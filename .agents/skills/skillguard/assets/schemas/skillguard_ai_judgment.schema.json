@@ -1,0 +1,146 @@
+{
+  "title": "SkillGuard AI Judgment",
+  "description": "Record-family schema for bounded AI judgment records that complement deterministic checks without replacing direct evidence or hard gates. This schema defines record shape only; it does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "target_path",
+    "target_type",
+    "scope",
+    "decision",
+    "input_evidence",
+    "findings",
+    "confidence",
+    "uncertainty",
+    "blockers",
+    "skipped_checks",
+    "residual_risk",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "skillguard.ai_judgment.v1"
+    },
+    "target_path": {
+      "type": "string"
+    },
+    "target_type": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "block",
+        "needs-review"
+      ]
+    },
+    "input_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "description",
+          "fresh"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "fresh": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "finding_id",
+          "severity",
+          "summary",
+          "evidence_ids"
+        ],
+        "properties": {
+          "finding_id": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "failure",
+              "blocker"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "confidence": {
+      "type": "string",
+      "enum": [
+        "high",
+        "medium",
+        "low",
+        "blocked"
+      ]
+    },
+    "uncertainty": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skipped_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "residual_risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claim_boundary": {
+      "type": "string"
+    },
+    "reviewer": {
+      "type": "string"
+    },
+    "reviewed_at": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

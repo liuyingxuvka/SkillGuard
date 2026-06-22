@@ -1,0 +1,20 @@
+{
+  "schema_version": "skillguard.bad_static_evidence_manifest.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+  "target_type": "evidence_manifest",
+  "status": "checked",
+  "evidence": [
+    {
+      "evidence_id": "bad-static-skill",
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "summary": "Fixture entrypoint intentionally omits frontmatter description."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "Current command output is stored separately under fixtures/evidence_outputs."
+  ],
+  "claim_boundary": "This evidence manifest covers only the missing-description bad static fixture. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

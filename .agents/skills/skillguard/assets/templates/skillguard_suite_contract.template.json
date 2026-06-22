@@ -1,0 +1,73 @@
+{
+  "template_version": "skillguard.suite_contract.template.v1",
+  "schema_version": "skillguard.suite_contract.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "suite",
+  "status": "draft",
+  "suite_name": "{{suite_name}}",
+  "purpose": "{{suite_purpose}}",
+  "included_skills": [
+    {
+      "skill_name": "{{skill_name}}",
+      "skill_path": "{{skill_path}}",
+      "required": true,
+      "responsibility": "{{skill_responsibility}}"
+    }
+  ],
+  "routing": [
+    {
+      "route_id": "{{route_id}}",
+      "condition": "{{route_condition}}",
+      "target_skill": "{{target_skill}}",
+      "required_evidence": [
+        "{{required_evidence}}"
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "dependency_name": "{{dependency_name}}",
+      "dependency_type": "{{dependency_type}}",
+      "required": false,
+      "fallback_rule": "{{fallback_rule}}"
+    }
+  ],
+  "shared_evidence_rules": [
+    {
+      "rule_id": "{{rule_id}}",
+      "description": "{{rule_description}}",
+      "freshness_rule": "{{freshness_rule}}"
+    }
+  ],
+  "compatibility": {
+    "suite_versions": [
+      "{{suite_version}}"
+    ],
+    "skill_versions": [
+      "{{skill_version}}"
+    ],
+    "external_dependencies": []
+  },
+  "validation_layers": [
+    {
+      "layer_id": "{{layer_id}}",
+      "purpose": "{{layer_purpose}}",
+      "required_checks": [
+        "{{required_check}}"
+      ]
+    }
+  ],
+  "maintenance_ownership": {
+    "owner": "{{maintenance_owner}}",
+    "change_review": "{{change_review_rule}}",
+    "evidence_owner": "{{evidence_owner}}"
+  },
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

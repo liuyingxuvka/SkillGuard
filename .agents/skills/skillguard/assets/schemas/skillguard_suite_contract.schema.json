@@ -1,0 +1,223 @@
+{
+  "title": "SkillGuard Suite Contract",
+  "description": "Record-family schema for a generic suite contract covering purpose, inventory, routing, dependencies, shared evidence, compatibility, validation, ownership, and status. This schema defines record shape only; it does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "suite_name",
+    "purpose",
+    "target_path",
+    "status",
+    "included_skills",
+    "routing",
+    "dependencies",
+    "shared_evidence_rules",
+    "compatibility",
+    "validation_layers",
+    "maintenance_ownership",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "skillguard.suite_contract.v1"
+    },
+    "suite_name": {
+      "type": "string"
+    },
+    "purpose": {
+      "type": "string"
+    },
+    "target_path": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "checked",
+        "needs-review",
+        "blocked",
+        "stale",
+        "accepted",
+        "pass",
+        "fail",
+        "block"
+      ]
+    },
+    "included_skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "path",
+          "role",
+          "status",
+          "evidence_source"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "evidence_source": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "residual_risk": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "routing": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "use_case",
+          "skill",
+          "conflict_resolution"
+        ],
+        "properties": {
+          "use_case": {
+            "type": "string"
+          },
+          "skill": {
+            "type": "string"
+          },
+          "conflict_resolution": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "dependency_type",
+          "required"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "dependency_type": {
+            "type": "string",
+            "enum": [
+              "skill",
+              "reference",
+              "schema",
+              "fixture",
+              "command",
+              "credential",
+              "external_service",
+              "other"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "shared_evidence_rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "required": [
+        "suite_version",
+        "checker_version",
+        "compatibility_notes"
+      ],
+      "properties": {
+        "suite_version": {
+          "type": "string"
+        },
+        "checker_version": {
+          "type": "string"
+        },
+        "compatibility_notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "validation_layers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "maintenance_ownership": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skipped_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "residual_risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claim_boundary": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": "skillguard.bad_static_ai_judgment.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim",
+  "target_type": "ai_judgment",
+  "status": "checked",
+  "decision": "bounded_support_only",
+  "input_evidence": [
+    {
+      "evidence_id": "bad-static-skill",
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim/SKILL.md",
+      "summary": "Fixture entrypoint under test."
+    }
+  ],
+  "confidence": {
+    "level": "medium",
+    "rationale": "The fixture intent is visible in local files, but command output remains the authority."
+  },
+  "uncertainty": [
+    {
+      "question": "Will unsupported claim scanning vocabulary change?",
+      "impact": "Failure wording may need refresh.",
+      "resolution_path": "Rerun fixture-test after checker changes."
+    }
+  ],
+  "human_review": {
+    "required": true,
+    "reason": "AI judgment is advisory and cannot replace command evidence."
+  },
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "Advisory fixture judgment can drift when checker rules change."
+  ],
+  "claim_boundary": "This AI judgment covers only the unsafe-broad-claim bad static fixture. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

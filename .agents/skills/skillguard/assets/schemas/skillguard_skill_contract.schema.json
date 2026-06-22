@@ -1,0 +1,214 @@
+{
+  "title": "SkillGuard Skill Contract",
+  "description": "Record-family schema for one SkillGuard skill contract record, including frontmatter, activation rules, hard gates, output requirements, and evidence. This schema defines record shape only; it does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "target_path",
+    "name",
+    "description",
+    "status",
+    "frontmatter",
+    "sections",
+    "activation_boundary",
+    "do_not_use_boundary",
+    "required_workflow",
+    "hard_gates",
+    "output_requirements",
+    "evidence",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "skillguard.skill_contract.v1"
+    },
+    "target_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "missing",
+        "draft",
+        "checked",
+        "needs-review",
+        "blocked",
+        "stale",
+        "accepted",
+        "pass",
+        "fail",
+        "block"
+      ]
+    },
+    "frontmatter": {
+      "type": "object",
+      "required": [
+        "parse_status",
+        "name_present",
+        "description_present",
+        "public_safe"
+      ],
+      "properties": {
+        "parse_status": {
+          "type": "string",
+          "enum": [
+            "parsed",
+            "failed",
+            "not_checked"
+          ]
+        },
+        "name_present": {
+          "type": "boolean"
+        },
+        "description_present": {
+          "type": "boolean"
+        },
+        "public_safe": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sections": {
+      "type": "object",
+      "required": [
+        "purpose",
+        "use_when",
+        "do_not_use_when",
+        "required_workflow",
+        "hard_gates",
+        "output_requirements",
+        "maintenance"
+      ],
+      "properties": {
+        "purpose": {
+          "type": "boolean"
+        },
+        "use_when": {
+          "type": "boolean"
+        },
+        "do_not_use_when": {
+          "type": "boolean"
+        },
+        "required_workflow": {
+          "type": "boolean"
+        },
+        "hard_gates": {
+          "type": "boolean"
+        },
+        "output_requirements": {
+          "type": "boolean"
+        },
+        "maintenance": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "activation_boundary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "do_not_use_boundary": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_workflow": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hard_gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "gate",
+          "required",
+          "status"
+        ],
+        "properties": {
+          "gate": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "block",
+              "skipped",
+              "not_checked"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "output_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "maintenance_synchronization": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skipped_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "residual_risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claim_boundary": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

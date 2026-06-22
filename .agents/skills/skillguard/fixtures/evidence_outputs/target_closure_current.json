@@ -1,0 +1,236 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-22T08:53:03Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "make-closure:reports",
+      "name": "Current report data",
+      "required": true,
+      "status": "pass",
+      "summary": "Loaded current report JSON records and checked failures, blockers, skipped checks, timestamps, and conservative claim boundaries."
+    },
+    {
+      "check_id": "make-closure:evidence",
+      "name": "Declared evidence references",
+      "required": true,
+      "status": "pass",
+      "summary": "Resolved declared evidence references and rejected stale-history, PM-text, acceptance-registry, progress-ledger, or runtime-id references as closure proof."
+    }
+  ],
+  "claim_boundary": "This make-closure result derives only a bounded closure record from current report JSON and declared direct evidence references. It does not treat progress ledgers, acceptance registries, PM text, runtime ids, stale history, or chat summaries as closure proof.",
+  "closure_record": {
+    "blockers": [],
+    "checks": [
+      {
+        "check_id": "make-closure:reports",
+        "name": "Current report data",
+        "required": true,
+        "status": "pass",
+        "summary": "Loaded current report JSON records and checked failures, blockers, skipped checks, timestamps, and conservative claim boundaries."
+      },
+      {
+        "check_id": "make-closure:evidence",
+        "name": "Declared evidence references",
+        "required": true,
+        "status": "pass",
+        "summary": "Resolved declared evidence references and rejected stale-history, PM-text, acceptance-registry, progress-ledger, or runtime-id references as closure proof."
+      }
+    ],
+    "claim_boundary": "This closure record is bounded to current report JSON and direct evidence references inspected in this invocation. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence.",
+    "closure_decision": "closed_with_evidence",
+    "closure_scope": "leaf-run-target-check current target validation and direct evidence closure",
+    "decision_reason": "All supplied current reports and direct evidence references support bounded closure.",
+    "evidence": [
+      {
+        "evidence_id": "current-report-data",
+        "freshness": "Fresh only for the current files loaded during this command.",
+        "summary": "Loaded 1 report JSON record(s) in this invocation."
+      },
+      {
+        "evidence_id": "declared-direct-evidence",
+        "freshness": "Fresh only for the current filesystem state.",
+        "summary": "Checked 12 evidence reference(s) without using progress ledgers or runtime packet text as closure proof."
+      }
+    ],
+    "failures": [],
+    "next_action": "accept bounded closure",
+    "residual_risk": [
+      {
+        "description": "Closure is limited to current report data and declared evidence references.",
+        "disposition": "Carry as claim boundary.",
+        "risk_id": "bounded-closure-only"
+      }
+    ],
+    "schema_version": "skillguard.closure.v1",
+    "skipped_checks": [],
+    "status": "closed_with_evidence",
+    "target_path": ".agents/skills/skillguard",
+    "target_type": "skillguard_skill"
+  },
+  "command": "make-closure",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "closure-report-parse",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard",
+      "summary": "Parsed 1 report file(s) and derived closure_decision=closed_with_evidence."
+    }
+  ],
+  "evidence_references": [
+    {
+      "context": "evidence[0]",
+      "decision": "pass",
+      "exists": true,
+      "fresh": true,
+      "kind": "file",
+      "line_count": 731,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
+      "sha256": "2960A434156DB34DC470585358D7D1BBEB6A8D624CC74EE64B98C43C4CE59110",
+      "source": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json"
+    },
+    {
+      "context": "evidence[1]",
+      "decision": "pass",
+      "exists": true,
+      "fresh": true,
+      "kind": "file",
+      "line_count": 743,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_gate_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_gate_current.json",
+      "sha256": "322E8FD4BFFA25A284DDF6DCC836E7F4A64711A23E031E4D517EF1360E4C815B",
+      "source": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json"
+    },
+    {
+      "context": "evidence[2]",
+      "decision": "pass",
+      "exists": true,
+      "fresh": true,
+      "kind": "file",
+      "line_count": 252,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_gate_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_gate_current.json",
+      "sha256": "36CD848FC2156AA67A57D90934081C6049BCDAA0C346068F1AB7762612468F91",
+      "source": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json"
+    },
+    {
+      "context": "evidence[3]",
+      "decision": "pass",
+      "exists": true,
+      "fresh": true,
+      "kind": "file",
+      "line_count": 707,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_gate_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_gate_current.json",
+      "sha256": "306ED83DBEDB8D20DFB41CA53F8C1EBBB53105CEF237EE69B4F8A093E0C89A26",
+      "source": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json"
+    },
+    {
+      "context": "evidence[4]",
+      "decision": "pass",
+      "exists": true,
+      "fresh": true,
+      "kind": "file",
+      "line_count": 42,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "sha256": "910709FB7E09C7A1CE84A0085DDEC2ECB5F92D8122C9231EA30307E7F51E15AF",
+      "source": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json"
+    },
+    {
+      "context": "--evidence[0]",
+      "decision": "pass",
+      "exists": true,
+      "kind": "file",
+      "line_count": 731,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
+      "sha256": "2960A434156DB34DC470585358D7D1BBEB6A8D624CC74EE64B98C43C4CE59110",
+      "source": "cli"
+    },
+    {
+      "context": "--evidence[1]",
+      "decision": "pass",
+      "exists": true,
+      "kind": "file",
+      "line_count": 743,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_gate_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_gate_current.json",
+      "sha256": "322E8FD4BFFA25A284DDF6DCC836E7F4A64711A23E031E4D517EF1360E4C815B",
+      "source": "cli"
+    },
+    {
+      "context": "--evidence[2]",
+      "decision": "pass",
+      "exists": true,
+      "kind": "file",
+      "line_count": 240,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json",
+      "sha256": "CB3380E7642B1D49E818F94980AA70E9614DA069212FC086C82EC35E0C0CECF8",
+      "source": "cli"
+    },
+    {
+      "context": "--evidence[3]",
+      "decision": "pass",
+      "exists": true,
+      "kind": "file",
+      "line_count": 252,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_gate_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_gate_current.json",
+      "sha256": "36CD848FC2156AA67A57D90934081C6049BCDAA0C346068F1AB7762612468F91",
+      "source": "cli"
+    },
+    {
+      "context": "--evidence[4]",
+      "decision": "pass",
+      "exists": true,
+      "kind": "file",
+      "line_count": 707,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_gate_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_gate_current.json",
+      "sha256": "306ED83DBEDB8D20DFB41CA53F8C1EBBB53105CEF237EE69B4F8A093E0C89A26",
+      "source": "cli"
+    },
+    {
+      "context": "--evidence[5]",
+      "decision": "pass",
+      "exists": true,
+      "kind": "file",
+      "line_count": 42,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "sha256": "910709FB7E09C7A1CE84A0085DDEC2ECB5F92D8122C9231EA30307E7F51E15AF",
+      "source": "cli"
+    },
+    {
+      "context": "report-file",
+      "decision": "pass",
+      "exists": true,
+      "kind": "file",
+      "line_count": 145,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json",
+      "sha256": "511D104A781A348D424B5A27EAE688E7A15BB556014629021355C1F42B5A8542",
+      "source": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json"
+    }
+  ],
+  "failures": [],
+  "reports_inspected": [
+    {
+      "kind": "json",
+      "line_count": 145,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json",
+      "sha256": "511D104A781A348D424B5A27EAE688E7A15BB556014629021355C1F42B5A8542"
+    }
+  ],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard"
+}

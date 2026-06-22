@@ -1,0 +1,57 @@
+{
+  "schema_version": "skillguard.suite_contract.v1",
+  "suite_name": "bad_suite_child_without_closure",
+  "purpose": "Provide a negative suite fixture whose checked child report lacks direct evidence entries.",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite",
+  "status": "checked",
+  "included_skills": [
+    {
+      "name": "child_without_closure_member",
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member",
+      "role": "negative fixture member",
+      "status": "checked",
+      "evidence_source": "evidence/child_without_closure_report.json",
+      "owner": "fixture"
+    }
+  ],
+  "routing": [
+    {
+      "use_case": "child without closure fixture rerun",
+      "skill": "child_without_closure_member",
+      "conflict_resolution": "Use the fixture-local member report and keep the missing evidence entries as the isolated defect."
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "child_without_closure_member",
+      "dependency_type": "skill",
+      "required": true,
+      "status": "checked"
+    }
+  ],
+  "shared_evidence_rules": [
+    "Checked children require direct member report evidence.",
+    "Progress ledgers, runtime ids, and PM text cannot satisfy suite closure."
+  ],
+  "compatibility": {
+    "suite_version": "bad-suite-stale-fixtures.v1",
+    "checker_version": "skillguard.local_cli_dispatch.v1",
+    "compatibility_notes": [
+      "The suite map and suite contract schema shapes are valid.",
+      "The member report intentionally has an empty evidence list."
+    ]
+  },
+  "validation_layers": [
+    "Suite member path and evidence checks through local check-suite command.",
+    "Child closure rollup must reject reports without direct evidence entries."
+  ],
+  "maintenance_ownership": [
+    "Refresh this fixture after child closure evidence semantics change."
+  ],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "This suite contract covers only the missing-direct-evidence negative branch."
+  ],
+  "claim_boundary": "This suite contract covers only the bad_suite_child_without_closure negative fixture records, member path, and fixture-local member report. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

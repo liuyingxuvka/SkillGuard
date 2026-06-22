@@ -1,0 +1,76 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "bad-suite-stale-fixtures.v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "status": "compatible",
+    "notes": [
+      "Suite and policy bad fixtures use expected_decision=fail because the current checker reports these isolated defects as fail-class findings.",
+      "Each case targets one current command surface and preserves separate failure attribution for suite records, child closure, stale evidence, and checker-policy self-check protection."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "bad_suite_router_without_map",
+      "fixture_type": "negative",
+      "target_rule": "A suite with a contract but no suite map must fail suite record validation.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/router_without_map.fixture.json",
+      "known_limitations": [
+        "This fixture covers only the missing suite-map branch."
+      ]
+    },
+    {
+      "fixture_id": "bad_suite_child_without_closure",
+      "fixture_type": "negative",
+      "target_rule": "A checked suite child whose member report declares no direct evidence must fail child closure validation.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/child_without_closure.fixture.json",
+      "known_limitations": [
+        "This fixture covers only the member-report-without-direct-evidence branch."
+      ]
+    },
+    {
+      "fixture_id": "bad_suite_stale_evidence",
+      "fixture_type": "negative",
+      "target_rule": "A checked suite child whose evidence report is stale must fail current evidence validation.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/stale_evidence.fixture.json",
+      "known_limitations": [
+        "This fixture covers only fixture-local stale evidence metadata."
+      ]
+    },
+    {
+      "fixture_id": "bad_checker_weakened_policy",
+      "fixture_type": "negative",
+      "target_rule": "A weakened checker-change policy document must fail self-check policy-artifact validation.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/checker_weakened_policy.fixture.json",
+      "known_limitations": [
+        "This fixture uses fixture-local policy copies and does not mutate production policy files."
+      ]
+    }
+  ],
+  "evidence": [
+    "bad_suite_router_without_map/suite/suite-contract.json",
+    "bad_suite_child_without_closure/suite/suite-map.json",
+    "bad_suite_child_without_closure/suite/evidence/child_without_closure_report.json",
+    "bad_suite_stale_evidence/suite/suite-map.json",
+    "bad_suite_stale_evidence/suite/evidence/stale_member_report.json",
+    "bad_checker_weakened_policy/references/08-checker-change-fixture-policy.md",
+    "../evidence_outputs/fixture_test_bad_suite_stale_current.json"
+  ],
+  "skipped_checks": [
+    "These fixtures intentionally do not cover static single-skill defects already represented in bad_static.",
+    "These fixtures do not replace the passing good_single_skill or good_suite fixtures."
+  ],
+  "residual_risk": [
+    "The fixtures are local negative examples and do not prove broad checker behavior.",
+    "Future checker status-vocabulary changes may require refreshing expected_decision values."
+  ],
+  "claim_boundary": "This suite, closure, stale-evidence, and checker-policy bad-fixture manifest covers only the listed negative fixture cases and current local files. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

@@ -1,0 +1,145 @@
+{
+  "schema_version": "skillguard.target_check_closure_input.v1",
+  "checked_at": "2026-06-22T08:53:01Z",
+  "command": "derived closure-support report from current direct target-check artifacts",
+  "decision": "pass",
+  "target_path": ".agents/skills/skillguard",
+  "target_type": "skillguard_skill",
+  "checks": [
+    {
+      "check_id": "target-check-current",
+      "name": "Current target check",
+      "required": true,
+      "status": "pass",
+      "summary": "Local target check command exited 0, emitted parseable JSON, and reported pass with no failures or blockers."
+    },
+    {
+      "check_id": "sibling-gates-current",
+      "name": "Current sibling gates",
+      "required": true,
+      "status": "pass",
+      "summary": "Self-check, fixture-test gate, and standard-library tests reported pass with no failures or blockers."
+    },
+    {
+      "check_id": "direct-evidence-closure",
+      "name": "Direct evidence closure",
+      "required": true,
+      "status": "pass",
+      "summary": "Closure support references current report artifacts directly and avoids progress-ledger-only, packet, lease, result, acceptance, or PM-text closure evidence."
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "target-check-report-current",
+      "kind": "command_output",
+      "fresh": true,
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
+      "summary": "Current check-skill output report."
+    },
+    {
+      "evidence_id": "target-check-gate-current",
+      "kind": "command_output",
+      "fresh": true,
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_gate_current.json",
+      "summary": "Command wrapper with exact target-check command line, exit status, parse status, and observed decision."
+    },
+    {
+      "evidence_id": "self-check-gate-current",
+      "kind": "command_output",
+      "fresh": true,
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_gate_current.json",
+      "summary": "Current self-check command wrapper."
+    },
+    {
+      "evidence_id": "fixture-test-gate-current",
+      "kind": "command_output",
+      "fresh": true,
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_gate_current.json",
+      "summary": "Current fixture-test gate across explicit good, bad_static, and bad_suite_stale manifests."
+    },
+    {
+      "evidence_id": "standard-library-tests-current",
+      "kind": "command_output",
+      "fresh": true,
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "summary": "Current standard-library test output."
+    }
+  ],
+  "files_inspected": [
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
+      "line_count": 731,
+      "sha256": "2960A434156DB34DC470585358D7D1BBEB6A8D624CC74EE64B98C43C4CE59110",
+      "bytes": 27455,
+      "last_write_time_utc": "2026-06-22T08:45:28Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_gate_current.json",
+      "line_count": 743,
+      "sha256": "322E8FD4BFFA25A284DDF6DCC836E7F4A64711A23E031E4D517EF1360E4C815B",
+      "bytes": 29464,
+      "last_write_time_utc": "2026-06-22T08:51:52Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json",
+      "line_count": 240,
+      "sha256": "CB3380E7642B1D49E818F94980AA70E9614DA069212FC086C82EC35E0C0CECF8",
+      "bytes": 8984,
+      "last_write_time_utc": "2026-06-22T08:45:13Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_gate_current.json",
+      "line_count": 252,
+      "sha256": "36CD848FC2156AA67A57D90934081C6049BCDAA0C346068F1AB7762612468F91",
+      "bytes": 10006,
+      "last_write_time_utc": "2026-06-22T08:51:52Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_gate_current.json",
+      "line_count": 707,
+      "sha256": "306ED83DBEDB8D20DFB41CA53F8C1EBBB53105CEF237EE69B4F8A093E0C89A26",
+      "bytes": 30309,
+      "last_write_time_utc": "2026-06-22T08:51:52Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "line_count": 42,
+      "sha256": "910709FB7E09C7A1CE84A0085DDEC2ECB5F92D8122C9231EA30307E7F51E15AF",
+      "bytes": 1719,
+      "last_write_time_utc": "2026-06-22T08:45:26Z"
+    }
+  ],
+  "summaries": {
+    "target_check": {
+      "exit_code": 0,
+      "parse_ok": true,
+      "decision": "pass",
+      "failure_count": 0,
+      "blocker_count": 0
+    },
+    "self_check": {
+      "exit_code": 0,
+      "parse_ok": true,
+      "decision": "pass",
+      "failure_count": 0,
+      "blocker_count": 0
+    },
+    "fixture_test": {
+      "decision": "pass",
+      "result_count": 3
+    },
+    "standard_library_tests": {
+      "decision": "pass",
+      "test_count": 5,
+      "failure_count": 0,
+      "error_count": 0
+    }
+  },
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "This closure support is limited to the current local target-check evidence and sibling gates. It is not release, package publication, network, external service, or future-behavior evidence."
+  ],
+  "claim_boundary": "This report supports only current local SkillGuard target-check closure with direct artifacts listed here. It does not prove runtime checker execution beyond the command output, broad fixture coverage, CLI checks beyond the commands listed, tests beyond the listed local test report, suite automation, package publication, release readiness, code-contract validation, external service behavior, or future AI behavior."
+}

@@ -1,0 +1,45 @@
+{
+  "schema_version": "skillguard.suite_map.v1",
+  "suite_name": "good_suite",
+  "target_path": ".agents/skills/skillguard/fixtures/good_suite/suite",
+  "status": "checked",
+  "included_skills": [
+    {
+      "name": "good_suite_member",
+      "path": ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member",
+      "role": "positive fixture member",
+      "status": "checked",
+      "evidence_location": "evidence/good_suite_member_report.json",
+      "required": true,
+      "owner": "fixture"
+    }
+  ],
+  "relationships": [],
+  "routing_hints": [
+    {
+      "task_shape": "positive suite fixture rerun",
+      "preferred_skill": "good_suite_member",
+      "non_use_boundary": "Do not use this fixture for negative, stale, release, or package publication claims.",
+      "conflict_rule": "Use only direct local evidence in this suite directory."
+    }
+  ],
+  "evidence_expectations": [
+    "Member status checked requires a direct evidence_source or evidence_location file.",
+    "Closure data must use current suite report and evidence files rather than runtime ids or progress-ledger-only proof."
+  ],
+  "maintenance_ownership": [
+    "Fixture maintainers refresh suite records when checker schema or member-root rules change."
+  ],
+  "compatibility": {
+    "version_boundary": "good-fixtures.v1 with skillguard.local_cli_dispatch.v1",
+    "known_incompatibilities": []
+  },
+  "evidence": [
+    "evidence/good_suite_closure.json"
+  ],
+  "blockers": [],
+  "residual_risk": [
+    "The suite map covers one positive member and does not exercise multi-member edge cases."
+  ],
+  "claim_boundary": "This suite map covers only the good_suite positive fixture records and member reference. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

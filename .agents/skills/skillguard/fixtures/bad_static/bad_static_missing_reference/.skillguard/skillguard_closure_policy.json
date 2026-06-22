@@ -1,0 +1,33 @@
+{
+  "schema_version": "skillguard.bad_static_closure_policy.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference/.skillguard",
+  "target_type": "closure_policy",
+  "status": "checked",
+  "closure_states": [
+    "open",
+    "blocked",
+    "closed_with_evidence",
+    "not_run"
+  ],
+  "hard_gates": [
+    {
+      "gate_id": "expected-fail-only",
+      "condition": "The static defect must remain a fail-class fixture result.",
+      "required_disposition": "expected fail"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "bad-static-report",
+      "path": ".skillguard/reports/current_check_report.json",
+      "summary": "Fixture-local static report metadata."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "Closure is bounded to current fixture files and command evidence."
+  ],
+  "claim_boundary": "This closure policy covers only the missing-reference bad static fixture. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

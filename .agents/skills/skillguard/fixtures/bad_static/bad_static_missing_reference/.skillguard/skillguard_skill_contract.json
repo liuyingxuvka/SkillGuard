@@ -1,0 +1,26 @@
+{
+  "schema_version": "skillguard.bad_static_contract.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference/SKILL.md",
+  "target_type": "skill_contract",
+  "status": "checked",
+  "evidence": [
+    {
+      "evidence_id": "bad-static-contract",
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference/SKILL.md",
+      "summary": "Fixture entrypoint intentionally declares a missing reference."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "non-reference-defects",
+      "reason": "This fixture isolates only missing declared reference behavior.",
+      "impact": "Other static defects are covered by sibling bad_static fixtures."
+    }
+  ],
+  "residual_risk": [
+    "The fixture must be refreshed if declared-reference validation rules change."
+  ],
+  "claim_boundary": "This contract covers only the missing-reference bad static fixture. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

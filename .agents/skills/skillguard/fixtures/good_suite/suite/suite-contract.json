@@ -1,0 +1,63 @@
+{
+  "schema_version": "skillguard.suite_contract.v1",
+  "suite_name": "good_suite",
+  "purpose": "Provide a maintained positive suite fixture with one explicit member and direct closure evidence.",
+  "target_path": ".agents/skills/skillguard/fixtures/good_suite/suite",
+  "status": "checked",
+  "included_skills": [
+    {
+      "name": "good_suite_member",
+      "path": ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member",
+      "role": "positive fixture member",
+      "status": "checked",
+      "evidence_source": "evidence/good_suite_member_report.json",
+      "owner": "fixture"
+    }
+  ],
+  "routing": [
+    {
+      "use_case": "positive suite fixture rerun",
+      "skill": "good_suite_member",
+      "conflict_resolution": "Use direct suite fixture evidence and keep the result bounded."
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "good_suite_member",
+      "dependency_type": "skill",
+      "required": true,
+      "status": "checked"
+    }
+  ],
+  "shared_evidence_rules": [
+    "Direct member evidence is required for checked member status.",
+    "Progress ledgers, runtime ids, and PM text cannot satisfy suite closure."
+  ],
+  "compatibility": {
+    "suite_version": "good-fixtures.v1",
+    "checker_version": "skillguard.local_cli_dispatch.v1",
+    "compatibility_notes": [
+      "The fixture uses the current suite map and suite contract schema shapes.",
+      "The fixture is positive-only and intentionally avoids broad release claims."
+    ]
+  },
+  "validation_layers": [
+    "Schema validation through local suite record commands.",
+    "Suite member path and evidence checks through local check-suite command.",
+    "Closure data review against direct evidence files."
+  ],
+  "maintenance_ownership": [
+    "Refresh this suite fixture after schema, member path, evidence freshness, or closure-policy changes."
+  ],
+  "evidence": [
+    "evidence/good_suite_closure.json"
+  ],
+  "blockers": [],
+  "skipped_checks": [
+    "Negative, stale, and multi-member cases are outside this positive fixture."
+  ],
+  "residual_risk": [
+    "This suite contract covers one positive member and does not exercise all suite branch behavior."
+  ],
+  "claim_boundary": "This suite contract covers only the good_suite positive fixture records, member path, and direct evidence files. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

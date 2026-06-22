@@ -1,0 +1,20 @@
+{
+  "schema_version": "skillguard.bad_static_manifest_index.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+  "target_type": "control_manifest",
+  "status": "checked",
+  "evidence": [
+    {
+      "evidence_id": "bad-static-evidence",
+      "path": ".skillguard/evidence/current_evidence_manifest.json",
+      "summary": "Fixture-local evidence manifest."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "Manifest is limited to this negative fixture."
+  ],
+  "claim_boundary": "This manifest indexes only the missing-description bad static fixture records. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

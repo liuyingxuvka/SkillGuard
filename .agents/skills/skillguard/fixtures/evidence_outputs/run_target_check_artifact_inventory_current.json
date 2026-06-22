@@ -1,0 +1,229 @@
+{
+  "schema_version": "skillguard.run_target_check_artifact_inventory.v1",
+  "checked_at": "2026-06-22T08:55:20Z",
+  "decision": "pass",
+  "target_path": ".agents/skills/skillguard",
+  "target_type": "skillguard_skill",
+  "commands": {
+    "target_check": {
+      "command": "python .agents/skills/skillguard/scripts/skillguard.py check-skill --target .agents/skills/skillguard --output fixtures/evidence_outputs/target_check_current.json",
+      "exit_code": 0,
+      "parse_ok": true,
+      "observed_decision": "pass",
+      "failure_count": 0,
+      "blocker_count": 0,
+      "report_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json"
+    },
+    "make_closure": {
+      "command": "python .agents/skills/skillguard/scripts/skillguard.py make-closure --report .agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json --evidence .agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json --evidence .agents/skills/skillguard/fixtures/evidence_outputs/target_check_gate_current.json --evidence .agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json --evidence .agents/skills/skillguard/fixtures/evidence_outputs/self_check_gate_current.json --evidence .agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_gate_current.json --evidence .agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json --target .agents/skills/skillguard --target-type skillguard_skill --closure-scope leaf-run-target-check current target validation and direct evidence closure --output fixtures/evidence_outputs/target_closure_current.json",
+      "exit_code": 0,
+      "parse_ok": true,
+      "decision": "pass",
+      "failure_count": 0,
+      "blocker_count": 0,
+      "closure_status": "closed_with_evidence",
+      "closure_decision": "closed_with_evidence",
+      "report_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_closure_current.json"
+    },
+    "self_check": {
+      "command": "python .agents/skills/skillguard/scripts/skillguard.py self-check --target .agents/skills/skillguard --output fixtures/evidence_outputs/self_check_current.json",
+      "exit_code": 0,
+      "parse_ok": true,
+      "observed_decision": "pass",
+      "failure_count": 0,
+      "blocker_count": 0,
+      "report_path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json"
+    },
+    "standard_library_tests": {
+      "command": "python tests/test_skillguard_local.py --json-output .agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "exit_code": 0,
+      "decision": "pass",
+      "test_count": 5,
+      "failure_count": 0,
+      "error_count": 0,
+      "report_path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json"
+    }
+  },
+  "fixture_gate": {
+    "decision": "pass",
+    "result_count": 3,
+    "results": [
+      {
+        "case_id": "good-fixtures",
+        "exit_code": 0,
+        "parse_ok": true,
+        "decision": "pass",
+        "expected_count_key": "expected_pass",
+        "expected_count": 3,
+        "observed_count": 3
+      },
+      {
+        "case_id": "bad-static-fixtures",
+        "exit_code": 0,
+        "parse_ok": true,
+        "decision": "pass",
+        "expected_count_key": "expected_fail",
+        "expected_count": 3,
+        "observed_count": 3
+      },
+      {
+        "case_id": "bad-suite-stale-fixtures",
+        "exit_code": 0,
+        "parse_ok": true,
+        "decision": "pass",
+        "expected_count_key": "expected_fail",
+        "expected_count": 4,
+        "observed_count": 4
+      }
+    ]
+  },
+  "closure": {
+    "support_report_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json",
+    "closure_report_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_closure_current.json",
+    "closure_gate_path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_closure_gate_current.json",
+    "decision": "pass",
+    "status": "closed_with_evidence",
+    "closure_decision": "closed_with_evidence",
+    "failure_count": 0,
+    "blocker_count": 0,
+    "evidence_reference_count": 12
+  },
+  "scans": {
+    "unsafe_public_claim_patterns": {
+      "decision": "pass",
+      "match_count": 0
+    },
+    "private_runtime_secret_patterns": {
+      "decision": "pass",
+      "match_count": 0
+    }
+  },
+  "cleanup": {
+    "stale_control_report_path": ".agents/skills/skillguard/.skillguard/reports/target_check_current.json",
+    "stale_control_report_exists": false,
+    "python_cache_dir_count": 0
+  },
+  "environment": {
+    "flowguard_schema_version": "1.0",
+    "git_status_exit_code": 128,
+    "git_status_summary": "not_a_git_repository"
+  },
+  "artifacts": [
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
+      "line_count": 731,
+      "sha256": "2960A434156DB34DC470585358D7D1BBEB6A8D624CC74EE64B98C43C4CE59110",
+      "bytes": 27455,
+      "last_write_time_utc": "2026-06-22T08:45:28Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_gate_current.json",
+      "line_count": 743,
+      "sha256": "322E8FD4BFFA25A284DDF6DCC836E7F4A64711A23E031E4D517EF1360E4C815B",
+      "bytes": 29464,
+      "last_write_time_utc": "2026-06-22T08:51:52Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_closure_input_current.json",
+      "line_count": 145,
+      "sha256": "511D104A781A348D424B5A27EAE688E7A15BB556014629021355C1F42B5A8542",
+      "bytes": 5912,
+      "last_write_time_utc": "2026-06-22T08:53:02Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_closure_current.json",
+      "line_count": 236,
+      "sha256": "31BDE16FF05A7674EBD2C6912769DCD7032772EE854E2E4B30704AFE587CC74C",
+      "bytes": 10600,
+      "last_write_time_utc": "2026-06-22T08:53:03Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_closure_gate_current.json",
+      "line_count": 15,
+      "sha256": "F380AC2522F32797CA8D1EE50122A21F385D6EB94DB3047EE51228CAEFF6F8F0",
+      "bytes": 1397,
+      "last_write_time_utc": "2026-06-22T08:53:04Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json",
+      "line_count": 240,
+      "sha256": "CB3380E7642B1D49E818F94980AA70E9614DA069212FC086C82EC35E0C0CECF8",
+      "bytes": 8984,
+      "last_write_time_utc": "2026-06-22T08:45:13Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_gate_current.json",
+      "line_count": 252,
+      "sha256": "36CD848FC2156AA67A57D90934081C6049BCDAA0C346068F1AB7762612468F91",
+      "bytes": 10006,
+      "last_write_time_utc": "2026-06-22T08:51:52Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_gate_current.json",
+      "line_count": 707,
+      "sha256": "306ED83DBEDB8D20DFB41CA53F8C1EBBB53105CEF237EE69B4F8A093E0C89A26",
+      "bytes": 30309,
+      "last_write_time_utc": "2026-06-22T08:51:52Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "line_count": 42,
+      "sha256": "910709FB7E09C7A1CE84A0085DDEC2ECB5F92D8122C9231EA30307E7F51E15AF",
+      "bytes": 1719,
+      "last_write_time_utc": "2026-06-22T08:45:26Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/run_fixture_test_artifact_inventory_current.json",
+      "line_count": 123,
+      "sha256": "E8261A7F074F8D49E293093985022D0CB2B13DD6B951478CFDA751AA4FC2A614",
+      "bytes": 4179,
+      "last_write_time_utc": "2026-06-22T07:28:35Z"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/run_self_check_artifact_inventory_current.json",
+      "line_count": 145,
+      "sha256": "A2D25D21D73A0F9CDC6090AC86BE92D61EC2A2EE5C5D8CE73C0913A1EA48EEB5",
+      "bytes": 5131,
+      "last_write_time_utc": "2026-06-22T08:04:59Z"
+    },
+    {
+      "path": "README.md",
+      "line_count": 189,
+      "sha256": "D545EDAC8289FABD252D20F82A38122B949B901F2EE679DC749F11191297BD58",
+      "bytes": 16285,
+      "last_write_time_utc": "2026-06-22T06:28:53Z"
+    },
+    {
+      "path": "examples/README.md",
+      "line_count": 56,
+      "sha256": "2D042BCA45DAF34ADB52628E02B99796A784CA3E5C19B6763572784A060F8302",
+      "bytes": 3830,
+      "last_write_time_utc": "2026-06-22T06:26:25Z"
+    },
+    {
+      "path": "tests/test_skillguard_local.py",
+      "line_count": 170,
+      "sha256": "583FB0658F3CC9156F1F1FAFBA6AFE6A9BBE4660F7CB66C98FC1043EC80953C7",
+      "bytes": 8736,
+      "last_write_time_utc": "2026-06-22T06:26:25Z"
+    },
+    {
+      "path": "pyproject.toml",
+      "line_count": 30,
+      "sha256": "42AA83077D82600893CCDF44BDFE22E53908C0966ADE0A4AB34D7A42B1065B79",
+      "bytes": 1065,
+      "last_write_time_utc": "2026-06-22T06:29:01Z"
+    },
+    {
+      "path": "AGENTS.md",
+      "line_count": 29,
+      "sha256": "8A83BB8E2CAE60D3AC3691DF65A0A8CF24281CBFB667E768C3977A6E60174A90",
+      "bytes": 2832,
+      "last_write_time_utc": "2026-06-21T11:59:12Z"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "claim_boundary": "This inventory records current local target-check, closure, sibling-gate, scan, cleanup, and artifact-hash evidence only. It does not prove runtime checker execution beyond listed commands, broad fixture coverage, CLI checks beyond listed commands, tests beyond listed reports, suite automation, package publication, release readiness, code-contract validation, external services, or future AI behavior."
+}

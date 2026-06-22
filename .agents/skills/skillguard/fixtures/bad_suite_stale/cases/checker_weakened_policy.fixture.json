@@ -1,0 +1,7 @@
+{
+  "fixture_id": "bad_checker_weakened_policy",
+  "target_command": "self-check",
+  "expected_decision": "fail",
+  "target_path": ".agents/skills/skillguard",
+  "policy_root": "../bad_checker_weakened_policy"
+}

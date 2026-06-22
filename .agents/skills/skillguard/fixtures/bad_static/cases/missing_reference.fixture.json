@@ -1,0 +1,6 @@
+{
+  "fixture_id": "bad_static_missing_reference",
+  "target_command": "check-skill",
+  "expected_decision": "fail",
+  "target_path": "../bad_static_missing_reference"
+}

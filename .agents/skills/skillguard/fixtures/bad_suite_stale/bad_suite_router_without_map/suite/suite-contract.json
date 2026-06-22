@@ -1,0 +1,58 @@
+{
+  "schema_version": "skillguard.suite_contract.v1",
+  "suite_name": "bad_suite_router_without_map",
+  "purpose": "Provide a negative suite fixture with a valid contract and member but no suite map record.",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/suite",
+  "status": "checked",
+  "included_skills": [
+    {
+      "name": "router_member",
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member",
+      "role": "negative fixture member",
+      "status": "checked",
+      "evidence_source": "evidence/router_member_report.json",
+      "owner": "fixture"
+    }
+  ],
+  "routing": [
+    {
+      "use_case": "missing suite-map fixture rerun",
+      "skill": "router_member",
+      "conflict_resolution": "Use direct fixture evidence and keep the absent suite map as the isolated defect."
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "router_member",
+      "dependency_type": "skill",
+      "required": true,
+      "status": "checked"
+    }
+  ],
+  "shared_evidence_rules": [
+    "Direct member evidence is required for checked member status.",
+    "Progress ledgers, runtime ids, and PM text cannot satisfy suite closure."
+  ],
+  "compatibility": {
+    "suite_version": "bad-suite-stale-fixtures.v1",
+    "checker_version": "skillguard.local_cli_dispatch.v1",
+    "compatibility_notes": [
+      "The contract shape matches the current suite contract schema.",
+      "The missing suite map record is intentional for this fixture."
+    ]
+  },
+  "validation_layers": [
+    "Suite member path and evidence checks through local check-suite command."
+  ],
+  "maintenance_ownership": [
+    "Refresh this fixture after suite map discovery or missing-record wording changes."
+  ],
+  "blockers": [],
+  "skipped_checks": [
+    "The suite map record is intentionally absent."
+  ],
+  "residual_risk": [
+    "This fixture covers only the missing suite-map negative branch."
+  ],
+  "claim_boundary": "This suite contract covers only the bad_suite_router_without_map negative fixture records, member path, and direct evidence files. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

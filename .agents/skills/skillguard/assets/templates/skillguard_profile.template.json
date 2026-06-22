@@ -1,0 +1,54 @@
+{
+  "template_version": "skillguard.profile.template.v1",
+  "schema_version": "skillguard.profile.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "{{target_type}}",
+  "status": "draft",
+  "skill_name": "{{skill_name}}",
+  "summary": "{{purpose_summary}}",
+  "applicability": {
+    "use_when": [
+      "{{use_when_condition}}"
+    ],
+    "do_not_use_when": [
+      "{{do_not_use_condition}}"
+    ],
+    "required_inputs": [
+      "{{required_input}}"
+    ]
+  },
+  "standards": [
+    "{{standard_reference}}"
+  ],
+  "compatibility": {
+    "supported_targets": [
+      "{{supported_target_type}}"
+    ],
+    "known_limits": [
+      "{{known_limit}}"
+    ],
+    "external_dependencies": []
+  },
+  "evidence": [
+    {
+      "evidence_id": "{{evidence_id}}",
+      "kind": "{{evidence_kind}}",
+      "source": "{{evidence_source}}",
+      "summary": "{{evidence_summary}}",
+      "freshness": "{{freshness_statement}}"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "{{check_id}}",
+      "reason": "{{skip_reason}}",
+      "impact": "{{skip_impact}}"
+    }
+  ],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

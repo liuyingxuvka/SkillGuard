@@ -1,0 +1,44 @@
+{
+  "template_version": "skillguard.fixture_manifest.template.v1",
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "fixture_manifest",
+  "status": "draft",
+  "fixture_version": "{{fixture_version}}",
+  "checker_version": "{{checker_version}}",
+  "compatibility": {
+    "compatible_checker_versions": [
+      "{{checker_version}}"
+    ],
+    "compatible_schema_versions": [
+      "{{schema_version}}"
+    ],
+    "incompatible_conditions": [
+      "{{incompatible_condition}}"
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "{{fixture_id}}",
+      "fixture_path": "{{fixture_path}}",
+      "fixture_hash": "{{fixture_hash}}",
+      "purpose": "{{fixture_purpose}}",
+      "expected_result": "{{expected_result}}",
+      "freshness_rule": "{{freshness_rule}}"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "{{evidence_id}}",
+      "summary": "{{evidence_summary}}",
+      "freshness": "{{freshness_statement}}"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

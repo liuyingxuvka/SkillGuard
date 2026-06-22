@@ -1,0 +1,41 @@
+{
+  "schema_version": "skillguard.check_report.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member",
+  "target_type": "skill",
+  "status": "pass",
+  "checked_at": "2020-01-01T00:00:00Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "checker_version": "skillguard.local_cli_dispatch.v1",
+    "fixture_version": "bad-suite-stale-fixtures.v1",
+    "notes": "Intentionally stale member report for evidence freshness validation."
+  },
+  "checks": [
+    {
+      "check_id": "stale-member-entrypoint",
+      "name": "Stale member entrypoint",
+      "required": true,
+      "status": "pass",
+      "evidence_ids": [
+        "stale-member-skill-md"
+      ],
+      "summary": "The report shape is otherwise valid, but its evidence is intentionally stale."
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "stale-member-skill-md",
+      "kind": "file",
+      "fresh": false,
+      "summary": "Stale fixture member entrypoint reference.",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member/SKILL.md"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "This report is intentionally stale and cannot support current suite closure."
+  ],
+  "claim_boundary": "This stale report is an intentionally insufficient fixture-local child report. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

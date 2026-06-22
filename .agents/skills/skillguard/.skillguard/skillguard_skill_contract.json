@@ -1,0 +1,112 @@
+{
+  "schema_version": "skillguard.self_skill_contract.v1",
+  "target_path": ".agents/skills/skillguard/SKILL.md",
+  "target_type": "skillguard_skill_contract",
+  "status": "initial_contract_record",
+  "contract_version": "0.1.0",
+  "frontmatter": {
+    "name_required": true,
+    "description_required": true,
+    "activation_description_required": true
+  },
+  "activation_boundary": {
+    "use_when": [
+      "The user asks to evaluate skill or suite artifacts against SkillGuard standards.",
+      "A local control record needs evidence, blocker, skipped-check, residual-risk, or claim-boundary review."
+    ],
+    "do_not_use_when": [
+      "The task is unrelated to skill or suite artifact governance.",
+      "The available materials do not include a target artifact or an explicit scope."
+    ]
+  },
+  "required_workflow": [
+    {
+      "step_id": "scope",
+      "description": "Identify target_path, target_type, requested check, and allowed evidence.",
+      "required_evidence": [
+        "target artifact path or explicit missing-information blocker"
+      ]
+    },
+    {
+      "step_id": "inspect",
+      "description": "Inspect target materials before making status or closure claims.",
+      "required_evidence": [
+        "file listing, content inspection, parse evidence, or stated unavailable evidence"
+      ]
+    },
+    {
+      "step_id": "evaluate",
+      "description": "Separate evidence, failures, blockers, skipped checks, residual risk, and claim boundary.",
+      "required_evidence": [
+        "structured result fields"
+      ]
+    },
+    {
+      "step_id": "close",
+      "description": "State the supported decision and any remaining limits.",
+      "required_evidence": [
+        "claim_boundary and residual_risk"
+      ]
+    }
+  ],
+  "hard_gates": [
+    {
+      "gate_id": "no-evidence-no-pass",
+      "condition": "Required evidence is missing.",
+      "failure_effect": "Return a blocker or not-run status rather than a passing claim."
+    },
+    {
+      "gate_id": "skipped-checks-visible",
+      "condition": "A relevant check was not run.",
+      "failure_effect": "Record skipped_checks with reason and impact."
+    },
+    {
+      "gate_id": "claim-boundary-required",
+      "condition": "A decision or recommendation is made.",
+      "failure_effect": "Include claim_boundary that limits the decision to inspected evidence."
+    }
+  ],
+  "output_requirements": {
+    "must_include": [
+      "status",
+      "evidence",
+      "failures",
+      "blockers",
+      "skipped_checks",
+      "residual_risk",
+      "claim_boundary"
+    ],
+    "must_not_include": [
+      "unsupported broad approval claims",
+      "hidden private paths",
+      "credential material",
+      "unchecked external-service assumptions"
+    ]
+  },
+  "compatibility": {
+    "checker_version": "not_assigned",
+    "fixture_version": "not_assigned",
+    "external_dependencies": []
+  },
+  "checks": [],
+  "evidence": [
+    {
+      "evidence_id": "initial-skill-contract-record",
+      "path": ".skillguard/skillguard_skill_contract.json",
+      "summary": "Initial SkillGuard self-contract record."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "full-target-suite-review",
+      "reason": "This record defines the self-contract and does not execute a future target review.",
+      "impact": "Future reviews must gather their own current evidence."
+    }
+  ],
+  "residual_risk": [
+    "The contract may need revision when implementation checkers and fixture manifests are added."
+  ],
+  "claim_boundary": "This contract defines initial SkillGuard self-maintenance obligations; it does not prove future checks will pass. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

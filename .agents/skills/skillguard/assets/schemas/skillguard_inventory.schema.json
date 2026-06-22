@@ -1,0 +1,188 @@
+{
+  "title": "SkillGuard Inventory",
+  "description": "Record-family schema for an inventory of a SkillGuard target. This schema models discovered files and evidence without claiming that a scanner implementation, runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation exists or passed.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "target_path",
+    "target_type",
+    "status",
+    "discovered_files",
+    "evidence",
+    "blockers",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "skillguard.inventory.v1"
+    },
+    "target_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "skill",
+        "skill_repository",
+        "suite",
+        "reference_set",
+        "release_candidate"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "missing",
+        "draft",
+        "checked",
+        "needs-review",
+        "blocked",
+        "stale",
+        "accepted",
+        "pass",
+        "fail",
+        "block"
+      ]
+    },
+    "discovered_files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "kind",
+          "role",
+          "exists"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "file",
+              "directory",
+              "missing"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "skill_contract",
+              "readme",
+              "reference",
+              "metadata",
+              "schema",
+              "fixture",
+              "script",
+              "test",
+              "report",
+              "other"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "exists": {
+            "type": "boolean"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "line_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "referenced_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "declared_commands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "maintained_records": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "kind",
+          "summary",
+          "fresh"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "file_listing",
+              "content_inspection",
+              "hash",
+              "parser_output",
+              "command_output",
+              "judgment",
+              "other"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "fresh": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skipped_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "residual_risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claim_boundary": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

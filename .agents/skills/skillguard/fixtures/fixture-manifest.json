@@ -1,0 +1,62 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "good-fixtures.v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "status": "compatible",
+    "notes": [
+      "Positive fixture cases target the current standard-library schema-backed checker commands.",
+      "Single-skill and suite fixture directories are separate from command output evidence so reports can be refreshed without changing fixture intent."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "good_single_skill_contract",
+      "fixture_type": "positive",
+      "target_rule": "check-skill-contract accepts the maintained good_single_skill contract fixture.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/good_single_skill_contract.fixture.json",
+      "known_limitations": [
+        "This is one positive schema fixture and is not broad fixture coverage."
+      ]
+    },
+    {
+      "fixture_id": "good_suite_map",
+      "fixture_type": "positive",
+      "target_rule": "check-suite-map accepts the maintained good_suite map fixture.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/good_suite_map.fixture.json",
+      "known_limitations": [
+        "This is one positive suite-map fixture and is not suite automation evidence."
+      ]
+    },
+    {
+      "fixture_id": "good_suite_contract",
+      "fixture_type": "positive",
+      "target_rule": "check-suite-contract accepts the maintained good_suite contract fixture.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/good_suite_contract.fixture.json",
+      "known_limitations": [
+        "This is one positive suite-contract fixture and is not package publication or release evidence."
+      ]
+    }
+  ],
+  "evidence": [
+    "good_single_skill/SKILL.md",
+    "good_suite/suite/suite-map.json",
+    "good_suite/suite/suite-contract.json",
+    "good_suite/suite/evidence/good_suite_member_report.json"
+  ],
+  "skipped_checks": [
+    "Negative, stale, and blocked fixture families are outside this good-fixture node.",
+    "Generated command-output evidence is refreshed by validation commands and is not stored in this manifest."
+  ],
+  "residual_risk": [
+    "The manifest proves only the listed positive case shape when fixture-test is run against current files.",
+    "Broader checker behavior still needs separate negative, regression, and stale-evidence fixtures."
+  ],
+  "claim_boundary": "This fixture manifest covers only the listed positive fixture records and current local files. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

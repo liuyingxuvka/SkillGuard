@@ -1,0 +1,85 @@
+{
+  "schema_version": "skillguard.examples_tests_artifact_inventory.v1",
+  "checked_at": "2026-06-22T06:30:24Z",
+  "decision": "pass",
+  "artifacts": [
+    {
+      "path": "README.md",
+      "line_count": 269,
+      "sha256": "D545EDAC8289FABD252D20F82A38122B949B901F2EE679DC749F11191297BD58"
+    },
+    {
+      "path": "pyproject.toml",
+      "line_count": 31,
+      "sha256": "42AA83077D82600893CCDF44BDFE22E53908C0966ADE0A4AB34D7A42B1065B79"
+    },
+    {
+      "path": "examples/README.md",
+      "line_count": 87,
+      "sha256": "2D042BCA45DAF34ADB52628E02B99796A784CA3E5C19B6763572784A060F8302"
+    },
+    {
+      "path": "tests/test_skillguard_local.py",
+      "line_count": 200,
+      "sha256": "583FB0658F3CC9156F1F1FAFBA6AFE6A9BBE4660F7CB66C98FC1043EC80953C7"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "line_count": 42,
+      "sha256": "C30B8C3EB67631DEC2DA97F11CBD4EDB94496B177DC50651C7F2B22725874538"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/fixture-manifest.json",
+      "line_count": 62,
+      "sha256": "2B0BA0BBA338755C456A7310B88D972C9B8C0D0BA9962AEA85E1869A1B223880"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/fixture-manifest.json",
+      "line_count": 62,
+      "sha256": "C3B87DDCEC074CEB68F98A5CDE17709727C5D9071B5BD19ADD6FCC16D2867D6A"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/fixture-manifest.json",
+      "line_count": 76,
+      "sha256": "A009D41211F1D0AFCD4F2130056AA02BE4AEA030CA32A4FAA7C16BBA9ADCC3D9"
+    }
+  ],
+  "validations": [
+    {
+      "command": "python -m py_compile .agents/skills/skillguard/scripts/checker_engine.py .agents/skills/skillguard/scripts/skillguard.py .agents/skills/skillguard/scripts/skillguard_utils.py tests/test_skillguard_local.py",
+      "decision": "pass"
+    },
+    {
+      "command": "python tests/test_skillguard_local.py --json-output .agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "decision": "pass",
+      "test_count": 5,
+      "failure_count": 0,
+      "error_count": 0
+    },
+    {
+      "command": "python .agents/skills/skillguard/scripts/skillguard.py fixture-test --manifest .agents/skills/skillguard/fixtures/fixture-manifest.json",
+      "decision": "pass",
+      "expected_pass": 3
+    },
+    {
+      "command": "python .agents/skills/skillguard/scripts/skillguard.py fixture-test --manifest .agents/skills/skillguard/fixtures/bad_static/fixture-manifest.json",
+      "decision": "pass",
+      "expected_fail": 3
+    },
+    {
+      "command": "python .agents/skills/skillguard/scripts/skillguard.py fixture-test --manifest .agents/skills/skillguard/fixtures/bad_suite_stale/fixture-manifest.json",
+      "decision": "pass",
+      "expected_fail": 4
+    },
+    {
+      "command": "python .agents/skills/skillguard/scripts/skillguard.py self-check --target .agents/skills/skillguard",
+      "decision": "pass"
+    },
+    {
+      "command": "rg public-safety and unsafe-overclaim scans over README.md, examples/README.md, and standard_library_tests_current.json",
+      "decision": "pass",
+      "match_count": 0
+    }
+  ],
+  "claim_boundary": "Inventory covers local examples, standard-library smoke checks, explicit fixture manifests, README metadata, and generated evidence files only. It does not prove packaged CLI installation, broad fixture coverage, suite automation, package publication, release readiness, code-contract validation, external services, or future AI behavior."
+}

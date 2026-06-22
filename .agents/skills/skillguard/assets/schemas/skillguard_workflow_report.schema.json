@@ -1,0 +1,165 @@
+{
+  "title": "SkillGuard Workflow Report",
+  "description": "Record-family schema for practical SkillGuard workflow reports covering create, audit, repair, suite, and closure modes. This schema defines record shape only; it does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "workflow_mode",
+    "target_path",
+    "target_type",
+    "entry_condition",
+    "decision",
+    "evidence",
+    "hard_gates",
+    "outputs",
+    "blockers",
+    "skipped_checks",
+    "residual_risk",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "skillguard.workflow_report.v1"
+    },
+    "workflow_mode": {
+      "type": "string",
+      "enum": [
+        "create",
+        "audit",
+        "repair",
+        "suite",
+        "closure",
+        "self-check"
+      ]
+    },
+    "target_path": {
+      "type": "string"
+    },
+    "target_type": {
+      "type": "string"
+    },
+    "entry_condition": {
+      "type": "string"
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "block"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "summary",
+          "fresh"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "fresh": {
+            "type": "boolean"
+          },
+          "source_path": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "hard_gates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "gate",
+          "status",
+          "required"
+        ],
+        "properties": {
+          "gate": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "block",
+              "skipped",
+              "not_checked"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skipped_checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "check",
+          "reason",
+          "required",
+          "status_impact"
+        ],
+        "properties": {
+          "check": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "status_impact": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "residual_risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claim_boundary": {
+      "type": "string"
+    },
+    "next_action": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

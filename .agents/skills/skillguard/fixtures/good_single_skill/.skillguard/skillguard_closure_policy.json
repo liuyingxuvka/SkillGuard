@@ -1,0 +1,39 @@
+{
+  "schema_version": "skillguard.fixture_closure_policy.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+  "target_type": "closure_policy",
+  "status": "checked",
+  "closure_states": [
+    "open",
+    "blocked",
+    "closed_with_evidence",
+    "not_run"
+  ],
+  "hard_gates": [
+    {
+      "gate_id": "direct-current-evidence",
+      "condition": "Closure must cite current report or evidence files.",
+      "required_disposition": "closed_with_evidence only when direct evidence exists"
+    },
+    {
+      "gate_id": "no-progress-ledger-closure",
+      "condition": "A progress ledger is the only support.",
+      "required_disposition": "open or blocked"
+    }
+  ],
+  "checks": [],
+  "evidence": [
+    {
+      "evidence_id": "good-single-skill-closure",
+      "path": ".skillguard/reports/good_single_skill_closure.json",
+      "summary": "Bounded single-skill fixture closure data."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "Closure is bounded to fixture-local evidence and current command output files."
+  ],
+  "claim_boundary": "This closure policy governs only the good_single_skill fixture. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

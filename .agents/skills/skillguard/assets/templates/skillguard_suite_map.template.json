@@ -1,0 +1,70 @@
+{
+  "template_version": "skillguard.suite_map.template.v1",
+  "schema_version": "skillguard.suite_map.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "suite",
+  "status": "draft",
+  "suite_identity": {
+    "suite_name": "{{suite_name}}",
+    "suite_version": "{{suite_version}}",
+    "owner": "{{maintenance_owner}}"
+  },
+  "included_checks": [
+    {
+      "check_id": "{{check_id}}",
+      "name": "{{check_name}}",
+      "purpose": "{{check_purpose}}",
+      "applicability": "{{check_applicability}}",
+      "required_evidence": [
+        "{{required_evidence}}"
+      ]
+    }
+  ],
+  "included_skills": [
+    {
+      "skill_name": "{{skill_name}}",
+      "skill_path": "{{skill_path}}",
+      "role": "{{skill_role}}",
+      "applicability": "{{skill_applicability}}"
+    }
+  ],
+  "relationships": [
+    {
+      "from": "{{source_item}}",
+      "to": "{{target_item}}",
+      "relationship": "{{relationship_kind}}"
+    }
+  ],
+  "routing_hints": [
+    {
+      "condition": "{{routing_condition}}",
+      "preferred_check": "{{preferred_check_id}}",
+      "fallback": "{{fallback_guidance}}"
+    }
+  ],
+  "evidence_expectations": [
+    "{{evidence_expectation}}"
+  ],
+  "maintenance_ownership": {
+    "owner": "{{maintenance_owner}}",
+    "review_cadence": "{{review_cadence}}",
+    "change_control": "{{change_control_rule}}"
+  },
+  "compatibility": {
+    "supported_versions": [
+      "{{supported_version}}"
+    ],
+    "incompatible_conditions": [
+      "{{incompatible_condition}}"
+    ],
+    "external_dependencies": []
+  },
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

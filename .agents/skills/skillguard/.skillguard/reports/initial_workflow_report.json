@@ -1,0 +1,73 @@
+{
+  "schema_version": "skillguard.initial_workflow_report.v1",
+  "target_path": ".agents/skills/skillguard/.skillguard",
+  "target_type": "workflow_report",
+  "status": "initial_report",
+  "workflow_mode": "self_maintenance_setup",
+  "entry_condition": "SkillGuard needs local self-maintenance control records before implementation checkers are introduced.",
+  "decision": "continue_with_bounded_records",
+  "hard_gates": [
+    {
+      "gate_id": "required-records-present",
+      "status": "recorded",
+      "evidence": [
+        "skillguard_manifest.json"
+      ]
+    },
+    {
+      "gate_id": "claims-bounded",
+      "status": "recorded",
+      "evidence": [
+        "skillguard_closure_policy.json",
+        "ai_judgments/initial_ai_judgment.json"
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "path": "skillguard_profile.json",
+      "role": "self profile"
+    },
+    {
+      "path": "skillguard_skill_contract.json",
+      "role": "self contract"
+    },
+    {
+      "path": "skillguard_evidence_rules.json",
+      "role": "evidence policy"
+    },
+    {
+      "path": "skillguard_closure_policy.json",
+      "role": "closure policy"
+    },
+    {
+      "path": "skillguard_manifest.json",
+      "role": "control manifest"
+    },
+    {
+      "path": "skillguard_progress_ledger.jsonl",
+      "role": "progress ledger"
+    }
+  ],
+  "checks": [],
+  "evidence": [
+    {
+      "evidence_id": "initial-workflow-record",
+      "path": "reports/initial_workflow_report.json",
+      "summary": "Initial workflow report for self-maintenance setup."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "implementation-behavior-check",
+      "reason": "This workflow only creates control records and does not implement or execute checkers.",
+      "impact": "Behavioral claims require future implementation evidence."
+    }
+  ],
+  "residual_risk": [
+    "Further workflow reports may be needed when implementation assets, fixtures, or checker versions are added."
+  ],
+  "claim_boundary": "This workflow report documents initial self-maintenance setup and does not assert broad project closure. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

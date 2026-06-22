@@ -1,0 +1,199 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-22T04:42:41Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "check-suite:suite-root",
+      "name": "Suite and member roots",
+      "required": true,
+      "status": "pass",
+      "summary": "Resolved suite root and bounded suite member root."
+    },
+    {
+      "check_id": "check-suite:suite-records",
+      "name": "Suite map and contract records",
+      "required": true,
+      "status": "pass",
+      "summary": "Loaded suite map and suite contract JSON records when available and checked their declared schema subsets."
+    },
+    {
+      "check_id": "check-suite:members",
+      "name": "Suite member inventory",
+      "required": true,
+      "status": "pass",
+      "summary": "Validated member list uniqueness, path confinement, and SKILL.md entrypoints."
+    },
+    {
+      "check_id": "check-suite:relationships",
+      "name": "Suite relationships and dependencies",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked relationship and skill-dependency endpoints against declared members."
+    },
+    {
+      "check_id": "check-suite:evidence",
+      "name": "Suite evidence references",
+      "required": true,
+      "status": "fail",
+      "summary": "Resolved suite and child evidence references, checked missing paths, stale timestamps, and hash or line-count mismatches when present."
+    },
+    {
+      "check_id": "check-suite:child-closure",
+      "name": "Child closure rollup",
+      "required": true,
+      "status": "fail",
+      "summary": "Checked that accepted, checked, or passing children have current evidence and that historical progress is not promoted to closure proof."
+    },
+    {
+      "check_id": "check-suite:unsafe-claims",
+      "name": "Unsafe suite claim scan",
+      "required": true,
+      "status": "pass",
+      "summary": "Scanned suite-facing records, member entrypoints, evidence files, and explicit --scan files for declared unsafe claim phrases."
+    },
+    {
+      "check_id": "check-suite:claim-boundaries",
+      "name": "Suite claim boundaries",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked suite map and suite contract claim boundaries for conservative no-claim categories."
+    }
+  ],
+  "child_closure": [
+    {
+      "current_evidence_count": 0,
+      "decision": "fail",
+      "member_path_decision": "pass",
+      "member_status": "checked",
+      "name": "child_without_closure_member",
+      "required": true,
+      "uses_progress_ledger_as_current_closure_evidence": false
+    }
+  ],
+  "claim_boundary": "This static suite check covers only the suite records, member paths, relationship declarations, child closure evidence references, stale-evidence indicators, and unsafe-claim phrases loaded during this invocation. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "check-suite",
+  "current_closure_evidence": {
+    "summary": "Progress ledger references are treated as historical progress and cannot satisfy suite or child closure evidence.",
+    "uses_progress_ledger_as_current_closure_evidence": false
+  },
+  "decision": "fail",
+  "evidence": [
+    {
+      "evidence_id": "suite-record-parse",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite",
+      "summary": "Loaded 2 suite records and inspected 2 JSON files."
+    },
+    {
+      "evidence_id": "suite-member-path-check",
+      "fresh": true,
+      "kind": "filesystem_check",
+      "source_path": ".agents/skills",
+      "summary": "Checked 1 suite member declarations under .agents/skills."
+    },
+    {
+      "evidence_id": "suite-evidence-freshness-check",
+      "fresh": true,
+      "kind": "filesystem_check",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite",
+      "summary": "Checked 1 suite evidence references for existence, stale markers, hashes, and line counts where declared."
+    },
+    {
+      "evidence_id": "suite-unsafe-claim-scan",
+      "fresh": true,
+      "kind": "text_scan",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite",
+      "summary": "Scanned 4 suite-facing files against 6 unsafe claim phrase rules."
+    }
+  ],
+  "evidence_references": [
+    {
+      "context": "member:child_without_closure_member.evidence_source",
+      "decision": "fail",
+      "exists": true,
+      "kind": "file",
+      "line_count": 30,
+      "path": "evidence/child_without_closure_report.json",
+      "problems": [
+        "referenced check report declares no direct evidence entries"
+      ],
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/evidence/child_without_closure_report.json",
+      "sha256": "7CA8A64074B9C02356D43244374394F925FBABD8903B0C26747E097E5D6C2E97",
+      "source": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-map.json;.agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-contract.json"
+    }
+  ],
+  "failures": [
+    "evidence/child_without_closure_report.json: referenced check report declares no direct evidence entries",
+    "member child_without_closure_member: accepted/checked child status requires current evidence_source"
+  ],
+  "files_inspected": [
+    {
+      "kind": "json",
+      "line_count": 42,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-map.json",
+      "sha256": "B6E28AEF2C7CFA235D747BC90E2D54A9ABC6A0AB3C6493EE255E7953FBAE84A1"
+    },
+    {
+      "kind": "json",
+      "line_count": 57,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-contract.json",
+      "sha256": "2436A2517673A6CEDB3D6ECEA6540F6B188879C5B3AF5970BFF3E6FDD26ED0FF"
+    }
+  ],
+  "members": [
+    {
+      "decision": "pass",
+      "kind": "directory",
+      "name": "child_without_closure_member",
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member",
+      "skill_entrypoint": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member/SKILL.md",
+      "skill_line_count": 58,
+      "skill_sha256": "3AA1B99E2FE09AFA60C02102F355030547DAA7BBF16D0F0C944DC677F6152AD2",
+      "source": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-map.json;.agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-contract.json",
+      "status": "checked"
+    }
+  ],
+  "relationships": [
+    {
+      "decision": "pass",
+      "from_skill": "suite",
+      "index": 0,
+      "relationship_type": "dependency",
+      "required": true,
+      "source": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-contract.json",
+      "to_skill": "child_without_closure_member"
+    }
+  ],
+  "residual_risk": [
+    "Unsafe-claim scanning uses a declared phrase set and may miss paraphrased overclaims.",
+    "This command validates current file structure and evidence references; it does not run child skill workflows or suite automation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "suite_records": [
+    {
+      "line_count": 42,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-map.json",
+      "sha256": "B6E28AEF2C7CFA235D747BC90E2D54A9ABC6A0AB3C6493EE255E7953FBAE84A1"
+    },
+    {
+      "line_count": 57,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-contract.json",
+      "sha256": "2436A2517673A6CEDB3D6ECEA6540F6B188879C5B3AF5970BFF3E6FDD26ED0FF"
+    }
+  ],
+  "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite",
+  "unsafe_claim_findings": [],
+  "unsafe_claim_phrase_set": [
+    "fixture-coverage",
+    "full-suite-automation",
+    "package-publication",
+    "release-readiness",
+    "code-contract-validation",
+    "tests-passed"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schema_version": "skillguard.fixture_profile.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+  "target_type": "skill",
+  "status": "checked",
+  "profile_version": "good-fixtures.v1",
+  "purpose": "Maintain a positive single-skill fixture for current SkillGuard checker behavior.",
+  "control_root": ".skillguard",
+  "checks": [
+    {
+      "check_id": "fixture-profile-current",
+      "status": "checked",
+      "evidence": [
+        "current-evidence-manifest"
+      ],
+      "failures": [],
+      "blockers": [],
+      "skipped_checks": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "current-evidence-manifest",
+      "path": ".skillguard/evidence/current_evidence_manifest.json",
+      "summary": "Direct current fixture evidence manifest."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "negative-fixture-branches",
+      "reason": "This directory is the positive single-skill fixture only.",
+      "impact": "Negative, stale, and blocked behavior needs separate fixture records."
+    }
+  ],
+  "residual_risk": [
+    "This fixture is a maintained example and does not exercise every SkillGuard branch."
+  ],
+  "claim_boundary": "This profile covers only the good_single_skill fixture files currently inspected. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

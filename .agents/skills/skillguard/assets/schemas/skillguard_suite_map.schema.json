@@ -1,0 +1,211 @@
+{
+  "title": "SkillGuard Suite Map",
+  "description": "Record-family schema for a generic suite map that groups skills, relationships, routing hints, evidence expectations, ownership, and compatibility. This schema defines record shape only; it does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "suite_name",
+    "target_path",
+    "status",
+    "included_skills",
+    "relationships",
+    "routing_hints",
+    "evidence_expectations",
+    "maintenance_ownership",
+    "compatibility",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "skillguard.suite_map.v1"
+    },
+    "suite_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "checked",
+        "needs-review",
+        "blocked",
+        "stale",
+        "accepted",
+        "pass",
+        "fail",
+        "block"
+      ]
+    },
+    "included_skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "path",
+          "role",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "evidence_location": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "owner": {
+            "type": "string"
+          },
+          "blockers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "residual_risk": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "from_skill",
+          "to_skill",
+          "relationship_type"
+        ],
+        "properties": {
+          "from_skill": {
+            "type": "string"
+          },
+          "to_skill": {
+            "type": "string"
+          },
+          "relationship_type": {
+            "type": "string",
+            "enum": [
+              "parent_child",
+              "prerequisite",
+              "follow_up",
+              "shared_reference",
+              "shared_schema",
+              "shared_fixture",
+              "release_group",
+              "mutual_exclusion",
+              "other"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "routing_hints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "task_shape",
+          "preferred_skill",
+          "non_use_boundary"
+        ],
+        "properties": {
+          "task_shape": {
+            "type": "string"
+          },
+          "preferred_skill": {
+            "type": "string"
+          },
+          "non_use_boundary": {
+            "type": "string"
+          },
+          "conflict_rule": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence_expectations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "maintenance_ownership": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "required": [
+        "version_boundary",
+        "known_incompatibilities"
+      ],
+      "properties": {
+        "version_boundary": {
+          "type": "string"
+        },
+        "known_incompatibilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "residual_risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claim_boundary": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

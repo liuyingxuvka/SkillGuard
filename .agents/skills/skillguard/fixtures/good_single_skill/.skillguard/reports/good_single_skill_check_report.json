@@ -1,0 +1,39 @@
+{
+  "schema_version": "skillguard.fixture_check_report.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/good_single_skill",
+  "target_type": "skill",
+  "status": "checked",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "good-single-skill-static-structure",
+      "name": "Positive single-skill fixture structure",
+      "required": true,
+      "status": "pass",
+      "summary": "The fixture declares required entrypoint sections and local control records."
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "good-single-skill-entrypoint",
+      "kind": "file",
+      "fresh": true,
+      "summary": "Maintained positive fixture entrypoint.",
+      "source_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md"
+    },
+    {
+      "evidence_id": "current-evidence-manifest",
+      "kind": "json",
+      "fresh": true,
+      "summary": "Fixture-local evidence manifest.",
+      "source_path": ".skillguard/evidence/current_evidence_manifest.json"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "This report is a fixture-local summary; validation output must be refreshed by the current command run."
+  ],
+  "claim_boundary": "This report summarizes only the good_single_skill fixture files. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

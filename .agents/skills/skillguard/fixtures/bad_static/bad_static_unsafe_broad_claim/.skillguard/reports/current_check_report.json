@@ -1,0 +1,20 @@
+{
+  "schema_version": "skillguard.bad_static_report.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim",
+  "target_type": "skill",
+  "status": "checked",
+  "evidence": [
+    {
+      "evidence_id": "bad-static-skill",
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim/SKILL.md",
+      "summary": "Fixture entrypoint under current static-analysis check."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "This record describes fixture intent; command output records the actual expected fail."
+  ],
+  "claim_boundary": "This report metadata covers only the unsafe-broad-claim bad static fixture. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

@@ -1,0 +1,42 @@
+{
+  "schema_version": "skillguard.suite_map.v1",
+  "suite_name": "bad_suite_child_without_closure",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite",
+  "status": "checked",
+  "included_skills": [
+    {
+      "name": "child_without_closure_member",
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member",
+      "role": "negative fixture member",
+      "status": "checked",
+      "evidence_location": "evidence/child_without_closure_report.json",
+      "required": true,
+      "owner": "fixture"
+    }
+  ],
+  "relationships": [],
+  "routing_hints": [
+    {
+      "task_shape": "child without closure fixture rerun",
+      "preferred_skill": "child_without_closure_member",
+      "non_use_boundary": "Do not use this fixture for positive suite, release, package, or broad automation claims.",
+      "conflict_rule": "Use only fixture-local files in this suite directory."
+    }
+  ],
+  "evidence_expectations": [
+    "Checked children require member reports with direct evidence entries.",
+    "An empty member report cannot satisfy suite closure."
+  ],
+  "maintenance_ownership": [
+    "Fixture maintainers refresh this suite map when child closure rules change."
+  ],
+  "compatibility": {
+    "version_boundary": "bad-suite-stale-fixtures.v1 with skillguard.local_cli_dispatch.v1",
+    "known_incompatibilities": []
+  },
+  "blockers": [],
+  "residual_risk": [
+    "This suite map covers only the missing-direct-evidence negative branch."
+  ],
+  "claim_boundary": "This suite map covers only the bad_suite_child_without_closure negative fixture records and member reference. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

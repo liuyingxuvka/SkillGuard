@@ -1,0 +1,50 @@
+{
+  "template_version": "skillguard.closure.template.v1",
+  "schema_version": "skillguard.closure.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "{{target_type}}",
+  "status": "draft",
+  "closure_decision": "open",
+  "decision_reason": "{{decision_reason}}",
+  "checks": [
+    {
+      "check_id": "{{check_id}}",
+      "status": "not_started",
+      "evidence": [
+        "{{evidence_id}}"
+      ],
+      "failures": [],
+      "blockers": [],
+      "skipped_checks": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "{{evidence_id}}",
+      "summary": "{{evidence_summary}}",
+      "freshness": "{{freshness_statement}}"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "{{check_id}}",
+      "reason": "{{skip_reason}}",
+      "impact": "{{skip_impact}}"
+    }
+  ],
+  "residual_risk": [
+    {
+      "risk_id": "{{risk_id}}",
+      "description": "{{risk_description}}",
+      "disposition": "{{risk_disposition}}"
+    }
+  ],
+  "human_review": {
+    "required": true,
+    "reason": "{{human_review_reason}}"
+  },
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence.",
+  "next_action": "{{recommended_next_action}}"
+}

@@ -1,0 +1,40 @@
+{
+  "schema_version": "skillguard.check_report.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member",
+  "target_type": "skill",
+  "status": "pass",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "checker_version": "skillguard.local_cli_dispatch.v1",
+    "fixture_version": "good-fixtures.v1",
+    "notes": "Positive suite fixture member evidence."
+  },
+  "checks": [
+    {
+      "check_id": "good-suite-member-entrypoint",
+      "name": "Suite member entrypoint",
+      "required": true,
+      "status": "pass",
+      "evidence_ids": [
+        "good-suite-member-skill-md"
+      ],
+      "summary": "Member skill entrypoint is present for suite path validation."
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "good-suite-member-skill-md",
+      "kind": "file",
+      "fresh": true,
+      "summary": "Maintained suite member fixture entrypoint.",
+      "source_path": ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member/SKILL.md"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "This evidence record supports one positive suite member only."
+  ],
+  "claim_boundary": "This report supports only the good_suite_member positive fixture reference. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

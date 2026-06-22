@@ -1,0 +1,56 @@
+{
+  "template_version": "skillguard.checker_change.template.v1",
+  "schema_version": "skillguard.checker_change.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "checker_change",
+  "status": "draft",
+  "checker_version": "{{checker_version}}",
+  "change_summary": "{{change_summary}}",
+  "change_reason": "{{change_reason}}",
+  "affected_checks": [
+    {
+      "check_id": "{{check_id}}",
+      "change_type": "{{change_type}}",
+      "expected_behavior_change": "{{expected_behavior_change}}",
+      "required_evidence": [
+        "{{required_evidence}}"
+      ]
+    }
+  ],
+  "fixture_updates": [
+    {
+      "fixture_id": "{{fixture_id}}",
+      "fixture_version": "{{fixture_version}}",
+      "update_required": true,
+      "reason": "{{fixture_update_reason}}"
+    }
+  ],
+  "compatibility": {
+    "compatible_schema_versions": [
+      "{{schema_version}}"
+    ],
+    "compatible_fixture_versions": [
+      "{{fixture_version}}"
+    ],
+    "migration_required": false,
+    "migration_notes": "{{migration_notes}}"
+  },
+  "checks": [
+    {
+      "check_id": "{{validation_check_id}}",
+      "status": "not_started",
+      "evidence": [],
+      "failures": [],
+      "blockers": [],
+      "skipped_checks": []
+    }
+  ],
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

@@ -1,0 +1,83 @@
+{
+  "template_version": "skillguard.skill_contract.template.v1",
+  "schema_version": "skillguard.skill_contract.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "skill",
+  "status": "draft",
+  "frontmatter": {
+    "name": "{{skill_name}}",
+    "description": "{{activation_description}}",
+    "required": true
+  },
+  "sections": [
+    {
+      "section_name": "Purpose",
+      "required": true,
+      "expected_content": "{{purpose_expectation}}"
+    },
+    {
+      "section_name": "Activation Boundary",
+      "required": true,
+      "expected_content": "{{activation_boundary_expectation}}"
+    },
+    {
+      "section_name": "Workflow",
+      "required": true,
+      "expected_content": "{{workflow_expectation}}"
+    }
+  ],
+  "activation_boundary": {
+    "use_when": [
+      "{{use_when_condition}}"
+    ],
+    "do_not_use_when": [
+      "{{do_not_use_condition}}"
+    ]
+  },
+  "do_not_use_boundary": [
+    "{{do_not_use_condition}}"
+  ],
+  "required_workflow": [
+    {
+      "step_id": "{{step_id}}",
+      "description": "{{step_description}}",
+      "required_evidence": [
+        "{{required_evidence}}"
+      ]
+    }
+  ],
+  "hard_gates": [
+    {
+      "gate_id": "{{gate_id}}",
+      "condition": "{{gate_condition}}",
+      "failure_effect": "{{failure_effect}}"
+    }
+  ],
+  "output_requirements": {
+    "must_include": [
+      "evidence",
+      "failures",
+      "blockers",
+      "skipped_checks",
+      "residual_risk",
+      "claim_boundary"
+    ],
+    "must_not_include": [
+      "{{unsupported_claim}}"
+    ]
+  },
+  "compatibility": {
+    "target_versions": [
+      "{{target_version}}"
+    ],
+    "external_dependencies": []
+  },
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

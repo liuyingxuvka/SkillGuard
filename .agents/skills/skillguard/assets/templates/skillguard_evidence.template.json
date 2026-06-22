@@ -1,0 +1,43 @@
+{
+  "template_version": "skillguard.evidence.template.v1",
+  "schema_version": "skillguard.evidence.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "{{target_type}}",
+  "status": "draft",
+  "evidence": [
+    {
+      "evidence_id": "{{evidence_id}}",
+      "kind": "{{evidence_kind}}",
+      "source_path": "{{source_path}}",
+      "collected_at": "{{iso_utc_time}}",
+      "command": "{{command_or_manual_step}}",
+      "observed": "{{observed_result}}",
+      "supports_claims": [
+        "{{supported_claim}}"
+      ],
+      "freshness": {
+        "freshness_rule": "{{freshness_rule}}",
+        "fresh_at_collection": true,
+        "staleness_triggers": [
+          "{{staleness_trigger}}"
+        ]
+      },
+      "limitations": [
+        "{{evidence_limit}}"
+      ]
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "{{check_id}}",
+      "reason": "{{skip_reason}}",
+      "impact": "{{skip_impact}}"
+    }
+  ],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

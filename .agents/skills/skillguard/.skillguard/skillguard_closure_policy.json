@@ -1,0 +1,80 @@
+{
+  "schema_version": "skillguard.closure_policy.v1",
+  "target_path": ".agents/skills/skillguard/.skillguard",
+  "target_type": "closure_policy",
+  "status": "initial_policy_record",
+  "closure_states": [
+    "open",
+    "blocked",
+    "closed_with_evidence",
+    "not_run"
+  ],
+  "closure_policy": {
+    "closed_with_evidence_requires": [
+      "all required artifacts exist",
+      "structured files parse",
+      "manifest paths are relative",
+      "failures are empty or explicitly resolved",
+      "blockers are empty",
+      "skipped_checks are listed with reason and impact",
+      "residual_risk is stated",
+      "claim_boundary is stated"
+    ],
+    "blocked_requires": [
+      "blocker id or blocker class",
+      "blocked artifact or check",
+      "recommended resolution"
+    ],
+    "not_run_requires": [
+      "check id",
+      "reason",
+      "impact on claim boundary"
+    ]
+  },
+  "hard_gates": [
+    {
+      "gate_id": "blockers-prevent-closure",
+      "condition": "Any unresolved blocker is present.",
+      "required_disposition": "blocked"
+    },
+    {
+      "gate_id": "missing-parse-evidence-prevents-closure",
+      "condition": "A structured record exists but parse evidence is missing.",
+      "required_disposition": "open or blocked"
+    },
+    {
+      "gate_id": "ai-judgment-is-bounded",
+      "condition": "AI judgment is used in a decision.",
+      "required_disposition": "state confidence, uncertainty, and evidence limits"
+    }
+  ],
+  "compatibility": {
+    "checker_version": "not_assigned",
+    "fixture_version": "not_assigned",
+    "compatible_schema_versions": [
+      "skillguard.closure_policy.v1"
+    ],
+    "external_dependencies": []
+  },
+  "checks": [],
+  "evidence": [
+    {
+      "evidence_id": "initial-closure-policy",
+      "path": ".skillguard/skillguard_closure_policy.json",
+      "summary": "Initial closure policy record."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "automated-closure-enforcement",
+      "reason": "No enforcement script is created by this node.",
+      "impact": "Closure remains a recorded policy until an implementation checker is added."
+    }
+  ],
+  "residual_risk": [
+    "Manual application of the closure policy may miss edge cases until checker support exists."
+  ],
+  "claim_boundary": "This policy defines initial closure requirements for SkillGuard self-maintenance records only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

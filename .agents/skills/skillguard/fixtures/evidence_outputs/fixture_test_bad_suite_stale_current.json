@@ -1,0 +1,320 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-22T04:42:40Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "fixture-test:manifest",
+      "name": "Fixture manifest",
+      "required": true,
+      "status": "pass",
+      "summary": "Loaded the fixture manifest when supplied, checked its schema subset, and kept its claim boundary conservative."
+    },
+    {
+      "check_id": "fixture-test:cases",
+      "name": "Fixture cases",
+      "required": true,
+      "status": "pass",
+      "summary": "Executed explicit fixture cases and compared observed pass/fail/block decisions with expected decisions."
+    }
+  ],
+  "claim_boundary": "This fixture-test result covers only the explicit fixture manifest and fixture case files loaded during this invocation. It does not prove broad fixture coverage, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "fixture-test",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "fixture-manifest-parse",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/fixture-manifest.json",
+      "summary": "Inspected 1 manifest JSON file(s) and executed 4 fixture case(s)."
+    },
+    {
+      "evidence_id": "fixture-case-results",
+      "fresh": true,
+      "kind": "command_output",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_suite_stale",
+      "summary": "Observed fixture result classes: {'expected_fail': 4}."
+    }
+  ],
+  "failures": [],
+  "files_inspected": [
+    {
+      "kind": "json",
+      "line_count": 76,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/fixture-manifest.json",
+      "sha256": "A009D41211F1D0AFCD4F2130056AA02BE4AEA030CA32A4FAA7C16BBA9ADCC3D9"
+    }
+  ],
+  "fixture_class_counts": {
+    "expected_fail": 4
+  },
+  "fixture_results": [
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--suite-root",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/suite",
+        "--suite-contract",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/suite/suite-contract.json",
+        "--member-root",
+        ".agents/skills"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_suite_router_without_map",
+      "fixture_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/cases/router_without_map.fixture.json",
+      "line_count": 8,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-suite:suite-root",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:suite-records",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-suite:members",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:relationships",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:evidence",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:child-closure",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:unsafe-claims",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:claim-boundaries",
+          "status": "pass"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 1,
+      "observed_failures": [
+        "suite map record is missing"
+      ],
+      "problems": [
+        "suite map record is missing"
+      ],
+      "sha256": "0C5EC627A4562FB602D77EC5132F6D8940C854DEB26A2D12141862E0344D5C60",
+      "target_command": "check-suite",
+      "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/suite"
+    },
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--suite-root",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite",
+        "--suite-map",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-map.json",
+        "--suite-contract",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-contract.json",
+        "--member-root",
+        ".agents/skills"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_suite_child_without_closure",
+      "fixture_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/cases/child_without_closure.fixture.json",
+      "line_count": 9,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-suite:suite-root",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:suite-records",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:members",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:relationships",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:evidence",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-suite:child-closure",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-suite:unsafe-claims",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:claim-boundaries",
+          "status": "pass"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 2,
+      "observed_failures": [
+        "evidence/child_without_closure_report.json: referenced check report declares no direct evidence entries",
+        "member child_without_closure_member: accepted/checked child status requires current evidence_source"
+      ],
+      "problems": [
+        "evidence/child_without_closure_report.json: referenced check report declares no direct evidence entries",
+        "member child_without_closure_member: accepted/checked child status requires current evidence_source"
+      ],
+      "sha256": "E8767AE5EE3081399529C39DCD330607369DC1264F398829A8E3DD2BDE98D2E8",
+      "target_command": "check-suite",
+      "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite"
+    },
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--suite-root",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/suite",
+        "--suite-map",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/suite/suite-map.json",
+        "--suite-contract",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/suite/suite-contract.json",
+        "--member-root",
+        ".agents/skills",
+        "--max-evidence-age-days",
+        "30"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_suite_stale_evidence",
+      "fixture_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/cases/stale_evidence.fixture.json",
+      "line_count": 10,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-suite:suite-root",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:suite-records",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:members",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:relationships",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:evidence",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-suite:child-closure",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-suite:unsafe-claims",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-suite:claim-boundaries",
+          "status": "pass"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 3,
+      "observed_failures": [
+        "evidence/stale_member_report.json: referenced evidence checked_at older than 30 days",
+        "evidence/stale_member_report.json: referenced check report contains explicitly stale evidence",
+        "member stale_member: accepted/checked child status requires current evidence_source"
+      ],
+      "problems": [
+        "evidence/stale_member_report.json: referenced evidence checked_at older than 30 days",
+        "evidence/stale_member_report.json: referenced check report contains explicitly stale evidence",
+        "member stale_member: accepted/checked child status requires current evidence_source"
+      ],
+      "sha256": "7ECC44A981346CC5CD651DFBBAFB2D783881BD506EF5629D4B429D2F2672BF8A",
+      "target_command": "check-suite",
+      "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/suite"
+    },
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--target",
+        ".agents/skills/skillguard",
+        "--policy-root",
+        ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_checker_weakened_policy"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_checker_weakened_policy",
+      "fixture_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/cases/checker_weakened_policy.fixture.json",
+      "line_count": 7,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "self-check:required-files",
+          "status": "pass"
+        },
+        {
+          "check_id": "self-check:json-parse",
+          "status": "pass"
+        },
+        {
+          "check_id": "self-check:public-boundary",
+          "status": "pass"
+        },
+        {
+          "check_id": "self-check:skill-entrypoint",
+          "status": "pass"
+        },
+        {
+          "check_id": "self-check:policy-artifacts",
+          "status": "fail"
+        },
+        {
+          "check_id": "self-check:public-safety",
+          "status": "pass"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 2,
+      "observed_failures": [
+        "checker-change fixture policy missing term 'negative fixtures'",
+        "checker-change fixture policy missing term 'public-safety'"
+      ],
+      "problems": [
+        "checker-change fixture policy missing term 'negative fixtures'",
+        "checker-change fixture policy missing term 'public-safety'"
+      ],
+      "sha256": "0D4F8844B7F79B7C199E37D91772558CCF67AB2BEDB0B9E568C5C7AC1F379E87",
+      "target_command": "self-check",
+      "target_path": ".agents/skills/skillguard"
+    }
+  ],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/fixture-manifest.json"
+}

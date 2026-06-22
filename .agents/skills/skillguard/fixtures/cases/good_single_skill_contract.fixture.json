@@ -1,0 +1,73 @@
+{
+  "fixture_id": "good_single_skill_contract",
+  "target_command": "check-skill-contract",
+  "expected_decision": "pass",
+  "input": {
+    "schema_version": "skillguard.skill_contract.v1",
+    "target_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+    "name": "good_single_skill",
+    "description": "Positive single-skill fixture for SkillGuard checker happy-path validation.",
+    "status": "checked",
+    "frontmatter": {
+      "parse_status": "parsed",
+      "name_present": true,
+      "description_present": true,
+      "public_safe": true
+    },
+    "sections": {
+      "purpose": true,
+      "use_when": true,
+      "do_not_use_when": true,
+      "required_workflow": true,
+      "hard_gates": true,
+      "output_requirements": true,
+      "maintenance": true
+    },
+    "activation_boundary": [
+      "Use this fixture when checking the positive single-skill contract path.",
+      "Use this fixture only with current local SkillGuard fixture commands."
+    ],
+    "do_not_use_boundary": [
+      "Do not use this fixture to claim broad fixture coverage.",
+      "Do not use this fixture to claim package publication or release readiness."
+    ],
+    "required_workflow": [
+      "Inspect the fixture SKILL.md and control records.",
+      "Run the local check-skill command against the fixture directory.",
+      "Keep closure evidence tied to direct current report and evidence files."
+    ],
+    "hard_gates": [
+      {
+        "gate": "current-local-files",
+        "required": true,
+        "status": "pass"
+      },
+      {
+        "gate": "bounded-claim",
+        "required": true,
+        "status": "pass"
+      }
+    ],
+    "output_requirements": [
+      "Report evidence, failures, blockers, skipped_checks, residual_risk, and claim_boundary.",
+      "List direct command output paths when current evidence is refreshed."
+    ],
+    "maintenance_synchronization": [
+      "Refresh fixture command output after checker command behavior changes.",
+      "Do not use runtime ids, PM text, or progress ledgers as closure proof."
+    ],
+    "evidence": [
+      ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json"
+    ],
+    "failures": [],
+    "blockers": [],
+    "skipped_checks": [
+      "Negative and stale fixture branches are intentionally outside this positive case."
+    ],
+    "residual_risk": [
+      "This positive contract case does not exercise every checker branch."
+    ],
+    "claim_boundary": "This fixture case covers one maintained single-skill contract record. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+  }
+}

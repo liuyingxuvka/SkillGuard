@@ -1,0 +1,81 @@
+---
+name: "{{skill_name}}"
+description: "{{activation_description}}"
+---
+
+# {{skill_display_name}}
+
+## Purpose
+
+{{purpose_statement}}
+
+## Activation Boundary
+
+Use this skill when:
+
+- {{activation_condition_1}}
+- {{activation_condition_2}}
+
+## Do Not Use When
+
+- {{do_not_use_condition_1}}
+- {{do_not_use_condition_2}}
+
+## Required Inputs
+
+- Target path: `{{target_path}}`
+- Target type: `{{target_type}}`
+- Requested outcome: `{{requested_outcome}}`
+- Available evidence: `{{available_evidence_summary}}`
+
+## Required Workflow
+
+1. Confirm the target path, target type, requested outcome, and allowed scope.
+2. Inspect the target materials before making claims about behavior or readiness.
+3. Identify blockers, skipped checks, and residual risk before writing the final answer.
+4. Run the strongest practical checks that are in scope for the target.
+5. Report only evidence-backed findings and keep the claim boundary explicit.
+
+## Hard Gates
+
+- Do not claim verification beyond the evidence listed in the final response.
+- Do not collapse blockers, skipped checks, failures, and residual risk into one generic note.
+- Do not treat AI judgment as a substitute for direct evidence.
+- Do not rely on private paths, credentials, network-only resources, or one-time runtime identifiers.
+- Do not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence.
+
+## Evidence Contract
+
+Record the following fields when this skill produces a check, review, or closure artifact:
+
+- `schema_version`
+- `target_path`
+- `target_type`
+- `status`
+- `evidence`
+- `failures`
+- `blockers`
+- `skipped_checks`
+- `residual_risk`
+- `claim_boundary`
+- `confidence`
+- `checks`
+- `fixture_version`
+- `checker_version`
+- `compatibility`
+
+## Output Contract
+
+The response should include:
+
+- What was inspected or changed.
+- The direct evidence used.
+- Any failures, blockers, skipped checks, and residual risk.
+- The exact claim boundary for the conclusion.
+- The recommended next action when closure is not supported.
+
+## Claim Boundary
+
+{{claim_boundary_statement}}
+
+This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence.

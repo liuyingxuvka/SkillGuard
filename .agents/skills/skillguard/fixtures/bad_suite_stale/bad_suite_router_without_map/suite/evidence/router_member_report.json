@@ -1,0 +1,41 @@
+{
+  "schema_version": "skillguard.check_report.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member",
+  "target_type": "skill",
+  "status": "pass",
+  "checked_at": "2026-06-22T00:00:00Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "checker_version": "skillguard.local_cli_dispatch.v1",
+    "fixture_version": "bad-suite-stale-fixtures.v1",
+    "notes": "Supporting evidence for the missing suite-map negative case."
+  },
+  "checks": [
+    {
+      "check_id": "router-member-entrypoint",
+      "name": "Router member entrypoint",
+      "required": true,
+      "status": "pass",
+      "evidence_ids": [
+        "router-member-skill-md"
+      ],
+      "summary": "Member skill entrypoint is present so the missing suite map remains isolated."
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "router-member-skill-md",
+      "kind": "file",
+      "fresh": true,
+      "summary": "Fixture member entrypoint.",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member/SKILL.md"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "This report only supports the router_member fixture path."
+  ],
+  "claim_boundary": "This report supports only the bad_suite_router_without_map member reference. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

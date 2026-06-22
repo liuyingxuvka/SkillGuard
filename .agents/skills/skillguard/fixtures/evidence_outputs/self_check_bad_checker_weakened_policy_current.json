@@ -1,0 +1,243 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-22T04:42:42Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "self-check:required-files",
+      "name": "Required self-check files",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked current SkillGuard repository, skill, script, policy, schema, template, and reference files needed for self-check."
+    },
+    {
+      "check_id": "self-check:json-parse",
+      "name": "Policy and schema JSON parse",
+      "required": true,
+      "status": "pass",
+      "summary": "Parsed required local schema, policy, and manifest JSON files with the Python standard library."
+    },
+    {
+      "check_id": "self-check:public-boundary",
+      "name": "README and command boundary",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked local command dispatch entries against README command wording and conservative public-boundary terms."
+    },
+    {
+      "check_id": "self-check:skill-entrypoint",
+      "name": "SkillGuard skill entrypoint",
+      "required": true,
+      "status": "pass",
+      "summary": "Parsed SkillGuard SKILL.md frontmatter and checked required entrypoint sections."
+    },
+    {
+      "check_id": "self-check:policy-artifacts",
+      "name": "Checker-change and self-check policy artifacts",
+      "required": true,
+      "status": "fail",
+      "summary": "Checked checker-change fixture policy and self-check reference documents for required policy surfaces."
+    },
+    {
+      "check_id": "self-check:public-safety",
+      "name": "Public safety and unsafe-claim scans",
+      "required": true,
+      "status": "pass",
+      "summary": "Scanned public SkillGuard files for private paths, runtime ids, credentials, private keys, and declared unsafe overclaim phrases."
+    }
+  ],
+  "claim_boundary": "This self-check covers current local SkillGuard repository files, the SkillGuard skill entrypoint, checker-change policy artifacts, control records, report/evidence conventions, public-boundary wording, and local CLI dispatch. It does not prove full fixture coverage, suite automation, package publication, release readiness, code-contract validation, external publication, or future AI behavior.",
+  "command": "self-check",
+  "command_names": [
+    "commands",
+    "inventory",
+    "init-target",
+    "init-suite",
+    "mark",
+    "check-skill",
+    "check-suite",
+    "check-skill-contract",
+    "check-suite-map",
+    "check-suite-contract",
+    "check-fixture-manifest",
+    "fixture-test",
+    "check-ai-judgment",
+    "check-report",
+    "check-workflow-report",
+    "make-closure",
+    "self-check",
+    "write-report"
+  ],
+  "decision": "fail",
+  "evidence": [
+    {
+      "evidence_id": "self-check-file-inventory",
+      "fresh": true,
+      "kind": "filesystem_check",
+      "source_path": ".agents/skills/skillguard",
+      "summary": "Inspected 21 current SkillGuard files for self-check."
+    },
+    {
+      "evidence_id": "self-check-command-boundary",
+      "fresh": true,
+      "kind": "command_table_check",
+      "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
+      "summary": "Checked 18 local command dispatch entries against README command wording."
+    },
+    {
+      "evidence_id": "self-check-public-safety",
+      "fresh": true,
+      "kind": "text_scan",
+      "source_path": "README.md",
+      "summary": "Scanned 6 public files for public-safety and unsafe-claim patterns."
+    }
+  ],
+  "failures": [
+    "checker-change fixture policy missing term 'negative fixtures'",
+    "checker-change fixture policy missing term 'public-safety'"
+  ],
+  "files_inspected": [
+    {
+      "kind": "markdown",
+      "line_count": 7,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_checker_weakened_policy/README.md",
+      "sha256": "96CD4D287031848E1B27BA6F6B4026EE266B8C9A632BE1307C0B78B61CCEAFB8"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 5,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_checker_weakened_policy/AGENTS.md",
+      "sha256": "19BC31A36B84E4E27B2DFEFFCCA9D8C7A0A9EEA17DBBF8BB78D4767B6F693883"
+    },
+    {
+      "kind": "file",
+      "line_count": 22,
+      "path": "LICENSE",
+      "sha256": "419E691D8CEC1E2E7847AC51CA8B4F4834C809B498E0A21C4A178A77777CE641"
+    },
+    {
+      "kind": "file",
+      "line_count": 1,
+      "path": "VERSION",
+      "sha256": "59854984853104DF5C353E2F681A15FC7924742F9A2E468C29AF248DCE45CE03"
+    },
+    {
+      "kind": "file",
+      "line_count": 31,
+      "path": "pyproject.toml",
+      "sha256": "0D263C4F842B3E8253EBA591FAA28061D6CA40DB10BB0610F3424C90FB0780A3"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 143,
+      "path": ".agents/skills/skillguard/SKILL.md",
+      "sha256": "CBB9515D81896EA85F60EA64C1F4E545C971181DA6A6A3D7A408879DFF6E9A21"
+    },
+    {
+      "kind": "file",
+      "line_count": 36,
+      "path": ".agents/skills/skillguard/scripts/skillguard.py",
+      "sha256": "179E0D6B83079EE87055D0F5F42183894B881D67C0EB0E8928370CFD2F090658"
+    },
+    {
+      "kind": "file",
+      "line_count": 3073,
+      "path": ".agents/skills/skillguard/scripts/checker_engine.py",
+      "sha256": "0FDA1B15E550B873857A05DF3FE317746C8DDC5A88BFC24BB577AFE30B07BC89"
+    },
+    {
+      "kind": "file",
+      "line_count": 89,
+      "path": ".agents/skills/skillguard/scripts/skillguard_utils.py",
+      "sha256": "B98DA091DF56E48169AA64B45811313FF3626A4B47248688518B589E7B478B27"
+    },
+    {
+      "kind": "json",
+      "line_count": 131,
+      "path": ".agents/skills/skillguard/assets/schemas/skillguard_fixture_manifest.schema.json",
+      "sha256": "E955E3D744B2035699268A6E391A88915BAF57D7CF825228C14CEF36F837F066"
+    },
+    {
+      "kind": "json",
+      "line_count": 195,
+      "path": ".agents/skills/skillguard/assets/schemas/skillguard_check_report.schema.json",
+      "sha256": "4D1ADBEAED946F0608E6ED5EAF886DBA184976B74AD3276C007EAB205DA7ED19"
+    },
+    {
+      "kind": "json",
+      "line_count": 165,
+      "path": ".agents/skills/skillguard/assets/schemas/skillguard_workflow_report.schema.json",
+      "sha256": "BECBA988C808954D9C3485C9A7575FA85150900F3129B715A03B91C15F0590A5"
+    },
+    {
+      "kind": "json",
+      "line_count": 56,
+      "path": ".agents/skills/skillguard/assets/templates/skillguard_checker_change.template.json",
+      "sha256": "75943C244E7F1C926A48E4ED703C6A4DB21288B3401735279D910A1373677C79"
+    },
+    {
+      "kind": "json",
+      "line_count": 44,
+      "path": ".agents/skills/skillguard/assets/templates/skillguard_fixture_manifest.template.json",
+      "sha256": "CCE07D346CF6A87E424020300FB772B7A872F849900DE7B36D7780D44E17D0B1"
+    },
+    {
+      "kind": "json",
+      "line_count": 50,
+      "path": ".agents/skills/skillguard/assets/templates/skillguard_closure.template.json",
+      "sha256": "7D1A8042B5C9D3CA7ACC43B6B7166122ECC5C1D4B75C7CE051CD5EBA9007D9B3"
+    },
+    {
+      "kind": "json",
+      "line_count": 112,
+      "path": ".agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json",
+      "sha256": "D90226C11D697428509C28BA28383CB611043299F090ABF2F78051B377709543"
+    },
+    {
+      "kind": "json",
+      "line_count": 80,
+      "path": ".agents/skills/skillguard/.skillguard/skillguard_closure_policy.json",
+      "sha256": "E03B35BEFC8FBB003DA35D82DEC5A35D890928531CCE0E6A9268EBA72BFE6B8D"
+    },
+    {
+      "kind": "json",
+      "line_count": 120,
+      "path": ".agents/skills/skillguard/.skillguard/skillguard_manifest.json",
+      "sha256": "50C3695D914C3FCD2B7B4647FE96CF1E008C8F36CBA55C8B7E33FC6BC3CF6553"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 5,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_checker_weakened_policy/references/06-evidence-freshness-and-closure-boundaries.md",
+      "sha256": "1283EFD2540FA7326712E22EF49C7D87CC893321794812B23F74A22C55291FD1"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 7,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_checker_weakened_policy/references/08-checker-change-fixture-policy.md",
+      "sha256": "2FA691614E5C96EDBAF3051451CF6378609A1ECF1C5D164542B918C6C108B08F"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 5,
+      "path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_checker_weakened_policy/references/09-skillguard-self-check.md",
+      "sha256": "66BD2EF148C52F4C7CCCD6B81D202E3CEC91E0E197693F2C1DF0722B28D9CAD7"
+    }
+  ],
+  "public_safety_findings": [],
+  "residual_risk": [
+    "This self-check is static and local; it does not replace separate fixture coverage, package installation, release, or code-contract validation evidence.",
+    "Semantic adequacy of policy wording may still need human review for release decisions."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [
+    {
+      "check_id": "persistent-fixture-corpus",
+      "reason": "No persistent fixture corpus is required for this self-check command; fixture-test accepts explicit supplied fixture cases.",
+      "required": false,
+      "status_impact": "Not a pass claim for broad fixture coverage."
+    }
+  ],
+  "target_path": ".agents/skills/skillguard",
+  "unsafe_claim_findings": []
+}

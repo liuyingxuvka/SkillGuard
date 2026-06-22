@@ -1,0 +1,120 @@
+{
+  "schema_version": "skillguard.self_manifest.v1",
+  "target_path": ".agents/skills/skillguard/.skillguard",
+  "target_type": "self_control_manifest",
+  "status": "initial_manifest_record",
+  "manifest_version": "0.1.0",
+  "control_root": ".skillguard",
+  "directories": [
+    {
+      "path": "evidence",
+      "role": "Stores evidence manifests and evidence indexes."
+    },
+    {
+      "path": "ai_judgments",
+      "role": "Stores bounded AI judgment records."
+    },
+    {
+      "path": "reports",
+      "role": "Stores self-check and workflow reports."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "skillguard_profile.json",
+      "role": "SkillGuard self-profile and applicability record.",
+      "required": true,
+      "target_type": "skillguard_skill"
+    },
+    {
+      "path": "skillguard_skill_contract.json",
+      "role": "Self-contract for activation, workflow, hard gates, and outputs.",
+      "required": true,
+      "target_type": "skillguard_skill_contract"
+    },
+    {
+      "path": "skillguard_evidence_rules.json",
+      "role": "Evidence freshness, blocker, skipped-check, AI judgment, and public-safety rules.",
+      "required": true,
+      "target_type": "evidence_rules"
+    },
+    {
+      "path": "skillguard_closure_policy.json",
+      "role": "Closure states, hard gates, and claim-boundary requirements.",
+      "required": true,
+      "target_type": "closure_policy"
+    },
+    {
+      "path": "skillguard_manifest.json",
+      "role": "Index of self-maintenance control files and directories.",
+      "required": true,
+      "target_type": "self_control_manifest"
+    },
+    {
+      "path": "skillguard_progress_ledger.jsonl",
+      "role": "Append-only JSON Lines progress ledger for self-maintenance events.",
+      "required": true,
+      "target_type": "progress_ledger"
+    },
+    {
+      "path": "evidence/initial_evidence_manifest.json",
+      "role": "Initial evidence manifest for control-record creation.",
+      "required": true,
+      "target_type": "evidence_manifest"
+    },
+    {
+      "path": "ai_judgments/initial_ai_judgment.json",
+      "role": "Initial bounded AI judgment record.",
+      "required": true,
+      "target_type": "ai_judgment"
+    },
+    {
+      "path": "reports/initial_self_check_report.json",
+      "role": "Initial self-check report for the control root.",
+      "required": true,
+      "target_type": "self_check_report"
+    },
+    {
+      "path": "reports/initial_workflow_report.json",
+      "role": "Initial workflow report for self-maintenance setup.",
+      "required": true,
+      "target_type": "workflow_report"
+    }
+  ],
+  "path_policy": {
+    "path_style": "relative_to_control_root",
+    "absolute_paths_allowed": false,
+    "external_service_paths_allowed": false
+  },
+  "compatibility": {
+    "checker_version": "not_assigned",
+    "fixture_version": "not_assigned",
+    "external_dependencies": []
+  },
+  "checks": [
+    {
+      "check_id": "manifest-indexes-required-artifacts",
+      "status": "initial_recorded",
+      "evidence": [
+        "initial-evidence-manifest"
+      ],
+      "failures": [],
+      "blockers": [],
+      "skipped_checks": []
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "initial-evidence-manifest",
+      "path": "evidence/initial_evidence_manifest.json",
+      "summary": "Initial self-control manifest evidence."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "The manifest records initial intended roles and must be refreshed if files are moved, renamed, or replaced."
+  ],
+  "claim_boundary": "This manifest indexes the initial self-control records under the SkillGuard control root and does not index future generated artifacts. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

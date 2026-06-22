@@ -1,0 +1,62 @@
+{
+  "schema_version": "skillguard.initial_ai_judgment.v1",
+  "target_path": ".agents/skills/skillguard/.skillguard",
+  "target_type": "ai_judgment",
+  "status": "initial_judgment_record",
+  "decision": "bounded_support_only",
+  "input_evidence": [
+    {
+      "evidence_id": "initial-evidence-manifest",
+      "path": "evidence/initial_evidence_manifest.json",
+      "summary": "Initial self-control evidence manifest."
+    },
+    {
+      "evidence_id": "self-contract",
+      "path": "skillguard_skill_contract.json",
+      "summary": "Initial self-contract for SkillGuard."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "initial-structure-present",
+      "severity": "informational",
+      "claim": "The self-control file set is structured to separate profile, contract, evidence rules, closure policy, manifest, progress, AI judgment, evidence, and reports.",
+      "supporting_evidence": [
+        "initial-evidence-manifest"
+      ],
+      "limits": [
+        "This is a structural judgment and does not prove future checker behavior."
+      ]
+    }
+  ],
+  "confidence": {
+    "level": "medium",
+    "rationale": "The judgment is based on direct local record structure, but future automated checks are not part of this initial file set."
+  },
+  "uncertainty": [
+    {
+      "question": "Which checker and fixture versions will be assigned later?",
+      "impact": "Compatibility fields may need refresh.",
+      "resolution_path": "Create checker and fixture manifests when those assets exist."
+    }
+  ],
+  "human_review": {
+    "required": true,
+    "reason": "AI judgment is only supporting evidence and cannot approve broad claims by itself."
+  },
+  "checks": [],
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "independent-human-review",
+      "reason": "No human review is performed by this initial control-record creation.",
+      "impact": "The judgment remains advisory."
+    }
+  ],
+  "residual_risk": [
+    "Advisory judgments may miss field drift until independent review or checker support is added."
+  ],
+  "claim_boundary": "This AI judgment is an initial bounded structure review and does not assert correctness or approval beyond the inspected local evidence. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

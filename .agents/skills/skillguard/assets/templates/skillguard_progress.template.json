@@ -1,0 +1,45 @@
+{
+  "template_version": "skillguard.progress.template.v1",
+  "schema_version": "skillguard.progress.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "{{target_type}}",
+  "status": "in_progress",
+  "progress_entries": [
+    {
+      "step_id": "{{step_id}}",
+      "state": "pending",
+      "owner": "{{owner}}",
+      "started_at": "{{iso_utc_time}}",
+      "finished_at": "{{iso_utc_time_or_empty}}",
+      "evidence": [
+        "{{evidence_id}}"
+      ],
+      "failures": [],
+      "blockers": [],
+      "skipped_checks": []
+    }
+  ],
+  "current_decision": {
+    "decision": "continue",
+    "reason": "{{decision_reason}}",
+    "confidence": "{{confidence_level}}"
+  },
+  "checks": [
+    {
+      "check_id": "{{check_id}}",
+      "status": "not_started",
+      "evidence": [],
+      "failures": [],
+      "blockers": [],
+      "skipped_checks": []
+    }
+  ],
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

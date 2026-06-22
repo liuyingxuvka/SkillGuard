@@ -1,0 +1,34 @@
+{
+  "schema_version": "skillguard.closure.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/good_suite/suite",
+  "target_type": "suite",
+  "status": "closed_with_evidence",
+  "closure_decision": "closed_with_evidence",
+  "decision_reason": "The positive suite fixture references one current member path and direct member evidence file.",
+  "closure_scope": "good_suite positive fixture only",
+  "checks": [
+    {
+      "check_id": "good-suite-direct-child-evidence",
+      "name": "Direct child evidence",
+      "required": true,
+      "status": "pass",
+      "summary": "Closure cites direct suite evidence files rather than runtime ids, stale history, PM text, or progress-ledger-only proof."
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "good-suite-member-report",
+      "kind": "json",
+      "fresh": true,
+      "summary": "Direct member evidence report.",
+      "source_path": "evidence/good_suite_member_report.json"
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "Closure is bounded to one positive suite member and the current suite fixture files."
+  ],
+  "claim_boundary": "This closure record covers only the good_suite positive fixture and direct member evidence. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

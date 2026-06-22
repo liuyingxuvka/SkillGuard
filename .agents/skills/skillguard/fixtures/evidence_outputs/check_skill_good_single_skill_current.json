@@ -1,0 +1,585 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-22T03:44:12Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "check-skill:target-directory",
+      "name": "Target directory",
+      "required": true,
+      "status": "pass",
+      "summary": "Resolved target as .agents/skills/skillguard/fixtures/good_single_skill."
+    },
+    {
+      "check_id": "check-skill:entrypoint-read",
+      "name": "SKILL.md readability",
+      "required": true,
+      "status": "pass",
+      "summary": "Read the target skill entrypoint without rewriting it."
+    },
+    {
+      "check_id": "check-skill:frontmatter",
+      "name": "SKILL.md frontmatter",
+      "required": true,
+      "status": "pass",
+      "summary": "Parsed scalar frontmatter and checked name/description fields."
+    },
+    {
+      "check_id": "check-skill:required-sections",
+      "name": "Required SKILL.md sections",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked required operational body sections and output-field terms."
+    },
+    {
+      "check_id": "check-skill:public-safety",
+      "name": "SKILL.md public-safety scan",
+      "required": true,
+      "status": "pass",
+      "summary": "Scanned SKILL.md for private local paths, runtime ids, and credential-like assignments."
+    },
+    {
+      "check_id": "check-skill:unsafe-claims",
+      "name": "SKILL.md unsafe claim scan",
+      "required": true,
+      "status": "pass",
+      "summary": "Scanned SKILL.md for unsupported broad-claim phrases and allowed only conservative no-claim contexts."
+    },
+    {
+      "check_id": "check-skill:declared-references",
+      "name": "Declared reference resolution",
+      "required": true,
+      "status": "pass",
+      "summary": "Resolved SKILL.md declared references and any extra --reference values with explicit repository/target boundaries."
+    },
+    {
+      "check_id": "check-skill:control-root",
+      "name": "Target .skillguard root",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked that the target .skillguard control root is present."
+    },
+    {
+      "check_id": "check-skill:control-json-records",
+      "name": "Control JSON records",
+      "required": true,
+      "status": "pass",
+      "summary": "Parsed required root records and present ai_judgments/evidence/reports records, then checked common fields and references."
+    },
+    {
+      "check_id": "check-skill:progress-ledger",
+      "name": "Progress ledger JSONL",
+      "required": true,
+      "status": "pass",
+      "summary": "Parsed progress ledger line by line and reported ledger entries as historical progress, not current closure evidence."
+    }
+  ],
+  "claim_boundary": "This static single-skill check covers SKILL.md metadata and sections, declared local references, target .skillguard control records, progress JSONL parsing, AI-judgment structure, evidence references, and conservative no-claim wording from files inspected during this invocation. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "check-skill",
+  "control_records": [
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_profile.json",
+      "schema_version": "skillguard.fixture_profile.v1",
+      "status": "checked",
+      "target_type": "skill"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_skill_contract.json",
+      "schema_version": "skillguard.fixture_skill_contract.v1",
+      "status": "checked",
+      "target_type": "skill_contract"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_evidence_rules.json",
+      "schema_version": "skillguard.fixture_evidence_rules.v1",
+      "status": "checked",
+      "target_type": "evidence_rules"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_closure_policy.json",
+      "schema_version": "skillguard.fixture_closure_policy.v1",
+      "status": "checked",
+      "target_type": "closure_policy"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "schema_version": "skillguard.fixture_manifest_index.v1",
+      "status": "checked",
+      "target_type": "control_manifest"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/ai_judgments/good_single_skill_ai_judgment.json",
+      "schema_version": "skillguard.fixture_ai_judgment.v1",
+      "status": "checked",
+      "target_type": "ai_judgment"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "schema_version": "skillguard.fixture_evidence_manifest.v1",
+      "status": "checked",
+      "target_type": "evidence_manifest"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "schema_version": "skillguard.fixture_check_report.v1",
+      "status": "checked",
+      "target_type": "skill"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "schema_version": "skillguard.fixture_closure.v1",
+      "status": "closed_with_evidence",
+      "target_type": "skill"
+    }
+  ],
+  "control_reference_checks": [
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_profile.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.control_root",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_profile.json",
+      "reference": ".skillguard",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_profile.json",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_skill_contract.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_skill_contract.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_evidence_rules.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_evidence_rules.json",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_closure_policy.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_closure_policy.json",
+      "reference": ".skillguard/reports/good_single_skill_closure.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.artifacts[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "reference": "skillguard_profile.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_profile.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.artifacts[1].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "reference": "skillguard_skill_contract.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_skill_contract.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.artifacts[2].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "reference": "skillguard_evidence_rules.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_evidence_rules.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.artifacts[3].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "reference": "skillguard_closure_policy.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_closure_policy.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.artifacts[4].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "reference": "reports/good_single_skill_check_report.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.artifacts[5].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "reference": "reports/good_single_skill_closure.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/ai_judgments/good_single_skill_ai_judgment.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.input_evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/ai_judgments/good_single_skill_ai_judgment.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.input_evidence[1].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/ai_judgments/good_single_skill_ai_judgment.json",
+      "reference": ".skillguard/reports/good_single_skill_closure.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[1].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "reference": ".skillguard/reports/good_single_skill_check_report.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[2].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "reference": ".skillguard/reports/good_single_skill_closure.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].source_path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[1].source_path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].source_path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "reference": ".skillguard/reports/good_single_skill_check_report.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[1].source_path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_progress_ledger.jsonl line 1",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_progress_ledger.jsonl line 1",
+      "reference": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "status": "pass"
+    }
+  ],
+  "current_closure_evidence": {
+    "summary": "Ledger entries are parsed for structure and context only; this command bases its decision on fresh inspection in this invocation.",
+    "uses_progress_ledger_as_current_closure_evidence": false
+  },
+  "decision": "pass",
+  "declared_references": [
+    {
+      "boundary": "repository",
+      "exists": true,
+      "kind": "file",
+      "reference": "SKILL.md",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "boundary": "repository",
+      "exists": true,
+      "kind": "directory",
+      "reference": ".skillguard",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "status": "pass"
+    },
+    {
+      "boundary": "repository",
+      "exists": true,
+      "kind": "file",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "boundary": "repository",
+      "exists": true,
+      "kind": "file",
+      "reference": ".skillguard/reports/good_single_skill_check_report.json",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "status": "pass"
+    },
+    {
+      "boundary": "repository",
+      "exists": true,
+      "kind": "file",
+      "reference": ".skillguard/reports/good_single_skill_closure.json",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "status": "pass"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "skill-entrypoint-static-read",
+      "fresh": true,
+      "kind": "file_inspection",
+      "source_path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "summary": "Read SKILL.md for .agents/skills/skillguard/fixtures/good_single_skill when present and checked frontmatter, sections, references, and public-safety patterns."
+    },
+    {
+      "evidence_id": "control-record-parse",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard",
+      "summary": "Parsed 9 target .skillguard JSON records with Python json helpers."
+    },
+    {
+      "evidence_id": "progress-ledger-jsonl-parse",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_progress_ledger.jsonl",
+      "summary": "Parsed 1 progress ledger entries line by line without treating them as current closure evidence."
+    }
+  ],
+  "failures": [],
+  "files_inspected": [
+    {
+      "kind": "markdown",
+      "line_count": 64,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "sha256": "CCF67EA3096A83C1D6943BD0C313BB48BAF00C8AF069504F5F460EB2CB418B01"
+    },
+    {
+      "kind": "json",
+      "line_count": 41,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_profile.json",
+      "sha256": "C4FEA483C46B1288495BE136C6E4C293736501E5E3472F74B673B762F18D9F9D"
+    },
+    {
+      "kind": "json",
+      "line_count": 51,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_skill_contract.json",
+      "sha256": "246679DF64C0905D8A9BBD0A925D5D89F8122C4B673E5D81A9E7E06776544EF6"
+    },
+    {
+      "kind": "json",
+      "line_count": 32,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_evidence_rules.json",
+      "sha256": "DEFE620B385CAEF2808E587CB8840EB64BEC2331F324C327DE3C90B8504D90E2"
+    },
+    {
+      "kind": "json",
+      "line_count": 39,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_closure_policy.json",
+      "sha256": "4238A4A96CC2E462889A4E71C5558A9AC5C5ED25877716D9EAA82A58F885C54D"
+    },
+    {
+      "kind": "json",
+      "line_count": 53,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_manifest.json",
+      "sha256": "5264393139946711EBA44DDD6186F29249524DC816D97D77808C7603E5A186D1"
+    },
+    {
+      "kind": "json",
+      "line_count": 57,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/ai_judgments/good_single_skill_ai_judgment.json",
+      "sha256": "D44FFA939DBA76B41B2C93A6E78C2BE99B1383E87780382FA2DDBEBEE178C24D"
+    },
+    {
+      "kind": "json",
+      "line_count": 36,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/evidence/current_evidence_manifest.json",
+      "sha256": "85D7F26D1E17CC5C52B7E9A705CBA7041CE578641BF7926F4C4BD6C6609F62FE"
+    },
+    {
+      "kind": "json",
+      "line_count": 39,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_check_report.json",
+      "sha256": "EBDB2CA1D5A702452AC5AEBD4AF522B5EDD83C7825FE4D573AFEEC287E4D1E72"
+    },
+    {
+      "kind": "json",
+      "line_count": 41,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/reports/good_single_skill_closure.json",
+      "sha256": "0A431B9AD8B4C8192C9D43F2475BDCAA2A56663C8E05697A7DB8C4E2BE2E4DFD"
+    },
+    {
+      "kind": "jsonl",
+      "line_count": 1,
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/.skillguard/skillguard_progress_ledger.jsonl",
+      "sha256": "95F82B5028E4A2BB06EB1B74D9E3392587545A620E2E3BBB0243CB1A37FFA0DA"
+    }
+  ],
+  "progress_ledger_entries": [
+    {
+      "event_id": "good-single-skill-fixture-created",
+      "event_time": "2026-06-22T00:00:00Z",
+      "line": 1,
+      "status": "checked"
+    }
+  ],
+  "residual_risk": [
+    "This command is a static local check; semantic adequacy still needs reviewer judgment where the target contract requires it.",
+    "Progress ledger entries are parsed and reported as historical records only, not as current closure evidence for this invocation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard/fixtures/good_single_skill",
+  "unsafe_claim_findings": []
+}

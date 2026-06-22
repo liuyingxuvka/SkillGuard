@@ -1,0 +1,6 @@
+{
+  "fixture_id": "good_suite_contract",
+  "target_command": "check-suite-contract",
+  "expected_decision": "pass",
+  "input_path": "../good_suite/suite/suite-contract.json"
+}

@@ -1,0 +1,36 @@
+{
+  "schema_version": "skillguard.fixture_evidence_manifest.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/good_single_skill",
+  "target_type": "evidence_manifest",
+  "status": "checked",
+  "evidence": [
+    {
+      "evidence_id": "good-single-skill-entrypoint",
+      "path": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
+      "summary": "Single-skill fixture entrypoint with required sections."
+    },
+    {
+      "evidence_id": "good-single-skill-report-summary",
+      "path": ".skillguard/reports/good_single_skill_check_report.json",
+      "summary": "Fixture-local report summary record."
+    },
+    {
+      "evidence_id": "good-single-skill-closure",
+      "path": ".skillguard/reports/good_single_skill_closure.json",
+      "summary": "Fixture-local bounded closure record."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [
+    {
+      "check_id": "generated-output-hash-embedding",
+      "reason": "Current command-output hashes are gathered during validation rather than embedded in this fixture file.",
+      "impact": "Reviewer should use current command output and final file hashes for freshness."
+    }
+  ],
+  "residual_risk": [
+    "Evidence is current only after rerunning the local fixture/check commands."
+  ],
+  "claim_boundary": "This evidence manifest lists direct good_single_skill fixture files only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

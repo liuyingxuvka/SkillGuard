@@ -1,0 +1,264 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-22T04:42:44Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "fixture-test:manifest",
+      "name": "Fixture manifest",
+      "required": true,
+      "status": "pass",
+      "summary": "Loaded the fixture manifest when supplied, checked its schema subset, and kept its claim boundary conservative."
+    },
+    {
+      "check_id": "fixture-test:cases",
+      "name": "Fixture cases",
+      "required": true,
+      "status": "pass",
+      "summary": "Executed explicit fixture cases and compared observed pass/fail/block decisions with expected decisions."
+    }
+  ],
+  "claim_boundary": "This fixture-test result covers only the explicit fixture manifest and fixture case files loaded during this invocation. It does not prove broad fixture coverage, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "fixture-test",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "fixture-manifest-parse",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_static/fixture-manifest.json",
+      "summary": "Inspected 1 manifest JSON file(s) and executed 3 fixture case(s)."
+    },
+    {
+      "evidence_id": "fixture-case-results",
+      "fresh": true,
+      "kind": "command_output",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_static",
+      "summary": "Observed fixture result classes: {'expected_fail': 3}."
+    }
+  ],
+  "failures": [],
+  "files_inspected": [
+    {
+      "kind": "json",
+      "line_count": 62,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/fixture-manifest.json",
+      "sha256": "C3B87DDCEC074CEB68F98A5CDE17709727C5D9071B5BD19ADD6FCC16D2867D6A"
+    }
+  ],
+  "fixture_class_counts": {
+    "expected_fail": 3
+  },
+  "fixture_results": [
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--target",
+        ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_static_missing_description",
+      "fixture_path": ".agents/skills/skillguard/fixtures/bad_static/cases/missing_description.fixture.json",
+      "line_count": 6,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-skill:target-directory",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:entrypoint-read",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:frontmatter",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-skill:required-sections",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:public-safety",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:unsafe-claims",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:declared-references",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:control-root",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:control-json-records",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:progress-ledger",
+          "status": "pass"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 1,
+      "observed_failures": [
+        "SKILL.md frontmatter missing non-empty 'description'"
+      ],
+      "problems": [
+        "SKILL.md frontmatter missing non-empty 'description'"
+      ],
+      "sha256": "DCD0488A0F05C84CBD07F68B6702F38C6E0002513F9D8EE48DA0E829D7EADF10",
+      "target_command": "check-skill",
+      "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description"
+    },
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--target",
+        ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_static_missing_reference",
+      "fixture_path": ".agents/skills/skillguard/fixtures/bad_static/cases/missing_reference.fixture.json",
+      "line_count": 6,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-skill:target-directory",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:entrypoint-read",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:frontmatter",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:required-sections",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:public-safety",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:unsafe-claims",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:declared-references",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-skill:control-root",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:control-json-records",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:progress-ledger",
+          "status": "pass"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 1,
+      "observed_failures": [
+        "missing_static_reference.json: referenced path is missing"
+      ],
+      "problems": [
+        "missing_static_reference.json: referenced path is missing"
+      ],
+      "sha256": "C61126A496F59F6C78537E9C798C0FC1E172A0F6389EBB853E67CD632F3BD45B",
+      "target_command": "check-skill",
+      "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference"
+    },
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--target",
+        ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_static_unsafe_broad_claim",
+      "fixture_path": ".agents/skills/skillguard/fixtures/bad_static/cases/unsafe_broad_claim.fixture.json",
+      "line_count": 6,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-skill:target-directory",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:entrypoint-read",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:frontmatter",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:required-sections",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:public-safety",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:unsafe-claims",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-skill:declared-references",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:control-root",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:control-json-records",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-skill:progress-ledger",
+          "status": "pass"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 1,
+      "observed_failures": [
+        ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim/SKILL.md line 14: unsafe claim phrase fixture-coverage"
+      ],
+      "problems": [
+        ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim/SKILL.md line 14: unsafe claim phrase fixture-coverage"
+      ],
+      "sha256": "63248A35892FB4CBF67F610645FC784361A4B4D257CB7F589011F35E52AAF85E",
+      "target_command": "check-skill",
+      "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim"
+    }
+  ],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/fixture-manifest.json"
+}

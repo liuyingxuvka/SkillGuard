@@ -1,0 +1,431 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-22T03:43:34Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "check-skill:target-directory",
+      "name": "Target directory",
+      "required": true,
+      "status": "pass",
+      "summary": "Resolved target as .agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description."
+    },
+    {
+      "check_id": "check-skill:entrypoint-read",
+      "name": "SKILL.md readability",
+      "required": true,
+      "status": "pass",
+      "summary": "Read the target skill entrypoint without rewriting it."
+    },
+    {
+      "check_id": "check-skill:frontmatter",
+      "name": "SKILL.md frontmatter",
+      "required": true,
+      "status": "fail",
+      "summary": "Parsed scalar frontmatter and checked name/description fields."
+    },
+    {
+      "check_id": "check-skill:required-sections",
+      "name": "Required SKILL.md sections",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked required operational body sections and output-field terms."
+    },
+    {
+      "check_id": "check-skill:public-safety",
+      "name": "SKILL.md public-safety scan",
+      "required": true,
+      "status": "pass",
+      "summary": "Scanned SKILL.md for private local paths, runtime ids, and credential-like assignments."
+    },
+    {
+      "check_id": "check-skill:unsafe-claims",
+      "name": "SKILL.md unsafe claim scan",
+      "required": true,
+      "status": "pass",
+      "summary": "Scanned SKILL.md for unsupported broad-claim phrases and allowed only conservative no-claim contexts."
+    },
+    {
+      "check_id": "check-skill:declared-references",
+      "name": "Declared reference resolution",
+      "required": true,
+      "status": "pass",
+      "summary": "Resolved SKILL.md declared references and any extra --reference values with explicit repository/target boundaries."
+    },
+    {
+      "check_id": "check-skill:control-root",
+      "name": "Target .skillguard root",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked that the target .skillguard control root is present."
+    },
+    {
+      "check_id": "check-skill:control-json-records",
+      "name": "Control JSON records",
+      "required": true,
+      "status": "pass",
+      "summary": "Parsed required root records and present ai_judgments/evidence/reports records, then checked common fields and references."
+    },
+    {
+      "check_id": "check-skill:progress-ledger",
+      "name": "Progress ledger JSONL",
+      "required": true,
+      "status": "pass",
+      "summary": "Parsed progress ledger line by line and reported ledger entries as historical progress, not current closure evidence."
+    }
+  ],
+  "claim_boundary": "This static single-skill check covers SKILL.md metadata and sections, declared local references, target .skillguard control records, progress JSONL parsing, AI-judgment structure, evidence references, and conservative no-claim wording from files inspected during this invocation. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "check-skill",
+  "control_records": [
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_profile.json",
+      "schema_version": "skillguard.bad_static_profile.v1",
+      "status": "checked",
+      "target_type": "skill"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_skill_contract.json",
+      "schema_version": "skillguard.bad_static_contract.v1",
+      "status": "checked",
+      "target_type": "skill_contract"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_evidence_rules.json",
+      "schema_version": "skillguard.bad_static_evidence_rules.v1",
+      "status": "checked",
+      "target_type": "evidence_rules"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_closure_policy.json",
+      "schema_version": "skillguard.bad_static_closure_policy.v1",
+      "status": "checked",
+      "target_type": "closure_policy"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_manifest.json",
+      "schema_version": "skillguard.bad_static_manifest_index.v1",
+      "status": "checked",
+      "target_type": "control_manifest"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/ai_judgments/current_ai_judgment.json",
+      "schema_version": "skillguard.bad_static_ai_judgment.v1",
+      "status": "checked",
+      "target_type": "ai_judgment"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/evidence/current_evidence_manifest.json",
+      "schema_version": "skillguard.bad_static_evidence_manifest.v1",
+      "status": "checked",
+      "target_type": "evidence_manifest"
+    },
+    {
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/reports/current_check_report.json",
+      "schema_version": "skillguard.bad_static_report.v1",
+      "status": "checked",
+      "target_type": "skill"
+    }
+  ],
+  "control_reference_checks": [
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_profile.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_profile.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_skill_contract.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_skill_contract.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_evidence_rules.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_evidence_rules.json",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_closure_policy.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_closure_policy.json",
+      "reference": ".skillguard/reports/current_check_report.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/reports/current_check_report.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_manifest.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_manifest.json",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/ai_judgments/current_ai_judgment.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.input_evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/ai_judgments/current_ai_judgment.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/evidence/current_evidence_manifest.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/evidence/current_evidence_manifest.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/reports/current_check_report.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/reports/current_check_report.json",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.target_path",
+      "kind": "directory",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_progress_ledger.jsonl line 1",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+      "status": "pass"
+    },
+    {
+      "exists": true,
+      "field": "$.evidence[0].path",
+      "kind": "file",
+      "record": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_progress_ledger.jsonl line 1",
+      "reference": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "status": "pass"
+    }
+  ],
+  "current_closure_evidence": {
+    "summary": "Ledger entries are parsed for structure and context only; this command bases its decision on fresh inspection in this invocation.",
+    "uses_progress_ledger_as_current_closure_evidence": false
+  },
+  "decision": "fail",
+  "declared_references": [
+    {
+      "boundary": "repository",
+      "exists": true,
+      "kind": "file",
+      "reference": ".skillguard/skillguard_manifest.json",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_manifest.json",
+      "status": "pass"
+    },
+    {
+      "boundary": "repository",
+      "exists": true,
+      "kind": "file",
+      "reference": ".skillguard/evidence/current_evidence_manifest.json",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/evidence/current_evidence_manifest.json",
+      "status": "pass"
+    },
+    {
+      "boundary": "repository",
+      "exists": true,
+      "kind": "file",
+      "reference": ".skillguard/reports/current_check_report.json",
+      "required": true,
+      "resolved_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/reports/current_check_report.json",
+      "status": "pass"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "skill-entrypoint-static-read",
+      "fresh": true,
+      "kind": "file_inspection",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "summary": "Read SKILL.md for .agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description when present and checked frontmatter, sections, references, and public-safety patterns."
+    },
+    {
+      "evidence_id": "control-record-parse",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+      "summary": "Parsed 8 target .skillguard JSON records with Python json helpers."
+    },
+    {
+      "evidence_id": "progress-ledger-jsonl-parse",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_progress_ledger.jsonl",
+      "summary": "Parsed 1 progress ledger entries line by line without treating them as current closure evidence."
+    }
+  ],
+  "failures": [
+    "SKILL.md frontmatter missing non-empty 'description'"
+  ],
+  "files_inspected": [
+    {
+      "kind": "markdown",
+      "line_count": 60,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
+      "sha256": "EA2B7E4418A761E5B3D5E8F5871218EDCA8DDC81AB3681FD2A42E5E6378289CD"
+    },
+    {
+      "kind": "json",
+      "line_count": 26,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_profile.json",
+      "sha256": "B4574FCAEA372AEEF1604A886989B70A7FB0DE28C71CDC91EBD13017FA68FD6A"
+    },
+    {
+      "kind": "json",
+      "line_count": 26,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_skill_contract.json",
+      "sha256": "C57698D50104C0EB498638EF91735E8CD76FC53492D8F4BB40A3DB64D4781712"
+    },
+    {
+      "kind": "json",
+      "line_count": 20,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_evidence_rules.json",
+      "sha256": "ED7B3C56402589BE7D8DB8BC9B05807270CC1522F63C35E25940EFE8B70A2897"
+    },
+    {
+      "kind": "json",
+      "line_count": 33,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_closure_policy.json",
+      "sha256": "989F0A7F8C7064693C7407791508D765CB464E1C6BC7C9FBB5FE1F31B204AD10"
+    },
+    {
+      "kind": "json",
+      "line_count": 20,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_manifest.json",
+      "sha256": "7128C0D449D8299080FC70CC17751A4DFE8D0954D65FE183EBC8996183E27899"
+    },
+    {
+      "kind": "json",
+      "line_count": 37,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/ai_judgments/current_ai_judgment.json",
+      "sha256": "9FEAA12E13C0CA6C13CEA22959B5FB88E7EDA6A77B35C7E243D1A1CDB5F06C90"
+    },
+    {
+      "kind": "json",
+      "line_count": 20,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/evidence/current_evidence_manifest.json",
+      "sha256": "7C94EE0C3C99FF0047256F3781369777728032A2962CB6295FFEDD3D23568639"
+    },
+    {
+      "kind": "json",
+      "line_count": 20,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/reports/current_check_report.json",
+      "sha256": "B324123E6F513AF3726004A7A8F0CEC144951606E076A80DB05007EB8727B0C0"
+    },
+    {
+      "kind": "jsonl",
+      "line_count": 1,
+      "path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard/skillguard_progress_ledger.jsonl",
+      "sha256": "525B1F73D6423E429B1BE19BC87000B9B10612DD20B35D49A286DAE3D43C9E99"
+    }
+  ],
+  "progress_ledger_entries": [
+    {
+      "event_id": "bad-static-missing-description-fixture-created",
+      "event_time": "2026-06-22T00:00:00Z",
+      "line": 1,
+      "status": "checked"
+    }
+  ],
+  "residual_risk": [
+    "This command is a static local check; semantic adequacy still needs reviewer judgment where the target contract requires it.",
+    "Progress ledger entries are parsed and reported as historical records only, not as current closure evidence for this invocation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
+  "unsafe_claim_findings": []
+}

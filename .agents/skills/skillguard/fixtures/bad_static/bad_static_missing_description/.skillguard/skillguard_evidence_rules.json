@@ -1,0 +1,20 @@
+{
+  "schema_version": "skillguard.bad_static_evidence_rules.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/.skillguard",
+  "target_type": "evidence_rules",
+  "status": "checked",
+  "evidence": [
+    {
+      "evidence_id": "bad-static-evidence",
+      "path": ".skillguard/evidence/current_evidence_manifest.json",
+      "summary": "Fixture-local evidence manifest."
+    }
+  ],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "Evidence is current only after rerunning fixture-test or check-skill."
+  ],
+  "claim_boundary": "These evidence rules cover only the missing-description bad static fixture. They do not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

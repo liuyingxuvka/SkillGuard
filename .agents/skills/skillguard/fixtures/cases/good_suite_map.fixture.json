@@ -1,0 +1,6 @@
+{
+  "fixture_id": "good_suite_map",
+  "target_command": "check-suite-map",
+  "expected_decision": "pass",
+  "input_path": "../good_suite/suite/suite-map.json"
+}

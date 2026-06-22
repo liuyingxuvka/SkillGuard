@@ -1,0 +1,51 @@
+{
+  "template_version": "skillguard.ai_judgment.template.v1",
+  "schema_version": "skillguard.ai_judgment.v1",
+  "target_path": "{{target_path}}",
+  "target_type": "{{target_type}}",
+  "status": "draft",
+  "decision": "needs_human_review",
+  "input_evidence": [
+    {
+      "evidence_id": "{{evidence_id}}",
+      "summary": "{{evidence_summary}}",
+      "freshness": "{{freshness_statement}}"
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "{{finding_id}}",
+      "severity": "{{severity}}",
+      "claim": "{{finding_claim}}",
+      "supporting_evidence": [
+        "{{evidence_id}}"
+      ],
+      "limits": [
+        "{{finding_limit}}"
+      ]
+    }
+  ],
+  "confidence": {
+    "level": "{{confidence_level}}",
+    "rationale": "{{confidence_rationale}}"
+  },
+  "uncertainty": [
+    {
+      "question": "{{open_question}}",
+      "impact": "{{uncertainty_impact}}",
+      "resolution_path": "{{resolution_path}}"
+    }
+  ],
+  "human_review": {
+    "required": true,
+    "reason": "{{human_review_reason}}"
+  },
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "{{residual_risk_statement}}"
+  ],
+  "claim_boundary": "{{claim_boundary_statement}} This template does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation without separate current evidence."
+}

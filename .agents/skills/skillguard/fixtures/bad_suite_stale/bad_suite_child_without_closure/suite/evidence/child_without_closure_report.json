@@ -1,0 +1,30 @@
+{
+  "schema_version": "skillguard.check_report.v1",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member",
+  "target_type": "skill",
+  "status": "pass",
+  "checked_at": "2026-06-22T00:00:00Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "checker_version": "skillguard.local_cli_dispatch.v1",
+    "fixture_version": "bad-suite-stale-fixtures.v1",
+    "notes": "Intentionally missing direct evidence entries for child closure validation."
+  },
+  "checks": [
+    {
+      "check_id": "child-report-empty-evidence",
+      "name": "Empty evidence fixture",
+      "required": true,
+      "status": "pass",
+      "summary": "The report shape is otherwise valid, but its evidence list is intentionally empty."
+    }
+  ],
+  "evidence": [],
+  "failures": [],
+  "blockers": [],
+  "skipped_checks": [],
+  "residual_risk": [
+    "This report is intentionally insufficient for suite closure."
+  ],
+  "claim_boundary": "This report is an intentionally insufficient fixture-local child report. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

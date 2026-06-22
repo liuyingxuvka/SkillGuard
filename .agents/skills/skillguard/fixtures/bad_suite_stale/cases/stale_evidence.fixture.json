@@ -1,0 +1,10 @@
+{
+  "fixture_id": "bad_suite_stale_evidence",
+  "target_command": "check-suite",
+  "expected_decision": "fail",
+  "suite_root": "../bad_suite_stale_evidence/suite",
+  "suite_map": "../bad_suite_stale_evidence/suite/suite-map.json",
+  "suite_contract": "../bad_suite_stale_evidence/suite/suite-contract.json",
+  "member_root": ".agents/skills",
+  "max_evidence_age_days": 30
+}

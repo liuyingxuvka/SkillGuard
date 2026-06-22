@@ -1,0 +1,42 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-22T08:45:26Z",
+  "checks": [
+    {
+      "check_id": "standard-library-local-examples",
+      "name": "Local examples and checker command smoke checks",
+      "required": true,
+      "status": "pass",
+      "summary": "Ran standard-library unittest checks for single-skill, suite, fixture manifests, self-check, and public-safe example wording."
+    }
+  ],
+  "claim_boundary": "This test result covers only the local examples and explicit SkillGuard command invocations run by this script. It does not prove broad fixture coverage, packaged CLI installation, suite automation, package publication, release readiness, code-contract validation, external services, or future AI behavior.",
+  "command": "python tests/test_skillguard_local.py",
+  "decision": "pass",
+  "elapsed_seconds": 6.808,
+  "error_count": 0,
+  "evidence": [
+    {
+      "evidence_id": "standard-library-unittest",
+      "fresh": true,
+      "kind": "command_output",
+      "source_path": "tests/test_skillguard_local.py",
+      "summary": "Ran 5 unittest checks using the local Python interpreter."
+    },
+    {
+      "evidence_id": "examples-readme",
+      "fresh": true,
+      "kind": "file_inspection",
+      "source_path": "examples/README.md",
+      "summary": "Checked examples/README.md for local command names and public-safe wording."
+    }
+  ],
+  "failure_count": 0,
+  "failures": [],
+  "residual_risk": [
+    "These are local standard-library smoke checks, not packaged CLI, network, release, suite automation, or code-contract checks."
+  ],
+  "schema_version": "skillguard.standard_library_test_result.v1",
+  "skipped_checks": [],
+  "test_count": 5
+}

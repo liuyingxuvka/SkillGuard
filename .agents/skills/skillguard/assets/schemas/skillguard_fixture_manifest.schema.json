@@ -1,0 +1,131 @@
+{
+  "title": "SkillGuard Fixture Manifest",
+  "description": "Record-family schema for fixture manifest records used to govern checker-change fixture policy. This schema defines record shape only; it does not claim that fixture files, checker code, runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation are present or proven.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "fixture_version",
+    "checker_version",
+    "compatibility",
+    "fixtures",
+    "evidence",
+    "skipped_checks",
+    "residual_risk",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "skillguard.fixture_manifest.v1"
+    },
+    "fixture_version": {
+      "type": "string"
+    },
+    "checker_version": {
+      "type": "string"
+    },
+    "compatibility": {
+      "type": "object",
+      "required": [
+        "status",
+        "notes"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "compatible",
+            "incompatible",
+            "needs-review",
+            "blocked"
+          ]
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "fixtures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "fixture_id",
+          "fixture_type",
+          "target_rule",
+          "expected_decision",
+          "status"
+        ],
+        "properties": {
+          "fixture_id": {
+            "type": "string"
+          },
+          "fixture_type": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "regression"
+            ]
+          },
+          "target_rule": {
+            "type": "string"
+          },
+          "expected_decision": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "block"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "checked",
+              "stale",
+              "blocked"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "known_limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "skipped_checks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "residual_risk": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "claim_boundary": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}
