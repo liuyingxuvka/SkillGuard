@@ -1,0 +1,6 @@
+{
+  "task": "Create a draft skill scaffold from a Skill Blueprint",
+  "execute": true,
+  "dry_run": true,
+  "target_path": ".agents/skills/skillguard/fixtures/bad_routing/probes/mutually-exclusive-flags-must-not-exist"
+}

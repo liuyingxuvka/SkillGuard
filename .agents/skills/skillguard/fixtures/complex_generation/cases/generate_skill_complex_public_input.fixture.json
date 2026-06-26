@@ -1,0 +1,107 @@
+{
+  "fixture_id": "generate_skill_complex_public_input",
+  "target_command": "generate-skill",
+  "expected_decision": "pass",
+  "generated_skill_name": "complex-generation-review-helper",
+  "no_mutation_paths": [
+    "../probes/preserve-note.txt"
+  ],
+  "skill_idea": {
+    "skill_name": "complex-generation-review-helper",
+    "description": "Use when a maintainer needs a complex generated review helper with cross-file evidence notes, fixture guidance, and bounded maintenance instructions.",
+    "purpose": "Maintain a complex generated review helper that coordinates evidence intake, generated fixture review, maintenance record checks, and public-safe reporting.",
+    "closure_scope": "complex generation fixture only",
+    "evidence_policy": "current direct evidence required before target acceptance",
+    "use_when": [
+      "A maintainer needs to review generated evidence across SKILL.md, references, fixtures, tests, templates, and SkillGuard records.",
+      "A generated helper must preserve public-safe blockers and current maintenance record validation."
+    ],
+    "do_not_use_when": [
+      "The request asks for package publication, release readiness, external service integration, or sealed task material.",
+      "The target does not have current generated files or direct validation evidence."
+    ],
+    "required_workflow": [
+      "Inspect generated entrypoint, README, references, assets, fixtures, tests, and .skillguard records before making claims.",
+      "Run check-skill and check-maintenance-record against current generated evidence.",
+      "Run detect-stale-evidence and refresh-maintenance dry-run when generated evidence is reused.",
+      "Report skipped checks, residual risk, and claim boundaries before closure."
+    ],
+    "hard_gates": [
+      "Do not overwrite user-authored files in or near the generated target.",
+      "Do not accept missing generated files, invalid fixture manifests, stale evidence, or private-looking output.",
+      "Keep generated records draft until separate reviewer judgment exists."
+    ],
+    "output_requirements": [
+      "evidence",
+      "failures",
+      "blockers",
+      "skipped_checks",
+      "residual_risk",
+      "claim_boundary",
+      "maintenance_record"
+    ]
+  },
+  "expected_result": {
+    "deterministic_repeat": true,
+    "required_files": [
+      "SKILL.md",
+      "README.md",
+      "references/README.md",
+      "assets/schemas/skillguard_generated_record.schema.json",
+      "assets/templates/check_report.template.json",
+      "scripts/README.md",
+      "scripts/run_checks.py",
+      "fixtures/README.md",
+      "fixtures/fixture-manifest.json",
+      "tests/README.md",
+      "tests/test_smoke.py",
+      ".skillguard/skillguard_profile.json",
+      ".skillguard/skillguard_skill_contract.json",
+      ".skillguard/skillguard_evidence_rules.json",
+      ".skillguard/skillguard_closure_policy.json",
+      ".skillguard/skillguard_manifest.json",
+      ".skillguard/skillguard_progress_ledger.jsonl",
+      ".skillguard/evidence/initial_evidence_manifest.json",
+      ".skillguard/ai_judgments/initial_ai_judgment.json",
+      ".skillguard/reports/initial_workflow_report.json"
+    ],
+    "generated_file_contains": {
+      "SKILL.md": [
+        "Maintain a complex generated review helper that coordinates evidence intake",
+        "Inspect the current target files before making claims.",
+        "Run deterministic checks that are available for the declared scope.",
+        "Do not treat generated scaffold files as acceptance evidence.",
+        "./assets/templates/check_report.template.json",
+        "./fixtures/fixture-manifest.json",
+        "./.skillguard/skillguard_manifest.json"
+      ],
+      "README.md": [
+        "generated SkillGuard skill scaffold",
+        "Scaffold Contents",
+        "Current Status"
+      ],
+      "fixtures/fixture-manifest.json": [
+        "skillguard.fixture_manifest.v1",
+        "draft-smoke"
+      ],
+      "assets/templates/check_report.template.json": [
+        "skillguard.check_report.v1",
+        "replace this template with current evidence before closure"
+      ],
+      ".skillguard/skillguard_manifest.json": [
+        "skillguard.manifest.v1",
+        "generated_files",
+        "blueprint_trace"
+      ]
+    },
+    "validate_generated_manifest": true,
+    "post_generation_checks_pass": true,
+    "check_maintenance_record": true,
+    "detect_stale_evidence": true,
+    "refresh_maintenance_dry_run": true,
+    "public_boundary_scan": true,
+    "forbidden_output_substrings": [
+      "FORBIDDEN_PUBLIC_BOUNDARY_PROBE"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "fixture_id": "route_task_invalid_path_config",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "json-config-with-invalid-path",
+  "config_path": "../inputs/invalid-path-config.json",
+  "no_mutation_paths": [
+    "../probes/invalid-path-config-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_config_error",
+    "blocker_code": "invalid_path_config",
+    "conflicting_fields": [
+      "$.target_path"
+    ],
+    "message_contains": [
+      "escapes repository boundary"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "forbidden_output_substrings": [
+      "Create a draft skill scaffold from a Skill Blueprint"
+    ],
+    "path_checks_block": true,
+    "deterministic_repeat": true
+  }
+}

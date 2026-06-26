@@ -1,0 +1,80 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-26T11:30:42Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "check-contract:schema",
+      "name": "Work-contract schema",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked .agents/skills/skillguard/.skillguard/work-contract.json against skillguard_work_contract.schema.json."
+    },
+    {
+      "check_id": "check-contract:semantic-links",
+      "name": "Route, phase, evidence, check, and closure links",
+      "required": true,
+      "status": "pass",
+      "summary": "Validated route phase order, phase requirements, script paths, quality floors, closure rules, target binding, and canonical hash."
+    }
+  ],
+  "claim_boundary": "This result covers only the named local CLI invocation and the current files it loaded. It does not prove fixture coverage, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "check-contract",
+  "contract_hash": "B4BBE7311278C7F73B3294BFA4787745467A61C6B0922A079CDD4C91AD98ACF1",
+  "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "work-contract-json",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
+      "summary": "Loaded .agents/skills/skillguard/.skillguard/work-contract.json; sha256=5CA9176AA0D1A682225F5A0EA52F37C23AD206891AFE317C58BB58BD109F14FA."
+    }
+  ],
+  "failures": [],
+  "files_inspected": [
+    {
+      "kind": "json",
+      "line_count": 224,
+      "path": ".agents/skills/skillguard/.skillguard/work-contract.json",
+      "sha256": "5CA9176AA0D1A682225F5A0EA52F37C23AD206891AFE317C58BB58BD109F14FA"
+    },
+    {
+      "kind": "python",
+      "line_count": 11,
+      "path": ".agents/skills/skillguard/.skillguard/checks/check_route.py",
+      "sha256": "396C5DB9DB248BE6ECDED38CB8DB9049AFF3489BDDAD26973964A5026600C870"
+    },
+    {
+      "kind": "python",
+      "line_count": 8,
+      "path": ".agents/skills/skillguard/.skillguard/checks/check_phase_order.py",
+      "sha256": "408FB5E968F34421F8C7BEB001ABD7407CEA57DC6EDB8A9253AEC9322D169FE7"
+    },
+    {
+      "kind": "python",
+      "line_count": 8,
+      "path": ".agents/skills/skillguard/.skillguard/checks/check_evidence.py",
+      "sha256": "AD9868E1F51C9EA0B5B373AE52D17616A622F42167413CCB57B81E478B8E3885"
+    },
+    {
+      "kind": "python",
+      "line_count": 8,
+      "path": ".agents/skills/skillguard/.skillguard/checks/check_quality_floor.py",
+      "sha256": "81EEC08C6C2A7BFA400E6E538D26A19514BEB14D9670CBA29C5FA3C8344D0DA7"
+    },
+    {
+      "kind": "python",
+      "line_count": 8,
+      "path": ".agents/skills/skillguard/.skillguard/checks/check_closure.py",
+      "sha256": "934465154DB8F2A120F6A535A9B0FFFB6744B33A8F02A231298342BEBDE8432A"
+    }
+  ],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard"
+}

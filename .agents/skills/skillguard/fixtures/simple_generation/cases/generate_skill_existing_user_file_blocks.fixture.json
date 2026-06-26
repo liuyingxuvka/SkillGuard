@@ -1,0 +1,21 @@
+{
+  "fixture_id": "generate_skill_existing_user_file_blocks",
+  "target_command": "generate-skill",
+  "expected_decision": "block",
+  "generated_skill_name": "simple-generation-conflict-helper",
+  "preexisting_files": [
+    {
+      "path": "notes.md",
+      "content": "user-authored note that the generator must not overwrite\n"
+    }
+  ],
+  "expected_result": {
+    "check_maintenance_record": true,
+    "detect_stale_evidence": false,
+    "refresh_maintenance_dry_run": false,
+    "public_boundary_scan": false,
+    "forbidden_output_substrings": [
+      "FORBIDDEN_PUBLIC_BOUNDARY_PROBE"
+    ]
+  }
+}

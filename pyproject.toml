@@ -27,5 +27,5 @@ classifiers = [
 
 [tool.skillguard.repository]
 baseline_version = "1.0.0"
-implementation_status = "local-cli-dispatch"
-public_claim_boundary = "Local script dispatch, explicit fixture manifests, examples, and standard-library smoke checks exist; packaged CLI installation, broad fixture coverage, suite automation, git history, publication, release readiness, and code-contract validation are separate downstream work."
+implementation_status = "local-cli-dispatch-runtime-contract"
+public_claim_boundary = "Local script dispatch, runtime work-contract commands, explicit fixture manifests, examples, and standard-library smoke checks exist; packaged CLI installation, broad fixture coverage, suite automation, git history, publication, release readiness, and code-contract validation are separate downstream work."

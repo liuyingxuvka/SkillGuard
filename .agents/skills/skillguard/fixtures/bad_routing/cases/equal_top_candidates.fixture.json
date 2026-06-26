@@ -1,0 +1,28 @@
+{
+  "fixture_id": "route_task_equal_top_candidates",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "direct-task-with-equal-candidate-scores",
+  "task": "check skill and check suite",
+  "no_mutation_paths": [
+    "../probes/equal-top-candidates-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_conflict",
+    "blocker_code": "multiple_equal_route_candidates",
+    "conflicting_fields": [
+      "$.task"
+    ],
+    "candidate_command_families": [
+      "check-skill",
+      "check-suite"
+    ],
+    "message_contains": [
+      "multiple current routes"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "no_task_echo": true,
+    "deterministic_repeat": true
+  }
+}

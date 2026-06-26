@@ -1,0 +1,23 @@
+{
+  "fixture_id": "route_task_malformed_json_config",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "malformed-json-config",
+  "config_path": "../inputs/malformed-route-task.json",
+  "no_mutation_paths": [
+    "../probes/malformed-json-config-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_config_error",
+    "blocker_code": "malformed_json",
+    "conflicting_fields": [
+      "--input"
+    ],
+    "message_contains": [
+      "invalid JSON parse"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "deterministic_repeat": true
+  }
+}

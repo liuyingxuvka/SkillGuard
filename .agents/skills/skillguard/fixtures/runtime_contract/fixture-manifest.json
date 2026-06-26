@@ -1,0 +1,148 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "runtime-contract-v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "status": "compatible",
+    "notes": [
+      "Exercises the runnable SkillGuard work-contract command family against current local artifacts."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "runtime-check-contract-pass",
+      "fixture_type": "positive",
+      "target_rule": "A compiled work contract with current check scripts passes check-contract.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/check-contract-pass.json"
+    },
+    {
+      "fixture_id": "runtime-check-contract-missing-contract-block",
+      "fixture_type": "negative",
+      "target_rule": "A missing work contract blocks check-contract instead of allowing unstated work.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/check-contract-missing-contract-block.json"
+    },
+    {
+      "fixture_id": "runtime-check-contract-hollow-fail",
+      "fixture_type": "negative",
+      "target_rule": "A hollow work contract fails because routes, phases, evidence, checks, floors, shortcuts, closure rules, and hash are not enforceable.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/check-contract-hollow-fail.json"
+    },
+    {
+      "fixture_id": "runtime-select-route-pass",
+      "fixture_type": "positive",
+      "target_rule": "A task matching the audit route selects exactly one route.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/select-route-pass.json"
+    },
+    {
+      "fixture_id": "runtime-select-route-missing-route-block",
+      "fixture_type": "negative",
+      "target_rule": "A multi-route contract with no matching route blocks before work begins.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/select-route-missing-route-block.json"
+    },
+    {
+      "fixture_id": "runtime-select-route-ambiguous-block",
+      "fixture_type": "negative",
+      "target_rule": "A multi-route contract with equal route matches blocks ambiguous route selection.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/select-route-ambiguous-block.json"
+    },
+    {
+      "fixture_id": "runtime-check-run-complete-pass",
+      "fixture_type": "positive",
+      "target_rule": "A complete run with all required fresh evidence and checks passes check-run --complete.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/check-run-complete-pass.json"
+    },
+    {
+      "fixture_id": "runtime-close-run-complete-pass",
+      "fixture_type": "positive",
+      "target_rule": "A complete run can be accepted by close-run in dry-run mode.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/close-run-complete-pass.json"
+    },
+    {
+      "fixture_id": "runtime-check-run-missing-evidence-fail",
+      "fixture_type": "negative",
+      "target_rule": "A checked phase with missing required evidence fails check-run --complete.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/check-run-missing-evidence-fail.json"
+    },
+    {
+      "fixture_id": "runtime-check-run-skipped-phase-fail",
+      "fixture_type": "negative",
+      "target_rule": "A skipped route phase fails check-run --complete.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/check-run-skipped-phase-fail.json"
+    },
+    {
+      "fixture_id": "runtime-check-run-stale-evidence-fail",
+      "fixture_type": "negative",
+      "target_rule": "A stale required evidence record fails check-run --complete.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/check-run-stale-evidence-fail.json"
+    },
+    {
+      "fixture_id": "runtime-check-run-quality-downgrade-fail",
+      "fixture_type": "negative",
+      "target_rule": "A run that records a quality-floor failure cannot pass complete run checks.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/check-run-quality-downgrade-fail.json"
+    },
+    {
+      "fixture_id": "runtime-close-run-early-fail",
+      "fixture_type": "negative",
+      "target_rule": "A run that has only started cannot be accepted by close-run.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/close-run-early-fail.json"
+    },
+    {
+      "fixture_id": "runtime-close-run-overclaim-fail",
+      "fixture_type": "negative",
+      "target_rule": "A checked-only contract cannot be broadened into accepted closure.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/close-run-overclaim-fail.json"
+    },
+    {
+      "fixture_id": "runtime-check-suite-parent-hides-child-failure-fail",
+      "fixture_type": "negative",
+      "target_rule": "A suite parent cannot hide a child report that lacks direct closure evidence.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/check-suite-parent-hides-child-failure-fail.json"
+    }
+  ],
+  "evidence": [
+    ".agents/skills/skillguard/.skillguard/work-contract.json",
+    ".agents/skills/skillguard/.skillguard/check_manifest.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/hollow_contract.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/ambiguous_routes_contract.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/checked_only_contract.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/runs/quality_failure_run.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/runs/overclaim_run.json",
+    ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite/suite-map.json"
+  ],
+  "skipped_checks": [],
+  "residual_risk": [
+    "Fixture cases cover the runtime-contract command family only, not every possible user-authored contract shape."
+  ],
+  "claim_boundary": "This fixture manifest only governs the explicit runtime-contract fixture cases. It does not prove broad runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, external services, or future AI behavior."
+}

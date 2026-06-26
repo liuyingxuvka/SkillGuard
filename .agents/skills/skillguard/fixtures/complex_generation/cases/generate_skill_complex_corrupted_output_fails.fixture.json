@@ -1,0 +1,52 @@
+{
+  "fixture_id": "generate_skill_complex_corrupted_output_fails",
+  "target_command": "generate-skill",
+  "expected_decision": "fail",
+  "generated_skill_name": "complex-generation-corrupted-helper",
+  "skill_idea": {
+    "skill_name": "complex-generation-corrupted-helper",
+    "description": "Use when a maintainer needs a generated helper whose output is intentionally corrupted by a fixture.",
+    "purpose": "Prove complex generated output validation catches missing files, invalid generated fixture manifests, and stale generated evidence.",
+    "closure_scope": "complex corrupted output fixture only",
+    "evidence_policy": "current direct evidence required before target acceptance",
+    "use_when": [
+      "A maintainer needs to prove generated output validation rejects corrupted artifacts."
+    ],
+    "do_not_use_when": [
+      "The request needs accepted generated skill status."
+    ],
+    "required_workflow": [
+      "Generate the complex scaffold.",
+      "Corrupt controlled generated files.",
+      "Confirm fixture validation reports stale or malformed generated output."
+    ],
+    "hard_gates": [
+      "Do not treat corrupted generated files as current evidence."
+    ],
+    "output_requirements": [
+      "failures",
+      "blockers",
+      "claim_boundary"
+    ]
+  },
+  "post_generation_remove_files": [
+    "SKILL.md"
+  ],
+  "post_generation_file_overrides": [
+    {
+      "path": "fixtures/fixture-manifest.json",
+      "content": "{\"schema_version\":\"skillguard.fixture_manifest.v1\",\"fixtures\":[1]}\n"
+    }
+  ],
+  "expected_result": {
+    "validate_generated_manifest": true,
+    "post_generation_checks_pass": true,
+    "check_maintenance_record": true,
+    "detect_stale_evidence": true,
+    "refresh_maintenance_dry_run": false,
+    "public_boundary_scan": true,
+    "forbidden_output_substrings": [
+      "FORBIDDEN_PUBLIC_BOUNDARY_PROBE"
+    ]
+  }
+}

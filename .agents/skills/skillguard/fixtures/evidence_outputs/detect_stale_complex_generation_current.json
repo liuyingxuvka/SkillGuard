@@ -1,0 +1,323 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-26T11:29:11Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "detect-stale-evidence:input-artifacts",
+      "name": "Evidence artifact inputs",
+      "required": true,
+      "status": "pass",
+      "summary": "Loaded 1 evidence JSON artifact(s) supplied by --input."
+    },
+    {
+      "check_id": "detect-stale-evidence:freshness-bindings",
+      "name": "Freshness bindings",
+      "required": true,
+      "status": "pass",
+      "summary": "Compared recorded source fingerprints, fixture bindings, generated artifact paths, route metadata, command surface, and OpenSpec status metadata against current repository state."
+    },
+    {
+      "check_id": "detect-stale-evidence:no-mutation",
+      "name": "Read-only source artifact inspection",
+      "required": true,
+      "status": "pass",
+      "summary": "The command reads input evidence and referenced files only; it does not delete, rewrite, regenerate, or normalize source artifacts."
+    }
+  ],
+  "claim_boundary": "This detect-stale-evidence result covers only the evidence-bearing JSON artifacts supplied through --input and the current repository files, route metadata, command table, fixture bindings, generated artifact paths, and OpenSpec status metadata they explicitly record. It does not inspect sealed FlowPilot packet bodies, sibling role result text, external services, release readiness, package publication, suite automation, code-contract validation, or future AI behavior.",
+  "command": "detect-stale-evidence",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "detect-stale-input-artifacts",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard",
+      "summary": "Parsed 1 evidence artifact(s); checked 6 freshness binding(s)."
+    },
+    {
+      "evidence_id": "detect-stale-current-command-surface",
+      "fresh": true,
+      "kind": "command_table_check",
+      "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
+      "summary": "Compared any recorded command_names against 37 current dispatch command(s)."
+    }
+  ],
+  "expected_route_registry_version": "skillguard.route_registry.v1",
+  "expected_route_version": "5",
+  "failures": [],
+  "freshness_bindings_checked": 6,
+  "inspected_artifacts": [
+    {
+      "kind": "json",
+      "line_count": 514,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_complex_generation_current.json",
+      "sha256": "1732CF3E9EF75F2364BF6A24D7C8D3D40AEB7DF4E36DE4E78D6CE1CD2737C7AE"
+    }
+  ],
+  "maintenance_freshness": {
+    "current_evidence_can_pass": true,
+    "freshness_bindings_checked": 6,
+    "input_artifact_count": 1,
+    "missing_count": 0,
+    "recorded_source_status_fields": [
+      "inspected_artifacts[].path",
+      "inspected_artifacts[].sha256",
+      "freshness_bindings_checked",
+      "stale_evidence_blockers[].expected_current_binding",
+      "stale_evidence_blockers[].observed_stale_binding",
+      "stale_evidence_blockers[].recommended_refresh_action"
+    ],
+    "refreshable_stale_count": 0,
+    "schema_version": "skillguard.maintenance_freshness_state.v1",
+    "stale_count": 0,
+    "stale_or_missing_blocker_codes": [],
+    "state": "fresh",
+    "states_supported": [
+      "current_after_refresh",
+      "fresh",
+      "missing",
+      "missing_or_unrefreshable_blocker",
+      "refresh_failed",
+      "stale_or_missing",
+      "stale_refresh_planned"
+    ],
+    "unrefreshable_count": 0
+  },
+  "maintenance_record": {
+    "artifact_id": ".agents/skills/skillguard",
+    "blockers": [],
+    "command_surface": {
+      "checker_name": "detect-stale-evidence",
+      "checker_version": "skillguard.local_cli_dispatch.v1",
+      "command_names": [
+        "commands",
+        "route-task",
+        "inventory",
+        "plan-skill",
+        "generate-skill",
+        "generate-suite",
+        "check-json-schema",
+        "compile-contract",
+        "check-contract",
+        "select-route",
+        "start-run",
+        "advance-run",
+        "check-run",
+        "close-run",
+        "init-target",
+        "init-suite",
+        "mark",
+        "check-skill",
+        "check-suite",
+        "check-skill-contract",
+        "check-suite-map",
+        "check-suite-contract",
+        "check-fixture-manifest",
+        "check-work-contract",
+        "check-run-record",
+        "check-check-manifest",
+        "fixture-test",
+        "detect-stale-evidence",
+        "refresh-maintenance",
+        "review-checker-change",
+        "check-maintenance-record",
+        "check-ai-judgment",
+        "check-report",
+        "check-workflow-report",
+        "make-closure",
+        "self-check",
+        "write-report"
+      ],
+      "current_route_registry": [
+        {
+          "command_family": "route-task",
+          "next_step": "Return a deterministic SkillGuard route decision.",
+          "responsibility": "router",
+          "route_id": "skillguard.route.route-task.v1",
+          "route_node_id": "route-task",
+          "status": "current"
+        },
+        {
+          "command_family": "plan-skill",
+          "next_step": "Run plan-skill with a repository-local skill idea JSON file.",
+          "responsibility": "planner",
+          "route_id": "skillguard.route.plan-skill.v1",
+          "route_node_id": "plan-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "generate-skill",
+          "next_step": "Run generate-skill with a valid Skill Blueprint after review.",
+          "responsibility": "generator",
+          "route_id": "skillguard.route.generate-skill.v1",
+          "route_node_id": "generate-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "generate-suite",
+          "next_step": "Run generate-suite with a valid Suite Blueprint after review.",
+          "responsibility": "generator",
+          "route_id": "skillguard.route.generate-suite.v1",
+          "route_node_id": "generate-suite",
+          "status": "current"
+        },
+        {
+          "command_family": "compile-contract",
+          "next_step": "Run compile-contract against the target skill before expecting runtime phase checks.",
+          "responsibility": "contract-compiler",
+          "route_id": "skillguard.route.compile-contract.v1",
+          "route_node_id": "compile-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "check-contract",
+          "next_step": "Run check-contract against the target skill work contract.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-contract.v1",
+          "route_node_id": "check-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "select-route",
+          "next_step": "Run select-route before starting a SkillGuard-governed task run.",
+          "responsibility": "runtime-router",
+          "route_id": "skillguard.route.select-route.v1",
+          "route_node_id": "select-route",
+          "status": "current"
+        },
+        {
+          "command_family": "start-run",
+          "next_step": "Run start-run after select-route has chosen the route.",
+          "responsibility": "runtime-ledger",
+          "route_id": "skillguard.route.start-run.v1",
+          "route_node_id": "start-run",
+          "status": "current"
+        },
+        {
+          "command_family": "check-run",
+          "next_step": "Run check-run against the current run record before claiming progress or closure.",
+          "responsibility": "runtime-checker",
+          "route_id": "skillguard.route.check-run.v1",
+          "route_node_id": "check-run",
+          "status": "current"
+        },
+        {
+          "command_family": "close-run",
+          "next_step": "Run close-run only after check-run supports the requested closure decision.",
+          "responsibility": "closure",
+          "route_id": "skillguard.route.close-run.v1",
+          "route_node_id": "close-run",
+          "status": "current"
+        },
+        {
+          "command_family": "check-skill",
+          "next_step": "Run check-skill against the target skill directory.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-skill.v1",
+          "route_node_id": "check-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "check-suite",
+          "next_step": "Run check-suite against suite records and member paths.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-suite.v1",
+          "route_node_id": "check-suite",
+          "status": "current"
+        },
+        {
+          "command_family": "fixture-test",
+          "next_step": "Run fixture-test against an explicit fixture manifest.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.fixture-test.v1",
+          "route_node_id": "fixture-test",
+          "status": "current"
+        },
+        {
+          "command_family": "detect-stale-evidence",
+          "next_step": "Run detect-stale-evidence against current evidence-bearing JSON artifacts.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.detect-stale-evidence.v1",
+          "route_node_id": "detect-stale-evidence",
+          "status": "current"
+        },
+        {
+          "command_family": "refresh-maintenance",
+          "next_step": "Run refresh-maintenance against stale evidence records, first in dry-run mode unless execution is explicitly requested.",
+          "responsibility": "maintainer",
+          "route_id": "skillguard.route.refresh-maintenance.v1",
+          "route_node_id": "refresh-maintenance",
+          "status": "current"
+        },
+        {
+          "command_family": "review-checker-change",
+          "next_step": "Run review-checker-change against the approved checker-change baseline and current evidence metadata.",
+          "responsibility": "reviewer",
+          "route_id": "skillguard.route.review-checker-change.v1",
+          "route_node_id": "review-checker-change",
+          "status": "current"
+        },
+        {
+          "command_family": "check-maintenance-record",
+          "next_step": "Run check-maintenance-record against a canonical or supported legacy maintenance record JSON artifact.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-maintenance-record.v1",
+          "route_node_id": "check-maintenance-record",
+          "status": "current"
+        },
+        {
+          "command_family": "make-closure",
+          "next_step": "Run make-closure with current reports and direct evidence references.",
+          "responsibility": "closure",
+          "route_id": "skillguard.route.make-closure.v1",
+          "route_node_id": "make-closure",
+          "status": "current"
+        },
+        {
+          "command_family": "self-check",
+          "next_step": "Run self-check against the SkillGuard skill target.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.self-check.v1",
+          "route_node_id": "self-check",
+          "status": "current"
+        },
+        {
+          "command_family": "inventory",
+          "next_step": "Run inventory against the target path.",
+          "responsibility": "inventory",
+          "route_id": "skillguard.route.inventory.v1",
+          "route_node_id": "inventory",
+          "status": "current"
+        }
+      ]
+    },
+    "content_hash": "1F741E270018ED8CBFF26C39195F2133D481B2C14DF7E2AE4D5B7CE10A7CBBE7",
+    "evidence_timestamp": "2026-06-26T11:29:11Z",
+    "record_id": "stale_evidence_review:22ABD210E386768E",
+    "record_kind": "stale_evidence_review",
+    "refresh_action": {
+      "action": "detect_only",
+      "stale_evidence_count": 0,
+      "status": "not_applicable"
+    },
+    "route_node_id": "detect-stale-evidence",
+    "route_registry_version": "skillguard.route_registry.v1",
+    "route_version": "5",
+    "schema_version": "skillguard.maintenance_record.v1",
+    "status": "pass"
+  },
+  "maintenance_record_schema_version": "skillguard.maintenance_record.v1",
+  "residual_risk": [
+    "Evidence artifacts without explicit comparable metadata are intentionally blocked as unverifiable rather than accepted.",
+    "This stale detector checks declared path/hash/route/command bindings; semantic adequacy still requires the owning checker or reviewer."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [
+    "detect-stale-evidence does not refresh stale artifacts, execute target commands, run OpenSpec itself, run fixture-test, or perform closure."
+  ],
+  "stale_evidence_blockers": [],
+  "stale_evidence_count": 0,
+  "target_path": ".agents/skills/skillguard"
+}

@@ -1,0 +1,1 @@
+This public fixture probe must not be modified by complex generate-skill fixture execution.

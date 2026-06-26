@@ -1,0 +1,5 @@
+{
+  "task": "Create a draft skill scaffold from a Skill Blueprint",
+  "requested_responsibility": "checker",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_routing/probes/responsibility-mismatch-must-not-exist"
+}

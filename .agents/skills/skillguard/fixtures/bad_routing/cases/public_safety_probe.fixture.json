@@ -1,0 +1,33 @@
+{
+  "fixture_id": "route_task_public_safety_probe",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "direct-task-with-public-safety-echo-probe",
+  "task": "Create a draft skill scaffold from PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO Skill Blueprint",
+  "route_hint": "check-suite",
+  "no_mutation_paths": [
+    "../probes/public-safety-probe-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_conflict",
+    "blocker_code": "incompatible_route_hint",
+    "conflicting_fields": [
+      "$.task",
+      "$.route_hint"
+    ],
+    "candidate_command_families": [
+      "generate-skill",
+      "check-suite"
+    ],
+    "message_contains": [
+      "route hint conflicts"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "no_task_echo": true,
+    "forbidden_output_substrings": [
+      "PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO"
+    ],
+    "deterministic_repeat": true
+  }
+}

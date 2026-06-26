@@ -1,0 +1,7 @@
+{
+  "fixture_id": "runtime-check-run-skipped-phase-fail",
+  "target_command": "check-run",
+  "expected_decision": "fail",
+  "run_path": "../runs/skipped_phase_run.json",
+  "complete": true
+}

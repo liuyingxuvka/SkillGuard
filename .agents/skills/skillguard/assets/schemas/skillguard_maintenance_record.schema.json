@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Canonical public SkillGuard maintenance record schema.",
+  "properties": {
+    "artifact_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "blockers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "blocker_class": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "blocker_code": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "message": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "recommended_repair_action": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "blocker_class",
+          "blocker_code",
+          "artifact_id",
+          "message",
+          "recommended_repair_action"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "command_surface": {
+      "additionalProperties": false,
+      "properties": {
+        "checker_name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "checker_version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "command_names": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "current_route_registry": {
+          "items": {
+            "type": "object"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "checker_name",
+        "checker_version",
+        "command_names",
+        "current_route_registry"
+      ],
+      "type": "object"
+    },
+    "content_hash": {
+      "minLength": 64,
+      "type": "string"
+    },
+    "evidence_timestamp": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "record_kind": {
+      "enum": [
+        "checker_change_review",
+        "command_surface",
+        "fixture_evidence",
+        "maintenance_refresh",
+        "route_task_metadata",
+        "self_check",
+        "stale_evidence_review",
+        "target_check",
+        "workflow_evidence"
+      ],
+      "type": "string"
+    },
+    "refresh_action": {
+      "type": "object"
+    },
+    "route_node_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "route_registry_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "route_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "skillguard.maintenance_record.v1",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "block",
+        "fail",
+        "pass"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "record_id",
+    "record_kind",
+    "artifact_id",
+    "route_node_id",
+    "route_version",
+    "route_registry_version",
+    "command_surface",
+    "content_hash",
+    "evidence_timestamp",
+    "status",
+    "blockers",
+    "refresh_action"
+  ],
+  "title": "SkillGuardMaintenanceRecord",
+  "type": "object"
+}

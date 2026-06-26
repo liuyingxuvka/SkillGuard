@@ -1,0 +1,7 @@
+{
+  "fixture_id": "runtime-check-run-complete-pass",
+  "target_command": "check-run",
+  "expected_decision": "pass",
+  "run_path": "../runs/good_run.json",
+  "complete": true
+}

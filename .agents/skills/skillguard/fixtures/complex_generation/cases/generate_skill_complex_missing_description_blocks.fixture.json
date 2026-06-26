@@ -1,0 +1,47 @@
+{
+  "fixture_id": "generate_skill_complex_missing_description_blocks",
+  "target_command": "generate-skill",
+  "expected_decision": "block",
+  "generated_skill_name": "complex-generation-malformed-helper",
+  "skill_idea": {
+    "skill_name": "complex-generation-malformed-helper",
+    "description": "Use when a maintainer needs a complex generated helper that will be malformed by this fixture.",
+    "purpose": "Exercise complex generation blocker reporting for malformed rich input.",
+    "closure_scope": "complex malformed generation fixture only",
+    "evidence_policy": "current direct evidence required before target acceptance",
+    "use_when": [
+      "A maintainer needs a negative complex generation fixture."
+    ],
+    "do_not_use_when": [
+      "The request needs private task material."
+    ],
+    "required_workflow": [
+      "Prepare a rich blueprint.",
+      "Remove one required generated blueprint field.",
+      "Confirm generate-skill blocks before writing scaffold files."
+    ],
+    "hard_gates": [
+      "Do not create target files after malformed input blocks."
+    ],
+    "output_requirements": [
+      "evidence",
+      "blockers",
+      "claim_boundary"
+    ]
+  },
+  "blueprint_remove_fields": [
+    "skill_blueprint.skill.description"
+  ],
+  "expected_result": {
+    "check_maintenance_record": true,
+    "detect_stale_evidence": false,
+    "refresh_maintenance_dry_run": false,
+    "public_boundary_scan": false,
+    "observed_blocker_contains": [
+      "Skill Blueprint skill object missing required field: description"
+    ],
+    "forbidden_output_substrings": [
+      "FORBIDDEN_PUBLIC_BOUNDARY_PROBE"
+    ]
+  }
+}

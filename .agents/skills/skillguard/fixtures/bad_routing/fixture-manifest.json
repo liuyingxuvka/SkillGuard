@@ -1,0 +1,158 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "bad-routing-fixtures.v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "status": "compatible",
+    "notes": [
+      "Routing negative fixtures target the current route-task command and current public route registry.",
+      "Each case checks an expected block decision plus structured routing_conflict_blockers and no selected fallback route."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "route_task_conflicting_cli_input_sources",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block --input combined with direct task or route hint arguments.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/conflicting_cli_input_sources.fixture.json",
+      "known_limitations": [
+        "Covers one CLI-vs-config input-source conflict."
+      ]
+    },
+    {
+      "fixture_id": "route_task_ambiguous_task_sources",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block ambiguous task source fields instead of choosing a route.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/ambiguous_task_sources.fixture.json",
+      "known_limitations": [
+        "Covers tasks-array ambiguity, not every possible input schema error."
+      ]
+    },
+    {
+      "fixture_id": "route_task_unsupported_route_hint",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block unsupported current route hints.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/unsupported_route_hint.fixture.json",
+      "known_limitations": [
+        "Covers unsupported route hints distinct from stale route identifiers."
+      ]
+    },
+    {
+      "fixture_id": "route_task_stale_route_hint",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block stale or repair-only route identifiers.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/stale_route_hint.fixture.json",
+      "known_limitations": [
+        "Covers one superseded route hint token."
+      ]
+    },
+    {
+      "fixture_id": "route_task_mutually_exclusive_flags",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block mutually exclusive routing flags.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/mutually_exclusive_flags.fixture.json",
+      "known_limitations": [
+        "Covers execute plus dry_run conflict."
+      ]
+    },
+    {
+      "fixture_id": "route_task_malformed_json_config",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block malformed JSON config input.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/malformed_json_config.fixture.json",
+      "known_limitations": [
+        "Covers one malformed JSON parser failure."
+      ]
+    },
+    {
+      "fixture_id": "route_task_invalid_path_config",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block repository-escaping path config.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/invalid_path_config.fixture.json",
+      "known_limitations": [
+        "Covers one repository-boundary path violation."
+      ]
+    },
+    {
+      "fixture_id": "route_task_equal_top_candidates",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block equal-scoring top route candidates.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/equal_top_candidates.fixture.json",
+      "known_limitations": [
+        "Covers one equal-score check-skill/check-suite candidate pair."
+      ]
+    },
+    {
+      "fixture_id": "route_task_conflicting_route_identifier_fields",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block multiple route identifier fields that point to different current routes.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/conflicting_route_identifier_fields.fixture.json",
+      "known_limitations": [
+        "Covers route_id plus route_node_id disagreement."
+      ]
+    },
+    {
+      "fixture_id": "route_task_responsibility_mismatch",
+      "fixture_type": "negative",
+      "target_rule": "route-task must block requested responsibility mismatches against selected route ownership.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/responsibility_mismatch.fixture.json",
+      "known_limitations": [
+        "Covers checker responsibility requested for a generator route."
+      ]
+    },
+    {
+      "fixture_id": "route_task_public_safety_probe",
+      "fixture_type": "negative",
+      "target_rule": "route-task must not echo private-looking task text while returning a structured blocker.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/public_safety_probe.fixture.json",
+      "known_limitations": [
+        "Covers one non-secret task-text echo probe."
+      ]
+    }
+  ],
+  "evidence": [
+    "cases/conflicting_cli_input_sources.fixture.json",
+    "cases/ambiguous_task_sources.fixture.json",
+    "cases/unsupported_route_hint.fixture.json",
+    "cases/stale_route_hint.fixture.json",
+    "cases/mutually_exclusive_flags.fixture.json",
+    "cases/malformed_json_config.fixture.json",
+    "cases/invalid_path_config.fixture.json",
+    "cases/equal_top_candidates.fixture.json",
+    "cases/conflicting_route_identifier_fields.fixture.json",
+    "cases/responsibility_mismatch.fixture.json",
+    "cases/public_safety_probe.fixture.json",
+    "../evidence_outputs/fixture_test_bad_routing_current.json"
+  ],
+  "skipped_checks": [
+    "These fixtures do not claim broad router fixture coverage beyond the listed conflict classes.",
+    "These fixtures do not replace successful route-task routing and compatible explicit route-hint tests."
+  ],
+  "residual_risk": [
+    "Future route registry changes may require refreshing expected current route ids and candidate families.",
+    "These fixtures validate route-task output shape and no-mutation probes, not execution of the selected downstream route."
+  ],
+  "claim_boundary": "This routing bad-fixture manifest covers only the listed route-task negative fixture cases and current local files. It does not prove runtime checker execution, broad fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

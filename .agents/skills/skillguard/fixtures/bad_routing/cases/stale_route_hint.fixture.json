@@ -1,0 +1,26 @@
+{
+  "fixture_id": "route_task_stale_route_hint",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "json-config-with-stale-route-hint",
+  "config_path": "../inputs/stale-route-hint.json",
+  "no_mutation_paths": [
+    "../probes/stale-route-hint-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_conflict",
+    "blocker_code": "stale_route_identifier",
+    "conflicting_fields": [
+      "$.route_hint"
+    ],
+    "message_contains": [
+      "not a current public route"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "forbidden_output_substrings": [
+      "Create a draft skill scaffold from a Skill Blueprint"
+    ],
+    "deterministic_repeat": true
+  }
+}

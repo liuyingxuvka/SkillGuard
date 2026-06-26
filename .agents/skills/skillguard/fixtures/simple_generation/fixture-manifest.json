@@ -1,0 +1,50 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "simple-generation-fixtures.v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "status": "compatible",
+    "notes": [
+      "Simple generation fixtures target the current public plan-skill and generate-skill command path.",
+      "Fixture workspaces are marker-owned, repository-local, and removed after each fixture case."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "generate_skill_simple_public_input",
+      "fixture_type": "regression",
+      "target_rule": "generate-skill creates a minimal valid skill scaffold from public simple input and validates current maintenance surfaces.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/generate_skill_simple_public_input.fixture.json",
+      "known_limitations": [
+        "This is one simple generation regression and does not prove broad generator coverage."
+      ]
+    },
+    {
+      "fixture_id": "generate_skill_existing_user_file_blocks",
+      "fixture_type": "negative",
+      "target_rule": "generate-skill blocks an existing user-authored file in the target before writing scaffold files.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/generate_skill_existing_user_file_blocks.fixture.json",
+      "known_limitations": [
+        "Covers one unexpected existing-file overwrite-protection case."
+      ]
+    }
+  ],
+  "evidence": [
+    "cases/generate_skill_simple_public_input.fixture.json",
+    "cases/generate_skill_existing_user_file_blocks.fixture.json",
+    "../evidence_outputs/fixture_test_simple_generation_current.json"
+  ],
+  "skipped_checks": [
+    "These fixtures do not claim package publication, release readiness, external service integration, or semantic acceptance of generated skills.",
+    "These fixtures do not replace generator unit tests for malformed input, stale generated evidence, or every overwrite-protection shape."
+  ],
+  "residual_risk": [
+    "Future generator contract changes may require refreshing the expected required file list and fixture output evidence.",
+    "The generated scaffold remains a draft artifact and still needs separate review before any accepted status can be claimed."
+  ],
+  "claim_boundary": "This simple generation fixture manifest covers only the listed public generate-skill fixture cases and current local files. It does not prove runtime checker execution beyond this fixture invocation, broad fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
+}

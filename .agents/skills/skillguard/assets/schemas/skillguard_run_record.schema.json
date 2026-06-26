@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SkillGuard runtime run-record schema for one task against one work contract.",
+  "properties": {
+    "blockers": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "claim_boundary": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "closure_decision": {
+      "enum": [
+        "not_requested",
+        "checked",
+        "accepted",
+        "needs-review",
+        "blocked",
+        "failed",
+        "stale"
+      ],
+      "type": "string"
+    },
+    "commands_run": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "decision": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "evidence_id": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "decision",
+          "evidence_id"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "contract_ref": {
+      "additionalProperties": false,
+      "properties": {
+        "contract_hash": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "contract_path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "contract_version": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "contract_path",
+        "contract_version",
+        "contract_hash"
+      ],
+      "type": "object"
+    },
+    "current_phase": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "fresh": {
+            "type": "boolean"
+          },
+          "kind": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "phase_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "source_path": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "phase_id",
+          "kind",
+          "source_path",
+          "fresh"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "phase_statuses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "phase_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "running",
+              "checked",
+              "needs-review",
+              "blocked",
+              "failed",
+              "stale",
+              "skipped"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "phase_id",
+          "status"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "quality_failures": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "run_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "skillguard.run_record.v1",
+      "type": "string"
+    },
+    "selected_route": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "skipped_checks": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "target_skill": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "task_summary": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "run_id",
+    "target_skill",
+    "task_summary",
+    "contract_ref",
+    "selected_route",
+    "current_phase",
+    "phase_statuses",
+    "evidence",
+    "commands_run",
+    "skipped_checks",
+    "blockers",
+    "quality_failures",
+    "closure_decision",
+    "claim_boundary"
+  ],
+  "title": "SkillGuardRunRecord",
+  "type": "object"
+}

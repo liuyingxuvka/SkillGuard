@@ -1,0 +1,25 @@
+{
+  "fixture_id": "route_task_unsupported_route_hint",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "direct-task-with-unsupported-route-hint",
+  "task": "Create a draft skill scaffold from a Skill Blueprint",
+  "route_hint": "not-a-current-route",
+  "no_mutation_paths": [
+    "../probes/unsupported-route-hint-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_config_error",
+    "blocker_code": "unsupported_route_hint",
+    "conflicting_fields": [
+      "$.route_hint"
+    ],
+    "message_contains": [
+      "does not name a current public route"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "no_task_echo": true,
+    "deterministic_repeat": true
+  }
+}

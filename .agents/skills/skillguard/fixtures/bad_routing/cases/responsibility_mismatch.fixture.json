@@ -1,0 +1,30 @@
+{
+  "fixture_id": "route_task_responsibility_mismatch",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "json-config-with-requested-responsibility",
+  "config_path": "../inputs/responsibility-mismatch.json",
+  "no_mutation_paths": [
+    "../probes/responsibility-mismatch-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_conflict",
+    "blocker_code": "responsibility_route_conflict",
+    "conflicting_fields": [
+      "$.requested_responsibility",
+      "routing_decision.responsibility"
+    ],
+    "candidate_command_families": [
+      "generate-skill"
+    ],
+    "message_contains": [
+      "requested responsibility conflicts"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "forbidden_output_substrings": [
+      "Create a draft skill scaffold from a Skill Blueprint"
+    ],
+    "deterministic_repeat": true
+  }
+}

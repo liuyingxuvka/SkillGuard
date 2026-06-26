@@ -1,0 +1,7 @@
+{
+  "fixture_id": "runtime-select-route-pass",
+  "target_command": "select-route",
+  "expected_decision": "pass",
+  "target_path": ".agents/skills/skillguard",
+  "task": "Audit the target skill contract and check current runtime evidence before closure."
+}

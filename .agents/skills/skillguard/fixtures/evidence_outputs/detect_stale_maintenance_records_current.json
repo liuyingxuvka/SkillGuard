@@ -1,0 +1,253 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-24T04:50:15Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "detect-stale-evidence:input-artifacts",
+      "name": "Evidence artifact inputs",
+      "required": true,
+      "status": "pass",
+      "summary": "Loaded 4 evidence JSON artifact(s) supplied by --input."
+    },
+    {
+      "check_id": "detect-stale-evidence:freshness-bindings",
+      "name": "Freshness bindings",
+      "required": true,
+      "status": "pass",
+      "summary": "Compared recorded source fingerprints, fixture bindings, generated artifact paths, route metadata, command surface, and OpenSpec status metadata against current repository state."
+    },
+    {
+      "check_id": "detect-stale-evidence:no-mutation",
+      "name": "Read-only source artifact inspection",
+      "required": true,
+      "status": "pass",
+      "summary": "The command reads input evidence and referenced files only; it does not delete, rewrite, regenerate, or normalize source artifacts."
+    }
+  ],
+  "claim_boundary": "This detect-stale-evidence result covers only the evidence-bearing JSON artifacts supplied through --input and the current repository files, route metadata, command table, fixture bindings, generated artifact paths, and OpenSpec status metadata they explicitly record. It does not inspect sealed FlowPilot packet bodies, sibling role result text, external services, release readiness, package publication, suite automation, code-contract validation, or future AI behavior.",
+  "command": "detect-stale-evidence",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "detect-stale-input-artifacts",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard",
+      "summary": "Parsed 4 evidence artifact(s); checked 47 freshness binding(s)."
+    },
+    {
+      "evidence_id": "detect-stale-current-command-surface",
+      "fresh": true,
+      "kind": "command_table_check",
+      "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
+      "summary": "Compared any recorded command_names against 26 current dispatch command(s)."
+    }
+  ],
+  "expected_route_registry_version": "skillguard.route_registry.v1",
+  "expected_route_version": "4",
+  "failures": [],
+  "freshness_bindings_checked": 47,
+  "inspected_artifacts": [
+    {
+      "kind": "json",
+      "line_count": 430,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json",
+      "sha256": "15E6074BA54B901FC8D7932D7A5D8700EA96A28FBA87F0930910B3389A0628B5"
+    },
+    {
+      "kind": "json",
+      "line_count": 895,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
+      "sha256": "79CA1B71E5C1E4B56397A8CB0B8D95B60DDD3676090E2BDAD10F8156F8175819"
+    },
+    {
+      "kind": "json",
+      "line_count": 475,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/review_checker_change_current.json",
+      "sha256": "17AF80EE06E6C0F3D17EFDCBAD0D312E72D49CD584EEC01BCA5D08586EAA0176"
+    },
+    {
+      "kind": "json",
+      "line_count": 206,
+      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
+      "sha256": "89AA8ABC986BC108A2501A02D8E0233BAB3B7B8BD15C8A8BC7CA5C50B41FD604"
+    }
+  ],
+  "maintenance_record": {
+    "artifact_id": ".agents/skills/skillguard",
+    "blockers": [],
+    "command_surface": {
+      "checker_name": "detect-stale-evidence",
+      "checker_version": "skillguard.local_cli_dispatch.v1",
+      "command_names": [
+        "commands",
+        "route-task",
+        "inventory",
+        "plan-skill",
+        "generate-skill",
+        "generate-suite",
+        "init-target",
+        "init-suite",
+        "mark",
+        "check-skill",
+        "check-suite",
+        "check-skill-contract",
+        "check-suite-map",
+        "check-suite-contract",
+        "check-fixture-manifest",
+        "fixture-test",
+        "detect-stale-evidence",
+        "refresh-maintenance",
+        "review-checker-change",
+        "check-maintenance-record",
+        "check-ai-judgment",
+        "check-report",
+        "check-workflow-report",
+        "make-closure",
+        "self-check",
+        "write-report"
+      ],
+      "current_route_registry": [
+        {
+          "command_family": "route-task",
+          "next_step": "Return a deterministic SkillGuard route decision.",
+          "responsibility": "router",
+          "route_id": "skillguard.route.route-task.v1",
+          "route_node_id": "route-task",
+          "status": "current"
+        },
+        {
+          "command_family": "plan-skill",
+          "next_step": "Run plan-skill with a repository-local skill idea JSON file.",
+          "responsibility": "planner",
+          "route_id": "skillguard.route.plan-skill.v1",
+          "route_node_id": "plan-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "generate-skill",
+          "next_step": "Run generate-skill with a valid Skill Blueprint after review.",
+          "responsibility": "generator",
+          "route_id": "skillguard.route.generate-skill.v1",
+          "route_node_id": "generate-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "generate-suite",
+          "next_step": "Run generate-suite with a valid Suite Blueprint after review.",
+          "responsibility": "generator",
+          "route_id": "skillguard.route.generate-suite.v1",
+          "route_node_id": "generate-suite",
+          "status": "current"
+        },
+        {
+          "command_family": "check-skill",
+          "next_step": "Run check-skill against the target skill directory.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-skill.v1",
+          "route_node_id": "check-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "check-suite",
+          "next_step": "Run check-suite against suite records and member paths.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-suite.v1",
+          "route_node_id": "check-suite",
+          "status": "current"
+        },
+        {
+          "command_family": "fixture-test",
+          "next_step": "Run fixture-test against an explicit fixture manifest.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.fixture-test.v1",
+          "route_node_id": "fixture-test",
+          "status": "current"
+        },
+        {
+          "command_family": "detect-stale-evidence",
+          "next_step": "Run detect-stale-evidence against current evidence-bearing JSON artifacts.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.detect-stale-evidence.v1",
+          "route_node_id": "detect-stale-evidence",
+          "status": "current"
+        },
+        {
+          "command_family": "refresh-maintenance",
+          "next_step": "Run refresh-maintenance against stale evidence records, first in dry-run mode unless execution is explicitly requested.",
+          "responsibility": "maintainer",
+          "route_id": "skillguard.route.refresh-maintenance.v1",
+          "route_node_id": "refresh-maintenance",
+          "status": "current"
+        },
+        {
+          "command_family": "review-checker-change",
+          "next_step": "Run review-checker-change against the approved checker-change baseline and current evidence metadata.",
+          "responsibility": "reviewer",
+          "route_id": "skillguard.route.review-checker-change.v1",
+          "route_node_id": "review-checker-change",
+          "status": "current"
+        },
+        {
+          "command_family": "check-maintenance-record",
+          "next_step": "Run check-maintenance-record against a canonical or supported legacy maintenance record JSON artifact.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-maintenance-record.v1",
+          "route_node_id": "check-maintenance-record",
+          "status": "current"
+        },
+        {
+          "command_family": "make-closure",
+          "next_step": "Run make-closure with current reports and direct evidence references.",
+          "responsibility": "closure",
+          "route_id": "skillguard.route.make-closure.v1",
+          "route_node_id": "make-closure",
+          "status": "current"
+        },
+        {
+          "command_family": "self-check",
+          "next_step": "Run self-check against the SkillGuard skill target.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.self-check.v1",
+          "route_node_id": "self-check",
+          "status": "current"
+        },
+        {
+          "command_family": "inventory",
+          "next_step": "Run inventory against the target path.",
+          "responsibility": "inventory",
+          "route_id": "skillguard.route.inventory.v1",
+          "route_node_id": "inventory",
+          "status": "current"
+        }
+      ]
+    },
+    "content_hash": "35919D1B3DC74CB211702F9853712433CD8CE16534AA1E5844B6C03107FA20C6",
+    "evidence_timestamp": "2026-06-24T04:50:15Z",
+    "record_id": "stale_evidence_review:623A113A312B3E67",
+    "record_kind": "stale_evidence_review",
+    "refresh_action": {
+      "action": "detect_only",
+      "stale_evidence_count": 0,
+      "status": "not_applicable"
+    },
+    "route_node_id": "detect-stale-evidence",
+    "route_registry_version": "skillguard.route_registry.v1",
+    "route_version": "4",
+    "schema_version": "skillguard.maintenance_record.v1",
+    "status": "pass"
+  },
+  "maintenance_record_schema_version": "skillguard.maintenance_record.v1",
+  "residual_risk": [
+    "Evidence artifacts without explicit comparable metadata are intentionally blocked as unverifiable rather than accepted.",
+    "This stale detector checks declared path/hash/route/command bindings; semantic adequacy still requires the owning checker or reviewer."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [
+    "detect-stale-evidence does not refresh stale artifacts, execute target commands, run OpenSpec itself, run fixture-test, or perform closure."
+  ],
+  "stale_evidence_blockers": [],
+  "stale_evidence_count": 0,
+  "target_path": ".agents/skills/skillguard"
+}

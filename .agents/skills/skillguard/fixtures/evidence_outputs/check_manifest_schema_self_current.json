@@ -1,0 +1,47 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-26T11:25:35Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "check-check-manifest:json-load",
+      "name": "Input JSON load",
+      "required": true,
+      "status": "pass",
+      "summary": "Loaded .agents/skills/skillguard/.skillguard/check_manifest.json with the Python standard library json module."
+    },
+    {
+      "check_id": "check-check-manifest:schema-subset",
+      "name": "Standard-library schema subset check",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked required fields, basic types, const, enum, minLength, minimum, and additionalProperties where declared."
+    }
+  ],
+  "claim_boundary": "This result covers only the named local CLI invocation and the current files it loaded. It does not prove fixture coverage, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "check-check-manifest",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "input-json",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/.skillguard/check_manifest.json",
+      "summary": "Parsed .agents/skills/skillguard/.skillguard/check_manifest.json; sha256=B3FCE1B5A3D1FD88C13CB0C1BDFB6F17CAB6D90628AC4A3C394991C42E11E58B."
+    },
+    {
+      "evidence_id": "schema-json",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard/assets/schemas/skillguard_check_manifest.schema.json",
+      "summary": "Parsed schema assets/schemas/skillguard_check_manifest.schema.json; sha256=70DF18A58C624B3DEF44BD149826BD041203C5A24A03ABC1D2A6FEE20DD3B84C."
+    }
+  ],
+  "failures": [],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard/.skillguard/check_manifest.json"
+}

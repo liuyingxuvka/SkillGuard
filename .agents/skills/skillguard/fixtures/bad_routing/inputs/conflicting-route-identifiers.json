@@ -1,0 +1,6 @@
+{
+  "task": "Create a draft skill scaffold from a Skill Blueprint",
+  "route_id": "skillguard.route.generate-skill.v1",
+  "route_node_id": "check-suite",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_routing/probes/conflicting-route-identifiers-must-not-exist"
+}

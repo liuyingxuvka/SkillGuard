@@ -1,0 +1,29 @@
+{
+  "claim_boundary": "This Suite Blueprint is an example input only. It does not prove child skill acceptance, runtime checker execution, fixture coverage, tests, suite automation, package publication, release readiness, code-contract validation, external services, or future AI behavior.",
+  "evidence_policy": "current direct evidence required before suite or child acceptance",
+  "member_skills": [
+    {
+      "description": "Use when a maintainer needs bounded repository-note review inside the example suite.",
+      "name": "example-suite-review",
+      "purpose": "Maintain example review notes with visible evidence and claim boundaries.",
+      "role": "review helper"
+    },
+    {
+      "description": "Use when a maintainer needs bounded fixture-note review inside the example suite.",
+      "name": "example-suite-fixtures",
+      "purpose": "Maintain example fixture notes with visible evidence and claim boundaries.",
+      "role": "fixture helper"
+    }
+  ],
+  "purpose": "Create a bounded multi-skill suite scaffold with visible child evidence.",
+  "safe_edit_scope": {
+    "allowed_write_paths": [
+      ".agents/skills/example-review-suite"
+    ],
+    "target_file_writes_allowed": true
+  },
+  "schema_version": "skillguard.suite_blueprint.v1",
+  "suite_name": "example-review-suite",
+  "target": ".agents/skills/example-review-suite",
+  "workflow_mode": "suite"
+}

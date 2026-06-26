@@ -1,0 +1,245 @@
+{
+  "check_scripts": [
+    {
+      "check_id": "check_route",
+      "command": "python .skillguard/checks/check_route.py",
+      "failure_class": "route",
+      "phase_id": "intake",
+      "required": true,
+      "script_path": ".skillguard/checks/check_route.py"
+    },
+    {
+      "check_id": "check_phase_order",
+      "command": "python .skillguard/checks/check_phase_order.py",
+      "failure_class": "phase_order",
+      "phase_id": "inventory",
+      "required": true,
+      "script_path": ".skillguard/checks/check_phase_order.py"
+    },
+    {
+      "check_id": "check_evidence",
+      "command": "python .skillguard/checks/check_evidence.py",
+      "failure_class": "evidence",
+      "phase_id": "evidence",
+      "required": true,
+      "script_path": ".skillguard/checks/check_evidence.py"
+    },
+    {
+      "check_id": "check_quality_floor",
+      "command": "python .skillguard/checks/check_quality_floor.py",
+      "failure_class": "quality_floor",
+      "phase_id": "checks",
+      "required": true,
+      "script_path": ".skillguard/checks/check_quality_floor.py"
+    },
+    {
+      "check_id": "check_closure",
+      "command": "python .skillguard/checks/check_closure.py",
+      "failure_class": "closure",
+      "phase_id": "closure",
+      "required": true,
+      "script_path": ".skillguard/checks/check_closure.py"
+    }
+  ],
+  "claim_boundary": "This work contract governs only the declared target skill and local run evidence. It does not prove packaged CLI support, package publication, external services, future AI correctness, or broader release readiness.",
+  "closure_rules": [
+    {
+      "allowed_decision": "accepted",
+      "required_checks": [
+        "check_route",
+        "check_phase_order",
+        "check_evidence",
+        "check_quality_floor",
+        "check_closure"
+      ],
+      "required_evidence": [
+        "task_summary",
+        "target_inventory",
+        "direct_evidence",
+        "check_output",
+        "closure_report"
+      ],
+      "rule_id": "accepted_requires_all_required_checks",
+      "scope": "declared run scope only"
+    }
+  ],
+  "contract_hash": "CEB2D9A4291B4E18190EBB23E37D00B9A576D73CA310974E207610A1AA2BCF24",
+  "contract_version": "1",
+  "forbidden_shortcuts": [
+    {
+      "shortcut_id": "skip_to_closure",
+      "summary": "Do not move directly from intake or planning to closure without current phase evidence and required checks."
+    }
+  ],
+  "phases": [
+    {
+      "allowed_next": [
+        "inventory"
+      ],
+      "phase_id": "intake",
+      "required_checks": [
+        "check_route"
+      ],
+      "required_evidence": [
+        "task_summary"
+      ],
+      "summary": "Confirm target, requested outcome, route, and claim boundary."
+    },
+    {
+      "allowed_next": [
+        "evidence"
+      ],
+      "phase_id": "inventory",
+      "required_checks": [
+        "check_phase_order"
+      ],
+      "required_evidence": [
+        "target_inventory"
+      ],
+      "summary": "Inspect current target files and supported local materials."
+    },
+    {
+      "allowed_next": [
+        "checks"
+      ],
+      "phase_id": "evidence",
+      "required_checks": [
+        "check_evidence"
+      ],
+      "required_evidence": [
+        "direct_evidence"
+      ],
+      "summary": "Collect current direct evidence for the declared scope."
+    },
+    {
+      "allowed_next": [
+        "closure"
+      ],
+      "phase_id": "checks",
+      "required_checks": [
+        "check_quality_floor"
+      ],
+      "required_evidence": [
+        "check_output"
+      ],
+      "summary": "Run required checks and quality-floor gates."
+    },
+    {
+      "allowed_next": [],
+      "phase_id": "closure",
+      "required_checks": [
+        "check_closure"
+      ],
+      "required_evidence": [
+        "closure_report"
+      ],
+      "summary": "Close only inside the evidence-backed claim boundary."
+    }
+  ],
+  "quality_floors": [
+    {
+      "failure_effect": "block checked or accepted closure",
+      "floor_id": "no_prose_only_completion",
+      "required_checks": [
+        "check_evidence",
+        "check_quality_floor"
+      ],
+      "summary": "Do not replace required command or file evidence with prose-only claims."
+    }
+  ],
+  "required_evidence": [
+    {
+      "evidence_id": "task_summary",
+      "kind": "task_record",
+      "phase_id": "intake",
+      "required": true,
+      "source": ".skillguard/runs/"
+    },
+    {
+      "evidence_id": "target_inventory",
+      "kind": "file_inventory",
+      "phase_id": "inventory",
+      "required": true,
+      "source": ".skillguard/runs/"
+    },
+    {
+      "evidence_id": "direct_evidence",
+      "kind": "direct_evidence",
+      "phase_id": "evidence",
+      "required": true,
+      "source": ".skillguard/runs/"
+    },
+    {
+      "evidence_id": "check_output",
+      "kind": "command_output",
+      "phase_id": "checks",
+      "required": true,
+      "source": ".skillguard/runs/"
+    },
+    {
+      "evidence_id": "closure_report",
+      "kind": "closure_record",
+      "phase_id": "closure",
+      "required": true,
+      "source": ".skillguard/runs/"
+    }
+  ],
+  "routes": [
+    {
+      "activation_keywords": [
+        "audit",
+        "review",
+        "check",
+        "inspect",
+        "verify"
+      ],
+      "do_not_use_when": [
+        "The task is outside this skill's activation boundary."
+      ],
+      "phase_order": [
+        "intake",
+        "inventory",
+        "evidence",
+        "checks",
+        "closure"
+      ],
+      "route_id": "audit",
+      "summary": "Inspect the target skill and close only after required checks pass."
+    },
+    {
+      "activation_keywords": [
+        "audit",
+        "review",
+        "check",
+        "inspect",
+        "verify"
+      ],
+      "do_not_use_when": [
+        "The task is outside this skill's activation boundary."
+      ],
+      "phase_order": [
+        "intake",
+        "inventory",
+        "evidence",
+        "checks",
+        "closure"
+      ],
+      "route_id": "review",
+      "summary": "Review the target skill and close only after required checks pass."
+    }
+  ],
+  "schema_version": "skillguard.work_contract.v1",
+  "skill_id": "skillguard",
+  "stale_bindings": [
+    {
+      "binding_id": "target_skill_prompt",
+      "path": "SKILL.md",
+      "stales": [
+        "route_selection",
+        "run_record",
+        "closure_report"
+      ]
+    }
+  ],
+  "target_path": ".agents/skills/skillguard"
+}

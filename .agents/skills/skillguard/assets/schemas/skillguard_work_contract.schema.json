@@ -1,0 +1,347 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SkillGuard runnable work-contract schema for one target skill.",
+  "properties": {
+    "check_scripts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "check_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "command": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "failure_class": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "phase_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "script_path": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "phase_id",
+          "script_path",
+          "command",
+          "required",
+          "failure_class"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "claim_boundary": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "closure_rules": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_decision": {
+            "enum": [
+              "checked",
+              "accepted",
+              "needs-review",
+              "blocked",
+              "failed",
+              "stale"
+            ],
+            "type": "string"
+          },
+          "required_checks": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required_evidence": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "rule_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "scope": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_id",
+          "scope",
+          "allowed_decision",
+          "required_checks",
+          "required_evidence"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "contract_hash": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "contract_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "forbidden_shortcuts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "shortcut_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "shortcut_id",
+          "summary"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "phases": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed_next": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "phase_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required_checks": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required_evidence": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "phase_id",
+          "summary",
+          "required_evidence",
+          "required_checks",
+          "allowed_next"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "quality_floors": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "failure_effect": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "floor_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required_checks": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "floor_id",
+          "summary",
+          "required_checks",
+          "failure_effect"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "required_evidence": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "phase_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "source": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "phase_id",
+          "kind",
+          "source",
+          "required"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "routes": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "activation_keywords": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "do_not_use_when": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "phase_order": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "route_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "route_id",
+          "summary",
+          "activation_keywords",
+          "do_not_use_when",
+          "phase_order"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "skillguard.work_contract.v1",
+      "type": "string"
+    },
+    "skill_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "stale_bindings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "binding_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "stales": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "binding_id",
+          "path",
+          "stales"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "target_path": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "skill_id",
+    "target_path",
+    "contract_version",
+    "contract_hash",
+    "routes",
+    "phases",
+    "required_evidence",
+    "quality_floors",
+    "forbidden_shortcuts",
+    "check_scripts",
+    "closure_rules",
+    "stale_bindings",
+    "claim_boundary"
+  ],
+  "title": "SkillGuardWorkContract",
+  "type": "object"
+}

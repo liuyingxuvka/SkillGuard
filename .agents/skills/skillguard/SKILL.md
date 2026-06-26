@@ -25,8 +25,10 @@ Start from the current repository layout instead of assuming generated files exi
 - Use `README.md`, `pyproject.toml`, `VERSION`, and `AGENTS.md` for the public repository contract, metadata, version, and contributor boundaries.
 - Use `../../../references/` for the maintained SkillGuard standards when this repository layout is present.
 - Use `assets/schemas/` and `assets/templates/` for local schema and template checks.
-- Use `.skillguard/` under the skill directory only when the task asks for maintained SkillGuard records, evidence, reports, or self-check material.
-- Treat local `scripts/`, `fixtures/`, `tests/`, and `examples/` under this skill as absent unless direct inspection in the current task finds those paths.
+- Use `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` when a task needs runtime contract routing, phase gates, or closure rules.
+- Use `.skillguard/checks/` for local runtime check script stubs and `.skillguard/runs/` for run records created before non-trivial skill work begins.
+- Use other `.skillguard/` material under the skill directory when the task asks for maintained SkillGuard records, evidence, reports, or self-check material.
+- Treat local `scripts/`, `fixtures/`, `tests`, and `examples/` under this skill as evidence only after direct inspection in the current task finds those paths and their current content.
 
 Do not cite or require scripts, fixtures, examples, tests, package commands, releases, git remotes, or publication records unless they exist in the current filesystem and were inspected for the current task.
 
@@ -99,6 +101,21 @@ Do not use this skill to certify AI correctness, guarantee Codex activation, or 
 
    A missing required file, stale required evidence, privacy exposure, malformed metadata, or unvalidated release claim must be reported as a failure or blocker. Do not downgrade it to a warning just to complete the task.
 
+## Runtime Contract Mode
+
+Use Runtime Contract Mode when the task is about making a target skill's actual work path enforceable, not merely reviewing repository files.
+
+In this mode SkillGuard should help the target skill:
+
+- compile a `.skillguard/work-contract.json` with routes, phases, evidence obligations, quality floors, forbidden shortcuts, checks, closure rules, and stale bindings;
+- require route selection before non-trivial skill work starts;
+- create or update a `.skillguard/runs/` run record for the selected route;
+- advance phases only when required evidence and checks are present for earlier phases;
+- run route, phase-order, evidence, quality-floor, freshness, suite-child, and closure checks before closure;
+- block missing contracts, hollow contracts, ambiguous routes, skipped phases, stale evidence, prose-only evidence, quality downgrades, and closure overclaims.
+
+AI or human judgment may be recorded after deterministic evidence is clear, but it cannot replace required runnable checks or make skipped work pass.
+
 ## Hard Gates
 
 These gates are mandatory for SkillGuard work. If a gate cannot be checked, mark it as skipped with a reason or block the task. Do not claim success for unchecked gates.
@@ -113,6 +130,7 @@ These gates are mandatory for SkillGuard work. If a gate cannot be checked, mark
 - AI or human judgment must be recorded as judgment, not as deterministic proof.
 - Release, package, command, fixture, schema, git, and publication claims must be directly validated before they are described as complete.
 - Failures and blockers must remain visible in the final report.
+- Runtime contract work must not close unless the selected route, run record, required phases, required evidence, required checks, quality floors, and closure boundary are all current for the declared scope.
 
 Hard gates are not suggestions. Vague confidence, intent, partial inspection, or a prior successful run is not enough to pass a hard gate.
 

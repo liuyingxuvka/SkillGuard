@@ -1,0 +1,6 @@
+{
+  "fixture_id": "runtime-check-contract-pass",
+  "target_command": "check-contract",
+  "expected_decision": "pass",
+  "target_path": ".agents/skills/skillguard"
+}

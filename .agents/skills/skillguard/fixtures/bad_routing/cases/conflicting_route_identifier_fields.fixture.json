@@ -1,0 +1,31 @@
+{
+  "fixture_id": "route_task_conflicting_route_identifier_fields",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "json-config-with-conflicting-route-identifiers",
+  "config_path": "../inputs/conflicting-route-identifiers.json",
+  "no_mutation_paths": [
+    "../probes/conflicting-route-identifiers-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_conflict",
+    "blocker_code": "incompatible_route_identifiers",
+    "conflicting_fields": [
+      "$.route_id",
+      "$.route_node_id"
+    ],
+    "candidate_command_families": [
+      "generate-skill",
+      "check-suite"
+    ],
+    "message_contains": [
+      "multiple current routes"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "forbidden_output_substrings": [
+      "Create a draft skill scaffold from a Skill Blueprint"
+    ],
+    "deterministic_repeat": true
+  }
+}

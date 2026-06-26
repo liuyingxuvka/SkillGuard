@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "SkillGuard runtime check manifest schema.",
+  "properties": {
+    "checks": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "check_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "command": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "failure_class": {
+            "enum": [
+              "route",
+              "phase_order",
+              "evidence",
+              "freshness",
+              "quality_floor",
+              "closure",
+              "suite_child"
+            ],
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "phase_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "check_id",
+          "phase_id",
+          "command",
+          "required",
+          "failure_class",
+          "inputs"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "claim_boundary": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "contract_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "freshness": {
+      "additionalProperties": false,
+      "properties": {
+        "watch": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "watch"
+      ],
+      "type": "object"
+    },
+    "output_schema": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "skillguard.check_manifest.v1",
+      "type": "string"
+    },
+    "target_skill": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "target_skill",
+    "contract_ref",
+    "checks",
+    "output_schema",
+    "freshness",
+    "claim_boundary"
+  ],
+  "title": "SkillGuardCheckManifest",
+  "type": "object"
+}

@@ -1,0 +1,8 @@
+{
+  "fixture_id": "runtime-select-route-missing-route-block",
+  "target_command": "select-route",
+  "expected_decision": "block",
+  "target_path": ".agents/skills/skillguard",
+  "contract_path": "../contracts/ambiguous_routes_contract.json",
+  "task": "Prepare an unrelated calendar agenda without guard contract terms."
+}

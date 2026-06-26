@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import unittest
 from datetime import datetime, timezone
@@ -16,11 +18,17 @@ from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SKILLGUARD = REPO_ROOT / ".agents" / "skills" / "skillguard" / "scripts" / "skillguard.py"
+SCRIPT_DIR = REPO_ROOT / ".agents" / "skills" / "skillguard" / "scripts"
+sys.path.insert(0, str(SCRIPT_DIR))
+
+import checker_engine  # noqa: E402
+
+
+SKILLGUARD = SCRIPT_DIR / "skillguard.py"
 EXAMPLES = REPO_ROOT / "examples" / "README.md"
 
 PRIVATE_OR_SECRET_PATTERNS = (
-    re.compile(r"(?i)([A-Z]:[\\/][^\\s`\"']+|/Users/|\\\\[^\\s`\"']+)"),
+    re.compile(r"(?<![A-Za-z])(?:[A-Za-z]:[\\/][^\\s`\"']+|/[Uu]sers/|\\\\[^\\s`\"']+)"),
     re.compile(r"\b(?:packet|lease|result)-\d{4,}\b"),
     re.compile(r"BEGIN (?:RSA |OPENSSH |DSA |EC |PGP )?PRIVATE\s+KEY"),
     re.compile(r"(?i)\b(?:api[_-]?key|secret|token|password)\b\s*[:=]"),
@@ -64,6 +72,218 @@ def run_skillguard(*args: str, expected_exit: int = 0) -> dict[str, Any]:
         raise AssertionError(f"command did not produce parseable JSON: {exc}\n{completed.stdout}") from exc
 
 
+def write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
+
+
+def freshness_record_for(path: Path, **extra: Any) -> dict[str, Any]:
+    record = {
+        "schema_version": "skillguard.cli_result.v1",
+        "command": "check-skill",
+        "decision": "pass",
+        "checked_at": utc_timestamp(),
+        "files_inspected": [
+            {
+                "path": rel(path),
+                "kind": "file",
+                "sha256": sha256(path),
+                "line_count": len(path.read_text(encoding="utf-8").splitlines()),
+            }
+        ],
+        "evidence": [
+            {
+                "evidence_id": "freshness-test-source",
+                "kind": "file_inspection",
+                "fresh": True,
+                "source_path": rel(path),
+                "summary": "Synthetic current source fingerprint for detect-stale-evidence regression.",
+            }
+        ],
+        "failures": [],
+        "blockers": [],
+        "skipped_checks": [],
+        "residual_risk": [],
+        "claim_boundary": "Synthetic test evidence used only by the local detect-stale-evidence regression.",
+    }
+    record.update(extra)
+    return record
+
+
+def stale_blocker_codes(report: dict[str, Any]) -> set[str]:
+    return {item.get("blocker_code") for item in report.get("stale_evidence_blockers", [])}
+
+
+def valid_skill_idea(target_path: str, skill_name: str = "example-review-helper") -> dict[str, Any]:
+    return {
+        "skill_name": skill_name,
+        "description": "Use when a maintainer needs a bounded review helper for repository notes.",
+        "target_path": target_path,
+        "purpose": "Create a review helper skill plan with explicit evidence and claim boundaries.",
+        "workflow_mode": "create",
+        "closure_scope": "blueprint preview only",
+        "evidence_policy": "current direct evidence required before target acceptance",
+        "safe_edit_mode": "no_write",
+        "use_when": ["A maintainer asks for a review helper skill plan."],
+        "do_not_use_when": ["The request needs target files written by the planning command."],
+        "required_workflow": ["Inspect target files before any later edit.", "Run local checks after implementation."],
+        "hard_gates": ["Do not write target files during planning.", "Keep claim boundaries visible."],
+        "output_requirements": ["evidence", "blockers", "skipped_checks", "residual_risk", "claim_boundary"],
+    }
+
+
+def valid_suite_blueprint(target_path: str, suite_name: str, members: list[str] | None = None) -> dict[str, Any]:
+    member_names = members or ["suite-alpha", "suite-beta"]
+    return {
+        "schema_version": "skillguard.suite_blueprint.v1",
+        "suite_name": suite_name,
+        "target": target_path,
+        "workflow_mode": "suite",
+        "purpose": "Create a bounded multi-skill suite scaffold with visible child evidence.",
+        "evidence_policy": "current direct evidence required before suite or child acceptance",
+        "safe_edit_scope": {
+            "target_file_writes_allowed": True,
+            "allowed_write_paths": [target_path],
+        },
+        "member_skills": [
+            {
+                "name": name,
+                "role": f"{name} generated member",
+                "description": f"Use when work falls inside the {name} suite member boundary.",
+                "purpose": f"Maintain {name} with current child evidence and bounded suite claims.",
+            }
+            for name in member_names
+        ],
+        "claim_boundary": (
+            "This Suite Blueprint is an input to generate-suite only. It does not prove child skill acceptance, runtime checker "
+            "execution, fixture coverage, tests, suite automation, package publication, release readiness, code-contract "
+            "validation, external services, or future AI behavior."
+        ),
+    }
+
+
+def checker_change_baseline(
+    *,
+    command_surface: list[dict[str, Any]] | None = None,
+    route_registry: list[dict[str, Any]] | None = None,
+    fixture_manifests: list[dict[str, Any]] | None = None,
+    evidence_records: list[dict[str, Any]] | None = None,
+    **overrides: Any,
+) -> dict[str, Any]:
+    record = {
+        "schema_version": checker_engine.REVIEW_CHECKER_CHANGE_BASELINE_SCHEMA,
+        "baseline_id": "synthetic-checker-change-baseline",
+        "checker_version": checker_engine.CHECKER_VERSION,
+        "route_version": checker_engine.DETECT_STALE_EXPECTED_ROUTE_VERSION,
+        "route_registry_version": checker_engine.ROUTE_TASK_REGISTRY_VERSION,
+        "command_surface": command_surface if command_surface is not None else checker_engine.current_checker_command_surface(),
+        "route_registry": route_registry
+        if route_registry is not None
+        else [checker_engine.public_route_entry(entry) for entry in checker_engine.current_route_entries()],
+        "fixture_manifests": fixture_manifests or [],
+        "evidence_records": evidence_records or [],
+        "public_safety_checks": [finding_id for finding_id, _pattern in checker_engine.PUBLIC_SAFETY_PATTERNS],
+    }
+    record.update(overrides)
+    return record
+
+
+def checker_change_blocker_codes(report: dict[str, Any]) -> set[str]:
+    return {item.get("blocker_code") for item in report.get("checker_change_blockers", [])}
+
+
+def checker_change_suite_guard_codes(report: dict[str, Any]) -> set[str]:
+    return {item.get("blocker_code") for item in report.get("checker_change_suite_guard_blockers", [])}
+
+
+def checker_change_review_report_for(source_path: Path, **overrides: Any) -> dict[str, Any]:
+    checked_at = utc_timestamp()
+    source_relative = rel(source_path)
+    report = {
+        "schema_version": checker_engine.REVIEW_CHECKER_CHANGE_RESULT_SCHEMA,
+        "command": "review-checker-change",
+        "decision": "pass",
+        "checked_at": checked_at,
+        "checker_version": checker_engine.CHECKER_VERSION,
+        "route_version": checker_engine.DETECT_STALE_EXPECTED_ROUTE_VERSION,
+        "route_registry_version": checker_engine.ROUTE_TASK_REGISTRY_VERSION,
+        "command_names": list(checker_engine.COMMANDS),
+        "current_route_registry": [
+            checker_engine.public_route_entry(entry) for entry in checker_engine.current_route_entries()
+        ],
+        "files_inspected": [
+            {
+                "path": source_relative,
+                "kind": "file",
+                "sha256": sha256(source_path),
+                "line_count": len(source_path.read_text(encoding="utf-8").splitlines()),
+            }
+        ],
+        "checker_change_blockers": [],
+        "blockers": [],
+        "failures": [],
+        "checks": [
+            {
+                "check_id": "review-checker-change:synthetic-current",
+                "name": "Synthetic current review",
+                "required": True,
+                "status": "pass",
+                "summary": "Synthetic current checker-change review evidence for suite-guard regression.",
+            }
+        ],
+        "evidence": [
+            {
+                "evidence_id": "synthetic-checker-change-review",
+                "kind": "file_inspection",
+                "fresh": True,
+                "source_path": source_relative,
+                "summary": "Synthetic checker-change review source fingerprint.",
+            }
+        ],
+        "skipped_checks": [],
+        "residual_risk": [],
+        "claim_boundary": "Synthetic review-checker-change evidence used only by local suite-guard regression tests.",
+        "mutation_check": {"read_only": True, "mutated_input_paths": [], "watched_input_count": 1},
+    }
+    report["maintenance_record"] = checker_engine.build_maintenance_record(
+        record_kind="checker_change_review",
+        artifact_id=".agents/skills/skillguard",
+        route_node_id="review-checker-change",
+        checker_name="review-checker-change",
+        status="pass",
+        blockers=[],
+        evidence_timestamp=checked_at,
+        refresh_action={"action": "review_only", "status": "not_applicable"},
+        content_seed={"source_path": source_relative, "decision": "pass"},
+    )
+    report["maintenance_record_schema_version"] = checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION
+    report.update(overrides)
+    return report
+
+
+def valid_maintenance_record(**overrides: Any) -> dict[str, Any]:
+    record = checker_engine.build_maintenance_record(
+        record_kind="stale_evidence_review",
+        artifact_id="synthetic-maintenance-record",
+        route_node_id="detect-stale-evidence",
+        checker_name="detect-stale-evidence",
+        status="pass",
+        blockers=[],
+        evidence_timestamp=utc_timestamp(),
+        refresh_action={"action": "detect_only", "status": "not_applicable"},
+        content_seed={"test": "maintenance-record"},
+    )
+    record.update(overrides)
+    return record
+
+
+def maintenance_blocker_codes(report: dict[str, Any]) -> set[str]:
+    return {item.get("blocker_code") for item in report.get("maintenance_record_blockers", [])}
+
+
 class SkillGuardLocalExamplesTest(unittest.TestCase):
     maxDiff = None
 
@@ -72,6 +292,47 @@ class SkillGuardLocalExamplesTest(unittest.TestCase):
         self.assertEqual(report.get("failures"), [])
         self.assertEqual(report.get("blockers"), [])
         self.assertIn("claim_boundary", report)
+
+    def assert_route_conflict(self, report: dict[str, Any], blocker_code: str) -> dict[str, Any]:
+        self.assertEqual(report.get("decision"), "block")
+        structured = report.get("routing_conflict_blockers", [])
+        self.assertIsInstance(structured, list)
+        match = next((item for item in structured if item.get("blocker_code") == blocker_code), None)
+        self.assertIsNotNone(match, structured)
+        assert match is not None
+        self.assertTrue(match.get("blocker_class"))
+        self.assertTrue(match.get("message"))
+        self.assertIn("recommended_resolution", match)
+        self.assertTrue(match.get("conflicting_fields") or match.get("conflicting_candidates"), match)
+        self.assertEqual(report.get("routing_decision"), {})
+        return match
+
+    def assert_validation_registry(self, report: dict[str, Any], command: str, decision: str) -> dict[str, Any]:
+        registry = report.get("validation_registry")
+        self.assertIsInstance(registry, dict)
+        assert isinstance(registry, dict)
+        self.assertEqual(registry.get("schema_version"), checker_engine.VALIDATION_REGISTRY_SCHEMA_VERSION)
+        self.assertEqual(registry.get("command"), command)
+        self.assertEqual(registry.get("decision"), decision)
+        self.assertIsInstance(registry.get("validation_rows"), list)
+        self.assertIsInstance(registry.get("evidence"), list)
+        self.assertIn("checks", registry.get("source_of_truth_for", []))
+        self.assertIn("evidence", registry.get("source_of_truth_for", []))
+        return registry
+
+    def validation_registry_ids(self, registry: dict[str, Any]) -> set[str]:
+        return {
+            str(row.get("validation_id"))
+            for row in registry.get("validation_rows", [])
+            if isinstance(row, dict) and row.get("validation_id")
+        }
+
+    def validation_registry_blocker_codes(self, registry: dict[str, Any]) -> set[str]:
+        return {
+            str(row.get("blocker_code"))
+            for row in registry.get("blocker_evidence", [])
+            if isinstance(row, dict) and row.get("blocker_code")
+        }
 
     def test_single_skill_example_command(self) -> None:
         report = run_skillguard("check-skill", "--target", ".agents/skills/skillguard/fixtures/good_single_skill")
@@ -98,6 +359,34 @@ class SkillGuardLocalExamplesTest(unittest.TestCase):
         self.assert_clean_pass(positive)
         self.assertEqual(positive.get("fixture_class_counts", {}).get("expected_pass"), 3)
 
+        simple_generation = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json")
+        self.assert_clean_pass(simple_generation)
+        self.assertEqual(simple_generation.get("fixture_class_counts", {}).get("expected_pass"), 1)
+        self.assertEqual(simple_generation.get("fixture_class_counts", {}).get("blocker_condition"), 1)
+        generation_results = {item.get("fixture_id"): item for item in simple_generation.get("fixture_results", [])}
+        happy = generation_results["generate_skill_simple_public_input"]
+        self.assertEqual(happy.get("target_command"), "generate-skill")
+        self.assertTrue(happy.get("deterministic_repeat_checked"))
+        self.assertEqual(happy.get("generation_validation", {}).get("check_maintenance_record_decision"), "pass")
+        self.assertEqual(happy.get("generation_validation", {}).get("detect_stale_evidence_decision"), "pass")
+        self.assertEqual(happy.get("generation_validation", {}).get("refresh_maintenance_decision"), "pass")
+        self.assertEqual(generation_results["generate_skill_existing_user_file_blocks"].get("observed_decision"), "block")
+
+        complex_generation = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json")
+        self.assert_clean_pass(complex_generation)
+        self.assertEqual(complex_generation.get("fixture_class_counts", {}).get("expected_pass"), 1)
+        self.assertEqual(complex_generation.get("fixture_class_counts", {}).get("expected_fail"), 1)
+        self.assertEqual(complex_generation.get("fixture_class_counts", {}).get("blocker_condition"), 1)
+        complex_results = {item.get("fixture_id"): item for item in complex_generation.get("fixture_results", [])}
+        complex_happy = complex_results["generate_skill_complex_public_input"]
+        self.assertTrue(complex_happy.get("deterministic_repeat_checked"))
+        self.assertEqual(complex_happy.get("generation_validation", {}).get("check_maintenance_record_decision"), "pass")
+        self.assertEqual(complex_happy.get("generation_validation", {}).get("detect_stale_evidence_decision"), "pass")
+        self.assertEqual(complex_happy.get("generation_validation", {}).get("refresh_maintenance_decision"), "pass")
+        self.assertEqual(complex_happy.get("generation_validation", {}).get("public_boundary_problem_count"), 0)
+        self.assertEqual(complex_results["generate_skill_complex_missing_description_blocks"].get("observed_decision"), "block")
+        self.assertEqual(complex_results["generate_skill_complex_corrupted_output_fails"].get("observed_decision"), "fail")
+
         bad_static = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/bad_static/fixture-manifest.json")
         self.assert_clean_pass(bad_static)
         self.assertEqual(bad_static.get("fixture_class_counts", {}).get("expected_fail"), 3)
@@ -106,14 +395,2174 @@ class SkillGuardLocalExamplesTest(unittest.TestCase):
         self.assert_clean_pass(bad_suite)
         self.assertEqual(bad_suite.get("fixture_class_counts", {}).get("expected_fail"), 4)
 
+        bad_routing = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json")
+        self.assert_clean_pass(bad_routing)
+        self.assertEqual(bad_routing.get("fixture_class_counts", {}).get("blocker_condition"), 11)
+        expected_codes = {
+            "conflicting_input_sources",
+            "ambiguous_task_sources",
+            "unsupported_route_hint",
+            "stale_route_identifier",
+            "mutually_exclusive_flags",
+            "malformed_json",
+            "invalid_path_config",
+            "multiple_equal_route_candidates",
+            "incompatible_route_identifiers",
+            "responsibility_route_conflict",
+            "incompatible_route_hint",
+        }
+        observed_codes = {
+            code
+            for result in bad_routing.get("fixture_results", [])
+            for code in result.get("routing_conflict_blocker_codes", [])
+        }
+        self.assertEqual(observed_codes, expected_codes)
+        self.assertFalse(any(result.get("routing_decision_present") for result in bad_routing.get("fixture_results", [])))
+        self.assertTrue(all(result.get("deterministic_repeat_checked") for result in bad_routing.get("fixture_results", [])))
+
     def test_self_check_example_command(self) -> None:
         report = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
         self.assert_clean_pass(report)
 
+    def test_plan_skill_outputs_blueprint_without_writing_target(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-plan-", dir=REPO_ROOT) as tmp:
+            tmp_root = Path(tmp)
+            target = tmp_root / "planned_skill"
+            idea_path = tmp_root / "idea.json"
+            write_json(idea_path, valid_skill_idea(rel(target)))
+
+            report = run_skillguard("plan-skill", "--input", rel(idea_path))
+
+            self.assert_clean_pass(report)
+            self.assertFalse(target.exists(), "plan-skill must not create the declared target directory")
+            blueprint = report.get("skill_blueprint")
+            self.assertIsInstance(blueprint, dict)
+            for field in (
+                "blueprint_id",
+                "target",
+                "workflow_mode",
+                "closure_scope",
+                "evidence_policy",
+                "safe_edit_scope",
+                "phase_plan",
+                "evidence_gates",
+                "handoffs",
+                "closure_report",
+                "residual_risk",
+                "claim_boundary",
+            ):
+                self.assertIn(field, blueprint)
+            self.assertEqual(blueprint.get("workflow_mode"), "create")
+            self.assertEqual(blueprint.get("safe_edit_scope", {}).get("target_file_writes_allowed"), False)
+            self.assertGreaterEqual(len(blueprint.get("phase_plan", [])), 5)
+
+    def test_plan_skill_blocks_missing_target_and_unsafe_writes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-plan-", dir=REPO_ROOT) as tmp:
+            tmp_root = Path(tmp)
+            idea_path = tmp_root / "idea.json"
+            idea = valid_skill_idea(rel(tmp_root / "planned_skill"))
+            idea.pop("target_path")
+            write_json(idea_path, idea)
+            missing_target = run_skillguard("plan-skill", "--input", rel(idea_path), expected_exit=1)
+            self.assertEqual(missing_target.get("decision"), "block")
+            self.assertTrue(any("target_path" in blocker for blocker in missing_target.get("blockers", [])))
+
+            unsafe_path = tmp_root / "unsafe.json"
+            unsafe = valid_skill_idea(rel(tmp_root / "planned_skill"))
+            unsafe["safe_edit_mode"] = "write"
+            unsafe["write_target_files"] = True
+            write_json(unsafe_path, unsafe)
+            unsafe_report = run_skillguard("plan-skill", "--input", rel(unsafe_path), expected_exit=1)
+            self.assertEqual(unsafe_report.get("decision"), "block")
+            self.assertFalse((tmp_root / "planned_skill").exists())
+            self.assertTrue(any("no_write" in blocker or "preview-only" in blocker for blocker in unsafe_report.get("blockers", [])))
+
+    def test_commands_includes_plan_skill(self) -> None:
+        report = run_skillguard("commands")
+        self.assert_clean_pass(report)
+        names = {item.get("name") for item in report.get("commands", [])}
+        self.assertIn("route-task", names)
+        self.assertIn("plan-skill", names)
+        self.assertIn("generate-suite", names)
+        self.assertIn("detect-stale-evidence", names)
+        self.assertIn("refresh-maintenance", names)
+        self.assertIn("review-checker-change", names)
+        self.assertIn("check-maintenance-record", names)
+        self.assertIn("compile-contract", names)
+        self.assertIn("check-contract", names)
+        self.assertIn("select-route", names)
+        self.assertIn("start-run", names)
+        self.assertIn("advance-run", names)
+        self.assertIn("check-run", names)
+        self.assertIn("close-run", names)
+
+    def test_runtime_contract_command_family_enforces_route_run_and_closure_gates(self) -> None:
+        target = REPO_ROOT / ".agents" / "skills" / "skillguard"
+        contract = target / ".skillguard" / "work-contract.json"
+        manifest = target / ".skillguard" / "check_manifest.json"
+        good_run = target / "fixtures" / "runtime_contract" / "runs" / "good_run.json"
+        quality_run = target / "fixtures" / "runtime_contract" / "runs" / "quality_failure_run.json"
+        overclaim_run = target / "fixtures" / "runtime_contract" / "runs" / "overclaim_run.json"
+        hollow_contract = target / "fixtures" / "runtime_contract" / "contracts" / "hollow_contract.json"
+        ambiguous_contract = target / "fixtures" / "runtime_contract" / "contracts" / "ambiguous_routes_contract.json"
+
+        for command, input_path in (
+            ("check-work-contract", contract),
+            ("check-run-record", good_run),
+            ("check-check-manifest", manifest),
+        ):
+            report = run_skillguard(command, "--input", rel(input_path))
+            self.assert_clean_pass(report)
+
+        compiled = run_skillguard("compile-contract", "--target", rel(target), "--dry-run")
+        self.assert_clean_pass(compiled)
+        check_contract = run_skillguard("check-contract", "--target", rel(target))
+        self.assert_clean_pass(check_contract)
+        hollow = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(hollow_contract), expected_exit=1)
+        self.assertEqual(hollow.get("decision"), "fail")
+
+        selected = run_skillguard("select-route", "--target", rel(target), "--task", "Audit current runtime evidence before closure.")
+        self.assert_clean_pass(selected)
+        self.assertEqual(selected.get("routing_decision", {}).get("route_id"), "audit")
+        ambiguous = run_skillguard(
+            "select-route",
+            "--target",
+            rel(target),
+            "--contract",
+            rel(ambiguous_contract),
+            "--task",
+            "Audit and review current runtime evidence before closure.",
+            expected_exit=1,
+        )
+        self.assertEqual(ambiguous.get("decision"), "block")
+        self.assertTrue(any("ambiguous" in blocker for blocker in ambiguous.get("blockers", [])))
+
+        started = run_skillguard(
+            "start-run",
+            "--target",
+            rel(target),
+            "--route",
+            "audit",
+            "--task",
+            "Audit current runtime evidence before closure.",
+            "--dry-run",
+        )
+        self.assert_clean_pass(started)
+        self.assertEqual(started.get("run_record", {}).get("selected_route"), "audit")
+
+        complete = run_skillguard("check-run", "--run", rel(good_run), "--complete")
+        self.assert_clean_pass(complete)
+        quality = run_skillguard("check-run", "--run", rel(quality_run), "--complete", expected_exit=1)
+        self.assertEqual(quality.get("decision"), "fail")
+        self.assertTrue(any("quality_failures" in failure for failure in quality.get("failures", [])))
+        overclaim = run_skillguard("close-run", "--run", rel(overclaim_run), "--decision", "accepted", "--dry-run", expected_exit=1)
+        self.assertEqual(overclaim.get("decision"), "fail")
+        self.assertTrue(any("no closure rule allowing accepted" in failure for failure in overclaim.get("failures", [])))
+
+    def test_route_task_routes_ordinary_task_and_is_deterministic(self) -> None:
+        task = "Create a draft skill scaffold from a Skill Blueprint"
+
+        first = run_skillguard("route-task", "--task", task)
+        second = run_skillguard("route-task", "--task", task)
+
+        self.assert_clean_pass(first)
+        self.assert_clean_pass(second)
+        first_route = first.get("routing_decision", {})
+        second_route = second.get("routing_decision", {})
+        for field in ("route_id", "route_node_id", "command_family", "responsibility", "next_step"):
+            self.assertEqual(first_route.get(field), second_route.get(field))
+        self.assertEqual(first_route.get("command_family"), "generate-skill")
+        self.assertEqual(first_route.get("route_node_id"), "generate-skill")
+        self.assertEqual(first.get("task_fingerprint"), second.get("task_fingerprint"))
+        self.assertNotIn(task, json.dumps(first, sort_keys=True))
+        self.assertTrue(any(item.get("command_family") == "generate-skill" for item in first.get("candidate_routes", [])))
+        registry = self.assert_validation_registry(first, "route-task", "pass")
+        self.assertIn("route-task:selection", self.validation_registry_ids(registry))
+        self.assertTrue(
+            any(
+                item.get("evidence_id") == "route-task-current-route-registry"
+                for item in registry.get("evidence", [])
+                if isinstance(item, dict)
+            )
+        )
+
+    def test_route_task_routes_refresh_maintenance_task(self) -> None:
+        report = run_skillguard("route-task", "--task", "Refresh stale maintenance evidence metadata")
+
+        self.assert_clean_pass(report)
+        route = report.get("routing_decision", {})
+        self.assertEqual(route.get("command_family"), "refresh-maintenance")
+        self.assertEqual(route.get("route_node_id"), "refresh-maintenance")
+        self.assertEqual(route.get("responsibility"), "maintainer")
+
+    def test_route_task_honors_explicit_current_route_hint(self) -> None:
+        report = run_skillguard("route-task", "--task", "Review suite records and member evidence.", "--route-hint", "check-suite")
+
+        self.assert_clean_pass(report)
+        self.assertEqual(report.get("routing_conflict_blockers"), [])
+        route = report.get("routing_decision", {})
+        self.assertEqual(route.get("selection_reason"), "explicit_route_hint")
+        self.assertEqual(route.get("command_family"), "check-suite")
+        self.assertEqual(route.get("responsibility"), "checker")
+
+    def test_route_task_blocks_ambiguous_input(self) -> None:
+        report = run_skillguard("route-task", "--task", "check skill and check suite", expected_exit=1)
+        repeat = run_skillguard("route-task", "--task", "check skill and check suite", expected_exit=1)
+
+        conflict = self.assert_route_conflict(report, "multiple_equal_route_candidates")
+        self.assertEqual(report.get("routing_conflict_blockers"), repeat.get("routing_conflict_blockers"))
+        self.assertTrue(any("ambiguous" in blocker for blocker in report.get("blockers", [])))
+        self.assertGreaterEqual(len(report.get("candidate_routes", [])), 2)
+        self.assertGreaterEqual(len(conflict.get("conflicting_candidates", [])), 2)
+
+    def test_route_task_blocks_incompatible_route_hint_without_fallback(self) -> None:
+        task = "Create a draft skill scaffold from a Skill Blueprint"
+
+        report = run_skillguard("route-task", "--task", task, "--route-hint", "check-suite", expected_exit=1)
+
+        conflict = self.assert_route_conflict(report, "incompatible_route_hint")
+        self.assertEqual(report.get("target_path"), "")
+        candidate_commands = {item.get("command_family") for item in conflict.get("conflicting_candidates", [])}
+        self.assertIn("check-suite", candidate_commands)
+        self.assertIn("generate-skill", candidate_commands)
+        self.assertNotIn(task, json.dumps(report, sort_keys=True))
+
+    def test_route_task_blocks_mutually_exclusive_flags(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-", dir=REPO_ROOT) as tmp:
+            input_path = Path(tmp) / "route-task.json"
+            write_json(
+                input_path,
+                {
+                    "task": "Create a draft skill scaffold from a Skill Blueprint",
+                    "execute": True,
+                    "dry_run": True,
+                },
+            )
+
+            report = run_skillguard("route-task", "--input", rel(input_path), expected_exit=1)
+
+            conflict = self.assert_route_conflict(report, "mutually_exclusive_flags")
+            self.assertEqual(set(conflict.get("conflicting_fields", [])), {"$.execute", "$.dry_run"})
+
+    def test_route_task_blocks_requested_responsibility_conflict(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-", dir=REPO_ROOT) as tmp:
+            input_path = Path(tmp) / "route-task.json"
+            write_json(
+                input_path,
+                {
+                    "task": "Create a draft skill scaffold from a Skill Blueprint",
+                    "requested_responsibility": "checker",
+                },
+            )
+
+            report = run_skillguard("route-task", "--input", rel(input_path), expected_exit=1)
+
+            conflict = self.assert_route_conflict(report, "responsibility_route_conflict")
+            self.assertEqual(report.get("requested_responsibility"), "checker")
+            self.assertTrue(any(item.get("responsibility") == "generator" for item in conflict.get("conflicting_candidates", [])))
+
+    def test_route_task_blocks_conflicting_route_identifier_fields(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-", dir=REPO_ROOT) as tmp:
+            input_path = Path(tmp) / "route-task.json"
+            write_json(
+                input_path,
+                {
+                    "task": "Create a draft skill scaffold from a Skill Blueprint",
+                    "route_id": "skillguard.route.generate-skill.v1",
+                    "route_node_id": "check-suite",
+                },
+            )
+
+            report = run_skillguard("route-task", "--input", rel(input_path), expected_exit=1)
+
+            conflict = self.assert_route_conflict(report, "incompatible_route_identifiers")
+            self.assertEqual(set(conflict.get("conflicting_fields", [])), {"$.route_id", "$.route_node_id"})
+
+    def test_route_task_blocks_unsupported_route_hint_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            target = workspace / "must-not-exist"
+            input_path = workspace / "route-task.json"
+            write_json(
+                input_path,
+                {
+                    "task": "Create a draft skill scaffold from a Skill Blueprint",
+                    "route_hint": "old-router-v0",
+                    "target_path": rel(target),
+                },
+            )
+
+            report = run_skillguard("route-task", "--input", rel(input_path), expected_exit=1)
+
+            self.assert_route_conflict(report, "stale_route_identifier")
+            self.assertTrue(any("not a current public route" in blocker or "unsupported route_hint" in blocker for blocker in report.get("blockers", [])))
+            self.assertFalse(target.exists())
+            self.assertNotIn("created_files", report)
+
+    def test_route_task_blocks_malformed_json_and_invalid_paths(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            malformed_path = workspace / "malformed.json"
+            malformed_path.write_text("{not valid json\n", encoding="utf-8")
+
+            malformed = run_skillguard("route-task", "--input", rel(malformed_path), expected_exit=1)
+            self.assert_route_conflict(malformed, "malformed_json")
+            self.assertTrue(any("invalid JSON" in blocker or "parse" in blocker for blocker in malformed.get("blockers", [])))
+
+            invalid_path = workspace / "invalid-path.json"
+            write_json(
+                invalid_path,
+                {
+                    "task": "Create a draft skill scaffold from a Skill Blueprint",
+                    "target_path": "../outside-skillguard",
+                },
+            )
+            invalid = run_skillguard("route-task", "--input", rel(invalid_path), expected_exit=1)
+            self.assert_route_conflict(invalid, "invalid_path_config")
+            self.assertTrue(any("escapes repository boundary" in blocker for blocker in invalid.get("blockers", [])))
+            self.assertTrue(any(item.get("status") == "block" for item in invalid.get("path_checks", [])))
+            registry = self.assert_validation_registry(invalid, "route-task", "block")
+            self.assertIn("invalid_path_config", self.validation_registry_blocker_codes(registry))
+            categories = {
+                row.get("blocker_category")
+                for row in registry.get("blocker_evidence", [])
+                if isinstance(row, dict)
+            }
+            self.assertIn("invalid_input", categories)
+
+    def test_route_task_blocks_conflicting_cli_input_modes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-", dir=REPO_ROOT) as tmp:
+            input_path = Path(tmp) / "route-task.json"
+            write_json(input_path, {"task": "Create a draft skill scaffold from a Skill Blueprint"})
+
+            report = run_skillguard("route-task", "--input", rel(input_path), "--task", "Check a skill", expected_exit=1)
+
+            self.assert_route_conflict(report, "conflicting_input_sources")
+            self.assertTrue(any("cannot be combined" in blocker for blocker in report.get("blockers", [])))
+
+    def test_route_task_executes_generate_skill_from_explicit_route_hint(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "routed-review-helper"
+            idea_path = workspace / "idea.json"
+            plan_path = workspace / "blueprint.json"
+            route_input_path = workspace / "route-task.json"
+            write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+            plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+            write_json(plan_path, plan_report)
+            write_json(
+                route_input_path,
+                {
+                    "task": "Create a draft skill scaffold from a Skill Blueprint",
+                    "route_hint": "generate-skill",
+                    "input_path": rel(plan_path),
+                },
+            )
+
+            report = run_skillguard("route-task", "--input", rel(route_input_path))
+
+            self.assert_clean_pass(report)
+            self.assertEqual(report.get("command"), "generate-skill")
+            self.assertEqual(report.get("target_path"), rel(target))
+            self.assertTrue((target / "SKILL.md").is_file())
+            self.assertEqual(
+                [(item.get("command"), item.get("artifact_path"), item.get("status")) for item in report.get("post_generation_checks", [])],
+                [
+                    ("check-skill", rel(target), "pass"),
+                    ("check-contract", rel(target / ".skillguard" / "work-contract.json"), "pass"),
+                ],
+            )
+            registry = self.assert_validation_registry(report, "generate-skill", "pass")
+            self.assertIn("generate-skill:post-generation-checks", self.validation_registry_ids(registry))
+            self.assertIn("generate-skill:post-check-skill", self.validation_registry_ids(registry))
+            self.assertIn("generate-skill:post-check-contract", self.validation_registry_ids(registry))
+            self.assertIn("post_generation_checks", registry.get("source_of_truth_for", []))
+
+    def test_route_task_executes_generate_suite_from_explicit_route_hint(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "routed-review-suite"
+            suite_root = target / ".skillguard" / "suite"
+            blueprint_path = workspace / "suite-blueprint.json"
+            route_input_path = workspace / "route-task.json"
+            write_json(blueprint_path, valid_suite_blueprint(rel(target), target.name))
+            write_json(
+                route_input_path,
+                {
+                    "task": "Create a draft suite scaffold from a Suite Blueprint",
+                    "route_hint": "generate-suite",
+                    "input_path": rel(blueprint_path),
+                },
+            )
+
+            report = run_skillguard("route-task", "--input", rel(route_input_path))
+
+            self.assert_clean_pass(report)
+            self.assertEqual(report.get("command"), "generate-suite")
+            self.assertEqual(report.get("target_path"), rel(target))
+            self.assertTrue((suite_root / "suite-map.json").is_file())
+            self.assertTrue(all(item.get("status") == "pass" for item in report.get("post_generation_checks", [])))
+            registry = self.assert_validation_registry(report, "generate-suite", "pass")
+            self.assertIn("generate-suite:post-generation-checks", self.validation_registry_ids(registry))
+            post_rows = [
+                row
+                for row in registry.get("validation_rows", [])
+                if isinstance(row, dict) and row.get("validation_kind") == "post_generation_check"
+            ]
+            self.assertGreaterEqual(len(post_rows), 3)
+
+    def test_route_task_blocks_generator_command_path_without_explicit_hint(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-unhinted-generator-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "unhinted-review-helper"
+            idea_path = workspace / "idea.json"
+            plan_path = workspace / "blueprint.json"
+            route_input_path = workspace / "route-task.json"
+            write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+            plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+            write_json(plan_path, plan_report)
+            write_json(
+                route_input_path,
+                {
+                    "task": "Create a draft skill scaffold from a Skill Blueprint",
+                    "input_path": rel(plan_path),
+                    "execute": True,
+                },
+            )
+
+            report = run_skillguard("route-task", "--input", rel(route_input_path), expected_exit=1)
+
+            self.assert_route_conflict(report, "command_path_requires_explicit_route_hint")
+            self.assertFalse((target / "SKILL.md").exists())
+            registry = self.assert_validation_registry(report, "route-task", "block")
+            self.assertIn("command_path_requires_explicit_route_hint", self.validation_registry_blocker_codes(registry))
+            categories = {
+                row.get("blocker_category")
+                for row in registry.get("blocker_evidence", [])
+                if isinstance(row, dict)
+            }
+            self.assertIn("blocked_generation_request", categories)
+
+    def test_route_task_registry_records_no_write_generator_blocker(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="route-task-no-write-generator-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "no-write-review-helper"
+            idea_path = workspace / "idea.json"
+            plan_path = workspace / "blueprint.json"
+            route_input_path = workspace / "route-task.json"
+            write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+            plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+            write_json(plan_path, plan_report)
+            write_json(
+                route_input_path,
+                {
+                    "task": "Create a draft skill scaffold from a Skill Blueprint",
+                    "route_hint": "generate-skill",
+                    "input_path": rel(plan_path),
+                    "no_write": True,
+                },
+            )
+
+            report = run_skillguard("route-task", "--input", rel(route_input_path), expected_exit=1)
+
+            self.assert_route_conflict(report, "generator_execution_forbidden_by_no_write_flag")
+            self.assertFalse((target / "SKILL.md").exists())
+            registry = self.assert_validation_registry(report, "route-task", "block")
+            self.assertIn("generator_execution_forbidden_by_no_write_flag", self.validation_registry_blocker_codes(registry))
+
+    def test_detect_stale_evidence_passes_fresh_source_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="detect-stale-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            source_path = workspace / "source.txt"
+            source_path.write_text("fresh source\n", encoding="utf-8")
+            evidence_path = workspace / "evidence.json"
+            write_json(
+                evidence_path,
+                freshness_record_for(
+                    source_path,
+                    route_version=checker_engine.DETECT_STALE_EXPECTED_ROUTE_VERSION,
+                    route_registry_version=checker_engine.ROUTE_TASK_REGISTRY_VERSION,
+                    command_names=list(checker_engine.COMMANDS),
+                ),
+            )
+
+            report = run_skillguard("detect-stale-evidence", "--input", rel(evidence_path))
+
+            self.assert_clean_pass(report)
+            self.assertEqual(report.get("stale_evidence_blockers"), [])
+            self.assertGreaterEqual(report.get("freshness_bindings_checked", 0), 4)
+            freshness = report.get("maintenance_freshness", {})
+            self.assertEqual(freshness.get("state"), "fresh")
+            self.assertTrue(freshness.get("current_evidence_can_pass"))
+            self.assertEqual(freshness.get("missing_count"), 0)
+            self.assertIn("fresh", freshness.get("states_supported", []))
+
+    def test_detect_stale_evidence_blocks_stale_source_route_fixture_generated_command_and_missing_metadata(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="detect-stale-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            source_path = workspace / "source.txt"
+            source_path.write_text("original\n", encoding="utf-8")
+            stale_source_path = workspace / "stale-source.json"
+            write_json(stale_source_path, freshness_record_for(source_path))
+            source_path.write_text("changed\n", encoding="utf-8")
+
+            route_path = workspace / "stale-route.json"
+            write_json(
+                route_path,
+                freshness_record_for(source_path, route_version="3", route_registry_version="stale-registry.v0"),
+            )
+
+            manifest_path = workspace / "fixture-manifest.json"
+            case_path = workspace / "case.fixture.json"
+            manifest_path.write_text('{"schema_version":"skillguard.fixture_manifest.v1","fixtures":[]}\n', encoding="utf-8")
+            case_path.write_text('{"fixture_id":"stale-case"}\n', encoding="utf-8")
+            fixture_output_path = workspace / "fixture-output.json"
+            write_json(
+                fixture_output_path,
+                {
+                    "schema_version": "skillguard.cli_result.v1",
+                    "command": "fixture-test",
+                    "decision": "pass",
+                    "checked_at": utc_timestamp(),
+                    "target_path": rel(manifest_path),
+                    "files_inspected": [{"path": rel(manifest_path), "sha256": sha256(manifest_path), "kind": "json"}],
+                    "fixture_results": [{"fixture_id": "stale-case", "fixture_path": rel(case_path), "sha256": sha256(case_path)}],
+                    "evidence": [],
+                    "failures": [],
+                    "blockers": [],
+                    "skipped_checks": [],
+                    "residual_risk": [],
+                    "claim_boundary": "Synthetic fixture output.",
+                },
+            )
+            manifest_path.write_text('{"schema_version":"skillguard.fixture_manifest.v1","fixtures":[1]}\n', encoding="utf-8")
+            case_path.write_text('{"fixture_id":"stale-case","changed":true}\n', encoding="utf-8")
+
+            generated_path = workspace / "generated-output.json"
+            write_json(
+                generated_path,
+                {
+                    "schema_version": "skillguard.cli_result.v1",
+                    "command": "generate-skill",
+                    "decision": "pass",
+                    "checked_at": utc_timestamp(),
+                    "all_scaffold_files": [rel(workspace / "missing-generated" / "SKILL.md")],
+                    "evidence": [],
+                    "failures": [],
+                    "blockers": [],
+                    "skipped_checks": [],
+                    "residual_risk": [],
+                    "claim_boundary": "Synthetic generated output.",
+                },
+            )
+
+            command_surface_path = workspace / "stale-command-surface.json"
+            write_json(command_surface_path, freshness_record_for(source_path, command="self-check", command_names=["commands"]))
+
+            missing_metadata_path = workspace / "missing-metadata.json"
+            write_json(
+                missing_metadata_path,
+                {
+                    "schema_version": "skillguard.cli_result.v1",
+                    "command": "check-skill",
+                    "decision": "pass",
+                    "checked_at": utc_timestamp(),
+                    "evidence": [{"evidence_id": "summary-only", "summary": "No comparable metadata."}],
+                },
+            )
+
+            openspec_status_path = workspace / "stale-openspec-status.json"
+            write_json(
+                openspec_status_path,
+                {
+                    "schema_version": "skillguard.cli_result.v1",
+                    "command": "detect-stale-evidence",
+                    "decision": "pass",
+                    "checked_at": utc_timestamp(),
+                    "openspec_status": {"changes_directory_present": True},
+                    "claim_boundary": "Synthetic OpenSpec status evidence.",
+                },
+            )
+
+            report = run_skillguard(
+                "detect-stale-evidence",
+                "--input",
+                rel(stale_source_path),
+                "--input",
+                rel(route_path),
+                "--input",
+                rel(fixture_output_path),
+                "--input",
+                rel(generated_path),
+                "--input",
+                rel(command_surface_path),
+                "--input",
+                rel(missing_metadata_path),
+                "--input",
+                rel(openspec_status_path),
+                expected_exit=1,
+            )
+
+            codes = stale_blocker_codes(report)
+            self.assertEqual(report.get("decision"), "block")
+            self.assertIn("stale_source_fingerprint", codes)
+            self.assertIn("stale_route_version", codes)
+            self.assertIn("stale_route_registry_version", codes)
+            self.assertIn("stale_fixture_manifest", codes)
+            self.assertIn("stale_fixture_output", codes)
+            self.assertIn("stale_generated_artifact_path", codes)
+            self.assertIn("stale_command_surface", codes)
+            self.assertIn("missing_evidence_metadata", codes)
+            self.assertIn("stale_openspec_status", codes)
+            freshness = report.get("maintenance_freshness", {})
+            self.assertEqual(freshness.get("state"), "stale_or_missing")
+            self.assertFalse(freshness.get("current_evidence_can_pass"))
+            self.assertGreater(freshness.get("stale_count", 0), 0)
+            self.assertGreater(freshness.get("missing_count", 0), 0)
+            self.assertIn("stale_evidence_blockers[].expected_current_binding", freshness.get("recorded_source_status_fields", []))
+            for blocker in report.get("stale_evidence_blockers", []):
+                self.assertTrue(blocker.get("artifact_id"))
+                self.assertTrue(blocker.get("expected_current_binding"))
+                self.assertTrue(blocker.get("observed_stale_binding"))
+                self.assertTrue(blocker.get("recommended_refresh_action"))
+
+    def test_detect_stale_evidence_keeps_blockers_public_safe_and_read_only(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="detect-stale-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            evidence_path = workspace / "private-probe.json"
+            write_json(
+                evidence_path,
+                {
+                    "schema_version": "skillguard.cli_result.v1",
+                    "command": "check-skill",
+                    "decision": "pass",
+                    "private_payload": "PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO",
+                },
+            )
+            before_hash = sha256(evidence_path)
+
+            report = run_skillguard("detect-stale-evidence", "--input", rel(evidence_path), expected_exit=1)
+
+            self.assertEqual(sha256(evidence_path), before_hash)
+            output_text = json.dumps(report, sort_keys=True)
+            self.assertNotIn("PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO", output_text)
+            self.assertIn("missing_evidence_metadata", stale_blocker_codes(report))
+            for blocker in report.get("stale_evidence_blockers", []):
+                self.assertNotIn("private_payload", json.dumps(blocker, sort_keys=True))
+
+    def test_refresh_maintenance_dry_run_plans_without_mutation(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="refresh-maintenance-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            source_path = workspace / "source.txt"
+            source_path.write_text("original\n", encoding="utf-8")
+            evidence_path = workspace / "evidence.json"
+            write_json(evidence_path, freshness_record_for(source_path))
+            source_path.write_text("changed\n", encoding="utf-8")
+            before_hash = sha256(evidence_path)
+
+            report = run_skillguard("refresh-maintenance", "--input", rel(evidence_path))
+
+            self.assert_clean_pass(report)
+            self.assertEqual(sha256(evidence_path), before_hash)
+            planned = report.get("planned_refreshes", [])
+            self.assertTrue(planned)
+            self.assertTrue(any(item.get("blocker_code") == "stale_source_fingerprint" for item in planned))
+            refresh_state = report.get("maintenance_refresh_state", {})
+            self.assertEqual(refresh_state.get("state"), "stale_refresh_planned")
+            self.assertFalse(refresh_state.get("current_evidence_can_pass"))
+            self.assertGreater(refresh_state.get("refreshable_stale_count", 0), 0)
+            self.assertEqual(refresh_state.get("refresh_failed_count"), 0)
+            for item in planned:
+                self.assertTrue(item.get("artifact_id"))
+                self.assertTrue(item.get("stale_reason"))
+                self.assertTrue(item.get("expected_current_binding"))
+                self.assertTrue(item.get("refresh_action"))
+                self.assertEqual(item.get("mutation_status"), "planned_no_mutation")
+
+    def test_refresh_maintenance_execute_refreshes_stale_source_route_command_and_openspec_metadata(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="refresh-maintenance-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            source_path = workspace / "self-check-source.txt"
+            source_path.write_text("original\n", encoding="utf-8")
+            evidence_path = workspace / "self-check-evidence.json"
+            current_openspec = checker_engine.current_openspec_changes_present()
+            write_json(
+                evidence_path,
+                freshness_record_for(
+                    source_path,
+                    command="self-check",
+                    route_version="3",
+                    route_registry_version="stale-registry.v0",
+                    command_names=["commands"],
+                    current_route_registry=[{"route_id": "skillguard.route.old.v0"}],
+                    openspec_status={"changes_directory_present": not current_openspec},
+                ),
+            )
+            source_path.write_text("changed\n", encoding="utf-8")
+
+            report = run_skillguard("refresh-maintenance", "--input", rel(evidence_path), "--execute")
+
+            self.assert_clean_pass(report)
+            codes = stale_blocker_codes(report)
+            self.assertIn("stale_command_or_self_check_record", codes)
+            self.assertIn("stale_route_version", codes)
+            self.assertIn("stale_route_registry_version", codes)
+            self.assertIn("stale_command_surface", codes)
+            self.assertIn("stale_route_registry", codes)
+            self.assertIn("stale_openspec_status", codes)
+            self.assertEqual(report.get("post_refresh_freshness", {}).get("remaining_stale_count"), 0)
+            refresh_state = report.get("maintenance_refresh_state", {})
+            self.assertEqual(refresh_state.get("state"), "current_after_refresh")
+            self.assertTrue(refresh_state.get("current_evidence_can_pass"))
+            self.assertGreater(refresh_state.get("completed_refresh_count", 0), 0)
+            refreshed = json.loads(evidence_path.read_text(encoding="utf-8"))
+            self.assertEqual(refreshed["files_inspected"][0]["sha256"], sha256(source_path))
+            self.assertEqual(refreshed.get("route_version"), checker_engine.DETECT_STALE_EXPECTED_ROUTE_VERSION)
+            self.assertEqual(refreshed.get("route_registry_version"), checker_engine.ROUTE_TASK_REGISTRY_VERSION)
+            self.assertIn("refresh-maintenance", refreshed.get("command_names", []))
+            self.assertTrue(
+                any(item.get("command_family") == "refresh-maintenance" for item in refreshed.get("current_route_registry", []))
+            )
+            self.assertEqual(refreshed.get("openspec_status", {}).get("changes_directory_present"), current_openspec)
+            self.assertIn("maintenance_refresh", refreshed)
+
+            post = run_skillguard("detect-stale-evidence", "--input", rel(evidence_path))
+            self.assert_clean_pass(post)
+
+    def test_refresh_maintenance_execute_refreshes_fixture_manifest_and_result_bindings(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="refresh-maintenance-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            manifest_path = workspace / "fixture-manifest.json"
+            case_path = workspace / "case.fixture.json"
+            manifest_path.write_text('{"schema_version":"skillguard.fixture_manifest.v1","fixtures":[]}\n', encoding="utf-8")
+            case_path.write_text('{"fixture_id":"stale-case"}\n', encoding="utf-8")
+            fixture_output_path = workspace / "fixture-output.json"
+            write_json(
+                fixture_output_path,
+                {
+                    "schema_version": "skillguard.cli_result.v1",
+                    "command": "fixture-test",
+                    "decision": "pass",
+                    "checked_at": utc_timestamp(),
+                    "target_path": rel(manifest_path),
+                    "files_inspected": [{"path": rel(manifest_path), "sha256": sha256(manifest_path), "kind": "json"}],
+                    "fixture_results": [{"fixture_id": "stale-case", "fixture_path": rel(case_path), "sha256": sha256(case_path)}],
+                    "evidence": [],
+                    "failures": [],
+                    "blockers": [],
+                    "skipped_checks": [],
+                    "residual_risk": [],
+                    "claim_boundary": "Synthetic fixture output.",
+                },
+            )
+            manifest_path.write_text('{"schema_version":"skillguard.fixture_manifest.v1","fixtures":[1]}\n', encoding="utf-8")
+            case_path.write_text('{"fixture_id":"stale-case","changed":true}\n', encoding="utf-8")
+
+            report = run_skillguard("refresh-maintenance", "--input", rel(fixture_output_path), "--mode", "execute")
+
+            self.assert_clean_pass(report)
+            codes = stale_blocker_codes(report)
+            self.assertIn("stale_fixture_manifest", codes)
+            self.assertIn("stale_fixture_output", codes)
+            refreshed = json.loads(fixture_output_path.read_text(encoding="utf-8"))
+            self.assertEqual(refreshed["files_inspected"][0]["sha256"], sha256(manifest_path))
+            self.assertEqual(refreshed["fixture_results"][0]["sha256"], sha256(case_path))
+
+            post = run_skillguard("detect-stale-evidence", "--input", rel(fixture_output_path))
+            self.assert_clean_pass(post)
+
+    def test_refresh_maintenance_blocks_unrefreshable_and_keeps_blockers_public_safe(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="refresh-maintenance-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            generated_path = workspace / "generated-output.json"
+            missing_generated = workspace / "missing-generated" / "SKILL.md"
+            write_json(
+                generated_path,
+                {
+                    "schema_version": "skillguard.cli_result.v1",
+                    "command": "generate-skill",
+                    "decision": "pass",
+                    "checked_at": utc_timestamp(),
+                    "all_scaffold_files": [rel(missing_generated)],
+                    "evidence": [],
+                    "failures": [],
+                    "blockers": [],
+                    "skipped_checks": [],
+                    "residual_risk": [],
+                    "claim_boundary": "Synthetic generated output.",
+                },
+            )
+            private_path = workspace / "private-probe.json"
+            write_json(
+                private_path,
+                {
+                    "schema_version": "skillguard.cli_result.v1",
+                    "command": "check-skill",
+                    "decision": "pass",
+                    "private_payload": "PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO",
+                },
+            )
+
+            report = run_skillguard(
+                "refresh-maintenance",
+                "--input",
+                rel(generated_path),
+                "--input",
+                rel(private_path),
+                "--execute",
+                expected_exit=1,
+            )
+
+            self.assertEqual(report.get("decision"), "block")
+            codes = stale_blocker_codes(report)
+            self.assertIn("stale_generated_artifact_path", codes)
+            self.assertIn("missing_evidence_metadata", codes)
+            self.assertFalse(missing_generated.exists())
+            output_text = json.dumps(report, sort_keys=True)
+            self.assertNotIn("PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO", output_text)
+            self.assertTrue(any(item.get("mutation_status") == "not_refreshable" for item in report.get("planned_refreshes", [])))
+            refresh_state = report.get("maintenance_refresh_state", {})
+            self.assertEqual(refresh_state.get("state"), "refresh_failed")
+            self.assertFalse(refresh_state.get("current_evidence_can_pass"))
+            self.assertGreater(refresh_state.get("refresh_failed_count", 0), 0)
+            self.assertIn("stale_evidence_blockers[].observed_stale_binding", refresh_state.get("recorded_source_status_fields", []))
+
+    def test_refresh_maintenance_blocks_invalid_target_and_conflicting_modes(self) -> None:
+        invalid_target = run_skillguard("refresh-maintenance", "--target", "..", expected_exit=1)
+        self.assertEqual(invalid_target.get("decision"), "block")
+        self.assertTrue(any("target path" in blocker for blocker in invalid_target.get("blockers", [])))
+
+        conflict = run_skillguard("refresh-maintenance", "--dry-run", "--execute", expected_exit=1)
+        self.assertEqual(conflict.get("decision"), "block")
+        self.assertTrue(any("only one mode selector" in blocker for blocker in conflict.get("blockers", [])))
+
+    def test_check_maintenance_record_passes_canonical_and_supported_legacy_record(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="maintenance-record-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            canonical_path = workspace / "canonical.json"
+            write_json(canonical_path, valid_maintenance_record())
+
+            canonical = run_skillguard("check-maintenance-record", "--input", rel(canonical_path))
+
+            self.assert_clean_pass(canonical)
+            self.assertEqual(canonical.get("migration_status"), "canonical")
+            self.assertEqual(canonical.get("normalized_record", {}).get("schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
+            self.assertEqual(canonical.get("maintenance_record", {}).get("schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
+
+            source_path = workspace / "source.txt"
+            source_path.write_text("current\n", encoding="utf-8")
+            legacy_path = workspace / "legacy-command-output.json"
+            write_json(
+                legacy_path,
+                freshness_record_for(
+                    source_path,
+                    route_version=checker_engine.DETECT_STALE_EXPECTED_ROUTE_VERSION,
+                    route_registry_version=checker_engine.ROUTE_TASK_REGISTRY_VERSION,
+                    command_names=list(checker_engine.COMMANDS),
+                    current_route_registry=[checker_engine.public_route_entry(entry) for entry in checker_engine.current_route_entries()],
+                ),
+            )
+
+            legacy = run_skillguard("check-maintenance-record", "--input", rel(legacy_path))
+
+            self.assert_clean_pass(legacy)
+            self.assertEqual(legacy.get("migration_status"), "legacy_normalized")
+            self.assertEqual(legacy.get("normalized_record", {}).get("schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
+            self.assertEqual(legacy.get("normalized_record", {}).get("record_kind"), "target_check")
+
+    def test_check_maintenance_record_blocks_schema_route_command_alias_blocker_and_public_boundary_defects(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="maintenance-record-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            cases: list[tuple[str, dict[str, Any], str]] = []
+
+            missing = valid_maintenance_record()
+            missing.pop("artifact_id")
+            cases.append(("missing.json", missing, "missing_required_field"))
+
+            alias = valid_maintenance_record(changes_directory_found=True)
+            cases.append(("alias.json", alias, "unknown_legacy_alias"))
+
+            bad_version = valid_maintenance_record(schema_version="skillguard.maintenance_record.v0")
+            cases.append(("bad-version.json", bad_version, "incompatible_schema_version"))
+
+            malformed_blocker = valid_maintenance_record(blockers=["not-structured"])
+            cases.append(("malformed-blocker.json", malformed_blocker, "malformed_blocker_row"))
+
+            bad_route = valid_maintenance_record(route_version="3")
+            cases.append(("bad-route.json", bad_route, "route_version_mismatch"))
+
+            bad_command = valid_maintenance_record()
+            bad_command["command_surface"]["command_names"] = ["commands"]
+            cases.append(("bad-command.json", bad_command, "command_binding_mismatch"))
+
+            leaked = valid_maintenance_record(artifact_id="PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO")
+            cases.append(("leaked.json", leaked, "public_boundary_leakage"))
+
+            unsupported_legacy = {
+                "schema_version": "skillguard.legacy_record.v0",
+                "private_payload": "PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO",
+            }
+            cases.append(("unsupported-legacy.json", unsupported_legacy, "public_boundary_leakage"))
+
+            for name, record, expected_code in cases:
+                path = workspace / name
+                write_json(path, record)
+                report = run_skillguard("check-maintenance-record", "--input", rel(path), expected_exit=1)
+                self.assertEqual(report.get("decision"), "block", name)
+                self.assertIn(expected_code, maintenance_blocker_codes(report), name)
+                output_text = json.dumps(report, sort_keys=True)
+                self.assertNotIn("PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO", output_text)
+                for blocker in report.get("maintenance_record_blockers", []):
+                    self.assertTrue(blocker.get("artifact_id"))
+                    self.assertTrue(blocker.get("observed_shape") is not None)
+                    self.assertEqual(blocker.get("expected_schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
+                    self.assertTrue(blocker.get("recommended_repair_action"))
+
+    def test_maintenance_record_integration_with_stale_refresh_review_dispatch_and_self_check(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="maintenance-record-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            source_path = workspace / "source.txt"
+            source_path.write_text("original\n", encoding="utf-8")
+            evidence_path = workspace / "evidence.json"
+            write_json(evidence_path, freshness_record_for(source_path))
+            source_path.write_text("changed\n", encoding="utf-8")
+
+            stale = run_skillguard("detect-stale-evidence", "--input", rel(evidence_path), expected_exit=1)
+            self.assertEqual(stale.get("maintenance_record", {}).get("record_kind"), "stale_evidence_review")
+            stale_output = workspace / "stale-output.json"
+            write_json(stale_output, stale)
+            stale_check = run_skillguard("check-maintenance-record", "--input", rel(stale_output))
+            self.assert_clean_pass(stale_check)
+
+            refresh = run_skillguard("refresh-maintenance", "--input", rel(evidence_path))
+            self.assertEqual(refresh.get("maintenance_record", {}).get("record_kind"), "maintenance_refresh")
+            refresh_output = workspace / "refresh-output.json"
+            write_json(refresh_output, refresh)
+            refresh_check = run_skillguard("check-maintenance-record", "--input", rel(refresh_output))
+            self.assert_clean_pass(refresh_check)
+
+            baseline_path = workspace / "baseline.json"
+            write_json(baseline_path, checker_change_baseline())
+            review = run_skillguard("review-checker-change", "--baseline", rel(baseline_path))
+            self.assertEqual(review.get("maintenance_record", {}).get("record_kind"), "checker_change_review")
+            review_output = workspace / "review-output.json"
+            write_json(review_output, review)
+            review_check = run_skillguard("check-maintenance-record", "--input", rel(review_output))
+            self.assert_clean_pass(review_check)
+
+            commands = run_skillguard("commands")
+            self.assert_clean_pass(commands)
+            names = {item.get("name") for item in commands.get("commands", [])}
+            self.assertIn("check-maintenance-record", names)
+            self.assertEqual(commands.get("maintenance_record", {}).get("record_kind"), "command_surface")
+
+            route = run_skillguard("route-task", "--task", "Validate the maintenance record schema")
+            self.assert_clean_pass(route)
+            self.assertEqual(route.get("routing_decision", {}).get("command_family"), "check-maintenance-record")
+
+            self_check = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
+            self.assert_clean_pass(self_check)
+            self.assertEqual(self_check.get("maintenance_record", {}).get("record_kind"), "self_check")
+
+    def test_generation_fixture_maintenance_staleness_uses_current_evidence(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="maintenance-generation-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+
+            simple_manifest = ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json"
+            complex_manifest = ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json"
+            simple = run_skillguard("fixture-test", "--manifest", simple_manifest)
+            complex_report = run_skillguard("fixture-test", "--manifest", complex_manifest)
+            self_check = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
+            target_check = run_skillguard("check-skill", "--target", ".agents/skills/skillguard")
+            for workspace_path in (
+                REPO_ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "simple_generation" / "workspace",
+                REPO_ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "complex_generation" / "workspace",
+            ):
+                self.assertFalse(workspace_path.exists(), workspace_path)
+
+            simple_path = workspace / "simple-fixture-current.json"
+            complex_path = workspace / "complex-fixture-current.json"
+            self_check_path = workspace / "self-check-current.json"
+            target_check_path = workspace / "target-check-current.json"
+            write_json(simple_path, simple)
+            write_json(complex_path, complex_report)
+            write_json(self_check_path, self_check)
+            write_json(target_check_path, target_check)
+
+            fresh = run_skillguard(
+                "detect-stale-evidence",
+                "--input",
+                rel(simple_path),
+                "--input",
+                rel(complex_path),
+                "--input",
+                rel(self_check_path),
+                "--input",
+                rel(target_check_path),
+            )
+            self.assert_clean_pass(fresh)
+            self.assertEqual(fresh.get("stale_evidence_count"), 0)
+            self.assertEqual(fresh.get("maintenance_record", {}).get("record_kind"), "stale_evidence_review")
+            for path in (simple_path, complex_path, self_check_path, target_check_path):
+                maintenance = run_skillguard("check-maintenance-record", "--input", rel(path))
+                self.assert_clean_pass(maintenance)
+                self.assertEqual(maintenance.get("migration_status"), "canonical_nested")
+
+            baseline_path = workspace / "checker-baseline.json"
+            write_json(
+                baseline_path,
+                checker_change_baseline(
+                    fixture_manifests=[
+                        {
+                            "path": simple_manifest,
+                            "sha256": sha256(REPO_ROOT / simple_manifest),
+                            "fixture_ids": [item.get("fixture_id") for item in simple.get("fixture_results", [])],
+                        },
+                        {
+                            "path": complex_manifest,
+                            "sha256": sha256(REPO_ROOT / complex_manifest),
+                            "fixture_ids": [item.get("fixture_id") for item in complex_report.get("fixture_results", [])],
+                        },
+                    ],
+                    evidence_records=[
+                        {"path": rel(simple_path), "sha256": sha256(simple_path)},
+                        {"path": rel(complex_path), "sha256": sha256(complex_path)},
+                    ],
+                ),
+            )
+            review = run_skillguard(
+                "review-checker-change",
+                "--baseline",
+                rel(baseline_path),
+                "--fixture-manifest",
+                simple_manifest,
+                "--fixture-manifest",
+                complex_manifest,
+                "--evidence",
+                rel(simple_path),
+                "--evidence",
+                rel(complex_path),
+            )
+            self.assert_clean_pass(review)
+            review_path = workspace / "review-current.json"
+            write_json(review_path, review)
+            review_maintenance = run_skillguard("check-maintenance-record", "--input", rel(review_path))
+            self.assert_clean_pass(review_maintenance)
+
+            def clone(payload: dict[str, Any]) -> dict[str, Any]:
+                return json.loads(json.dumps(payload))
+
+            governed_generated_artifact = workspace / "generated-artifact.md"
+            governed_generated_artifact.write_text("generated artifact v1\n", encoding="utf-8")
+            generated_hash_drift = clone(complex_report)
+            generated_hash_drift["generated_artifact_hashes"] = [
+                {
+                    "path": rel(governed_generated_artifact),
+                    "kind": "markdown",
+                    "sha256": sha256(governed_generated_artifact),
+                }
+            ]
+            governed_generated_artifact.write_text("generated artifact v2\n", encoding="utf-8")
+            generated_hash_path = workspace / "generated-hash-drift.json"
+            write_json(generated_hash_path, generated_hash_drift)
+
+            fixture_manifest_drift = clone(complex_report)
+            fixture_manifest_drift["files_inspected"][0]["sha256"] = "0" * 64
+            fixture_manifest_drift["fixture_results"][0]["sha256"] = "1" * 64
+            fixture_manifest_path = workspace / "fixture-manifest-drift.json"
+            write_json(fixture_manifest_path, fixture_manifest_drift)
+
+            route_drift = clone(complex_report)
+            route_drift["route_version"] = "3"
+            route_drift["route_registry_version"] = "stale-registry.v0"
+            route_drift["maintenance_record"]["route_version"] = "3"
+            route_drift["maintenance_record"]["route_registry_version"] = "stale-registry.v0"
+            route_drift_path = workspace / "route-drift.json"
+            write_json(route_drift_path, route_drift)
+
+            missing_generated_metadata = clone(complex_report)
+            missing_generated_metadata["generated_artifact_hashes"] = [{"path": rel(governed_generated_artifact)}]
+            missing_generated_metadata_path = workspace / "missing-generated-metadata.json"
+            write_json(missing_generated_metadata_path, missing_generated_metadata)
+
+            stale_command = clone(self_check)
+            stale_command["command_names"] = ["commands"]
+            stale_command["current_route_registry"] = [{"route_id": "skillguard.route.old.v0"}]
+            stale_command_path = workspace / "stale-command-output.json"
+            write_json(stale_command_path, stale_command)
+
+            malformed_maintenance = clone(complex_report)
+            malformed_maintenance["maintenance_record"]["schema_version"] = "skillguard.maintenance_record.v0"
+            malformed_maintenance["maintenance_record"]["changes_directory_found"] = True
+            malformed_maintenance["maintenance_record"]["artifact_id"] = "PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO"
+            malformed_maintenance_path = workspace / "malformed-maintenance-record.json"
+            write_json(malformed_maintenance_path, malformed_maintenance)
+
+            stale_inputs = [
+                generated_hash_path,
+                fixture_manifest_path,
+                route_drift_path,
+                missing_generated_metadata_path,
+                stale_command_path,
+                malformed_maintenance_path,
+            ]
+            before_hashes = {path: sha256(path) for path in stale_inputs}
+            stale = run_skillguard(
+                "detect-stale-evidence",
+                *[arg for path in stale_inputs for arg in ("--input", rel(path))],
+                expected_exit=1,
+            )
+            stale_again = run_skillguard(
+                "detect-stale-evidence",
+                *[arg for path in stale_inputs for arg in ("--input", rel(path))],
+                expected_exit=1,
+            )
+            self.assertEqual(stale_blocker_codes(stale), stale_blocker_codes(stale_again))
+            codes = stale_blocker_codes(stale)
+            self.assertIn("stale_generated_artifact_hash", codes)
+            self.assertIn("stale_fixture_manifest", codes)
+            self.assertIn("stale_fixture_output", codes)
+            self.assertIn("stale_route_version", codes)
+            self.assertIn("stale_route_registry_version", codes)
+            self.assertIn("route_version_mismatch", codes)
+            self.assertIn("route_registry_version_mismatch", codes)
+            self.assertIn("missing_evidence_metadata", codes)
+            self.assertIn("stale_command_surface", codes)
+            self.assertIn("stale_route_registry", codes)
+            self.assertIn("incompatible_schema_version", codes)
+            self.assertIn("unknown_legacy_alias", codes)
+            for blocker in stale.get("stale_evidence_blockers", []):
+                self.assertTrue(blocker.get("artifact_id"))
+                self.assertTrue(blocker.get("binding_id"))
+                self.assertTrue(blocker.get("stale_reason"))
+                self.assertTrue(blocker.get("expected_current_binding"))
+                self.assertTrue(blocker.get("observed_stale_binding"))
+                self.assertTrue(blocker.get("recommended_refresh_action"))
+
+            refresh = run_skillguard(
+                "refresh-maintenance",
+                *[arg for path in stale_inputs for arg in ("--input", rel(path))],
+                expected_exit=1,
+            )
+            for path, before_hash in before_hashes.items():
+                self.assertEqual(sha256(path), before_hash, path)
+            planned = refresh.get("planned_refreshes", [])
+            self.assertTrue(any(item.get("blocker_code") == "stale_fixture_manifest" for item in planned))
+            self.assertTrue(any(item.get("blocker_code") == "stale_route_version" for item in planned))
+            self.assertTrue(any(item.get("blocker_code") == "stale_command_surface" for item in planned))
+            self.assertTrue(any(item.get("blocker_code") == "stale_generated_artifact_hash" for item in planned))
+            self.assertTrue(any(item.get("mutation_status") == "planned_no_mutation" for item in planned))
+            self.assertTrue(any(item.get("mutation_status") == "not_refreshable" for item in planned))
+            self.assertEqual(refresh.get("post_refresh_freshness", {}).get("rerun_performed"), False)
+            refresh_state = refresh.get("maintenance_refresh_state", {})
+            self.assertEqual(refresh_state.get("state"), "missing_or_unrefreshable_blocker")
+            self.assertFalse(refresh_state.get("current_evidence_can_pass"))
+            self.assertGreater(refresh_state.get("unrefreshable_count", 0), 0)
+
+            output_text = json.dumps({"stale": stale, "refresh": refresh}, sort_keys=True)
+            self.assertNotIn("PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO", output_text)
+            self.assertNotIn("sealed packet body text", output_text)
+            self.assertNotIn("sibling role-only result text", output_text)
+
+    def test_review_checker_change_passes_unchanged_and_additive_command(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="review-checker-change-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            baseline_path = workspace / "baseline.json"
+            write_json(baseline_path, checker_change_baseline())
+
+            unchanged = run_skillguard("review-checker-change", "--baseline", rel(baseline_path))
+
+            self.assert_clean_pass(unchanged)
+            self.assertEqual(unchanged.get("baseline_binding", {}).get("command_count"), len(checker_engine.COMMANDS))
+            self.assertEqual(unchanged.get("checker_change_blockers"), [])
+            self.assertTrue(unchanged.get("mutation_check", {}).get("read_only"))
+
+            additive_commands = [
+                item
+                for item in checker_engine.current_checker_command_surface()
+                if item.get("name") != "review-checker-change"
+            ]
+            additive_routes = [
+                checker_engine.public_route_entry(entry)
+                for entry in checker_engine.current_route_entries()
+                if entry.get("command_family") != "review-checker-change"
+            ]
+            additive_baseline_path = workspace / "additive-baseline.json"
+            write_json(
+                additive_baseline_path,
+                checker_change_baseline(command_surface=additive_commands, route_registry=additive_routes),
+            )
+
+            additive = run_skillguard("review-checker-change", "--baseline", rel(additive_baseline_path))
+
+            self.assert_clean_pass(additive)
+            compatible_classes = {item.get("change_class") for item in additive.get("compatible_changes", [])}
+            self.assertIn("additive_command", compatible_classes)
+            self.assertIn("additive_route", compatible_classes)
+            self.assertTrue(
+                any(item.get("checker") == "review-checker-change" for item in additive.get("compatible_changes", []))
+            )
+
+    def test_review_checker_change_blocks_removed_weakened_renamed_schema_and_fixture_changes(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="review-checker-change-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            manifest_path = workspace / "fixture-manifest.json"
+            write_json(
+                manifest_path,
+                {
+                    "schema_version": "skillguard.fixture_manifest.v1",
+                    "fixtures": [{"fixture_id": "checker-change-case", "target_command": "self-check", "expected_decision": "pass"}],
+                },
+            )
+            original_manifest_hash = sha256(manifest_path)
+            command_surface = checker_engine.current_checker_command_surface()
+            for item in command_surface:
+                if item["name"] == "refresh-maintenance":
+                    item["required_checks"] = item["required_checks"] + ["refresh-maintenance:must-not-ignore-failing-checks"]
+                if item["name"] == "commands":
+                    item["output_schema"] = "skillguard.old_command_result.v0"
+            command_surface.extend(
+                [
+                    {
+                        "name": "removed-checker",
+                        "dispatch_function": "checker_engine.removed_checker",
+                        "summary": "Removed checker in synthetic baseline.",
+                        "required_checks": ["removed-checker:hard-gate"],
+                        "output_schema": "skillguard.cli_result.v1",
+                    },
+                    {
+                        "name": "old-review-checker-change",
+                        "dispatch_function": "checker_engine.review_checker_change",
+                        "summary": "Old checker name in synthetic baseline.",
+                        "required_checks": checker_engine.checker_command_required_checks("review-checker-change"),
+                        "output_schema": checker_engine.REVIEW_CHECKER_CHANGE_RESULT_SCHEMA,
+                    },
+                ]
+            )
+            baseline_path = workspace / "baseline.json"
+            write_json(
+                baseline_path,
+                checker_change_baseline(
+                    command_surface=command_surface,
+                    fixture_manifests=[
+                        {
+                            "path": rel(manifest_path),
+                            "sha256": original_manifest_hash,
+                            "fixture_ids": ["checker-change-case"],
+                        }
+                    ],
+                ),
+            )
+            write_json(
+                manifest_path,
+                {
+                    "schema_version": "skillguard.fixture_manifest.v1",
+                    "fixtures": [
+                        {
+                            "fixture_id": "checker-change-case-renamed",
+                            "target_command": "self-check",
+                            "expected_decision": "block",
+                        }
+                    ],
+                },
+            )
+
+            report = run_skillguard(
+                "review-checker-change",
+                "--baseline",
+                rel(baseline_path),
+                "--fixture-manifest",
+                rel(manifest_path),
+                expected_exit=1,
+            )
+
+            codes = checker_change_blocker_codes(report)
+            self.assertEqual(report.get("decision"), "block")
+            self.assertIn("checker_command_removed", codes)
+            self.assertIn("checker_required_check_removed", codes)
+            self.assertIn("checker_command_renamed", codes)
+            self.assertIn("checker_output_schema_changed", codes)
+            self.assertIn("fixture_expectation_changed", codes)
+            for blocker in report.get("checker_change_blockers", []):
+                self.assertTrue(blocker.get("changed_checker"))
+                self.assertTrue(blocker.get("old_binding"))
+                self.assertTrue(blocker.get("new_binding"))
+                self.assertTrue(blocker.get("impact_class"))
+                self.assertTrue(blocker.get("affected_evidence_kinds"))
+                self.assertTrue(blocker.get("required_revalidation"))
+                self.assertTrue(blocker.get("recommended_repair_action"))
+
+    def test_review_checker_change_blocks_missing_baseline_stale_evidence_and_stays_public_safe_read_only(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="review-checker-change-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            missing = run_skillguard("review-checker-change", expected_exit=1)
+            self.assertIn("missing_baseline_metadata", checker_change_blocker_codes(missing))
+
+            source_path = workspace / "source.txt"
+            source_path.write_text("original\n", encoding="utf-8")
+            evidence_path = workspace / "evidence.json"
+            write_json(evidence_path, freshness_record_for(source_path))
+            baseline_path = workspace / "baseline.json"
+            write_json(
+                baseline_path,
+                checker_change_baseline(
+                    evidence_records=[{"path": rel(evidence_path), "sha256": sha256(evidence_path)}],
+                    private_payload="PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO",
+                ),
+            )
+            baseline_before = sha256(baseline_path)
+            evidence_before = sha256(evidence_path)
+            source_path.write_text("changed\n", encoding="utf-8")
+
+            report = run_skillguard(
+                "review-checker-change",
+                "--baseline",
+                rel(baseline_path),
+                "--evidence",
+                rel(evidence_path),
+                expected_exit=1,
+            )
+
+            self.assertEqual(sha256(baseline_path), baseline_before)
+            self.assertEqual(sha256(evidence_path), evidence_before)
+            output_text = json.dumps(report, sort_keys=True)
+            self.assertNotIn("PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO", output_text)
+            codes = checker_change_blocker_codes(report)
+            self.assertIn("stale_evidence_after_checker_change", codes)
+            self.assertEqual(report.get("mutation_check", {}).get("mutated_input_paths"), [])
+            for blocker in report.get("checker_change_blockers", []):
+                self.assertNotIn("private_payload", json.dumps(blocker, sort_keys=True))
+
+    def test_review_checker_change_command_dispatch_route_and_self_check(self) -> None:
+        commands = run_skillguard("commands")
+        self.assert_clean_pass(commands)
+        names = {item.get("name") for item in commands.get("commands", [])}
+        self.assertIn("review-checker-change", names)
+
+        route = run_skillguard("route-task", "--task", "Review checker change against current baseline metadata")
+        self.assert_clean_pass(route)
+        self.assertEqual(route.get("routing_decision", {}).get("command_family"), "review-checker-change")
+        self.assertEqual(route.get("routing_decision", {}).get("responsibility"), "reviewer")
+
+        self_check = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
+        self.assert_clean_pass(self_check)
+
+    def test_checker_change_suite_guard_passes_and_projects_registry_for_route_and_generators(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="checker-change-guard-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            source_path = workspace / "review-source.txt"
+            source_path.write_text("current checker-change review source\n", encoding="utf-8")
+            review_path = workspace / "review-current.json"
+            write_json(review_path, checker_change_review_report_for(source_path))
+
+            target = workspace / "guarded-skill"
+            idea_path = workspace / "guarded-skill-idea.json"
+            plan_path = workspace / "guarded-skill-blueprint.json"
+            write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+            write_json(plan_path, run_skillguard("plan-skill", "--input", rel(idea_path)))
+
+            report = run_skillguard(
+                "generate-skill",
+                "--input",
+                rel(plan_path),
+                "--checker-suite",
+                "generate-skill",
+                "--checker-suite-impact",
+                "checker_change",
+                "--checker-change-review",
+                rel(review_path),
+            )
+
+            self.assert_clean_pass(report)
+            guard = report.get("checker_change_suite_guard", {})
+            self.assertEqual(guard.get("state"), "fresh")
+            self.assertTrue(guard.get("current_evidence_can_pass"))
+            self.assertEqual(guard.get("selected_suites"), ["generate-skill"])
+            registry = self.assert_validation_registry(report, "generate-skill", "pass")
+            self.assertIn("checker_change_suite_guard", registry.get("source_of_truth_for", []))
+            self.assertIn("generate-skill:checker-change-suite-guard", self.validation_registry_ids(registry))
+            self.assertTrue(
+                any(
+                    item.get("kind") == "checker_change_suite_guard"
+                    for item in registry.get("evidence", [])
+                    if isinstance(item, dict)
+                )
+            )
+
+            suite_target = workspace / "guarded-suite"
+            suite_blueprint_path = workspace / "guarded-suite-blueprint.json"
+            route_input_path = workspace / "guarded-suite-route.json"
+            write_json(suite_blueprint_path, valid_suite_blueprint(rel(suite_target), suite_target.name))
+            write_json(
+                route_input_path,
+                {
+                    "task": "Create a draft suite scaffold from a Suite Blueprint",
+                    "route_hint": "generate-suite",
+                    "input_path": rel(suite_blueprint_path),
+                    "checker_change_review_path": rel(review_path),
+                    "checker_suite": "generate-suite",
+                    "checker_suite_impact": "suite_change",
+                },
+            )
+
+            routed = run_skillguard("route-task", "--input", rel(route_input_path))
+
+            self.assert_clean_pass(routed)
+            self.assertEqual(routed.get("command"), "generate-suite")
+            self.assertEqual(routed.get("checker_change_suite_guard", {}).get("state"), "fresh")
+            route_registry = self.assert_validation_registry(routed, "generate-suite", "pass")
+            self.assertIn("checker_change_suite_guard", route_registry.get("source_of_truth_for", []))
+
+    def test_checker_change_suite_guard_blocks_missing_stale_refresh_and_invalid_states(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="checker-change-guard-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+
+            def write_plan(name: str) -> Path:
+                target = workspace / name
+                idea_path = workspace / f"{name}-idea.json"
+                plan_path = workspace / f"{name}-blueprint.json"
+                write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+                write_json(plan_path, run_skillguard("plan-skill", "--input", rel(idea_path)))
+                return plan_path
+
+            current_source = workspace / "current-review-source.txt"
+            current_source.write_text("current review source\n", encoding="utf-8")
+            current_review = workspace / "current-review.json"
+            write_json(current_review, checker_change_review_report_for(current_source))
+
+            missing = run_skillguard(
+                "generate-skill",
+                "--input",
+                rel(write_plan("missing-guard-skill")),
+                "--checker-suite-required",
+                "--checker-suite-impact",
+                "checker_change",
+                expected_exit=1,
+            )
+            missing_codes = checker_change_suite_guard_codes(missing)
+            self.assertIn("empty_checker_suite_selection", missing_codes)
+            self.assertIn("missing_checker_change_review_evidence", missing_codes)
+
+            invalid = run_skillguard(
+                "generate-skill",
+                "--input",
+                rel(write_plan("invalid-selection-skill")),
+                "--checker-suite",
+                "bad/suite",
+                "--checker-suite-impact",
+                "checker_change",
+                "--checker-change-review",
+                rel(current_review),
+                expected_exit=1,
+            )
+            self.assertIn("invalid_checker_suite_selection", checker_change_suite_guard_codes(invalid))
+            self.assertEqual(invalid.get("checker_change_suite_guard", {}).get("state"), "invalid_selection")
+
+            stale_source = workspace / "stale-review-source.txt"
+            stale_source.write_text("before\n", encoding="utf-8")
+            stale_review = workspace / "stale-review.json"
+            write_json(stale_review, checker_change_review_report_for(stale_source))
+            stale_source.write_text("after\n", encoding="utf-8")
+
+            stale = run_skillguard(
+                "generate-skill",
+                "--input",
+                rel(write_plan("stale-guard-skill")),
+                "--checker-suite",
+                "generate-skill",
+                "--checker-suite-impact",
+                "checker_change",
+                "--checker-change-review",
+                rel(stale_review),
+                expected_exit=1,
+            )
+            self.assertIn("stale_checker_change_review_evidence", checker_change_suite_guard_codes(stale))
+            self.assertEqual(stale.get("checker_change_suite_guard", {}).get("state"), "stale_or_missing")
+
+            dry_refresh = run_skillguard("refresh-maintenance", "--input", rel(stale_review))
+            dry_refresh_path = workspace / "dry-refresh.json"
+            write_json(dry_refresh_path, dry_refresh)
+            planned = run_skillguard(
+                "generate-skill",
+                "--input",
+                rel(write_plan("planned-refresh-skill")),
+                "--checker-suite",
+                "generate-skill",
+                "--checker-suite-impact",
+                "checker_change",
+                "--checker-change-review",
+                rel(stale_review),
+                "--checker-change-refresh",
+                rel(dry_refresh_path),
+                expected_exit=1,
+            )
+            self.assertIn("checker_change_refresh_planned_only", checker_change_suite_guard_codes(planned))
+            self.assertEqual(planned.get("checker_change_suite_guard", {}).get("state"), "stale_refresh_planned")
+
+            execute_source = workspace / "execute-review-source.txt"
+            execute_source.write_text("before\n", encoding="utf-8")
+            execute_review = workspace / "execute-review.json"
+            write_json(execute_review, checker_change_review_report_for(execute_source))
+            execute_source.write_text("after\n", encoding="utf-8")
+            execute_refresh = run_skillguard("refresh-maintenance", "--input", rel(execute_review), "--execute")
+            execute_refresh_path = workspace / "execute-refresh.json"
+            write_json(execute_refresh_path, execute_refresh)
+            refreshed = run_skillguard(
+                "generate-skill",
+                "--input",
+                rel(write_plan("execute-refresh-skill")),
+                "--checker-suite",
+                "generate-skill",
+                "--checker-suite-impact",
+                "checker_change",
+                "--checker-change-review",
+                rel(execute_review),
+                "--checker-change-refresh",
+                rel(execute_refresh_path),
+            )
+            self.assert_clean_pass(refreshed)
+            self.assertEqual(refreshed.get("checker_change_suite_guard", {}).get("state"), "current_after_refresh")
+
+            missing_source = workspace / "missing-review-source.txt"
+            missing_source.write_text("before\n", encoding="utf-8")
+            failed_review = workspace / "failed-review.json"
+            write_json(failed_review, checker_change_review_report_for(missing_source))
+            missing_source.unlink()
+
+            failed_refresh = run_skillguard("refresh-maintenance", "--input", rel(failed_review), "--execute", expected_exit=1)
+            failed_refresh_path = workspace / "failed-refresh.json"
+            write_json(failed_refresh_path, failed_refresh)
+            failed = run_skillguard(
+                "generate-skill",
+                "--input",
+                rel(write_plan("failed-refresh-skill")),
+                "--checker-suite",
+                "generate-skill",
+                "--checker-suite-impact",
+                "checker_change",
+                "--checker-change-review",
+                rel(failed_review),
+                "--checker-change-refresh",
+                rel(failed_refresh_path),
+                expected_exit=1,
+            )
+            self.assertIn("checker_change_refresh_failed", checker_change_suite_guard_codes(failed))
+            self.assertEqual(failed.get("checker_change_suite_guard", {}).get("state"), "refresh_failed")
+
+            unrefreshable_source = workspace / "unrefreshable-review-source.txt"
+            unrefreshable_source.write_text("before\n", encoding="utf-8")
+            unrefreshable_review = workspace / "unrefreshable-review.json"
+            write_json(unrefreshable_review, checker_change_review_report_for(unrefreshable_source))
+            unrefreshable_source.unlink()
+            unrefreshable_refresh = run_skillguard("refresh-maintenance", "--input", rel(unrefreshable_review), expected_exit=1)
+            unrefreshable_refresh_path = workspace / "unrefreshable-refresh.json"
+            write_json(unrefreshable_refresh_path, unrefreshable_refresh)
+            unrefreshable = run_skillguard(
+                "generate-skill",
+                "--input",
+                rel(write_plan("unrefreshable-skill")),
+                "--checker-suite",
+                "generate-skill",
+                "--checker-suite-impact",
+                "checker_change",
+                "--checker-change-review",
+                rel(unrefreshable_review),
+                "--checker-change-refresh",
+                rel(unrefreshable_refresh_path),
+                expected_exit=1,
+            )
+            self.assertIn("checker_change_unrefreshable_evidence", checker_change_suite_guard_codes(unrefreshable))
+            self.assertEqual(
+                unrefreshable.get("checker_change_suite_guard", {}).get("state"),
+                "missing_or_unrefreshable_blocker",
+            )
+
+    def test_generate_skill_creates_expected_scaffold_and_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-helper"
+            idea_path = workspace / "idea.json"
+            plan_path = workspace / "blueprint.json"
+            write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+            plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+            write_json(plan_path, plan_report)
+
+            report = run_skillguard("generate-skill", "--input", rel(plan_path))
+            report_path = workspace / "generate-output.json"
+            write_json(report_path, report)
+
+            self.assert_clean_pass(report)
+            self.assertEqual(report.get("maintenance_record", {}).get("schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
+            required_files = {
+                "SKILL.md",
+                "README.md",
+                "references/README.md",
+                "assets/schemas/skillguard_generated_record.schema.json",
+                "assets/templates/check_report.template.json",
+                "scripts/README.md",
+                "scripts/run_checks.py",
+                "fixtures/README.md",
+                "fixtures/fixture-manifest.json",
+                "tests/README.md",
+                "tests/test_smoke.py",
+                ".skillguard/work-contract.json",
+                ".skillguard/check_manifest.json",
+                ".skillguard/checks/check_route.py",
+                ".skillguard/checks/check_phase_order.py",
+                ".skillguard/checks/check_evidence.py",
+                ".skillguard/checks/check_quality_floor.py",
+                ".skillguard/checks/check_closure.py",
+                ".skillguard/skillguard_profile.json",
+                ".skillguard/skillguard_skill_contract.json",
+                ".skillguard/skillguard_evidence_rules.json",
+                ".skillguard/skillguard_closure_policy.json",
+                ".skillguard/skillguard_manifest.json",
+                ".skillguard/skillguard_progress_ledger.jsonl",
+                ".skillguard/evidence/initial_evidence_manifest.json",
+                ".skillguard/ai_judgments/initial_ai_judgment.json",
+                ".skillguard/reports/initial_workflow_report.json",
+            }
+            for relative in required_files:
+                self.assertTrue((target / relative).is_file(), relative)
+                text = (target / relative).read_text(encoding="utf-8")
+                for pattern in PRIVATE_OR_SECRET_PATTERNS:
+                    self.assertIsNone(pattern.search(text), f"{relative}: {pattern.pattern}")
+                for pattern in UNSAFE_CLAIM_PATTERNS:
+                    self.assertIsNone(pattern.search(text), f"{relative}: {pattern.pattern}")
+            self.assertEqual(set(report.get("missing_after_write", [])), set())
+            post_checks = report.get("post_generation_checks", [])
+            self.assertEqual(
+                [(item.get("command"), item.get("artifact_path"), item.get("status")) for item in post_checks],
+                [
+                    ("check-skill", rel(target), "pass"),
+                    ("check-contract", rel(target / ".skillguard" / "work-contract.json"), "pass"),
+                ],
+            )
+
+            maintenance = run_skillguard("check-maintenance-record", "--input", rel(report_path))
+            self.assert_clean_pass(maintenance)
+            self.assertEqual(maintenance.get("migration_status"), "canonical_nested")
+
+            stale = run_skillguard("detect-stale-evidence", "--input", rel(report_path))
+            self.assert_clean_pass(stale)
+            self.assertEqual(stale.get("stale_evidence_count"), 0)
+
+            refresh = run_skillguard("refresh-maintenance", "--input", rel(report_path))
+            self.assert_clean_pass(refresh)
+
+            manifest_check = run_skillguard("check-fixture-manifest", "--input", rel(target / "fixtures" / "fixture-manifest.json"))
+            self.assert_clean_pass(manifest_check)
+
+            check_report = run_skillguard("check-skill", "--target", rel(target))
+            self.assert_clean_pass(check_report)
+
+            rerun = run_skillguard("generate-skill", "--input", rel(plan_path))
+            self.assert_clean_pass(rerun)
+            self.assertEqual(rerun.get("created_files"), [])
+            self.assertGreaterEqual(len(rerun.get("existing_files", [])), len(required_files))
+            self.assertTrue(all(item.get("status") == "pass" for item in rerun.get("post_generation_checks", [])))
+
+            bad_manifest = target / "fixtures" / "fixture-manifest.json"
+            write_json(bad_manifest, {"schema_version": "skillguard.fixture_manifest.v1", "fixtures": [1]})
+            malformed = run_skillguard("check-fixture-manifest", "--input", rel(bad_manifest), expected_exit=1)
+            self.assertEqual(malformed.get("decision"), "fail")
+            self.assertTrue(malformed.get("failures"))
+
+            removed = target / "SKILL.md"
+            removed.unlink()
+            stale_after_remove = run_skillguard("detect-stale-evidence", "--input", rel(report_path), expected_exit=1)
+            self.assertEqual(stale_after_remove.get("decision"), "block")
+            self.assertIn("stale_generated_artifact_path", stale_blocker_codes(stale_after_remove))
+
+    def test_generate_skill_blocks_conflicts_and_unsafe_target(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-helper"
+            idea_path = workspace / "idea.json"
+            plan_path = workspace / "blueprint.json"
+            write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+            plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+            write_json(plan_path, plan_report)
+            target.mkdir()
+            (target / "SKILL.md").write_text("conflicting content\n", encoding="utf-8")
+
+            conflict = run_skillguard("generate-skill", "--input", rel(plan_path), expected_exit=1)
+
+            self.assertEqual(conflict.get("decision"), "block")
+            self.assertTrue(any("different content" in blocker for blocker in conflict.get("blockers", [])))
+            self.assertTrue(
+                any(
+                    item.get("conflict_kind") == "existing_file_content_mismatch"
+                    and item.get("conflicting_path") == rel(target / "SKILL.md")
+                    for item in conflict.get("write_preflight_conflicts", [])
+                )
+            )
+            self.assertFalse((target / ".skillguard").exists())
+
+            unsafe_path = workspace / "unsafe-blueprint.json"
+            unsafe_report = dict(plan_report)
+            unsafe_blueprint = dict(plan_report["skill_blueprint"])
+            unsafe_blueprint["target"] = "../outside-skill"
+            unsafe_blueprint["skill"] = dict(unsafe_blueprint["skill"])
+            unsafe_blueprint["skill"]["target_path"] = "../outside-skill"
+            unsafe_report["skill_blueprint"] = unsafe_blueprint
+            write_json(unsafe_path, unsafe_report)
+            unsafe = run_skillguard("generate-skill", "--input", rel(unsafe_path), expected_exit=1)
+            self.assertEqual(unsafe.get("decision"), "block")
+            self.assertTrue(any("repository root" in blocker for blocker in unsafe.get("blockers", [])))
+
+    def test_generate_skill_blocks_required_directory_file_conflicts_before_writing(self) -> None:
+        required_directories = (
+            ".skillguard",
+            ".skillguard/ai_judgments",
+            ".skillguard/evidence",
+            ".skillguard/reports",
+            "assets/schemas",
+            "assets/templates",
+            "fixtures",
+            "references",
+            "scripts",
+            "tests",
+        )
+        for required_directory in required_directories:
+            with self.subTest(required_directory=required_directory):
+                with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+                    workspace = Path(tmp)
+                    target = workspace / "generated-review-helper"
+                    idea_path = workspace / "idea.json"
+                    plan_path = workspace / "blueprint.json"
+                    write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+                    plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+                    write_json(plan_path, plan_report)
+
+                    conflict_path = target / Path(*required_directory.split("/"))
+                    conflict_path.parent.mkdir(parents=True, exist_ok=True)
+                    conflict_path.write_text("directory conflict\n", encoding="utf-8")
+
+                    conflict = run_skillguard("generate-skill", "--input", rel(plan_path), expected_exit=1)
+
+                    conflict_relative = rel(conflict_path)
+                    self.assertEqual(conflict.get("decision"), "block")
+                    self.assertTrue(
+                        any(
+                            "required scaffold directory conflict" in blocker and conflict_relative in blocker
+                            for blocker in conflict.get("blockers", [])
+                        )
+                    )
+                    structured_conflicts = conflict.get("write_preflight_conflicts", [])
+                    self.assertTrue(
+                        any(
+                            item.get("conflicting_path") == conflict_relative
+                            and item.get("expected_directory_role")
+                            and item.get("safe_remediation_path") == conflict_relative
+                            for item in structured_conflicts
+                        ),
+                        structured_conflicts,
+                    )
+                    self.assertEqual(conflict.get("planned_created_files"), [])
+                    self.assertNotIn("created_files", conflict)
+                    for generated_file in (
+                        "SKILL.md",
+                        "README.md",
+                        "references/README.md",
+                        "assets/schemas/skillguard_generated_record.schema.json",
+                        "assets/templates/check_report.template.json",
+                        "scripts/run_checks.py",
+                        "fixtures/fixture-manifest.json",
+                        "tests/test_smoke.py",
+                        ".skillguard/skillguard_profile.json",
+                    ):
+                        self.assertFalse((target / Path(*generated_file.split("/"))).is_file(), generated_file)
+
+    def test_generate_skill_blocks_unowned_existing_target_without_writing(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-helper"
+            idea_path = workspace / "idea.json"
+            plan_path = workspace / "blueprint.json"
+            write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+            plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+            write_json(plan_path, plan_report)
+            target.mkdir()
+            user_note = target / "notes.md"
+            user_note.write_text("user-owned note\n", encoding="utf-8")
+
+            conflict = run_skillguard("generate-skill", "--input", rel(plan_path), expected_exit=1)
+
+            self.assertEqual(conflict.get("decision"), "block")
+            self.assertEqual(conflict.get("planned_created_files"), [])
+            self.assertNotIn("created_files", conflict)
+            self.assertTrue(user_note.is_file())
+            self.assertFalse((target / "SKILL.md").exists())
+            self.assertFalse((target / ".skillguard").exists())
+            self.assertTrue(
+                any(
+                    item.get("conflict_kind") == "unexpected_existing_file"
+                    and item.get("conflicting_path") == rel(user_note)
+                    and item.get("safe_remediation_path") == rel(user_note)
+                    for item in conflict.get("write_preflight_conflicts", [])
+                ),
+                conflict.get("write_preflight_conflicts", []),
+            )
+
+    def test_generate_skill_blocks_partial_generated_tree_before_writing(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-helper"
+            idea_path = workspace / "idea.json"
+            plan_path = workspace / "blueprint.json"
+            write_json(idea_path, valid_skill_idea(rel(target), skill_name=target.name))
+            plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+            write_json(plan_path, plan_report)
+            first = run_skillguard("generate-skill", "--input", rel(plan_path))
+            self.assert_clean_pass(first)
+
+            removed = target / "references" / "README.md"
+            removed.unlink()
+            conflict = run_skillguard("generate-skill", "--input", rel(plan_path), expected_exit=1)
+
+            self.assertEqual(conflict.get("decision"), "block")
+            self.assertEqual(conflict.get("planned_created_files"), [])
+            self.assertNotIn("created_files", conflict)
+            self.assertFalse(removed.exists())
+            self.assertTrue(
+                any(
+                    item.get("conflict_kind") == "incomplete_generated_ownership"
+                    and item.get("conflicting_path") == rel(target)
+                    for item in conflict.get("write_preflight_conflicts", [])
+                ),
+                conflict.get("write_preflight_conflicts", []),
+            )
+
+    def test_generate_skill_fails_when_post_generation_check_fails(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-helper"
+            idea_path = workspace / "idea.json"
+            plan_path = workspace / "blueprint.json"
+            idea = valid_skill_idea(rel(target), skill_name=target.name)
+            idea["description"] = "Use when a maintainer asks for tests passed evidence without a current review."
+            write_json(idea_path, idea)
+            plan_report = run_skillguard("plan-skill", "--input", rel(idea_path))
+            write_json(plan_path, plan_report)
+
+            report = run_skillguard("generate-skill", "--input", rel(plan_path), expected_exit=1)
+
+            self.assertEqual(report.get("decision"), "fail")
+            self.assertTrue((target / "SKILL.md").is_file())
+            self.assertTrue(
+                any(
+                    item.get("command") == "check-skill"
+                    and item.get("artifact_path") == rel(target)
+                    and item.get("status") == "fail"
+                    and item.get("reported_decision") == "fail"
+                    for item in report.get("post_generation_checks", [])
+                ),
+                report.get("post_generation_checks", []),
+            )
+            self.assertTrue(any("post-generation check" in failure for failure in report.get("failures", [])))
+            self.assertNotEqual(report.get("decision"), "pass")
+
+    def test_post_generation_check_reports_missing_artifact_blocker(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            missing_target = Path(tmp) / "missing-generated-skill"
+            check = checker_engine.build_post_generation_check_result(
+                check_id="test:missing-generated-artifact",
+                command_name="check-skill",
+                argv=["--target", rel(missing_target)],
+                artifact_path=rel(missing_target),
+            )
+
+            self.assertEqual(check.get("status"), "block")
+            self.assertEqual(check.get("reported_decision"), "block")
+            self.assertEqual(check.get("artifact_path"), rel(missing_target))
+            self.assertTrue(any("does not exist" in item for item in check.get("reported_blockers", [])))
+
+    def test_generate_skill_blocks_invalid_blueprint_shape(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            target = Path(tmp)
+            invalid_path = target / "invalid.json"
+            write_json(invalid_path, {"schema_version": "skillguard.skill_blueprint.v1", "target": rel(target)})
+
+            report = run_skillguard("generate-skill", "--input", rel(invalid_path), expected_exit=1)
+
+            self.assertEqual(report.get("decision"), "block")
+            self.assertTrue(any("missing required field" in blocker for blocker in report.get("blockers", [])))
+            self.assertFalse((target / ".skillguard").exists())
+
+    def test_generate_suite_creates_suite_child_records_and_is_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-suite"
+            blueprint_path = workspace / "suite-blueprint.json"
+            write_json(blueprint_path, valid_suite_blueprint(rel(target), target.name))
+
+            report = run_skillguard("generate-suite", "--input", rel(blueprint_path))
+
+            self.assert_clean_pass(report)
+            suite_root = target / ".skillguard" / "suite"
+            member_root = target / "members"
+            required_files = {
+                "README.md",
+                ".skillguard/suite/suite-map.json",
+                ".skillguard/suite/suite-contract.json",
+                ".skillguard/suite/evidence/source_blueprint_trace.json",
+                ".skillguard/suite/evidence/suite_closure.json",
+                ".skillguard/suite/evidence/suite-alpha_check_report.json",
+                ".skillguard/suite/evidence/suite-beta_check_report.json",
+                ".skillguard/suite/reports/suite_generation_report.json",
+                "members/suite-alpha/SKILL.md",
+                "members/suite-alpha/.skillguard/skillguard_profile.json",
+                "members/suite-beta/SKILL.md",
+                "members/suite-beta/.skillguard/skillguard_profile.json",
+            }
+            for relative in required_files:
+                path = target / Path(*relative.split("/"))
+                self.assertTrue(path.is_file(), relative)
+                text = path.read_text(encoding="utf-8")
+                for pattern in PRIVATE_OR_SECRET_PATTERNS:
+                    self.assertIsNone(pattern.search(text), f"{relative}: {pattern.pattern}")
+                for pattern in UNSAFE_CLAIM_PATTERNS:
+                    self.assertIsNone(pattern.search(text), f"{relative}: {pattern.pattern}")
+            self.assertEqual(set(report.get("missing_after_write", [])), set())
+            self.assertEqual(set(report.get("child_skill_paths", [])), {rel(member_root / "suite-alpha"), rel(member_root / "suite-beta")})
+            post_checks = report.get("post_generation_checks", [])
+            self.assertTrue(all(item.get("status") == "pass" for item in post_checks), post_checks)
+            self.assertEqual(
+                {(item.get("command"), item.get("artifact_path")) for item in post_checks},
+                {
+                    ("check-suite", rel(suite_root)),
+                    ("check-skill", rel(member_root / "suite-alpha")),
+                    ("check-skill", rel(member_root / "suite-beta")),
+                },
+            )
+
+            suite_check = run_skillguard(
+                "check-suite",
+                "--suite-root",
+                rel(suite_root),
+                "--suite-map",
+                rel(suite_root / "suite-map.json"),
+                "--suite-contract",
+                rel(suite_root / "suite-contract.json"),
+                "--member-root",
+                rel(member_root),
+            )
+            self.assert_clean_pass(suite_check)
+            for child in ("suite-alpha", "suite-beta"):
+                child_check = run_skillguard("check-skill", "--target", rel(member_root / child))
+                self.assert_clean_pass(child_check)
+
+            rerun = run_skillguard("generate-suite", "--input", rel(blueprint_path))
+            self.assert_clean_pass(rerun)
+            self.assertEqual(rerun.get("created_files"), [])
+            self.assertGreaterEqual(len(rerun.get("existing_files", [])), len(required_files))
+            self.assertTrue(all(item.get("status") == "pass" for item in rerun.get("post_generation_checks", [])))
+
+    def test_generate_suite_honors_declared_nested_member_path(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-suite"
+            member_root = target / "members"
+            nested_child = member_root / "nested" / "suite-alpha"
+            blueprint_path = workspace / "suite-blueprint.json"
+            blueprint = valid_suite_blueprint(rel(target), target.name, members=["suite-alpha"])
+            blueprint["member_skills"][0]["path"] = rel(nested_child)
+            write_json(blueprint_path, blueprint)
+
+            report = run_skillguard("generate-suite", "--input", rel(blueprint_path))
+
+            self.assert_clean_pass(report)
+            self.assertEqual(report.get("child_skill_paths"), [rel(nested_child)])
+            self.assertTrue(
+                any(
+                    item.get("command") == "check-skill"
+                    and item.get("artifact_path") == rel(nested_child)
+                    and item.get("status") == "pass"
+                    for item in report.get("post_generation_checks", [])
+                ),
+                report.get("post_generation_checks", []),
+            )
+            self.assertTrue((nested_child / "SKILL.md").is_file())
+            self.assertTrue((nested_child / ".skillguard" / "skillguard_profile.json").is_file())
+            self.assertFalse((member_root / "suite-alpha" / "SKILL.md").exists())
+
+            suite_root = target / ".skillguard" / "suite"
+            suite_map = json.loads((suite_root / "suite-map.json").read_text(encoding="utf-8"))
+            suite_contract = json.loads((suite_root / "suite-contract.json").read_text(encoding="utf-8"))
+            self.assertEqual(suite_map["included_skills"][0]["path"], rel(nested_child))
+            self.assertEqual(suite_contract["included_skills"][0]["path"], rel(nested_child))
+            self.assertEqual(
+                json.loads((suite_root / "evidence" / "suite-alpha_check_report.json").read_text(encoding="utf-8"))["target_path"],
+                rel(nested_child),
+            )
+
+            suite_check = run_skillguard(
+                "check-suite",
+                "--suite-root",
+                rel(suite_root),
+                "--suite-map",
+                rel(suite_root / "suite-map.json"),
+                "--suite-contract",
+                rel(suite_root / "suite-contract.json"),
+                "--member-root",
+                rel(member_root),
+            )
+            self.assert_clean_pass(suite_check)
+            child_check = run_skillguard("check-skill", "--target", rel(nested_child))
+            self.assert_clean_pass(child_check)
+
+    def test_generate_suite_blocks_unowned_nested_member_path_without_writing(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-suite"
+            member_root = target / "members"
+            nested_child = member_root / "nested" / "suite-alpha"
+            blueprint_path = workspace / "suite-blueprint.json"
+            blueprint = valid_suite_blueprint(rel(target), target.name, members=["suite-alpha"])
+            blueprint["member_skills"][0]["path"] = rel(nested_child)
+            write_json(blueprint_path, blueprint)
+            nested_child.mkdir(parents=True)
+            user_note = nested_child / "notes.md"
+            user_note.write_text("user-owned nested member note\n", encoding="utf-8")
+
+            conflict = run_skillguard("generate-suite", "--input", rel(blueprint_path), expected_exit=1)
+
+            self.assertEqual(conflict.get("decision"), "block")
+            self.assertEqual(conflict.get("planned_created_files"), [])
+            self.assertNotIn("created_files", conflict)
+            self.assertTrue(user_note.is_file())
+            self.assertFalse((target / "README.md").exists())
+            self.assertFalse((nested_child / "SKILL.md").exists())
+            self.assertTrue(
+                any(
+                    item.get("conflict_kind") == "unexpected_existing_file"
+                    and item.get("conflicting_path") == rel(user_note)
+                    and item.get("safe_remediation_path") == rel(user_note)
+                    for item in conflict.get("write_preflight_conflicts", [])
+                ),
+                conflict.get("write_preflight_conflicts", []),
+            )
+
+    def test_generate_suite_fails_when_child_post_generation_check_fails(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-suite"
+            member_root = target / "members"
+            child = member_root / "suite-alpha"
+            blueprint_path = workspace / "suite-blueprint.json"
+            blueprint = valid_suite_blueprint(rel(target), target.name, members=["suite-alpha"])
+            blueprint["member_skills"][0]["description"] = (
+                "Use when maintainers ask for tests passed evidence without current child review."
+            )
+            write_json(blueprint_path, blueprint)
+
+            report = run_skillguard("generate-suite", "--input", rel(blueprint_path), expected_exit=1)
+
+            self.assertEqual(report.get("decision"), "fail")
+            self.assertTrue((target / "README.md").is_file())
+            self.assertTrue((child / "SKILL.md").is_file())
+            post_checks = report.get("post_generation_checks", [])
+            self.assertTrue(
+                any(
+                    item.get("command") == "check-skill"
+                    and item.get("artifact_path") == rel(child)
+                    and item.get("status") == "fail"
+                    for item in post_checks
+                ),
+                post_checks,
+            )
+            self.assertTrue(any("post-generation check" in failure for failure in report.get("failures", [])))
+            self.assertNotEqual(report.get("decision"), "pass")
+
+    def test_generate_suite_blocks_conflicts_and_unsafe_or_invalid_input(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            workspace = Path(tmp)
+            target = workspace / "generated-review-suite"
+            blueprint_path = workspace / "suite-blueprint.json"
+            write_json(blueprint_path, valid_suite_blueprint(rel(target), target.name))
+            (target / ".skillguard" / "suite").mkdir(parents=True)
+            (target / ".skillguard" / "suite" / "suite-map.json").write_text("conflicting content\n", encoding="utf-8")
+
+            conflict = run_skillguard("generate-suite", "--input", rel(blueprint_path), expected_exit=1)
+
+            self.assertEqual(conflict.get("decision"), "block")
+            self.assertTrue(any("different content" in blocker for blocker in conflict.get("blockers", [])))
+            self.assertFalse((target / "members" / "suite-alpha" / "SKILL.md").exists())
+
+            unsafe_path = workspace / "unsafe-suite.json"
+            unsafe = valid_suite_blueprint(rel(workspace / "unsafe-suite"), "unsafe-suite")
+            unsafe["target"] = "../outside-suite"
+            unsafe["safe_edit_scope"] = {"target_file_writes_allowed": True, "allowed_write_paths": ["../outside-suite"]}
+            write_json(unsafe_path, unsafe)
+            unsafe_report = run_skillguard("generate-suite", "--input", rel(unsafe_path), expected_exit=1)
+            self.assertEqual(unsafe_report.get("decision"), "block")
+            self.assertTrue(any("repository root" in blocker for blocker in unsafe_report.get("blockers", [])))
+
+            invalid_path = workspace / "invalid-suite.json"
+            invalid = valid_suite_blueprint(rel(workspace / "invalid-suite"), "invalid-suite")
+            invalid.pop("member_skills")
+            write_json(invalid_path, invalid)
+            invalid_report = run_skillguard("generate-suite", "--input", rel(invalid_path), expected_exit=1)
+            self.assertEqual(invalid_report.get("decision"), "block")
+            self.assertTrue(any("member_skills" in blocker for blocker in invalid_report.get("blockers", [])))
+
+    def test_generate_suite_blocks_required_directory_file_conflicts_before_writing(self) -> None:
+        conflict_paths = (".skillguard/suite", "members/suite-alpha/references")
+        for conflict_relative in conflict_paths:
+            with self.subTest(conflict_relative=conflict_relative):
+                with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+                    workspace = Path(tmp)
+                    target = workspace / "generated-review-suite"
+                    blueprint_path = workspace / "suite-blueprint.json"
+                    write_json(blueprint_path, valid_suite_blueprint(rel(target), target.name, members=["suite-alpha"]))
+                    conflict_path = target / Path(*conflict_relative.split("/"))
+                    conflict_path.parent.mkdir(parents=True, exist_ok=True)
+                    conflict_path.write_text("directory conflict\n", encoding="utf-8")
+
+                    conflict = run_skillguard("generate-suite", "--input", rel(blueprint_path), expected_exit=1)
+
+                    path_relative = rel(conflict_path)
+                    self.assertEqual(conflict.get("decision"), "block")
+                    self.assertTrue(
+                        any(
+                            "required suite scaffold directory conflict" in blocker and path_relative in blocker
+                            for blocker in conflict.get("blockers", [])
+                        )
+                    )
+                    structured_conflicts = conflict.get("write_preflight_conflicts", [])
+                    self.assertTrue(
+                        any(
+                            item.get("conflicting_path") == path_relative
+                            and item.get("expected_directory_role")
+                            and item.get("safe_remediation_path") == path_relative
+                            for item in structured_conflicts
+                        ),
+                        structured_conflicts,
+                    )
+                    self.assertEqual(conflict.get("planned_created_files"), [])
+                    self.assertNotIn("created_files", conflict)
+                    self.assertFalse((target / "README.md").is_file())
+                    self.assertFalse((target / "members" / "suite-alpha" / "SKILL.md").is_file())
+
     def test_example_document_is_public_safe_and_current(self) -> None:
         self.assertTrue(EXAMPLES.is_file(), f"missing {rel(EXAMPLES)}")
         text = EXAMPLES.read_text(encoding="utf-8")
-        for required in ("check-skill", "check-suite", "fixture-test", "self-check", "standard-library"):
+        for required in (
+            "check-skill",
+            "check-suite",
+            "fixture-test",
+            "self-check",
+            "route-task",
+            "plan-skill",
+            "generate-skill",
+            "generate-suite",
+            "detect-stale-evidence",
+            "refresh-maintenance",
+            "review-checker-change",
+            "check-maintenance-record",
+            "standard-library",
+        ):
             self.assertIn(required, text)
         for pattern in PRIVATE_OR_SECRET_PATTERNS:
             self.assertIsNone(pattern.search(text), pattern.pattern)
@@ -127,7 +2576,7 @@ def result_payload(result: unittest.TestResult, elapsed_seconds: float) -> dict[
         for test, details in list(result.failures) + list(result.errors)
     ]
     decision = "pass" if result.wasSuccessful() else "fail"
-    return {
+    payload = {
         "schema_version": "skillguard.standard_library_test_result.v1",
         "checked_at": utc_timestamp(),
         "command": "python tests/test_skillguard_local.py",
@@ -173,6 +2622,19 @@ def result_payload(result: unittest.TestResult, elapsed_seconds: float) -> dict[
             "release readiness, code-contract validation, external services, or future AI behavior."
         ),
     }
+    payload["maintenance_record_schema_version"] = checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION
+    payload["maintenance_record"] = checker_engine.build_maintenance_record(
+        record_kind="workflow_evidence",
+        artifact_id="tests/test_skillguard_local.py",
+        route_node_id="standard-library-tests",
+        checker_name="check-maintenance-record",
+        status=decision,
+        blockers=failure_items,
+        evidence_timestamp=payload["checked_at"],
+        refresh_action={"action": "not_applicable", "status": "test_result"},
+        content_seed={"test_count": result.testsRun, "failure_count": len(result.failures), "error_count": len(result.errors)},
+    )
+    return payload
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,0 +1,31 @@
+{
+  "skill_name": "example-review-helper",
+  "description": "Use when a maintainer needs a bounded review helper for repository notes.",
+  "target_path": ".agents/skills/example-review-helper",
+  "purpose": "Create a review helper skill plan with explicit evidence and claim boundaries.",
+  "workflow_mode": "create",
+  "closure_scope": "blueprint preview only",
+  "evidence_policy": "current direct evidence required before target acceptance",
+  "safe_edit_mode": "no_write",
+  "use_when": [
+    "A maintainer asks for a review helper skill plan."
+  ],
+  "do_not_use_when": [
+    "The request needs target files written by the planning command."
+  ],
+  "required_workflow": [
+    "Inspect target files before any later edit.",
+    "Run local checks after implementation."
+  ],
+  "hard_gates": [
+    "Do not write target files during planning.",
+    "Keep claim boundaries visible."
+  ],
+  "output_requirements": [
+    "evidence",
+    "blockers",
+    "skipped_checks",
+    "residual_risk",
+    "claim_boundary"
+  ]
+}

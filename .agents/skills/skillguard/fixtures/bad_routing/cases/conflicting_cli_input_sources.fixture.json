@@ -1,0 +1,28 @@
+{
+  "fixture_id": "route_task_conflicting_cli_input_sources",
+  "target_command": "route-task",
+  "expected_decision": "block",
+  "input_surface": "cli-input-plus-direct-task",
+  "config_path": "../inputs/ordinary-generate-skill.json",
+  "extra_arguments": [
+    "--task",
+    "Check a skill"
+  ],
+  "no_mutation_paths": [
+    "../probes/conflicting-cli-input-must-not-exist"
+  ],
+  "expected_result": {
+    "blocker_class": "routing_conflict",
+    "blocker_code": "conflicting_input_sources",
+    "conflicting_fields": [
+      "--input",
+      "--task"
+    ],
+    "message_contains": [
+      "--input cannot be combined"
+    ],
+    "no_selected_fallback": true,
+    "empty_target_path_when_blocked": true,
+    "deterministic_repeat": true
+  }
+}

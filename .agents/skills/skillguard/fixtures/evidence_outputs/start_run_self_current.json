@@ -1,0 +1,105 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-26T10:48:29Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "start-run:contract",
+      "name": "Current work contract",
+      "required": true,
+      "status": "pass",
+      "summary": "Loaded and validated the contract before creating a run record."
+    },
+    {
+      "check_id": "start-run:route",
+      "name": "Selected route exists",
+      "required": true,
+      "status": "pass",
+      "summary": "Bound the run record to an explicit route id from the current contract."
+    },
+    {
+      "check_id": "start-run:record",
+      "name": "Run record creation",
+      "required": true,
+      "status": "pass",
+      "summary": "Created or previewed a run record with first phase running and later phases pending."
+    }
+  ],
+  "claim_boundary": "This result covers only the named local CLI invocation and the current files it loaded. It does not prove fixture coverage, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "start-run",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "run-record",
+      "fresh": true,
+      "kind": "run_record",
+      "source_path": ".agents/skills/skillguard/.skillguard/runs/run-b862f9d96a1ca3fb.json",
+      "summary": "Prepared run record run-b862f9d96a1ca3fb."
+    }
+  ],
+  "failures": [],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "run_path": ".agents/skills/skillguard/.skillguard/runs/run-b862f9d96a1ca3fb.json",
+  "run_record": {
+    "blockers": [],
+    "claim_boundary": "This run record covers only the declared target skill, selected route, phase evidence, and local checks captured in this file.",
+    "closure_decision": "not_requested",
+    "commands_run": [
+      {
+        "command": "start-run",
+        "decision": "pass",
+        "evidence_id": "task_summary"
+      }
+    ],
+    "contract_ref": {
+      "contract_hash": "B4BBE7311278C7F73B3294BFA4787745467A61C6B0922A079CDD4C91AD98ACF1",
+      "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
+      "contract_version": "1"
+    },
+    "current_phase": "intake",
+    "evidence": [
+      {
+        "evidence_id": "task_summary",
+        "fresh": true,
+        "kind": "task_record",
+        "phase_id": "intake",
+        "source_path": ".agents/skills/skillguard/.skillguard/runs/run-b862f9d96a1ca3fb.json"
+      }
+    ],
+    "phase_statuses": [
+      {
+        "phase_id": "intake",
+        "status": "running"
+      },
+      {
+        "phase_id": "inventory",
+        "status": "pending"
+      },
+      {
+        "phase_id": "evidence",
+        "status": "pending"
+      },
+      {
+        "phase_id": "checks",
+        "status": "pending"
+      },
+      {
+        "phase_id": "closure",
+        "status": "pending"
+      }
+    ],
+    "quality_failures": [],
+    "run_id": "run-b862f9d96a1ca3fb",
+    "schema_version": "skillguard.run_record.v1",
+    "selected_route": "audit",
+    "skipped_checks": [],
+    "target_skill": ".agents/skills/skillguard",
+    "task_summary": "Audit SkillGuard runtime contract work before closing implementation"
+  },
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard",
+  "write_status": "written"
+}

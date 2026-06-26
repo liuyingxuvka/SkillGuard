@@ -1,0 +1,7 @@
+{
+  "fixture_id": "runtime-check-run-missing-evidence-fail",
+  "target_command": "check-run",
+  "expected_decision": "fail",
+  "run_path": "../runs/missing_evidence_run.json",
+  "complete": true
+}

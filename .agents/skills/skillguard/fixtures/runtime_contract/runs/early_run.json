@@ -1,0 +1,56 @@
+{
+  "schema_version": "skillguard.run_record.v1",
+  "run_id": "fixture-early-run",
+  "target_skill": ".agents/skills/skillguard",
+  "task_summary": "Fixture early runtime contract run.",
+  "contract_ref": {
+    "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
+    "contract_version": "1",
+    "contract_hash": "B4BBE7311278C7F73B3294BFA4787745467A61C6B0922A079CDD4C91AD98ACF1"
+  },
+  "selected_route": "audit",
+  "current_phase": "intake",
+  "phase_statuses": [
+    {
+      "phase_id": "intake",
+      "status": "running"
+    },
+    {
+      "phase_id": "inventory",
+      "status": "pending"
+    },
+    {
+      "phase_id": "evidence",
+      "status": "pending"
+    },
+    {
+      "phase_id": "checks",
+      "status": "pending"
+    },
+    {
+      "phase_id": "closure",
+      "status": "pending"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "task_summary",
+      "phase_id": "intake",
+      "kind": "task_record",
+      "source_path": ".agents/skills/skillguard/fixtures/runtime_contract/runs/early_run.json",
+      "fresh": true
+    }
+  ],
+  "commands_run": [
+    {
+      "command": "start-run",
+      "decision": "pass",
+      "evidence_id": "task_summary"
+    }
+  ],
+  "skipped_checks": [],
+  "blockers": [],
+  "quality_failures": [],
+  "closure_decision": "not_requested",
+  "claim_boundary": "This fixture run is intentionally incomplete and must not be accepted."
+}

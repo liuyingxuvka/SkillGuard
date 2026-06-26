@@ -1,0 +1,97 @@
+{
+  "schema_version": "skillguard.run_record.v1",
+  "run_id": "fixture-missing-evidence-run",
+  "target_skill": ".agents/skills/skillguard",
+  "task_summary": "Fixture run missing direct evidence.",
+  "contract_ref": {
+    "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
+    "contract_version": "1",
+    "contract_hash": "B4BBE7311278C7F73B3294BFA4787745467A61C6B0922A079CDD4C91AD98ACF1"
+  },
+  "selected_route": "audit",
+  "current_phase": "closure",
+  "phase_statuses": [
+    {
+      "phase_id": "intake",
+      "status": "checked"
+    },
+    {
+      "phase_id": "inventory",
+      "status": "checked"
+    },
+    {
+      "phase_id": "evidence",
+      "status": "checked"
+    },
+    {
+      "phase_id": "checks",
+      "status": "checked"
+    },
+    {
+      "phase_id": "closure",
+      "status": "checked"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "task_summary",
+      "phase_id": "intake",
+      "kind": "task_record",
+      "source_path": ".agents/skills/skillguard/fixtures/runtime_contract/runs/missing_evidence_run.json",
+      "fresh": true
+    },
+    {
+      "evidence_id": "target_inventory",
+      "phase_id": "inventory",
+      "kind": "file_inventory",
+      "source_path": ".agents/skills/skillguard/SKILL.md",
+      "fresh": true
+    },
+    {
+      "evidence_id": "check_output",
+      "phase_id": "checks",
+      "kind": "command_output",
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/check_run_self_complete_current.json",
+      "fresh": true
+    },
+    {
+      "evidence_id": "closure_report",
+      "phase_id": "closure",
+      "kind": "closure_record",
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/close_run_self_accepted_current.json",
+      "fresh": true
+    }
+  ],
+  "commands_run": [
+    {
+      "command": "advance-run:intake:check:check_route",
+      "decision": "pass",
+      "evidence_id": "check_route"
+    },
+    {
+      "command": "advance-run:inventory:check:check_phase_order",
+      "decision": "pass",
+      "evidence_id": "check_phase_order"
+    },
+    {
+      "command": "advance-run:evidence:check:check_evidence",
+      "decision": "pass",
+      "evidence_id": "check_evidence"
+    },
+    {
+      "command": "advance-run:checks:check:check_quality_floor",
+      "decision": "pass",
+      "evidence_id": "check_quality_floor"
+    },
+    {
+      "command": "advance-run:closure:check:check_closure",
+      "decision": "pass",
+      "evidence_id": "check_closure"
+    }
+  ],
+  "skipped_checks": [],
+  "blockers": [],
+  "quality_failures": [],
+  "closure_decision": "not_requested",
+  "claim_boundary": "This fixture run intentionally omits required evidence and must fail."
+}

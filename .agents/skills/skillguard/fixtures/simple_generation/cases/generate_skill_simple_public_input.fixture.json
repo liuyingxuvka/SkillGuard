@@ -1,0 +1,32 @@
+{
+  "fixture_id": "generate_skill_simple_public_input",
+  "target_command": "generate-skill",
+  "expected_decision": "pass",
+  "generated_skill_name": "simple-generation-review-helper",
+  "expected_result": {
+    "deterministic_repeat": true,
+    "required_files": [
+      "SKILL.md",
+      "README.md",
+      "references/README.md",
+      "assets/schemas/skillguard_generated_record.schema.json",
+      "assets/templates/check_report.template.json",
+      "scripts/README.md",
+      "scripts/run_checks.py",
+      "fixtures/README.md",
+      "fixtures/fixture-manifest.json",
+      "tests/README.md",
+      "tests/test_smoke.py",
+      ".skillguard/skillguard_manifest.json"
+    ],
+    "validate_generated_manifest": true,
+    "post_generation_checks_pass": true,
+    "check_maintenance_record": true,
+    "detect_stale_evidence": true,
+    "refresh_maintenance_dry_run": true,
+    "public_boundary_scan": true,
+    "forbidden_output_substrings": [
+      "FORBIDDEN_PUBLIC_BOUNDARY_PROBE"
+    ]
+  }
+}

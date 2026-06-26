@@ -1,0 +1,16 @@
+{
+  "check_scripts": [],
+  "claim_boundary": "This hollow fixture contract is intentionally incomplete and must fail check-contract.",
+  "closure_rules": [],
+  "contract_hash": "",
+  "contract_version": "1",
+  "forbidden_shortcuts": [],
+  "phases": [],
+  "quality_floors": [],
+  "required_evidence": [],
+  "routes": [],
+  "schema_version": "skillguard.work_contract.v1",
+  "skill_id": "skillguard",
+  "stale_bindings": [],
+  "target_path": ".agents/skills/skillguard"
+}

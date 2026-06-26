@@ -36,6 +36,19 @@ Use this skill when:
 4. Run the strongest practical checks that are in scope for the target.
 5. Report only evidence-backed findings and keep the claim boundary explicit.
 
+## SkillGuard Runtime Rules
+
+For non-trivial work with this skill, use the local SkillGuard runtime contract before claiming closure:
+
+1. Select one route from `.skillguard/work-contract.json` before starting target work.
+2. Create or update a run record under `.skillguard/runs/`.
+3. Follow the declared phases in order.
+4. Attach current evidence for every required phase.
+5. Run required checks from `.skillguard/check_manifest.json`.
+6. Block instead of closing when a route is ambiguous, a phase is skipped, required evidence is missing or stale, a quality floor fails, or closure wording exceeds the evidence.
+
+AI or human judgment may explain semantic risk, but it must not replace required runnable checks.
+
 ## Hard Gates
 
 - Do not claim verification beyond the evidence listed in the final response.

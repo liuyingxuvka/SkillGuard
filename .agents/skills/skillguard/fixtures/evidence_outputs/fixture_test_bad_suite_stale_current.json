@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-22T04:42:40Z",
+  "checked_at": "2026-06-26T11:25:51Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -281,7 +281,7 @@
         },
         {
           "check_id": "self-check:public-boundary",
-          "status": "pass"
+          "status": "fail"
         },
         {
           "check_id": "self-check:skill-entrypoint",
@@ -297,12 +297,39 @@
         }
       ],
       "observed_decision": "fail",
-      "observed_failure_count": 2,
+      "observed_failure_count": 21,
       "observed_failures": [
-        "checker-change fixture policy missing term 'negative fixtures'",
-        "checker-change fixture policy missing term 'public-safety'"
+        "README command surface missing `route-task`",
+        "README command surface missing `plan-skill`",
+        "README command surface missing `generate-skill`",
+        "README command surface missing `generate-suite`",
+        "README command surface missing `check-json-schema`",
+        "README command surface missing `compile-contract`",
+        "README command surface missing `check-contract`",
+        "README command surface missing `select-route`",
+        "README command surface missing `start-run`",
+        "README command surface missing `advance-run`"
       ],
       "problems": [
+        "README command surface missing `route-task`",
+        "README command surface missing `plan-skill`",
+        "README command surface missing `generate-skill`",
+        "README command surface missing `generate-suite`",
+        "README command surface missing `check-json-schema`",
+        "README command surface missing `compile-contract`",
+        "README command surface missing `check-contract`",
+        "README command surface missing `select-route`",
+        "README command surface missing `start-run`",
+        "README command surface missing `advance-run`",
+        "README command surface missing `check-run`",
+        "README command surface missing `close-run`",
+        "README command surface missing `check-work-contract`",
+        "README command surface missing `check-run-record`",
+        "README command surface missing `check-check-manifest`",
+        "README command surface missing `detect-stale-evidence`",
+        "README command surface missing `refresh-maintenance`",
+        "README command surface missing `review-checker-change`",
+        "README command surface missing `check-maintenance-record`",
         "checker-change fixture policy missing term 'negative fixtures'",
         "checker-change fixture policy missing term 'public-safety'"
       ],
@@ -311,6 +338,230 @@
       "target_path": ".agents/skills/skillguard"
     }
   ],
+  "maintenance_record": {
+    "artifact_id": ".agents/skills/skillguard/fixtures/bad_suite_stale/fixture-manifest.json",
+    "blockers": [],
+    "command_surface": {
+      "checker_name": "fixture-test",
+      "checker_version": "skillguard.local_cli_dispatch.v1",
+      "command_names": [
+        "commands",
+        "route-task",
+        "inventory",
+        "plan-skill",
+        "generate-skill",
+        "generate-suite",
+        "check-json-schema",
+        "compile-contract",
+        "check-contract",
+        "select-route",
+        "start-run",
+        "advance-run",
+        "check-run",
+        "close-run",
+        "init-target",
+        "init-suite",
+        "mark",
+        "check-skill",
+        "check-suite",
+        "check-skill-contract",
+        "check-suite-map",
+        "check-suite-contract",
+        "check-fixture-manifest",
+        "check-work-contract",
+        "check-run-record",
+        "check-check-manifest",
+        "fixture-test",
+        "detect-stale-evidence",
+        "refresh-maintenance",
+        "review-checker-change",
+        "check-maintenance-record",
+        "check-ai-judgment",
+        "check-report",
+        "check-workflow-report",
+        "make-closure",
+        "self-check",
+        "write-report"
+      ],
+      "current_route_registry": [
+        {
+          "command_family": "route-task",
+          "next_step": "Return a deterministic SkillGuard route decision.",
+          "responsibility": "router",
+          "route_id": "skillguard.route.route-task.v1",
+          "route_node_id": "route-task",
+          "status": "current"
+        },
+        {
+          "command_family": "plan-skill",
+          "next_step": "Run plan-skill with a repository-local skill idea JSON file.",
+          "responsibility": "planner",
+          "route_id": "skillguard.route.plan-skill.v1",
+          "route_node_id": "plan-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "generate-skill",
+          "next_step": "Run generate-skill with a valid Skill Blueprint after review.",
+          "responsibility": "generator",
+          "route_id": "skillguard.route.generate-skill.v1",
+          "route_node_id": "generate-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "generate-suite",
+          "next_step": "Run generate-suite with a valid Suite Blueprint after review.",
+          "responsibility": "generator",
+          "route_id": "skillguard.route.generate-suite.v1",
+          "route_node_id": "generate-suite",
+          "status": "current"
+        },
+        {
+          "command_family": "compile-contract",
+          "next_step": "Run compile-contract against the target skill before expecting runtime phase checks.",
+          "responsibility": "contract-compiler",
+          "route_id": "skillguard.route.compile-contract.v1",
+          "route_node_id": "compile-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "check-contract",
+          "next_step": "Run check-contract against the target skill work contract.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-contract.v1",
+          "route_node_id": "check-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "select-route",
+          "next_step": "Run select-route before starting a SkillGuard-governed task run.",
+          "responsibility": "runtime-router",
+          "route_id": "skillguard.route.select-route.v1",
+          "route_node_id": "select-route",
+          "status": "current"
+        },
+        {
+          "command_family": "start-run",
+          "next_step": "Run start-run after select-route has chosen the route.",
+          "responsibility": "runtime-ledger",
+          "route_id": "skillguard.route.start-run.v1",
+          "route_node_id": "start-run",
+          "status": "current"
+        },
+        {
+          "command_family": "check-run",
+          "next_step": "Run check-run against the current run record before claiming progress or closure.",
+          "responsibility": "runtime-checker",
+          "route_id": "skillguard.route.check-run.v1",
+          "route_node_id": "check-run",
+          "status": "current"
+        },
+        {
+          "command_family": "close-run",
+          "next_step": "Run close-run only after check-run supports the requested closure decision.",
+          "responsibility": "closure",
+          "route_id": "skillguard.route.close-run.v1",
+          "route_node_id": "close-run",
+          "status": "current"
+        },
+        {
+          "command_family": "check-skill",
+          "next_step": "Run check-skill against the target skill directory.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-skill.v1",
+          "route_node_id": "check-skill",
+          "status": "current"
+        },
+        {
+          "command_family": "check-suite",
+          "next_step": "Run check-suite against suite records and member paths.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-suite.v1",
+          "route_node_id": "check-suite",
+          "status": "current"
+        },
+        {
+          "command_family": "fixture-test",
+          "next_step": "Run fixture-test against an explicit fixture manifest.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.fixture-test.v1",
+          "route_node_id": "fixture-test",
+          "status": "current"
+        },
+        {
+          "command_family": "detect-stale-evidence",
+          "next_step": "Run detect-stale-evidence against current evidence-bearing JSON artifacts.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.detect-stale-evidence.v1",
+          "route_node_id": "detect-stale-evidence",
+          "status": "current"
+        },
+        {
+          "command_family": "refresh-maintenance",
+          "next_step": "Run refresh-maintenance against stale evidence records, first in dry-run mode unless execution is explicitly requested.",
+          "responsibility": "maintainer",
+          "route_id": "skillguard.route.refresh-maintenance.v1",
+          "route_node_id": "refresh-maintenance",
+          "status": "current"
+        },
+        {
+          "command_family": "review-checker-change",
+          "next_step": "Run review-checker-change against the approved checker-change baseline and current evidence metadata.",
+          "responsibility": "reviewer",
+          "route_id": "skillguard.route.review-checker-change.v1",
+          "route_node_id": "review-checker-change",
+          "status": "current"
+        },
+        {
+          "command_family": "check-maintenance-record",
+          "next_step": "Run check-maintenance-record against a canonical or supported legacy maintenance record JSON artifact.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-maintenance-record.v1",
+          "route_node_id": "check-maintenance-record",
+          "status": "current"
+        },
+        {
+          "command_family": "make-closure",
+          "next_step": "Run make-closure with current reports and direct evidence references.",
+          "responsibility": "closure",
+          "route_id": "skillguard.route.make-closure.v1",
+          "route_node_id": "make-closure",
+          "status": "current"
+        },
+        {
+          "command_family": "self-check",
+          "next_step": "Run self-check against the SkillGuard skill target.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.self-check.v1",
+          "route_node_id": "self-check",
+          "status": "current"
+        },
+        {
+          "command_family": "inventory",
+          "next_step": "Run inventory against the target path.",
+          "responsibility": "inventory",
+          "route_id": "skillguard.route.inventory.v1",
+          "route_node_id": "inventory",
+          "status": "current"
+        }
+      ]
+    },
+    "content_hash": "660020821C7FC4937427E350A9288D513A3F35DF837D4A568B763C1D8337150A",
+    "evidence_timestamp": "2026-06-26T11:25:51Z",
+    "record_id": "fixture_evidence:E6A4CD10F108A7D5",
+    "record_kind": "fixture_evidence",
+    "refresh_action": {
+      "action": "fixture_test",
+      "fixture_result_count": 4,
+      "status": "pass"
+    },
+    "route_node_id": "fixture-test",
+    "route_registry_version": "skillguard.route_registry.v1",
+    "route_version": "5",
+    "schema_version": "skillguard.maintenance_record.v1",
+    "status": "pass"
+  },
+  "maintenance_record_schema_version": "skillguard.maintenance_record.v1",
   "residual_risk": [
     "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
   ],

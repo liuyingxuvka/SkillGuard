@@ -1,0 +1,5 @@
+{
+  "task": "Create a draft skill scaffold from a Skill Blueprint",
+  "route_hint": "old-router-v0",
+  "target_path": ".agents/skills/skillguard/fixtures/bad_routing/probes/stale-route-hint-must-not-exist"
+}
