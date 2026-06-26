@@ -31,6 +31,7 @@ SCHEMA_DIR = skill_root() / "assets" / "schemas"
 MARKER_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$")
 MARKER_STATUSES = ("checked", "needs-review", "blocked", "stale", "accepted")
 REFERENCE_SPAN_RE = re.compile(r"`([^`]+)`")
+FENCED_CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
 HEADING_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
 REQUIRED_SKILL_SECTIONS = (
     "Purpose",
@@ -1756,7 +1757,7 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
             if check_id not in check_by_id:
                 failures.append(f"quality_floor {floor_id}: unknown required_check {check_id}")
 
-    if target is not None and contract.get("target_path") != public_relative_path(target):
+    if target is not None and not contract_target_matches_target(contract.get("target_path"), target):
         failures.append("$.target_path: does not match the checked target directory")
     if contract_path is not None and not contract_path.is_file():
         failures.append(f"contract file is missing: {public_relative_path(contract_path)}")
@@ -4567,6 +4568,10 @@ def parse_skill_frontmatter(text: str) -> tuple[dict[str, str], list[str]]:
 
 def looks_like_reference_span(reference_text: str) -> bool:
     reference_text = reference_text.strip()
+    if "\n" in reference_text or "\r" in reference_text:
+        return False
+    if reference_text.startswith("/") and not reference_text.startswith(("/home/", "/Users/", "/tmp/", "/var/", "/etc/", "/opt/", "/mnt/")):
+        return False
     if reference_text in ROOT_REFERENCE_NAMES or reference_text == "SKILL.md":
         return True
     if reference_text.endswith((".md", ".json", ".toml", ".py", ".txt")):
@@ -4577,7 +4582,8 @@ def looks_like_reference_span(reference_text: str) -> bool:
 def extract_reference_tokens(text: str) -> list[str]:
     references: list[str] = []
     seen: set[str] = set()
-    for match in REFERENCE_SPAN_RE.finditer(text):
+    reference_source = FENCED_CODE_BLOCK_RE.sub("", text)
+    for match in REFERENCE_SPAN_RE.finditer(reference_source):
         reference_text = match.group(1).strip()
         if reference_text and looks_like_reference_span(reference_text) and reference_text not in seen:
             seen.add(reference_text)
@@ -4599,7 +4605,16 @@ def resolve_declared_reference(target: Path, reference: str) -> Path:
     normalized = reference.replace("\\", "/")
     if normalized == "SKILL.md":
         return target / "SKILL.md"
-    if normalized in ROOT_REFERENCE_NAMES or normalized.startswith(".agents/") or normalized.startswith("references/"):
+    source_layout_prefix = f".agents/skills/{target.name}/"
+    if normalized == f".agents/skills/{target.name}":
+        source_candidate = repo / normalized
+        return source_candidate if source_candidate.exists() else target
+    if normalized.startswith(source_layout_prefix):
+        source_candidate = repo / normalized
+        if source_candidate.exists():
+            return source_candidate
+        return target / normalized[len(source_layout_prefix):]
+    if normalized in ROOT_REFERENCE_NAMES or normalized.startswith(".agents/"):
         return repo / normalized
     return target / normalized
 
@@ -4704,9 +4719,30 @@ def resolve_record_reference(target: Path, control_root: Path, value: str) -> Pa
     normalized = value.replace("\\", "/")
     if normalized.startswith(".skillguard"):
         return target / normalized
-    if normalized.startswith(".agents/") or normalized.startswith("references/") or normalized in ROOT_REFERENCE_NAMES:
+    source_layout_prefix = f".agents/skills/{target.name}/"
+    if normalized == f".agents/skills/{target.name}":
+        source_candidate = repository_root() / normalized
+        return source_candidate if source_candidate.exists() else target
+    if normalized.startswith(source_layout_prefix):
+        source_candidate = repository_root() / normalized
+        if source_candidate.exists():
+            return source_candidate
+        return target / normalized[len(source_layout_prefix):]
+    if normalized.startswith(".agents/") or normalized in ROOT_REFERENCE_NAMES:
         return repository_root() / normalized
     return control_root / normalized
+
+
+def contract_target_matches_target(contract_target: Any, target: Path) -> bool:
+    if not isinstance(contract_target, str) or not contract_target.strip():
+        return False
+    if contract_target == public_relative_path(target):
+        return True
+    try:
+        resolved = resolve_declared_reference(target, contract_target).resolve()
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return resolved == target.resolve()
 
 
 def validate_record_references(
@@ -12741,8 +12777,21 @@ def self_check(argv: list[str]) -> int:
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
 
-    target = ensure_under_root(args.target)
-    policy_root = ensure_under_root(args.policy_root) if args.policy_root else repository_root()
+    repo = repository_root()
+    default_source_target = ".agents/skills/skillguard"
+    default_source_target_path = repo / default_source_target
+    if (
+        args.target == default_source_target
+        and not (default_source_target_path / "SKILL.md").is_file()
+        and (skill_root() / "SKILL.md").is_file()
+    ):
+        target = skill_root()
+    else:
+        target = ensure_under_root(args.target)
+    source_layout = target.resolve() == default_source_target_path.resolve() and (default_source_target_path / "SKILL.md").is_file()
+    layout = "source_repository" if source_layout else "installed_skill"
+    policy_root_supplied = bool(args.policy_root)
+    policy_root = ensure_under_root(args.policy_root) if policy_root_supplied else repo
     policy_relative_paths = {
         "README.md",
         "AGENTS.md",
@@ -12752,25 +12801,20 @@ def self_check(argv: list[str]) -> int:
     }
 
     def self_check_path(relative: str) -> Path:
-        if relative in policy_relative_paths:
-            return policy_root / relative
-        return repository_root() / relative
+        normalized = relative.replace("\\", "/")
+        source_layout_prefix = ".agents/skills/skillguard/"
+        if source_layout:
+            if normalized in policy_relative_paths:
+                return policy_root / normalized
+            return repo / normalized
+        if normalized.startswith(source_layout_prefix):
+            return target / normalized[len(source_layout_prefix):]
+        if normalized in policy_relative_paths or normalized in {"LICENSE", "VERSION", "pyproject.toml"}:
+            return (policy_root / normalized) if policy_root_supplied else target / normalized
+        return target / normalized
 
-    target_relative = public_relative_path(target)
-    payload = base_result("self-check", target_relative)
-    payload["claim_boundary"] = (
-        "This self-check covers current local SkillGuard repository files, the SkillGuard skill entrypoint, checker-change policy artifacts, "
-        "control records, report/evidence conventions, public-boundary wording, and local CLI dispatch. It does not prove full fixture coverage, "
-        "suite automation, package publication, release readiness, code-contract validation, external publication, or future AI behavior."
-    )
-    failures: list[str] = []
-    blockers: list[str] = []
-    inspected_files: list[dict[str, Any]] = []
-    public_safety: list[dict[str, Any]] = []
-    unsafe_claim_findings: list[dict[str, Any]] = []
-
-    before_failures, before_blockers = len(failures), len(blockers)
-    required_paths = [
+    skipped_checks: list[dict[str, Any]] = []
+    source_required_paths = [
         "README.md",
         "AGENTS.md",
         "LICENSE",
@@ -12798,6 +12842,65 @@ def self_check(argv: list[str]) -> int:
         "references/08-checker-change-fixture-policy.md",
         "references/09-skillguard-self-check.md",
     ]
+    installed_required_paths = [
+        "SKILL.md",
+        "scripts/skillguard.py",
+        "scripts/checker_engine.py",
+        "scripts/skillguard_utils.py",
+        "assets/schemas/skillguard_fixture_manifest.schema.json",
+        "assets/schemas/skillguard_check_report.schema.json",
+        "assets/schemas/skillguard_workflow_report.schema.json",
+        "assets/schemas/skillguard_maintenance_record.schema.json",
+        "assets/templates/skillguard_checker_change.template.json",
+        "assets/templates/skillguard_fixture_manifest.template.json",
+        "assets/templates/skillguard_closure.template.json",
+        "fixtures/checker_change/current-baseline.json",
+        "fixtures/bad_routing/fixture-manifest.json",
+        "fixtures/simple_generation/fixture-manifest.json",
+        "fixtures/complex_generation/fixture-manifest.json",
+        ".skillguard/skillguard_evidence_rules.json",
+        ".skillguard/skillguard_closure_policy.json",
+        ".skillguard/skillguard_manifest.json",
+    ]
+    if policy_root_supplied and not source_layout:
+        installed_required_paths.extend(sorted(policy_relative_paths))
+    required_paths = source_required_paths if source_layout else installed_required_paths
+
+    def self_check_json_paths() -> list[str]:
+        source_json_paths = [
+            ".agents/skills/skillguard/assets/schemas/skillguard_fixture_manifest.schema.json",
+            ".agents/skills/skillguard/assets/schemas/skillguard_check_report.schema.json",
+            ".agents/skills/skillguard/assets/schemas/skillguard_workflow_report.schema.json",
+            ".agents/skills/skillguard/assets/schemas/skillguard_maintenance_record.schema.json",
+            ".agents/skills/skillguard/fixtures/checker_change/current-baseline.json",
+            ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json",
+            ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
+            ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
+            ".agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json",
+            ".agents/skills/skillguard/.skillguard/skillguard_closure_policy.json",
+            ".agents/skills/skillguard/.skillguard/skillguard_manifest.json",
+        ]
+        if source_layout:
+            return source_json_paths
+        prefix = ".agents/skills/skillguard/"
+        return [path[len(prefix):] for path in source_json_paths]
+
+    target_relative = public_relative_path(target)
+    payload = base_result("self-check", target_relative)
+    payload["layout"] = layout
+    payload["claim_boundary"] = (
+        "This self-check covers the current local SkillGuard source-repository layout or installed-skill layout, "
+        "the SkillGuard skill entrypoint, checker policy artifacts when present for that layout, control records, "
+        "report/evidence conventions, public-boundary wording, and local CLI dispatch. It does not prove full fixture coverage, "
+        "suite automation, package publication, release readiness, code-contract validation, external publication, or future AI behavior."
+    )
+    failures: list[str] = []
+    blockers: list[str] = []
+    inspected_files: list[dict[str, Any]] = []
+    public_safety: list[dict[str, Any]] = []
+    unsafe_claim_findings: list[dict[str, Any]] = []
+
+    before_failures, before_blockers = len(failures), len(blockers)
     for relative in required_paths:
         path = self_check_path(relative)
         if not path.is_file():
@@ -12809,25 +12912,13 @@ def self_check(argv: list[str]) -> int:
         "self-check:required-files",
         "Required self-check files",
         check_status(failures, blockers, before_failures, before_blockers),
-        "Checked current SkillGuard repository, skill, script, policy, schema, template, and reference files needed for self-check.",
+        f"Checked current SkillGuard {layout} files needed for self-check.",
     )
 
     before_failures, before_blockers = len(failures), len(blockers)
-    for json_relative in [
-        ".agents/skills/skillguard/assets/schemas/skillguard_fixture_manifest.schema.json",
-        ".agents/skills/skillguard/assets/schemas/skillguard_check_report.schema.json",
-        ".agents/skills/skillguard/assets/schemas/skillguard_workflow_report.schema.json",
-        ".agents/skills/skillguard/assets/schemas/skillguard_maintenance_record.schema.json",
-        ".agents/skills/skillguard/fixtures/checker_change/current-baseline.json",
-        ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json",
-        ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
-        ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
-        ".agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json",
-        ".agents/skills/skillguard/.skillguard/skillguard_closure_policy.json",
-        ".agents/skills/skillguard/.skillguard/skillguard_manifest.json",
-    ]:
+    for json_relative in self_check_json_paths():
         try:
-            load_json(repository_root() / json_relative)
+            load_json(self_check_path(json_relative))
         except ValueError as exc:
             failures.append(f"{json_relative}: JSON parse failed: {exc}")
     append_check(
@@ -12846,18 +12937,30 @@ def self_check(argv: list[str]) -> int:
             failures.append(f"CLI dispatch missing required command {command_name}")
     readme_path = self_check_path("README.md")
     readme_text = readme_path.read_text(encoding="utf-8") if readme_path.is_file() else ""
-    for command_name in command_names:
-        if f"`{command_name}`" not in readme_text:
-            failures.append(f"README command surface missing `{command_name}`")
-    for term in ("fixture coverage", "suite automation", "package publication", "release readiness", "code-contract validation"):
-        if term not in readme_text.lower():
-            failures.append(f"README public boundary missing {term!r}")
+    if readme_text:
+        for command_name in command_names:
+            if f"`{command_name}`" not in readme_text:
+                failures.append(f"README command surface missing `{command_name}`")
+        for term in ("fixture coverage", "suite automation", "package publication", "release readiness", "code-contract validation"):
+            if term not in readme_text.lower():
+                failures.append(f"README public boundary missing {term!r}")
+    elif source_layout or policy_root_supplied:
+        failures.append("README.md missing for source-repository public-boundary check")
+    else:
+        skipped_checks.append(
+            {
+                "check_id": "self-check:source-readme-public-boundary",
+                "reason": "Installed SkillGuard layout does not ship the source repository README; source-repository self-check covers README wording.",
+                "required": False,
+                "status_impact": "Not a pass claim for source README command-surface wording.",
+            }
+        )
     append_check(
         payload,
         "self-check:public-boundary",
         "README and command boundary",
         check_status(failures, blockers, before_failures, before_blockers),
-        "Checked local command dispatch entries against README command wording and conservative public-boundary terms.",
+        "Checked local command dispatch entries and, when available for this layout, README command wording and conservative public-boundary terms.",
     )
 
     before_failures, before_blockers = len(failures), len(blockers)
@@ -12881,30 +12984,51 @@ def self_check(argv: list[str]) -> int:
     before_failures, before_blockers = len(failures), len(blockers)
     ref08_path = self_check_path("references/08-checker-change-fixture-policy.md")
     ref09_path = self_check_path("references/09-skillguard-self-check.md")
-    ref08 = ref08_path.read_text(encoding="utf-8").lower() if ref08_path.is_file() else ""
-    ref09 = ref09_path.read_text(encoding="utf-8").lower() if ref09_path.is_file() else ""
-    for term in ("positive fixtures", "negative fixtures", "stale fixture", "absent fixture", "compatibility", "public-safety"):
-        if term not in ref08:
-            failures.append(f"checker-change fixture policy missing term {term!r}")
-    for term in ("required inputs", "deterministic checks", "public-safety checks", "closure boundaries", "pass, fail, and block"):
-        if term not in ref09:
-            failures.append(f"self-check reference missing term {term!r}")
+    ref08_available = ref08_path.is_file()
+    ref09_available = ref09_path.is_file()
+    if ref08_available and ref09_available:
+        ref08 = ref08_path.read_text(encoding="utf-8").lower()
+        ref09 = ref09_path.read_text(encoding="utf-8").lower()
+        for term in ("positive fixtures", "negative fixtures", "stale fixture", "absent fixture", "compatibility", "public-safety"):
+            if term not in ref08:
+                failures.append(f"checker-change fixture policy missing term {term!r}")
+        for term in ("required inputs", "deterministic checks", "public-safety checks", "closure boundaries", "pass, fail, and block"):
+            if term not in ref09:
+                failures.append(f"self-check reference missing term {term!r}")
+    elif source_layout or policy_root_supplied:
+        if not ref08_available:
+            failures.append("references/08-checker-change-fixture-policy.md missing for policy artifact check")
+        if not ref09_available:
+            failures.append("references/09-skillguard-self-check.md missing for policy artifact check")
+    else:
+        skipped_checks.append(
+            {
+                "check_id": "self-check:source-policy-reference-docs",
+                "reason": "Installed SkillGuard layout does not ship the source repository policy reference documents; source-repository self-check covers them.",
+                "required": False,
+                "status_impact": "Not a pass claim for source policy reference wording.",
+            }
+        )
     append_check(
         payload,
         "self-check:policy-artifacts",
         "Checker-change and self-check policy artifacts",
         check_status(failures, blockers, before_failures, before_blockers),
-        "Checked checker-change fixture policy and self-check reference documents for required policy surfaces.",
+        "Checked checker-change fixture policy and self-check reference documents when available for this layout.",
     )
 
     before_failures, before_blockers = len(failures), len(blockers)
     public_paths = [
-        self_check_path("README.md"),
-        self_check_path("AGENTS.md"),
-        target / "SKILL.md",
-        self_check_path("references/06-evidence-freshness-and-closure-boundaries.md"),
-        self_check_path("references/08-checker-change-fixture-policy.md"),
-        self_check_path("references/09-skillguard-self-check.md"),
+        path
+        for path in [
+            readme_path,
+            self_check_path("AGENTS.md"),
+            target / "SKILL.md",
+            self_check_path("references/06-evidence-freshness-and-closure-boundaries.md"),
+            self_check_path("references/08-checker-change-fixture-policy.md"),
+            self_check_path("references/09-skillguard-self-check.md"),
+        ]
+        if path.is_file()
     ]
     for path in public_paths:
         for finding in public_safety_findings(path):
@@ -12916,9 +13040,11 @@ def self_check(argv: list[str]) -> int:
         "self-check:public-safety",
         "Public safety and unsafe-claim scans",
         check_status(failures, blockers, before_failures, before_blockers),
-        "Scanned public SkillGuard files for private paths, runtime ids, credentials, private keys, and declared unsafe overclaim phrases.",
+        "Scanned available public SkillGuard files for private paths, runtime ids, credentials, private keys, and declared unsafe overclaim phrases.",
     )
 
+    checker_engine_path = self_check_path(".agents/skills/skillguard/scripts/checker_engine.py")
+    public_safety_source_path = readme_path if readme_path.is_file() else target / "SKILL.md"
     payload["files_inspected"] = inspected_files
     payload["public_safety_findings"] = public_safety
     payload["unsafe_claim_findings"] = unsafe_claim_findings
@@ -12935,18 +13061,18 @@ def self_check(argv: list[str]) -> int:
             "evidence_id": "self-check-command-boundary",
             "kind": "command_table_check",
             "fresh": True,
-            "summary": f"Checked {len(command_names)} local command dispatch entries against README command wording.",
-            "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
+            "summary": f"Checked {len(command_names)} local command dispatch entries against available public boundary wording.",
+            "source_path": public_relative_path(checker_engine_path),
         },
         {
             "evidence_id": "self-check-public-safety",
             "kind": "text_scan",
             "fresh": True,
             "summary": f"Scanned {len(public_paths)} public files for public-safety and unsafe-claim patterns.",
-            "source_path": "README.md",
+            "source_path": public_relative_path(public_safety_source_path),
         },
     ]
-    payload["skipped_checks"] = [
+    payload["skipped_checks"] = skipped_checks + [
         {
             "check_id": "persistent-fixture-corpus",
             "reason": "No persistent fixture corpus is required for this self-check command; fixture-test accepts explicit supplied fixture cases.",
@@ -12969,7 +13095,7 @@ def self_check(argv: list[str]) -> int:
         checker_name="self-check",
         blockers=blockers + failures,
         refresh_action={"action": "not_applicable", "status": "self_check"},
-        content_seed={"files_inspected": len(inspected_files), "command_count": len(command_names)},
+        content_seed={"files_inspected": len(inspected_files), "command_count": len(command_names), "layout": layout},
     )
     return write_and_exit(payload, args.output)
 

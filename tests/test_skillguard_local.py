@@ -334,6 +334,74 @@ class SkillGuardLocalExamplesTest(unittest.TestCase):
             if isinstance(row, dict) and row.get("blocker_code")
         }
 
+    def test_reference_extraction_ignores_fenced_code_and_slash_commands(self) -> None:
+        text = """Use `/opsx:apply <other>` when switching changes.
+
+```bash
+python tool.py --input <input.json>
+```
+
+Read `references/README.md` before closing.
+"""
+        self.assertEqual(checker_engine.extract_reference_tokens(text), ["references/README.md"])
+
+    def test_reference_extraction_keeps_real_inline_missing_references(self) -> None:
+        text = "Read `references/missing-guide.md` before claiming completion."
+        self.assertEqual(checker_engine.extract_reference_tokens(text), ["references/missing-guide.md"])
+
+    def test_declared_references_resolve_target_local_references_directory(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="target-reference-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            target = Path(tmp)
+            references = target / "references"
+            references.mkdir()
+            guide = references / "guide.md"
+            guide.write_text("target-local reference\n", encoding="utf-8")
+            self.assertEqual(checker_engine.resolve_declared_reference(target, "references/guide.md"), guide)
+
+    def test_declared_references_still_fail_missing_target_local_reference(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="target-reference-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            target = Path(tmp)
+            failures: list[str] = []
+            blockers: list[str] = []
+            entry = checker_engine.validate_reference(
+                target,
+                "references/missing-guide.md",
+                failures,
+                blockers,
+                allow_project_boundary=True,
+            )
+            self.assertEqual(entry.get("status"), "fail")
+            self.assertIn("references/missing-guide.md: referenced path is missing", failures)
+            self.assertEqual(blockers, [])
+
+    def test_source_layout_references_fallback_to_installed_target_layout(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
+            target = Path(tmp)
+            skill = target / "SKILL.md"
+            skill.write_text("installed entrypoint\n", encoding="utf-8")
+            reference = f".agents/skills/{target.name}/SKILL.md"
+
+            self.assertEqual(checker_engine.resolve_declared_reference(target, reference), skill)
+
+    def test_record_references_fallback_to_installed_target_layout(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
+            target = Path(tmp)
+            control_root = target / ".skillguard"
+            control_root.mkdir()
+            skill = target / "SKILL.md"
+            skill.write_text("installed entrypoint\n", encoding="utf-8")
+            reference = f".agents/skills/{target.name}/SKILL.md"
+
+            self.assertEqual(checker_engine.resolve_record_reference(target, control_root, reference), skill)
+
+    def test_contract_target_path_accepts_installed_target_layout_alias(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
+            target = Path(tmp)
+            target.mkdir(exist_ok=True)
+            reference = f".agents/skills/{target.name}"
+
+            self.assertTrue(checker_engine.contract_target_matches_target(reference, target))
+
     def test_single_skill_example_command(self) -> None:
         report = run_skillguard("check-skill", "--target", ".agents/skills/skillguard/fixtures/good_single_skill")
         self.assert_clean_pass(report)

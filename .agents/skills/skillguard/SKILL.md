@@ -19,16 +19,16 @@ When a task asks for implementation, validation, packaging, publication, or rele
 
 ## Local Material Routing
 
-Start from the current repository layout instead of assuming generated files exist. In this SkillGuard repository:
+Start from the current layout instead of assuming generated files exist. SkillGuard can run from the source repository layout or from the installed Codex skill layout.
 
-- Treat this file as the Codex skill entrypoint: `.agents/skills/skillguard/SKILL.md`.
-- Use `README.md`, `pyproject.toml`, `VERSION`, and `AGENTS.md` for the public repository contract, metadata, version, and contributor boundaries.
-- Use `../../../references/` for the maintained SkillGuard standards when this repository layout is present.
+- In the source repository layout, treat this file as the Codex skill entrypoint under `.agents/skills/skillguard/SKILL.md`; in the installed layout, treat local `SKILL.md` as the entrypoint.
+- Use the repository README, pyproject metadata, VERSION file, and AGENTS file for the public repository contract, metadata, version, and contributor boundaries only when the source repository layout is present.
+- Use the repository references directory for the maintained SkillGuard standards only when the source repository layout is present.
 - Use `assets/schemas/` and `assets/templates/` for local schema and template checks.
 - Use `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` when a task needs runtime contract routing, phase gates, or closure rules.
 - Use `.skillguard/checks/` for local runtime check script stubs and `.skillguard/runs/` for run records created before non-trivial skill work begins.
 - Use other `.skillguard/` material under the skill directory when the task asks for maintained SkillGuard records, evidence, reports, or self-check material.
-- Treat local `scripts/`, `fixtures/`, `tests`, and `examples/` under this skill as evidence only after direct inspection in the current task finds those paths and their current content.
+- Treat local `scripts/` and `fixtures/` under this skill as evidence only after direct inspection in the current task finds those paths and their current content. Treat repository tests and examples as source-repository evidence only when that layout is present and the paths exist.
 
 Do not cite or require scripts, fixtures, examples, tests, package commands, releases, git remotes, or publication records unless they exist in the current filesystem and were inspected for the current task.
 
@@ -124,7 +124,7 @@ These gates are mandatory for SkillGuard work. If a gate cannot be checked, mark
 - `SKILL.md` frontmatter must be structurally valid and closed before body content.
 - Required sections must be present for the artifact being checked.
 - Activation boundaries must say when to use the skill and when not to use it.
-- Public files must not expose credentials, private local paths, private transcripts, private task payloads, or internal coordination records.
+- Public files must not expose credentials, machine-specific local paths, confidential task material, or internal coordination records.
 - Validation evidence must be fresh enough for the current files being judged.
 - Parent or suite status must cite current child evidence and must not hide failed, missing, blocked, skipped, or stale child checks.
 - AI or human judgment must be recorded as judgment, not as deterministic proof.
@@ -138,13 +138,13 @@ Hard gates are not suggestions. Vague confidence, intent, partial inspection, or
 
 SkillGuard reports should include:
 
-- Checked target: the skill path, maintained target, suite file, repository area, or release artifact.
-- Status: `pass`, `fail`, or `block`, with `needs-review` or `stale` only when those labels are more accurate for the requested scope.
-- Evidence: current files inspected, commands or parsers run, hashes or line counts when useful, and the specific records used for the decision.
-- Failures and blockers: missing files, malformed metadata, stale evidence, unsafe claims, privacy findings, unclear activation boundaries, or unavailable required tools.
-- Skipped checks: every skipped check and the reason it was skipped.
-- Residual risk: what remains uncertain after the completed checks.
-- Claim boundary: what the report does and does not prove.
+- `checked_target`: the skill path, maintained target, suite file, repository area, or release artifact.
+- `status`: `pass`, `fail`, or `block`, with `needs-review` or `stale` only when those labels are more accurate for the requested scope.
+- `evidence`: current files inspected, commands or parsers run, hashes or line counts when useful, and the specific records used for the decision.
+- `failures` and `blockers`: missing files, malformed metadata, stale evidence, unsafe claims, privacy findings, unclear activation boundaries, or unavailable required tools.
+- `skipped_checks`: every skipped check and the reason it was skipped.
+- `residual_risk`: what remains uncertain after the completed checks.
+- `claim_boundary`: what the report does and does not prove.
 
 Do not claim that scripts, fixtures, schemas, command-line tools, package publication, git commits, GitHub releases, external credentials, or downstream validation are complete unless those exact items were directly validated in the current task.
 
@@ -153,7 +153,7 @@ Do not claim that scripts, fixtures, schemas, command-line tools, package public
 When SkillGuard changes, keep the public contract synchronized across the maintained files:
 
 - Update `SKILL.md` when activation scope, non-use boundaries, hard gates, or output requirements change.
-- Update `README.md` when public usage, status meanings, command names, non-guarantees, or repository structure change.
+- Update the repository README when public usage, status meanings, command names, non-guarantees, or repository structure change.
 - Keep version metadata synchronized when release metadata changes.
 - Keep validation commands and examples aligned with the scripts, fixtures, schemas, and tests that actually exist.
 - Preserve privacy boundaries in public files. Do not copy private workspace instructions, local machine paths, private task text, or internal coordination details into maintained artifacts.
