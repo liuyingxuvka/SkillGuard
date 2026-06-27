@@ -3167,6 +3167,19 @@ def global_resolvable_relative_path(path_label: str) -> Path | None:
     return candidate
 
 
+def global_resolvable_scan_root_path(path_label: str, codex_home: str | None = None) -> Path | None:
+    if not path_label or path_label.startswith("<external:"):
+        return None
+    normalized = path_label.replace("\\", "/")
+    if normalized == ".codex" or normalized.startswith(".codex/"):
+        codex_root = expand_global_path(codex_home) if codex_home else (Path.home() / ".codex").resolve()
+        suffix = normalized[len(".codex") :].lstrip("/")
+        return (codex_root / suffix).resolve()
+    if normalized.startswith("~/") or Path(path_label).is_absolute():
+        return expand_global_path(path_label)
+    return global_resolvable_relative_path(path_label)
+
+
 def global_skill_roots_from_args(skill_roots: list[str], codex_home: str | None = None) -> tuple[list[Path], list[str]]:
     roots: list[Path] = []
     blockers: list[str] = []
@@ -3416,7 +3429,7 @@ def build_global_registry_payload(skill_roots: list[Path]) -> dict[str, Any]:
 
 
 def registry_roots_for_check(registry: dict[str, Any], supplied_roots: list[str], codex_home: str | None = None) -> tuple[list[Path], list[str]]:
-    if supplied_roots or codex_home:
+    if supplied_roots:
         return global_skill_roots_from_args(supplied_roots, codex_home)
     roots: list[Path] = []
     blockers: list[str] = []
@@ -3424,7 +3437,7 @@ def registry_roots_for_check(registry: dict[str, Any], supplied_roots: list[str]
         if not isinstance(row, dict):
             continue
         path_label = str(row.get("path") or "")
-        candidate = global_resolvable_relative_path(path_label)
+        candidate = global_resolvable_scan_root_path(path_label, codex_home)
         if candidate is None:
             blockers.append(f"scan root is not re-checkable without --skill-root: {path_label}")
             continue
@@ -3537,9 +3550,9 @@ def render_global_prompt_block(registry: dict[str, Any], registry_path: str = ""
         GLOBAL_PROMPT_BEGIN,
         "## SkillGuard Global Router",
         "",
-        "- Before using a Codex skill for non-trivial skill, prompt, process, or SkillGuard-family work, consult the SkillGuard global router registry when it is present.",
-        "- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a skill-routing claim.",
-        "- Route order: select the target skill from the registry, read the selected `SKILL.md`, then follow that skill's `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` or native route bindings.",
+        "- Use the SkillGuard global router registry only for skill-selection, skill-maintenance, prompt/process, or SkillGuard-family routing claims when it is present; do not make it a mandatory pre-execution gate for every skill invocation.",
+        "- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a global skill-routing claim.",
+        "- Handoff order: select the target skill from the registry when selection help is needed, read the selected `SKILL.md`, then use that skill's own `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, or native route bindings.",
         "- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.",
         f"- router_skill_id: {GLOBAL_ROUTER_SKILL_ID}",
         f"- registry_hash: {registry.get('registry_hash', '')}",
@@ -12824,6 +12837,14 @@ def run_fixture_handler(handler: Callable[[list[str]], int], argv: list[str]) ->
     return exit_code, json.loads(stream.getvalue())
 
 
+MUTATING_RUNTIME_FIXTURE_COMMANDS = {
+    "build-global-registry",
+    "install-global-prompt",
+    "refresh-global-router",
+    "render-global-prompt",
+}
+
+
 def reset_owned_fixture_workspace(fixture_path: Path, fixture_id: str) -> Path:
     fixture_root = fixture_path.parent.parent
     workspace = (fixture_root / "workspace" / slugify_identifier(fixture_id)).resolve()
@@ -12847,7 +12868,7 @@ def cleanup_owned_fixture_workspace(workspace: Path) -> bool:
             if not workspace.exists():
                 break
             time.sleep(0.05)
-        if parent.name == "workspace" and parent.exists():
+        if parent.name in {"workspace", ".runtime_workspaces"} and parent.exists():
             for _ in range(10):
                 if any(parent.iterdir()):
                     break
@@ -12859,6 +12880,49 @@ def cleanup_owned_fixture_workspace(workspace: Path) -> bool:
                 break
         return not workspace.exists()
     return not workspace.exists()
+
+
+def reset_owned_runtime_fixture_workspace(fixture_path: Path, fixture_id: str) -> Path:
+    fixture_root = fixture_path.parent.parent
+    workspace = (fixture_root / ".runtime_workspaces" / slugify_identifier(fixture_id)).resolve()
+    workspace.relative_to(repository_root().resolve())
+    marker = workspace / ".skillguard_fixture_workspace_marker"
+    if workspace.exists():
+        if not marker.is_file():
+            raise ValueError(f"fixture runtime workspace exists without SkillGuard ownership marker: {public_relative_path(workspace)}")
+        shutil.rmtree(workspace)
+    workspace.mkdir(parents=True, exist_ok=True)
+    marker.write_text("owned by SkillGuard runtime fixture-test; safe to remove\n", encoding="utf-8")
+    return workspace
+
+
+def resolve_fixture_runtime_argument_path(fixture_path: Path, value: str) -> Path:
+    normalized = value.replace("\\", "/")
+    if normalized.startswith(".agents/skills"):
+        return resolve_skillguard_self_layout_path(value)
+    return resolve_repository_reference(value, fixture_path.parent)
+
+
+def sandbox_mutating_runtime_fixture_argv(fixture_path: Path, fixture_id: str, argv: list[str]) -> tuple[list[str], Path | None]:
+    fixture_root = fixture_path.parent.parent.resolve()
+    source_workspace = (fixture_root / "workspace").resolve()
+    if not source_workspace.is_dir():
+        return argv, None
+
+    sandbox_root = reset_owned_runtime_fixture_workspace(fixture_path, f"{fixture_id}-runtime")
+    sandbox_workspace = sandbox_root / "workspace"
+    shutil.copytree(source_workspace, sandbox_workspace, dirs_exist_ok=True)
+
+    mapped_argv: list[str] = []
+    for item in argv:
+        try:
+            candidate = resolve_fixture_runtime_argument_path(fixture_path, item).resolve()
+            suffix = candidate.relative_to(source_workspace)
+        except (OSError, ValueError):
+            mapped_argv.append(item)
+            continue
+        mapped_argv.append(public_relative_path(sandbox_workspace / suffix))
+    return mapped_argv, sandbox_root
 
 
 def default_generation_fixture_idea(case_data: dict[str, Any], target: Path) -> dict[str, Any]:
@@ -13652,18 +13716,22 @@ def evaluate_runtime_fixture_case(
     handler = handler_map[target_command]
 
     stream = io.StringIO()
+    sandbox_workspace: Path | None = None
     mutation_before = route_task_fixture_mutation_snapshot(fixture_path, case_data) if target_command == "route-task" else {}
     repeat_report: dict[str, Any] | None = None
     expected_result = case_data.get("expected_result")
     deterministic_repeat = isinstance(expected_result, dict) and expected_result.get("deterministic_repeat") is True
     try:
+        run_argv = argv
+        if target_command in MUTATING_RUNTIME_FIXTURE_COMMANDS and case_data.get("sandbox_workspace", True) is not False:
+            run_argv, sandbox_workspace = sandbox_mutating_runtime_fixture_argv(fixture_path, fixture_id, argv)
         with contextlib.redirect_stdout(stream):
-            exit_code = handler(argv)
+            exit_code = handler(run_argv)
         report = json.loads(stream.getvalue())
         if target_command == "route-task" and deterministic_repeat:
             repeat_stream = io.StringIO()
             with contextlib.redirect_stdout(repeat_stream):
-                repeat_exit_code = handler(argv)
+                repeat_exit_code = handler(run_argv)
             repeat_report = json.loads(repeat_stream.getvalue())
             if repeat_exit_code != exit_code:
                 report.setdefault("fixture_repeat_findings", []).append("deterministic repeat exit code changed")
@@ -13681,6 +13749,11 @@ def evaluate_runtime_fixture_case(
         if expected_decision != observed:
             failures.append(f"fixture {fixture_id}: {target_command} execution did not match expected decision {expected_decision}")
         return result
+    finally:
+        if sandbox_workspace is not None and case_data.get("cleanup_workspace", True) is not False:
+            cleanup_ok = cleanup_owned_fixture_workspace(sandbox_workspace)
+            if not cleanup_ok:
+                failures.append(f"fixture {fixture_id}: runtime fixture sandbox cleanup did not complete")
 
     mutation_after = route_task_fixture_mutation_snapshot(fixture_path, case_data) if target_command == "route-task" else {}
     observed = str(report.get("decision") or ("pass" if exit_code == 0 else "fail")).strip().lower()

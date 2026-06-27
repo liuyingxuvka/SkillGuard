@@ -528,11 +528,18 @@ Read `references/README.md` before closing.
         self.assertFalse(any(result.get("routing_decision_present") for result in bad_routing.get("fixture_results", [])))
         self.assertTrue(all(result.get("deterministic_repeat_checked") for result in bad_routing.get("fixture_results", [])))
 
+        global_router_evidence = [
+            REPO_ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "global_router" / "workspace" / "global_router" / "global_registry.json",
+            REPO_ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "global_router" / "workspace" / "global_router" / "global_prompt_projection.json",
+            REPO_ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "global_router" / "workspace" / "codex_home" / "AGENTS.md",
+        ]
+        global_router_before = {path: sha256(path) for path in global_router_evidence}
         global_router = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json")
         self.assert_clean_pass(global_router)
         self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_pass"), 3)
         self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_fail"), 2)
         self.assertEqual(global_router.get("fixture_class_counts", {}).get("blocker_condition"), 5)
+        self.assertEqual(global_router_before, {path: sha256(path) for path in global_router_evidence})
 
     def test_self_check_example_command(self) -> None:
         report = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
@@ -839,6 +846,10 @@ Read `references/README.md` before closing.
             prompt_check = run_skillguard("check-global-prompt", "--registry", rel(registry), "--codex-home", rel(codex_home))
             self.assert_clean_pass(prompt_check)
             self.assertEqual(prompt_check.get("registry_hash"), refresh.get("registry_hash"))
+            managed_prompt = (codex_home / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("do not make it a mandatory pre-execution gate for every skill invocation", managed_prompt)
+            self.assertIn("Handoff order: select the target skill from the registry when selection help is needed", managed_prompt)
+            self.assertNotIn("Before using a Codex skill", managed_prompt)
 
             router_route = run_skillguard(
                 "resolve-global-skill",
@@ -926,6 +937,24 @@ Read `references/README.md` before closing.
                 expected_exit=1,
             )
             self.assertEqual(stale_prompt.get("decision"), "fail")
+
+    def test_global_registry_check_resolves_codex_scan_roots_from_codex_home(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-global-router-roots-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            codex_home = workspace / ".codex"
+            skills_root = codex_home / "skills"
+            plugin_root = codex_home / "plugins" / "cache" / "openai-bundled"
+            skills_root.mkdir(parents=True)
+            plugin_root.mkdir(parents=True)
+            registry = {
+                "scan_roots": [
+                    {"path": ".codex/skills"},
+                    {"path": ".codex/plugins/cache/openai-bundled"},
+                ]
+            }
+            roots, blockers = checker_engine.registry_roots_for_check(registry, [], str(codex_home))
+            self.assertEqual(blockers, [])
+            self.assertEqual([skills_root.resolve(), plugin_root.resolve()], roots)
 
     def test_runtime_contract_command_family_enforces_route_run_and_closure_gates(self) -> None:
         target = REPO_ROOT / ".agents" / "skills" / "skillguard"
