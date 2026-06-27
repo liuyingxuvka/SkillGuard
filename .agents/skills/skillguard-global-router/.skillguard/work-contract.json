@@ -63,7 +63,7 @@
       "scope": "declared run scope only"
     }
   ],
-  "contract_hash": "1B12C8FB7C762D1067AFCF4BCE60014645016C2C747E62FE26055A1C13575A33",
+  "contract_hash": "F24D3505DA3F94AA606F86204B1ECD2C317E7121174AC7C11BB9C30534DBD463",
   "contract_version": "1",
   "forbidden_shortcuts": [
     {
@@ -76,6 +76,7 @@
   "may_define_parallel_execution_route": false,
   "may_define_skillguard_runtime_route": true,
   "native_check_bindings": [],
+  "phase_native_bindings": [],
   "native_route_bindings": [],
   "native_route_owner": "",
   "phases": [

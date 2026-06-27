@@ -23,7 +23,7 @@
       "scope": "declared native route scope only"
     }
   ],
-  "contract_hash": "069211FD8723D93586134BE33708EAC7B55A56F41908C5FFC42F3A39A2E76C45",
+  "contract_hash": "1DC2C6D8C475DCD6F65FA38448D2C23485BF392A3B75E114433A67597A926B29",
   "contract_version": "native-fixture-1",
   "forbidden_shortcuts": [
     {
@@ -52,6 +52,17 @@
     }
   ],
   "native_route_owner": "native-router.fixture",
+  "phase_native_bindings": [
+    {
+      "evidence_source": "native route/check evidence for intake",
+      "native_check_binding_ids": [
+        "native-check-binding"
+      ],
+      "native_route_binding_id": "native-audit-binding",
+      "phase_id": "intake",
+      "required": true
+    }
+  ],
   "phases": [
     {
       "allowed_next": [],

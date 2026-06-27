@@ -106,14 +106,15 @@ Required native-integration fields:
 - `native_route_owner`;
 - `native_route_bindings`;
 - `native_check_bindings`;
+- `phase_native_bindings`;
 - `skillguard_role`;
 - `may_define_parallel_execution_route`;
 - `may_define_skillguard_runtime_route`;
 - `integration_claim_boundary`.
 
-Pass criteria: a native or hybrid target binds the original route/check system and uses SkillGuard as a native-bound or hybrid contract executor, not as a parallel route owner.
+Pass criteria: a native or hybrid target binds the original route/check system, maps every route phase to native route/check evidence through `phase_native_bindings`, and uses SkillGuard as a native-bound or hybrid contract executor, not as a parallel route owner.
 
-Fail criteria: a native or hybrid target adds a second SkillGuard execution route, omits native route/check bindings, or lets SkillGuard bypass the original router, controller, simulator, checker, or closure flow.
+Fail criteria: a native or hybrid target adds a second SkillGuard execution route, omits native route/check or phase-native bindings, or lets SkillGuard bypass the original router, controller, simulator, checker, or closure flow.
 
 Block criteria: the target appears to have a native system, but ownership cannot be identified well enough to choose between native integration, hybrid extension, and SkillGuard-owned runtime.
 

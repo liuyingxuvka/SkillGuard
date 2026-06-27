@@ -1,0 +1,56 @@
+{
+  "schema_version": "skillguard.native_contract_upgrade_audit_summary.v1",
+  "checked_at": "2026-06-27T08:59:39Z",
+  "decision": "pass",
+  "privacy_boundary": "Public-safe summary only. Detailed local skill names, descriptions, and per-skill paths are intentionally excluded from this publishable artifact.",
+  "scope": {
+    "skill_root": "~/.codex/skills",
+    "total_skill_items_seen": 77,
+    "user_created_skill_count": 64,
+    "excluded_system_skill_count": 5,
+    "excluded_skillguard_fixture_count": 8
+  },
+  "user_created_skill_classification": {
+    "pass": 64,
+    "repair_needed": 0,
+    "cleanup_needed": 0,
+    "skipped_with_reason": 0,
+    "native_integrated": 45,
+    "hybrid_extension": 17,
+    "skillguard_runtime": 2,
+    "missing_contract": 0
+  },
+  "excluded_scope_summary": {
+    "system_skills_missing_contract": 5,
+    "skillguard_fixture_skills_missing_contract": 8,
+    "reason": "System skills and SkillGuard fixture skills are not user-created upgraded skill targets for this audit."
+  },
+  "repairs_and_cleanup": [
+    "Added phase_native_bindings to installed user-created native/hybrid SkillGuard contracts where missing.",
+    "Kept skillguard-runtime contracts with empty phase_native_bindings.",
+    "Synchronized installed SkillGuard and skillguard-global-router from the upgraded source skill directories.",
+    "Synchronized FlowPilot installed .skillguard layer from the FlowPilot source worktree.",
+    "Removed transient nested .agents output and restored FlowPilot noise-only simulation metadata changes."
+  ],
+  "checks": {
+    "scan_global_skills": {
+      "decision": "pass",
+      "failures": 0,
+      "warnings": 0,
+      "blockers": 0
+    },
+    "skillguard_self_contract": {
+      "decision": "pass"
+    },
+    "flowpilot_contract": {
+      "decision": "pass"
+    },
+    "installed_skillguard_contract": {
+      "decision": "pass"
+    },
+    "installed_flowpilot_contract": {
+      "decision": "pass"
+    }
+  },
+  "claim_boundary": "This summary proves only the local SkillGuard scan and repair classification performed during this task. It does not publish private per-skill details and does not prove future skill behavior."
+}

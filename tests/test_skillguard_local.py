@@ -686,6 +686,17 @@ Read `references/README.md` before closing.
                     ]
                     if valid
                     else [],
+                    "phase_native_bindings": [
+                        {
+                            "phase_id": "intake",
+                            "native_route_binding_id": "native-audit-binding",
+                            "native_check_binding_ids": ["native-check-binding"],
+                            "evidence_source": "target native route/check phase evidence",
+                            "required": True,
+                        }
+                    ]
+                    if valid
+                    else [],
                     "routes": [
                         {
                             "route_id": "audit",
@@ -823,6 +834,7 @@ Read `references/README.md` before closing.
             self.assertEqual(native_entrypoint.get("native_route_owner"), "native-router.fixture")
             self.assertTrue(native_entrypoint.get("native_route_bindings"))
             self.assertTrue(native_entrypoint.get("native_check_bindings"))
+            self.assertTrue(native_entrypoint.get("phase_native_bindings"))
 
             prompt_check = run_skillguard("check-global-prompt", "--registry", rel(registry), "--codex-home", rel(codex_home))
             self.assert_clean_pass(prompt_check)
@@ -863,6 +875,7 @@ Read `references/README.md` before closing.
             self.assertEqual(native_route.get("routing_decision", {}).get("skill_id"), "fixture-native-route")
             self.assertEqual(native_route.get("routing_decision", {}).get("integration_mode"), "native-integrated")
             self.assertTrue(native_route.get("routing_decision", {}).get("native_route_bindings"))
+            self.assertTrue(native_route.get("routing_decision", {}).get("phase_native_bindings"))
 
             invalid_native_route = run_skillguard(
                 "resolve-global-skill",
@@ -942,6 +955,38 @@ Read `references/README.md` before closing.
         hollow = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(hollow_contract), expected_exit=1)
         self.assertEqual(hollow.get("decision"), "fail")
 
+        with tempfile.TemporaryDirectory(prefix="external-skill-root-", dir=REPO_ROOT.parent) as external_tmp:
+            external_root = Path(external_tmp)
+            external_skill = external_root / "skills" / "external-fixture"
+            external_checks = external_skill / ".skillguard" / "checks"
+            external_checks.mkdir(parents=True)
+            external_skill.joinpath("SKILL.md").write_text(
+                "---\nname: external-fixture\ndescription: External root check fixture.\n---\n",
+                encoding="utf-8",
+            )
+            for check_name in (
+                "check_route.py",
+                "check_phase_order.py",
+                "check_evidence.py",
+                "check_quality_floor.py",
+                "check_closure.py",
+            ):
+                external_checks.joinpath(check_name).write_text("print('external route check')\n", encoding="utf-8")
+            external_contract = dict(compiled["compiled_contract"])
+            external_contract["skill_id"] = "external-fixture"
+            external_contract["target_path"] = "skills/external-fixture"
+            external_contract["contract_hash"] = checker_engine.work_contract_hash(external_contract)
+            write_json(external_skill / ".skillguard" / "work-contract.json", external_contract)
+            external_check = run_skillguard(
+                "check-contract",
+                "--target-root",
+                str(external_root),
+                "--target",
+                "skills/external-fixture",
+            )
+            self.assert_clean_pass(external_check)
+            self.assertEqual(external_check.get("target_path"), "skills/external-fixture")
+
         with tempfile.TemporaryDirectory(prefix="native-contract-", dir=REPO_ROOT) as tmp:
             native_contract = dict(compiled["compiled_contract"])
             native_contract.update(
@@ -963,6 +1008,43 @@ Read `references/README.md` before closing.
                             "evidence_source": "native validation report",
                             "required": True,
                         }
+                    ],
+                    "phase_native_bindings": [
+                        {
+                            "phase_id": "intake",
+                            "native_route_binding_id": "native-router-selected-route",
+                            "native_check_binding_ids": ["native-checks-current"],
+                            "evidence_source": "native route/check evidence for intake",
+                            "required": True,
+                        },
+                        {
+                            "phase_id": "inventory",
+                            "native_route_binding_id": "native-router-selected-route",
+                            "native_check_binding_ids": ["native-checks-current"],
+                            "evidence_source": "native route/check evidence for inventory",
+                            "required": True,
+                        },
+                        {
+                            "phase_id": "evidence",
+                            "native_route_binding_id": "native-router-selected-route",
+                            "native_check_binding_ids": ["native-checks-current"],
+                            "evidence_source": "native route/check evidence for evidence",
+                            "required": True,
+                        },
+                        {
+                            "phase_id": "checks",
+                            "native_route_binding_id": "native-router-selected-route",
+                            "native_check_binding_ids": ["native-checks-current"],
+                            "evidence_source": "native route/check evidence for checks",
+                            "required": True,
+                        },
+                        {
+                            "phase_id": "closure",
+                            "native_route_binding_id": "native-router-selected-route",
+                            "native_check_binding_ids": ["native-checks-current"],
+                            "evidence_source": "native route/check evidence for closure",
+                            "required": True,
+                        },
                     ],
                     "skillguard_role": "native_contract_executor",
                     "may_define_skillguard_runtime_route": False,

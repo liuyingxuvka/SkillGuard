@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-27T06:42:14Z",
+  "checked_at": "2026-06-27T09:00:59Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -155,7 +155,7 @@
       "kind": "markdown",
       "line_count": 184,
       "path": ".agents/skills/skillguard/SKILL.md",
-      "sha256": "067F3DD9704C79B1D6B08CBED9BB060E6CFD5127F595A90352BBB1ECB384BE94"
+      "sha256": "1887DC5C0AF86325CD65712D8B5586227EE8BC830370B063F1FDBF2D8253C68A"
     },
     {
       "kind": "file",
@@ -165,9 +165,9 @@
     },
     {
       "kind": "file",
-      "line_count": 14490,
+      "line_count": 14567,
       "path": ".agents/skills/skillguard/scripts/checker_engine.py",
-      "sha256": "06CFD1BAB73DC9F45F31DA137A2EA67AF12D49EA711C9DE4530C541C51713A67"
+      "sha256": "A31CFD02291D3C3A19EC8A91076DDD31011C3924030B8ADBD5697F47B35E7B0E"
     },
     {
       "kind": "file",
@@ -520,7 +520,7 @@
       ]
     },
     "content_hash": "47BDFAAC6B4D14E65E7F27C133135AF21C494629F2BF8DDAFBCFE9B24B9BEEAC",
-    "evidence_timestamp": "2026-06-27T06:42:14Z",
+    "evidence_timestamp": "2026-06-27T09:00:59Z",
     "record_id": "self_check:FA48A9CF89095BE0",
     "record_kind": "self_check",
     "refresh_action": {

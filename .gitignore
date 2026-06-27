@@ -37,6 +37,8 @@ tmp/
 temp/
 /.skillguard/
 .flowpilot/
+/.agents/skills/skillguard/fixtures/evidence_outputs/native_contract_upgrade_audit_current.json
+/.agents/skills/skillguard/fixtures/evidence_outputs/scan_global_user_skills_current.json
 
 # Environment and local secrets
 .env

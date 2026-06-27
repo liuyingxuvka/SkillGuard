@@ -63,7 +63,7 @@
       "scope": "declared run scope only; accepted closure is intentionally not allowed"
     }
   ],
-  "contract_hash": "D82A58A42A0A9CC48B873AE99022EA65AF943FB646E19EA8E53ECD9306B6F78A",
+  "contract_hash": "0132B068C6D9AC0A03528E012B079B9F1E10E2C0E6789CD4E8CB05B88EDFACFF",
   "contract_version": "1",
   "forbidden_shortcuts": [
     {
@@ -78,6 +78,7 @@
   "native_check_bindings": [],
   "native_route_bindings": [],
   "native_route_owner": "",
+  "phase_native_bindings": [],
   "phases": [
     {
       "allowed_next": [

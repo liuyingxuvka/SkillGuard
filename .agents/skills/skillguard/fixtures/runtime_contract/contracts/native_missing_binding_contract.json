@@ -23,7 +23,7 @@
       "scope": "declared native route scope only"
     }
   ],
-  "contract_hash": "76ADB8E2CD5A1352EC861408E90FC8FC537752523F337F3A420E9B587B5A9D3A",
+  "contract_hash": "65D7F4E06D2F70C6C51D999EBFA85FF15E7514B32146BF64CF9BBB87F9240000",
   "contract_version": "native-fixture-1",
   "forbidden_shortcuts": [
     {
@@ -45,6 +45,7 @@
   ],
   "native_route_bindings": [],
   "native_route_owner": "native-router.fixture",
+  "phase_native_bindings": [],
   "phases": [
     {
       "allowed_next": [],

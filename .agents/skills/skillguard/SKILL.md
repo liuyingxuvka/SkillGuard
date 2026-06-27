@@ -151,7 +151,7 @@ These gates are mandatory for SkillGuard work. If a gate cannot be checked, mark
 - Release, package, command, fixture, schema, git, and publication claims must be directly validated before they are described as complete.
 - Failures and blockers must remain visible in the final report.
 - Runtime contract work must not close unless the selected route, run record, required phases, required evidence, required checks, quality floors, and closure boundary are all current for the declared scope.
-- Runtime contract work for a target with an existing native route/check system must bind that native system and must not add a parallel SkillGuard execution route.
+- Runtime contract work for a target with an existing native route/check system must bind that native system and must not add a parallel SkillGuard execution route. Native or hybrid contracts must include `phase_native_bindings` so each SkillGuard phase names the native route binding and native check binding that prove the phase.
 - Global router work must not claim current user-level routing unless the registry and managed user-level AGENTS prompt block were refreshed or checked against the current registry hash.
 
 Hard gates are not suggestions. Vague confidence, intent, partial inspection, or a prior successful run is not enough to pass a hard gate.

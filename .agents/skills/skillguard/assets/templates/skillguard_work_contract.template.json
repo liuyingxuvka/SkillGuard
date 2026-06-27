@@ -8,6 +8,7 @@
   "native_route_owner": "",
   "native_route_bindings": [],
   "native_check_bindings": [],
+  "phase_native_bindings": [],
   "skillguard_role": "runtime_owner",
   "may_define_parallel_execution_route": false,
   "may_define_skillguard_runtime_route": true,

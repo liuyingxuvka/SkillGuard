@@ -878,11 +878,11 @@ def line_count(path: Path) -> int:
     return len(path.read_text(encoding="utf-8").splitlines())
 
 
-def require_directory(path: Path, command: str) -> None:
+def require_directory(path: Path, command: str, root: Path | None = None) -> None:
     if not path.exists():
-        raise SkillGuardCliError(command, f"target directory does not exist: {public_relative_path(path)}", "missing_file")
+        raise SkillGuardCliError(command, f"target directory does not exist: {public_relative_path(path, root)}", "missing_file")
     if not path.is_dir():
-        raise SkillGuardCliError(command, f"target is not a directory: {public_relative_path(path)}", "validation_error")
+        raise SkillGuardCliError(command, f"target is not a directory: {public_relative_path(path, root)}", "validation_error")
 
 
 def resolve_skillguard_self_layout_path(path_text: str | Path) -> Path:
@@ -902,12 +902,14 @@ def resolve_skillguard_self_layout_path(path_text: str | Path) -> Path:
     return ensure_under_root(path_text, root)
 
 
-def resolve_target_argument(path_text: str | Path) -> Path:
+def resolve_target_argument(path_text: str | Path, root: Path | None = None) -> Path:
+    if root is not None:
+        return ensure_under_root(path_text, root)
     return resolve_skillguard_self_layout_path(path_text)
 
 
-def control_root_for(target: Path) -> Path:
-    return ensure_under_root(target / ".skillguard")
+def control_root_for(target: Path, root: Path | None = None) -> Path:
+    return ensure_under_root(target / ".skillguard", root)
 
 
 def suite_root_for(target: Path) -> Path:
@@ -1423,10 +1425,12 @@ def work_contract_hash(contract: dict[str, Any]) -> str:
     return canonical_json_hash(seed)
 
 
-def runtime_contract_path(target: Path, explicit_contract: str | None = None) -> Path:
+def runtime_contract_path(target: Path, explicit_contract: str | None = None, root: Path | None = None) -> Path:
     if explicit_contract:
+        if root is not None:
+            return ensure_under_root(explicit_contract, root)
         return resolve_skillguard_self_layout_path(explicit_contract)
-    return ensure_under_root(control_root_for(target) / WORK_CONTRACT_FILENAME)
+    return ensure_under_root(control_root_for(target, root) / WORK_CONTRACT_FILENAME, root)
 
 
 def runtime_check_manifest_path(target: Path, explicit_manifest: str | None = None) -> Path:
@@ -1440,10 +1444,10 @@ def runtime_run_path(target: Path, run_id: str) -> Path:
     return ensure_under_root(control_root_for(target) / "runs" / f"{safe_id}.json")
 
 
-def require_skill_target(target: Path, command: str) -> None:
-    require_directory(target, command)
+def require_skill_target(target: Path, command: str, root: Path | None = None) -> None:
+    require_directory(target, command, root)
     if not (target / "SKILL.md").is_file():
-        raise SkillGuardCliError(command, f"target skill is missing SKILL.md: {public_relative_path(target)}", "missing_file")
+        raise SkillGuardCliError(command, f"target skill is missing SKILL.md: {public_relative_path(target, root)}", "missing_file")
 
 
 def contract_lookup(items: Any, key: str) -> dict[str, dict[str, Any]]:
@@ -1484,6 +1488,7 @@ def build_default_work_contract(target: Path) -> tuple[dict[str, Any], dict[str,
         "native_route_owner": "",
         "native_route_bindings": [],
         "native_check_bindings": [],
+        "phase_native_bindings": [],
         "skillguard_role": "runtime_owner",
         "may_define_parallel_execution_route": False,
         "may_define_skillguard_runtime_route": True,
@@ -1705,7 +1710,12 @@ def build_default_work_contract(target: Path) -> tuple[dict[str, Any], dict[str,
     return contract, check_manifest
 
 
-def contract_semantic_failures(contract: Any, target: Path | None = None, contract_path: Path | None = None) -> list[str]:
+def contract_semantic_failures(
+    contract: Any,
+    target: Path | None = None,
+    contract_path: Path | None = None,
+    root: Path | None = None,
+) -> list[str]:
     failures: list[str] = []
     schema = load_json(schema_path(WORK_CONTRACT_SCHEMA_NAME))
     failures.extend(validate_schema_subset(contract, schema))
@@ -1724,6 +1734,7 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
     native_route_owner = str(contract.get("native_route_owner") or "").strip()
     native_route_bindings = contract.get("native_route_bindings")
     native_check_bindings = contract.get("native_check_bindings")
+    phase_native_bindings = contract.get("phase_native_bindings")
     may_define_parallel_execution_route = contract.get("may_define_parallel_execution_route")
     may_define_skillguard_runtime_route = contract.get("may_define_skillguard_runtime_route")
     for field_name, value in (
@@ -1760,11 +1771,15 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
             failures.append(f"$.native_route_bindings: must bind at least one native route when integration_mode is {integration_mode}")
         if not isinstance(native_check_bindings, list) or not native_check_bindings:
             failures.append(f"$.native_check_bindings: must bind at least one native check when integration_mode is {integration_mode}")
+        if not isinstance(phase_native_bindings, list) or not phase_native_bindings:
+            failures.append(f"$.phase_native_bindings: must bind native route/check evidence for each route phase when integration_mode is {integration_mode}")
     elif integration_mode == "skillguard-runtime":
         if skillguard_role != "runtime_owner":
             failures.append("$.skillguard_role: expected runtime_owner when integration_mode is skillguard-runtime")
         if may_define_skillguard_runtime_route is not True:
             failures.append("$.may_define_skillguard_runtime_route: must be true when SkillGuard is the runtime owner")
+        if isinstance(phase_native_bindings, list) and phase_native_bindings:
+            failures.append("$.phase_native_bindings: must be empty when integration_mode is skillguard-runtime")
     elif integration_mode:
         failures.append("$.integration_mode: unsupported integration mode")
 
@@ -1776,6 +1791,9 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
     phase_by_id = contract_lookup(phases, "phase_id")
     evidence_by_id = contract_lookup(evidence, "evidence_id")
     check_by_id = contract_lookup(checks, "check_id")
+    native_route_binding_by_id = contract_lookup(native_route_bindings, "binding_id")
+    native_check_binding_by_id = contract_lookup(native_check_bindings, "binding_id")
+    phase_native_binding_by_phase = contract_lookup(phase_native_bindings, "phase_id")
     for field_name, items, id_key in (
         ("routes", routes, "route_id"),
         ("phases", phases, "phase_id"),
@@ -1787,7 +1805,10 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
     ):
         for duplicate in duplicate_ids(items, id_key):
             failures.append(f"$.{field_name}: duplicate {id_key} {duplicate}")
+    for duplicate in duplicate_ids(phase_native_bindings, "phase_id"):
+        failures.append(f"$.phase_native_bindings: duplicate phase_id {duplicate}")
 
+    route_phase_ids: set[str] = set()
     for route_id, route in route_by_id.items():
         order = route.get("phase_order")
         if not isinstance(order, list) or not order:
@@ -1796,6 +1817,8 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
         for phase_id in order:
             if phase_id not in phase_by_id:
                 failures.append(f"route {route_id}: unknown phase_id {phase_id}")
+            else:
+                route_phase_ids.add(str(phase_id))
         route_source = route.get("route_source")
         if integration_mode == "native-integrated" and route_source != "native_binding":
             failures.append(f"route {route_id}: route_source must be native_binding for native-integrated contracts")
@@ -1803,6 +1826,29 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
             failures.append(f"route {route_id}: route_source must be native_binding or hybrid_extension for hybrid-extension contracts")
         if integration_mode == "skillguard-runtime" and route_source != "skillguard_runtime":
             failures.append(f"route {route_id}: route_source must be skillguard_runtime for skillguard-runtime contracts")
+
+    for binding in phase_native_bindings if isinstance(phase_native_bindings, list) else []:
+        if not isinstance(binding, dict):
+            continue
+        phase_id = str(binding.get("phase_id") or "")
+        route_binding_id = str(binding.get("native_route_binding_id") or "")
+        check_binding_ids = binding.get("native_check_binding_ids")
+        if phase_id and phase_id not in phase_by_id:
+            failures.append(f"phase_native_binding {phase_id}: unknown phase_id")
+        if route_binding_id and route_binding_id not in native_route_binding_by_id:
+            failures.append(f"phase_native_binding {phase_id or '<missing phase>'}: unknown native_route_binding_id {route_binding_id}")
+        if not isinstance(check_binding_ids, list) or not check_binding_ids:
+            failures.append(f"phase_native_binding {phase_id or '<missing phase>'}: native_check_binding_ids must be non-empty")
+        else:
+            for check_binding_id in check_binding_ids:
+                if check_binding_id not in native_check_binding_by_id:
+                    failures.append(
+                        f"phase_native_binding {phase_id or '<missing phase>'}: unknown native_check_binding_id {check_binding_id}"
+                    )
+    if integration_mode in {"native-integrated", "hybrid-extension"}:
+        for phase_id in sorted(route_phase_ids):
+            if phase_id not in phase_native_binding_by_phase:
+                failures.append(f"phase {phase_id}: missing phase_native_bindings entry for {integration_mode} route")
 
     for phase_id, phase in phase_by_id.items():
         for evidence_id in phase.get("required_evidence", []) if isinstance(phase.get("required_evidence"), list) else []:
@@ -1826,13 +1872,13 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
             failures.append(f"check_script {check_id}: unknown phase_id {phase_id}")
         script_path = item.get("script_path")
         if target is not None and isinstance(script_path, str) and script_path:
-            resolved = ensure_under_root(target / script_path)
+            resolved = ensure_under_root(target / script_path, root)
             try:
                 resolved.relative_to(target.resolve())
             except ValueError:
                 failures.append(f"check_script {check_id}: script_path must stay under target skill")
             if not resolved.is_file():
-                failures.append(f"check_script {check_id}: script file is missing: {public_relative_path(resolved)}")
+                failures.append(f"check_script {check_id}: script file is missing: {public_relative_path(resolved, root)}")
 
     for rule in closures if isinstance(closures, list) else []:
         if not isinstance(rule, dict):
@@ -1853,17 +1899,21 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
             if check_id not in check_by_id:
                 failures.append(f"quality_floor {floor_id}: unknown required_check {check_id}")
 
-    if target is not None and not contract_target_matches_target(contract.get("target_path"), target):
+    if target is not None and not contract_target_matches_target(contract.get("target_path"), target, root):
         failures.append("$.target_path: does not match the checked target directory")
     if contract_path is not None and not contract_path.is_file():
-        failures.append(f"contract file is missing: {public_relative_path(contract_path)}")
+        failures.append(f"contract file is missing: {public_relative_path(contract_path, root)}")
     return failures
 
 
-def load_work_contract_for_target(target: Path, contract_arg: str | None = None) -> tuple[Path, dict[str, Any], list[str]]:
-    path = runtime_contract_path(target, contract_arg)
-    contract = load_json(path)
-    failures = contract_semantic_failures(contract, target, path)
+def load_work_contract_for_target(
+    target: Path,
+    contract_arg: str | None = None,
+    root: Path | None = None,
+) -> tuple[Path, dict[str, Any], list[str]]:
+    path = runtime_contract_path(target, contract_arg, root)
+    contract = load_json(path, root)
+    failures = contract_semantic_failures(contract, target, path, root)
     return path, contract, failures
 
 
@@ -2062,32 +2112,36 @@ def compile_contract(argv: list[str]) -> int:
 def check_contract(argv: list[str]) -> int:
     parser = JsonArgumentParser(prog="skillguard.py check-contract", description="Check a target SkillGuard work contract.")
     parser.add_argument("--target", required=True, help="Target skill directory under the repository root.")
+    parser.add_argument("--target-root", help="Explicit root for read-only external target checks. Target and contract must stay under this root.")
     parser.add_argument("--contract", help="Contract path. Defaults to target/.skillguard/work-contract.json.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = resolve_target_argument(args.target)
-    require_skill_target(target, "check-contract")
-    contract_path = runtime_contract_path(target, args.contract)
-    contract = load_json(contract_path)
-    failures = contract_semantic_failures(contract, target, contract_path)
-    payload = base_result("check-contract", public_relative_path(target))
-    payload["contract_path"] = public_relative_path(contract_path)
+    target_root = Path(args.target_root).resolve() if args.target_root else None
+    if target_root is not None and not target_root.is_dir():
+        raise SkillGuardCliError("check-contract", f"--target-root is missing or not a directory: {args.target_root}", "missing_file")
+    target = resolve_target_argument(args.target, target_root)
+    require_skill_target(target, "check-contract", target_root)
+    contract_path = runtime_contract_path(target, args.contract, target_root)
+    contract = load_json(contract_path, target_root)
+    failures = contract_semantic_failures(contract, target, contract_path, target_root)
+    payload = base_result("check-contract", public_relative_path(target, target_root))
+    payload["contract_path"] = public_relative_path(contract_path, target_root)
     payload["contract_hash"] = contract.get("contract_hash") if isinstance(contract, dict) else ""
-    inspected_files = [checked_file(contract_path, "json")]
+    inspected_files = [checked_file(contract_path, "json", target_root)]
     if isinstance(contract, dict):
         for item in contract.get("check_scripts", []) if isinstance(contract.get("check_scripts"), list) else []:
             if not isinstance(item, dict) or not isinstance(item.get("script_path"), str):
                 continue
-            script_path = ensure_under_root(target / item["script_path"])
+            script_path = ensure_under_root(target / item["script_path"], target_root)
             if script_path.is_file():
-                inspected_files.append(checked_file(script_path, "python"))
+                inspected_files.append(checked_file(script_path, "python", target_root))
     payload["checks"] = [
         {
             "check_id": "check-contract:schema",
             "name": "Work-contract schema",
             "required": True,
             "status": "fail" if any(item.startswith("$") for item in failures) else "pass",
-            "summary": f"Checked {public_relative_path(contract_path)} against {WORK_CONTRACT_SCHEMA_NAME}.",
+            "summary": f"Checked {public_relative_path(contract_path, target_root)} against {WORK_CONTRACT_SCHEMA_NAME}.",
         },
         {
             "check_id": "check-contract:semantic-links",
@@ -2102,8 +2156,8 @@ def check_contract(argv: list[str]) -> int:
             "evidence_id": "work-contract-json",
             "kind": "parser_output",
             "fresh": True,
-            "summary": f"Loaded {public_relative_path(contract_path)}; sha256={file_sha256(contract_path)}.",
-            "source_path": public_relative_path(contract_path),
+            "summary": f"Loaded {public_relative_path(contract_path, target_root)}; sha256={file_sha256(contract_path)}.",
+            "source_path": public_relative_path(contract_path, target_root),
         }
     ]
     payload["files_inspected"] = inspected_files
@@ -3189,10 +3243,24 @@ def skill_route_terms(skill_id: str, skill_name: str, description: str, use_when
     return terms[:40]
 
 
+def global_contract_semantic_root(skill_dir: Path) -> Path:
+    resolved = skill_dir.resolve()
+    repo = repository_root().resolve()
+    try:
+        resolved.relative_to(repo)
+        return repo
+    except ValueError:
+        pass
+    if resolved.parent.name == "skills":
+        return resolved.parent.parent
+    return resolved
+
+
 def global_contract_projection(skill_dir: Path) -> tuple[dict[str, Any], list[str]]:
     warnings: list[str] = []
     contract_path = skill_dir / ".skillguard" / WORK_CONTRACT_FILENAME
     manifest_path = skill_dir / ".skillguard" / CHECK_MANIFEST_FILENAME
+    semantic_root = global_contract_semantic_root(skill_dir)
     projection: dict[str, Any] = {
         "integration_mode": "missing",
         "route_confidence": "derived",
@@ -3206,6 +3274,7 @@ def global_contract_projection(skill_dir: Path) -> tuple[dict[str, Any], list[st
         "native_route_owner": "",
         "native_route_bindings": [],
         "native_check_bindings": [],
+        "phase_native_bindings": [],
         "may_define_parallel_execution_route": False,
         "may_define_skillguard_runtime_route": False,
         "route_doc_paths": [global_public_path(skill_dir / "SKILL.md")],
@@ -3221,7 +3290,7 @@ def global_contract_projection(skill_dir: Path) -> tuple[dict[str, Any], list[st
             warnings.append(f"work-contract JSON could not be loaded: {exc}")
             contract = {}
         if isinstance(contract, dict):
-            semantic_failures = contract_semantic_failures(contract, target=skill_dir, contract_path=contract_path)
+            semantic_failures = contract_semantic_failures(contract, target=skill_dir, contract_path=contract_path, root=semantic_root)
             warnings.extend(f"work-contract semantic failure: {item}" for item in semantic_failures[:8])
             routes = contract.get("routes", [])
             route_items = [item for item in routes if isinstance(item, dict)]
@@ -3238,8 +3307,10 @@ def global_contract_projection(skill_dir: Path) -> tuple[dict[str, Any], list[st
             projection["native_route_owner"] = str(contract.get("native_route_owner") or "")
             native_route_bindings = contract.get("native_route_bindings")
             native_check_bindings = contract.get("native_check_bindings")
+            phase_native_bindings = contract.get("phase_native_bindings")
             projection["native_route_bindings"] = native_route_bindings if isinstance(native_route_bindings, list) else []
             projection["native_check_bindings"] = native_check_bindings if isinstance(native_check_bindings, list) else []
+            projection["phase_native_bindings"] = phase_native_bindings if isinstance(phase_native_bindings, list) else []
             if projection["integration_mode"] in {"native-integrated", "hybrid-extension"}:
                 projection["handoff_rule"] = (
                     "Use this registry only to select the skill, then hand off to the target skill's native route/check bindings through its work contract."
@@ -3426,6 +3497,7 @@ def global_route_candidates(registry: dict[str, Any], task: str, route_hint: str
                 "native_route_owner": entrypoint.get("native_route_owner", ""),
                 "native_route_bindings": entrypoint.get("native_route_bindings", []),
                 "native_check_bindings": entrypoint.get("native_check_bindings", []),
+                "phase_native_bindings": entrypoint.get("phase_native_bindings", []),
                 "may_define_parallel_execution_route": entrypoint.get("may_define_parallel_execution_route", False),
                 "may_define_skillguard_runtime_route": entrypoint.get("may_define_skillguard_runtime_route", False),
                 "route_doc_paths": entrypoint.get("route_doc_paths", []),
@@ -3446,6 +3518,8 @@ def global_candidate_handoff_blockers(candidate: dict[str, Any]) -> list[str]:
         blockers.append("native or hybrid global route is missing native_route_bindings")
     if not isinstance(candidate.get("native_check_bindings"), list) or not candidate.get("native_check_bindings"):
         blockers.append("native or hybrid global route is missing native_check_bindings")
+    if not isinstance(candidate.get("phase_native_bindings"), list) or not candidate.get("phase_native_bindings"):
+        blockers.append("native or hybrid global route is missing phase_native_bindings")
     if candidate.get("may_define_parallel_execution_route") is True:
         blockers.append("native or hybrid global route cannot define a parallel execution route")
     if candidate.get("may_define_skillguard_runtime_route") is True:
@@ -5365,11 +5439,14 @@ def resolve_record_reference(target: Path, control_root: Path, value: str) -> Pa
     return control_root / normalized
 
 
-def contract_target_matches_target(contract_target: Any, target: Path) -> bool:
+def contract_target_matches_target(contract_target: Any, target: Path, root: Path | None = None) -> bool:
     if not isinstance(contract_target, str) or not contract_target.strip():
         return False
-    if contract_target == public_relative_path(target):
-        return True
+    try:
+        if contract_target == public_relative_path(target, root):
+            return True
+    except ValueError:
+        pass
     normalized_contract_target = contract_target.replace("\\", "/").strip("/")
     installed_target = f".codex/skills/{target.name}"
     source_target = f".agents/skills/{target.name}"
@@ -5584,9 +5661,9 @@ def public_safety_findings(path: Path) -> list[dict[str, Any]]:
     return findings
 
 
-def checked_file(path: Path, kind: str = "file") -> dict[str, Any]:
+def checked_file(path: Path, kind: str = "file", root: Path | None = None) -> dict[str, Any]:
     return {
-        "path": public_relative_path(path),
+        "path": public_relative_path(path, root),
         "kind": kind,
         "sha256": file_sha256(path),
         "line_count": line_count(path),

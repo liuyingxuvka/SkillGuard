@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-26T11:30:42Z",
+  "checked_at": "2026-06-27T08:55:09Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -20,7 +20,7 @@
   ],
   "claim_boundary": "This result covers only the named local CLI invocation and the current files it loaded. It does not prove fixture coverage, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
   "command": "check-contract",
-  "contract_hash": "B4BBE7311278C7F73B3294BFA4787745467A61C6B0922A079CDD4C91AD98ACF1",
+  "contract_hash": "D18C5FA5C09325D639AD10BC3871FCFD103358699FBCFE9BB622F08A9B2AC60E",
   "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
   "decision": "pass",
   "evidence": [
@@ -29,16 +29,16 @@
       "fresh": true,
       "kind": "parser_output",
       "source_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
-      "summary": "Loaded .agents/skills/skillguard/.skillguard/work-contract.json; sha256=5CA9176AA0D1A682225F5A0EA52F37C23AD206891AFE317C58BB58BD109F14FA."
+      "summary": "Loaded .agents/skills/skillguard/.skillguard/work-contract.json; sha256=634D8365FBDB77E42B119487E6467CB1304D13784FC7787513A06D5FD50A62FD."
     }
   ],
   "failures": [],
   "files_inspected": [
     {
       "kind": "json",
-      "line_count": 224,
+      "line_count": 236,
       "path": ".agents/skills/skillguard/.skillguard/work-contract.json",
-      "sha256": "5CA9176AA0D1A682225F5A0EA52F37C23AD206891AFE317C58BB58BD109F14FA"
+      "sha256": "634D8365FBDB77E42B119487E6467CB1304D13784FC7787513A06D5FD50A62FD"
     },
     {
       "kind": "python",

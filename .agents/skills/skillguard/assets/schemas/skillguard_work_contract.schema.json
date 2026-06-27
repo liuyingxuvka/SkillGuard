@@ -156,6 +156,45 @@
       },
       "type": "array"
     },
+    "phase_native_bindings": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_source": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "native_check_binding_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "native_route_binding_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "phase_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "phase_id",
+          "native_route_binding_id",
+          "native_check_binding_ids",
+          "evidence_source",
+          "required"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
     "native_route_bindings": {
       "items": {
         "additionalProperties": false,
@@ -445,6 +484,7 @@
     "native_route_owner",
     "native_route_bindings",
     "native_check_bindings",
+    "phase_native_bindings",
     "skillguard_role",
     "may_define_parallel_execution_route",
     "may_define_skillguard_runtime_route",

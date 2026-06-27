@@ -1,7 +1,7 @@
 {
   "claim_boundary": "This global registry is a generated index over the scanned local SKILL.md files and their SkillGuard route documents. It selects a skill route but does not replace the selected skill's SKILL.md, work contract, check manifest, runtime checks, tests, package publication, release readiness, external service validation, or future AI behavior evidence.",
   "current_item_count": 2,
-  "generated_at": "2026-06-27T06:40:32Z",
+  "generated_at": "2026-06-27T09:03:28Z",
   "item_count": 10,
   "items": [
     {
@@ -16,9 +16,9 @@
       "route_entrypoint": {
         "check_manifest_path": ".agents/skills/skillguard/.skillguard/check_manifest.json",
         "check_manifest_sha256": "B3FCE1B5A3D1FD88C13CB0C1BDFB6F17CAB6D90628AC4A3C394991C42E11E58B",
-        "contract_hash": "3A93A5454C33349A40BDDDB58E93945422DF63AA69CFE12B55EBDD182E732AB2",
+        "contract_hash": "D18C5FA5C09325D639AD10BC3871FCFD103358699FBCFE9BB622F08A9B2AC60E",
         "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
-        "contract_sha256": "F44BC8A6AD8DBA8E55AD95996E56FF1BB57A382FE0A2FE1C9589F9DB154BF8B4",
+        "contract_sha256": "634D8365FBDB77E42B119487E6467CB1304D13784FC7787513A06D5FD50A62FD",
         "default_route_id": "audit",
         "handoff_rule": "Use select-route/start-run/check-run/close-run against the target work contract before claiming closure.",
         "integration_mode": "skillguard-runtime",
@@ -27,6 +27,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "explicit",
         "route_doc_paths": [
           ".agents/skills/skillguard/SKILL.md",
@@ -83,7 +84,7 @@
       "skill_id": "skillguard",
       "skill_name": "skillguard",
       "skill_path": ".agents/skills/skillguard",
-      "skill_sha256": "067F3DD9704C79B1D6B08CBED9BB060E6CFD5127F595A90352BBB1ECB384BE94",
+      "skill_sha256": "1887DC5C0AF86325CD65712D8B5586227EE8BC830370B063F1FDBF2D8253C68A",
       "status": "current",
       "use_when": [
         "Use this skill when the user asks to:",
@@ -106,9 +107,9 @@
       "route_entrypoint": {
         "check_manifest_path": ".agents/skills/skillguard-global-router/.skillguard/check_manifest.json",
         "check_manifest_sha256": "E6F97AF607C77A9EF7FA13CBE8CA4866AA48E206BFABDBA1CF61199B61E424E0",
-        "contract_hash": "1B12C8FB7C762D1067AFCF4BCE60014645016C2C747E62FE26055A1C13575A33",
+        "contract_hash": "F24D3505DA3F94AA606F86204B1ECD2C317E7121174AC7C11BB9C30534DBD463",
         "contract_path": ".agents/skills/skillguard-global-router/.skillguard/work-contract.json",
-        "contract_sha256": "01D2140C080B84D557A1C75B76E1B0E6B7EE73B5447174AE0BDB426715670BE7",
+        "contract_sha256": "284EC593345D21286C0AEF11613B544AA4B09E6BB860983F8D72F43B386E4BA4",
         "default_route_id": "audit",
         "handoff_rule": "Use select-route/start-run/check-run/close-run against the target work contract before claiming closure.",
         "integration_mode": "skillguard-runtime",
@@ -117,6 +118,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "explicit",
         "route_doc_paths": [
           ".agents/skills/skillguard-global-router/SKILL.md",
@@ -206,6 +208,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "derived",
         "route_doc_paths": [
           ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md"
@@ -273,6 +276,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "derived",
         "route_doc_paths": [
           ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference/SKILL.md"
@@ -337,6 +341,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "derived",
         "route_doc_paths": [
           ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim/SKILL.md"
@@ -402,6 +407,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "derived",
         "route_doc_paths": [
           ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member/SKILL.md"
@@ -462,6 +468,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "derived",
         "route_doc_paths": [
           ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member/SKILL.md"
@@ -517,6 +524,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "derived",
         "route_doc_paths": [
           ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member/SKILL.md"
@@ -576,6 +584,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "derived",
         "route_doc_paths": [
           ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md"
@@ -636,6 +645,7 @@
         "native_check_bindings": [],
         "native_route_bindings": [],
         "native_route_owner": "",
+        "phase_native_bindings": [],
         "route_confidence": "derived",
         "route_doc_paths": [
           ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member/SKILL.md"
@@ -678,7 +688,7 @@
       ]
     }
   ],
-  "registry_hash": "4C1D770A93B66EF236FB6D80C47B8C392BB56B07F472CE0AD5621167D0DD3503",
+  "registry_hash": "56B5C919BEB3957A36A8BB8E01E5FECC2F2C19438E4651E772D93877A3A3F8E0",
   "router_skill_id": "skillguard-global-router",
   "scan_roots": [
     {

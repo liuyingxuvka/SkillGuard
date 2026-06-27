@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-27T03:54:42Z",
+  "checked_at": "2026-06-27T09:00:59Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -221,12 +221,16 @@
         }
       ],
       "observed_decision": "fail",
-      "observed_failure_count": 1,
+      "observed_failure_count": 3,
       "observed_failures": [
-        "$.native_route_bindings: must bind at least one native route when integration_mode is native-integrated"
+        "$.native_route_bindings: must bind at least one native route when integration_mode is native-integrated",
+        "$.phase_native_bindings: must bind native route/check evidence for each route phase when integration_mode is native-integrated",
+        "phase intake: missing phase_native_bindings entry for native-integrated route"
       ],
       "problems": [
-        "$.native_route_bindings: must bind at least one native route when integration_mode is native-integrated"
+        "$.native_route_bindings: must bind at least one native route when integration_mode is native-integrated",
+        "$.phase_native_bindings: must bind native route/check evidence for each route phase when integration_mode is native-integrated",
+        "phase intake: missing phase_native_bindings entry for native-integrated route"
       ],
       "sha256": "1D9B4ABC1691DD3D260CAF7E6DFEC7D843B0A58F69FD094D9A93E27F6CFC2A6B",
       "target_command": "check-contract",
@@ -1076,7 +1080,7 @@
       ]
     },
     "content_hash": "E859DC0365AD6011AA8360A164CA67F6BE3969933165C9D2A493836F14277746",
-    "evidence_timestamp": "2026-06-27T03:54:42Z",
+    "evidence_timestamp": "2026-06-27T09:00:59Z",
     "record_id": "fixture_evidence:C1E272B4BD9413A4",
     "record_kind": "fixture_evidence",
     "refresh_action": {

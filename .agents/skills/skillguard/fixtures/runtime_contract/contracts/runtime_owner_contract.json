@@ -63,7 +63,7 @@
       "scope": "declared run scope only"
     }
   ],
-  "contract_hash": "3A93A5454C33349A40BDDDB58E93945422DF63AA69CFE12B55EBDD182E732AB2",
+  "contract_hash": "D18C5FA5C09325D639AD10BC3871FCFD103358699FBCFE9BB622F08A9B2AC60E",
   "contract_version": "1",
   "forbidden_shortcuts": [
     {
@@ -78,6 +78,7 @@
   "native_check_bindings": [],
   "native_route_bindings": [],
   "native_route_owner": "",
+  "phase_native_bindings": [],
   "phases": [
     {
       "allowed_next": [
