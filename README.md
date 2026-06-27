@@ -4,7 +4,7 @@ A conservative maintenance framework for Codex skills that keeps claims tied to 
 
 SkillGuard helps maintainers inspect a skill repository, describe what is present, separate deterministic checks from human or AI judgment, and report whether a skill or suite is missing, stale, blocked, checked, or accepted for a stated scope. It is designed for public skill repositories where overclaiming is easy: a README can promise commands that do not exist, a parent suite can hide a failing child, or an old report can be reused after files changed.
 
-Current version: `1.0.1`
+Current version: `0.1.2`
 
 Current repository status: foundation metadata, local SkillGuard materials, local script-based CLI dispatch, deterministic `route-task` routing metadata, runtime work-contract commands, global SkillGuard registry and managed prompt commands, no-write `plan-skill` blueprint preview, controlled `generate-skill` scaffold creation with generated runtime contracts, controlled `generate-suite` suite scaffold creation, read-only `detect-stale-evidence` freshness checks, bounded `refresh-maintenance` metadata refreshes, read-only `review-checker-change` checker-change review, canonical `check-maintenance-record` schema validation, explicit fixture manifests including runtime-contract, global-router, simple-generation, and complex-generation fixtures, local examples, and a standard-library smoke test script are present. The current tree does not include a packaged CLI, suite automation, package publication, external service integration, or code-contract validation; GitHub release tags are external publication records and do not expand the local runtime claim boundary.
 
@@ -125,7 +125,7 @@ Current local material status:
 | --- | --- |
 | `README.md` | Public project overview |
 | `LICENSE` | MIT license text |
-| `VERSION` | `1.0.1` |
+| `VERSION` | `0.1.2` |
 | `pyproject.toml` | Metadata with conservative local implementation status |
 | `references/` | SkillGuard standards and policy references |
 | `examples/` | Local examples for `check-skill`, `check-suite`, `fixture-test`, `route-task`, global router commands, `plan-skill`, `generate-skill`, `generate-suite`, `detect-stale-evidence`, `refresh-maintenance`, `review-checker-change`, `check-maintenance-record`, and `self-check` |

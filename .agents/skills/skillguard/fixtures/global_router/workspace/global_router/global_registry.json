@@ -1,7 +1,7 @@
 {
   "claim_boundary": "This global registry is a generated index over the scanned local SKILL.md files and their SkillGuard route documents. It selects a skill route but does not replace the selected skill's SKILL.md, work contract, check manifest, runtime checks, tests, package publication, release readiness, external service validation, or future AI behavior evidence.",
   "current_item_count": 2,
-  "generated_at": "2026-06-27T06:12:43Z",
+  "generated_at": "2026-06-27T06:40:32Z",
   "item_count": 10,
   "items": [
     {
@@ -83,7 +83,7 @@
       "skill_id": "skillguard",
       "skill_name": "skillguard",
       "skill_path": ".agents/skills/skillguard",
-      "skill_sha256": "D02FFAF01076B4E5C06D34EA8B12F63AA5CAC30426266F1303B6FA8BCFCBC919",
+      "skill_sha256": "067F3DD9704C79B1D6B08CBED9BB060E6CFD5127F595A90352BBB1ECB384BE94",
       "status": "current",
       "use_when": [
         "Use this skill when the user asks to:",
@@ -678,7 +678,7 @@
       ]
     }
   ],
-  "registry_hash": "9AF10824B979ED7608F0084CD93EC843D3573563E0B177CC00CA0B4DA0CCBF66",
+  "registry_hash": "4C1D770A93B66EF236FB6D80C47B8C392BB56B07F472CE0AD5621167D0DD3503",
   "router_skill_id": "skillguard-global-router",
   "scan_roots": [
     {

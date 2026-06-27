@@ -8,7 +8,7 @@
 - Route order: select the target skill from the registry, read the selected `SKILL.md`, then follow that skill's `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` or native route bindings.
 - Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.
 - router_skill_id: skillguard-global-router
-- registry_hash: 9AF10824B979ED7608F0084CD93EC843D3573563E0B177CC00CA0B4DA0CCBF66
+- registry_hash: 4C1D770A93B66EF236FB6D80C47B8C392BB56B07F472CE0AD5621167D0DD3503
 - registry_path: .agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json
 
 ### Current Route Index

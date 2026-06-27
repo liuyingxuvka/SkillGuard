@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-27T03:27:41Z",
+  "checked_at": "2026-06-27T06:42:14Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -55,6 +55,14 @@
     "plan-skill",
     "generate-skill",
     "generate-suite",
+    "scan-global-skills",
+    "build-global-registry",
+    "check-global-registry",
+    "resolve-global-skill",
+    "render-global-prompt",
+    "install-global-prompt",
+    "check-global-prompt",
+    "refresh-global-router",
     "check-json-schema",
     "compile-contract",
     "check-contract",
@@ -94,14 +102,14 @@
       "fresh": true,
       "kind": "filesystem_check",
       "source_path": ".agents/skills/skillguard",
-      "summary": "Inspected 26 current SkillGuard files for self-check."
+      "summary": "Inspected 30 current SkillGuard files for self-check."
     },
     {
       "evidence_id": "self-check-command-boundary",
       "fresh": true,
       "kind": "command_table_check",
       "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
-      "summary": "Checked 37 local command dispatch entries against available public boundary wording."
+      "summary": "Checked 45 local command dispatch entries against available public boundary wording."
     },
     {
       "evidence_id": "self-check-public-safety",
@@ -115,9 +123,9 @@
   "files_inspected": [
     {
       "kind": "markdown",
-      "line_count": 345,
+      "line_count": 360,
       "path": "README.md",
-      "sha256": "D98AE43298157A5CDB4D1FA932D1A57164A2AE2D05216CFFF9EEB4B22966D8EF"
+      "sha256": "BB53F060F8794C0D87A7A8FB22E36139C9C31A2C382052A32D76152D5459C9D1"
     },
     {
       "kind": "markdown",
@@ -135,31 +143,31 @@
       "kind": "file",
       "line_count": 1,
       "path": "VERSION",
-      "sha256": "F34306BB50E2D2EC59C788B9013C5AC682EF7F7F69345A3E957E38C0B6BA2FDD"
+      "sha256": "297B50F08386D3521F8FDAF2F78EB8D9D0ACDF452D2E61596905FBA37208C792"
     },
     {
       "kind": "file",
       "line_count": 31,
       "path": "pyproject.toml",
-      "sha256": "2E3BD14367472E0C6E8451EE79AA85037A7D89CDCA1B72A1DFB4A11EF93FD927"
+      "sha256": "96F0D66EF993D38BDA263E4C8F7F85BD5CC0BD046722FBCAFAF78616D2BE5EC9"
     },
     {
       "kind": "markdown",
-      "line_count": 165,
+      "line_count": 184,
       "path": ".agents/skills/skillguard/SKILL.md",
-      "sha256": "575E55EB044CB3DD62A21CA3618AC2E20E822C74F4BCBC364481B0ECDE153BCA"
+      "sha256": "067F3DD9704C79B1D6B08CBED9BB060E6CFD5127F595A90352BBB1ECB384BE94"
     },
     {
       "kind": "file",
       "line_count": 36,
       "path": ".agents/skills/skillguard/scripts/skillguard.py",
-      "sha256": "179E0D6B83079EE87055D0F5F42183894B881D67C0EB0E8928370CFD2F090658"
+      "sha256": "F41793A67366E1D098D16A0C563E44EFD77B093C18BD4507267B9F2BAFD815DF"
     },
     {
       "kind": "file",
-      "line_count": 13313,
+      "line_count": 14490,
       "path": ".agents/skills/skillguard/scripts/checker_engine.py",
-      "sha256": "FDFCC4CDC5295A26D2DA069855233DB79EFD3677D03F3D109EA33E9F7D553965"
+      "sha256": "06CFD1BAB73DC9F45F31DA137A2EA67AF12D49EA711C9DE4530C541C51713A67"
     },
     {
       "kind": "file",
@@ -193,6 +201,18 @@
     },
     {
       "kind": "json",
+      "line_count": 157,
+      "path": ".agents/skills/skillguard/assets/schemas/skillguard_global_registry.schema.json",
+      "sha256": "9192199E4BDEC256273B7B18309518E6304DAF9466FE55C90E2CC051CF96EC20"
+    },
+    {
+      "kind": "json",
+      "line_count": 68,
+      "path": ".agents/skills/skillguard/assets/schemas/skillguard_global_prompt_projection.schema.json",
+      "sha256": "45F48ED0586EE63A198B88E8BF58BF44DE0A1FCE9C7AC96D8302BAE9321E32FF"
+    },
+    {
+      "kind": "json",
       "line_count": 56,
       "path": ".agents/skills/skillguard/assets/templates/skillguard_checker_change.template.json",
       "sha256": "75943C244E7F1C926A48E4ED703C6A4DB21288B3401735279D910A1373677C79"
@@ -210,6 +230,12 @@
       "sha256": "7D1A8042B5C9D3CA7ACC43B6B7166122ECC5C1D4B75C7CE051CD5EBA9007D9B3"
     },
     {
+      "kind": "file",
+      "line_count": 16,
+      "path": ".agents/skills/skillguard/assets/templates/global_skillguard_prompt_block.md.template",
+      "sha256": "0CD6E2F55BC2335A827DCB570910702CCAB6279A145B6D0F4D3662AF2497F041"
+    },
+    {
       "kind": "json",
       "line_count": 161,
       "path": ".agents/skills/skillguard/fixtures/checker_change/current-baseline.json",
@@ -217,9 +243,15 @@
     },
     {
       "kind": "json",
-      "line_count": 159,
+      "line_count": 158,
       "path": ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json",
-      "sha256": "930F03382ABDD698CDD550884B9FB0501FD3DBADFEB07DFB86084739A4930425"
+      "sha256": "A7E097FFB88B75C4A33EE1588922D7D23BA4E51155F77E5C5377C29054805CDF"
+    },
+    {
+      "kind": "json",
+      "line_count": 120,
+      "path": ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json",
+      "sha256": "6B92B7B4E0E97C2A1A1891E8DD6EA20424E3A68B293A0C7C821F2844845142CC"
     },
     {
       "kind": "json",
@@ -267,7 +299,7 @@
       "kind": "markdown",
       "line_count": 228,
       "path": "references/09-skillguard-self-check.md",
-      "sha256": "0B650367CAAC2B3BF1DB0905E48427D8391B42A2E60EDE0256635CF999AA100D"
+      "sha256": "25BF647A3B5FAB41ACEB2892ED80DA47B67359DCB65FBE3047966E98CAD889D0"
     }
   ],
   "layout": "source_repository",
@@ -284,6 +316,14 @@
         "plan-skill",
         "generate-skill",
         "generate-suite",
+        "scan-global-skills",
+        "build-global-registry",
+        "check-global-registry",
+        "resolve-global-skill",
+        "render-global-prompt",
+        "install-global-prompt",
+        "check-global-prompt",
+        "refresh-global-router",
         "check-json-schema",
         "compile-contract",
         "check-contract",
@@ -479,9 +519,9 @@
         }
       ]
     },
-    "content_hash": "6D3409CE6EA77E888EB2C665A98F1B25EE632CC6D43AB2397F37EE6EC6A2F801",
-    "evidence_timestamp": "2026-06-27T03:27:41Z",
-    "record_id": "self_check:9BBED3F4BE4BC114",
+    "content_hash": "47BDFAAC6B4D14E65E7F27C133135AF21C494629F2BF8DDAFBCFE9B24B9BEEAC",
+    "evidence_timestamp": "2026-06-27T06:42:14Z",
+    "record_id": "self_check:FA48A9CF89095BE0",
     "record_kind": "self_check",
     "refresh_action": {
       "action": "not_applicable",
