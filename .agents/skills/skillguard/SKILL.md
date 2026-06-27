@@ -28,7 +28,7 @@ Start from the current layout instead of assuming generated files exist. SkillGu
 - Use `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` when a task needs runtime contract routing, phase gates, or closure rules.
 - Use `.skillguard/checks/` for local runtime check script stubs and `.skillguard/runs/` for run records created before non-trivial skill work begins.
 - Use other `.skillguard/` material under the skill directory when the task asks for maintained SkillGuard records, evidence, reports, or self-check material.
-- Use the `skillguard-global-router` skill and the `scan-global-skills`, `build-global-registry`, `check-global-registry`, `resolve-global-skill`, `render-global-prompt`, `install-global-prompt`, `check-global-prompt`, and `refresh-global-router` commands when the task is about user-level skill routing, global prompt projection, managed `AGENTS.md` blocks, or new-skill onboarding defaults.
+- Use the `skillguard-global-router` skill and the `scan-global-skills`, `build-global-registry`, `check-global-registry`, `resolve-global-skill`, `render-global-prompt`, `install-global-prompt`, `check-global-prompt`, and `refresh-global-router` commands when the task is about user-level skill routing, global prompt projection, managed user-level AGENTS prompt blocks, or new-skill onboarding defaults.
 - Treat local `scripts/` and `fixtures/` under this skill as evidence only after direct inspection in the current task finds those paths and their current content. Treat repository tests and examples as source-repository evidence only when that layout is present and the paths exist.
 
 Do not cite or require scripts, fixtures, examples, tests, package commands, releases, git remotes, or publication records unless they exist in the current filesystem and were inspected for the current task.
@@ -128,7 +128,7 @@ In this mode SkillGuard should:
 
 - scan explicit skill roots for `SKILL.md` files and adjacent `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` route documents;
 - build a global registry artifact as the route-selection source of truth;
-- render a managed `AGENTS.md` prompt block from that registry;
+- render a managed user-level AGENTS prompt block from that registry;
 - install or replace only the managed SkillGuard global router block while preserving unrelated user prompt content;
 - check the installed block against the current registry hash before claiming global prompt freshness;
 - resolve the user's task to exactly one current skill, then hand off to that skill's own `SKILL.md`, work contract, check manifest, or native route bindings;
@@ -152,7 +152,7 @@ These gates are mandatory for SkillGuard work. If a gate cannot be checked, mark
 - Failures and blockers must remain visible in the final report.
 - Runtime contract work must not close unless the selected route, run record, required phases, required evidence, required checks, quality floors, and closure boundary are all current for the declared scope.
 - Runtime contract work for a target with an existing native route/check system must bind that native system and must not add a parallel SkillGuard execution route.
-- Global router work must not claim current user-level routing unless the registry and managed `AGENTS.md` block were refreshed or checked against the current registry hash.
+- Global router work must not claim current user-level routing unless the registry and managed user-level AGENTS prompt block were refreshed or checked against the current registry hash.
 
 Hard gates are not suggestions. Vague confidence, intent, partial inspection, or a prior successful run is not enough to pass a hard gate.
 

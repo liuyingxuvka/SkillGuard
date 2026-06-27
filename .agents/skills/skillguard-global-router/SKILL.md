@@ -1,13 +1,13 @@
 ---
 name: skillguard-global-router
-description: "Use when maintaining the user-level SkillGuard global skill registry, route selection, managed AGENTS.md prompt block, or new-skill onboarding defaults."
+description: "Use when maintaining the user-level SkillGuard global skill registry, route selection, managed AGENTS prompt block, or new-skill onboarding defaults."
 ---
 
 # SkillGuard Global Router
 
 ## Purpose
 
-SkillGuard Global Router is the user-level routing layer for Codex skills. It scans installed or repository-local skills, records each skill's SkillGuard contract and route documents, resolves a task to the right skill, and keeps the managed global `AGENTS.md` prompt block current.
+SkillGuard Global Router is the user-level routing layer for Codex skills. It scans installed or repository-local skills, records each skill's SkillGuard contract and route documents, resolves a task to the right skill, and keeps the managed global AGENTS prompt block current.
 
 The router does not replace target skills. It chooses the target skill, then hands control to that skill's `SKILL.md`, `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, or declared native route bindings.
 
@@ -26,7 +26,7 @@ Use the SkillGuard CLI owned by the `skillguard` skill for all deterministic rou
 - Use `check-global-registry` to verify registry schema and freshness.
 - Use `resolve-global-skill` to select exactly one current skill for a task.
 - Use `render-global-prompt` to generate the managed prompt projection.
-- Use `install-global-prompt` to insert or replace only the managed SkillGuard global router block in `AGENTS.md`.
+- Use `install-global-prompt` to insert or replace only the managed SkillGuard global router block in the user-level AGENTS prompt file.
 - Use `check-global-prompt` to verify the installed block contains the current registry hash.
 - Use `refresh-global-router` as the standard end-to-end path for scan, registry, prompt projection, install, and prompt freshness check.
 
@@ -40,7 +40,7 @@ Treat the generated global registry artifact as the source of truth for route se
 - Workflow: `Required Workflow` orders scan, registry build, prompt render, prompt install, prompt check, and target-skill handoff.
 - Gates: `Hard Gates` require freshness checks and block stale global prompt claims.
 - Output: `Output Requirements` requires evidence, failures, blockers, skipped checks, residual risk, and claim boundary.
-- Maintenance: `SkillGuard Maintenance` says new skills and prompt changes must refresh the global registry and AGENTS managed block.
+- Maintenance: `SkillGuard Maintenance` says new skills and prompt changes must refresh the global registry and managed AGENTS prompt block.
 
 ## Use When
 
@@ -48,10 +48,10 @@ Use this skill when the user asks to:
 
 - Create, refresh, check, install, or repair the global SkillGuard skill router.
 - Scan installed or repository-local Codex skills and build a global route registry.
-- Make global prompt behavior default through a managed user-level `AGENTS.md` block.
+- Make global prompt behavior default through a managed user-level AGENTS prompt block.
 - Resolve a task to the correct skill before that skill's native workflow begins.
 - Onboard a newly added skill so it appears in the global registry and prompt projection.
-- Check whether the global route registry or AGENTS managed block is stale.
+- Check whether the global route registry or managed AGENTS prompt block is stale.
 
 ## Do Not Use When
 
@@ -65,7 +65,7 @@ Do not use this skill to claim global AI correctness, package publication, relea
 
 1. Inspect the current SkillGuard router materials.
 
-   Locate the SkillGuard CLI, the skill roots to scan, the existing registry artifact if present, and the target `AGENTS.md` file or test equivalent.
+   Locate the SkillGuard CLI, the skill roots to scan, the existing registry artifact if present, and the target user-level AGENTS prompt file or test equivalent.
 
 2. Scan skill roots.
 
@@ -85,7 +85,7 @@ Do not use this skill to claim global AI correctness, package publication, relea
 
 6. Check global prompt freshness.
 
-   Run `check-global-prompt` against the registry and AGENTS file. Block if the managed block is missing, duplicated, marker-corrupted, or stale for the current registry hash.
+   Run `check-global-prompt` against the registry and AGENTS prompt file. Block if the managed block is missing, duplicated, marker-corrupted, or stale for the current registry hash.
 
 7. Resolve target skill and hand off.
 
@@ -93,7 +93,7 @@ Do not use this skill to claim global AI correctness, package publication, relea
 
 8. Report closure.
 
-   Report the registry path, registry hash, AGENTS target, commands run, failures, blockers, skipped checks, residual risk, and claim boundary.
+   Report the registry path, registry hash, AGENTS prompt target, commands run, failures, blockers, skipped checks, residual risk, and claim boundary.
 
 ## Runtime Contract Mode
 
@@ -103,15 +103,15 @@ In this mode:
 
 - the router must maintain a `.skillguard/work-contract.json` and `.skillguard/check_manifest.json`;
 - the registry and prompt projection must be generated by current CLI output, not prose-only edits;
-- AGENTS installation must preserve unrelated user content and only replace the managed SkillGuard block;
+- AGENTS prompt installation must preserve unrelated user content and only replace the managed SkillGuard block;
 - closure requires `check-global-registry`, `check-global-prompt`, and at least one `resolve-global-skill` smoke route.
 
 ## Hard Gates
 
 - A global registry claim must cite a current registry hash.
-- A global prompt claim must cite a current `AGENTS.md` managed block check.
-- `AGENTS.md` must contain at most one SkillGuard global router managed block.
-- Prompt installation must preserve unrelated `AGENTS.md` content.
+- A global prompt claim must cite a current managed AGENTS prompt block check.
+- The user-level AGENTS prompt file must contain at most one SkillGuard global router managed block.
+- Prompt installation must preserve unrelated AGENTS prompt content.
 - Missing skill roots, missing registry files, stale registry hashes, marker corruption, or unresolved target routes are blockers.
 - Newly added skills must be rescanned before claiming they are globally routable.
 - The global router must hand off to the selected skill's own route documents and must not override that skill's contract or native route bindings.
@@ -121,7 +121,7 @@ In this mode:
 
 Router reports should include:
 
-- `checked_target`: the registry path, AGENTS path, skill root, or selected skill path.
+- `checked_target`: the registry path, AGENTS prompt path, skill root, or selected skill path.
 - `status`: `pass`, `fail`, or `block`.
 - `registry_hash`: the current global registry hash when applicable.
 - `evidence`: commands run, files inspected, generated artifacts, hashes, and prompt marker checks.

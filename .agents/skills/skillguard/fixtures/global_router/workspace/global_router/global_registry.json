@@ -1,7 +1,7 @@
 {
   "claim_boundary": "This global registry is a generated index over the scanned local SKILL.md files and their SkillGuard route documents. It selects a skill route but does not replace the selected skill's SKILL.md, work contract, check manifest, runtime checks, tests, package publication, release readiness, external service validation, or future AI behavior evidence.",
   "current_item_count": 2,
-  "generated_at": "2026-06-27T04:30:13Z",
+  "generated_at": "2026-06-27T04:44:01Z",
   "item_count": 10,
   "items": [
     {
@@ -83,7 +83,7 @@
       "skill_id": "skillguard",
       "skill_name": "skillguard",
       "skill_path": ".agents/skills/skillguard",
-      "skill_sha256": "339CF3FA2BE6C4C8BBD85538A863EB6D7FA81FB126DE2B8ED1C7D9481D2F958A",
+      "skill_sha256": "D02FFAF01076B4E5C06D34EA8B12F63AA5CAC30426266F1303B6FA8BCFCBC919",
       "status": "current",
       "use_when": [
         "Use this skill when the user asks to:",
@@ -97,7 +97,7 @@
     },
     {
       "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Use when maintaining the user-level SkillGuard global skill registry, route selection, managed AGENTS.md prompt block, or new-skill onboarding defaults.",
+      "description": "Use when maintaining the user-level SkillGuard global skill registry, route selection, managed AGENTS prompt block, or new-skill onboarding defaults.",
       "do_not_use_when": [
         "Do not use this skill to execute the selected target skill's actual work. After route selection, use the selected skill and its contract.",
         "Do not use this skill as a parallel route system beside a target skill that already owns native route/check behavior. Bind and hand off to the native route documents instead.",
@@ -130,7 +130,6 @@
       "route_terms": [
         "added",
         "agents",
-        "agents.md",
         "and",
         "appears",
         "asks",
@@ -167,22 +166,23 @@
         "resolve",
         "route",
         "router.",
-        "scan"
+        "scan",
+        "selection"
       ],
       "skill_file": ".agents/skills/skillguard-global-router/SKILL.md",
       "skill_id": "skillguard-global-router",
       "skill_name": "skillguard-global-router",
       "skill_path": ".agents/skills/skillguard-global-router",
-      "skill_sha256": "EF2BCD139B2C632F74D447B24B45EAFA3F853C8A1678CD90ADA0E2719FF5B547",
+      "skill_sha256": "4071608600A747B6481FA525152EFF35D10019149B0FC86242126218B83511CD",
       "status": "current",
       "use_when": [
         "Use this skill when the user asks to:",
         "Create, refresh, check, install, or repair the global SkillGuard skill router.",
         "Scan installed or repository-local Codex skills and build a global route registry.",
-        "Make global prompt behavior default through a managed user-level `AGENTS.md` block.",
+        "Make global prompt behavior default through a managed user-level AGENTS prompt block.",
         "Resolve a task to the correct skill before that skill's native workflow begins.",
         "Onboard a newly added skill so it appears in the global registry and prompt projection.",
-        "Check whether the global route registry or AGENTS managed block is stale."
+        "Check whether the global route registry or managed AGENTS prompt block is stale."
       ]
     },
     {
@@ -678,7 +678,7 @@
       ]
     }
   ],
-  "registry_hash": "DABCE65E57EC1D0A468B9F5C241E1A878BA77AE7866564B5B52DCD4A1D96EF60",
+  "registry_hash": "9AF10824B979ED7608F0084CD93EC843D3573563E0B177CC00CA0B4DA0CCBF66",
   "router_skill_id": "skillguard-global-router",
   "scan_roots": [
     {
