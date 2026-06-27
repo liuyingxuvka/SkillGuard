@@ -5370,6 +5370,11 @@ def contract_target_matches_target(contract_target: Any, target: Path) -> bool:
         return False
     if contract_target == public_relative_path(target):
         return True
+    normalized_contract_target = contract_target.replace("\\", "/").strip("/")
+    installed_target = f".codex/skills/{target.name}"
+    source_target = f".agents/skills/{target.name}"
+    if normalized_contract_target in {installed_target, source_target} and (target / "SKILL.md").is_file():
+        return True
     try:
         resolved = resolve_declared_reference(target, contract_target).resolve()
     except (OSError, RuntimeError, ValueError):

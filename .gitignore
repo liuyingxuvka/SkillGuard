@@ -35,6 +35,7 @@ htmlcov/
 logs/
 tmp/
 temp/
+/.skillguard/
 .flowpilot/
 
 # Environment and local secrets

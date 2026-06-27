@@ -2,7 +2,7 @@
 repository = "https://github.com/liuyingxuvka/FlowGuard"
 adopted_package_version = "0.52.2"
 schema_version = "1.0"
-last_verified_at = "2026-06-26T11:08:18+00:00"
+last_verified_at = "2026-06-27T05:09:19+00:00"
 last_verified_by = "FlowGuard project-adopt"
 agents_path = "AGENTS.md"
 
