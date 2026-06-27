@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-26T11:31:08Z",
+  "checked_at": "2026-06-27T03:54:42Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -27,29 +27,29 @@
       "fresh": true,
       "kind": "parser_output",
       "source_path": ".agents/skills/skillguard/fixtures/runtime_contract/fixture-manifest.json",
-      "summary": "Inspected 1 manifest JSON file(s) and executed 15 fixture case(s)."
+      "summary": "Inspected 1 manifest JSON file(s) and executed 19 fixture case(s)."
     },
     {
       "evidence_id": "fixture-case-results",
       "fresh": true,
       "kind": "command_output",
       "source_path": ".agents/skills/skillguard/fixtures/runtime_contract",
-      "summary": "Observed fixture result classes: {'expected_pass': 4, 'blocker_condition': 3, 'expected_fail': 8}."
+      "summary": "Observed fixture result classes: {'expected_pass': 5, 'blocker_condition': 3, 'expected_fail': 11}."
     }
   ],
   "failures": [],
   "files_inspected": [
     {
       "kind": "json",
-      "line_count": 148,
+      "line_count": 184,
       "path": ".agents/skills/skillguard/fixtures/runtime_contract/fixture-manifest.json",
-      "sha256": "F96C209476EDE2E02D1ACBE2D4BA2EC5B77A66E5794F91F04BA2B658AE05E889"
+      "sha256": "8AD034AB360371A5576D939FC191FD11C39819ED02CA75A6428DD200C57216EE"
     }
   ],
   "fixture_class_counts": {
     "blocker_condition": 3,
-    "expected_fail": 8,
-    "expected_pass": 4
+    "expected_fail": 11,
+    "expected_pass": 5
   },
   "fixture_results": [
     {
@@ -93,7 +93,7 @@
       "line_count": 7,
       "observed_decision": "block",
       "problems": [
-        "check-contract fixture execution failed: [Errno 2] No such file or directory: 'C:\\\\Users\\\\liu_y\\\\Documents\\\\SkillGuard_20260614\\\\SkillGuard\\\\.agents\\\\skills\\\\skillguard\\\\fixtures\\\\runtime_contract\\\\contracts\\\\missing_contract.json'"
+        "check-contract fixture execution failed: [Errno 2] No such file or directory: '.\\\\.agents\\\\skills\\\\skillguard\\\\fixtures\\\\runtime_contract\\\\contracts\\\\missing_contract.json'"
       ],
       "sha256": "8C71AC0E949236EE326833C6D8F78F48CAB442EA0FB6AF1D05AD5453DB243ED0",
       "target_command": "check-contract"
@@ -125,20 +125,28 @@
         }
       ],
       "observed_decision": "fail",
-      "observed_failure_count": 9,
+      "observed_failure_count": 16,
       "observed_failures": [
-        "$.contract_hash: shorter than minLength 1",
+        "$.integration_mode: missing required field",
+        "$.native_route_owner: missing required field",
+        "$.native_route_bindings: missing required field",
+        "$.native_check_bindings: missing required field",
+        "$.skillguard_role: missing required field",
+        "$.may_define_parallel_execution_route: missing required field",
+        "$.may_define_skillguard_runtime_route: missing required field",
+        "$.integration_claim_boundary: missing required field",
         "$.routes: must be a non-empty list",
-        "$.phases: must be a non-empty list",
-        "$.required_evidence: must be a non-empty list",
-        "$.check_scripts: must be a non-empty list",
-        "$.closure_rules: must be a non-empty list",
-        "$.quality_floors: must be a non-empty list",
-        "$.forbidden_shortcuts: must be a non-empty list",
-        "$.contract_hash: does not match current canonical work-contract content"
+        "$.phases: must be a non-empty list"
       ],
       "problems": [
-        "$.contract_hash: shorter than minLength 1",
+        "$.integration_mode: missing required field",
+        "$.native_route_owner: missing required field",
+        "$.native_route_bindings: missing required field",
+        "$.native_check_bindings: missing required field",
+        "$.skillguard_role: missing required field",
+        "$.may_define_parallel_execution_route: missing required field",
+        "$.may_define_skillguard_runtime_route: missing required field",
+        "$.integration_claim_boundary: missing required field",
         "$.routes: must be a non-empty list",
         "$.phases: must be a non-empty list",
         "$.required_evidence: must be a non-empty list",
@@ -146,9 +154,161 @@
         "$.closure_rules: must be a non-empty list",
         "$.quality_floors: must be a non-empty list",
         "$.forbidden_shortcuts: must be a non-empty list",
-        "$.contract_hash: does not match current canonical work-contract content"
+        "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner or own the runtime contract directly; duplicate execution paths are invalid"
       ],
       "sha256": "9DAA19DCB9DF279056C52CA0650B935A6C806E54FDBCCC6322CD10A4FC482729",
+      "target_command": "check-contract",
+      "target_path": ".agents/skills/skillguard"
+    },
+    {
+      "case_class": "expected_pass",
+      "case_status": "pass",
+      "command_arguments": [
+        "--target",
+        ".agents/skills/skillguard",
+        "--contract",
+        ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_integrated_contract.json"
+      ],
+      "command_exit_code": 0,
+      "expected_decision": "pass",
+      "fixture_id": "good_native_integrated_contract",
+      "fixture_path": ".agents/skills/skillguard/fixtures/runtime_contract/cases/good-native-integrated-contract.json",
+      "line_count": 7,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-contract:schema",
+          "status": "pass"
+        },
+        {
+          "check_id": "check-contract:semantic-links",
+          "status": "pass"
+        }
+      ],
+      "observed_decision": "pass",
+      "observed_failure_count": 0,
+      "observed_failures": [],
+      "problems": [],
+      "sha256": "9A2C036445B6B918E026892C204E90D300F8696286B0447D7622238C9D37BA5B",
+      "target_command": "check-contract",
+      "target_path": ".agents/skills/skillguard"
+    },
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--target",
+        ".agents/skills/skillguard",
+        "--contract",
+        ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_missing_binding_contract.json"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_native_missing_binding",
+      "fixture_path": ".agents/skills/skillguard/fixtures/runtime_contract/cases/bad-native-missing-binding.json",
+      "line_count": 7,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-contract:schema",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-contract:semantic-links",
+          "status": "fail"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 1,
+      "observed_failures": [
+        "$.native_route_bindings: must bind at least one native route when integration_mode is native-integrated"
+      ],
+      "problems": [
+        "$.native_route_bindings: must bind at least one native route when integration_mode is native-integrated"
+      ],
+      "sha256": "1D9B4ABC1691DD3D260CAF7E6DFEC7D843B0A58F69FD094D9A93E27F6CFC2A6B",
+      "target_command": "check-contract",
+      "target_path": ".agents/skills/skillguard"
+    },
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--target",
+        ".agents/skills/skillguard",
+        "--contract",
+        ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_parallel_route_contract.json"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_parallel_native_route",
+      "fixture_path": ".agents/skills/skillguard/fixtures/runtime_contract/cases/bad-parallel-native-route.json",
+      "line_count": 7,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-contract:schema",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-contract:semantic-links",
+          "status": "fail"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 1,
+      "observed_failures": [
+        "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner or own the runtime contract directly; duplicate execution paths are invalid"
+      ],
+      "problems": [
+        "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner or own the runtime contract directly; duplicate execution paths are invalid"
+      ],
+      "sha256": "26BA77E7F133393A8442662F4B9CD6D11530C4E63A11FB23198DC841A97674E7",
+      "target_command": "check-contract",
+      "target_path": ".agents/skills/skillguard"
+    },
+    {
+      "case_class": "expected_fail",
+      "case_status": "pass",
+      "command_arguments": [
+        "--target",
+        ".agents/skills/skillguard",
+        "--contract",
+        ".agents/skills/skillguard/fixtures/runtime_contract/contracts/legacy_role_contract.json"
+      ],
+      "command_exit_code": 1,
+      "expected_decision": "fail",
+      "fixture_id": "bad_legacy_role_alias",
+      "fixture_path": ".agents/skills/skillguard/fixtures/runtime_contract/cases/bad-legacy-role-alias.json",
+      "line_count": 7,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [
+        {
+          "check_id": "check-contract:schema",
+          "status": "fail"
+        },
+        {
+          "check_id": "check-contract:semantic-links",
+          "status": "fail"
+        }
+      ],
+      "observed_decision": "fail",
+      "observed_failure_count": 3,
+      "observed_failures": [
+        "$.skillguard_role: expected one of ['native_contract_executor', 'hybrid_contract_executor', 'runtime_owner']",
+        "$.skillguard_role: legacy role contract_adapter is invalid; regenerate the contract with native_contract_executor, hybrid_contract_executor, or runtime_owner",
+        "$.skillguard_role: expected native_contract_executor when integration_mode is native-integrated"
+      ],
+      "problems": [
+        "$.skillguard_role: expected one of ['native_contract_executor', 'hybrid_contract_executor', 'runtime_owner']",
+        "$.skillguard_role: legacy role contract_adapter is invalid; regenerate the contract with native_contract_executor, hybrid_contract_executor, or runtime_owner",
+        "$.skillguard_role: expected native_contract_executor when integration_mode is native-integrated"
+      ],
+      "sha256": "408D1D1AC676E4390D34709B3598AC626845A5F25E06F6FE5C6359F9B21DC33B",
       "target_command": "check-contract",
       "target_path": ".agents/skills/skillguard"
     },
@@ -712,6 +872,14 @@
         "plan-skill",
         "generate-skill",
         "generate-suite",
+        "scan-global-skills",
+        "build-global-registry",
+        "check-global-registry",
+        "resolve-global-skill",
+        "render-global-prompt",
+        "install-global-prompt",
+        "check-global-prompt",
+        "refresh-global-router",
         "check-json-schema",
         "compile-contract",
         "check-contract",
@@ -907,13 +1075,13 @@
         }
       ]
     },
-    "content_hash": "51CAC4C04F9C62B7C3291A7F69C095766E25B743B3E7C5510CF6FE997FA57F7E",
-    "evidence_timestamp": "2026-06-26T11:31:08Z",
-    "record_id": "fixture_evidence:35A73594C72C4CAF",
+    "content_hash": "E859DC0365AD6011AA8360A164CA67F6BE3969933165C9D2A493836F14277746",
+    "evidence_timestamp": "2026-06-27T03:54:42Z",
+    "record_id": "fixture_evidence:C1E272B4BD9413A4",
     "record_kind": "fixture_evidence",
     "refresh_action": {
       "action": "fixture_test",
-      "fixture_result_count": 15,
+      "fixture_result_count": 19,
       "status": "pass"
     },
     "route_node_id": "fixture-test",

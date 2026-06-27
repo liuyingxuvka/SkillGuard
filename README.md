@@ -4,9 +4,9 @@ A conservative maintenance framework for Codex skills that keeps claims tied to 
 
 SkillGuard helps maintainers inspect a skill repository, describe what is present, separate deterministic checks from human or AI judgment, and report whether a skill or suite is missing, stale, blocked, checked, or accepted for a stated scope. It is designed for public skill repositories where overclaiming is easy: a README can promise commands that do not exist, a parent suite can hide a failing child, or an old report can be reused after files changed.
 
-Current version: `1.0.0`
+Current version: `1.0.1`
 
-Current repository status: foundation metadata, local SkillGuard materials, local script-based CLI dispatch, deterministic `route-task` routing metadata, runtime work-contract commands, no-write `plan-skill` blueprint preview, controlled `generate-skill` scaffold creation with generated runtime contracts, controlled `generate-suite` suite scaffold creation, read-only `detect-stale-evidence` freshness checks, bounded `refresh-maintenance` metadata refreshes, read-only `review-checker-change` checker-change review, canonical `check-maintenance-record` schema validation, explicit fixture manifests including runtime-contract, simple-generation, and complex-generation fixtures, local examples, and a standard-library smoke test script are present. The current tree does not include a packaged CLI, suite automation, package publication, release artifacts, git remotes, external service integration, or code-contract validation.
+Current repository status: foundation metadata, local SkillGuard materials, local script-based CLI dispatch, deterministic `route-task` routing metadata, runtime work-contract commands, global SkillGuard registry and managed prompt commands, no-write `plan-skill` blueprint preview, controlled `generate-skill` scaffold creation with generated runtime contracts, controlled `generate-suite` suite scaffold creation, read-only `detect-stale-evidence` freshness checks, bounded `refresh-maintenance` metadata refreshes, read-only `review-checker-change` checker-change review, canonical `check-maintenance-record` schema validation, explicit fixture manifests including runtime-contract, global-router, simple-generation, and complex-generation fixtures, local examples, and a standard-library smoke test script are present. The current tree does not include a packaged CLI, suite automation, package publication, external service integration, or code-contract validation; GitHub release tags are external publication records and do not expand the local runtime claim boundary.
 
 ## Current Capability Boundary
 
@@ -43,6 +43,7 @@ This is still a local script surface, not a packaged CLI or external service. Th
 - Current local maintenance command: `refresh-maintenance` uses the stale bindings reported for explicit evidence artifacts to plan or execute approved metadata refreshes for evidence summaries, fixture manifest/result bindings, generated artifact status records, command/self-check outputs, OpenSpec status metadata, and route registry metadata. Dry-run mode does not rewrite evidence artifacts; execute mode rewrites only supported metadata fields in the supplied evidence JSON files.
 - Current local checker-change review command: `review-checker-change` compares an approved public checker-change baseline with current command dispatch, route bindings, fixture expectations, supplied evidence freshness, and public-boundary scans without rewriting baselines, fixtures, evidence, or source artifacts.
 - Current local record schema command: `check-maintenance-record` validates canonical public maintenance records and can normalize supported legacy SkillGuard command outputs without rewriting the source artifact.
+- Current global router commands: `scan-global-skills`, `build-global-registry`, `check-global-registry`, `resolve-global-skill`, `render-global-prompt`, `install-global-prompt`, `check-global-prompt`, and `refresh-global-router` scan local skill roots, build a route registry, resolve a task to a current skill, render the managed `AGENTS.md` router block, install only that managed block, and verify prompt freshness against the registry hash.
 - Current limitation: these commands do not prove future AI behavior, package installation, external release readiness, broad fixture coverage, or code-contract validation. They enforce the local runtime contract and run-record evidence for the declared target only.
 
 ### Work Routing
@@ -113,6 +114,9 @@ SkillGuard/
           ai_judgments/
           evidence/
           reports/
+      skillguard-global-router/
+        SKILL.md
+        .skillguard/
 ```
 
 Current local material status:
@@ -121,17 +125,18 @@ Current local material status:
 | --- | --- |
 | `README.md` | Public project overview |
 | `LICENSE` | MIT license text |
-| `VERSION` | `1.0.0` |
+| `VERSION` | `1.0.1` |
 | `pyproject.toml` | Metadata with conservative local implementation status |
 | `references/` | SkillGuard standards and policy references |
-| `examples/` | Local examples for `check-skill`, `check-suite`, `fixture-test`, `route-task`, `plan-skill`, `generate-skill`, `generate-suite`, `detect-stale-evidence`, `refresh-maintenance`, `review-checker-change`, `check-maintenance-record`, and `self-check` |
+| `examples/` | Local examples for `check-skill`, `check-suite`, `fixture-test`, `route-task`, global router commands, `plan-skill`, `generate-skill`, `generate-suite`, `detect-stale-evidence`, `refresh-maintenance`, `review-checker-change`, `check-maintenance-record`, and `self-check` |
 | `tests/` | Standard-library local smoke checks |
 | `.agents/skills/skillguard/SKILL.md` | Codex skill entrypoint |
 | `.agents/skills/skillguard/assets/schemas/` | JSON schemas for SkillGuard records |
 | `.agents/skills/skillguard/assets/templates/` | JSON and `SKILL.md` templates |
 | `.agents/skills/skillguard/.skillguard/` | Initial self-maintenance records |
-| `.agents/skills/skillguard/scripts/` | Local standard-library CLI dispatch, runtime-contract commands, `route-task` deterministic routing, `plan-skill` preview generation, `generate-skill` scaffold creation, `generate-suite` suite scaffold creation, `detect-stale-evidence` freshness checks, `refresh-maintenance` metadata refreshes, `review-checker-change` checker-change review, `check-maintenance-record` schema validation, and checker-engine helpers |
-| `.agents/skills/skillguard/fixtures/` | Local positive, static-negative, suite-negative, routing-conflict, runtime-contract, simple-generation, and complex-generation fixture manifests with generated command-output evidence |
+| `.agents/skills/skillguard/scripts/` | Local standard-library CLI dispatch, runtime-contract commands, `route-task` deterministic routing, global registry and prompt-router commands, `plan-skill` preview generation, `generate-skill` scaffold creation, `generate-suite` suite scaffold creation, `detect-stale-evidence` freshness checks, `refresh-maintenance` metadata refreshes, `review-checker-change` checker-change review, `check-maintenance-record` schema validation, and checker-engine helpers |
+| `.agents/skills/skillguard/fixtures/` | Local positive, static-negative, suite-negative, routing-conflict, runtime-contract, global-router, simple-generation, and complex-generation fixture manifests with generated command-output evidence |
+| `.agents/skills/skillguard-global-router/` | Global SkillGuard router skill entrypoint and runtime contract for registry, route selection, and managed prompt installation work |
 
 ## Quick Start
 
@@ -170,7 +175,7 @@ This repository currently supports a documentation-and-records workflow plus a l
    python .agents/skills/skillguard/scripts/skillguard.py commands
    ```
 
-   The current local command set is `commands`, `route-task`, `inventory`, `plan-skill`, `generate-skill`, `generate-suite`, `check-json-schema`, `compile-contract`, `check-contract`, `select-route`, `start-run`, `advance-run`, `check-run`, `close-run`, `init-target`, `init-suite`, `mark`, `check-skill`, `check-suite`, `check-skill-contract`, `check-suite-map`, `check-suite-contract`, `check-fixture-manifest`, `check-work-contract`, `check-run-record`, `check-check-manifest`, `fixture-test`, `detect-stale-evidence`, `refresh-maintenance`, `review-checker-change`, `check-maintenance-record`, `check-ai-judgment`, `check-report`, `check-workflow-report`, `make-closure`, `self-check`, and `write-report`.
+   The current local command set is `commands`, `route-task`, `inventory`, `plan-skill`, `generate-skill`, `generate-suite`, `scan-global-skills`, `build-global-registry`, `check-global-registry`, `resolve-global-skill`, `render-global-prompt`, `install-global-prompt`, `check-global-prompt`, `refresh-global-router`, `check-json-schema`, `compile-contract`, `check-contract`, `select-route`, `start-run`, `advance-run`, `check-run`, `close-run`, `init-target`, `init-suite`, `mark`, `check-skill`, `check-suite`, `check-skill-contract`, `check-suite-map`, `check-suite-contract`, `check-fixture-manifest`, `check-work-contract`, `check-run-record`, `check-check-manifest`, `fixture-test`, `detect-stale-evidence`, `refresh-maintenance`, `review-checker-change`, `check-maintenance-record`, `check-ai-judgment`, `check-report`, `check-workflow-report`, `make-closure`, `self-check`, and `write-report`.
 
 7. To create and use a runtime contract for a target skill:
 
@@ -189,7 +194,16 @@ This repository currently supports a documentation-and-records workflow plus a l
    examples/README.md
    ```
 
-9. To run the standard-library smoke checks, use:
+9. To refresh the local global router against a test Codex home:
+
+   ```powershell
+   python .agents/skills/skillguard/scripts/skillguard.py refresh-global-router --skill-root .agents/skills --codex-home .skillguard/test_codex_home --output-dir .skillguard/global-router
+   python .agents/skills/skillguard/scripts/skillguard.py check-global-prompt --registry .skillguard/global-router/global_registry.json --codex-home .skillguard/test_codex_home
+   ```
+
+   Run the same refresh/check path after `generate-skill`, installed-skill sync, or any change to `SKILL.md`, `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, or native route bindings before claiming default global routing is current.
+
+10. To run the standard-library smoke checks, use:
 
    ```powershell
    python tests/test_skillguard_local.py --json-output .agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json
@@ -215,7 +229,8 @@ Current public validation evidence supports the local SkillGuard documentation a
 | Local smoke checks | `python tests/test_skillguard_local.py` | Standard-library local examples and command checks pass for the current files; this is not release-readiness or code-contract proof. |
 | SkillGuard self and target checks | `self-check` and `check-skill` evidence outputs | Current entrypoint, local control records, public-boundary wording, and target records pass the local static checks for the stated scope. |
 | Checker-change review | `review-checker-change` evidence output | Current checker bindings, route bindings, fixture expectations, evidence freshness, and public-boundary scans pass read-only review for the supplied public artifacts. |
-| Explicit fixture behavior | Positive, negative, routing-conflict, runtime-contract, simple-generation, and complex-generation fixture outputs | Expected pass, fail, or block behavior is observed for explicit local manifests only; this is not broad fixture coverage. |
+| Explicit fixture behavior | Positive, negative, routing-conflict, runtime-contract, global-router, simple-generation, and complex-generation fixture outputs | Expected pass, fail, or block behavior is observed for explicit local manifests only; this is not broad fixture coverage. |
+| Global router prompt path | `refresh-global-router`, `check-global-registry`, `check-global-prompt`, and `resolve-global-skill` evidence outputs | Current registry and managed prompt projection pass for explicit local/test roots only; this is not proof of future AI behavior or external installation state. |
 
 Release-gate status: current evidence is sufficient for this README's local documentation claim boundary. It is not a package publication, external release, release-readiness, suite automation, broad fixture coverage, packaged CLI, git remote, external service, or code-contract validation gate.
 

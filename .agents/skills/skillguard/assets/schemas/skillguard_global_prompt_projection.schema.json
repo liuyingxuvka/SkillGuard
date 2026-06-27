@@ -1,0 +1,68 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "claim_boundary": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "generated_at": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "managed_block": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "managed_block_markers": {
+      "additionalProperties": false,
+      "properties": {
+        "begin": {
+          "const": "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->",
+          "type": "string"
+        },
+        "end": {
+          "const": "<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->",
+          "type": "string"
+        }
+      },
+      "required": [
+        "begin",
+        "end"
+      ],
+      "type": "object"
+    },
+    "registry_hash": {
+      "minLength": 64,
+      "type": "string"
+    },
+    "registry_path": {
+      "type": "string"
+    },
+    "route_index": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "router_skill_id": {
+      "const": "skillguard-global-router",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "skillguard.global_prompt_projection.v1",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "generated_at",
+    "router_skill_id",
+    "registry_hash",
+    "registry_path",
+    "managed_block_markers",
+    "managed_block",
+    "route_index",
+    "claim_boundary"
+  ],
+  "type": "object"
+}

@@ -90,6 +90,33 @@ Fail criteria: the workflow is aspirational, unordered, or missing evidence coll
 
 Block criteria: required scope or target information is missing.
 
+## Native Runtime Integration
+
+When a target skill already has its own route selection, controller, simulator, checker, validation script, or closure workflow, SkillGuard should integrate with that native system instead of creating a parallel runtime.
+
+Every runtime work contract should declare one integration mode:
+
+- `native-integrated`: the target skill already owns the runtime path. SkillGuard records and enforces the native route/check contract.
+- `hybrid-extension`: the target skill owns part of the runtime path, and SkillGuard fills missing gates such as evidence, freshness, quality-floor, or closure checks.
+- `skillguard-runtime`: no native runtime system is declared, so SkillGuard owns the route/phase/check contract.
+
+Required native-integration fields:
+
+- `integration_mode`;
+- `native_route_owner`;
+- `native_route_bindings`;
+- `native_check_bindings`;
+- `skillguard_role`;
+- `may_define_parallel_execution_route`;
+- `may_define_skillguard_runtime_route`;
+- `integration_claim_boundary`.
+
+Pass criteria: a native or hybrid target binds the original route/check system and uses SkillGuard as a native-bound or hybrid contract executor, not as a parallel route owner.
+
+Fail criteria: a native or hybrid target adds a second SkillGuard execution route, omits native route/check bindings, or lets SkillGuard bypass the original router, controller, simulator, checker, or closure flow.
+
+Block criteria: the target appears to have a native system, but ownership cannot be identified well enough to choose between native integration, hybrid extension, and SkillGuard-owned runtime.
+
 ## Hard Gates
 
 Hard gates are required checks that cannot be softened into suggestions.
@@ -105,6 +132,7 @@ Common hard gates:
 - child or suite evidence is not hidden by parent summaries;
 - failures, blockers, and skipped checks remain visible;
 - implementation, publication, and external-integration claims are directly validated before being claimed complete.
+- runtime contracts for skills with existing native route/check systems bind those native systems rather than creating a second execution route;
 
 Pass criteria: every required gate passes or is explicitly out of scope.
 

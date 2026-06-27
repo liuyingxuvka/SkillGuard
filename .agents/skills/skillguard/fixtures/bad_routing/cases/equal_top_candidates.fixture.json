@@ -20,7 +20,7 @@
     "message_contains": [
       "multiple current routes"
     ],
-    "no_selected_fallback": true,
+    "no_route_selected": true,
     "empty_target_path_when_blocked": true,
     "no_task_echo": true,
     "deterministic_repeat": true

@@ -1,0 +1,7 @@
+{
+  "fixture_id": "bad_parallel_native_route",
+  "target_command": "check-contract",
+  "expected_decision": "fail",
+  "target_path": ".agents/skills/skillguard",
+  "contract_path": "../contracts/native_parallel_route_contract.json"
+}

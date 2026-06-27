@@ -13,8 +13,17 @@ def skill_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
+def repository_root_for_skill_root(root: Path) -> Path:
+    resolved = root.resolve()
+    if resolved.parent.name == "skills" and resolved.parent.parent.name == ".agents":
+        return resolved.parents[2]
+    if resolved.parent.name == "skills" and resolved.parent.parent.name == ".codex":
+        return resolved.parents[2]
+    return resolved
+
+
 def repository_root() -> Path:
-    return skill_root().parents[2]
+    return repository_root_for_skill_root(skill_root())
 
 
 def utc_timestamp() -> str:

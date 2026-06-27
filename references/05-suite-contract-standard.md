@@ -61,7 +61,7 @@ Routing information may include:
 - non-use cases;
 - handoff conditions;
 - conflict resolution;
-- fallback behavior;
+- blocked-when-no-route behavior;
 - blocked conditions;
 - examples that remain generic and public-safe.
 

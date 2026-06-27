@@ -1,0 +1,111 @@
+{
+  "check_scripts": [
+    {
+      "check_id": "check_route",
+      "command": "python .skillguard/checks/check_route.py",
+      "failure_class": "route",
+      "phase_id": "intake",
+      "required": true,
+      "script_path": ".skillguard/checks/check_route.py"
+    }
+  ],
+  "claim_boundary": "This native integration fixture covers only local contract validation for a target-owned route/check binding.",
+  "closure_rules": [
+    {
+      "allowed_decision": "accepted",
+      "required_checks": [
+        "check_route"
+      ],
+      "required_evidence": [
+        "task_summary"
+      ],
+      "rule_id": "accepted_requires_native_binding",
+      "scope": "declared native route scope only"
+    }
+  ],
+  "contract_hash": "76ADB8E2CD5A1352EC861408E90FC8FC537752523F337F3A420E9B587B5A9D3A",
+  "contract_version": "native-fixture-1",
+  "forbidden_shortcuts": [
+    {
+      "shortcut_id": "shadow_native_route",
+      "summary": "Do not replace the target-owned native route with a duplicate SkillGuard-owned execution path."
+    }
+  ],
+  "integration_claim_boundary": "SkillGuard executes contract gates through the target skill native route and check owner.",
+  "integration_mode": "native-integrated",
+  "may_define_parallel_execution_route": false,
+  "may_define_skillguard_runtime_route": false,
+  "native_check_bindings": [
+    {
+      "binding_id": "native-check-binding",
+      "evidence_source": "target native check output",
+      "native_check_id": "native.checks.current",
+      "required": true
+    }
+  ],
+  "native_route_bindings": [],
+  "native_route_owner": "native-router.fixture",
+  "phases": [
+    {
+      "allowed_next": [],
+      "phase_id": "intake",
+      "required_checks": [
+        "check_route"
+      ],
+      "required_evidence": [
+        "task_summary"
+      ],
+      "summary": "Confirm target, native route binding, and closure scope."
+    }
+  ],
+  "quality_floors": [
+    {
+      "failure_effect": "block closure",
+      "floor_id": "native_route_not_shadowed",
+      "required_checks": [
+        "check_route"
+      ],
+      "summary": "Native route work must use the declared native route binding."
+    }
+  ],
+  "required_evidence": [
+    {
+      "evidence_id": "task_summary",
+      "kind": "task_record",
+      "phase_id": "intake",
+      "required": true,
+      "source": ".skillguard/runs/"
+    }
+  ],
+  "routes": [
+    {
+      "activation_keywords": [
+        "audit",
+        "check"
+      ],
+      "do_not_use_when": [
+        "Task is outside the native audit route."
+      ],
+      "phase_order": [
+        "intake"
+      ],
+      "route_id": "audit",
+      "route_source": "native_binding",
+      "summary": "Execute the native audit route with SkillGuard contract gates."
+    }
+  ],
+  "schema_version": "skillguard.work_contract.v1",
+  "skill_id": "skillguard",
+  "skillguard_role": "native_contract_executor",
+  "stale_bindings": [
+    {
+      "binding_id": "target_skill_prompt",
+      "path": "SKILL.md",
+      "stales": [
+        "route_selection",
+        "closure_report"
+      ]
+    }
+  ],
+  "target_path": ".agents/skills/skillguard"
+}

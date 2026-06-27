@@ -34,6 +34,38 @@
       "path": "cases/check-contract-hollow-fail.json"
     },
     {
+      "fixture_id": "good_native_integrated_contract",
+      "fixture_type": "positive",
+      "target_rule": "A native-integrated contract passes only when SkillGuard is the runtime contract executor attached to declared native route and check bindings.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/good-native-integrated-contract.json"
+    },
+    {
+      "fixture_id": "bad_native_missing_binding",
+      "fixture_type": "negative",
+      "target_rule": "A native-integrated contract without native route bindings fails instead of falling back to a SkillGuard-owned route.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/bad-native-missing-binding.json"
+    },
+    {
+      "fixture_id": "bad_parallel_native_route",
+      "fixture_type": "negative",
+      "target_rule": "A native-integrated contract that allows duplicate SkillGuard-owned execution paths fails.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/bad-parallel-native-route.json"
+    },
+    {
+      "fixture_id": "bad_legacy_role_alias",
+      "fixture_type": "negative",
+      "target_rule": "A native-integrated contract using old role names fails instead of preserving compatibility.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/bad-legacy-role-alias.json"
+    },
+    {
       "fixture_id": "runtime-select-route-pass",
       "fixture_type": "positive",
       "target_rule": "A task matching the audit route selects exactly one route.",
@@ -134,6 +166,10 @@
     ".agents/skills/skillguard/.skillguard/work-contract.json",
     ".agents/skills/skillguard/.skillguard/check_manifest.json",
     ".agents/skills/skillguard/fixtures/runtime_contract/contracts/hollow_contract.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_integrated_contract.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_missing_binding_contract.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_parallel_route_contract.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/legacy_role_contract.json",
     ".agents/skills/skillguard/fixtures/runtime_contract/contracts/ambiguous_routes_contract.json",
     ".agents/skills/skillguard/fixtures/runtime_contract/contracts/checked_only_contract.json",
     ".agents/skills/skillguard/fixtures/runtime_contract/runs/quality_failure_run.json",

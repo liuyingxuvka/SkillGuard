@@ -63,7 +63,7 @@
       "scope": "declared run scope only; accepted closure is intentionally not allowed"
     }
   ],
-  "contract_hash": "24EE5FD07E4558F033BC160F17CACA0F88B9D9236A1D2483FB7A1B66D37CC84B",
+  "contract_hash": "D82A58A42A0A9CC48B873AE99022EA65AF943FB646E19EA8E53ECD9306B6F78A",
   "contract_version": "1",
   "forbidden_shortcuts": [
     {
@@ -71,6 +71,13 @@
       "summary": "Do not move directly from intake or planning to closure without current phase evidence and required checks."
     }
   ],
+  "integration_claim_boundary": "No native route/check system is declared for this generated target, so SkillGuard owns this runtime contract until a native system is added. If a native route/check system appears later, regenerate or edit this contract as native-integrated or hybrid-extension; duplicate SkillGuard-owned execution paths are invalid.",
+  "integration_mode": "skillguard-runtime",
+  "may_define_parallel_execution_route": false,
+  "may_define_skillguard_runtime_route": true,
+  "native_check_bindings": [],
+  "native_route_bindings": [],
+  "native_route_owner": "",
   "phases": [
     {
       "allowed_next": [
@@ -204,11 +211,13 @@
         "closure"
       ],
       "route_id": "audit",
+      "route_source": "skillguard_runtime",
       "summary": "Inspect the target skill and close only after required checks pass."
     }
   ],
   "schema_version": "skillguard.work_contract.v1",
   "skill_id": "skillguard",
+  "skillguard_role": "runtime_owner",
   "stale_bindings": [
     {
       "binding_id": "target_skill_prompt",

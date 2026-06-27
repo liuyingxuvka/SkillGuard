@@ -1,0 +1,16 @@
+<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->
+## SkillGuard Global Router
+
+- Before using a Codex skill for non-trivial skill, prompt, process, or SkillGuard-family work, consult the SkillGuard global router registry when it is present.
+- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a skill-routing claim.
+- Route order: select the target skill from the registry, read the selected `SKILL.md`, then follow that skill's `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` or native route bindings.
+- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.
+- router_skill_id: skillguard-global-router
+- registry_hash: {{registry_hash}}
+- registry_path: {{registry_path}}
+
+### Current Route Index
+{{route_index}}
+
+Claim boundary: this block is a routing projection only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence.
+<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->

@@ -40,14 +40,24 @@ Use this skill when:
 
 For non-trivial work with this skill, use the local SkillGuard runtime contract before claiming closure:
 
-1. Select one route from `.skillguard/work-contract.json` before starting target work.
-2. Create or update a run record under `.skillguard/runs/`.
-3. Follow the declared phases in order.
-4. Attach current evidence for every required phase.
-5. Run required checks from `.skillguard/check_manifest.json`.
-6. Block instead of closing when a route is ambiguous, a phase is skipped, required evidence is missing or stale, a quality floor fails, or closure wording exceeds the evidence.
+1. Identify whether this skill already has a native route/check system. If it does, bind that system in `.skillguard/work-contract.json`; SkillGuard may execute the contract around that native system, but must not create a second SkillGuard execution route.
+2. Select the native route decision or SkillGuard-owned route from `.skillguard/work-contract.json` before starting target work, depending on the declared integration mode.
+3. Create or update a run record under `.skillguard/runs/`.
+4. Follow the declared phases in order.
+5. Attach current evidence for every required phase.
+6. Run required native checks and SkillGuard checks from `.skillguard/check_manifest.json`.
+7. Block instead of closing when a route is ambiguous, a native binding is missing, a phase is skipped, required evidence is missing or stale, a quality floor fails, or closure wording exceeds the evidence.
 
 AI or human judgment may explain semantic risk, but it must not replace required runnable checks.
+
+## Global Router Onboarding
+
+After this skill is added, moved, renamed, or its `SKILL.md`, `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, or native route binding changes, refresh the SkillGuard global router before claiming default global routing is current:
+
+1. Run `refresh-global-router` against the relevant installed or repository-local skill roots.
+2. Check the generated global registry with `check-global-registry`.
+3. Check the user-level managed `AGENTS.md` block with `check-global-prompt`.
+4. Do not claim this skill is globally routable by default when the registry or managed prompt block is missing or stale.
 
 ## Hard Gates
 

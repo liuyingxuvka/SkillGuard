@@ -1,0 +1,35 @@
+{
+  "blockers": [],
+  "checks": [
+    {
+      "blockers": [],
+      "check_id": "global-router-profile-current",
+      "evidence": [
+        "skillguard-global-router-skill-md"
+      ],
+      "failures": [],
+      "skipped_checks": [],
+      "status": "checked"
+    }
+  ],
+  "claim_boundary": "This profile covers only the current SkillGuard Global Router skill files and local router-control records. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, external services, installed prompt freshness, or future AI behavior without separate current evidence.",
+  "control_root": ".skillguard",
+  "evidence": [
+    {
+      "evidence_id": "skillguard-global-router-skill-md",
+      "path": ".agents/skills/skillguard-global-router/SKILL.md",
+      "summary": "Global router skill entrypoint with required SkillGuard sections."
+    }
+  ],
+  "failures": [],
+  "profile_version": "global-router.v1",
+  "purpose": "Maintain the global SkillGuard registry, router prompt projection, and AGENTS managed block workflow.",
+  "residual_risk": [
+    "Actual installed prompt freshness depends on the latest refresh-global-router and check-global-prompt command output."
+  ],
+  "schema_version": "skillguard.global_router_profile.v1",
+  "skipped_checks": [],
+  "status": "checked",
+  "target_path": ".agents/skills/skillguard-global-router/SKILL.md",
+  "target_type": "skill"
+}

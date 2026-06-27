@@ -6,7 +6,7 @@
     "status": "compatible",
     "notes": [
       "Routing negative fixtures target the current route-task command and current public route registry.",
-      "Each case checks an expected block decision plus structured routing_conflict_blockers and no selected fallback route."
+      "Each case checks an expected block decision plus structured routing_conflict_blockers and no route selected."
     ]
   },
   "fixtures": [

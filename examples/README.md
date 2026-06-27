@@ -76,6 +76,12 @@ Run runtime-contract fixtures:
 python .agents/skills/skillguard/scripts/skillguard.py fixture-test --manifest .agents/skills/skillguard/fixtures/runtime_contract/fixture-manifest.json
 ```
 
+Run global-router fixtures:
+
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py fixture-test --manifest .agents/skills/skillguard/fixtures/global_router/fixture-manifest.json
+```
+
 Interpretation:
 
 - Positive fixture cases are expected to observe `pass`.
@@ -84,6 +90,7 @@ Interpretation:
 - The `fixture_class_counts` field is useful for confirming which expected case classes ran.
 - Routing fixtures also report `routing_conflict_blocker_codes` in each route-task fixture result so stable conflict classes can be checked without relying only on prose blocker text.
 - Runtime-contract fixtures prove the explicit local command family can compile and check a contract, select a route, check complete runs, accept a complete run, and observe expected failures or blocks for missing contracts, hollow contracts, missing routes, ambiguous routes, missing evidence, skipped phases, stale evidence, quality downgrades, closure overclaims, parent suite child-failure hiding, and early closure.
+- Global-router fixtures exercise scan, registry refresh, managed prompt install/check, and route resolution against explicit local roots and a test Codex home only.
 - Simple generation fixtures run the public `plan-skill` and `generate-skill` path inside marker-owned temporary workspaces, validate current generated evidence, and clean up generated files after each case.
 - Complex generation fixtures add richer generated-content assertions, malformed blueprint blocking, generated-output corruption checks, stale-evidence integration, and non-target mutation probes on top of the same public generation path.
 
@@ -151,7 +158,7 @@ Arguments:
 
 - `--task` supplies one task request directly.
 - `--input` supplies a repository-local JSON object with `task` and optional `route_hint`.
-- `--route-hint` may name a current route id, route node id, command family, or public alias.
+- `--route-hint` may name a current route id, route node id, or command family.
 - `--output` writes the JSON result under the SkillGuard skill root; `-` prints to stdout.
 
 Interpretation:
@@ -160,6 +167,34 @@ Interpretation:
 - `decision: block` means the input was missing, ambiguous, unsupported, malformed, path-unsafe, or used conflicting options; inspect `routing_conflict_blockers` for stable `blocker_class`, `blocker_code`, conflicting fields or candidates, and recommended resolution.
 - Conflict blockers cover conflicting task/input sources, incompatible route hints, mutually exclusive routing flags, equal route candidates, stale route identifiers, invalid path/config combinations, and requested responsibility mismatches.
 - `route-task` does not invoke generators, run target checks, create files, expose private runtime material, or make a closure claim.
+
+## Global Router
+
+Refresh the global SkillGuard router against explicit local roots and a test Codex home:
+
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py refresh-global-router --skill-root .agents/skills --codex-home .skillguard/test_codex_home --output-dir .skillguard/global-router
+```
+
+Check the generated registry and installed managed prompt block:
+
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py check-global-registry --registry .skillguard/global-router/global_registry.json --skill-root .agents/skills
+python .agents/skills/skillguard/scripts/skillguard.py check-global-prompt --registry .skillguard/global-router/global_registry.json --codex-home .skillguard/test_codex_home
+```
+
+Resolve a task to the global router skill before handing off to that skill's own contract:
+
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py resolve-global-skill --registry .skillguard/global-router/global_registry.json --task "Refresh the global SkillGuard router prompt and registry"
+```
+
+Interpretation:
+
+- `refresh-global-router` scans current skill roots, writes a registry and prompt projection, inserts or replaces only the managed SkillGuard block in `AGENTS.md`, and checks that block against the registry hash.
+- `check-global-registry` blocks or fails stale registry claims instead of treating old route indexes as current.
+- `check-global-prompt` blocks missing, duplicated, corrupted, or stale managed prompt blocks.
+- `resolve-global-skill` selects a current skill and returns route-document paths; it does not execute the selected skill or replace the selected skill's own gates.
 
 ## Evidence Freshness
 
@@ -264,6 +299,7 @@ Interpretation:
 
 - `decision: pass` means the command parsed the Skill Blueprint, checked the target write boundary, created missing scaffold files, verified required file presence, and ran `check-skill` against the final generated target.
 - Generated skills include `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, `.skillguard/checks/*.py`, and `.skillguard/runs/`; post-generation validation runs both `check-skill` and `check-contract`.
+- Successful generation records `global_router_refresh.required: true`; run `refresh-global-router`, `check-global-registry`, and `check-global-prompt` before claiming the new skill is available through default global routing.
 - Differing existing files block generation; identical existing files are preserved for idempotent reruns.
 - Generated scaffold files remain draft evidence only. Run target checks and reviewer judgment before any accepted status or closure claim.
 

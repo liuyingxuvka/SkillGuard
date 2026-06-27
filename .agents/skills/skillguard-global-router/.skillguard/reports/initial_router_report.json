@@ -1,0 +1,20 @@
+{
+  "blockers": [],
+  "claim_boundary": "This report records initial router setup state only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, installed prompt freshness, external services, or future AI behavior without separate current evidence.",
+  "evidence": [
+    {
+      "evidence_id": "router-control-records",
+      "path": ".agents/skills/skillguard-global-router/.skillguard/skillguard_manifest.json",
+      "summary": "Control manifest indexes router control records."
+    }
+  ],
+  "failures": [],
+  "residual_risk": [
+    "This initial report is not a substitute for check-global-registry or check-global-prompt output."
+  ],
+  "schema_version": "skillguard.global_router_initial_report.v1",
+  "skipped_checks": [],
+  "status": "checked",
+  "target_path": ".agents/skills/skillguard-global-router",
+  "target_type": "workflow_report"
+}

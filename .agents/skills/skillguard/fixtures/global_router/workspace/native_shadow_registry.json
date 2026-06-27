@@ -1,0 +1,49 @@
+{
+  "schema_version": "skillguard.global_registry.v1",
+  "generated_at": "2026-06-27T00:00:00Z",
+  "router_skill_id": "skillguard-global-router",
+  "scan_roots": [],
+  "item_count": 1,
+  "current_item_count": 1,
+  "items": [
+    {
+      "skill_id": "native-shadow-skill",
+      "skill_name": "native-shadow-skill",
+      "description": "Use for native shadow route fixture work.",
+      "skill_path": "fixtures/native-shadow-skill",
+      "skill_file": "fixtures/native-shadow-skill/SKILL.md",
+      "skill_sha256": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+      "status": "current",
+      "use_when": [
+        "Use for native shadow route fixture work."
+      ],
+      "do_not_use_when": [],
+      "route_entrypoint": {
+        "integration_mode": "native-integrated",
+        "route_confidence": "native-bound",
+        "native_route_owner": "",
+        "native_route_bindings": [],
+        "native_check_bindings": [],
+        "may_define_parallel_execution_route": true,
+        "may_define_skillguard_runtime_route": true,
+        "route_ids": [
+          "audit"
+        ],
+        "default_route_id": "audit",
+        "route_doc_paths": [
+          "fixtures/native-shadow-skill/SKILL.md"
+        ],
+        "handoff_rule": "Fixture intentionally lacks native bindings."
+      },
+      "route_terms": [
+        "native",
+        "shadow",
+        "route"
+      ],
+      "claim_boundary": "Native shadow fixture registry entry only."
+    }
+  ],
+  "warnings": [],
+  "claim_boundary": "Native shadow route fixture registry only.",
+  "registry_hash": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+}

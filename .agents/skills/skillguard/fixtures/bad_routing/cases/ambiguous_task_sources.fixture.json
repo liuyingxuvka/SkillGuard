@@ -17,7 +17,7 @@
     "message_contains": [
       "use one string field named task"
     ],
-    "no_selected_fallback": true,
+    "no_route_selected": true,
     "empty_target_path_when_blocked": true,
     "forbidden_output_substrings": [
       "Create a draft skill scaffold from a Skill Blueprint"

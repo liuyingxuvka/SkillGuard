@@ -1,69 +1,51 @@
 {
-  "template_version": "skillguard.suite_contract.template.v1",
   "schema_version": "skillguard.suite_contract.v1",
-  "target_path": "{{target_path}}",
-  "target_type": "suite",
-  "status": "draft",
   "suite_name": "{{suite_name}}",
   "purpose": "{{suite_purpose}}",
+  "target_path": "{{target_path}}",
+  "status": "draft",
   "included_skills": [
     {
-      "skill_name": "{{skill_name}}",
-      "skill_path": "{{skill_path}}",
-      "required": true,
-      "responsibility": "{{skill_responsibility}}"
+      "name": "{{skill_name}}",
+      "path": "{{skill_path}}",
+      "role": "{{skill_role}}",
+      "status": "draft",
+      "evidence_source": "{{evidence_source}}",
+      "owner": "{{maintenance_owner}}"
     }
   ],
   "routing": [
     {
-      "route_id": "{{route_id}}",
-      "condition": "{{route_condition}}",
-      "target_skill": "{{target_skill}}",
-      "required_evidence": [
-        "{{required_evidence}}"
-      ]
+      "use_case": "{{use_case}}",
+      "skill": "{{target_skill}}",
+      "conflict_resolution": "{{conflict_resolution_rule}}"
     }
   ],
   "dependencies": [
     {
-      "dependency_name": "{{dependency_name}}",
-      "dependency_type": "{{dependency_type}}",
-      "required": false,
-      "fallback_rule": "{{fallback_rule}}"
+      "name": "{{dependency_name}}",
+      "dependency_type": "skill",
+      "required": true,
+      "status": "{{dependency_status}}"
     }
   ],
   "shared_evidence_rules": [
-    {
-      "rule_id": "{{rule_id}}",
-      "description": "{{rule_description}}",
-      "freshness_rule": "{{freshness_rule}}"
-    }
+    "{{shared_evidence_rule}}"
   ],
   "compatibility": {
-    "suite_versions": [
-      "{{suite_version}}"
-    ],
-    "skill_versions": [
-      "{{skill_version}}"
-    ],
-    "external_dependencies": []
+    "suite_version": "{{suite_version}}",
+    "checker_version": "{{checker_version}}",
+    "compatibility_notes": [
+      "{{compatibility_note}}"
+    ]
   },
   "validation_layers": [
-    {
-      "layer_id": "{{layer_id}}",
-      "purpose": "{{layer_purpose}}",
-      "required_checks": [
-        "{{required_check}}"
-      ]
-    }
+    "{{validation_layer}}"
   ],
-  "maintenance_ownership": {
-    "owner": "{{maintenance_owner}}",
-    "change_review": "{{change_review_rule}}",
-    "evidence_owner": "{{evidence_owner}}"
-  },
+  "maintenance_ownership": [
+    "{{maintenance_owner}} refreshes this suite contract when member responsibilities, routing, dependencies, validation layers, or evidence rules change."
+  ],
   "evidence": [],
-  "failures": [],
   "blockers": [],
   "skipped_checks": [],
   "residual_risk": [

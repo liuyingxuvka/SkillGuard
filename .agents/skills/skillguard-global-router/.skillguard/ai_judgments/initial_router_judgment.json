@@ -1,0 +1,62 @@
+{
+  "blockers": [],
+  "claim_boundary": "This AI judgment records only an initial maintenance note for the router skill. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, installed prompt freshness, external services, or future AI behavior without separate current evidence.",
+  "decision": "bounded_support_only",
+  "evidence": [
+    {
+      "evidence_id": "router-skill-entrypoint",
+      "path": ".agents/skills/skillguard-global-router/SKILL.md",
+      "summary": "Global router entrypoint exists."
+    }
+  ],
+  "failures": [],
+  "findings": [
+    {
+      "claim": "The global router skill has an entrypoint and local control records for registry and prompt-routing maintenance.",
+      "finding_id": "initial-router-structure-present",
+      "limits": [
+        "This is a bounded structure judgment and does not prove installed prompt freshness."
+      ],
+      "severity": "informational",
+      "supporting_evidence": [
+        "router-skill-entrypoint"
+      ]
+    }
+  ],
+  "confidence": {
+    "level": "medium",
+    "rationale": "The judgment is based on direct local files, but command output is still required for registry and prompt freshness claims."
+  },
+  "human_review": {
+    "reason": "AI judgment cannot approve global prompt installation or future route behavior by itself.",
+    "required": true
+  },
+  "input_evidence": [
+    {
+      "evidence_id": "router-skill-entrypoint",
+      "path": ".agents/skills/skillguard-global-router/SKILL.md",
+      "summary": "Global router entrypoint exists."
+    },
+    {
+      "evidence_id": "router-control-manifest",
+      "path": ".agents/skills/skillguard-global-router/.skillguard/skillguard_manifest.json",
+      "summary": "Control manifest indexes router records."
+    }
+  ],
+  "reasoning_summary": "The router skill has an entrypoint and local control records; installed global prompt freshness still requires current command output.",
+  "residual_risk": [
+    "Judgment does not replace deterministic router checks."
+  ],
+  "schema_version": "skillguard.global_router_ai_judgment.v1",
+  "skipped_checks": [],
+  "status": "checked",
+  "target_path": ".agents/skills/skillguard-global-router",
+  "target_type": "ai_judgment",
+  "uncertainty": [
+    {
+      "impact": "The managed AGENTS block may become stale after later skill-root changes.",
+      "question": "Has the latest global registry hash been installed in the target AGENTS file?",
+      "resolution_path": "Run refresh-global-router or check-global-prompt with current registry evidence."
+    }
+  ]
+}

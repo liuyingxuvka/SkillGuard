@@ -9,6 +9,8 @@ import io
 import json
 import re
 import shutil
+import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -29,6 +31,12 @@ from skillguard_utils import (
 CHECKER_VERSION = "skillguard.local_cli_dispatch.v1"
 SCHEMA_DIR = skill_root() / "assets" / "schemas"
 MARKER_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$")
+GLOBAL_REGISTRY_SCHEMA_VERSION = "skillguard.global_registry.v1"
+GLOBAL_PROMPT_PROJECTION_SCHEMA_VERSION = "skillguard.global_prompt_projection.v1"
+GLOBAL_PROMPT_BEGIN = "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->"
+GLOBAL_PROMPT_END = "<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->"
+GLOBAL_ROUTER_SKILL_ID = "skillguard-global-router"
+GLOBAL_ROUTE_STOPWORDS = {"and", "are", "for", "from", "into", "the", "this", "that", "with"}
 MARKER_STATUSES = ("checked", "needs-review", "blocked", "stale", "accepted")
 REFERENCE_SPAN_RE = re.compile(r"`([^`]+)`")
 FENCED_CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
@@ -186,11 +194,19 @@ FIXTURE_TARGET_RUNTIME_COMMANDS = {
     "check-suite",
     "close-run",
     "compile-contract",
+    "build-global-registry",
+    "check-global-prompt",
+    "check-global-registry",
     "generate-skill",
+    "install-global-prompt",
+    "refresh-global-router",
+    "render-global-prompt",
+    "resolve-global-skill",
     "route-task",
     "select-route",
     "self-check",
     "start-run",
+    "scan-global-skills",
 }
 FIXTURE_EXPECTED_DECISIONS = {"pass", "fail", "block"}
 REVIEW_CHECKER_CHANGE_BASELINE_SCHEMA = "skillguard.checker_change_baseline.v1"
@@ -869,6 +885,27 @@ def require_directory(path: Path, command: str) -> None:
         raise SkillGuardCliError(command, f"target is not a directory: {public_relative_path(path)}", "validation_error")
 
 
+def resolve_skillguard_self_layout_path(path_text: str | Path) -> Path:
+    normalized = str(path_text).replace("\\", "/")
+    root = repository_root().resolve()
+    current_skill_root = skill_root().resolve()
+    source_layout_prefix = f".agents/skills/{current_skill_root.name}"
+    installed_skill_layout = current_skill_root.parent.name == "skills" and current_skill_root.parent.parent.name == ".codex"
+    if installed_skill_layout and (normalized == ".agents/skills" or normalized.startswith(".agents/skills/")):
+        suffix = normalized[len(".agents/skills") :].lstrip("/")
+        return ensure_under_root(current_skill_root.parent / suffix, root)
+    if (root == current_skill_root or installed_skill_layout) and (
+        normalized == source_layout_prefix or normalized.startswith(f"{source_layout_prefix}/")
+    ):
+        suffix = normalized[len(source_layout_prefix) :].lstrip("/")
+        return ensure_under_root(current_skill_root / suffix, root)
+    return ensure_under_root(path_text, root)
+
+
+def resolve_target_argument(path_text: str | Path) -> Path:
+    return resolve_skillguard_self_layout_path(path_text)
+
+
 def control_root_for(target: Path) -> Path:
     return ensure_under_root(target / ".skillguard")
 
@@ -1388,13 +1425,13 @@ def work_contract_hash(contract: dict[str, Any]) -> str:
 
 def runtime_contract_path(target: Path, explicit_contract: str | None = None) -> Path:
     if explicit_contract:
-        return ensure_under_root(explicit_contract)
+        return resolve_skillguard_self_layout_path(explicit_contract)
     return ensure_under_root(control_root_for(target) / WORK_CONTRACT_FILENAME)
 
 
 def runtime_check_manifest_path(target: Path, explicit_manifest: str | None = None) -> Path:
     if explicit_manifest:
-        return ensure_under_root(explicit_manifest)
+        return resolve_skillguard_self_layout_path(explicit_manifest)
     return ensure_under_root(control_root_for(target) / CHECK_MANIFEST_FILENAME)
 
 
@@ -1443,11 +1480,26 @@ def build_default_work_contract(target: Path) -> tuple[dict[str, Any], dict[str,
         "target_path": target_relative,
         "contract_version": "1",
         "contract_hash": "",
+        "integration_mode": "skillguard-runtime",
+        "native_route_owner": "",
+        "native_route_bindings": [],
+        "native_check_bindings": [],
+        "skillguard_role": "runtime_owner",
+        "may_define_parallel_execution_route": False,
+        "may_define_skillguard_runtime_route": True,
+        "integration_claim_boundary": (
+            "No native route/check system is declared for this generated target, so SkillGuard owns this runtime contract "
+            "until a native system is added. If a native route/check system appears later, regenerate or edit this contract "
+            "as native-integrated or hybrid-extension; duplicate SkillGuard-owned execution paths are invalid."
+        ),
         "routes": [
             {
                 "route_id": "audit",
+                "route_source": "skillguard_runtime",
                 "summary": "Inspect the target skill and close only after required checks pass.",
                 "activation_keywords": ["audit", "review", "check", "inspect", "verify"],
+                "default_route": True,
+                "route_priority": 0,
                 "do_not_use_when": ["The task is outside this skill's activation boundary."],
                 "phase_order": ["intake", "inventory", "evidence", "checks", "closure"],
             }
@@ -1667,6 +1719,13 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
     closures = contract.get("closure_rules")
     floors = contract.get("quality_floors")
     shortcuts = contract.get("forbidden_shortcuts")
+    integration_mode = str(contract.get("integration_mode") or "")
+    skillguard_role = str(contract.get("skillguard_role") or "")
+    native_route_owner = str(contract.get("native_route_owner") or "").strip()
+    native_route_bindings = contract.get("native_route_bindings")
+    native_check_bindings = contract.get("native_check_bindings")
+    may_define_parallel_execution_route = contract.get("may_define_parallel_execution_route")
+    may_define_skillguard_runtime_route = contract.get("may_define_skillguard_runtime_route")
     for field_name, value in (
         ("routes", routes),
         ("phases", phases),
@@ -1678,6 +1737,36 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
     ):
         if not isinstance(value, list) or not value:
             failures.append(f"$.{field_name}: must be a non-empty list")
+
+    if may_define_parallel_execution_route is not False:
+        failures.append(
+            "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner "
+            "or own the runtime contract directly; duplicate execution paths are invalid"
+        )
+    if skillguard_role in {"contract_adapter", "missing_gate_extension"}:
+        failures.append(
+            f"$.skillguard_role: legacy role {skillguard_role} is invalid; regenerate the contract with "
+            "native_contract_executor, hybrid_contract_executor, or runtime_owner"
+        )
+    if integration_mode in {"native-integrated", "hybrid-extension"}:
+        if not native_route_owner:
+            failures.append(f"$.native_route_owner: required when integration_mode is {integration_mode}")
+        expected_role = "native_contract_executor" if integration_mode == "native-integrated" else "hybrid_contract_executor"
+        if skillguard_role != expected_role:
+            failures.append(f"$.skillguard_role: expected {expected_role} when integration_mode is {integration_mode}")
+        if may_define_skillguard_runtime_route is not False:
+            failures.append(f"$.may_define_skillguard_runtime_route: must be false when integration_mode is {integration_mode}")
+        if not isinstance(native_route_bindings, list) or not native_route_bindings:
+            failures.append(f"$.native_route_bindings: must bind at least one native route when integration_mode is {integration_mode}")
+        if not isinstance(native_check_bindings, list) or not native_check_bindings:
+            failures.append(f"$.native_check_bindings: must bind at least one native check when integration_mode is {integration_mode}")
+    elif integration_mode == "skillguard-runtime":
+        if skillguard_role != "runtime_owner":
+            failures.append("$.skillguard_role: expected runtime_owner when integration_mode is skillguard-runtime")
+        if may_define_skillguard_runtime_route is not True:
+            failures.append("$.may_define_skillguard_runtime_route: must be true when SkillGuard is the runtime owner")
+    elif integration_mode:
+        failures.append("$.integration_mode: unsupported integration mode")
 
     expected_hash = work_contract_hash(contract)
     if contract.get("contract_hash") != expected_hash:
@@ -1707,6 +1796,13 @@ def contract_semantic_failures(contract: Any, target: Path | None = None, contra
         for phase_id in order:
             if phase_id not in phase_by_id:
                 failures.append(f"route {route_id}: unknown phase_id {phase_id}")
+        route_source = route.get("route_source")
+        if integration_mode == "native-integrated" and route_source != "native_binding":
+            failures.append(f"route {route_id}: route_source must be native_binding for native-integrated contracts")
+        if integration_mode == "hybrid-extension" and route_source not in {"native_binding", "hybrid_extension"}:
+            failures.append(f"route {route_id}: route_source must be native_binding or hybrid_extension for hybrid-extension contracts")
+        if integration_mode == "skillguard-runtime" and route_source != "skillguard_runtime":
+            failures.append(f"route {route_id}: route_source must be skillguard_runtime for skillguard-runtime contracts")
 
     for phase_id, phase in phase_by_id.items():
         for evidence_id in phase.get("required_evidence", []) if isinstance(phase.get("required_evidence"), list) else []:
@@ -1865,7 +1961,7 @@ def compile_contract(argv: list[str]) -> int:
     parser.add_argument("--force", action="store_true", help="Overwrite generated contract files when their content differs.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     require_skill_target(target, "compile-contract")
     if args.write and args.dry_run:
         raise SkillGuardCliError("compile-contract", "--write and --dry-run cannot be combined")
@@ -1969,7 +2065,7 @@ def check_contract(argv: list[str]) -> int:
     parser.add_argument("--contract", help="Contract path. Defaults to target/.skillguard/work-contract.json.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     require_skill_target(target, "check-contract")
     contract_path = runtime_contract_path(target, args.contract)
     contract = load_json(contract_path)
@@ -2026,6 +2122,37 @@ def route_score(route: dict[str, Any], task_text: str) -> tuple[int, list[str]]:
     return len(hits), hits
 
 
+def route_priority(route: dict[str, Any]) -> int:
+    value = route.get("route_priority")
+    if isinstance(value, int) and value >= 0:
+        return value
+    return 1000
+
+
+def choose_default_or_priority_route(
+    candidates: list[dict[str, Any]], route_by_id: dict[str, dict[str, Any]]
+) -> tuple[dict[str, Any] | None, str]:
+    default_candidates = [
+        item
+        for item in candidates
+        if isinstance(route_by_id.get(str(item.get("route_id"))), dict)
+        and route_by_id[str(item.get("route_id"))].get("default_route") is True
+    ]
+    if len(default_candidates) == 1:
+        return route_by_id.get(str(default_candidates[0].get("route_id"))), "default_route_tiebreak"
+    prioritized = sorted(
+        (
+            (route_priority(route_by_id[str(item.get("route_id"))]), str(item.get("route_id")))
+            for item in candidates
+            if str(item.get("route_id")) in route_by_id
+        ),
+        key=lambda item: (item[0], item[1]),
+    )
+    if prioritized and len([item for item in prioritized if item[0] == prioritized[0][0]]) == 1:
+        return route_by_id.get(prioritized[0][1]), "route_priority_tiebreak"
+    return None, ""
+
+
 def select_route(argv: list[str]) -> int:
     parser = JsonArgumentParser(prog="skillguard.py select-route", description="Select a work-contract route for a task.")
     parser.add_argument("--target", required=True, help="Target skill directory under the repository root.")
@@ -2034,7 +2161,7 @@ def select_route(argv: list[str]) -> int:
     parser.add_argument("--route-hint", help="Explicit route id to check and select.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     contract_path, contract, contract_failures = load_work_contract_for_target(target, args.contract)
     routes = contract.get("routes", []) if isinstance(contract, dict) else []
     route_by_id = contract_lookup(routes, "route_id")
@@ -2060,6 +2187,8 @@ def select_route(argv: list[str]) -> int:
                     "route_id": route.get("route_id"),
                     "score": score,
                     "activation_hits": hits,
+                    "default_route": route.get("default_route") is True,
+                    "route_priority": route_priority(route),
                     "phase_order": route.get("phase_order", []),
                 }
             )
@@ -2069,12 +2198,16 @@ def select_route(argv: list[str]) -> int:
             selected = route_by_id.get(str(best[0]["route_id"]))
             selection_basis = "activation_keyword_score"
         elif len(best) > 1:
-            blockers.append("ambiguous route selection: multiple routes matched the task equally")
+            selected, selection_basis = choose_default_or_priority_route(best, route_by_id)
+            if selected is None:
+                blockers.append("ambiguous route selection: multiple routes matched the task equally")
         elif len(route_by_id) == 1:
             selected = next(iter(route_by_id.values()))
             selection_basis = "single_available_route"
         else:
-            blockers.append("no route matched the task; provide --route-hint or update route activation keywords")
+            selected, selection_basis = choose_default_or_priority_route(candidates, route_by_id)
+            if selected is None:
+                blockers.append("no route matched the task; provide --route-hint or update route activation keywords")
 
     payload = base_result("select-route", public_relative_path(target))
     payload["task_fingerprint"] = canonical_json_hash({"task": args.task}, length=16)
@@ -2101,7 +2234,7 @@ def select_route(argv: list[str]) -> int:
             "name": "Deterministic route decision",
             "required": True,
             "status": "pass" if selected is not None and not blockers else "block",
-            "summary": "Selected exactly one route from an explicit route hint, activation keyword score, or single-route fallback.",
+            "summary": "Selected exactly one current route from an explicit route hint, activation keyword score, or the single declared route.",
         },
     ]
     payload["evidence"] = [
@@ -2213,7 +2346,7 @@ def start_run(argv: list[str]) -> int:
     parser.add_argument("--force", action="store_true", help="Overwrite an existing different run record.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     contract_path, contract, contract_failures = load_work_contract_for_target(target, args.contract)
     run_record = build_start_run_record(target, args.task, args.route, contract_path, contract)
     run_path = ensure_under_root(args.run_output) if args.run_output else runtime_run_path(target, run_record["run_id"])
@@ -2293,14 +2426,14 @@ def parse_runtime_evidence(value: str, phase_id: str) -> dict[str, Any]:
 
 
 def load_run_and_contract(run_arg: str) -> tuple[Path, dict[str, Any], Path, dict[str, Any]]:
-    run_path = ensure_under_root(run_arg)
+    run_path = resolve_skillguard_self_layout_path(run_arg)
     run = load_json(run_path)
     if not isinstance(run, dict):
         raise SkillGuardCliError("check-run", "run record must be a JSON object", "validation_error")
     contract_ref = run.get("contract_ref")
     if not isinstance(contract_ref, dict) or not isinstance(contract_ref.get("contract_path"), str):
         raise SkillGuardCliError("check-run", "run record is missing contract_ref.contract_path", "validation_error")
-    contract_path = ensure_under_root(contract_ref["contract_path"])
+    contract_path = resolve_skillguard_self_layout_path(contract_ref["contract_path"])
     contract = load_json(contract_path)
     if not isinstance(contract, dict):
         raise SkillGuardCliError("check-run", "work contract must be a JSON object", "validation_error")
@@ -2901,13 +3034,13 @@ def build_plan_skill_blueprint(input_data: dict[str, Any], input_relative: str) 
     }
 
 
-def single_line(value: Any, fallback: str = "") -> str:
-    text = value if isinstance(value, str) else fallback
-    return " ".join(text.strip().split()) or fallback
+def single_line(value: Any, default: str = "") -> str:
+    text = value if isinstance(value, str) else default
+    return " ".join(text.strip().split()) or default
 
 
-def markdown_list(items: Any, fallback: list[str] | None = None) -> str:
-    values = items if isinstance(items, list) and items else fallback or ["Not declared."]
+def markdown_list(items: Any, default_items: list[str] | None = None) -> str:
+    values = items if isinstance(items, list) and items else default_items or ["Not declared."]
     lines: list[str] = []
     for item in values:
         text = single_line(item, "Not declared.")
@@ -2925,6 +3058,505 @@ def common_claim_boundary(scope: str) -> str:
         "fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, "
         "external services, or future AI behavior without separate current evidence."
     )
+
+
+def expand_global_path(path_text: str | Path) -> Path:
+    text = os.path.expandvars(str(path_text))
+    return Path(text).expanduser().resolve()
+
+
+def global_public_path(path_text: str | Path) -> str:
+    path = expand_global_path(path_text)
+    repo = repository_root().resolve()
+    try:
+        return path.relative_to(repo).as_posix()
+    except ValueError:
+        pass
+    home = Path.home().resolve()
+    try:
+        return "~/" + path.relative_to(home).as_posix()
+    except ValueError:
+        pass
+    return f"<external:{hashlib.sha256(str(path).encode('utf-8')).hexdigest()[:12]}>/{path.name}"
+
+
+def global_read_json(path_text: str | Path) -> Any:
+    with expand_global_path(path_text).open("r", encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def global_write_json(path_text: str | Path, payload: Any) -> Path:
+    path = expand_global_path(path_text)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json_block(payload), encoding="utf-8")
+    return path
+
+
+def global_checked_file(path_text: str | Path, kind: str = "file") -> dict[str, Any]:
+    path = expand_global_path(path_text)
+    return {
+        "path": global_public_path(path),
+        "kind": kind,
+        "sha256": file_sha256(path),
+        "line_count": line_count(path),
+    }
+
+
+def global_resolvable_relative_path(path_label: str) -> Path | None:
+    if not path_label or path_label.startswith("<external:") or path_label.startswith("~/"):
+        return None
+    candidate = (repository_root() / path_label).resolve()
+    try:
+        candidate.relative_to(repository_root().resolve())
+    except ValueError:
+        return None
+    return candidate
+
+
+def global_skill_roots_from_args(skill_roots: list[str], codex_home: str | None = None) -> tuple[list[Path], list[str]]:
+    roots: list[Path] = []
+    blockers: list[str] = []
+    for root_text in skill_roots:
+        root = expand_global_path(root_text)
+        if not root.is_dir():
+            blockers.append(f"skill root is missing or not a directory: {global_public_path(root)}")
+            continue
+        roots.append(root)
+    if not roots and codex_home:
+        codex_skills = expand_global_path(codex_home) / "skills"
+        if codex_skills.is_dir():
+            roots.append(codex_skills)
+        else:
+            blockers.append(f"codex-home skills directory is missing: {global_public_path(codex_skills)}")
+    if not roots and not blockers:
+        default_root = Path.home() / ".codex" / "skills"
+        if default_root.is_dir():
+            roots.append(default_root.resolve())
+        else:
+            blockers.append("no --skill-root supplied and ~/.codex/skills is not available")
+    return roots, blockers
+
+
+def parse_global_skill_frontmatter(text: str) -> dict[str, str]:
+    if not text.startswith("---"):
+        return {}
+    end = text.find("\n---", 3)
+    if end == -1:
+        return {}
+    data: dict[str, str] = {}
+    for raw_line in text[3:end].splitlines():
+        if ":" not in raw_line:
+            continue
+        key, value = raw_line.split(":", 1)
+        data[key.strip().lower()] = clean_scalar(value.strip())
+    return data
+
+
+def markdown_section_body(text: str, heading: str) -> str:
+    matches = list(HEADING_RE.finditer(text))
+    normalized = heading.strip().lower()
+    for index, match in enumerate(matches):
+        if match.group(1).strip().lower() != normalized:
+            continue
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        return text[start:end].strip()
+    return ""
+
+
+def markdown_section_items(text: str, heading: str, limit: int = 8) -> list[str]:
+    body = markdown_section_body(text, heading)
+    items: list[str] = []
+    for raw_line in body.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith(("- ", "* ")):
+            line = line[2:].strip()
+        elif line[0:2].isdigit() and ". " in line[:5]:
+            line = line.split(". ", 1)[1].strip()
+        if line.startswith("#"):
+            continue
+        items.append(single_line(line))
+        if len(items) >= limit:
+            break
+    return items
+
+
+def skill_route_terms(skill_id: str, skill_name: str, description: str, use_when: list[str]) -> list[str]:
+    seed = " ".join([skill_id, skill_name, description, *use_when]).lower()
+    terms = sorted({token for token in re.findall(r"[a-z0-9][a-z0-9_.:-]{1,}", seed) if len(token) > 2})
+    return terms[:40]
+
+
+def global_contract_projection(skill_dir: Path) -> tuple[dict[str, Any], list[str]]:
+    warnings: list[str] = []
+    contract_path = skill_dir / ".skillguard" / WORK_CONTRACT_FILENAME
+    manifest_path = skill_dir / ".skillguard" / CHECK_MANIFEST_FILENAME
+    projection: dict[str, Any] = {
+        "integration_mode": "missing",
+        "route_confidence": "derived",
+        "contract_path": "",
+        "contract_sha256": "",
+        "contract_hash": "",
+        "check_manifest_path": "",
+        "check_manifest_sha256": "",
+        "route_ids": [],
+        "default_route_id": "",
+        "native_route_owner": "",
+        "native_route_bindings": [],
+        "native_check_bindings": [],
+        "may_define_parallel_execution_route": False,
+        "may_define_skillguard_runtime_route": False,
+        "route_doc_paths": [global_public_path(skill_dir / "SKILL.md")],
+        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
+    }
+    if contract_path.is_file():
+        projection["contract_path"] = global_public_path(contract_path)
+        projection["contract_sha256"] = file_sha256(contract_path)
+        projection["route_doc_paths"].append(global_public_path(contract_path))
+        try:
+            contract = global_read_json(contract_path)
+        except (ValueError, json.JSONDecodeError) as exc:
+            warnings.append(f"work-contract JSON could not be loaded: {exc}")
+            contract = {}
+        if isinstance(contract, dict):
+            semantic_failures = contract_semantic_failures(contract, target=skill_dir, contract_path=contract_path)
+            warnings.extend(f"work-contract semantic failure: {item}" for item in semantic_failures[:8])
+            routes = contract.get("routes", [])
+            route_items = [item for item in routes if isinstance(item, dict)]
+            projection["integration_mode"] = str(contract.get("integration_mode") or "skillguard-runtime")
+            projection["route_confidence"] = (
+                "native-bound" if projection["integration_mode"] in {"native-integrated", "hybrid-extension"} else "explicit"
+            )
+            projection["contract_hash"] = str(contract.get("contract_hash") or "")
+            projection["may_define_parallel_execution_route"] = bool(contract.get("may_define_parallel_execution_route"))
+            projection["may_define_skillguard_runtime_route"] = bool(contract.get("may_define_skillguard_runtime_route"))
+            projection["route_ids"] = [str(item.get("route_id")) for item in route_items if item.get("route_id")]
+            default_routes = [str(item.get("route_id")) for item in route_items if item.get("default_route") is True and item.get("route_id")]
+            projection["default_route_id"] = default_routes[0] if default_routes else (projection["route_ids"][0] if projection["route_ids"] else "")
+            projection["native_route_owner"] = str(contract.get("native_route_owner") or "")
+            native_route_bindings = contract.get("native_route_bindings")
+            native_check_bindings = contract.get("native_check_bindings")
+            projection["native_route_bindings"] = native_route_bindings if isinstance(native_route_bindings, list) else []
+            projection["native_check_bindings"] = native_check_bindings if isinstance(native_check_bindings, list) else []
+            if projection["integration_mode"] in {"native-integrated", "hybrid-extension"}:
+                projection["handoff_rule"] = (
+                    "Use this registry only to select the skill, then hand off to the target skill's native route/check bindings through its work contract."
+                )
+            else:
+                projection["handoff_rule"] = "Use select-route/start-run/check-run/close-run against the target work contract before claiming closure."
+    if manifest_path.is_file():
+        projection["check_manifest_path"] = global_public_path(manifest_path)
+        projection["check_manifest_sha256"] = file_sha256(manifest_path)
+        projection["route_doc_paths"].append(global_public_path(manifest_path))
+    return projection, warnings
+
+
+def discover_global_skill_items(skill_roots: list[Path]) -> tuple[list[dict[str, Any]], list[str]]:
+    items: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    seen_skill_files: set[Path] = set()
+    for root in skill_roots:
+        for skill_file in sorted(root.rglob("SKILL.md")):
+            skill_file = skill_file.resolve()
+            if skill_file in seen_skill_files:
+                continue
+            seen_skill_files.add(skill_file)
+            skill_dir = skill_file.parent
+            try:
+                text = skill_file.read_text(encoding="utf-8")
+            except UnicodeDecodeError as exc:
+                warnings.append(f"{global_public_path(skill_file)} could not be read as UTF-8: {exc}")
+                continue
+            frontmatter = parse_global_skill_frontmatter(text)
+            declared_name = frontmatter.get("name") or skill_dir.name
+            description = frontmatter.get("description") or single_line(markdown_section_body(text, "Purpose"), "")
+            use_when = markdown_section_items(text, "Use When")
+            do_not_use_when = markdown_section_items(text, "Do Not Use When")
+            contract, contract_warnings = global_contract_projection(skill_dir)
+            warnings.extend(f"{global_public_path(skill_dir)}: {item}" for item in contract_warnings)
+            has_contract = bool(contract.get("contract_path"))
+            has_manifest = bool(contract.get("check_manifest_path"))
+            status = "current" if has_contract and has_manifest and not contract_warnings else "missing_contract"
+            if contract_warnings:
+                status = "invalid_contract"
+            skill_id = slugify_identifier(str(declared_name or skill_dir.name))
+            if skill_dir.name == GLOBAL_ROUTER_SKILL_ID:
+                skill_id = GLOBAL_ROUTER_SKILL_ID
+            elif skill_dir.name == "skillguard":
+                skill_id = "skillguard"
+            items.append(
+                {
+                    "skill_id": skill_id,
+                    "skill_name": str(declared_name),
+                    "description": single_line(description, "No description declared."),
+                    "skill_path": global_public_path(skill_dir),
+                    "skill_file": global_public_path(skill_file),
+                    "skill_sha256": file_sha256(skill_file),
+                    "status": status,
+                    "use_when": use_when,
+                    "do_not_use_when": do_not_use_when,
+                    "route_entrypoint": contract,
+                    "route_terms": skill_route_terms(skill_id, str(declared_name), description, use_when),
+                    "claim_boundary": (
+                        "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, "
+                        "suite automation, package publication, code-contract validation, release readiness, or future AI behavior."
+                    ),
+                }
+            )
+    return sorted(items, key=lambda item: (item["skill_path"], item["skill_id"])), warnings
+
+
+def global_registry_hash(payload: dict[str, Any]) -> str:
+    stable_payload = json.loads(json.dumps(payload, sort_keys=True, ensure_ascii=True))
+    stable_payload.pop("generated_at", None)
+    stable_payload.pop("registry_hash", None)
+    stable = json.dumps(stable_payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(stable.encode("utf-8")).hexdigest().upper()
+
+
+def build_global_registry_payload(skill_roots: list[Path]) -> dict[str, Any]:
+    items, warnings = discover_global_skill_items(skill_roots)
+    payload: dict[str, Any] = {
+        "schema_version": GLOBAL_REGISTRY_SCHEMA_VERSION,
+        "generated_at": utc_timestamp(),
+        "router_skill_id": GLOBAL_ROUTER_SKILL_ID,
+        "scan_roots": [
+            {
+                "path": global_public_path(root),
+                "exists": root.is_dir(),
+                "skill_file_count": sum(1 for _ in root.rglob("SKILL.md")) if root.is_dir() else 0,
+            }
+            for root in skill_roots
+        ],
+        "item_count": len(items),
+        "current_item_count": sum(1 for item in items if item.get("status") == "current"),
+        "items": items,
+        "warnings": warnings,
+        "claim_boundary": (
+            "This global registry is a generated index over the scanned local SKILL.md files and their SkillGuard route documents. "
+            "It selects a skill route but does not replace the selected skill's SKILL.md, work contract, check manifest, runtime checks, "
+            "tests, package publication, release readiness, external service validation, or future AI behavior evidence."
+        ),
+    }
+    payload["registry_hash"] = global_registry_hash(payload)
+    return payload
+
+
+def registry_roots_for_check(registry: dict[str, Any], supplied_roots: list[str], codex_home: str | None = None) -> tuple[list[Path], list[str]]:
+    if supplied_roots or codex_home:
+        return global_skill_roots_from_args(supplied_roots, codex_home)
+    roots: list[Path] = []
+    blockers: list[str] = []
+    for row in registry.get("scan_roots", []) if isinstance(registry.get("scan_roots"), list) else []:
+        if not isinstance(row, dict):
+            continue
+        path_label = str(row.get("path") or "")
+        candidate = global_resolvable_relative_path(path_label)
+        if candidate is None:
+            blockers.append(f"scan root is not re-checkable without --skill-root: {path_label}")
+            continue
+        roots.append(candidate)
+    if not roots and not blockers:
+        blockers.append("registry does not declare any re-checkable scan roots")
+    return roots, blockers
+
+
+def task_tokens(text: str) -> set[str]:
+    lowered = text.lower()
+    return {
+        token
+        for token in re.findall(r"[a-z0-9][a-z0-9_.:-]{1,}", lowered)
+        if len(token) > 2 and token not in GLOBAL_ROUTE_STOPWORDS
+    }
+
+
+def global_skill_route_score(item: dict[str, Any], task: str, route_hint: str = "") -> tuple[int, list[str]]:
+    task_lower = task.lower()
+    hint_lower = route_hint.lower().strip()
+    skill_id = str(item.get("skill_id") or "").lower()
+    skill_name = str(item.get("skill_name") or "").lower()
+    terms = {str(term).lower() for term in item.get("route_terms", []) if isinstance(term, str)}
+    tokens = task_tokens(task)
+    score = 0
+    reasons: list[str] = []
+    if hint_lower and hint_lower in {skill_id, skill_name}:
+        score += 1000
+        reasons.append("explicit-route-hint")
+    if skill_id and skill_id in task_lower:
+        score += 40
+        reasons.append("skill-id-substring")
+    if skill_name and skill_name in task_lower:
+        score += 30
+        reasons.append("skill-name-substring")
+    exact = sorted(tokens & terms)
+    if exact:
+        score += len(exact) * 4
+        reasons.append(f"term-overlap:{','.join(exact[:6])}")
+    if skill_id == "skillguard" and "skillguard" in task_lower and any(token in tokens for token in {"audit", "check", "review", "activation", "boundary", "skill"}):
+        score += 45
+        reasons.append("skillguard-boundary-audit-bias")
+    if skill_id == GLOBAL_ROUTER_SKILL_ID and any(token in tokens for token in {"global", "router", "registry", "prompt"}):
+        score += 120
+        reasons.append("global-router-task-bias")
+    return score, reasons
+
+
+def global_route_candidates(registry: dict[str, Any], task: str, route_hint: str = "") -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for item in registry.get("items", []) if isinstance(registry.get("items"), list) else []:
+        if not isinstance(item, dict) or item.get("status") != "current":
+            continue
+        score, reasons = global_skill_route_score(item, task, route_hint)
+        if score <= 0:
+            continue
+        entrypoint = item.get("route_entrypoint") if isinstance(item.get("route_entrypoint"), dict) else {}
+        rows.append(
+            {
+                "skill_id": item.get("skill_id"),
+                "skill_name": item.get("skill_name"),
+                "skill_path": item.get("skill_path"),
+                "score": score,
+                "selection_reasons": reasons,
+                "route_ids": entrypoint.get("route_ids", []),
+                "default_route_id": entrypoint.get("default_route_id", ""),
+                "integration_mode": entrypoint.get("integration_mode", ""),
+                "route_confidence": entrypoint.get("route_confidence", ""),
+                "native_route_owner": entrypoint.get("native_route_owner", ""),
+                "native_route_bindings": entrypoint.get("native_route_bindings", []),
+                "native_check_bindings": entrypoint.get("native_check_bindings", []),
+                "may_define_parallel_execution_route": entrypoint.get("may_define_parallel_execution_route", False),
+                "may_define_skillguard_runtime_route": entrypoint.get("may_define_skillguard_runtime_route", False),
+                "route_doc_paths": entrypoint.get("route_doc_paths", []),
+                "handoff_rule": entrypoint.get("handoff_rule", ""),
+            }
+        )
+    return sorted(rows, key=lambda item: (-int(item["score"]), str(item["skill_id"])))
+
+
+def global_candidate_handoff_blockers(candidate: dict[str, Any]) -> list[str]:
+    mode = str(candidate.get("integration_mode") or "")
+    if mode not in {"native-integrated", "hybrid-extension"}:
+        return []
+    blockers: list[str] = []
+    if not str(candidate.get("native_route_owner") or "").strip():
+        blockers.append("native or hybrid global route is missing native_route_owner")
+    if not isinstance(candidate.get("native_route_bindings"), list) or not candidate.get("native_route_bindings"):
+        blockers.append("native or hybrid global route is missing native_route_bindings")
+    if not isinstance(candidate.get("native_check_bindings"), list) or not candidate.get("native_check_bindings"):
+        blockers.append("native or hybrid global route is missing native_check_bindings")
+    if candidate.get("may_define_parallel_execution_route") is True:
+        blockers.append("native or hybrid global route cannot define a parallel execution route")
+    if candidate.get("may_define_skillguard_runtime_route") is True:
+        blockers.append("native or hybrid global route cannot be selected through a SkillGuard-owned runtime route")
+    return blockers
+
+
+def render_global_prompt_block(registry: dict[str, Any], registry_path: str = "") -> str:
+    route_rows = [
+        item
+        for item in registry.get("items", [])
+        if isinstance(item, dict) and item.get("status") == "current"
+    ]
+    lines = [
+        GLOBAL_PROMPT_BEGIN,
+        "## SkillGuard Global Router",
+        "",
+        "- Before using a Codex skill for non-trivial skill, prompt, process, or SkillGuard-family work, consult the SkillGuard global router registry when it is present.",
+        "- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a skill-routing claim.",
+        "- Route order: select the target skill from the registry, read the selected `SKILL.md`, then follow that skill's `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` or native route bindings.",
+        "- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.",
+        f"- router_skill_id: {GLOBAL_ROUTER_SKILL_ID}",
+        f"- registry_hash: {registry.get('registry_hash', '')}",
+        f"- registry_path: {registry_path or '<not-written>'}",
+        "",
+        "### Current Route Index",
+    ]
+    for item in route_rows[:120]:
+        entrypoint = item.get("route_entrypoint") if isinstance(item.get("route_entrypoint"), dict) else {}
+        default_route = str(entrypoint.get("default_route_id") or "")
+        mode = str(entrypoint.get("integration_mode") or "")
+        lines.append(
+            f"- `{item.get('skill_id')}` -> {item.get('skill_file')} "
+            f"(default_route={default_route or 'none'}, integration={mode or 'unknown'})"
+        )
+    if len(route_rows) > 120:
+        lines.append(f"- ... {len(route_rows) - 120} additional current route(s) are in the registry JSON.")
+    lines.extend(
+        [
+            "",
+            "Claim boundary: this block is a routing projection only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence.",
+            GLOBAL_PROMPT_END,
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def build_global_prompt_projection(registry: dict[str, Any], registry_path: str = "") -> dict[str, Any]:
+    block = render_global_prompt_block(registry, registry_path)
+    route_index = [
+        {
+            "skill_id": item.get("skill_id"),
+            "skill_file": item.get("skill_file"),
+            "status": item.get("status"),
+            "default_route_id": (item.get("route_entrypoint") or {}).get("default_route_id")
+            if isinstance(item.get("route_entrypoint"), dict)
+            else "",
+        }
+        for item in registry.get("items", [])
+        if isinstance(item, dict)
+    ]
+    return {
+        "schema_version": GLOBAL_PROMPT_PROJECTION_SCHEMA_VERSION,
+        "generated_at": utc_timestamp(),
+        "router_skill_id": GLOBAL_ROUTER_SKILL_ID,
+        "registry_hash": str(registry.get("registry_hash") or ""),
+        "registry_path": registry_path,
+        "managed_block_markers": {"begin": GLOBAL_PROMPT_BEGIN, "end": GLOBAL_PROMPT_END},
+        "managed_block": block,
+        "route_index": route_index,
+        "claim_boundary": (
+            "This prompt projection installs a managed routing block only. It does not prove target skill execution, tests, "
+            "fixture coverage, suite automation, package publication, release readiness, code-contract validation, or future AI behavior."
+        ),
+    }
+
+
+def replace_managed_global_prompt_block(existing: str, block: str) -> tuple[str, str]:
+    begin = existing.find(GLOBAL_PROMPT_BEGIN)
+    end = existing.find(GLOBAL_PROMPT_END)
+    if begin == -1 and end == -1:
+        prefix = existing.rstrip()
+        separator = "\n\n" if prefix else ""
+        return prefix + separator + block.rstrip() + "\n", "inserted"
+    if begin == -1 or end == -1 or end < begin:
+        raise ValueError("existing AGENTS.md has an incomplete SkillGuard global router managed block")
+    end += len(GLOBAL_PROMPT_END)
+    updated = existing[:begin].rstrip() + "\n\n" + block.rstrip() + "\n" + existing[end:].lstrip("\n")
+    return updated, "replaced"
+
+
+def check_global_prompt_text(text: str, registry_hash: str) -> tuple[list[str], list[str]]:
+    failures: list[str] = []
+    blockers: list[str] = []
+    begin_count = text.count(GLOBAL_PROMPT_BEGIN)
+    end_count = text.count(GLOBAL_PROMPT_END)
+    if begin_count != 1 or end_count != 1:
+        blockers.append("SkillGuard global router managed block must appear exactly once")
+        return failures, blockers
+    begin = text.find(GLOBAL_PROMPT_BEGIN)
+    end = text.find(GLOBAL_PROMPT_END)
+    if end < begin:
+        blockers.append("SkillGuard global router managed block markers are out of order")
+        return failures, blockers
+    block = text[begin:end]
+    if f"registry_hash: {registry_hash}" not in block:
+        failures.append("SkillGuard global router managed block is stale for the supplied registry hash")
+    if GLOBAL_ROUTER_SKILL_ID not in block:
+        failures.append("SkillGuard global router managed block does not name the router skill")
+    return failures, blockers
 
 
 def extract_skill_blueprint(data: Any) -> tuple[dict[str, Any], list[str]]:
@@ -3265,15 +3897,15 @@ This generated entrypoint is a scaffold for `{target_relative}`. It is not accep
 
 ## Local Material Routing
 
-- Use `./references/README.md` for local reference notes.
-- Use `./assets/schemas/skillguard_generated_record.schema.json` for scaffold record-shape notes.
-- Use `./assets/templates/check_report.template.json` for report-drafting notes.
-- Use `./scripts/run_checks.py` only as a local placeholder script.
-- Use `./fixtures/fixture-manifest.json` and `./tests/test_smoke.py` as draft scaffolding inputs.
-- Use `./.skillguard/work-contract.json` to choose the run route, required phases, evidence, checks, and closure rule.
-- Use `./.skillguard/check_manifest.json` and `./.skillguard/checks/` for local runtime-check bindings.
-- Use `./.skillguard/runs/` for task run records created before work begins.
-- Use `./.skillguard/skillguard_manifest.json` for generated SkillGuard record inventory.
+- Use `references/README.md` for local reference notes.
+- Use `assets/schemas/skillguard_generated_record.schema.json` for scaffold record-shape notes.
+- Use `assets/templates/check_report.template.json` for report-drafting notes.
+- Use `scripts/run_checks.py` only as a local placeholder script.
+- Use `fixtures/fixture-manifest.json` and `tests/test_smoke.py` as draft scaffolding inputs.
+- Use `.skillguard/work-contract.json` to choose the run route, required phases, evidence, checks, and closure rule.
+- Use `.skillguard/check_manifest.json` and `.skillguard/checks/` for local runtime-check bindings.
+- Use `.skillguard/runs/` for task run records created before work begins.
+- Use `.skillguard/skillguard_manifest.json` for generated SkillGuard record inventory.
 
 ## Entrypoint Acceptance Map
 
@@ -4891,7 +5523,7 @@ def inspect_control_json_file(
 
 def find_suite_record(suite_root: Path, explicit_path: str | None, record_kind: str) -> Path | None:
     if explicit_path:
-        return ensure_under_root(explicit_path)
+        return resolve_skillguard_self_layout_path(explicit_path)
     for file_name in SUITE_RECORD_CANDIDATES[record_kind]:
         candidate = suite_root / file_name
         if candidate.is_file():
@@ -5132,7 +5764,7 @@ def validate_suite_member_path(
         blockers.append(f"member {name}: absolute member paths are not allowed")
         entry["decision"] = "block"
         return entry
-    resolved = (repository_root() / raw_path).resolve()
+    resolved = resolve_skillguard_self_layout_path(raw_path)
     try:
         resolved.relative_to(suite_member_root.resolve())
     except ValueError:
@@ -5495,7 +6127,7 @@ def check_skill(argv: list[str]) -> int:
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
 
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     target_relative = public_relative_path(target)
     payload = base_result("check-skill", target_relative)
     payload["claim_boundary"] = (
@@ -6057,7 +6689,7 @@ def inventory(argv: list[str]) -> int:
     parser.add_argument("--output", default="-", help="Output record path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
     repo = repository_root()
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     target_relative = public_relative_path(target)
     expected = [
         ("README.md", "file", "readme", True),
@@ -6495,6 +7127,32 @@ def generate_skill(argv: list[str]) -> int:
             "summary": "Ran check-skill and check-contract against the final generated skill path after scaffold writes completed.",
         }
     )
+    payload["global_router_refresh"] = {
+        "required": True,
+        "status": "required_after_generation",
+        "reason": "A newly generated real skill is not part of default global routing until the global registry and managed prompt block are refreshed.",
+        "command": "refresh-global-router",
+        "suggested_arguments": [
+            "--skill-root",
+            "<skill-root>",
+            "--codex-home",
+            "<codex-home>",
+            "--output-dir",
+            "<global-router-output-dir>",
+        ],
+        "claim_boundary": (
+            "This record requires global-router refresh but does not prove the user-level AGENTS.md block or installed registry was updated."
+        ),
+    }
+    payload["checks"].append(
+        {
+            "check_id": "generate-skill:global-router-refresh-required",
+            "name": "Global router refresh requirement",
+            "required": True,
+            "status": "pass",
+            "summary": "Recorded that a successful new skill generation requires refresh-global-router before claiming default global routing is current.",
+        }
+    )
     payload["evidence"].append(
         {
             "evidence_id": "post-generation-check-skill",
@@ -6508,11 +7166,12 @@ def generate_skill(argv: list[str]) -> int:
         }
     )
     payload["skipped_checks"] = [
-        "generate-skill does not run target semantic review, fixture execution, package installation, release checks, suite automation, or code-contract validation."
+        "generate-skill does not run target semantic review, fixture execution, package installation, release checks, suite automation, code-contract validation, or user-level global prompt installation."
     ]
     payload["residual_risk"] = [
         "Generated scaffold files remain draft until current target checks and reviewer judgment run.",
         "Idempotent identical files are preserved, but differing existing files require a separate repair or overwrite decision.",
+        "The generated skill is not available through default global routing until refresh-global-router updates the registry and managed AGENTS.md block.",
     ]
     payload["claim_boundary"] = (
         "This generate-skill result covers only the current Skill Blueprint input, repository-local write preflight, scaffold file creation, "
@@ -6829,7 +7488,7 @@ def init_target(argv: list[str]) -> int:
     parser.add_argument("--target", default=".", help="Existing target directory under the repository root.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     require_directory(target, "init-target")
     control_root = control_root_for(target)
     created, existing, skipped = create_missing_directories(
@@ -6872,7 +7531,7 @@ def init_suite(argv: list[str]) -> int:
     parser.add_argument("--target", default=".", help="Existing suite root directory under the repository root.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     require_directory(target, "init-suite")
     suite_root = suite_root_for(target)
     created, existing, skipped = create_missing_directories(
@@ -6919,7 +7578,7 @@ def mark(argv: list[str]) -> int:
     parser.add_argument("--summary", required=True, help="Public-safe marker summary.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = ensure_under_root(args.target)
+    target = resolve_target_argument(args.target)
     require_directory(target, "mark")
     path = marker_path(target, args.scope, args.marker)
     marker_dir = path.parent
@@ -7178,7 +7837,7 @@ def route_task_route_hint(
                 blocker_code="invalid_route_hint_field",
                 message="route-task route identifier fields must be non-empty strings when supplied.",
                 conflicting_fields=[field_path],
-                recommended_resolution="Use one current public route id, route node id, command family, or public alias.",
+                recommended_resolution="Use one current public route id, route node id, or command family.",
                 blocker_class="routing_config_error",
             )
             continue
@@ -7195,7 +7854,7 @@ def route_task_route_hint(
                 blocker_code="stale_route_identifier",
                 message="route-task route hint is not a current public route: it names a stale or superseded route.",
                 conflicting_fields=[field_path],
-                recommended_resolution="Replace the stale route identifier with a route id, route node id, command family, or alias from current_route_registry.",
+                recommended_resolution="Replace the stale route identifier with a route id, route node id, or command family from current_route_registry.",
                 public_context=public_context,
             )
             continue
@@ -7208,7 +7867,7 @@ def route_task_route_hint(
                 blocker_code="unsupported_route_hint",
                 message="route-task route hint does not name a current public route.",
                 conflicting_fields=[field_path],
-                recommended_resolution="Use a route id, route node id, command family, or alias from current_route_registry.",
+                recommended_resolution="Use a route id, route node id, or command family from current_route_registry.",
                 blocker_class="routing_config_error",
                 public_context=public_context,
             )
@@ -7450,7 +8109,7 @@ def select_route_task_decision(
                 blocker_code="unsupported_route_hint",
                 message="unsupported route_hint: route-task route hint does not name a current public route.",
                 conflicting_fields=["$.route_hint"],
-                recommended_resolution="Use a route id, route node id, command family, or alias from current_route_registry.",
+                recommended_resolution="Use a route id, route node id, or command family from current_route_registry.",
                 blocker_class="routing_config_error",
                 public_context={"hint_fingerprint": route_task_fingerprint(route_hint), "hint_character_count": len(route_hint)},
             )
@@ -7650,7 +8309,7 @@ def route_task(argv: list[str]) -> int:
     )
     parser.add_argument("--task", help="Task text to route. Use exactly one task.")
     parser.add_argument("--input", help="Repository-local route-task JSON config with task and optional route_hint.")
-    parser.add_argument("--route-hint", help="Optional current route id, route node id, command family, or public alias.")
+    parser.add_argument("--route-hint", help="Optional current route id, route node id, or command family.")
     parser.add_argument("--output", default="-", help="Output path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
 
@@ -8984,7 +9643,7 @@ def detect_stale_evidence(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     try:
-        target = ensure_under_root(args.target)
+        target = resolve_target_argument(args.target)
         target_relative = public_relative_path(target)
     except ValueError:
         payload = base_result("detect-stale-evidence")
@@ -9512,7 +10171,7 @@ def refresh_maintenance(argv: list[str]) -> int:
     payload["mode"] = mode
 
     try:
-        target = ensure_under_root(args.target)
+        target = resolve_target_argument(args.target)
         target_relative = public_relative_path(target)
     except ValueError:
         payload["decision"] = "block"
@@ -9794,7 +10453,7 @@ def check_maintenance_record(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     try:
-        target = ensure_under_root(args.target)
+        target = resolve_target_argument(args.target)
         target_relative = public_relative_path(target)
     except ValueError:
         payload = base_result("check-maintenance-record")
@@ -10758,7 +11417,7 @@ def compare_checker_command_surface(
                     impact_class="renamed",
                     affected_evidence_kinds=["command_surface", "routing", "fixture_output"],
                     required_revalidation="Rerun command dispatch, route-task, fixture-test, self-check, and stale-evidence checks.",
-                    repair_action="Update the baseline and public docs only after preserving a compatibility alias or revalidating all affected evidence.",
+                    repair_action="Update the baseline and public docs only after revalidating all affected evidence with the current command name.",
                 )
             else:
                 add_checker_change_blocker(
@@ -10925,7 +11584,7 @@ def review_checker_change(argv: list[str]) -> int:
     watch_paths: list[Path] = []
 
     try:
-        target = ensure_under_root(args.target)
+        target = resolve_target_argument(args.target)
         payload["target_path"] = public_relative_path(target)
     except ValueError:
         add_checker_change_blocker(
@@ -11499,6 +12158,507 @@ def check_workflow_report(argv: list[str]) -> int:
     return check_json_record("check-workflow-report", argv, "skillguard_workflow_report.schema.json")
 
 
+def parse_global_roots_args(parser: JsonArgumentParser) -> None:
+    parser.add_argument("--skill-root", action="append", default=[], help="Skill root directory to recursively scan. Repeatable.")
+    parser.add_argument("--codex-home", help="Codex home directory; defaults to ~/.codex when no --skill-root is supplied.")
+
+
+def scan_global_skills(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py scan-global-skills", description="Scan skill roots for SKILL.md files and SkillGuard route documents.")
+    parse_global_roots_args(parser)
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    roots, root_blockers = global_skill_roots_from_args(args.skill_root, args.codex_home)
+    items, warnings = discover_global_skill_items(roots) if roots else ([], [])
+    payload = base_result("scan-global-skills")
+    payload["target_path"] = ", ".join(global_public_path(root) for root in roots)
+    payload["skill_roots"] = [global_public_path(root) for root in roots]
+    payload["skill_items"] = items
+    payload["warnings"] = warnings
+    payload["blockers"] = root_blockers
+    payload["decision"] = "block" if root_blockers else "pass"
+    payload["claim_boundary"] = (
+        "This scan records only current local SKILL.md files and adjacent SkillGuard route documents under the requested roots. "
+        "It does not install prompt routing, execute target skills, prove fixture coverage, tests, suite automation, package publication, "
+        "code-contract validation, release readiness, or future AI behavior."
+    )
+    append_check(
+        payload,
+        "scan-global-skills:roots",
+        "Skill roots",
+        "block" if root_blockers else "pass",
+        "Resolved the requested skill roots before recursive SKILL.md discovery.",
+    )
+    append_check(
+        payload,
+        "scan-global-skills:skill-docs",
+        "Skill document discovery",
+        "pass" if items or root_blockers else "fail",
+        f"Discovered {len(items)} SKILL.md file(s) and projected adjacent route documents when present.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "global-skill-scan",
+            "kind": "file_inventory",
+            "fresh": True,
+            "summary": f"Scanned {len(roots)} root(s) and discovered {len(items)} skill item(s).",
+            "source_path": payload["target_path"],
+        }
+    ]
+    if not items and not root_blockers:
+        payload["failures"] = ["no SKILL.md files were discovered under the supplied roots"]
+        payload["decision"] = "fail"
+    return write_and_exit(payload, args.output)
+
+
+def build_global_registry(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py build-global-registry", description="Build a global SkillGuard skill registry JSON artifact.")
+    parse_global_roots_args(parser)
+    parser.add_argument("--registry-output", "--registry", dest="registry_output", help="Registry JSON output path.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    roots, root_blockers = global_skill_roots_from_args(args.skill_root, args.codex_home)
+    registry = build_global_registry_payload(roots) if roots else {
+        "schema_version": GLOBAL_REGISTRY_SCHEMA_VERSION,
+        "generated_at": utc_timestamp(),
+        "router_skill_id": GLOBAL_ROUTER_SKILL_ID,
+        "scan_roots": [],
+        "item_count": 0,
+        "current_item_count": 0,
+        "items": [],
+        "warnings": [],
+        "claim_boundary": "No registry was built because no scan roots were available.",
+    }
+    registry["registry_hash"] = global_registry_hash(registry)
+    schema_failures = validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json")))
+    write_path = None
+    if args.registry_output and not root_blockers and not schema_failures:
+        write_path = global_write_json(args.registry_output, registry)
+    payload = base_result("build-global-registry", global_public_path(write_path) if write_path else "")
+    payload["registry"] = registry
+    payload["registry_path"] = global_public_path(write_path) if write_path else ""
+    payload["failures"] = schema_failures
+    payload["blockers"] = root_blockers
+    payload["decision"] = "block" if root_blockers else "fail" if schema_failures else "pass"
+    append_check(
+        payload,
+        "build-global-registry:schema",
+        "Registry schema",
+        "fail" if schema_failures else "pass",
+        "Built the registry and checked it against the bundled global registry schema.",
+    )
+    append_check(
+        payload,
+        "build-global-registry:write",
+        "Registry write",
+        "pass" if write_path or not args.registry_output else "block" if root_blockers else "fail" if schema_failures else "pass",
+        "Wrote the registry only after root and schema checks passed, or returned it without writing when no output path was requested.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "global-registry-json",
+            "kind": "generated_registry",
+            "fresh": True,
+            "summary": f"Registry hash {registry.get('registry_hash')} covers {registry.get('item_count')} skill item(s).",
+            "source_path": payload["registry_path"] or "stdout",
+        }
+    ]
+    return write_and_exit(payload, args.output)
+
+
+def check_global_registry(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py check-global-registry", description="Check that a global registry is schema-valid and fresh against current skill roots.")
+    parser.add_argument("--registry", required=True, help="Registry JSON path.")
+    parse_global_roots_args(parser)
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    registry_path = expand_global_path(args.registry)
+    failures: list[str] = []
+    blockers: list[str] = []
+    inspected_files: list[dict[str, Any]] = []
+    try:
+        registry = global_read_json(registry_path)
+        inspected_files.append(global_checked_file(registry_path, "json"))
+    except FileNotFoundError:
+        registry = {}
+        blockers.append(f"registry file is missing: {global_public_path(registry_path)}")
+    except (ValueError, json.JSONDecodeError) as exc:
+        registry = {}
+        blockers.append(f"registry JSON could not be loaded: {exc}")
+    if isinstance(registry, dict) and registry:
+        failures.extend(validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json"))))
+    elif not blockers:
+        blockers.append("registry JSON root must be an object")
+
+    roots, root_blockers = registry_roots_for_check(registry if isinstance(registry, dict) else {}, args.skill_root, args.codex_home)
+    blockers.extend(root_blockers)
+    current_registry: dict[str, Any] = {}
+    if roots and not blockers:
+        current_registry = build_global_registry_payload(roots)
+        if current_registry.get("registry_hash") != registry.get("registry_hash"):
+            failures.append("registry hash is stale against current skill root scan")
+    payload = base_result("check-global-registry", global_public_path(registry_path))
+    payload["registry_hash"] = registry.get("registry_hash", "") if isinstance(registry, dict) else ""
+    payload["current_registry_hash"] = current_registry.get("registry_hash", "")
+    payload["files_inspected"] = inspected_files
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
+    append_check(
+        payload,
+        "check-global-registry:schema",
+        "Registry schema",
+        "block" if blockers and not registry else "fail" if failures and not current_registry else "pass",
+        "Loaded the registry JSON and checked its bundled schema subset.",
+    )
+    append_check(
+        payload,
+        "check-global-registry:freshness",
+        "Registry freshness",
+        "block" if root_blockers else "fail" if current_registry and current_registry.get("registry_hash") != registry.get("registry_hash") else "pass",
+        "Rebuilt a current registry projection from the same roots when the roots were re-checkable.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "checked-global-registry",
+            "kind": "registry_freshness_check",
+            "fresh": not failures and not blockers,
+            "summary": f"Compared registry hash {payload['registry_hash']} to current hash {payload['current_registry_hash']}.",
+            "source_path": global_public_path(registry_path),
+        }
+    ]
+    return write_and_exit(payload, args.output)
+
+
+def resolve_global_skill(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py resolve-global-skill", description="Resolve one task to a current global SkillGuard registry skill route.")
+    parser.add_argument("--registry", help="Registry JSON path. If omitted, --skill-root/--codex-home are scanned.")
+    parser.add_argument("--task", required=True, help="Task text to route. The text is fingerprinted and not echoed in structured outputs.")
+    parser.add_argument("--route-hint", help="Optional skill_id or skill name hint.")
+    parse_global_roots_args(parser)
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    blockers: list[str] = []
+    failures: list[str] = []
+    registry_path_label = ""
+    if args.registry:
+        registry_path = expand_global_path(args.registry)
+        registry_path_label = global_public_path(registry_path)
+        try:
+            registry = global_read_json(registry_path)
+        except FileNotFoundError:
+            registry = {}
+            blockers.append(f"registry file is missing: {registry_path_label}")
+        except (ValueError, json.JSONDecodeError) as exc:
+            registry = {}
+            blockers.append(f"registry JSON could not be loaded: {exc}")
+    else:
+        roots, root_blockers = global_skill_roots_from_args(args.skill_root, args.codex_home)
+        blockers.extend(root_blockers)
+        registry = build_global_registry_payload(roots) if roots else {}
+    if isinstance(registry, dict) and registry:
+        failures.extend(validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json"))))
+    candidates = global_route_candidates(registry if isinstance(registry, dict) else {}, args.task, args.route_hint or "") if not blockers else []
+    selected: dict[str, Any] = {}
+    if not blockers and not failures:
+        if args.route_hint:
+            hint_lower = args.route_hint.lower().strip()
+            registry_items = registry.get("items", []) if isinstance(registry, dict) and isinstance(registry.get("items"), list) else []
+            hint_matches = [
+                item
+                for item in registry_items
+                if isinstance(item, dict)
+                and hint_lower in {str(item.get("skill_id") or "").lower(), str(item.get("skill_name") or "").lower()}
+            ]
+            current_hint_matches = [item for item in candidates if "explicit-route-hint" in item.get("selection_reasons", [])]
+            if hint_matches and not current_hint_matches:
+                matched = hint_matches[0]
+                blockers.append(
+                    f"route hint matched non-current global skill {matched.get('skill_id')} with status {matched.get('status')}"
+                )
+            elif not current_hint_matches:
+                blockers.append("route hint did not match a current global registry skill")
+        if not candidates:
+            blockers.append("no current global registry skill matched the task")
+        elif not blockers:
+            top_score = candidates[0]["score"]
+            top = [item for item in candidates if item["score"] == top_score]
+            hinted = bool(args.route_hint and "explicit-route-hint" in candidates[0].get("selection_reasons", []))
+            if len(top) > 1 and not hinted:
+                blockers.append("ambiguous global skill route: multiple current skills share the top score")
+            else:
+                selected_blockers = global_candidate_handoff_blockers(candidates[0])
+                if selected_blockers:
+                    blockers.extend(selected_blockers)
+                else:
+                    selected = candidates[0]
+    payload = base_result("resolve-global-skill", str(selected.get("skill_path") or registry_path_label))
+    payload["task_fingerprint"] = canonical_json_hash({"task": args.task}, length=16)
+    payload["task_character_count"] = len(args.task)
+    payload["route_hint_fingerprint"] = canonical_json_hash({"route_hint": args.route_hint or ""}, length=16) if args.route_hint else ""
+    payload["registry_hash"] = registry.get("registry_hash", "") if isinstance(registry, dict) else ""
+    payload["candidate_routes"] = candidates[:10]
+    payload["routing_decision"] = selected
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
+    append_check(
+        payload,
+        "resolve-global-skill:selection",
+        "Global skill route selection",
+        payload["decision"],
+        "Selected exactly one current registry skill, or blocked when no current or unambiguous route was available.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "global-registry-route-selection",
+            "kind": "routing_decision",
+            "fresh": payload["decision"] == "pass",
+            "summary": f"Resolved task fingerprint {payload['task_fingerprint']} against registry hash {payload['registry_hash']}.",
+            "source_path": registry_path_label or "inline-scan",
+        }
+    ]
+    return write_and_exit(payload, args.output)
+
+
+def load_registry_for_prompt_command(command: str, registry_path_text: str) -> tuple[dict[str, Any], list[str], list[str], str]:
+    failures: list[str] = []
+    blockers: list[str] = []
+    registry_path = expand_global_path(registry_path_text)
+    registry_path_label = global_public_path(registry_path)
+    try:
+        registry = global_read_json(registry_path)
+    except FileNotFoundError:
+        return {}, failures, [f"registry file is missing: {registry_path_label}"], registry_path_label
+    except (ValueError, json.JSONDecodeError) as exc:
+        return {}, failures, [f"registry JSON could not be loaded: {exc}"], registry_path_label
+    if not isinstance(registry, dict):
+        blockers.append(f"{command}: registry JSON root must be an object")
+        return {}, failures, blockers, registry_path_label
+    failures.extend(validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json"))))
+    return registry, failures, blockers, registry_path_label
+
+
+def render_global_prompt(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py render-global-prompt", description="Render the managed global SkillGuard router prompt projection.")
+    parser.add_argument("--registry", required=True, help="Registry JSON path.")
+    parser.add_argument("--projection-output", help="Optional prompt projection JSON output path.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    registry, failures, blockers, registry_label = load_registry_for_prompt_command("render-global-prompt", args.registry)
+    projection = build_global_prompt_projection(registry, registry_label) if registry else {}
+    projection_failures = validate_schema_subset(projection, load_json(schema_path("skillguard_global_prompt_projection.schema.json"))) if projection else []
+    failures.extend(projection_failures)
+    projection_path = ""
+    if args.projection_output and not failures and not blockers:
+        projection_path = global_public_path(global_write_json(args.projection_output, projection))
+    payload = base_result("render-global-prompt", projection_path or registry_label)
+    payload["projection"] = projection
+    payload["projection_path"] = projection_path
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
+    append_check(
+        payload,
+        "render-global-prompt:projection",
+        "Prompt projection",
+        payload["decision"],
+        "Rendered the managed prompt block from the supplied registry and checked its projection schema.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "global-prompt-projection",
+            "kind": "prompt_projection",
+            "fresh": payload["decision"] == "pass",
+            "summary": f"Rendered prompt projection for registry hash {registry.get('registry_hash', '') if registry else ''}.",
+            "source_path": projection_path or registry_label,
+        }
+    ]
+    return write_and_exit(payload, args.output)
+
+
+def install_global_prompt(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py install-global-prompt", description="Install or replace the managed SkillGuard global router block in AGENTS.md.")
+    parser.add_argument("--registry", required=True, help="Registry JSON path.")
+    parser.add_argument("--agents-file", help="AGENTS.md file to update. Defaults to --codex-home/AGENTS.md.")
+    parser.add_argument("--codex-home", help="Codex home directory used when --agents-file is omitted.")
+    parser.add_argument("--dry-run", action="store_true", help="Render and check without writing AGENTS.md.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    registry, failures, blockers, registry_label = load_registry_for_prompt_command("install-global-prompt", args.registry)
+    codex_home = expand_global_path(args.codex_home) if args.codex_home else Path.home() / ".codex"
+    agents_file = expand_global_path(args.agents_file) if args.agents_file else (codex_home / "AGENTS.md").resolve()
+    projection = build_global_prompt_projection(registry, registry_label) if registry else {}
+    existing = agents_file.read_text(encoding="utf-8") if agents_file.is_file() else ""
+    install_status = "not-written"
+    updated = existing
+    if not blockers and not failures and projection:
+        try:
+            updated, install_status = replace_managed_global_prompt_block(existing, str(projection.get("managed_block") or ""))
+        except ValueError as exc:
+            blockers.append(str(exc))
+        if not blockers and not args.dry_run:
+            agents_file.parent.mkdir(parents=True, exist_ok=True)
+            agents_file.write_text(updated, encoding="utf-8")
+    if not blockers and not failures and projection:
+        prompt_failures, prompt_blockers = check_global_prompt_text(updated, str(registry.get("registry_hash") or ""))
+        failures.extend(prompt_failures)
+        blockers.extend(prompt_blockers)
+    payload = base_result("install-global-prompt", global_public_path(agents_file))
+    payload["registry_hash"] = registry.get("registry_hash", "") if registry else ""
+    payload["agents_file"] = global_public_path(agents_file)
+    payload["install_status"] = "dry-run-" + install_status if args.dry_run else install_status
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
+    append_check(
+        payload,
+        "install-global-prompt:managed-block",
+        "Managed prompt block install",
+        payload["decision"],
+        "Inserted or replaced only the SkillGuard global router managed block and preserved surrounding AGENTS.md content.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "installed-global-prompt-block",
+            "kind": "prompt_installation",
+            "fresh": payload["decision"] == "pass",
+            "summary": f"{payload['install_status']} for registry hash {payload['registry_hash']}.",
+            "source_path": payload["agents_file"],
+        }
+    ]
+    return write_and_exit(payload, args.output)
+
+
+def check_global_prompt(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py check-global-prompt", description="Check AGENTS.md contains the current managed SkillGuard global router prompt block.")
+    parser.add_argument("--registry", required=True, help="Registry JSON path.")
+    parser.add_argument("--agents-file", help="AGENTS.md file to check. Defaults to --codex-home/AGENTS.md.")
+    parser.add_argument("--codex-home", help="Codex home directory used when --agents-file is omitted.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    registry, failures, blockers, registry_label = load_registry_for_prompt_command("check-global-prompt", args.registry)
+    codex_home = expand_global_path(args.codex_home) if args.codex_home else Path.home() / ".codex"
+    agents_file = expand_global_path(args.agents_file) if args.agents_file else (codex_home / "AGENTS.md").resolve()
+    if not agents_file.is_file():
+        blockers.append(f"AGENTS.md file is missing: {global_public_path(agents_file)}")
+        text = ""
+    else:
+        text = agents_file.read_text(encoding="utf-8")
+    if registry and text:
+        prompt_failures, prompt_blockers = check_global_prompt_text(text, str(registry.get("registry_hash") or ""))
+        failures.extend(prompt_failures)
+        blockers.extend(prompt_blockers)
+    payload = base_result("check-global-prompt", global_public_path(agents_file))
+    payload["registry_hash"] = registry.get("registry_hash", "") if registry else ""
+    payload["registry_path"] = registry_label
+    payload["agents_file"] = global_public_path(agents_file)
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
+    append_check(
+        payload,
+        "check-global-prompt:managed-block",
+        "Managed prompt block freshness",
+        payload["decision"],
+        "Checked that AGENTS.md has exactly one managed block and that it carries the supplied registry hash.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "checked-global-prompt-block",
+            "kind": "prompt_freshness_check",
+            "fresh": payload["decision"] == "pass",
+            "summary": f"Checked managed prompt block against registry hash {payload['registry_hash']}.",
+            "source_path": payload["agents_file"],
+        }
+    ]
+    return write_and_exit(payload, args.output)
+
+
+def refresh_global_router(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py refresh-global-router", description="Scan skills, rebuild registry, render prompt projection, install AGENTS.md, and verify freshness.")
+    parse_global_roots_args(parser)
+    parser.add_argument("--output-dir", default=".skillguard/global-router", help="Directory for registry/projection artifacts.")
+    parser.add_argument("--agents-file", help="AGENTS.md file to update. Defaults to --codex-home/AGENTS.md.")
+    parser.add_argument("--dry-run", action="store_true", help="Build artifacts and check projected content without writing AGENTS.md.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    roots, root_blockers = global_skill_roots_from_args(args.skill_root, args.codex_home)
+    output_dir = expand_global_path(args.output_dir)
+    registry_path = output_dir / "global_registry.json"
+    projection_path = output_dir / "global_prompt_projection.json"
+    failures: list[str] = []
+    blockers: list[str] = list(root_blockers)
+    registry = build_global_registry_payload(roots) if roots else {}
+    if registry:
+        failures.extend(validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json"))))
+    projection = build_global_prompt_projection(registry, global_public_path(registry_path)) if registry else {}
+    if projection:
+        failures.extend(validate_schema_subset(projection, load_json(schema_path("skillguard_global_prompt_projection.schema.json"))))
+    codex_home = expand_global_path(args.codex_home) if args.codex_home else Path.home() / ".codex"
+    agents_file = expand_global_path(args.agents_file) if args.agents_file else (codex_home / "AGENTS.md").resolve()
+    install_status = "not-written"
+    if not blockers and not failures and registry and projection:
+        global_write_json(registry_path, registry)
+        global_write_json(projection_path, projection)
+        existing = agents_file.read_text(encoding="utf-8") if agents_file.is_file() else ""
+        try:
+            updated, install_status = replace_managed_global_prompt_block(existing, str(projection.get("managed_block") or ""))
+        except ValueError as exc:
+            blockers.append(str(exc))
+            updated = existing
+        if not blockers and not args.dry_run:
+            agents_file.parent.mkdir(parents=True, exist_ok=True)
+            agents_file.write_text(updated, encoding="utf-8")
+        if not blockers:
+            prompt_failures, prompt_blockers = check_global_prompt_text(updated, str(registry.get("registry_hash") or ""))
+            failures.extend(prompt_failures)
+            blockers.extend(prompt_blockers)
+    payload = base_result("refresh-global-router", global_public_path(output_dir))
+    payload["skill_roots"] = [global_public_path(root) for root in roots]
+    payload["registry_path"] = global_public_path(registry_path)
+    payload["projection_path"] = global_public_path(projection_path)
+    payload["agents_file"] = global_public_path(agents_file)
+    payload["registry_hash"] = registry.get("registry_hash", "") if registry else ""
+    payload["install_status"] = "dry-run-" + install_status if args.dry_run else install_status
+    payload["registry_item_count"] = registry.get("item_count", 0) if registry else 0
+    payload["current_item_count"] = registry.get("current_item_count", 0) if registry else 0
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
+    append_check(
+        payload,
+        "refresh-global-router:registry",
+        "Registry refresh",
+        "block" if root_blockers else "fail" if failures else "pass",
+        "Scanned skill roots, rebuilt the global registry, and checked the registry/projection schemas.",
+    )
+    append_check(
+        payload,
+        "refresh-global-router:prompt",
+        "Prompt install and freshness",
+        payload["decision"],
+        "Installed or dry-ran the managed AGENTS.md block and immediately checked it against the registry hash.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "global-router-refresh-registry",
+            "kind": "generated_registry",
+            "fresh": payload["decision"] == "pass",
+            "summary": f"Registry hash {payload['registry_hash']} covers {payload['registry_item_count']} skill item(s).",
+            "source_path": payload["registry_path"],
+        },
+        {
+            "evidence_id": "global-router-refresh-prompt",
+            "kind": "prompt_installation",
+            "fresh": payload["decision"] == "pass",
+            "summary": f"{payload['install_status']} in {payload['agents_file']}.",
+            "source_path": payload["agents_file"],
+        },
+    ]
+    return write_and_exit(payload, args.output)
+
+
 def normalize_expected_decision(value: Any) -> str:
     if not isinstance(value, str):
         return ""
@@ -11540,6 +12700,11 @@ def fixture_case_result(
 def fixture_path_argument(fixture_path: Path, value: Any) -> str:
     if not isinstance(value, str) or not value:
         raise ValueError("fixture path argument must be a non-empty string")
+    normalized = value.replace("\\", "/")
+    source_layout_prefix = f".agents/skills/{skill_root().name}"
+    installed_skill_layout = skill_root().parent.name == "skills" and skill_root().parent.parent.name == ".codex"
+    if installed_skill_layout and (normalized == ".agents/skills" or normalized.startswith(".agents/skills/")):
+        return public_relative_path(resolve_skillguard_self_layout_path(value))
     return public_relative_path(resolve_repository_reference(value, fixture_path.parent))
 
 
@@ -11596,8 +12761,20 @@ def cleanup_owned_fixture_workspace(workspace: Path) -> bool:
     if workspace.exists() and marker.is_file():
         parent = workspace.parent
         shutil.rmtree(workspace)
-        if parent.name == "workspace" and parent.exists() and not any(parent.iterdir()):
-            parent.rmdir()
+        for _ in range(10):
+            if not workspace.exists():
+                break
+            time.sleep(0.05)
+        if parent.name == "workspace" and parent.exists():
+            for _ in range(10):
+                if any(parent.iterdir()):
+                    break
+                try:
+                    parent.rmdir()
+                except OSError:
+                    time.sleep(0.05)
+                    continue
+                break
         return not workspace.exists()
     return not workspace.exists()
 
@@ -11976,7 +13153,7 @@ def evaluate_generate_skill_fixture_case(
             expected_decision,
             observed,
             "blocker_condition",
-            [f"generate-skill fixture execution failed: {exc}"],
+            [f"generate-skill fixture execution failed: {public_safe_exception_message(exc)}"],
             "generate-skill",
         )
         if expected_decision != observed:
@@ -11993,6 +13170,60 @@ def build_runtime_fixture_argv(fixture_path: Path, case_data: dict[str, Any], ta
     explicit_arguments = case_data.get("arguments")
     if isinstance(explicit_arguments, list):
         return [str(item) for item in explicit_arguments if isinstance(item, (str, int, float))]
+
+    if target_command in {
+        "scan-global-skills",
+        "build-global-registry",
+        "check-global-registry",
+        "resolve-global-skill",
+        "render-global-prompt",
+        "install-global-prompt",
+        "check-global-prompt",
+        "refresh-global-router",
+    }:
+        argv: list[str] = []
+        for root in fixture_string_list(case_data.get("skill_roots") or case_data.get("skill_root")):
+            argv.extend(["--skill-root", fixture_path_argument(fixture_path, root)])
+        codex_home = case_data.get("codex_home")
+        if isinstance(codex_home, str) and codex_home:
+            argv.extend(["--codex-home", fixture_path_argument(fixture_path, codex_home)])
+        registry_path = case_data.get("registry_path") or case_data.get("registry")
+        if isinstance(registry_path, str) and registry_path and target_command in {
+            "check-global-registry",
+            "resolve-global-skill",
+            "render-global-prompt",
+            "install-global-prompt",
+            "check-global-prompt",
+        }:
+            argv.extend(["--registry", fixture_path_argument(fixture_path, registry_path)])
+        registry_output = case_data.get("registry_output")
+        if isinstance(registry_output, str) and registry_output and target_command == "build-global-registry":
+            argv.extend(["--registry-output", fixture_path_argument(fixture_path, registry_output)])
+        projection_output = case_data.get("projection_output")
+        if isinstance(projection_output, str) and projection_output and target_command == "render-global-prompt":
+            argv.extend(["--projection-output", fixture_path_argument(fixture_path, projection_output)])
+        output_dir = case_data.get("output_dir")
+        if isinstance(output_dir, str) and output_dir and target_command == "refresh-global-router":
+            argv.extend(["--output-dir", fixture_path_argument(fixture_path, output_dir)])
+        agents_file = case_data.get("agents_file")
+        if isinstance(agents_file, str) and agents_file and target_command in {
+            "install-global-prompt",
+            "check-global-prompt",
+            "refresh-global-router",
+        }:
+            argv.extend(["--agents-file", fixture_path_argument(fixture_path, agents_file)])
+        task_text = case_data.get("task")
+        if isinstance(task_text, str) and task_text and target_command == "resolve-global-skill":
+            argv.extend(["--task", task_text])
+        route_hint = case_data.get("route_hint")
+        if isinstance(route_hint, str) and route_hint and target_command == "resolve-global-skill":
+            argv.extend(["--route-hint", route_hint])
+        if case_data.get("dry_run") is True and target_command in {"install-global-prompt", "refresh-global-router"}:
+            argv.append("--dry-run")
+        for item in case_data.get("extra_arguments", []) if isinstance(case_data.get("extra_arguments"), list) else []:
+            if isinstance(item, (str, int, float)):
+                argv.append(str(item))
+        return argv
 
     if target_command == "route-task":
         return build_route_task_fixture_argv(fixture_path, case_data)
@@ -12108,7 +13339,7 @@ def route_task_stable_projection(report: dict[str, Any]) -> dict[str, Any]:
 
 
 def public_fixture_command_arguments(target_command: str, argv: list[str]) -> list[str]:
-    if target_command not in {"route-task", "select-route", "start-run"}:
+    if target_command not in {"route-task", "select-route", "start-run", "resolve-global-skill"}:
         return argv
     public_args: list[str] = []
     redact_next = False
@@ -12121,6 +13352,27 @@ def public_fixture_command_arguments(target_command: str, argv: list[str]) -> li
         if item == "--task":
             redact_next = True
     return public_args
+
+
+def public_safe_exception_message(exc: Exception) -> str:
+    message = str(exc)
+    replacement_pairs: list[tuple[str, str]] = []
+    for base in (repository_root(), skill_root(), Path.home()):
+        try:
+            resolved = base.resolve()
+        except OSError:
+            resolved = base
+        if base == Path.home():
+            replacement = "<home>"
+        else:
+            replacement = public_relative_path(resolved)
+        replacement_pairs.append((str(resolved), replacement))
+        replacement_pairs.append((str(resolved).replace("\\", "/"), replacement))
+        replacement_pairs.append((str(resolved).replace("\\", "\\\\"), replacement))
+    for old, new in replacement_pairs:
+        if old:
+            message = message.replace(old, new)
+    return message
 
 
 def route_task_fixture_mutation_snapshot(fixture_path: Path, case_data: dict[str, Any]) -> dict[str, Any]:
@@ -12229,8 +13481,8 @@ def evaluate_route_task_expectations(
         if not any(needle in message for message in messages):
             problems.append(f"missing public-safe message fragment: {needle}")
 
-    if expected.get("no_selected_fallback") is True and report.get("routing_decision") not in ({}, None):
-        problems.append("routing_decision must be empty when the route-task fixture expects no fallback")
+    if expected.get("no_route_selected") is True and report.get("routing_decision") not in ({}, None):
+        problems.append("routing_decision must be empty when the route-task fixture expects no route selection")
     if expected.get("empty_target_path_when_blocked") is True and report.get("decision") == "block" and report.get("target_path"):
         problems.append("target_path must be empty when route-task blocks")
 
@@ -12296,13 +13548,21 @@ def evaluate_runtime_fixture_case(
         return result
 
     handler_map = {
+        "build-global-registry": build_global_registry,
+        "check-global-prompt": check_global_prompt,
+        "check-global-registry": check_global_registry,
         "check-contract": check_contract,
         "check-run": check_run,
         "check-skill": check_skill,
         "check-suite": check_suite,
         "close-run": close_run,
         "compile-contract": compile_contract,
+        "install-global-prompt": install_global_prompt,
+        "refresh-global-router": refresh_global_router,
+        "render-global-prompt": render_global_prompt,
+        "resolve-global-skill": resolve_global_skill,
         "route-task": route_task,
+        "scan-global-skills": scan_global_skills,
         "select-route": select_route,
         "self-check": self_check,
         "start-run": start_run,
@@ -12333,7 +13593,7 @@ def evaluate_runtime_fixture_case(
             expected_decision,
             observed,
             "blocker_condition",
-            [f"{target_command} fixture execution failed: {exc}"],
+            [f"{target_command} fixture execution failed: {public_safe_exception_message(exc)}"],
             target_command,
         )
         if expected_decision != observed:
@@ -12488,11 +13748,16 @@ def fixture_test(argv: list[str]) -> int:
     )
     parser.add_argument("--manifest", help="Fixture manifest JSON under the repository root.")
     parser.add_argument("--fixture-root", help="Directory used to resolve manifest fixture paths. Defaults to the manifest directory.")
+    parser.add_argument("--fixture-id", action="append", default=[], help="Restrict a manifest-based run to the named fixture id. Repeatable.")
     parser.add_argument("--fixture", action="append", default=[], help="Additional fixture case JSON path under the repository root.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
     if not args.manifest and not args.fixture:
         parser.error("fixture-test requires --manifest or at least one --fixture")
+    if args.fixture_id and not args.manifest:
+        parser.error("--fixture-id requires --manifest")
+    if args.fixture_id and args.fixture:
+        parser.error("--fixture-id cannot be combined with --fixture")
 
     failures: list[str] = []
     blockers: list[str] = []
@@ -12532,8 +13797,14 @@ def fixture_test(argv: list[str]) -> int:
     )
 
     before_failures, before_blockers = len(failures), len(blockers)
+    requested_fixture_ids = set(args.fixture_id or [])
+    matched_fixture_ids: set[str] = set()
     for index, fixture in enumerate(manifest_fixtures):
         fixture_id = str(fixture.get("fixture_id") or f"manifest-fixture-{index + 1}")
+        if requested_fixture_ids and fixture_id not in requested_fixture_ids:
+            continue
+        if requested_fixture_ids:
+            matched_fixture_ids.add(fixture_id)
         path_text = fixture.get("path") or fixture.get("fixture_path")
         if not isinstance(path_text, str) or not path_text:
             observed = "block"
@@ -12552,6 +13823,8 @@ def fixture_test(argv: list[str]) -> int:
             fixture_results.append(fixture_case_result(fixture_id, None, normalize_expected_decision(fixture.get("expected_decision")), "block", "blocker_condition", ["fixture path escapes repository boundary"]))
             continue
         fixture_results.append(evaluate_fixture_case(fixture_path, fixture, failures, blockers))
+    for missing_fixture_id in sorted(requested_fixture_ids - matched_fixture_ids):
+        failures.append(f"fixture-id {missing_fixture_id!r} was not found in the supplied manifest")
     for path_text in args.fixture:
         try:
             fixture_path = ensure_under_root(path_text)
@@ -12787,7 +14060,7 @@ def self_check(argv: list[str]) -> int:
     ):
         target = skill_root()
     else:
-        target = ensure_under_root(args.target)
+        target = resolve_target_argument(args.target)
     source_layout = target.resolve() == default_source_target_path.resolve() and (default_source_target_path / "SKILL.md").is_file()
     layout = "source_repository" if source_layout else "installed_skill"
     policy_root_supplied = bool(args.policy_root)
@@ -12828,11 +14101,15 @@ def self_check(argv: list[str]) -> int:
         ".agents/skills/skillguard/assets/schemas/skillguard_check_report.schema.json",
         ".agents/skills/skillguard/assets/schemas/skillguard_workflow_report.schema.json",
         ".agents/skills/skillguard/assets/schemas/skillguard_maintenance_record.schema.json",
+        ".agents/skills/skillguard/assets/schemas/skillguard_global_registry.schema.json",
+        ".agents/skills/skillguard/assets/schemas/skillguard_global_prompt_projection.schema.json",
         ".agents/skills/skillguard/assets/templates/skillguard_checker_change.template.json",
         ".agents/skills/skillguard/assets/templates/skillguard_fixture_manifest.template.json",
         ".agents/skills/skillguard/assets/templates/skillguard_closure.template.json",
+        ".agents/skills/skillguard/assets/templates/global_skillguard_prompt_block.md.template",
         ".agents/skills/skillguard/fixtures/checker_change/current-baseline.json",
         ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json",
+        ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json",
         ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
         ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
         ".agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json",
@@ -12851,11 +14128,15 @@ def self_check(argv: list[str]) -> int:
         "assets/schemas/skillguard_check_report.schema.json",
         "assets/schemas/skillguard_workflow_report.schema.json",
         "assets/schemas/skillguard_maintenance_record.schema.json",
+        "assets/schemas/skillguard_global_registry.schema.json",
+        "assets/schemas/skillguard_global_prompt_projection.schema.json",
         "assets/templates/skillguard_checker_change.template.json",
         "assets/templates/skillguard_fixture_manifest.template.json",
         "assets/templates/skillguard_closure.template.json",
+        "assets/templates/global_skillguard_prompt_block.md.template",
         "fixtures/checker_change/current-baseline.json",
         "fixtures/bad_routing/fixture-manifest.json",
+        "fixtures/global_router/fixture-manifest.json",
         "fixtures/simple_generation/fixture-manifest.json",
         "fixtures/complex_generation/fixture-manifest.json",
         ".skillguard/skillguard_evidence_rules.json",
@@ -12872,8 +14153,11 @@ def self_check(argv: list[str]) -> int:
             ".agents/skills/skillguard/assets/schemas/skillguard_check_report.schema.json",
             ".agents/skills/skillguard/assets/schemas/skillguard_workflow_report.schema.json",
             ".agents/skills/skillguard/assets/schemas/skillguard_maintenance_record.schema.json",
+            ".agents/skills/skillguard/assets/schemas/skillguard_global_registry.schema.json",
+            ".agents/skills/skillguard/assets/schemas/skillguard_global_prompt_projection.schema.json",
             ".agents/skills/skillguard/fixtures/checker_change/current-baseline.json",
             ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json",
+            ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json",
             ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
             ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
             ".agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json",
@@ -13110,6 +14394,14 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "plan-skill": "Convert a skill idea JSON file into a no-write Skill Blueprint preview.",
     "generate-skill": "Create a draft SkillGuard skill scaffold from a valid Skill Blueprint.",
     "generate-suite": "Create a draft multi-skill SkillGuard suite scaffold from a valid Suite Blueprint.",
+    "scan-global-skills": "Scan skill roots for SKILL.md files and SkillGuard route documents.",
+    "build-global-registry": "Build a global SkillGuard skill registry artifact from scanned roots.",
+    "check-global-registry": "Check a global SkillGuard registry schema and freshness against current roots.",
+    "resolve-global-skill": "Resolve one task to a current skill through the global SkillGuard registry.",
+    "render-global-prompt": "Render the managed global SkillGuard router AGENTS.md prompt block.",
+    "install-global-prompt": "Install or replace the managed SkillGuard router block in AGENTS.md.",
+    "check-global-prompt": "Check the managed global SkillGuard router block is present and current.",
+    "refresh-global-router": "Scan skills, refresh registry/projection artifacts, install AGENTS.md, and verify freshness.",
     "check-json-schema": "Check one JSON file against an explicit local schema file.",
     "compile-contract": "Compile or write a runnable SkillGuard work contract for a target skill.",
     "check-contract": "Check a target work contract for schema, hash, references, scripts, and closure-rule readiness.",
@@ -13151,6 +14443,14 @@ COMMANDS: dict[str, CommandHandler] = {
     "plan-skill": plan_skill,
     "generate-skill": generate_skill,
     "generate-suite": generate_suite,
+    "scan-global-skills": scan_global_skills,
+    "build-global-registry": build_global_registry,
+    "check-global-registry": check_global_registry,
+    "resolve-global-skill": resolve_global_skill,
+    "render-global-prompt": render_global_prompt,
+    "install-global-prompt": install_global_prompt,
+    "check-global-prompt": check_global_prompt,
+    "refresh-global-router": refresh_global_router,
     "check-json-schema": check_json_schema,
     "compile-contract": compile_contract,
     "check-contract": check_contract,

@@ -1,0 +1,157 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "claim_boundary": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "current_item_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "generated_at": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "item_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
+    "items": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "claim_boundary": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "do_not_use_when": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "route_entrypoint": {
+            "type": "object"
+          },
+          "route_terms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "skill_file": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "skill_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "skill_name": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "skill_path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "skill_sha256": {
+            "minLength": 64,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "current",
+              "missing_contract",
+              "invalid_contract"
+            ],
+            "type": "string"
+          },
+          "use_when": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "skill_id",
+          "skill_name",
+          "description",
+          "skill_path",
+          "skill_file",
+          "skill_sha256",
+          "status",
+          "use_when",
+          "do_not_use_when",
+          "route_entrypoint",
+          "route_terms",
+          "claim_boundary"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "registry_hash": {
+      "minLength": 64,
+      "type": "string"
+    },
+    "router_skill_id": {
+      "const": "skillguard-global-router",
+      "type": "string"
+    },
+    "scan_roots": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "exists": {
+            "type": "boolean"
+          },
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "skill_file_count": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "exists",
+          "skill_file_count"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "skillguard.global_registry.v1",
+      "type": "string"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "generated_at",
+    "router_skill_id",
+    "scan_roots",
+    "item_count",
+    "current_item_count",
+    "items",
+    "warnings",
+    "claim_boundary",
+    "registry_hash"
+  ],
+  "type": "object"
+}

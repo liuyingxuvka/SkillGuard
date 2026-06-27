@@ -1,0 +1,120 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "global-router-v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "status": "compatible",
+    "notes": [
+      "Exercises the global SkillGuard router command path against explicit local roots and a fixture-local Codex home."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "global-router-refresh-pass",
+      "fixture_type": "positive",
+      "target_rule": "Refreshing the global router writes a registry, prompt projection, managed AGENTS block, and passes prompt freshness checks.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/refresh-global-router-pass.json"
+    },
+    {
+      "fixture_id": "global-router-check-prompt-pass",
+      "fixture_type": "positive",
+      "target_rule": "A managed AGENTS block generated from the current fixture registry passes check-global-prompt.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/check-global-prompt-pass.json"
+    },
+    {
+      "fixture_id": "global-router-resolve-router-pass",
+      "fixture_type": "positive",
+      "target_rule": "A global router maintenance task resolves to the skillguard-global-router skill.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/resolve-global-router-pass.json"
+    },
+    {
+      "fixture_id": "global-router-check-registry-stale-roots-fail",
+      "fixture_type": "negative",
+      "target_rule": "A registry checked against a different current root reports stale registry state.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/check-global-registry-stale-roots-fail.json"
+    },
+    {
+      "fixture_id": "global-router-check-prompt-missing-block",
+      "fixture_type": "negative",
+      "target_rule": "A user-level AGENTS.md without the managed global router block is blocked.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/check-global-prompt-missing-block.json"
+    },
+    {
+      "fixture_id": "global-router-check-prompt-stale-hash",
+      "fixture_type": "negative",
+      "target_rule": "A managed global router block with a stale registry hash reports failure.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/check-global-prompt-stale-hash.json"
+    },
+    {
+      "fixture_id": "global-router-resolve-no-match-block",
+      "fixture_type": "negative",
+      "target_rule": "A task with no current global skill match is blocked.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/resolve-global-no-match-block.json"
+    },
+    {
+      "fixture_id": "global-router-resolve-noncurrent-hint-block",
+      "fixture_type": "negative",
+      "target_rule": "A route hint that matches a non-current skill is blocked instead of falling through to another skill.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/resolve-global-noncurrent-hint-block.json"
+    },
+    {
+      "fixture_id": "global-router-resolve-ambiguous-block",
+      "fixture_type": "negative",
+      "target_rule": "Two current equal-score route candidates are blocked as ambiguous.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/resolve-global-ambiguous-block.json"
+    },
+    {
+      "fixture_id": "global-router-resolve-native-shadow-block",
+      "fixture_type": "negative",
+      "target_rule": "A native/hybrid registry entry that shadows native ownership or lacks native bindings is blocked.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/resolve-global-native-shadow-block.json"
+    }
+  ],
+  "evidence": [
+    "cases/refresh-global-router-pass.json",
+    "cases/check-global-prompt-pass.json",
+    "cases/resolve-global-router-pass.json",
+    "cases/check-global-registry-stale-roots-fail.json",
+    "cases/check-global-prompt-missing-block.json",
+    "cases/check-global-prompt-stale-hash.json",
+    "cases/resolve-global-no-match-block.json",
+    "cases/resolve-global-noncurrent-hint-block.json",
+    "cases/resolve-global-ambiguous-block.json",
+    "cases/resolve-global-native-shadow-block.json",
+    "workspace/global_router/global_registry.json",
+    "workspace/codex_home/AGENTS.md",
+    "workspace/missing_codex_home/AGENTS.md",
+    "workspace/stale_codex_home/AGENTS.md",
+    "workspace/ambiguous_registry.json",
+    "workspace/native_shadow_registry.json"
+  ],
+  "skipped_checks": [
+    "These fixtures cover explicit local refresh, prompt freshness, route selection, stale registry roots, no-match, ambiguity, non-current hints, and native-shadow blocking only.",
+    "They do not prove broad fixture coverage, user machine installation state, package publication, release readiness, external services, or future AI behavior."
+  ],
+  "residual_risk": [
+    "Future global-router command or prompt-template changes may require refreshing fixture workspace evidence.",
+    "The fixture-local Codex home is not proof of the real user's installed prompt state."
+  ],
+  "claim_boundary": "This global-router fixture manifest covers only the listed local command cases and fixture workspace files. It does not prove runtime checker execution beyond this fixture invocation, broad fixture coverage, CLI checks outside the explicit command surface, tests, suite automation, package publication, code-contract validation, release readiness, external service behavior, real user prompt state, or future AI behavior without separate current evidence."
+}

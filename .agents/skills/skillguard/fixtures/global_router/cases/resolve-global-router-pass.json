@@ -1,0 +1,11 @@
+{
+  "fixture_id": "global-router-resolve-router-pass",
+  "target_command": "resolve-global-skill",
+  "expected_decision": "pass",
+  "arguments": [
+    "--registry",
+    ".agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json",
+    "--task",
+    "Refresh the global SkillGuard router prompt and registry"
+  ]
+}

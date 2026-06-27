@@ -28,6 +28,7 @@ Start from the current layout instead of assuming generated files exist. SkillGu
 - Use `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` when a task needs runtime contract routing, phase gates, or closure rules.
 - Use `.skillguard/checks/` for local runtime check script stubs and `.skillguard/runs/` for run records created before non-trivial skill work begins.
 - Use other `.skillguard/` material under the skill directory when the task asks for maintained SkillGuard records, evidence, reports, or self-check material.
+- Use the `skillguard-global-router` skill and the `scan-global-skills`, `build-global-registry`, `check-global-registry`, `resolve-global-skill`, `render-global-prompt`, `install-global-prompt`, `check-global-prompt`, and `refresh-global-router` commands when the task is about user-level skill routing, global prompt projection, managed `AGENTS.md` blocks, or new-skill onboarding defaults.
 - Treat local `scripts/` and `fixtures/` under this skill as evidence only after direct inspection in the current task finds those paths and their current content. Treat repository tests and examples as source-repository evidence only when that layout is present and the paths exist.
 
 Do not cite or require scripts, fixtures, examples, tests, package commands, releases, git remotes, or publication records unless they exist in the current filesystem and were inspected for the current task.
@@ -107,14 +108,33 @@ Use Runtime Contract Mode when the task is about making a target skill's actual 
 
 In this mode SkillGuard should help the target skill:
 
-- compile a `.skillguard/work-contract.json` with routes, phases, evidence obligations, quality floors, forbidden shortcuts, checks, closure rules, and stale bindings;
-- require route selection before non-trivial skill work starts;
+- compile or maintain a `.skillguard/work-contract.json` that records the integration mode before any runtime claim: `native-integrated` when the target skill already has its own route/check system, `hybrid-extension` when SkillGuard is filling missing gates around a partial native system, and `skillguard-runtime` only when no native runtime system exists;
+- bind native routes and native checks directly when the target skill already owns routing, validation, controller, or closure behavior; do not create a second SkillGuard execution router beside the native system;
+- require the native route decision or SkillGuard-owned route decision before non-trivial skill work starts, depending on the declared integration mode;
 - create or update a `.skillguard/runs/` run record for the selected route;
 - advance phases only when required evidence and checks are present for earlier phases;
 - run route, phase-order, evidence, quality-floor, freshness, suite-child, and closure checks before closure;
 - block missing contracts, hollow contracts, ambiguous routes, skipped phases, stale evidence, prose-only evidence, quality downgrades, and closure overclaims.
 
+For native-integrated and hybrid-extension targets, SkillGuard is the runtime contract executor attached to the original skill system. It may add start gates, run records, evidence checks, quality floors, freshness checks, and closure blockers around the original workflow, and it must execute those gates through the original skill's router, controller, simulator, checker, or release flow. Duplicate SkillGuard-owned execution paths are invalid.
+
 AI or human judgment may be recorded after deterministic evidence is clear, but it cannot replace required runnable checks or make skipped work pass.
+
+## Global Router Mode
+
+Use Global Router Mode when the task is about making SkillGuard routing available at the user level across installed or repository-local skills.
+
+In this mode SkillGuard should:
+
+- scan explicit skill roots for `SKILL.md` files and adjacent `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` route documents;
+- build a global registry artifact as the route-selection source of truth;
+- render a managed `AGENTS.md` prompt block from that registry;
+- install or replace only the managed SkillGuard global router block while preserving unrelated user prompt content;
+- check the installed block against the current registry hash before claiming global prompt freshness;
+- resolve the user's task to exactly one current skill, then hand off to that skill's own `SKILL.md`, work contract, check manifest, or native route bindings;
+- refresh the global registry and managed prompt block whenever a skill is added or a skill's entrypoint, contract, check manifest, or native route binding changes.
+
+Global Router Mode is a routing and prompt-projection layer only. It does not execute the selected skill, prove target skill tests, prove package publication, or guarantee future AI behavior.
 
 ## Hard Gates
 
@@ -131,6 +151,8 @@ These gates are mandatory for SkillGuard work. If a gate cannot be checked, mark
 - Release, package, command, fixture, schema, git, and publication claims must be directly validated before they are described as complete.
 - Failures and blockers must remain visible in the final report.
 - Runtime contract work must not close unless the selected route, run record, required phases, required evidence, required checks, quality floors, and closure boundary are all current for the declared scope.
+- Runtime contract work for a target with an existing native route/check system must bind that native system and must not add a parallel SkillGuard execution route.
+- Global router work must not claim current user-level routing unless the registry and managed `AGENTS.md` block were refreshed or checked against the current registry hash.
 
 Hard gates are not suggestions. Vague confidence, intent, partial inspection, or a prior successful run is not enough to pass a hard gate.
 
@@ -156,6 +178,7 @@ When SkillGuard changes, keep the public contract synchronized across the mainta
 - Update the repository README when public usage, status meanings, command names, non-guarantees, or repository structure change.
 - Keep version metadata synchronized when release metadata changes.
 - Keep validation commands and examples aligned with the scripts, fixtures, schemas, and tests that actually exist.
+- Refresh the global registry and managed prompt block when a skill is added or when `SKILL.md`, work-contract, check-manifest, native route binding, or router command behavior changes.
 - Preserve privacy boundaries in public files. Do not copy private workspace instructions, local machine paths, private task text, or internal coordination details into maintained artifacts.
 - Re-run the relevant deterministic checks after edits and record any judgment-based review separately from parser or command results.
 - Treat stale evidence as stale. If a maintained file changes, refresh the evidence that depends on it before claiming acceptance.

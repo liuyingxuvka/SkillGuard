@@ -1,0 +1,53 @@
+{
+  "artifacts": [
+    {
+      "path": "skillguard_profile.json",
+      "required": true,
+      "role": "Global router profile"
+    },
+    {
+      "path": "skillguard_skill_contract.json",
+      "required": true,
+      "role": "Global router static skill contract"
+    },
+    {
+      "path": "skillguard_evidence_rules.json",
+      "required": true,
+      "role": "Global router evidence rules"
+    },
+    {
+      "path": "skillguard_closure_policy.json",
+      "required": true,
+      "role": "Global router closure policy"
+    },
+    {
+      "path": "work-contract.json",
+      "required": true,
+      "role": "Runtime work contract"
+    },
+    {
+      "path": "check_manifest.json",
+      "required": true,
+      "role": "Runtime check manifest"
+    }
+  ],
+  "blockers": [],
+  "checks": [],
+  "claim_boundary": "This manifest indexes only the SkillGuard Global Router control records. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, installed prompt freshness, or future AI behavior without separate current evidence.",
+  "evidence": [
+    {
+      "evidence_id": "router-profile",
+      "path": "skillguard_profile.json",
+      "summary": "Global router profile record."
+    }
+  ],
+  "failures": [],
+  "residual_risk": [
+    "The manifest must be refreshed if router control files move."
+  ],
+  "schema_version": "skillguard.global_router_manifest_index.v1",
+  "skipped_checks": [],
+  "status": "checked",
+  "target_path": ".agents/skills/skillguard-global-router/.skillguard",
+  "target_type": "control_manifest"
+}

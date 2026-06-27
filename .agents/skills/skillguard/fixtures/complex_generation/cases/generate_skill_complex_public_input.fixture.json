@@ -71,9 +71,9 @@
         "Inspect the current target files before making claims.",
         "Run deterministic checks that are available for the declared scope.",
         "Do not treat generated scaffold files as acceptance evidence.",
-        "./assets/templates/check_report.template.json",
-        "./fixtures/fixture-manifest.json",
-        "./.skillguard/skillguard_manifest.json"
+        "assets/templates/check_report.template.json",
+        "fixtures/fixture-manifest.json",
+        ".skillguard/skillguard_manifest.json"
       ],
       "README.md": [
         "generated SkillGuard skill scaffold",

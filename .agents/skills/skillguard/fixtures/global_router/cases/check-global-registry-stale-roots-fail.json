@@ -1,0 +1,11 @@
+{
+  "fixture_id": "global-router-check-registry-stale-roots-fail",
+  "target_command": "check-global-registry",
+  "expected_decision": "fail",
+  "arguments": [
+    "--registry",
+    ".agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json",
+    "--skill-root",
+    ".agents/skills/skillguard"
+  ]
+}

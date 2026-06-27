@@ -22,6 +22,7 @@ SCRIPT_DIR = REPO_ROOT / ".agents" / "skills" / "skillguard" / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import checker_engine  # noqa: E402
+import skillguard_utils  # noqa: E402
 
 
 SKILLGUARD = SCRIPT_DIR / "skillguard.py"
@@ -374,7 +375,7 @@ Read `references/README.md` before closing.
             self.assertIn("references/missing-guide.md: referenced path is missing", failures)
             self.assertEqual(blockers, [])
 
-    def test_source_layout_references_fallback_to_installed_target_layout(self) -> None:
+    def test_source_layout_references_map_to_installed_target_layout(self) -> None:
         with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
             target = Path(tmp)
             skill = target / "SKILL.md"
@@ -383,7 +384,7 @@ Read `references/README.md` before closing.
 
             self.assertEqual(checker_engine.resolve_declared_reference(target, reference), skill)
 
-    def test_record_references_fallback_to_installed_target_layout(self) -> None:
+    def test_record_references_map_to_installed_target_layout(self) -> None:
         with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
             target = Path(tmp)
             control_root = target / ".skillguard"
@@ -394,13 +395,31 @@ Read `references/README.md` before closing.
 
             self.assertEqual(checker_engine.resolve_record_reference(target, control_root, reference), skill)
 
-    def test_contract_target_path_accepts_installed_target_layout_alias(self) -> None:
+    def test_contract_target_path_accepts_installed_target_layout_mapping(self) -> None:
         with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
             target = Path(tmp)
             target.mkdir(exist_ok=True)
             reference = f".agents/skills/{target.name}"
 
             self.assertTrue(checker_engine.contract_target_matches_target(reference, target))
+
+    def test_repository_root_detection_supports_source_and_installed_layouts(self) -> None:
+        source_skill_root = REPO_ROOT / ".agents" / "skills" / "skillguard"
+        installed_skill_root = REPO_ROOT / ".codex" / "skills" / "skillguard"
+
+        self.assertEqual(skillguard_utils.repository_root_for_skill_root(source_skill_root), REPO_ROOT)
+        self.assertEqual(skillguard_utils.repository_root_for_skill_root(installed_skill_root), REPO_ROOT)
+
+        original_repo = checker_engine.repository_root
+        original_skill = checker_engine.skill_root
+        try:
+            checker_engine.repository_root = lambda: REPO_ROOT
+            checker_engine.skill_root = lambda: installed_skill_root
+            mapped = checker_engine.resolve_skillguard_self_layout_path(".agents/skills/skillguard/fixtures/runtime_contract")
+            self.assertEqual(mapped, installed_skill_root.resolve() / "fixtures" / "runtime_contract")
+        finally:
+            checker_engine.repository_root = original_repo
+            checker_engine.skill_root = original_skill
 
     def test_single_skill_example_command(self) -> None:
         report = run_skillguard("check-skill", "--target", ".agents/skills/skillguard/fixtures/good_single_skill")
@@ -426,6 +445,27 @@ Read `references/README.md` before closing.
         positive = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/fixture-manifest.json")
         self.assert_clean_pass(positive)
         self.assertEqual(positive.get("fixture_class_counts", {}).get("expected_pass"), 3)
+
+        selected_fixture = run_skillguard(
+            "fixture-test",
+            "--manifest",
+            ".agents/skills/skillguard/fixtures/runtime_contract/fixture-manifest.json",
+            "--fixture-id",
+            "good_native_integrated_contract",
+        )
+        self.assert_clean_pass(selected_fixture)
+        self.assertEqual(len(selected_fixture.get("fixture_results", [])), 1)
+        self.assertEqual(selected_fixture["fixture_results"][0].get("fixture_id"), "good_native_integrated_contract")
+
+        missing_fixture = run_skillguard(
+            "fixture-test",
+            "--manifest",
+            ".agents/skills/skillguard/fixtures/runtime_contract/fixture-manifest.json",
+            "--fixture-id",
+            "missing_fixture_id",
+            expected_exit=1,
+        )
+        self.assertIn("missing_fixture_id", "\n".join(missing_fixture.get("failures", [])))
 
         simple_generation = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json")
         self.assert_clean_pass(simple_generation)
@@ -487,6 +527,12 @@ Read `references/README.md` before closing.
         self.assertEqual(observed_codes, expected_codes)
         self.assertFalse(any(result.get("routing_decision_present") for result in bad_routing.get("fixture_results", [])))
         self.assertTrue(all(result.get("deterministic_repeat_checked") for result in bad_routing.get("fixture_results", [])))
+
+        global_router = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json")
+        self.assert_clean_pass(global_router)
+        self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_pass"), 3)
+        self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_fail"), 2)
+        self.assertEqual(global_router.get("fixture_class_counts", {}).get("blocker_condition"), 5)
 
     def test_self_check_example_command(self) -> None:
         report = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
@@ -552,6 +598,14 @@ Read `references/README.md` before closing.
         self.assertIn("route-task", names)
         self.assertIn("plan-skill", names)
         self.assertIn("generate-suite", names)
+        self.assertIn("scan-global-skills", names)
+        self.assertIn("build-global-registry", names)
+        self.assertIn("check-global-registry", names)
+        self.assertIn("resolve-global-skill", names)
+        self.assertIn("render-global-prompt", names)
+        self.assertIn("install-global-prompt", names)
+        self.assertIn("check-global-prompt", names)
+        self.assertIn("refresh-global-router", names)
         self.assertIn("detect-stale-evidence", names)
         self.assertIn("refresh-maintenance", names)
         self.assertIn("review-checker-change", names)
@@ -563,6 +617,302 @@ Read `references/README.md` before closing.
         self.assertIn("advance-run", names)
         self.assertIn("check-run", names)
         self.assertIn("close-run", names)
+
+    def test_global_router_refresh_prompt_and_route_resolution(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-global-router-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            codex_home = workspace / "codex_home"
+            output_dir = workspace / "global_router"
+            registry = output_dir / "global_registry.json"
+            extra_root = workspace / "extra_skills"
+
+            def write_skill(skill_dir: Path, name: str, description: str) -> None:
+                skill_dir.mkdir(parents=True, exist_ok=True)
+                skill_dir.joinpath("SKILL.md").write_text(
+                    "\n".join(
+                        [
+                            "---",
+                            f"name: {name}",
+                            f"description: {description}",
+                            "---",
+                            "",
+                            "# Purpose",
+                            description,
+                            "",
+                            "## Use When",
+                            f"- Use for {name} audit work and route handoff.",
+                            "",
+                            "## Do Not Use When",
+                            "- Do not use for unrelated fixture tasks.",
+                            "",
+                        ]
+                    ),
+                    encoding="utf-8",
+                )
+
+            def write_native_contract(skill_dir: Path, *, valid: bool) -> None:
+                control = skill_dir / ".skillguard"
+                checks = control / "checks"
+                checks.mkdir(parents=True, exist_ok=True)
+                checks.joinpath("check_route.py").write_text("print('native fixture check')\n", encoding="utf-8")
+                contract = {
+                    "schema_version": "skillguard.work_contract.v1",
+                    "contract_version": "native-router-fixture-1",
+                    "skill_id": skill_dir.name,
+                    "target_path": rel(skill_dir),
+                    "integration_mode": "native-integrated",
+                    "skillguard_role": "native_contract_executor",
+                    "native_route_owner": "native-router.fixture",
+                    "may_define_parallel_execution_route": False,
+                    "may_define_skillguard_runtime_route": False if valid else True,
+                    "integration_claim_boundary": "SkillGuard only records the native route handoff for this fixture.",
+                    "native_route_bindings": [
+                        {
+                            "binding_id": "native-audit-binding",
+                            "native_route_id": "native.audit",
+                            "source": "target native route registry",
+                            "required_before_closure": True,
+                        }
+                    ]
+                    if valid
+                    else [],
+                    "native_check_bindings": [
+                        {
+                            "binding_id": "native-check-binding",
+                            "native_check_id": "native.checks.current",
+                            "evidence_source": "target native check output",
+                            "required": True,
+                        }
+                    ]
+                    if valid
+                    else [],
+                    "routes": [
+                        {
+                            "route_id": "audit",
+                            "route_source": "native_binding",
+                            "phase_order": ["intake"],
+                            "activation_keywords": ["audit", "native"],
+                            "do_not_use_when": ["Task is outside the native audit route."],
+                            "summary": "Execute the native audit route with SkillGuard contract gates.",
+                        }
+                    ],
+                    "phases": [
+                        {
+                            "phase_id": "intake",
+                            "summary": "Confirm target, native route binding, and closure scope.",
+                            "required_evidence": ["task_summary"],
+                            "required_checks": ["check_route"],
+                            "allowed_next": [],
+                        }
+                    ],
+                    "required_evidence": [
+                        {
+                            "evidence_id": "task_summary",
+                            "kind": "task_record",
+                            "phase_id": "intake",
+                            "source": ".skillguard/runs/",
+                            "required": True,
+                        }
+                    ],
+                    "check_scripts": [
+                        {
+                            "check_id": "check_route",
+                            "phase_id": "intake",
+                            "command": "python .skillguard/checks/check_route.py",
+                            "script_path": ".skillguard/checks/check_route.py",
+                            "required": True,
+                            "failure_class": "route",
+                        }
+                    ],
+                    "closure_rules": [
+                        {
+                            "rule_id": "accepted_requires_native_binding",
+                            "required_checks": ["check_route"],
+                            "required_evidence": ["task_summary"],
+                            "allowed_decision": "accepted",
+                            "scope": "declared native route scope only",
+                        }
+                    ],
+                    "quality_floors": [
+                        {
+                            "floor_id": "native_route_not_shadowed",
+                            "required_checks": ["check_route"],
+                            "failure_effect": "block closure",
+                            "summary": "Native route work must use the declared native route binding.",
+                        }
+                    ],
+                    "forbidden_shortcuts": [
+                        {
+                            "shortcut_id": "shadow_native_route",
+                            "summary": "Do not replace the target-owned native route with a duplicate SkillGuard-owned execution path.",
+                        }
+                    ],
+                    "stale_bindings": [
+                        {
+                            "binding_id": "target_skill_prompt",
+                            "path": "SKILL.md",
+                            "stales": ["route_selection", "closure_report"],
+                        }
+                    ],
+                    "claim_boundary": "This fixture contract covers only local native-route registry tests.",
+                }
+                contract["contract_hash"] = checker_engine.work_contract_hash(contract)
+                write_json(control / "work-contract.json", contract)
+                write_json(
+                    control / "check_manifest.json",
+                    {
+                        "schema_version": "skillguard.check_manifest.v1",
+                        "target_skill": rel(skill_dir),
+                        "contract_ref": f"{rel(skill_dir)}/.skillguard/work-contract.json",
+                        "checks": [
+                            {
+                                "check_id": "check_route",
+                                "phase_id": "intake",
+                                "command": "python .skillguard/checks/check_route.py",
+                                "required": True,
+                                "failure_class": "route",
+                                "inputs": [".skillguard/work-contract.json", ".skillguard/runs/"],
+                            }
+                        ],
+                        "output_schema": "skillguard.cli_result.v1",
+                        "freshness": {"watch": ["SKILL.md", ".skillguard/work-contract.json", ".skillguard/check_manifest.json"]},
+                        "claim_boundary": "Fixture check manifest for native-route registry tests only.",
+                    },
+                )
+
+            write_skill(extra_root / "fixture-missing-contract", "fixture-missing-contract", "Use for fixture missing contract global router tests.")
+            write_skill(extra_root / "skillguard", "skillguard", "Use for fixture SkillGuard activation boundary audit tests.")
+            self.assert_clean_pass(run_skillguard("compile-contract", "--target", rel(extra_root / "skillguard"), "--write"))
+            write_skill(
+                extra_root / "skillguard-global-router",
+                "skillguard-global-router",
+                "Use for fixture global router registry prompt refresh tests.",
+            )
+            self.assert_clean_pass(run_skillguard("compile-contract", "--target", rel(extra_root / "skillguard-global-router"), "--write"))
+            write_skill(extra_root / "fixture-native-route", "fixture-native-route", "Use for fixture native route global router tests.")
+            write_native_contract(extra_root / "fixture-native-route", valid=True)
+            write_skill(extra_root / "fixture-native-shadow", "fixture-native-shadow", "Use for fixture native shadow global router tests.")
+            write_native_contract(extra_root / "fixture-native-shadow", valid=False)
+
+            refresh = run_skillguard(
+                "refresh-global-router",
+                "--skill-root",
+                rel(extra_root),
+                "--codex-home",
+                rel(codex_home),
+                "--output-dir",
+                rel(output_dir),
+            )
+            self.assert_clean_pass(refresh)
+            self.assertEqual(refresh.get("target_path"), rel(output_dir))
+            self.assertGreaterEqual(refresh.get("current_item_count", 0), 3)
+            self.assertTrue((codex_home / "AGENTS.md").is_file())
+            self.assertTrue(registry.is_file())
+
+            registry_check = run_skillguard("check-global-registry", "--registry", rel(registry))
+            self.assert_clean_pass(registry_check)
+            self.assertEqual(registry_check.get("registry_hash"), refresh.get("registry_hash"))
+            registry_payload = json.loads(registry.read_text(encoding="utf-8"))
+            entries = {item.get("skill_id"): item for item in registry_payload.get("items", [])}
+            self.assertEqual(entries["fixture-missing-contract"].get("status"), "missing_contract")
+            self.assertEqual(entries["fixture-native-shadow"].get("status"), "invalid_contract")
+            native_entrypoint = entries["fixture-native-route"].get("route_entrypoint", {})
+            self.assertEqual(entries["fixture-native-route"].get("status"), "current")
+            self.assertEqual(native_entrypoint.get("integration_mode"), "native-integrated")
+            self.assertEqual(native_entrypoint.get("route_confidence"), "native-bound")
+            self.assertEqual(native_entrypoint.get("native_route_owner"), "native-router.fixture")
+            self.assertTrue(native_entrypoint.get("native_route_bindings"))
+            self.assertTrue(native_entrypoint.get("native_check_bindings"))
+
+            prompt_check = run_skillguard("check-global-prompt", "--registry", rel(registry), "--codex-home", rel(codex_home))
+            self.assert_clean_pass(prompt_check)
+            self.assertEqual(prompt_check.get("registry_hash"), refresh.get("registry_hash"))
+
+            router_route = run_skillguard(
+                "resolve-global-skill",
+                "--registry",
+                rel(registry),
+                "--task",
+                "Refresh the global SkillGuard router prompt and registry",
+            )
+            self.assert_clean_pass(router_route)
+            self.assertEqual(router_route.get("routing_decision", {}).get("skill_id"), "skillguard-global-router")
+            self.assertIn(
+                rel(extra_root / "skillguard-global-router" / "SKILL.md"),
+                router_route.get("routing_decision", {}).get("route_doc_paths", []),
+            )
+
+            skillguard_route = run_skillguard(
+                "resolve-global-skill",
+                "--registry",
+                rel(registry),
+                "--task",
+                "Audit a Codex skill activation boundary with SkillGuard",
+            )
+            self.assert_clean_pass(skillguard_route)
+            self.assertEqual(skillguard_route.get("routing_decision", {}).get("skill_id"), "skillguard")
+
+            native_route = run_skillguard(
+                "resolve-global-skill",
+                "--registry",
+                rel(registry),
+                "--task",
+                "Use fixture-native-route audit work with native route handoff",
+            )
+            self.assert_clean_pass(native_route)
+            self.assertEqual(native_route.get("routing_decision", {}).get("skill_id"), "fixture-native-route")
+            self.assertEqual(native_route.get("routing_decision", {}).get("integration_mode"), "native-integrated")
+            self.assertTrue(native_route.get("routing_decision", {}).get("native_route_bindings"))
+
+            invalid_native_route = run_skillguard(
+                "resolve-global-skill",
+                "--registry",
+                rel(registry),
+                "--task",
+                "Use fixture-native-shadow audit work with native route handoff",
+                "--route-hint",
+                "fixture-native-shadow",
+                expected_exit=1,
+            )
+            self.assertEqual(invalid_native_route.get("decision"), "block")
+
+            missing_prompt_home = workspace / "missing_prompt_home"
+            missing_prompt_home.mkdir(parents=True)
+            missing_prompt_home.joinpath("AGENTS.md").write_text("# Existing user instructions\n", encoding="utf-8")
+            missing_prompt = run_skillguard(
+                "check-global-prompt",
+                "--registry",
+                rel(registry),
+                "--codex-home",
+                rel(missing_prompt_home),
+                expected_exit=1,
+            )
+            self.assertEqual(missing_prompt.get("decision"), "block")
+
+            stale_prompt_home = workspace / "stale_prompt_home"
+            stale_prompt_home.mkdir(parents=True)
+            stale_prompt_home.joinpath("AGENTS.md").write_text(
+                "\n".join(
+                    [
+                        "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->",
+                        "## SkillGuard Global Router",
+                        "- router_skill_id: skillguard-global-router",
+                        "- registry_hash: " + ("0" * 64),
+                        "<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->",
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            stale_prompt = run_skillguard(
+                "check-global-prompt",
+                "--registry",
+                rel(registry),
+                "--codex-home",
+                rel(stale_prompt_home),
+                expected_exit=1,
+            )
+            self.assertEqual(stale_prompt.get("decision"), "fail")
 
     def test_runtime_contract_command_family_enforces_route_run_and_closure_gates(self) -> None:
         target = REPO_ROOT / ".agents" / "skills" / "skillguard"
@@ -584,10 +934,65 @@ Read `references/README.md` before closing.
 
         compiled = run_skillguard("compile-contract", "--target", rel(target), "--dry-run")
         self.assert_clean_pass(compiled)
+        self.assertEqual(compiled.get("compiled_contract", {}).get("integration_mode"), "skillguard-runtime")
+        self.assertFalse(compiled.get("compiled_contract", {}).get("may_define_parallel_execution_route"))
+        self.assertTrue(compiled.get("compiled_contract", {}).get("may_define_skillguard_runtime_route"))
         check_contract = run_skillguard("check-contract", "--target", rel(target))
         self.assert_clean_pass(check_contract)
         hollow = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(hollow_contract), expected_exit=1)
         self.assertEqual(hollow.get("decision"), "fail")
+
+        with tempfile.TemporaryDirectory(prefix="native-contract-", dir=REPO_ROOT) as tmp:
+            native_contract = dict(compiled["compiled_contract"])
+            native_contract.update(
+                {
+                    "integration_mode": "native-integrated",
+                    "native_route_owner": "native-router",
+                    "native_route_bindings": [
+                        {
+                            "binding_id": "native-router-selected-route",
+                            "native_route_id": "native-router.selected-route",
+                            "source": "native router decision record",
+                            "required_before_closure": True,
+                        }
+                    ],
+                    "native_check_bindings": [
+                        {
+                            "binding_id": "native-checks-current",
+                            "native_check_id": "native.checks.current",
+                            "evidence_source": "native validation report",
+                            "required": True,
+                        }
+                    ],
+                    "skillguard_role": "native_contract_executor",
+                    "may_define_skillguard_runtime_route": False,
+                    "integration_claim_boundary": "SkillGuard executes contract gates through the target's native runtime route and checks.",
+                }
+            )
+            for route in native_contract["routes"]:
+                route["route_source"] = "native_binding"
+            native_contract["contract_hash"] = checker_engine.work_contract_hash(native_contract)
+            native_contract_path = Path(tmp) / "native_contract.json"
+            write_json(native_contract_path, native_contract)
+            self.assert_clean_pass(run_skillguard("check-contract", "--target", rel(target), "--contract", rel(native_contract_path)))
+
+            parallel_contract = dict(native_contract)
+            parallel_contract["may_define_parallel_execution_route"] = True
+            parallel_contract["contract_hash"] = checker_engine.work_contract_hash(parallel_contract)
+            parallel_contract_path = Path(tmp) / "parallel_contract.json"
+            write_json(parallel_contract_path, parallel_contract)
+            parallel = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(parallel_contract_path), expected_exit=1)
+            self.assertEqual(parallel.get("decision"), "fail")
+            self.assertTrue(any("duplicate execution paths" in failure for failure in parallel.get("failures", [])))
+
+            missing_owner_contract = dict(native_contract)
+            missing_owner_contract["native_route_owner"] = ""
+            missing_owner_contract["contract_hash"] = checker_engine.work_contract_hash(missing_owner_contract)
+            missing_owner_contract_path = Path(tmp) / "missing_owner_contract.json"
+            write_json(missing_owner_contract_path, missing_owner_contract)
+            missing_owner = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(missing_owner_contract_path), expected_exit=1)
+            self.assertEqual(missing_owner.get("decision"), "fail")
+            self.assertTrue(any("native_route_owner" in failure for failure in missing_owner.get("failures", [])))
 
         selected = run_skillguard("select-route", "--target", rel(target), "--task", "Audit current runtime evidence before closure.")
         self.assert_clean_pass(selected)
@@ -683,7 +1088,7 @@ Read `references/README.md` before closing.
         self.assertGreaterEqual(len(report.get("candidate_routes", [])), 2)
         self.assertGreaterEqual(len(conflict.get("conflicting_candidates", [])), 2)
 
-    def test_route_task_blocks_incompatible_route_hint_without_fallback(self) -> None:
+    def test_route_task_blocks_incompatible_route_hint_without_route_selection(self) -> None:
         task = "Create a draft skill scaffold from a Skill Blueprint"
 
         report = run_skillguard("route-task", "--task", task, "--route-hint", "check-suite", expected_exit=1)
@@ -844,6 +1249,9 @@ Read `references/README.md` before closing.
             self.assertIn("generate-skill:post-generation-checks", self.validation_registry_ids(registry))
             self.assertIn("generate-skill:post-check-skill", self.validation_registry_ids(registry))
             self.assertIn("generate-skill:post-check-contract", self.validation_registry_ids(registry))
+            self.assertIn("generate-skill:global-router-refresh-required", self.validation_registry_ids(registry))
+            self.assertEqual(report.get("global_router_refresh", {}).get("status"), "required_after_generation")
+            self.assertEqual(report.get("global_router_refresh", {}).get("command"), "refresh-global-router")
             self.assertIn("post_generation_checks", registry.get("source_of_truth_for", []))
 
     def test_route_task_executes_generate_suite_from_explicit_route_hint(self) -> None:

@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-26T11:31:08Z",
+  "checked_at": "2026-06-27T03:27:41Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -8,7 +8,7 @@
       "name": "Required self-check files",
       "required": true,
       "status": "pass",
-      "summary": "Checked current SkillGuard repository, skill, script, policy, schema, template, and reference files needed for self-check."
+      "summary": "Checked current SkillGuard source_repository files needed for self-check."
     },
     {
       "check_id": "self-check:json-parse",
@@ -22,7 +22,7 @@
       "name": "README and command boundary",
       "required": true,
       "status": "pass",
-      "summary": "Checked local command dispatch entries against README command wording and conservative public-boundary terms."
+      "summary": "Checked local command dispatch entries and, when available for this layout, README command wording and conservative public-boundary terms."
     },
     {
       "check_id": "self-check:skill-entrypoint",
@@ -36,17 +36,17 @@
       "name": "Checker-change and self-check policy artifacts",
       "required": true,
       "status": "pass",
-      "summary": "Checked checker-change fixture policy and self-check reference documents for required policy surfaces."
+      "summary": "Checked checker-change fixture policy and self-check reference documents when available for this layout."
     },
     {
       "check_id": "self-check:public-safety",
       "name": "Public safety and unsafe-claim scans",
       "required": true,
       "status": "pass",
-      "summary": "Scanned public SkillGuard files for private paths, runtime ids, credentials, private keys, and declared unsafe overclaim phrases."
+      "summary": "Scanned available public SkillGuard files for private paths, runtime ids, credentials, private keys, and declared unsafe overclaim phrases."
     }
   ],
-  "claim_boundary": "This self-check covers current local SkillGuard repository files, the SkillGuard skill entrypoint, checker-change policy artifacts, control records, report/evidence conventions, public-boundary wording, and local CLI dispatch. It does not prove full fixture coverage, suite automation, package publication, release readiness, code-contract validation, external publication, or future AI behavior.",
+  "claim_boundary": "This self-check covers the current local SkillGuard source-repository layout or installed-skill layout, the SkillGuard skill entrypoint, checker policy artifacts when present for that layout, control records, report/evidence conventions, public-boundary wording, and local CLI dispatch. It does not prove full fixture coverage, suite automation, package publication, release readiness, code-contract validation, external publication, or future AI behavior.",
   "command": "self-check",
   "command_names": [
     "commands",
@@ -101,7 +101,7 @@
       "fresh": true,
       "kind": "command_table_check",
       "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
-      "summary": "Checked 37 local command dispatch entries against README command wording."
+      "summary": "Checked 37 local command dispatch entries against available public boundary wording."
     },
     {
       "evidence_id": "self-check-public-safety",
@@ -117,7 +117,7 @@
       "kind": "markdown",
       "line_count": 345,
       "path": "README.md",
-      "sha256": "A37493B3884A4293412EAE24DFCF4A22E49CDF9F9431D9E4077C65EAF3199054"
+      "sha256": "D98AE43298157A5CDB4D1FA932D1A57164A2AE2D05216CFFF9EEB4B22966D8EF"
     },
     {
       "kind": "markdown",
@@ -135,19 +135,19 @@
       "kind": "file",
       "line_count": 1,
       "path": "VERSION",
-      "sha256": "59854984853104DF5C353E2F681A15FC7924742F9A2E468C29AF248DCE45CE03"
+      "sha256": "F34306BB50E2D2EC59C788B9013C5AC682EF7F7F69345A3E957E38C0B6BA2FDD"
     },
     {
       "kind": "file",
       "line_count": 31,
       "path": "pyproject.toml",
-      "sha256": "72B3FE9BBB620BB3C2DB0D6340383EF5745A5F040DA764D600C8133B21D58C64"
+      "sha256": "2E3BD14367472E0C6E8451EE79AA85037A7D89CDCA1B72A1DFB4A11EF93FD927"
     },
     {
       "kind": "markdown",
-      "line_count": 161,
+      "line_count": 165,
       "path": ".agents/skills/skillguard/SKILL.md",
-      "sha256": "C986D62409ACC3FE225888D449711203625DD2C4AC0AC1FA7D004F3245DEFE66"
+      "sha256": "575E55EB044CB3DD62A21CA3618AC2E20E822C74F4BCBC364481B0ECDE153BCA"
     },
     {
       "kind": "file",
@@ -157,15 +157,15 @@
     },
     {
       "kind": "file",
-      "line_count": 13059,
+      "line_count": 13313,
       "path": ".agents/skills/skillguard/scripts/checker_engine.py",
-      "sha256": "4FA789E19B521BA5418EB2AD8A891A6DCE68D92EF711011730B9799DC090E67F"
+      "sha256": "FDFCC4CDC5295A26D2DA069855233DB79EFD3677D03F3D109EA33E9F7D553965"
     },
     {
       "kind": "file",
-      "line_count": 89,
+      "line_count": 98,
       "path": ".agents/skills/skillguard/scripts/skillguard_utils.py",
-      "sha256": "B98DA091DF56E48169AA64B45811313FF3626A4B47248688518B589E7B478B27"
+      "sha256": "80AE8AA18FA781946050D32D100A52684F2A9A8FCA02CC1F252B5A3CBBE048E0"
     },
     {
       "kind": "json",
@@ -217,9 +217,9 @@
     },
     {
       "kind": "json",
-      "line_count": 158,
+      "line_count": 159,
       "path": ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json",
-      "sha256": "FAF4F2741D1467A8758F3D6E32CF3D37DB0E87680E2BA4E358ABCAAC12904E2E"
+      "sha256": "930F03382ABDD698CDD550884B9FB0501FD3DBADFEB07DFB86084739A4930425"
     },
     {
       "kind": "json",
@@ -270,6 +270,7 @@
       "sha256": "0B650367CAAC2B3BF1DB0905E48427D8391B42A2E60EDE0256635CF999AA100D"
     }
   ],
+  "layout": "source_repository",
   "maintenance_record": {
     "artifact_id": ".agents/skills/skillguard",
     "blockers": [],
@@ -478,9 +479,9 @@
         }
       ]
     },
-    "content_hash": "56A64284BC7EFE90D1E9C03C643AB7142224310D0BE7DE8B21BB2DFB2EF1683E",
-    "evidence_timestamp": "2026-06-26T11:31:08Z",
-    "record_id": "self_check:17448214A0FA97F4",
+    "content_hash": "6D3409CE6EA77E888EB2C665A98F1B25EE632CC6D43AB2397F37EE6EC6A2F801",
+    "evidence_timestamp": "2026-06-27T03:27:41Z",
+    "record_id": "self_check:9BBED3F4BE4BC114",
     "record_kind": "self_check",
     "refresh_action": {
       "action": "not_applicable",

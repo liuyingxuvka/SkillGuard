@@ -1,0 +1,13 @@
+{
+  "fixture_id": "global-router-refresh-pass",
+  "target_command": "refresh-global-router",
+  "expected_decision": "pass",
+  "arguments": [
+    "--skill-root",
+    ".agents/skills",
+    "--codex-home",
+    ".agents/skills/skillguard/fixtures/global_router/workspace/codex_home",
+    "--output-dir",
+    ".agents/skills/skillguard/fixtures/global_router/workspace/global_router"
+  ]
+}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 
-from checker_engine import COMMANDS, SkillGuardCliError, error_payload
+from checker_engine import COMMANDS, SkillGuardCliError, error_payload, public_safe_exception_message
 from skillguard_utils import emit_json
 
 
@@ -25,10 +25,10 @@ def main(argv: list[str] | None = None) -> int:
         emit_json(error_payload(exc.command, exc.message, exc.category))
         return 2
     except FileNotFoundError as exc:
-        emit_json(error_payload(command, str(exc), "missing_file"))
+        emit_json(error_payload(command, public_safe_exception_message(exc), "missing_file"))
         return 1
     except ValueError as exc:
-        emit_json(error_payload(command, str(exc), "validation_error"))
+        emit_json(error_payload(command, public_safe_exception_message(exc), "validation_error"))
         return 1
 
 

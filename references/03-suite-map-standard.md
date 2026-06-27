@@ -105,7 +105,7 @@ Useful routing hints include:
 - required input materials;
 - handoff conditions;
 - conflict resolution rules;
-- fallback or blocker conditions.
+- blocked-when-no-route conditions.
 
 Routing hints should remain recommendations for skill selection. Future model activation remains outside the map's proof.
 

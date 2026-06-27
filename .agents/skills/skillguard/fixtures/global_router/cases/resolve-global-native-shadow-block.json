@@ -1,0 +1,13 @@
+{
+  "fixture_id": "global-router-resolve-native-shadow-block",
+  "target_command": "resolve-global-skill",
+  "expected_decision": "block",
+  "arguments": [
+    "--registry",
+    ".agents/skills/skillguard/fixtures/global_router/workspace/native_shadow_registry.json",
+    "--task",
+    "native shadow route",
+    "--route-hint",
+    "native-shadow-skill"
+  ]
+}

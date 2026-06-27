@@ -22,12 +22,28 @@ Fail criteria: the selected workflow omits required checks for the task.
 
 Block criteria: the task could materially follow multiple modes and no safe default exists.
 
+## Native Integration Selection
+
+Before compiling or accepting a runtime contract, decide whether the target skill already has native routing or checking.
+
+Use:
+
+- `native-integrated` when the original skill already owns route selection, controller state, validation checks, and closure semantics;
+- `hybrid-extension` when the original skill owns part of the path but needs SkillGuard to add missing gates;
+- `skillguard-runtime` only when no native runtime path exists.
+
+Pass criteria: SkillGuard either binds the original route/check system or clearly owns the runtime because no native system is present.
+
+Fail criteria: SkillGuard adds a second execution route beside an existing native system, or reports maintenance evidence while the native route/check contract remains unbound.
+
+Block criteria: the native owner cannot be identified and the choice would change who controls work execution.
+
 ## End-To-End Operating Route
 
 A practical SkillGuard workflow should move through the same visible route even when the mode changes:
 
 1. Intake: name the target, workflow mode, scope, owner boundary, and public claim boundary.
-2. Inventory: list relevant files, identify the target skill when a skill is in scope, note whether a skill map or suite map is part of the evidence, and explicitly name absent scripts, fixtures, tests, CLI checks, suite automation, package publication, and code-contract checks when those categories matter.
+2. Inventory: list relevant files, identify the target skill when a skill is in scope, identify any native route/check owner before adding SkillGuard runtime material, note whether a skill map or suite map is part of the evidence, and explicitly name absent scripts, fixtures, tests, CLI checks, suite automation, package publication, and code-contract checks when those categories matter.
 3. Deterministic evidence: inspect current files, parse metadata where applicable, collect hashes or line counts when useful, and run only checks that actually exist.
 4. Judgment: use structured human or AI judgment for semantic questions after deterministic evidence is clear.
 5. Repair or blocker handling: fix owned failures, preserve unrelated work, and keep unresolved blockers visible.

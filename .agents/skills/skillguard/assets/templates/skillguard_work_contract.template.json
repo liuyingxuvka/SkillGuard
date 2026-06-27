@@ -4,15 +4,26 @@
   "target_path": "{{target_path}}",
   "contract_version": "1",
   "contract_hash": "{{contract_hash}}",
+  "integration_mode": "skillguard-runtime",
+  "native_route_owner": "",
+  "native_route_bindings": [],
+  "native_check_bindings": [],
+  "skillguard_role": "runtime_owner",
+  "may_define_parallel_execution_route": false,
+  "may_define_skillguard_runtime_route": true,
+  "integration_claim_boundary": "No native route/check system is declared for this generated target, so SkillGuard owns this runtime contract until a native system is added. If a native route/check system appears later, regenerate or edit this contract as native-integrated or hybrid-extension; duplicate SkillGuard-owned execution paths are invalid.",
   "routes": [
     {
       "route_id": "audit",
+      "route_source": "skillguard_runtime",
       "summary": "Inspect the target skill and close only after required checks pass.",
       "activation_keywords": [
         "audit",
         "review",
         "check"
       ],
+      "default_route": true,
+      "route_priority": 0,
       "do_not_use_when": [
         "The task is outside this skill's activation boundary."
       ],

@@ -1,0 +1,11 @@
+{
+  "fixture_id": "global-router-resolve-no-match-block",
+  "target_command": "resolve-global-skill",
+  "expected_decision": "block",
+  "arguments": [
+    "--registry",
+    ".agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json",
+    "--task",
+    "zzqv unlabeled unrelated request"
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-26T11:25:35Z",
+  "checked_at": "2026-06-27T02:19:04Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -522,7 +522,7 @@
       ]
     },
     "content_hash": "784FF2CCF12A055658E1B0C6C733AD4D5CDA6CB83688465F0F16659AB0230E6D",
-    "evidence_timestamp": "2026-06-26T11:25:35Z",
+    "evidence_timestamp": "2026-06-27T02:19:04Z",
     "record_id": "command_surface:35DF9A8B35DABB19",
     "record_kind": "command_surface",
     "refresh_action": {

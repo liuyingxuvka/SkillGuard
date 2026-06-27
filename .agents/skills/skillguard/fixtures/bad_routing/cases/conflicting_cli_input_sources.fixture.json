@@ -21,7 +21,7 @@
     "message_contains": [
       "--input cannot be combined"
     ],
-    "no_selected_fallback": true,
+    "no_route_selected": true,
     "empty_target_path_when_blocked": true,
     "deterministic_repeat": true
   }
