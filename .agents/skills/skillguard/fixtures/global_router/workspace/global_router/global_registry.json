@@ -1,7 +1,7 @@
 {
   "claim_boundary": "This global registry is a generated index over the scanned local SKILL.md files and their SkillGuard route documents. It selects a skill route but does not replace the selected skill's SKILL.md, work contract, check manifest, runtime checks, tests, package publication, release readiness, external service validation, or future AI behavior evidence.",
   "current_item_count": 2,
-  "generated_at": "2026-06-27T04:44:01Z",
+  "generated_at": "2026-06-27T04:50:19Z",
   "item_count": 10,
   "items": [
     {

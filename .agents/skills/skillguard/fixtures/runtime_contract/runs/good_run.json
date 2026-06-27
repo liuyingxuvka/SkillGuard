@@ -32,46 +32,6 @@
       "command": "close-run:accepted",
       "decision": "pass",
       "evidence_id": "closure_report"
-    },
-    {
-      "command": "close-run:accepted",
-      "decision": "pass",
-      "evidence_id": "closure_report"
-    },
-    {
-      "command": "close-run:accepted",
-      "decision": "pass",
-      "evidence_id": "closure_report"
-    },
-    {
-      "command": "close-run:accepted",
-      "decision": "pass",
-      "evidence_id": "closure_report"
-    },
-    {
-      "command": "close-run:accepted",
-      "decision": "pass",
-      "evidence_id": "closure_report"
-    },
-    {
-      "command": "close-run:accepted",
-      "decision": "pass",
-      "evidence_id": "closure_report"
-    },
-    {
-      "command": "close-run:accepted",
-      "decision": "pass",
-      "evidence_id": "closure_report"
-    },
-    {
-      "command": "close-run:accepted",
-      "decision": "pass",
-      "evidence_id": "closure_report"
-    },
-    {
-      "command": "close-run:accepted",
-      "decision": "pass",
-      "evidence_id": "closure_report"
     }
   ],
   "contract_ref": {

@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-27T04:44:57Z",
+  "checked_at": "2026-06-27T04:51:14Z",
   "checks": [
     {
       "check_id": "standard-library-local-examples",
@@ -13,7 +13,7 @@
   "claim_boundary": "This test result covers only the local examples and explicit SkillGuard command invocations run by this script. It does not prove broad fixture coverage, packaged CLI installation, suite automation, package publication, release readiness, code-contract validation, external services, or future AI behavior.",
   "command": "python tests/test_skillguard_local.py",
   "decision": "pass",
-  "elapsed_seconds": 78.647,
+  "elapsed_seconds": 74.89,
   "error_count": 0,
   "evidence": [
     {
@@ -250,7 +250,7 @@
       ]
     },
     "content_hash": "2914A7EBCC13189F6E3F952A790D124C5086B5DFA64E1E3C7B9B1A8D1AB281D4",
-    "evidence_timestamp": "2026-06-27T04:44:57Z",
+    "evidence_timestamp": "2026-06-27T04:51:14Z",
     "record_id": "workflow_evidence:EB71DEC9836EE67F",
     "record_kind": "workflow_evidence",
     "refresh_action": {
