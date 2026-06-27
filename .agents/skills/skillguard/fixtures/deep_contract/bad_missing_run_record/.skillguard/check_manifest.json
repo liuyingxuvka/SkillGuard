@@ -1,0 +1,26 @@
+{
+  "schema_version": "skillguard.check_manifest.v1",
+  "target_skill": ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record",
+  "contract_ref": ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record/.skillguard/work-contract.json",
+  "checks": [
+    {
+      "check_id": "check_route",
+      "phase_id": "intake",
+      "command": "python .skillguard/checks/check_route.py",
+      "required": true,
+      "failure_class": "route",
+      "inputs": [
+        ".skillguard/work-contract.json"
+      ]
+    }
+  ],
+  "output_schema": "skillguard.cli_result.v1",
+  "freshness": {
+    "watch": [
+      "SKILL.md",
+      ".skillguard/work-contract.json",
+      ".skillguard/check_manifest.json"
+    ]
+  },
+  "claim_boundary": "Negative fixture only."
+}

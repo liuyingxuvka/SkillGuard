@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.4 - 2026-06-28
+
+- Added deep runtime-contract coverage fields for source requirements, acceptance obligations, skill-specific checks, closure blockers, current run records, non-parallel route proof, and cleanup gates.
+- Added the `check-depth` command and negative deep-contract fixtures so shallow contracts, missing README gates, stale run evidence, and parallel route risks are blocked explicitly.
+- Added the `check-readme-release` command so bilingual README mirrors, text-to-image hero provenance, README model evidence, version consistency, command-surface wording, and public-boundary checks are executable before publishing.
+- Preserved native and hybrid target skill routes while upgrading installed skills to the deeper SkillGuard contract schema.
+- Corrected native/hybrid contracts so they bind target-owned routes and checks with `run_record_required=false`; only `skillguard-runtime` targets retain accepted SkillGuard run records.
+- Rebuilt the README with the README Showcase Writer workflow: English-first structure, full Chinese mirror, text-to-image concept hero, project-specific prompt/design notes, and current release boundaries.
+
 ## v0.1.3 - 2026-06-27
 
 - Reworked the public README into a clearer release page with current usage, runtime-contract workflow, global-router boundary, validation scope, and source-only release status.

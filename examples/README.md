@@ -108,6 +108,18 @@ Check the contract before using it:
 python .agents/skills/skillguard/scripts/skillguard.py check-contract --target .agents/skills/skillguard
 ```
 
+Check that the contract covers target-specific source requirements, runtime-owned run evidence, and non-parallel route proof:
+
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py check-depth --target .agents/skills/skillguard
+```
+
+Check README-facing release gates before publishing a README update:
+
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py check-readme-release --repo .
+```
+
 Select the route before starting work:
 
 ```powershell
@@ -136,6 +148,8 @@ python .agents/skills/skillguard/scripts/skillguard.py close-run --run .agents/s
 Interpretation:
 
 - `compile-contract` builds the local work contract, check manifest, check script stubs, and run directory.
+- `check-depth` fails shallow contracts that do not cover target-specific source requirements, required checks, required SkillGuard-runtime run evidence, closure blockers, or non-parallel route proof.
+- `check-readme-release` fails README updates that miss the bilingual mirror, text-to-image hero evidence, README model evidence, version consistency, command-surface wording, or public-boundary checks.
 - `select-route` must choose exactly one route; missing, ambiguous, or unsupported routes block before work starts.
 - `check-run --complete` fails skipped phases, missing evidence, stale evidence, missing passing check ids, blockers, and quality failures.
 - `close-run` does not make prose-only completion pass and does not broaden a checked-only contract into accepted closure. It only closes inside the evidence-backed contract boundary.
@@ -195,6 +209,20 @@ Interpretation:
 - `check-global-registry` blocks or fails stale registry claims instead of treating old route indexes as current.
 - `check-global-prompt` blocks missing, duplicated, corrupted, or stale managed prompt blocks.
 - `resolve-global-skill` selects a current skill and returns route-document paths; it does not execute the selected skill or replace the selected skill's own gates.
+
+## Installed Skill Audit
+
+Audit installed user skills for deep SkillGuard contracts:
+
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py audit-installed-skills --root <skill-root>
+```
+
+Interpretation:
+
+- `decision: pass` means every audited installed user skill reached `deep-pass`.
+- `classification_counts` shows whether any shallow, stale, cleanup, or native-binding problem remains.
+- Fixture, backup, and system skill copies are skipped so the report focuses on maintained user skills.
 
 ## Evidence Freshness
 

@@ -9,6 +9,69 @@
   "native_route_bindings": [],
   "native_check_bindings": [],
   "phase_native_bindings": [],
+  "source_requirements": [
+    {
+      "requirement_id": "target.entrypoint.acceptance",
+      "category": "entrypoint",
+      "summary": "Target skill entrypoint requirements must be mapped before closure.",
+      "source_path": "SKILL.md",
+      "required": true
+    }
+  ],
+  "acceptance_obligations": [
+    {
+      "obligation_id": "target.entrypoint.acceptance.covered",
+      "requirement_ids": [
+        "target.entrypoint.acceptance"
+      ],
+      "summary": "The target entrypoint's hard requirements are represented by runnable checks or native check bindings.",
+      "required": true,
+      "covered_by_checks": [
+        "check_evidence",
+        "check_quality_floor",
+        "check_closure"
+      ],
+      "native_check_binding_ids": []
+    }
+  ],
+  "skill_specific_checks": [
+    {
+      "check_id": "target.entrypoint.acceptance.check",
+      "obligation_ids": [
+        "target.entrypoint.acceptance.covered"
+      ],
+      "check_manifest_ids": [
+        "check_evidence",
+        "check_quality_floor",
+        "check_closure"
+      ],
+      "native_check_binding_ids": [],
+      "required": true,
+      "summary": "The check manifest must cover the target entrypoint's hard requirements."
+    }
+  ],
+  "closure_blockers": [
+    {
+      "blocker_id": "target.entrypoint.acceptance.blocker",
+      "obligation_ids": [
+        "target.entrypoint.acceptance.covered"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "summary": "Do not close if target-specific requirements are not covered by runnable checks or native check evidence."
+    }
+  ],
+  "run_record_required": true,
+  "not_parallel_route_proof": {
+    "proof_id": "skillguard.runtime.owner.no_parallel_native_route",
+    "summary": "This generated runtime-owner contract is valid only when no native route/check owner exists.",
+    "native_route_binding_ids": [],
+    "evidence_source": "SKILL.md and adjacent target materials inspected during contract compilation"
+  },
+  "cleanup_required": [],
   "skillguard_role": "runtime_owner",
   "may_define_parallel_execution_route": false,
   "may_define_skillguard_runtime_route": true,

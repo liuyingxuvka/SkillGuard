@@ -1,13 +1,13 @@
-# SkillGuard README Hero Prompt
+Prompt: create a bright wide GitHub README concept hero image for SkillGuard.
 
-Create a bright wide GitHub README concept hero image for SkillGuard.
+Style: premium art-directed conceptual workflow visual, semi-realistic 3D product-object render, clean light background, refined technical materials mixing brushed aluminum, translucent acrylic, paper contract sheets, and small luminous verification rails; modern, mature, not dark.
 
-Style: premium technical product explainer, clean light background, dimensional cards and rails, controlled readable English labels.
+Visual meaning: Codex skill files and existing native route lanes enter from the left, pass through a transparent contract executor with visible checkpoints for source requirements, acceptance obligations, run records, checks, and closure blockers, then exit as clearly separated approved skill paths on the right. Show SkillGuard as a governance layer attached to the original route lanes, not as a separate parallel highway. Include a subtle feedback loop from closure evidence back to the contract.
 
-Visual meaning: Skill files flow into a work contract, then into native route binding, evidence gates, and final closure. Show that SkillGuard attaches checks to the real target workflow instead of creating a parallel route.
+Make the purpose obvious: it helps AI-maintained skills choose the right path, lock the working contract, collect evidence, and block shallow or skipped work.
 
-Required readable labels: SkillGuard, Skill files, Work contract, Native binding, Evidence gates, Closure, v0.1.3.
+Composition: wide airy banner, large-scale product metaphor, clear left-to-right stages connected by luminous paths, dimensional objects instead of flat boxes; show several colored route lanes merging through transparent gates without losing their original lanes; clean GitHub README top image, high readability at thumbnail size.
 
-Avoid: humanoid robot, dark screen wall, noisy dashboards, local paths, private data, long paragraphs, unreadable text, watermark, decorative-only abstract shapes.
+Avoid: humanoid robot, dark room, wall of screens, generic dashboard, purely decorative tech background, repeated template layout, cluttered flat flowchart, cartoon style, anime, childish illustration, watermark, logo, Chinese text, long paragraphs, gibberish text.
 
-Implementation note: the committed image is a deterministic PNG because this README hero needs exact, readable workflow labels for a public release asset.
+Generation method: text-to-image model. The generated source image was saved by Codex under the thread-local generated_images directory and copied into `assets/readme-hero/hero.png`.

@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-27T09:00:59Z",
+  "checked_at": "2026-06-27T17:18:11Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -63,9 +63,12 @@
     "install-global-prompt",
     "check-global-prompt",
     "refresh-global-router",
+    "audit-installed-skills",
     "check-json-schema",
     "compile-contract",
     "check-contract",
+    "check-depth",
+    "check-readme-release",
     "select-route",
     "start-run",
     "advance-run",
@@ -109,7 +112,7 @@
       "fresh": true,
       "kind": "command_table_check",
       "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
-      "summary": "Checked 45 local command dispatch entries against available public boundary wording."
+      "summary": "Checked 48 local command dispatch entries against available public boundary wording."
     },
     {
       "evidence_id": "self-check-public-safety",
@@ -123,9 +126,9 @@
   "files_inspected": [
     {
       "kind": "markdown",
-      "line_count": 360,
+      "line_count": 565,
       "path": "README.md",
-      "sha256": "BB53F060F8794C0D87A7A8FB22E36139C9C31A2C382052A32D76152D5459C9D1"
+      "sha256": "B0DD28BDB5F849E85A7377F127C8485760CA0E12339C6E26A5E5B9055E42C615"
     },
     {
       "kind": "markdown",
@@ -143,19 +146,19 @@
       "kind": "file",
       "line_count": 1,
       "path": "VERSION",
-      "sha256": "297B50F08386D3521F8FDAF2F78EB8D9D0ACDF452D2E61596905FBA37208C792"
+      "sha256": "8A3DAD16D348C163566A456FCF650D85D7AEEDA5E53D01EE1FA8DC15212915A7"
     },
     {
       "kind": "file",
       "line_count": 31,
       "path": "pyproject.toml",
-      "sha256": "96F0D66EF993D38BDA263E4C8F7F85BD5CC0BD046722FBCAFAF78616D2BE5EC9"
+      "sha256": "BB02F14EACF431C077CBACE43BCD34CB2AE602CC89AF88045BB54A4C1109B8B9"
     },
     {
       "kind": "markdown",
-      "line_count": 184,
+      "line_count": 210,
       "path": ".agents/skills/skillguard/SKILL.md",
-      "sha256": "1887DC5C0AF86325CD65712D8B5586227EE8BC830370B063F1FDBF2D8253C68A"
+      "sha256": "F13CB50F63232999F1A5A19186B8958BCDB79E3DC24EA801C01CA64EFDE7157E"
     },
     {
       "kind": "file",
@@ -165,9 +168,9 @@
     },
     {
       "kind": "file",
-      "line_count": 14567,
+      "line_count": 15681,
       "path": ".agents/skills/skillguard/scripts/checker_engine.py",
-      "sha256": "A31CFD02291D3C3A19EC8A91076DDD31011C3924030B8ADBD5697F47B35E7B0E"
+      "sha256": "7E23A10559F4D4A496110A3F8347738348C4757BC2BCCACEF9A08AA2B5060901"
     },
     {
       "kind": "file",
@@ -233,7 +236,7 @@
       "kind": "file",
       "line_count": 16,
       "path": ".agents/skills/skillguard/assets/templates/global_skillguard_prompt_block.md.template",
-      "sha256": "0CD6E2F55BC2335A827DCB570910702CCAB6279A145B6D0F4D3662AF2497F041"
+      "sha256": "DCF0DF68925109DE941ECB4034BB4CB7FBD4183FF0F73A483E2B6FEB1C6632BB"
     },
     {
       "kind": "json",
@@ -324,9 +327,12 @@
         "install-global-prompt",
         "check-global-prompt",
         "refresh-global-router",
+        "audit-installed-skills",
         "check-json-schema",
         "compile-contract",
         "check-contract",
+        "check-depth",
+        "check-readme-release",
         "select-route",
         "start-run",
         "advance-run",
@@ -403,6 +409,30 @@
           "responsibility": "checker",
           "route_id": "skillguard.route.check-contract.v1",
           "route_node_id": "check-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "check-depth",
+          "next_step": "Run check-depth when a target skill contract must prove source-specific obligations, current run evidence, and non-parallel route binding.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-depth.v1",
+          "route_node_id": "check-depth",
+          "status": "current"
+        },
+        {
+          "command_family": "check-readme-release",
+          "next_step": "Run check-readme-release before publishing README-facing SkillGuard releases.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-readme-release.v1",
+          "route_node_id": "check-readme-release",
+          "status": "current"
+        },
+        {
+          "command_family": "audit-installed-skills",
+          "next_step": "Run audit-installed-skills against the installed user skill root before broad installed-skill coverage claims.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.audit-installed-skills.v1",
+          "route_node_id": "audit-installed-skills",
           "status": "current"
         },
         {
@@ -519,9 +549,9 @@
         }
       ]
     },
-    "content_hash": "47BDFAAC6B4D14E65E7F27C133135AF21C494629F2BF8DDAFBCFE9B24B9BEEAC",
-    "evidence_timestamp": "2026-06-27T09:00:59Z",
-    "record_id": "self_check:FA48A9CF89095BE0",
+    "content_hash": "7644848DA01062245D3199148D683E1C66FA96B4BA69B58985DDF0ED94408EF8",
+    "evidence_timestamp": "2026-06-27T17:18:11Z",
+    "record_id": "self_check:C410B5290F379297",
     "record_kind": "self_check",
     "refresh_action": {
       "action": "not_applicable",

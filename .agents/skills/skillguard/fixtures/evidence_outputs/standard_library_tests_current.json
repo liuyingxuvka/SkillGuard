@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-27T09:02:15Z",
+  "checked_at": "2026-06-27T17:20:33Z",
   "checks": [
     {
       "check_id": "standard-library-local-examples",
@@ -13,7 +13,7 @@
   "claim_boundary": "This test result covers only the local examples and explicit SkillGuard command invocations run by this script. It does not prove broad fixture coverage, packaged CLI installation, suite automation, package publication, release readiness, code-contract validation, external services, or future AI behavior.",
   "command": "python tests/test_skillguard_local.py",
   "decision": "pass",
-  "elapsed_seconds": 76.056,
+  "elapsed_seconds": 132.167,
   "error_count": 0,
   "evidence": [
     {
@@ -21,7 +21,7 @@
       "fresh": true,
       "kind": "command_output",
       "source_path": "tests/test_skillguard_local.py",
-      "summary": "Ran 65 unittest checks using the local Python interpreter."
+      "summary": "Ran 70 unittest checks using the local Python interpreter."
     },
     {
       "evidence_id": "examples-readme",
@@ -54,9 +54,12 @@
         "install-global-prompt",
         "check-global-prompt",
         "refresh-global-router",
+        "audit-installed-skills",
         "check-json-schema",
         "compile-contract",
         "check-contract",
+        "check-depth",
+        "check-readme-release",
         "select-route",
         "start-run",
         "advance-run",
@@ -133,6 +136,30 @@
           "responsibility": "checker",
           "route_id": "skillguard.route.check-contract.v1",
           "route_node_id": "check-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "check-depth",
+          "next_step": "Run check-depth when a target skill contract must prove source-specific obligations, current run evidence, and non-parallel route binding.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-depth.v1",
+          "route_node_id": "check-depth",
+          "status": "current"
+        },
+        {
+          "command_family": "check-readme-release",
+          "next_step": "Run check-readme-release before publishing README-facing SkillGuard releases.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-readme-release.v1",
+          "route_node_id": "check-readme-release",
+          "status": "current"
+        },
+        {
+          "command_family": "audit-installed-skills",
+          "next_step": "Run audit-installed-skills against the installed user skill root before broad installed-skill coverage claims.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.audit-installed-skills.v1",
+          "route_node_id": "audit-installed-skills",
           "status": "current"
         },
         {
@@ -249,9 +276,9 @@
         }
       ]
     },
-    "content_hash": "2914A7EBCC13189F6E3F952A790D124C5086B5DFA64E1E3C7B9B1A8D1AB281D4",
-    "evidence_timestamp": "2026-06-27T09:02:15Z",
-    "record_id": "workflow_evidence:EB71DEC9836EE67F",
+    "content_hash": "3DAB935BF228CB92BFE0FCEB3FB2BBDD2CDEF380503E16F30A9455B6E14D33C3",
+    "evidence_timestamp": "2026-06-27T17:20:33Z",
+    "record_id": "workflow_evidence:8AFCAB31B5AF61A4",
     "record_kind": "workflow_evidence",
     "refresh_action": {
       "action": "not_applicable",
@@ -269,5 +296,5 @@
   ],
   "schema_version": "skillguard.standard_library_test_result.v1",
   "skipped_checks": [],
-  "test_count": 65
+  "test_count": 70
 }

@@ -1,12 +1,17 @@
 {
   "blockers": [],
-  "claim_boundary": "This fixture run intentionally skips a required phase and must fail.",
-  "closure_decision": "not_requested",
+  "claim_boundary": "This run record covers only the declared target skill, selected route, phase evidence, and local checks captured in this file.",
+  "closure_decision": "accepted",
   "commands_run": [
     {
-      "command": "advance-run:intake:check:check_route",
+      "command": "start-run",
       "decision": "pass",
-      "evidence_id": "check_route"
+      "evidence_id": "task_summary"
+    },
+    {
+      "command": "advance-run:inventory:checked",
+      "decision": "pass",
+      "evidence_id": "inventory"
     },
     {
       "command": "advance-run:inventory:check:check_phase_order",
@@ -14,14 +19,54 @@
       "evidence_id": "check_phase_order"
     },
     {
+      "command": "advance-run:evidence:checked",
+      "decision": "pass",
+      "evidence_id": "evidence"
+    },
+    {
       "command": "advance-run:evidence:check:check_evidence",
       "decision": "pass",
       "evidence_id": "check_evidence"
     },
     {
+      "command": "advance-run:checks:checked",
+      "decision": "pass",
+      "evidence_id": "checks"
+    },
+    {
       "command": "advance-run:checks:check:check_quality_floor",
       "decision": "pass",
       "evidence_id": "check_quality_floor"
+    },
+    {
+      "command": "advance-run:closure:checked",
+      "decision": "pass",
+      "evidence_id": "closure"
+    },
+    {
+      "command": "advance-run:closure:check:check_closure",
+      "decision": "pass",
+      "evidence_id": "check_closure"
+    },
+    {
+      "command": "advance-run:intake:checked",
+      "decision": "pass",
+      "evidence_id": "intake"
+    },
+    {
+      "command": "advance-run:intake:check:check_route",
+      "decision": "pass",
+      "evidence_id": "check_route"
+    },
+    {
+      "command": "close-run:accepted",
+      "decision": "pass",
+      "evidence_id": "closure_report"
+    },
+    {
+      "command": "advance-run:closure:checked",
+      "decision": "pass",
+      "evidence_id": "closure"
     },
     {
       "command": "advance-run:closure:check:check_closure",
@@ -31,7 +76,7 @@
   ],
   "contract_ref": {
     "contract_hash": "219C0B09C1B2E70604D8B856D90B1996CA02698314A03333D3966B8009555C4D",
-    "contract_path": ".agents/skills/skillguard/fixtures/runtime_contract/contracts/runtime_owner_contract.json",
+    "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
     "contract_version": "1"
   },
   "current_phase": "closure",
@@ -41,35 +86,35 @@
       "fresh": true,
       "kind": "task_record",
       "phase_id": "intake",
-      "source_path": ".agents/skills/skillguard/fixtures/runtime_contract/runs/skipped_phase_run.json"
+      "source_path": ".agents/skills/skillguard/.skillguard/runs/run-3a5414fba2b744b8.json"
     },
     {
       "evidence_id": "target_inventory",
       "fresh": true,
-      "kind": "file_inventory",
+      "kind": "phase_evidence",
       "phase_id": "inventory",
       "source_path": ".agents/skills/skillguard/SKILL.md"
     },
     {
       "evidence_id": "direct_evidence",
       "fresh": true,
-      "kind": "direct_evidence",
+      "kind": "phase_evidence",
       "phase_id": "evidence",
       "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/check_contract_self_current.json"
     },
     {
       "evidence_id": "check_output",
       "fresh": true,
-      "kind": "command_output",
+      "kind": "phase_evidence",
       "phase_id": "checks",
-      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/check_run_self_complete_current.json"
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json"
     },
     {
       "evidence_id": "closure_report",
       "fresh": true,
-      "kind": "closure_record",
+      "kind": "phase_evidence",
       "phase_id": "closure",
-      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/close_run_self_accepted_current.json"
+      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/check_readme_release_current.json"
     }
   ],
   "phase_statuses": [
@@ -83,7 +128,7 @@
     },
     {
       "phase_id": "evidence",
-      "status": "skipped"
+      "status": "checked"
     },
     {
       "phase_id": "checks",
@@ -95,10 +140,10 @@
     }
   ],
   "quality_failures": [],
-  "run_id": "fixture-skipped-phase-run",
+  "run_id": "run-3a5414fba2b744b8",
   "schema_version": "skillguard.run_record.v1",
   "selected_route": "audit",
   "skipped_checks": [],
   "target_skill": ".agents/skills/skillguard",
-  "task_summary": "Fixture run with a skipped evidence phase."
+  "task_summary": "SkillGuard deep contract coverage upgrade self-verification"
 }

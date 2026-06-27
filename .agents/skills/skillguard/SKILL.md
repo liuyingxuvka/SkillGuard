@@ -55,6 +55,7 @@ Use this skill when the user asks to:
 - Review a skill repository for public readiness, activation clarity, privacy safety, metadata consistency, or release claims.
 - Check whether a skill's description is too broad, too vague, or likely to activate for unrelated tasks.
 - Validate a maintained skill target, suite summary, README, `SKILL.md`, metadata, fixtures, schemas, scripts, or check evidence.
+- Check README-facing release gates such as bilingual mirror coverage, text-to-image hero provenance, README model evidence, version consistency, command-surface wording, and public-boundary safety.
 - Compare parent status against child evidence so a suite or release summary does not hide stale, failed, missing, or skipped checks.
 - Produce a status report that needs current evidence, blockers, skipped checks, residual risk, and claim boundaries.
 
@@ -111,14 +112,35 @@ In this mode SkillGuard should help the target skill:
 - compile or maintain a `.skillguard/work-contract.json` that records the integration mode before any runtime claim: `native-integrated` when the target skill already has its own route/check system, `hybrid-extension` when SkillGuard is filling missing gates around a partial native system, and `skillguard-runtime` only when no native runtime system exists;
 - bind native routes and native checks directly when the target skill already owns routing, validation, controller, or closure behavior; do not create a second SkillGuard execution router beside the native system;
 - require the native route decision or SkillGuard-owned route decision before non-trivial skill work starts, depending on the declared integration mode;
-- create or update a `.skillguard/runs/` run record for the selected route;
+- create or update a `.skillguard/runs/` run record only when the contract is `skillguard-runtime` and SkillGuard owns the execution route;
 - advance phases only when required evidence and checks are present for earlier phases;
 - run route, phase-order, evidence, quality-floor, freshness, suite-child, and closure checks before closure;
 - block missing contracts, hollow contracts, ambiguous routes, skipped phases, stale evidence, prose-only evidence, quality downgrades, and closure overclaims.
 
-For native-integrated and hybrid-extension targets, SkillGuard is the runtime contract executor attached to the original skill system. It may add start gates, run records, evidence checks, quality floors, freshness checks, and closure blockers around the original workflow, and it must execute those gates through the original skill's router, controller, simulator, checker, or release flow. Duplicate SkillGuard-owned execution paths are invalid.
+For native-integrated and hybrid-extension targets, SkillGuard is the runtime contract executor attached to the original skill system. It may add start gates, evidence checks, quality floors, freshness checks, and closure blockers around the original workflow, but it must execute those gates through the original skill's router, controller, simulator, checker, or release flow. It must not retain a parallel SkillGuard-owned run record for those targets. Duplicate SkillGuard-owned execution paths are invalid.
 
 AI or human judgment may be recorded after deterministic evidence is clear, but it cannot replace required runnable checks or make skipped work pass.
+
+## Deep Contract Mode
+
+Use Deep Contract Mode when the question is not only "does a contract file exist?" but "does this contract actually cover what the target skill promises to do?"
+
+In this mode SkillGuard must compare the target `SKILL.md`, adjacent native route/check materials, `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, and current `.skillguard/runs/` records only for `skillguard-runtime` contracts. The `check-contract` command checks the contract structure; the `check-depth` command checks whether the contract is deep enough to be useful.
+
+Deep Contract Mode must verify:
+
+- source requirements from the target skill are listed in `source_requirements`;
+- every required source requirement has an `acceptance_obligation`;
+- every required obligation is covered by SkillGuard check-manifest checks, native check bindings, or both;
+- skill-specific checks exist for target-specific obligations such as README bilingual/hero gates, native route binding, hard gates, release gates, or global-router freshness;
+- closure blockers prevent accepted or checked status when target-specific evidence is missing;
+- `run_record_required` is true only for `skillguard-runtime` targets, and their latest run record is accepted, positioned at closure, and bound to the current contract hash;
+- native-integrated and hybrid-extension targets set `run_record_required` to false, include `not_parallel_route_proof` and native binding IDs, and retain no legacy SkillGuard run records;
+- cleanup requirements are explicit when old shallow-upgrade traces, stale reports, or obsolete route files still need removal.
+
+Treat `deep-pass` as the normal acceptance label for maintained target skills. Treat `shallow-contract`, `hollow-contract`, `parallel-route-risk`, `stale-run-evidence`, `missing-native-binding`, `cleanup-required`, and `blocked` as failure or repair labels, not as acceptable release status.
+
+For release-facing README work, run `check-readme-release` in addition to the general SkillGuard checks. This gate is the executable bridge to the README Showcase Writer contract: English-first Chinese mirror, text-to-image hero evidence, README model evidence, version consistency, command-surface wording, and public/private boundary checks.
 
 ## Global Router Mode
 
@@ -151,6 +173,8 @@ These gates are mandatory for SkillGuard work. If a gate cannot be checked, mark
 - Release, package, command, fixture, schema, git, and publication claims must be directly validated before they are described as complete.
 - Failures and blockers must remain visible in the final report.
 - Runtime contract work must not close unless the selected route, run record, required phases, required evidence, required checks, quality floors, and closure boundary are all current for the declared scope.
+- Deep contract work must not close on `check-contract` alone. It must run `check-depth` when the task claims that a target skill's obligations, native routes, checks, run records, or cleanup boundary are deeply covered.
+- README release work must not close on prose review alone. It must run `check-readme-release` when the task claims README bilingual, hero, model, version, command-surface, or public-boundary readiness.
 - Runtime contract work for a target with an existing native route/check system must bind that native system and must not add a parallel SkillGuard execution route. Native or hybrid contracts must include `phase_native_bindings` so each SkillGuard phase names the native route binding and native check binding that prove the phase.
 - Global router work must not claim current user-level routing unless the registry and managed user-level AGENTS prompt block were refreshed or checked against the current registry hash.
 
@@ -178,6 +202,8 @@ When SkillGuard changes, keep the public contract synchronized across the mainta
 - Update the repository README when public usage, status meanings, command names, non-guarantees, or repository structure change.
 - Keep version metadata synchronized when release metadata changes.
 - Keep validation commands and examples aligned with the scripts, fixtures, schemas, and tests that actually exist.
+- Keep `check-depth` aligned with the work-contract schema, generated templates, fixtures, and installed-skill upgrade behavior.
+- Keep `check-readme-release` aligned with README Showcase Writer requirements and public release evidence.
 - Refresh the global registry and managed prompt block when a skill is added or when `SKILL.md`, work-contract, check-manifest, native route binding, or router command behavior changes.
 - Preserve privacy boundaries in public files. Do not copy private workspace instructions, local machine paths, private task text, or internal coordination details into maintained artifacts.
 - Re-run the relevant deterministic checks after edits and record any judgment-based review separately from parser or command results.

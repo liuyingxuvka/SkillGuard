@@ -7,6 +7,7 @@ import hashlib
 import io
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -503,6 +504,10 @@ Read `references/README.md` before closing.
         self.assert_clean_pass(bad_suite)
         self.assertEqual(bad_suite.get("fixture_class_counts", {}).get("expected_fail"), 4)
 
+        deep_contract = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/deep_contract/fixture-manifest.json")
+        self.assert_clean_pass(deep_contract)
+        self.assertEqual(deep_contract.get("fixture_class_counts", {}).get("expected_fail"), 3)
+
         bad_routing = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json")
         self.assert_clean_pass(bad_routing)
         self.assertEqual(bad_routing.get("fixture_class_counts", {}).get("blocker_condition"), 11)
@@ -540,6 +545,50 @@ Read `references/README.md` before closing.
         self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_fail"), 2)
         self.assertEqual(global_router.get("fixture_class_counts", {}).get("blocker_condition"), 5)
         self.assertEqual(global_router_before, {path: sha256(path) for path in global_router_evidence})
+
+    def test_check_depth_rejects_incomplete_latest_run_record(self) -> None:
+        source = REPO_ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "deep_contract" / "bad_missing_run_record"
+        with tempfile.TemporaryDirectory(prefix="deep-incomplete-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            target = Path(tmp) / "bad_incomplete"
+            shutil.copytree(source, target)
+            contract_path = target / ".skillguard" / "work-contract.json"
+            contract = json.loads(contract_path.read_text(encoding="utf-8"))
+            contract["target_path"] = rel(target)
+            write_json(contract_path, contract)
+
+            runs_dir = target / ".skillguard" / "runs"
+            runs_dir.mkdir()
+            write_json(
+                runs_dir / "run-incomplete.json",
+                {
+                    "schema_version": "skillguard.run_record.v1",
+                    "run_id": "run-incomplete",
+                    "target_skill": rel(target),
+                    "selected_route": "audit",
+                    "current_phase": "intake",
+                    "closure_decision": "not_requested",
+                    "contract_ref": {
+                        "contract_hash": "BAD_HASH",
+                        "contract_path": rel(contract_path),
+                        "contract_version": "bad-missing-run-1",
+                    },
+                    "phase_statuses": [{"phase_id": "intake", "status": "running"}],
+                    "commands_run": [],
+                    "evidence": [],
+                    "skipped_checks": [],
+                    "quality_failures": [],
+                    "blockers": [],
+                    "claim_boundary": "Incomplete run fixture.",
+                    "task_summary": "Incomplete run should not satisfy deep contract closure.",
+                },
+            )
+
+            report = run_skillguard("check-depth", "--target", rel(target), expected_exit=1)
+            self.assertEqual(report.get("decision"), "fail")
+            self.assertEqual(report.get("depth_classification"), "stale-run-evidence")
+            failures = "\n".join(report.get("failures", []))
+            self.assertIn("latest run record is not closed with accepted evidence", failures)
+            self.assertIn("latest run record phase intake is running, not checked", failures)
 
     def test_self_check_example_command(self) -> None:
         report = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
@@ -613,17 +662,107 @@ Read `references/README.md` before closing.
         self.assertIn("install-global-prompt", names)
         self.assertIn("check-global-prompt", names)
         self.assertIn("refresh-global-router", names)
+        self.assertIn("audit-installed-skills", names)
         self.assertIn("detect-stale-evidence", names)
         self.assertIn("refresh-maintenance", names)
         self.assertIn("review-checker-change", names)
         self.assertIn("check-maintenance-record", names)
         self.assertIn("compile-contract", names)
         self.assertIn("check-contract", names)
+        self.assertIn("check-depth", names)
+        self.assertIn("check-readme-release", names)
         self.assertIn("select-route", names)
         self.assertIn("start-run", names)
         self.assertIn("advance-run", names)
         self.assertIn("check-run", names)
         self.assertIn("close-run", names)
+
+    def test_check_readme_release_current_repo_passes(self) -> None:
+        report = run_skillguard("check-readme-release", "--repo", ".")
+        self.assert_clean_pass(report)
+        check_ids = {item.get("check_id") for item in report.get("checks", [])}
+        self.assertIn("check-readme-release:bilingual-mirror", check_ids)
+        self.assertIn("check-readme-release:hero-provenance", check_ids)
+        self.assertIn("check-readme-release:model-evidence", check_ids)
+        self.assertIn("check-readme-release:version-consistency", check_ids)
+        self.assertIn("check-readme-release:public-boundary", check_ids)
+
+    def test_check_readme_release_blocks_missing_chinese_mirror(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-readme-release-", dir=REPO_ROOT) as tmp:
+            tmp_root = Path(tmp)
+            hero_dir = tmp_root / "assets" / "readme-hero"
+            hero_dir.mkdir(parents=True)
+            (hero_dir / "hero.png").write_bytes(b"0" * 12_000)
+            (hero_dir / "hero_prompt.md").write_text(
+                "Prompt: SkillGuard visual concept.\nGeneration method: text-to-image model.\n",
+                encoding="utf-8",
+            )
+            (hero_dir / "hero_design_note.md").write_text(
+                "# Hero\n\n## Core workflow\n\nWorkflow evidence.\n\n## Visual concept\n\nVisual evidence.\n",
+                encoding="utf-8",
+            )
+            (hero_dir / "readme_model_evidence.md").write_text(
+                "LogicGuard capability model mechanism evidence boundary objection.\n",
+                encoding="utf-8",
+            )
+            (tmp_root / "VERSION").write_text("0.1.4\n", encoding="utf-8")
+            (tmp_root / "pyproject.toml").write_text(
+                '[project]\nversion = "0.1.4"\n\n[tool.skillguard.repository]\nbaseline_version = "0.1.4"\n',
+                encoding="utf-8",
+            )
+            (tmp_root / "CHANGELOG.md").write_text("# Changelog\n\n## v0.1.4 - 2026-06-28\n", encoding="utf-8")
+            command_index = ", ".join(f"`{name}`" for name in checker_engine.COMMANDS)
+            (tmp_root / "README.md").write_text(
+                "\n".join(
+                    [
+                        "# SkillGuard",
+                        "",
+                        "<!-- README HERO START -->",
+                        '<img src="./assets/readme-hero/hero.png" alt="SkillGuard concept hero image" width="100%" />',
+                        "<!-- README HERO END -->",
+                        "",
+                        "Current release: `v0.1.4`",
+                        "",
+                        "English comes first; the second half is a full Chinese mirror.",
+                        "",
+                        "## Why It Exists",
+                        "English-only placeholder.",
+                        "",
+                        command_index,
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            report = run_skillguard("check-readme-release", "--repo", rel(tmp_root), expected_exit=1)
+            self.assertEqual(report.get("decision"), "fail")
+            self.assertTrue(
+                any("missing-bilingual-mirror" in item for item in report.get("failures", [])),
+                report.get("failures", []),
+            )
+
+    def test_global_route_score_prefers_readme_skill_for_readme_task(self) -> None:
+        task = "用 README 技能给 SkillGuard 写发布 README，中英双语，文生图 hero"
+        readme_score, readme_reasons = checker_engine.global_skill_route_score(
+            {
+                "skill_id": "readme-showcase-writer",
+                "skill_name": "readme-showcase-writer",
+                "route_terms": ["readme", "hero", "bilingual"],
+            },
+            task,
+        )
+        skillguard_score, skillguard_reasons = checker_engine.global_skill_route_score(
+            {
+                "skill_id": "skillguard",
+                "skill_name": "skillguard",
+                "route_terms": ["skillguard", "skill", "check"],
+            },
+            task,
+        )
+        self.assertIn("readme-showcase-task-bias", readme_reasons)
+        self.assertNotIn("skillguard-boundary-audit-bias", skillguard_reasons)
+        self.assertGreater(readme_score, skillguard_score)
 
     def test_global_router_refresh_prompt_and_route_resolution(self) -> None:
         with tempfile.TemporaryDirectory(prefix="skillguard-global-router-", dir=REPO_ROOT) as tmp:
@@ -774,6 +913,16 @@ Read `references/README.md` before closing.
                     ],
                     "claim_boundary": "This fixture contract covers only local native-route registry tests.",
                 }
+                deep_fields = checker_engine.default_deep_contract_fields(skill_dir, ["check_route"])
+                if valid:
+                    deep_fields["not_parallel_route_proof"] = {
+                        "proof_id": "fixture.native.no_parallel_route",
+                        "summary": "Fixture native contract binds SkillGuard checks to the target-owned native route.",
+                        "native_route_binding_ids": ["native-audit-binding"],
+                        "evidence_source": "fixture native route contract",
+                    }
+                    deep_fields["run_record_required"] = False
+                contract.update(deep_fields)
                 contract["contract_hash"] = checker_engine.work_contract_hash(contract)
                 write_json(control / "work-contract.json", contract)
                 write_json(
@@ -1076,6 +1225,7 @@ Read `references/README.md` before closing.
                         },
                     ],
                     "skillguard_role": "native_contract_executor",
+                    "run_record_required": False,
                     "may_define_skillguard_runtime_route": False,
                     "integration_claim_boundary": "SkillGuard executes contract gates through the target's native runtime route and checks.",
                 }
@@ -3139,6 +3289,9 @@ Read `references/README.md` before closing.
             "check-skill",
             "check-suite",
             "fixture-test",
+            "check-depth",
+            "check-readme-release",
+            "audit-installed-skills",
             "self-check",
             "route-task",
             "plan-skill",

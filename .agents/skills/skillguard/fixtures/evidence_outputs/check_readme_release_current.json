@@ -1,0 +1,134 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-27T17:18:11Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "check-readme-release:required-files",
+      "name": "README release files",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked README, version, changelog, hero image, hero notes, and README model evidence files."
+    },
+    {
+      "check_id": "check-readme-release:bilingual-mirror",
+      "name": "English-first Chinese mirror",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked the README language note, Chinese mirror section, paired headings, order, and mirror length."
+    },
+    {
+      "check_id": "check-readme-release:hero-provenance",
+      "name": "Text-to-image hero evidence",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked hero block count, renderable raster asset size, prompt evidence, design note, and deterministic-hero exclusions."
+    },
+    {
+      "check_id": "check-readme-release:model-evidence",
+      "name": "README model evidence",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked for a recorded LogicGuard-backed capability model with mechanism, evidence, boundary, and objection coverage."
+    },
+    {
+      "check_id": "check-readme-release:version-consistency",
+      "name": "Version consistency",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked VERSION, pyproject.toml, README current release line, and CHANGELOG entry."
+    },
+    {
+      "check_id": "check-readme-release:public-boundary",
+      "name": "Command surface and public boundary",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked README command surface wording and scanned public-facing README release files for private paths and unsafe overclaims."
+    }
+  ],
+  "claim_boundary": "This README release gate checks the current local README, version files, hero evidence, model evidence, command-surface wording, and public-safety scans. It does not prove package publication, GitHub release creation, external links beyond local path checks, or future AI behavior.",
+  "command": "check-readme-release",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "readme-release-file-set",
+      "fresh": true,
+      "kind": "filesystem_check",
+      "source_path": "README.md",
+      "summary": "Inspected 8 README release files."
+    },
+    {
+      "evidence_id": "readme-release-version",
+      "fresh": true,
+      "kind": "version_consistency",
+      "source_path": "VERSION",
+      "summary": "VERSION=0.1.4; pyproject.version=0.1.4; baseline_version=0.1.4."
+    },
+    {
+      "evidence_id": "readme-release-hero",
+      "fresh": true,
+      "kind": "hero_provenance",
+      "source_path": "assets/readme-hero/hero_prompt.md",
+      "summary": "Checked text-to-image hero prompt, design note, README hero block, and raster asset."
+    }
+  ],
+  "failures": [],
+  "files_inspected": [
+    {
+      "kind": "markdown",
+      "line_count": 565,
+      "path": "README.md",
+      "sha256": "B0DD28BDB5F849E85A7377F127C8485760CA0E12339C6E26A5E5B9055E42C615"
+    },
+    {
+      "kind": "file",
+      "line_count": 1,
+      "path": "VERSION",
+      "sha256": "8A3DAD16D348C163566A456FCF650D85D7AEEDA5E53D01EE1FA8DC15212915A7"
+    },
+    {
+      "kind": "file",
+      "line_count": 31,
+      "path": "pyproject.toml",
+      "sha256": "BB02F14EACF431C077CBACE43BCD34CB2AE602CC89AF88045BB54A4C1109B8B9"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 24,
+      "path": "CHANGELOG.md",
+      "sha256": "A6F37AD8B69BE8B8611E4AF5C428666A0C341813761F7DFBBD13C57C28ABB86B"
+    },
+    {
+      "byte_count": 1900704,
+      "kind": "image",
+      "path": "assets/readme-hero/hero.png",
+      "sha256": "5610DB4D8A567BB689D51609F06E5B7695B018CB661ABE4FF24FA00EECCD33EB"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 13,
+      "path": "assets/readme-hero/hero_prompt.md",
+      "sha256": "1BE6D3FCAECE3E7763546AB33F1CB13B69066C74E129869186EED9FE9DB8979C"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 47,
+      "path": "assets/readme-hero/hero_design_note.md",
+      "sha256": "2EE8916837A4ED5DC22220702109C5594020F146F0AAE5446444EC4A1CDF0B05"
+    },
+    {
+      "kind": "markdown",
+      "line_count": 40,
+      "path": "assets/readme-hero/readme_model_evidence.md",
+      "sha256": "1434A9FF7B5983D91EC8E04E40B4827D62369CB9405EF1AEB4D9A6CA9C8AB441"
+    }
+  ],
+  "public_safety_findings": [],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".",
+  "unsafe_claim_findings": []
+}

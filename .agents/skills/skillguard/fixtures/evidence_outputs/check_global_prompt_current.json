@@ -1,0 +1,36 @@
+{
+  "agents_file": "~/.codex/AGENTS.md",
+  "blockers": [],
+  "checked_at": "2026-06-27T17:28:09Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "check-global-prompt:managed-block",
+      "name": "Managed prompt block freshness",
+      "required": true,
+      "status": "pass",
+      "summary": "Checked that AGENTS.md has exactly one managed block and that it carries the supplied registry hash."
+    }
+  ],
+  "claim_boundary": "This result covers only the named local CLI invocation and the current files it loaded. It does not prove fixture coverage, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+  "command": "check-global-prompt",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "checked-global-prompt-block",
+      "fresh": true,
+      "kind": "prompt_freshness_check",
+      "source_path": "~/.codex/AGENTS.md",
+      "summary": "Checked managed prompt block against registry hash 6285D9ECD781D38D377C5A916BA3E22EBAD921FEFE124371F67F27D947B3F975."
+    }
+  ],
+  "failures": [],
+  "registry_hash": "6285D9ECD781D38D377C5A916BA3E22EBAD921FEFE124371F67F27D947B3F975",
+  "registry_path": "~/.codex/skillguard-global-router/global_registry.json",
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": "~/.codex/AGENTS.md"
+}

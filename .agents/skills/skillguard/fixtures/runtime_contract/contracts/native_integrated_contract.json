@@ -1,4 +1,66 @@
 {
+  "acceptance_obligations": [
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "skillguard.global_router_freshness.covered",
+      "required": true,
+      "requirement_ids": [
+        "skillguard.global_router_freshness"
+      ],
+      "summary": "Contract coverage for skillguard.global_router_freshness."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "skillguard.native_route_binding.covered",
+      "required": true,
+      "requirement_ids": [
+        "skillguard.native_route_binding"
+      ],
+      "summary": "Contract coverage for skillguard.native_route_binding."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "skillguard.runtime_contract_mode.covered",
+      "required": true,
+      "requirement_ids": [
+        "skillguard.runtime_contract_mode"
+      ],
+      "summary": "Contract coverage for skillguard.runtime_contract_mode."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.entrypoint.acceptance.covered",
+      "required": true,
+      "requirement_ids": [
+        "target.entrypoint.acceptance"
+      ],
+      "summary": "Contract coverage for target.entrypoint.acceptance."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.hard_gates.covered",
+      "required": true,
+      "requirement_ids": [
+        "target.hard_gates"
+      ],
+      "summary": "Contract coverage for target.hard_gates."
+    }
+  ],
   "check_scripts": [
     {
       "check_id": "check_route",
@@ -10,6 +72,69 @@
     }
   ],
   "claim_boundary": "This native integration fixture covers only local contract validation for a target-owned route/check binding.",
+  "cleanup_required": [],
+  "closure_blockers": [
+    {
+      "blocker_id": "skillguard.global_router_freshness.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "skillguard.global_router_freshness.covered"
+      ],
+      "summary": "Block closure when skillguard.global_router_freshness lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "skillguard.native_route_binding.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "skillguard.native_route_binding.covered"
+      ],
+      "summary": "Block closure when skillguard.native_route_binding lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "skillguard.runtime_contract_mode.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "skillguard.runtime_contract_mode.covered"
+      ],
+      "summary": "Block closure when skillguard.runtime_contract_mode lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.entrypoint.acceptance.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.entrypoint.acceptance.covered"
+      ],
+      "summary": "Block closure when target.entrypoint.acceptance lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.hard_gates.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.hard_gates.covered"
+      ],
+      "summary": "Block closure when target.hard_gates lacks runnable or native check evidence."
+    }
+  ],
   "closure_rules": [
     {
       "allowed_decision": "accepted",
@@ -23,7 +148,7 @@
       "scope": "declared native route scope only"
     }
   ],
-  "contract_hash": "1DC2C6D8C475DCD6F65FA38448D2C23485BF392A3B75E114433A67597A926B29",
+  "contract_hash": "F593AEE880F0A5B2CB2503A0540FB3E411443B2084378E5A4169374D299C6DE9",
   "contract_version": "native-fixture-1",
   "forbidden_shortcuts": [
     {
@@ -52,6 +177,14 @@
     }
   ],
   "native_route_owner": "native-router.fixture",
+  "not_parallel_route_proof": {
+    "evidence_source": "native_route_bindings and may_define_parallel_execution_route=false",
+    "native_route_binding_ids": [
+      "native-audit-binding"
+    ],
+    "proof_id": "native-route-binding-no-parallel-skillguard-route",
+    "summary": "Native integrated fixture binds the target native audit route and does not permit a SkillGuard-owned parallel route."
+  },
   "phase_native_bindings": [
     {
       "evidence_source": "native route/check evidence for intake",
@@ -112,9 +245,109 @@
       "summary": "Execute the native audit route with SkillGuard contract gates."
     }
   ],
+  "run_record_required": false,
   "schema_version": "skillguard.work_contract.v1",
   "skill_id": "skillguard",
+  "skill_specific_checks": [
+    {
+      "check_id": "skillguard.global_router_freshness.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "skillguard.global_router_freshness.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for skillguard.global_router_freshness."
+    },
+    {
+      "check_id": "skillguard.native_route_binding.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "skillguard.native_route_binding.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for skillguard.native_route_binding."
+    },
+    {
+      "check_id": "skillguard.runtime_contract_mode.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "skillguard.runtime_contract_mode.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for skillguard.runtime_contract_mode."
+    },
+    {
+      "check_id": "target.entrypoint.acceptance.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.entrypoint.acceptance.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.entrypoint.acceptance."
+    },
+    {
+      "check_id": "target.hard_gates.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.hard_gates.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.hard_gates."
+    }
+  ],
   "skillguard_role": "native_contract_executor",
+  "source_requirements": [
+    {
+      "category": "global-router",
+      "required": true,
+      "requirement_id": "skillguard.global_router_freshness",
+      "source_path": "SKILL.md",
+      "summary": "Global router work must enforce registry and managed prompt freshness before routing claims."
+    },
+    {
+      "category": "native-binding",
+      "required": true,
+      "requirement_id": "skillguard.native_route_binding",
+      "source_path": "SKILL.md",
+      "summary": "Native and hybrid contracts must bind the target skill's native route/check owner and must not create a parallel execution route."
+    },
+    {
+      "category": "runtime-contract",
+      "required": true,
+      "requirement_id": "skillguard.runtime_contract_mode",
+      "source_path": "SKILL.md",
+      "summary": "Runtime contract work must enforce selected route, run record, phase evidence, checks, quality floors, and closure gates."
+    },
+    {
+      "category": "entrypoint",
+      "required": true,
+      "requirement_id": "target.entrypoint.acceptance",
+      "source_path": "SKILL.md",
+      "summary": "The target skill entrypoint and hard gates must be represented by the runtime contract."
+    },
+    {
+      "category": "quality-gate",
+      "required": true,
+      "requirement_id": "target.hard_gates",
+      "source_path": "SKILL.md",
+      "summary": "Declared hard gates and required workflow steps must be represented by checks and closure blockers."
+    }
+  ],
   "stale_bindings": [
     {
       "binding_id": "target_skill_prompt",

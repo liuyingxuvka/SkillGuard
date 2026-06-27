@@ -1,0 +1,6 @@
+{
+  "fixture_id": "deep-parallel-native-route-fail",
+  "target_command": "check-depth",
+  "expected_decision": "fail",
+  "target_path": "../../runtime_contract/contracts/native_parallel_route_contract.json"
+}

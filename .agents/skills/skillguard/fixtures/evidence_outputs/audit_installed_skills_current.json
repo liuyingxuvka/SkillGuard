@@ -1,0 +1,816 @@
+{
+  "audited_skill_count": 64,
+  "blockers": [],
+  "checked_at": "2026-06-27T17:28:09Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "audit-installed-skills:root-discovery",
+      "name": "Installed skill roots",
+      "required": true,
+      "status": "pass",
+      "summary": "Resolved installed skill roots and skipped fixture, backup, and system skill copies."
+    },
+    {
+      "check_id": "audit-installed-skills:deep-contracts",
+      "name": "Deep installed skill contracts",
+      "required": true,
+      "status": "pass",
+      "summary": "Audited 64 installed skill(s); classification counts: {'deep-pass': 64}."
+    }
+  ],
+  "claim_boundary": "This installed-skill audit checks current local SKILL.md files outside fixture, backup, and system roots, then validates adjacent SkillGuard work contracts with deep contract logic. It does not execute target skill work, prove package publication, prove external services, or guarantee future AI behavior.",
+  "classification_counts": {
+    "deep-pass": 64
+  },
+  "command": "audit-installed-skills",
+  "decision": "pass",
+  "evidence": [
+    {
+      "evidence_id": "installed-skill-depth-audit",
+      "fresh": true,
+      "kind": "deep_contract_audit",
+      "source_path": ".codex/skills",
+      "summary": "Audited 64 installed skill(s) and skipped 15 non-target skill file(s)."
+    }
+  ],
+  "failures": [],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skill_results": [
+    {
+      "contract_hash": "A231AA2C07A561A31555F017308F3CF2D4DE6B4F175B3D45C6EC47C993FB7730",
+      "contract_path": ".codex/skills/academic-thesis-revision-workflow/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "academic-thesis-revision-workflow",
+      "skill_path": ".codex/skills/academic-thesis-revision-workflow"
+    },
+    {
+      "contract_hash": "13E01936EEE9678545B4CD4C7DBDB81BE5F7427DB95C56E65D9ED39A45B252DC",
+      "contract_path": ".codex/skills/autonomous-concept-ui-redesign/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "autonomous-concept-ui-redesign",
+      "skill_path": ".codex/skills/autonomous-concept-ui-redesign"
+    },
+    {
+      "contract_hash": "962533756430C425C4AC6300F19F3783A661D105DBDA0C7432BF0A5B6920987A",
+      "contract_path": ".codex/skills/databank-workflow/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "databank-workflow",
+      "skill_path": ".codex/skills/databank-workflow"
+    },
+    {
+      "contract_hash": "F637C0BA978831F5E3EC2941DB06F5AE1952723A4DCF444C87B6C2F11F32286D",
+      "contract_path": ".codex/skills/design-implementation-reviewer/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "design-implementation-reviewer",
+      "skill_path": ".codex/skills/design-implementation-reviewer"
+    },
+    {
+      "contract_hash": "7BB4F352FCFE0E87E245D86C9692871F685A1F72ED171FFAA81CDC4081C3C28C",
+      "contract_path": ".codex/skills/design-iterator/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "design-iterator",
+      "skill_path": ".codex/skills/design-iterator"
+    },
+    {
+      "contract_hash": "F8AD99C814CD5270C0B5068088D9E842A3D743CAFBA8AE3B90955AE90E28A14C",
+      "contract_path": ".codex/skills/flowguard-agent-workflow-rehearsal/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-agent-workflow-rehearsal",
+      "skill_path": ".codex/skills/flowguard-agent-workflow-rehearsal"
+    },
+    {
+      "contract_hash": "F9C9F85DDCA138E6FBFEF3576F8D6269BB4F45115701E2672114D05430A4942B",
+      "contract_path": ".codex/skills/flowguard-architecture-reduction/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-architecture-reduction",
+      "skill_path": ".codex/skills/flowguard-architecture-reduction"
+    },
+    {
+      "contract_hash": "D0EC5EAC1CE900055AB1785602D52BDE25708B114EE75C3F8E1493D93613EA55",
+      "contract_path": ".codex/skills/flowguard-code-structure-recommendation/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-code-structure-recommendation",
+      "skill_path": ".codex/skills/flowguard-code-structure-recommendation"
+    },
+    {
+      "contract_hash": "F240017250785A5A5FAA23DBF16485A354E852997DE0721560279DDE36A998EE",
+      "contract_path": ".codex/skills/flowguard-contract-exhaustion-mesh/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-contract-exhaustion-mesh",
+      "skill_path": ".codex/skills/flowguard-contract-exhaustion-mesh"
+    },
+    {
+      "contract_hash": "0035FA71CC8587909A5F45A970F85AF0614633B7F699CBE1433652F147C5720C",
+      "contract_path": ".codex/skills/flowguard-development-process-flow/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-development-process-flow",
+      "skill_path": ".codex/skills/flowguard-development-process-flow"
+    },
+    {
+      "contract_hash": "0725432B4EC6002AE61F03685A17BA8346B63C02161920EF1749316185059739",
+      "contract_path": ".codex/skills/flowguard-existing-model-preflight/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-existing-model-preflight",
+      "skill_path": ".codex/skills/flowguard-existing-model-preflight"
+    },
+    {
+      "contract_hash": "1534C9FC5836E9E6CA50CB0EA442422B4A9FBBC97534796C2D43ACA0F52CBC85",
+      "contract_path": ".codex/skills/flowguard-field-lifecycle-mesh/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-field-lifecycle-mesh",
+      "skill_path": ".codex/skills/flowguard-field-lifecycle-mesh"
+    },
+    {
+      "contract_hash": "9E4BC0E24E9F3ABCD2032A3539BA14F5A0E571A2CD81C30C564A6837B0B9B690",
+      "contract_path": ".codex/skills/flowguard-model-mesh/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-model-mesh",
+      "skill_path": ".codex/skills/flowguard-model-mesh"
+    },
+    {
+      "contract_hash": "0F53F2CDAD31D9CEFB3C20DA144F4CADB52011AEE7CE7EBE3ECACDC8B600A5C7",
+      "contract_path": ".codex/skills/flowguard-model-miss-review/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-model-miss-review",
+      "skill_path": ".codex/skills/flowguard-model-miss-review"
+    },
+    {
+      "contract_hash": "F0F081ABE7EB63049268F8679976D4316DC5FF099C9606E36AF83A5491F269D1",
+      "contract_path": ".codex/skills/flowguard-model-test-alignment/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-model-test-alignment",
+      "skill_path": ".codex/skills/flowguard-model-test-alignment"
+    },
+    {
+      "contract_hash": "CB4414C1ABDF7AA8778315A02D9848BDDD7FBB18E7FE00885E423D7DBCFCB61B",
+      "contract_path": ".codex/skills/flowguard-model-topology-hazard-review/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-model-topology-hazard-review",
+      "skill_path": ".codex/skills/flowguard-model-topology-hazard-review"
+    },
+    {
+      "contract_hash": "358CE6922EDEC5220912C2EF0767DC3A519A8041AAA8B55F45D1C59B3CF56895",
+      "contract_path": ".codex/skills/flowguard-plan-detailing-compiler/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-plan-detailing-compiler",
+      "skill_path": ".codex/skills/flowguard-plan-detailing-compiler"
+    },
+    {
+      "contract_hash": "F4967E52B180728FA3C76D70DB4371136F289375B4175585E93E6874F3BF8B9D",
+      "contract_path": ".codex/skills/flowguard-structure-mesh/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-structure-mesh",
+      "skill_path": ".codex/skills/flowguard-structure-mesh"
+    },
+    {
+      "contract_hash": "DEB8D5AE41E01FCF7D1915AD411392E253DA355A0399FC9FD3C8AF3DF648D9E8",
+      "contract_path": ".codex/skills/flowguard-test-mesh/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-test-mesh",
+      "skill_path": ".codex/skills/flowguard-test-mesh"
+    },
+    {
+      "contract_hash": "7EF931F813161108934E1A814D08F342DD0001E5D509C4D1770EA8E477AC3121",
+      "contract_path": ".codex/skills/flowguard-ui-flow-structure/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowguard-ui-flow-structure",
+      "skill_path": ".codex/skills/flowguard-ui-flow-structure"
+    },
+    {
+      "contract_hash": "70E58FEFDF8B10972F1D7BCB6111FC47B100F5D488C3AF0B3CC2AB1116FF5623",
+      "contract_path": ".codex/skills/flowpilot/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "flowpilot",
+      "skill_path": ".codex/skills/flowpilot"
+    },
+    {
+      "contract_hash": "DE7F1BAB8114CAD9DCC54118DC183B2F1BFCDBD2B55865B1EC5441DB5A6FF4AB",
+      "contract_path": ".codex/skills/frontend-design/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "frontend-design",
+      "skill_path": ".codex/skills/frontend-design"
+    },
+    {
+      "contract_hash": "AD886AB93E08A235CF35C6DFE96949048B3E2D2387E7250E629B046ABCEC0421",
+      "contract_path": ".codex/skills/hatch-pet/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "hatch-pet",
+      "skill_path": ".codex/skills/hatch-pet"
+    },
+    {
+      "contract_hash": "2E396800349816D10B5BB31C55BE0FF57CE2303363F09790F42683F442BFA5A4",
+      "contract_path": ".codex/skills/job-application-workflow/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "job-application-workflow",
+      "skill_path": ".codex/skills/job-application-workflow"
+    },
+    {
+      "contract_hash": "B2F8360D4D2C701EE0E075B688F2B49B2F42771C4B5B98BD58BC99F8A975556C",
+      "contract_path": ".codex/skills/kb-architect-pass/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "kb-architect-pass",
+      "skill_path": ".codex/skills/kb-architect-pass"
+    },
+    {
+      "contract_hash": "1C62058D3CBA440D067AF8CA863BDEB69A71DCB42F94E78ACB7AB8BCC4E43424",
+      "contract_path": ".codex/skills/kb-dream-pass/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "kb-dream-pass",
+      "skill_path": ".codex/skills/kb-dream-pass"
+    },
+    {
+      "contract_hash": "30F632A75F003A8D35004CC26A0B00F288CC2841B4F71620DE7F9E990DBD9D3F",
+      "contract_path": ".codex/skills/kb-organization-contribute/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "kb-organization-contribute",
+      "skill_path": ".codex/skills/kb-organization-contribute"
+    },
+    {
+      "contract_hash": "EAD5C7B89A48CF96DC638A6F951D6203DB966AA34C4929516C4F6046C46DDB7B",
+      "contract_path": ".codex/skills/kb-organization-maintenance/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "kb-organization-maintenance",
+      "skill_path": ".codex/skills/kb-organization-maintenance"
+    },
+    {
+      "contract_hash": "E026882536BFBAA4CC67DA6FD5A1230D4C5F4B589C22EACF05028660069B7167",
+      "contract_path": ".codex/skills/kb-sleep-maintenance/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "kb-sleep-maintenance",
+      "skill_path": ".codex/skills/kb-sleep-maintenance"
+    },
+    {
+      "contract_hash": "A773AFB9A874B3D58129A03178BF9AD2E593A200B4E8B751CA936A2A46A41215",
+      "contract_path": ".codex/skills/khaos-brain-update/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "khaos-brain-update",
+      "skill_path": ".codex/skills/khaos-brain-update"
+    },
+    {
+      "contract_hash": "2B6104604F3AF99593887387449253ED3E03024D75298D4244EF2AF17D6602CD",
+      "contract_path": ".codex/skills/logicguard/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "logicguard",
+      "skill_path": ".codex/skills/logicguard"
+    },
+    {
+      "contract_hash": "664047FDE09E1C7AA9C18842971C1B2A16BAB18EA5C8F5BA698902059B48630B",
+      "contract_path": ".codex/skills/logicguard-artifact-synthesis/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "logicguard-artifact-synthesis",
+      "skill_path": ".codex/skills/logicguard-artifact-synthesis"
+    },
+    {
+      "contract_hash": "A51947D7D124103A1A99286FD41871D531D493E77A2A02507279ED834CDF0302",
+      "contract_path": ".codex/skills/logicguard-model-deepening/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "logicguard-model-deepening",
+      "skill_path": ".codex/skills/logicguard-model-deepening"
+    },
+    {
+      "contract_hash": "1D253995566D054C82A99FAC25A11D5D447A96C040290DD9F7356D8A866917E1",
+      "contract_path": ".codex/skills/logicguard-project-library-viewer/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "logicguard-project-library-viewer",
+      "skill_path": ".codex/skills/logicguard-project-library-viewer"
+    },
+    {
+      "contract_hash": "10AC8656CC1FFF878F60C6719433DA7B312E259450E0E60022A800BCE8E2A7A0",
+      "contract_path": ".codex/skills/logicguard-source-library/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "logicguard-source-library",
+      "skill_path": ".codex/skills/logicguard-source-library"
+    },
+    {
+      "contract_hash": "FE5D086C629D99340AC758E879B021CBB7B4773B8EE0B7D833BC76077823FA85",
+      "contract_path": ".codex/skills/logicguard-structured-artifact/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "logicguard-structured-artifact",
+      "skill_path": ".codex/skills/logicguard-structured-artifact"
+    },
+    {
+      "contract_hash": "CC502A47DFF67D54BFA6D89DEED654C2B4D760EB6C1C30050FD6E9C6A3BBC09E",
+      "contract_path": ".codex/skills/model-first-function-flow/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "model-first-function-flow",
+      "skill_path": ".codex/skills/model-first-function-flow"
+    },
+    {
+      "contract_hash": "7018DFE75A232E64086010B6A96437F6079C85CE387495DE7054E0C7631CDD69",
+      "contract_path": ".codex/skills/openspec-apply-change/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "openspec-apply-change",
+      "skill_path": ".codex/skills/openspec-apply-change"
+    },
+    {
+      "contract_hash": "D1D730582A87CD5F5DCA6846EFA7F65C16556DFB66DD71E8A4D9757170856CBD",
+      "contract_path": ".codex/skills/openspec-archive-change/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "openspec-archive-change",
+      "skill_path": ".codex/skills/openspec-archive-change"
+    },
+    {
+      "contract_hash": "19561F01B7EB9D4632AC4308A6454C8EF8500B6933EDD0DCBB7D43BFD52063C9",
+      "contract_path": ".codex/skills/openspec-explore/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "openspec-explore",
+      "skill_path": ".codex/skills/openspec-explore"
+    },
+    {
+      "contract_hash": "120371C8FE84A0DC4D92BB0FBC93CF0424A0FAFAA5C07ECEE4E003F35CE097D8",
+      "contract_path": ".codex/skills/openspec-propose/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "openspec-propose",
+      "skill_path": ".codex/skills/openspec-propose"
+    },
+    {
+      "contract_hash": "824983C51185B82C08E1FE78B77C598D50C29E1674A44583D5A4839ABA5BA8CF",
+      "contract_path": ".codex/skills/openspec-verify-change/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "openspec-verify-change",
+      "skill_path": ".codex/skills/openspec-verify-change"
+    },
+    {
+      "contract_hash": "0E11562D582BB136D64F7DC734B312659A34F3F820D8B04957F7C62862506AC0",
+      "contract_path": ".codex/skills/physicsguard-ai-debugging/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-ai-debugging",
+      "skill_path": ".codex/skills/physicsguard-ai-debugging"
+    },
+    {
+      "contract_hash": "5276045403EDE59E2AF780BA8B36549BAF92562DEC5BF510809D63DF9EDFC60C",
+      "contract_path": ".codex/skills/physicsguard-audit-closure/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-audit-closure",
+      "skill_path": ".codex/skills/physicsguard-audit-closure"
+    },
+    {
+      "contract_hash": "B3CEF0EF647D1D9804F0BC6B90F645C236E8B2D7CE54F48EE782ACE541D9B4E3",
+      "contract_path": ".codex/skills/physicsguard-candidate-model-blueprint/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-candidate-model-blueprint",
+      "skill_path": ".codex/skills/physicsguard-candidate-model-blueprint"
+    },
+    {
+      "contract_hash": "1A7FA55077E43C823065BE7B7BBE9C2D91D6FEECBAA21AEC9FF5723B7630A354",
+      "contract_path": ".codex/skills/physicsguard-model-dataset-validation/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-model-dataset-validation",
+      "skill_path": ".codex/skills/physicsguard-model-dataset-validation"
+    },
+    {
+      "contract_hash": "7B86D28178ACBD220CEB35473E164F1088BA91E32B31B84788D686C1FBBAC715",
+      "contract_path": ".codex/skills/physicsguard-model-library/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-model-library",
+      "skill_path": ".codex/skills/physicsguard-model-library"
+    },
+    {
+      "contract_hash": "15644DE29D8EA7AC198D132889F1F1B6CE62310C9D422678B36A0F76135C84C2",
+      "contract_path": ".codex/skills/physicsguard-model-understanding-preflight/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-model-understanding-preflight",
+      "skill_path": ".codex/skills/physicsguard-model-understanding-preflight"
+    },
+    {
+      "contract_hash": "9382541A4353C904EF5D5AB1FCC88A8F77330BB88F4CA3623B1B4D7FDB81B866",
+      "contract_path": ".codex/skills/physicsguard-project-adoption/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-project-adoption",
+      "skill_path": ".codex/skills/physicsguard-project-adoption"
+    },
+    {
+      "contract_hash": "DD3A9FCDD23579D5579F270308EA86FE8A4CD8AB03BD9126B396EAA2AE113530",
+      "contract_path": ".codex/skills/physicsguard-project-evidence-registry/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-project-evidence-registry",
+      "skill_path": ".codex/skills/physicsguard-project-evidence-registry"
+    },
+    {
+      "contract_hash": "72C0E43DA26AA7EA3EA9E29660B65EFC92AB7FDF1652ED5A203873A756926387",
+      "contract_path": ".codex/skills/physicsguard-signal-mapping-review/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-signal-mapping-review",
+      "skill_path": ".codex/skills/physicsguard-signal-mapping-review"
+    },
+    {
+      "contract_hash": "750AB9B975A0FB1770E774CF60B80ACB002EEB0CDD5808DA8696409DED0053AC",
+      "contract_path": ".codex/skills/physicsguard-test-file-contract-review/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "physicsguard-test-file-contract-review",
+      "skill_path": ".codex/skills/physicsguard-test-file-contract-review"
+    },
+    {
+      "contract_hash": "03965F2F9F27787F7F3F0855F9250E96FEE78965B79C61B06B862BB1F219EDD0",
+      "contract_path": ".codex/skills/predictive-kb-preflight/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "native-integrated",
+      "skill_id": "predictive-kb-preflight",
+      "skill_path": ".codex/skills/predictive-kb-preflight"
+    },
+    {
+      "contract_hash": "FE28A06E9F845C42B25780484AE15113136C27EBE48DD008B73B028313E53E98",
+      "contract_path": ".codex/skills/promote-open-source-project/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "promote-open-source-project",
+      "skill_path": ".codex/skills/promote-open-source-project"
+    },
+    {
+      "contract_hash": "A6079850AFFE1B3BD06F32FA0C09D4498D79B569BC5ADA0A59B97D68465AE565",
+      "contract_path": ".codex/skills/publish-github-release/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "publish-github-release",
+      "skill_path": ".codex/skills/publish-github-release"
+    },
+    {
+      "contract_hash": "169940670FED42F73A82ACD3A0C164684A6B06FED67D96D8A72028CCB012A649",
+      "contract_path": ".codex/skills/readme-showcase-writer/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "readme-showcase-writer",
+      "skill_path": ".codex/skills/readme-showcase-writer"
+    },
+    {
+      "contract_hash": "B7859761018C2C12B2A20CBA26EE0641EA6D5920E56B4D1A906D9F8B93F48FDE",
+      "contract_path": ".codex/skills/research-investigation-workflow/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "research-investigation-workflow",
+      "skill_path": ".codex/skills/research-investigation-workflow"
+    },
+    {
+      "contract_hash": "219C0B09C1B2E70604D8B856D90B1996CA02698314A03333D3966B8009555C4D",
+      "contract_path": ".codex/skills/skillguard/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "skillguard-runtime",
+      "skill_id": "skillguard",
+      "skill_path": ".codex/skills/skillguard"
+    },
+    {
+      "contract_hash": "46E2050E930D8C06236F20BB806AEAEEAE2969C9393D27A352BA1684A9C03553",
+      "contract_path": ".codex/skills/skillguard-global-router/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "skillguard-runtime",
+      "skill_id": "skillguard-global-router",
+      "skill_path": ".codex/skills/skillguard-global-router"
+    },
+    {
+      "contract_hash": "5F3B42E84011938143212B58EA824F90B3F277E4C8F4590A4EF6928424A472BB",
+      "contract_path": ".codex/skills/sourceguard/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "sourceguard",
+      "skill_path": ".codex/skills/sourceguard"
+    },
+    {
+      "contract_hash": "36F2EAF53CFA8FB389D9BEF7CC3BAD4AD20B7C05C82B0DA2175A8C791AD953DF",
+      "contract_path": ".codex/skills/storyline-design/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "storyline-design",
+      "skill_path": ".codex/skills/storyline-design"
+    },
+    {
+      "contract_hash": "B44521D67DD328D473B71A665D3E906B97FDAE5D983BC858FDFB696652040537",
+      "contract_path": ".codex/skills/traceguard/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "traceguard",
+      "skill_path": ".codex/skills/traceguard"
+    },
+    {
+      "contract_hash": "E4DE0C9D92A98C474403BC088B65F937BB32D597A1ECE4A34028A61D73611A1A",
+      "contract_path": ".codex/skills/traceguard-library/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "traceguard-library",
+      "skill_path": ".codex/skills/traceguard-library"
+    },
+    {
+      "contract_hash": "BA3FDA8BFAF62B886D310F8C9FA8610C433B1DE2E187D1FEF2A23967D82EF18A",
+      "contract_path": ".codex/skills/worldguard/.skillguard/work-contract.json",
+      "decision": "pass",
+      "depth_classification": "deep-pass",
+      "failure_count": 0,
+      "failures": [],
+      "integration_mode": "hybrid-extension",
+      "skill_id": "worldguard",
+      "skill_path": ".codex/skills/worldguard"
+    }
+  ],
+  "skill_roots": [
+    ".codex/skills"
+  ],
+  "skipped_checks": [],
+  "skipped_skill_count": 15,
+  "skipped_skills": [
+    {
+      "reason": "skip system skill root",
+      "skill_path": ".codex/skills/.system/imagegen"
+    },
+    {
+      "reason": "skip system skill root",
+      "skill_path": ".codex/skills/.system/openai-docs"
+    },
+    {
+      "reason": "skip system skill root",
+      "skill_path": ".codex/skills/.system/plugin-creator"
+    },
+    {
+      "reason": "skip system skill root",
+      "skill_path": ".codex/skills/.system/skill-creator"
+    },
+    {
+      "reason": "skip system skill root",
+      "skill_path": ".codex/skills/.system/skill-installer"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/bad_static/bad_static_missing_description"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/bad_static/bad_static_missing_reference"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/deep_contract/bad_missing_run_record"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/deep_contract/bad_readme_missing_bilingual"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/good_single_skill"
+    },
+    {
+      "reason": "skip SkillGuard fixture skill",
+      "skill_path": ".codex/skills/skillguard/fixtures/good_suite/members/good_suite_member"
+    }
+  ],
+  "target_path": ".codex/skills"
+}

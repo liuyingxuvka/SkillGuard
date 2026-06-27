@@ -1,0 +1,49 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "deep-contract-v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "status": "compatible",
+    "notes": [
+      "Exercises SkillGuard deep target-specific contract coverage and known shallow-contract failure classes."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "deep-readme-missing-bilingual-fail",
+      "fixture_type": "negative",
+      "target_rule": "A README skill contract that omits the bilingual mirror obligation fails deep coverage.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/readme-missing-bilingual-fail.json"
+    },
+    {
+      "fixture_id": "deep-missing-run-record-fail",
+      "fixture_type": "negative",
+      "target_rule": "A contract that requires a run record fails when no current run record exists.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/missing-run-record-fail.json"
+    },
+    {
+      "fixture_id": "deep-parallel-native-route-fail",
+      "fixture_type": "negative",
+      "target_rule": "A native contract that permits a parallel SkillGuard execution route fails deep coverage.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/parallel-native-route-fail.json"
+    }
+  ],
+  "evidence": [
+    ".agents/skills/skillguard/fixtures/deep_contract/bad_readme_missing_bilingual/SKILL.md",
+    ".agents/skills/skillguard/fixtures/deep_contract/bad_readme_missing_bilingual/.skillguard/work-contract.json",
+    ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record/SKILL.md",
+    ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record/.skillguard/work-contract.json",
+    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_parallel_route_contract.json"
+  ],
+  "skipped_checks": [],
+  "residual_risk": [
+    "These fixtures cover selected deep-contract failure classes, not every target-specific skill domain."
+  ],
+  "claim_boundary": "This fixture manifest governs only explicit deep-contract fixture cases. It does not prove broad AI semantic extraction, runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, external services, or future AI behavior."
+}

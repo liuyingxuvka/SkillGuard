@@ -96,6 +96,57 @@
       },
       "type": "array"
     },
+    "closure_blockers": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "blocker_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "blocks_decisions": {
+            "items": {
+              "enum": [
+                "checked",
+                "accepted",
+                "needs-review",
+                "blocked",
+                "failed",
+                "stale"
+              ],
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "failure_class": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "obligation_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "blocker_id",
+          "obligation_ids",
+          "failure_class",
+          "blocks_decisions",
+          "summary"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
     "contract_hash": {
       "minLength": 1,
       "type": "string"
@@ -115,6 +166,99 @@
         "skillguard-runtime"
       ],
       "type": "string"
+    },
+    "acceptance_obligations": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "covered_by_checks": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "native_check_binding_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "obligation_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "requirement_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "obligation_id",
+          "requirement_ids",
+          "summary",
+          "required",
+          "covered_by_checks",
+          "native_check_binding_ids"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "cleanup_required": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "cleanup_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "paths": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "not-needed",
+              "required",
+              "complete",
+              "blocked"
+            ],
+            "type": "string"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "cleanup_id",
+          "summary",
+          "paths",
+          "required",
+          "status"
+        ],
+        "type": "object"
+      },
+      "type": "array"
     },
     "may_define_parallel_execution_route": {
       "type": "boolean"
@@ -225,6 +369,37 @@
       },
       "type": "array"
     },
+    "not_parallel_route_proof": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_source": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "native_route_binding_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "proof_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "summary": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "proof_id",
+        "summary",
+        "native_route_binding_ids",
+        "evidence_source"
+      ],
+      "type": "object"
+    },
     "native_route_owner": {
       "type": "string"
     },
@@ -293,6 +468,10 @@
         "type": "object"
       },
       "type": "array"
+    },
+    "run_record_required": {
+      "description": "True only when SkillGuard owns the runtime execution route. Native-integrated and hybrid-extension contracts must bind target-owned routes/checks instead.",
+      "type": "boolean"
     },
     "quality_floors": {
       "items": {
@@ -428,9 +607,94 @@
       "const": "skillguard.work_contract.v1",
       "type": "string"
     },
+    "skill_specific_checks": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "check_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "check_manifest_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "native_check_binding_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "obligation_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id",
+          "obligation_ids",
+          "check_manifest_ids",
+          "native_check_binding_ids",
+          "required",
+          "summary"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
     "skill_id": {
       "minLength": 1,
       "type": "string"
+    },
+    "source_requirements": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "requirement_id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "source_path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "requirement_id",
+          "category",
+          "summary",
+          "source_path",
+          "required"
+        ],
+        "type": "object"
+      },
+      "type": "array"
     },
     "skillguard_role": {
       "enum": [
@@ -485,6 +749,13 @@
     "native_route_bindings",
     "native_check_bindings",
     "phase_native_bindings",
+    "source_requirements",
+    "acceptance_obligations",
+    "skill_specific_checks",
+    "closure_blockers",
+    "run_record_required",
+    "not_parallel_route_proof",
+    "cleanup_required",
     "skillguard_role",
     "may_define_parallel_execution_route",
     "may_define_skillguard_runtime_route",

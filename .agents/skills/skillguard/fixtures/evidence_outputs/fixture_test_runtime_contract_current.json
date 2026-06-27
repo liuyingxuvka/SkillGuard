@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-27T09:00:59Z",
+  "checked_at": "2026-06-27T17:15:35Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -125,24 +125,31 @@
         }
       ],
       "observed_decision": "fail",
-      "observed_failure_count": 16,
+      "observed_failure_count": 29,
       "observed_failures": [
         "$.integration_mode: missing required field",
         "$.native_route_owner: missing required field",
         "$.native_route_bindings: missing required field",
         "$.native_check_bindings: missing required field",
-        "$.skillguard_role: missing required field",
-        "$.may_define_parallel_execution_route: missing required field",
-        "$.may_define_skillguard_runtime_route: missing required field",
-        "$.integration_claim_boundary: missing required field",
-        "$.routes: must be a non-empty list",
-        "$.phases: must be a non-empty list"
+        "$.source_requirements: missing required field",
+        "$.acceptance_obligations: missing required field",
+        "$.skill_specific_checks: missing required field",
+        "$.closure_blockers: missing required field",
+        "$.run_record_required: missing required field",
+        "$.not_parallel_route_proof: missing required field"
       ],
       "problems": [
         "$.integration_mode: missing required field",
         "$.native_route_owner: missing required field",
         "$.native_route_bindings: missing required field",
         "$.native_check_bindings: missing required field",
+        "$.source_requirements: missing required field",
+        "$.acceptance_obligations: missing required field",
+        "$.skill_specific_checks: missing required field",
+        "$.closure_blockers: missing required field",
+        "$.run_record_required: missing required field",
+        "$.not_parallel_route_proof: missing required field",
+        "$.cleanup_required: missing required field",
         "$.skillguard_role: missing required field",
         "$.may_define_parallel_execution_route: missing required field",
         "$.may_define_skillguard_runtime_route: missing required field",
@@ -154,6 +161,12 @@
         "$.closure_rules: must be a non-empty list",
         "$.quality_floors: must be a non-empty list",
         "$.forbidden_shortcuts: must be a non-empty list",
+        "$.source_requirements: must be a non-empty list",
+        "$.acceptance_obligations: must be a non-empty list",
+        "$.skill_specific_checks: must be a non-empty list",
+        "$.closure_blockers: must be a non-empty list",
+        "$.cleanup_required: must be a list",
+        "$.not_parallel_route_proof: required to prove SkillGuard did not add a parallel execution route",
         "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner or own the runtime contract directly; duplicate execution paths are invalid"
       ],
       "sha256": "9DAA19DCB9DF279056C52CA0650B935A6C806E54FDBCCC6322CD10A4FC482729",
@@ -221,13 +234,34 @@
         }
       ],
       "observed_decision": "fail",
-      "observed_failure_count": 3,
+      "observed_failure_count": 17,
       "observed_failures": [
-        "$.native_route_bindings: must bind at least one native route when integration_mode is native-integrated",
-        "$.phase_native_bindings: must bind native route/check evidence for each route phase when integration_mode is native-integrated",
-        "phase intake: missing phase_native_bindings entry for native-integrated route"
+        "$.source_requirements: missing required field",
+        "$.acceptance_obligations: missing required field",
+        "$.skill_specific_checks: missing required field",
+        "$.closure_blockers: missing required field",
+        "$.run_record_required: missing required field",
+        "$.not_parallel_route_proof: missing required field",
+        "$.cleanup_required: missing required field",
+        "$.source_requirements: must be a non-empty list",
+        "$.acceptance_obligations: must be a non-empty list",
+        "$.skill_specific_checks: must be a non-empty list"
       ],
       "problems": [
+        "$.source_requirements: missing required field",
+        "$.acceptance_obligations: missing required field",
+        "$.skill_specific_checks: missing required field",
+        "$.closure_blockers: missing required field",
+        "$.run_record_required: missing required field",
+        "$.not_parallel_route_proof: missing required field",
+        "$.cleanup_required: missing required field",
+        "$.source_requirements: must be a non-empty list",
+        "$.acceptance_obligations: must be a non-empty list",
+        "$.skill_specific_checks: must be a non-empty list",
+        "$.closure_blockers: must be a non-empty list",
+        "$.cleanup_required: must be a list",
+        "$.not_parallel_route_proof: required to prove SkillGuard did not add a parallel execution route",
+        "$.run_record_required: must be false when integration_mode is native-integrated",
         "$.native_route_bindings: must bind at least one native route when integration_mode is native-integrated",
         "$.phase_native_bindings: must bind native route/check evidence for each route phase when integration_mode is native-integrated",
         "phase intake: missing phase_native_bindings entry for native-integrated route"
@@ -263,12 +297,35 @@
         }
       ],
       "observed_decision": "fail",
-      "observed_failure_count": 1,
+      "observed_failure_count": 15,
       "observed_failures": [
-        "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner or own the runtime contract directly; duplicate execution paths are invalid"
+        "$.source_requirements: missing required field",
+        "$.acceptance_obligations: missing required field",
+        "$.skill_specific_checks: missing required field",
+        "$.closure_blockers: missing required field",
+        "$.run_record_required: missing required field",
+        "$.not_parallel_route_proof: missing required field",
+        "$.cleanup_required: missing required field",
+        "$.source_requirements: must be a non-empty list",
+        "$.acceptance_obligations: must be a non-empty list",
+        "$.skill_specific_checks: must be a non-empty list"
       ],
       "problems": [
-        "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner or own the runtime contract directly; duplicate execution paths are invalid"
+        "$.source_requirements: missing required field",
+        "$.acceptance_obligations: missing required field",
+        "$.skill_specific_checks: missing required field",
+        "$.closure_blockers: missing required field",
+        "$.run_record_required: missing required field",
+        "$.not_parallel_route_proof: missing required field",
+        "$.cleanup_required: missing required field",
+        "$.source_requirements: must be a non-empty list",
+        "$.acceptance_obligations: must be a non-empty list",
+        "$.skill_specific_checks: must be a non-empty list",
+        "$.closure_blockers: must be a non-empty list",
+        "$.cleanup_required: must be a list",
+        "$.not_parallel_route_proof: required to prove SkillGuard did not add a parallel execution route",
+        "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner or own the runtime contract directly; duplicate execution paths are invalid",
+        "$.run_record_required: must be false when integration_mode is native-integrated"
       ],
       "sha256": "26BA77E7F133393A8442662F4B9CD6D11530C4E63A11FB23198DC841A97674E7",
       "target_command": "check-contract",
@@ -301,16 +358,37 @@
         }
       ],
       "observed_decision": "fail",
-      "observed_failure_count": 3,
+      "observed_failure_count": 17,
       "observed_failures": [
+        "$.source_requirements: missing required field",
+        "$.acceptance_obligations: missing required field",
+        "$.skill_specific_checks: missing required field",
+        "$.closure_blockers: missing required field",
+        "$.run_record_required: missing required field",
+        "$.not_parallel_route_proof: missing required field",
+        "$.cleanup_required: missing required field",
         "$.skillguard_role: expected one of ['native_contract_executor', 'hybrid_contract_executor', 'runtime_owner']",
-        "$.skillguard_role: legacy role contract_adapter is invalid; regenerate the contract with native_contract_executor, hybrid_contract_executor, or runtime_owner",
-        "$.skillguard_role: expected native_contract_executor when integration_mode is native-integrated"
+        "$.source_requirements: must be a non-empty list",
+        "$.acceptance_obligations: must be a non-empty list"
       ],
       "problems": [
+        "$.source_requirements: missing required field",
+        "$.acceptance_obligations: missing required field",
+        "$.skill_specific_checks: missing required field",
+        "$.closure_blockers: missing required field",
+        "$.run_record_required: missing required field",
+        "$.not_parallel_route_proof: missing required field",
+        "$.cleanup_required: missing required field",
         "$.skillguard_role: expected one of ['native_contract_executor', 'hybrid_contract_executor', 'runtime_owner']",
+        "$.source_requirements: must be a non-empty list",
+        "$.acceptance_obligations: must be a non-empty list",
+        "$.skill_specific_checks: must be a non-empty list",
+        "$.closure_blockers: must be a non-empty list",
+        "$.cleanup_required: must be a list",
+        "$.not_parallel_route_proof: required to prove SkillGuard did not add a parallel execution route",
         "$.skillguard_role: legacy role contract_adapter is invalid; regenerate the contract with native_contract_executor, hybrid_contract_executor, or runtime_owner",
-        "$.skillguard_role: expected native_contract_executor when integration_mode is native-integrated"
+        "$.skillguard_role: expected native_contract_executor when integration_mode is native-integrated",
+        "$.run_record_required: must be false when integration_mode is native-integrated"
       ],
       "sha256": "408D1D1AC676E4390D34709B3598AC626845A5F25E06F6FE5C6359F9B21DC33B",
       "target_command": "check-contract",
@@ -767,7 +845,7 @@
       "observed_checks": [
         {
           "check_id": "check-run:schema-and-contract",
-          "status": "pass"
+          "status": "fail"
         },
         {
           "check_id": "check-run:phase-order",
@@ -775,7 +853,7 @@
         },
         {
           "check_id": "check-run:evidence-and-quality",
-          "status": "pass"
+          "status": "fail"
         },
         {
           "check_id": "close-run:closure-gate",
@@ -783,11 +861,34 @@
         }
       ],
       "observed_decision": "fail",
-      "observed_failure_count": 1,
+      "observed_failure_count": 15,
       "observed_failures": [
-        "contract has no closure rule allowing accepted"
+        "contract: $.source_requirements: missing required field",
+        "contract: $.acceptance_obligations: missing required field",
+        "contract: $.skill_specific_checks: missing required field",
+        "contract: $.closure_blockers: missing required field",
+        "contract: $.run_record_required: missing required field",
+        "contract: $.not_parallel_route_proof: missing required field",
+        "contract: $.cleanup_required: missing required field",
+        "contract: $.source_requirements: must be a non-empty list",
+        "contract: $.acceptance_obligations: must be a non-empty list",
+        "contract: $.skill_specific_checks: must be a non-empty list"
       ],
       "problems": [
+        "contract: $.source_requirements: missing required field",
+        "contract: $.acceptance_obligations: missing required field",
+        "contract: $.skill_specific_checks: missing required field",
+        "contract: $.closure_blockers: missing required field",
+        "contract: $.run_record_required: missing required field",
+        "contract: $.not_parallel_route_proof: missing required field",
+        "contract: $.cleanup_required: missing required field",
+        "contract: $.source_requirements: must be a non-empty list",
+        "contract: $.acceptance_obligations: must be a non-empty list",
+        "contract: $.skill_specific_checks: must be a non-empty list",
+        "contract: $.closure_blockers: must be a non-empty list",
+        "contract: $.cleanup_required: must be a list",
+        "contract: $.not_parallel_route_proof: required to prove SkillGuard did not add a parallel execution route",
+        "contract: $.run_record_required: must be true when integration_mode is skillguard-runtime",
         "contract has no closure rule allowing accepted"
       ],
       "sha256": "A9AABB7C6D4054AA6DB4C00574163389A5B62FC6B9A5E882A06359A958570BEE",
@@ -884,9 +985,12 @@
         "install-global-prompt",
         "check-global-prompt",
         "refresh-global-router",
+        "audit-installed-skills",
         "check-json-schema",
         "compile-contract",
         "check-contract",
+        "check-depth",
+        "check-readme-release",
         "select-route",
         "start-run",
         "advance-run",
@@ -963,6 +1067,30 @@
           "responsibility": "checker",
           "route_id": "skillguard.route.check-contract.v1",
           "route_node_id": "check-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "check-depth",
+          "next_step": "Run check-depth when a target skill contract must prove source-specific obligations, current run evidence, and non-parallel route binding.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-depth.v1",
+          "route_node_id": "check-depth",
+          "status": "current"
+        },
+        {
+          "command_family": "check-readme-release",
+          "next_step": "Run check-readme-release before publishing README-facing SkillGuard releases.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-readme-release.v1",
+          "route_node_id": "check-readme-release",
+          "status": "current"
+        },
+        {
+          "command_family": "audit-installed-skills",
+          "next_step": "Run audit-installed-skills against the installed user skill root before broad installed-skill coverage claims.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.audit-installed-skills.v1",
+          "route_node_id": "audit-installed-skills",
           "status": "current"
         },
         {
@@ -1080,7 +1208,7 @@
       ]
     },
     "content_hash": "E859DC0365AD6011AA8360A164CA67F6BE3969933165C9D2A493836F14277746",
-    "evidence_timestamp": "2026-06-27T09:00:59Z",
+    "evidence_timestamp": "2026-06-27T17:15:35Z",
     "record_id": "fixture_evidence:C1E272B4BD9413A4",
     "record_kind": "fixture_evidence",
     "refresh_action": {

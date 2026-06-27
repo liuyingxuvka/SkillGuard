@@ -136,3 +136,54 @@
 ### Next Actions
 - Before publishing, perform final git status review across SkillGuard and FlowPilot, then commit/push on `master`/`main` only.
 - Keep SkillGuard's global scanner enforcing `phase_native_bindings` so future native/hybrid skill upgrades cannot silently create parallel routes.
+
+## deepen-skillguard-contract-coverage - Deepen SkillGuard contract coverage, README gates, installed-skill audit, and global routing correction
+
+- Project: SkillGuard
+- Trigger reason: user found README skill misuse, indicating SkillGuard's previous coverage was too shallow
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-06-27T16:24:00+00:00
+- Ended: 2026-06-27T16:39:30+00:00
+- Commands OK: True
+
+### Commands
+- `python .agents/skills/skillguard/scripts/skillguard.py check-readme-release --repo .`
+- `python .agents/skills/skillguard/scripts/skillguard.py audit-installed-skills --root ~/.codex/skills`
+- `python tests/test_skillguard_local.py`
+- `python .agents/skills/skillguard/scripts/skillguard.py resolve-global-skill --registry ~/.codex/skillguard-global-router/global_registry.json --task "README release task"`
+- `python .agents/skills/skillguard/scripts/skillguard.py compile-contract --target .agents/skills/skillguard-global-router --write --force`
+- `python .agents/skills/skillguard/scripts/skillguard.py start-run --target .agents/skills/skillguard-global-router --route audit`
+- `python .agents/skills/skillguard/scripts/skillguard.py check-depth --target .agents/skills/skillguard-global-router`
+- `python ~/.codex/skills/skillguard/scripts/skillguard.py audit-installed-skills --root ~/.codex/skills`
+- `python ~/.codex/skills/skillguard/scripts/skillguard.py refresh-global-router --skill-root ~/.codex/skills --codex-home ~/.codex --output-dir ~/.codex/skillguard-global-router`
+- `python ~/.codex/skills/skillguard/scripts/skillguard.py check-global-prompt --registry ~/.codex/skillguard-global-router/global_registry.json --codex-home ~/.codex`
+- `python ~/.codex/skills/skillguard/scripts/skillguard.py resolve-global-skill --registry ~/.codex/skillguard-global-router/global_registry.json --task "README release task"`
+- `python ~/.codex/skills/skillguard/scripts/skillguard.py resolve-global-skill --registry ~/.codex/skillguard-global-router/global_registry.json --task "FlowPilot route task"`
+
+### Findings
+- Added executable `check-readme-release` for bilingual README mirror, text-to-image hero provenance, README model evidence, version consistency, command-surface wording, and public-boundary checks.
+- Added `audit-installed-skills` so installed user-created skills can be rechecked with deep contract logic without ad hoc shell scripts.
+- Fixed global route scoring so README/hero/bilingual tasks route to `readme-showcase-writer` even when the target project name is SkillGuard.
+- Recompiled `skillguard-global-router`'s source work contract with deep fields and created a current run record after installed audit found its old shallow contract.
+- Synchronized installed SkillGuard and SkillGuard Global Router copies to the source skill directories and removed explicitly identified extra old run-record files.
+- Installed audit returned 64 audited user skills with `deep-pass:64` after the fix.
+
+### Friction Points
+- The first `check-readme-release` implementation treated a PNG as UTF-8 text while building file evidence; it was corrected to record image byte count and hash.
+- A PowerShell copy command used `-LiteralPath` with a wildcard and did not copy; it was rerun with explicit child enumeration.
+- Global route resolution initially selected `skillguard` for a README task because the project name appeared in the request; the route scoring rule now suppresses the SkillGuard-specific bias for README tasks.
+
+### Risk Evidence Summary
+- README release gate passed on the current repository.
+- Standard library tests reported 68 tests OK before the final verification run.
+- Installed SkillGuard audit reported `deep-pass` for 64 user skills.
+- Global prompt check passed with registry hash `8516119C84D564E1C1EC955BB999092EFD2536AD0553B621CC380CEAA443CA73`.
+- README route resolved to `readme-showcase-writer`; FlowPilot route resolved to `flowpilot` with `native-integrated`.
+
+### Skipped Steps
+- No GitHub push, tag, or release was performed in this validation step.
+- FlowGuard project audit and OpenSpec verification remain to be rerun after the final edits.
+
+### Next Actions
+- Run final full verification, OpenSpec verification, project audit, privacy diff, commit on master, push, and publish `v0.1.4` only after all checks stay current.

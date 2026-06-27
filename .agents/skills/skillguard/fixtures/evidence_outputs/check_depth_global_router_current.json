@@ -1,0 +1,83 @@
+{
+  "blockers": [],
+  "checked_at": "2026-06-27T17:27:47Z",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "checks": [
+    {
+      "check_id": "check-depth:contract-shape",
+      "name": "Deep contract fields",
+      "required": true,
+      "status": "pass",
+      "summary": "Validated deep contract fields, native binding rules, check references, closure blockers, and canonical hash."
+    },
+    {
+      "check_id": "check-depth:target-obligations",
+      "name": "Target-specific obligation coverage",
+      "required": true,
+      "status": "pass",
+      "summary": "Compared inferred target skill obligations with contract obligations, runnable checks, run records, and closure blockers."
+    }
+  ],
+  "claim_boundary": "This depth check proves only that the current target contract maps inferred target obligations to declared checks, native bindings, run evidence, and closure blockers. It does not prove AI judgment quality or future task behavior.",
+  "command": "check-depth",
+  "contract_path": ".agents/skills/skillguard-global-router/.skillguard/work-contract.json",
+  "coverage_rows": [
+    {
+      "contract_declared": true,
+      "obligation_count": 1,
+      "requirement_id": "skillguard.global_router_freshness"
+    },
+    {
+      "contract_declared": true,
+      "obligation_count": 1,
+      "requirement_id": "skillguard.native_route_binding"
+    },
+    {
+      "contract_declared": true,
+      "obligation_count": 1,
+      "requirement_id": "skillguard.runtime_contract_mode"
+    },
+    {
+      "contract_declared": true,
+      "obligation_count": 1,
+      "requirement_id": "target.entrypoint.acceptance"
+    },
+    {
+      "contract_declared": true,
+      "obligation_count": 1,
+      "requirement_id": "target.hard_gates"
+    }
+  ],
+  "decision": "pass",
+  "depth_classification": "deep-pass",
+  "evidence": [
+    {
+      "evidence_id": "deep-contract-work-contract",
+      "fresh": true,
+      "kind": "parser_output",
+      "source_path": ".agents/skills/skillguard-global-router/.skillguard/work-contract.json",
+      "summary": "Loaded work contract .agents/skills/skillguard-global-router/.skillguard/work-contract.json; sha256=85F43C26D80B0D84E32AF275A3ED649D5E9AA1D783FE38DB604AA56BCDBF0D64."
+    },
+    {
+      "evidence_id": "deep-contract-skill-entrypoint",
+      "fresh": true,
+      "kind": "source_requirement_scan",
+      "source_path": ".agents/skills/skillguard-global-router/SKILL.md",
+      "summary": "Inferred 5 target source requirements from SKILL.md."
+    },
+    {
+      "evidence_id": "deep-contract-latest-run",
+      "fresh": true,
+      "kind": "run_record",
+      "source_path": ".agents/skills/skillguard-global-router/.skillguard/runs/run-1e850f38c5c98c92.json",
+      "summary": "Found latest run record .agents/skills/skillguard-global-router/.skillguard/runs/run-1e850f38c5c98c92.json."
+    }
+  ],
+  "failures": [],
+  "residual_risk": [
+    "This local command does not provide fixture coverage, suite automation, package publication, or code-contract validation."
+  ],
+  "schema_version": "skillguard.cli_result.v1",
+  "skipped_checks": [],
+  "target_path": ".agents/skills/skillguard-global-router"
+}

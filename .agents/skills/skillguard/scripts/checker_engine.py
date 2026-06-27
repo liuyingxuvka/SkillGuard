@@ -189,6 +189,8 @@ FIXTURE_TARGET_SCHEMAS = {
 }
 FIXTURE_TARGET_RUNTIME_COMMANDS = {
     "check-contract",
+    "check-depth",
+    "check-readme-release",
     "check-run",
     "check-skill",
     "check-suite",
@@ -200,6 +202,7 @@ FIXTURE_TARGET_RUNTIME_COMMANDS = {
     "generate-skill",
     "install-global-prompt",
     "refresh-global-router",
+    "audit-installed-skills",
     "render-global-prompt",
     "resolve-global-skill",
     "route-task",
@@ -579,6 +582,60 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
             "work contract schema",
             "contract hash",
             "contract closure rule",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.check-depth.v1",
+        "route_node_id": "check-depth",
+        "command_family": "check-depth",
+        "responsibility": "checker",
+        "next_step": "Run check-depth when a target skill contract must prove source-specific obligations, current run evidence, and non-parallel route binding.",
+        "status": "current",
+        "hints": ("check-depth", "deep-contract-check", "source-requirement-check", "non-parallel-route-proof"),
+        "keywords": (
+            "check depth",
+            "deep contract",
+            "shallow contract",
+            "source requirements",
+            "acceptance obligations",
+            "skill specific checks",
+            "closure blockers",
+            "parallel route risk",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.check-readme-release.v1",
+        "route_node_id": "check-readme-release",
+        "command_family": "check-readme-release",
+        "responsibility": "checker",
+        "next_step": "Run check-readme-release before publishing README-facing SkillGuard releases.",
+        "status": "current",
+        "hints": ("check-readme-release", "readme-release-gate", "readme-gates"),
+        "keywords": (
+            "readme release",
+            "readme gate",
+            "bilingual readme",
+            "hero provenance",
+            "version consistency",
+            "public boundary",
+            "readme model evidence",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.audit-installed-skills.v1",
+        "route_node_id": "audit-installed-skills",
+        "command_family": "audit-installed-skills",
+        "responsibility": "checker",
+        "next_step": "Run audit-installed-skills against the installed user skill root before broad installed-skill coverage claims.",
+        "status": "current",
+        "hints": ("audit-installed-skills", "installed-skill-audit", "global-skill-depth-audit"),
+        "keywords": (
+            "audit installed skills",
+            "scan installed skills",
+            "all user skills",
+            "global skill audit",
+            "installed skill depth",
+            "skillguard optimized skills",
         ),
     },
     {
@@ -1411,6 +1468,7 @@ CHECK_TEMPLATE_BY_ID = {
 }
 RUN_TERMINAL_STATUSES = {"checked", "needs-review", "blocked", "failed", "stale"}
 RUN_ACCEPTABLE_PREVIOUS_STATUSES = {"checked", "needs-review"}
+RUN_DEPTH_ACCEPTED_CLOSURE_DECISIONS = {"accepted", "closed_with_evidence"}
 
 
 def canonical_json_hash(value: Any, length: int | None = None) -> str:
@@ -1475,9 +1533,174 @@ def duplicate_ids(items: Any, key: str) -> list[str]:
     return sorted(duplicates)
 
 
-def build_default_work_contract(target: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+def source_requirement(
+    requirement_id: str,
+    category: str,
+    summary: str,
+    source_path: str = "SKILL.md",
+    *,
+    required: bool = True,
+) -> dict[str, Any]:
+    return {
+        "requirement_id": requirement_id,
+        "category": category,
+        "summary": summary,
+        "source_path": source_path,
+        "required": required,
+    }
+
+
+def read_target_skill_text(target: Path | None, root: Path | None = None) -> str:
+    if target is None:
+        return ""
+    skill_path = target / "SKILL.md"
+    if not skill_path.is_file():
+        return ""
+    try:
+        return skill_path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return skill_path.read_text(encoding="utf-8", errors="replace")
+
+
+def infer_source_requirements(target: Path | None, skill_text: str, root: Path | None = None) -> list[dict[str, Any]]:
+    lower = skill_text.lower()
+    target_name = target.name.lower() if target is not None else ""
+    requirements: dict[str, dict[str, Any]] = {}
+
+    def add(requirement_id: str, category: str, summary: str, source_path: str = "SKILL.md") -> None:
+        requirements[requirement_id] = source_requirement(requirement_id, category, summary, source_path)
+
+    if skill_text.strip():
+        add(
+            "target.entrypoint.acceptance",
+            "entrypoint",
+            "The target skill entrypoint and hard gates must be represented by the runtime contract.",
+        )
+
+    frontmatter_hint = lower[:1200]
+    readme_profile = "readme" in target_name or "write, rewrite, audit, or polish readme" in frontmatter_hint
+    if readme_profile:
+        if "bilingual" in lower or "chinese mirror" in lower or "english-first" in lower or "中文" in skill_text:
+            add(
+                "readme.bilingual_mirror",
+                "readme",
+                "README work must enforce the required English-first Chinese mirror contract when applicable.",
+            )
+        if "text-to-image" in lower or "concept hero image" in lower or "hero image" in lower:
+            add(
+                "readme.hero_provenance",
+                "readme",
+                "README hero work must enforce generated concept hero provenance and required hero evidence.",
+            )
+        if "logicguard" in lower or "capability model" in lower or "narrative model" in lower:
+            add(
+                "readme.model_evidence",
+                "readme",
+                "Non-trivial README work must enforce model-backed capability or narrative evidence.",
+            )
+        if "privacy" in lower or "release/version" in lower or "version consistency" in lower or "public/private" in lower:
+            add(
+                "readme.public_release_gates",
+                "readme",
+                "Release-facing README work must enforce public-boundary, privacy, link/render, and version consistency checks.",
+            )
+
+    if "runtime contract mode" in lower or "runtime contract" in lower:
+        add(
+            "skillguard.runtime_contract_mode",
+            "runtime-contract",
+            "Runtime contract work must enforce selected route, run record, phase evidence, checks, quality floors, and closure gates.",
+        )
+    if "global router mode" in lower or "global router" in lower:
+        add(
+            "skillguard.global_router_freshness",
+            "global-router",
+            "Global router work must enforce registry and managed prompt freshness before routing claims.",
+        )
+    if "native route" in lower or "native check" in lower or "parallel route" in lower:
+        add(
+            "skillguard.native_route_binding",
+            "native-binding",
+            "Native and hybrid contracts must bind the target skill's native route/check owner and must not create a parallel execution route.",
+        )
+    if "hard gates" in lower or "required workflow" in lower:
+        add(
+            "target.hard_gates",
+            "quality-gate",
+            "Declared hard gates and required workflow steps must be represented by checks and closure blockers.",
+        )
+
+    if not requirements:
+        add(
+            "target.entrypoint.acceptance",
+            "entrypoint",
+            "The target skill entrypoint must be inventoried and represented before closure.",
+            "SKILL.md or supplied work contract",
+        )
+
+    return sorted(requirements.values(), key=lambda item: str(item["requirement_id"]))
+
+
+def default_deep_contract_fields(target: Path, check_ids: list[str], skill_text: str | None = None) -> dict[str, Any]:
+    source_text = read_target_skill_text(target) if skill_text is None else skill_text
+    source_requirements = infer_source_requirements(target, source_text)
+    acceptance_obligations: list[dict[str, Any]] = []
+    skill_specific_checks: list[dict[str, Any]] = []
+    closure_blockers: list[dict[str, Any]] = []
+    for requirement in source_requirements:
+        requirement_id = str(requirement["requirement_id"])
+        obligation_id = f"{requirement_id}.covered"
+        covered_by_checks = list(check_ids)
+        acceptance_obligations.append(
+            {
+                "obligation_id": obligation_id,
+                "requirement_ids": [requirement_id],
+                "summary": f"Contract coverage for {requirement_id}.",
+                "required": bool(requirement.get("required", True)),
+                "covered_by_checks": covered_by_checks,
+                "native_check_binding_ids": [],
+            }
+        )
+        skill_specific_checks.append(
+            {
+                "check_id": f"{requirement_id}.check",
+                "obligation_ids": [obligation_id],
+                "check_manifest_ids": covered_by_checks,
+                "native_check_binding_ids": [],
+                "required": bool(requirement.get("required", True)),
+                "summary": f"Check-manifest coverage for {requirement_id}.",
+            }
+        )
+        closure_blockers.append(
+            {
+                "blocker_id": f"{requirement_id}.blocker",
+                "obligation_ids": [obligation_id],
+                "failure_class": "missing_target_specific_coverage",
+                "blocks_decisions": ["checked", "accepted"],
+                "summary": f"Block closure when {requirement_id} lacks runnable or native check evidence.",
+            }
+        )
+    return {
+        "source_requirements": source_requirements,
+        "acceptance_obligations": acceptance_obligations,
+        "skill_specific_checks": skill_specific_checks,
+        "closure_blockers": closure_blockers,
+        "run_record_required": True,
+        "not_parallel_route_proof": {
+            "proof_id": "skillguard.runtime.owner.no_parallel_native_route",
+            "summary": "This runtime-owner contract is valid only when no native route/check owner is present.",
+            "native_route_binding_ids": [],
+            "evidence_source": "SKILL.md and adjacent target materials inspected during contract compilation",
+        },
+        "cleanup_required": [],
+    }
+
+
+def build_default_work_contract(target: Path, skill_text: str | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     target_relative = public_relative_path(target)
     skill_id = slugify_identifier(target.name)
+    base_check_ids = ["check_route", "check_phase_order", "check_evidence", "check_quality_floor", "check_closure"]
+    deep_fields = default_deep_contract_fields(target, base_check_ids, skill_text)
     contract: dict[str, Any] = {
         "schema_version": "skillguard.work_contract.v1",
         "skill_id": skill_id,
@@ -1489,6 +1712,7 @@ def build_default_work_contract(target: Path) -> tuple[dict[str, Any], dict[str,
         "native_route_bindings": [],
         "native_check_bindings": [],
         "phase_native_bindings": [],
+        **deep_fields,
         "skillguard_role": "runtime_owner",
         "may_define_parallel_execution_route": False,
         "may_define_skillguard_runtime_route": True,
@@ -1735,6 +1959,12 @@ def contract_semantic_failures(
     native_route_bindings = contract.get("native_route_bindings")
     native_check_bindings = contract.get("native_check_bindings")
     phase_native_bindings = contract.get("phase_native_bindings")
+    source_requirements = contract.get("source_requirements")
+    acceptance_obligations = contract.get("acceptance_obligations")
+    skill_specific_checks = contract.get("skill_specific_checks")
+    closure_blockers = contract.get("closure_blockers")
+    cleanup_required = contract.get("cleanup_required")
+    not_parallel_route_proof = contract.get("not_parallel_route_proof")
     may_define_parallel_execution_route = contract.get("may_define_parallel_execution_route")
     may_define_skillguard_runtime_route = contract.get("may_define_skillguard_runtime_route")
     for field_name, value in (
@@ -1745,9 +1975,17 @@ def contract_semantic_failures(
         ("closure_rules", closures),
         ("quality_floors", floors),
         ("forbidden_shortcuts", shortcuts),
+        ("source_requirements", source_requirements),
+        ("acceptance_obligations", acceptance_obligations),
+        ("skill_specific_checks", skill_specific_checks),
+        ("closure_blockers", closure_blockers),
     ):
         if not isinstance(value, list) or not value:
             failures.append(f"$.{field_name}: must be a non-empty list")
+    if not isinstance(cleanup_required, list):
+        failures.append("$.cleanup_required: must be a list")
+    if not isinstance(not_parallel_route_proof, dict) or not not_parallel_route_proof.get("proof_id"):
+        failures.append("$.not_parallel_route_proof: required to prove SkillGuard did not add a parallel execution route")
 
     if may_define_parallel_execution_route is not False:
         failures.append(
@@ -1767,6 +2005,8 @@ def contract_semantic_failures(
             failures.append(f"$.skillguard_role: expected {expected_role} when integration_mode is {integration_mode}")
         if may_define_skillguard_runtime_route is not False:
             failures.append(f"$.may_define_skillguard_runtime_route: must be false when integration_mode is {integration_mode}")
+        if contract.get("run_record_required") is not False:
+            failures.append(f"$.run_record_required: must be false when integration_mode is {integration_mode}")
         if not isinstance(native_route_bindings, list) or not native_route_bindings:
             failures.append(f"$.native_route_bindings: must bind at least one native route when integration_mode is {integration_mode}")
         if not isinstance(native_check_bindings, list) or not native_check_bindings:
@@ -1778,6 +2018,8 @@ def contract_semantic_failures(
             failures.append("$.skillguard_role: expected runtime_owner when integration_mode is skillguard-runtime")
         if may_define_skillguard_runtime_route is not True:
             failures.append("$.may_define_skillguard_runtime_route: must be true when SkillGuard is the runtime owner")
+        if contract.get("run_record_required") is not True:
+            failures.append("$.run_record_required: must be true when integration_mode is skillguard-runtime")
         if isinstance(phase_native_bindings, list) and phase_native_bindings:
             failures.append("$.phase_native_bindings: must be empty when integration_mode is skillguard-runtime")
     elif integration_mode:
@@ -1794,6 +2036,10 @@ def contract_semantic_failures(
     native_route_binding_by_id = contract_lookup(native_route_bindings, "binding_id")
     native_check_binding_by_id = contract_lookup(native_check_bindings, "binding_id")
     phase_native_binding_by_phase = contract_lookup(phase_native_bindings, "phase_id")
+    source_requirement_by_id = contract_lookup(source_requirements, "requirement_id")
+    obligation_by_id = contract_lookup(acceptance_obligations, "obligation_id")
+    skill_specific_check_by_id = contract_lookup(skill_specific_checks, "check_id")
+    closure_blocker_by_id = contract_lookup(closure_blockers, "blocker_id")
     for field_name, items, id_key in (
         ("routes", routes, "route_id"),
         ("phases", phases, "phase_id"),
@@ -1802,6 +2048,10 @@ def contract_semantic_failures(
         ("closure_rules", closures, "rule_id"),
         ("quality_floors", floors, "floor_id"),
         ("forbidden_shortcuts", shortcuts, "shortcut_id"),
+        ("source_requirements", source_requirements, "requirement_id"),
+        ("acceptance_obligations", acceptance_obligations, "obligation_id"),
+        ("skill_specific_checks", skill_specific_checks, "check_id"),
+        ("closure_blockers", closure_blockers, "blocker_id"),
     ):
         for duplicate in duplicate_ids(items, id_key):
             failures.append(f"$.{field_name}: duplicate {id_key} {duplicate}")
@@ -1898,6 +2148,52 @@ def contract_semantic_failures(
         for check_id in floor.get("required_checks", []) if isinstance(floor.get("required_checks"), list) else []:
             if check_id not in check_by_id:
                 failures.append(f"quality_floor {floor_id}: unknown required_check {check_id}")
+
+    for obligation_id, obligation in obligation_by_id.items():
+        for requirement_id in obligation.get("requirement_ids", []) if isinstance(obligation.get("requirement_ids"), list) else []:
+            if requirement_id not in source_requirement_by_id:
+                failures.append(f"acceptance_obligation {obligation_id}: unknown source requirement {requirement_id}")
+        covered_check_ids = obligation.get("covered_by_checks", [])
+        native_check_ids = obligation.get("native_check_binding_ids", [])
+        if not isinstance(covered_check_ids, list) or not isinstance(native_check_ids, list):
+            continue
+        if not covered_check_ids and not native_check_ids:
+            failures.append(f"acceptance_obligation {obligation_id}: must cite a check or native check binding")
+        for check_id in covered_check_ids:
+            if check_id not in check_by_id:
+                failures.append(f"acceptance_obligation {obligation_id}: unknown covered_by_check {check_id}")
+        for binding_id in native_check_ids:
+            if binding_id not in native_check_binding_by_id:
+                failures.append(f"acceptance_obligation {obligation_id}: unknown native_check_binding_id {binding_id}")
+
+    for requirement_id, requirement in source_requirement_by_id.items():
+        if requirement.get("required") is True and not any(
+            requirement_id in obligation.get("requirement_ids", [])
+            for obligation in obligation_by_id.values()
+            if isinstance(obligation.get("requirement_ids"), list)
+        ):
+            failures.append(f"source_requirement {requirement_id}: no acceptance obligation covers this requirement")
+
+    for skill_check_id, skill_check in skill_specific_check_by_id.items():
+        for obligation_id in skill_check.get("obligation_ids", []) if isinstance(skill_check.get("obligation_ids"), list) else []:
+            if obligation_id not in obligation_by_id:
+                failures.append(f"skill_specific_check {skill_check_id}: unknown obligation {obligation_id}")
+        for check_id in skill_check.get("check_manifest_ids", []) if isinstance(skill_check.get("check_manifest_ids"), list) else []:
+            if check_id not in check_by_id:
+                failures.append(f"skill_specific_check {skill_check_id}: unknown check_manifest_id {check_id}")
+        for binding_id in skill_check.get("native_check_binding_ids", []) if isinstance(skill_check.get("native_check_binding_ids"), list) else []:
+            if binding_id not in native_check_binding_by_id:
+                failures.append(f"skill_specific_check {skill_check_id}: unknown native_check_binding_id {binding_id}")
+
+    for blocker_id, blocker in closure_blocker_by_id.items():
+        for obligation_id in blocker.get("obligation_ids", []) if isinstance(blocker.get("obligation_ids"), list) else []:
+            if obligation_id not in obligation_by_id:
+                failures.append(f"closure_blocker {blocker_id}: unknown obligation {obligation_id}")
+
+    if isinstance(not_parallel_route_proof, dict):
+        for binding_id in not_parallel_route_proof.get("native_route_binding_ids", []) if isinstance(not_parallel_route_proof.get("native_route_binding_ids"), list) else []:
+            if binding_id not in native_route_binding_by_id:
+                failures.append(f"not_parallel_route_proof: unknown native_route_binding_id {binding_id}")
 
     if target is not None and not contract_target_matches_target(contract.get("target_path"), target, root):
         failures.append("$.target_path: does not match the checked target directory")
@@ -2163,6 +2459,582 @@ def check_contract(argv: list[str]) -> int:
     payload["files_inspected"] = inspected_files
     payload["failures"] = failures
     payload["decision"] = "pass" if not failures else "fail"
+    return write_and_exit(payload, args.output)
+
+
+def resolve_depth_target(target_text: str, contract_text: str | None, root: Path | None = None) -> tuple[Path | None, Path, dict[str, Any], list[str]]:
+    raw_target = resolve_target_argument(target_text, root)
+    load_failures: list[str] = []
+    if raw_target.is_file():
+        contract_path = raw_target
+        contract = load_json(contract_path, root)
+        target_path_text = contract.get("target_path") if isinstance(contract, dict) else ""
+        target = resolve_target_argument(str(target_path_text), root) if isinstance(target_path_text, str) and target_path_text else None
+        return target if target is not None and target.is_dir() else None, contract_path, contract, load_failures
+    require_skill_target(raw_target, "check-depth", root)
+    contract_path = runtime_contract_path(raw_target, contract_text, root)
+    contract = load_json(contract_path, root)
+    return raw_target, contract_path, contract, load_failures
+
+
+def latest_run_record(target: Path | None, root: Path | None = None) -> Path | None:
+    if target is None:
+        return None
+    runs_dir = control_root_for(target, root) / "runs"
+    if not runs_dir.is_dir():
+        return None
+    runs: list[Path] = []
+    for path in runs_dir.glob("*.json"):
+        if not path.is_file():
+            continue
+        try:
+            candidate = load_json(path, root)
+        except ValueError:
+            continue
+        if (
+            isinstance(candidate, dict)
+            and candidate.get("schema_version") == "skillguard.run_record.v1"
+            and isinstance(candidate.get("contract_ref"), dict)
+        ):
+            runs.append(path)
+    if not runs:
+        return None
+    return max(runs, key=lambda path: path.stat().st_mtime)
+
+
+def completed_run_record_failures(run: dict[str, Any], run_path: Path, root: Path | None = None) -> list[str]:
+    failures: list[str] = []
+    closure_decision = str(run.get("closure_decision") or "")
+    if closure_decision not in RUN_DEPTH_ACCEPTED_CLOSURE_DECISIONS:
+        failures.append(
+            "stale-run-evidence: latest run record is not closed with accepted evidence "
+            f"(closure_decision={closure_decision or 'missing'})"
+        )
+    current_phase = str(run.get("current_phase") or "")
+    if current_phase != "closure":
+        failures.append(
+            "stale-run-evidence: latest run record is not positioned at closure "
+            f"(current_phase={current_phase or 'missing'})"
+        )
+
+    phase_statuses = run.get("phase_statuses", [])
+    if not isinstance(phase_statuses, list) or not phase_statuses:
+        failures.append("stale-run-evidence: latest run record has no phase_statuses")
+    else:
+        for item in phase_statuses:
+            if not isinstance(item, dict):
+                failures.append("stale-run-evidence: latest run record contains a malformed phase status")
+                continue
+            phase_id = str(item.get("phase_id") or "unknown")
+            status = str(item.get("status") or "")
+            if status != "checked":
+                failures.append(
+                    f"stale-run-evidence: latest run record phase {phase_id} is {status or 'missing'}, not checked"
+                )
+
+    closure_command_found = False
+    commands = run.get("commands_run", [])
+    for item in commands if isinstance(commands, list) else []:
+        if (
+            isinstance(item, dict)
+            and item.get("evidence_id") == "closure_report"
+            and item.get("decision") == "pass"
+        ):
+            closure_command_found = True
+            break
+    if not closure_command_found:
+        failures.append("stale-run-evidence: latest run record has no passing closure_report command")
+
+    if run.get("skipped_checks"):
+        failures.append("stale-run-evidence: latest run record contains skipped_checks")
+    if run.get("quality_failures"):
+        failures.append("stale-run-evidence: latest run record contains quality_failures")
+    if run.get("blockers"):
+        failures.append("stale-run-evidence: latest run record still contains blockers")
+
+    return failures
+
+
+def skillguard_runtime_run_required(contract: dict[str, Any]) -> bool:
+    integration_mode = str(contract.get("integration_mode") or "")
+    skillguard_role = str(contract.get("skillguard_role") or "")
+    return (
+        contract.get("run_record_required") is True
+        and (
+            integration_mode == "skillguard-runtime"
+            or skillguard_role == "runtime_owner"
+            or contract.get("may_define_skillguard_runtime_route") is True
+        )
+    )
+
+
+def check_manifest_ids(target: Path | None, root: Path | None = None) -> set[str]:
+    if target is None:
+        return set()
+    manifest_path = control_root_for(target, root) / CHECK_MANIFEST_FILENAME
+    if not manifest_path.is_file():
+        return set()
+    manifest = load_json(manifest_path, root)
+    ids: set[str] = set()
+    checks = manifest.get("checks", []) if isinstance(manifest, dict) else []
+    for item in checks if isinstance(checks, list) else []:
+        if isinstance(item, dict) and isinstance(item.get("check_id"), str):
+            ids.add(item["check_id"])
+    return ids
+
+
+def classify_depth_failures(failures: list[str], blockers: list[str]) -> str:
+    haystack = "\n".join([*failures, *blockers]).lower()
+    if blockers:
+        return "blocked"
+    if "parallel" in haystack or "duplicate execution paths" in haystack:
+        return "parallel-route-risk"
+    if "native" in haystack and ("binding" in haystack or "owner" in haystack):
+        return "missing-native-binding"
+    if "missing-run-record" in haystack or "stale-run-evidence" in haystack:
+        return "stale-run-evidence"
+    if "cleanup" in haystack:
+        return "cleanup-required"
+    if "source_requirements" in haystack or "acceptance_obligations" in haystack or "skill_specific_checks" in haystack:
+        return "shallow-contract"
+    if "must be a non-empty list" in haystack or "required property" in haystack:
+        return "hollow-contract"
+    return "shallow-contract" if failures else "deep-pass"
+
+
+def deep_contract_failures(
+    target: Path | None,
+    contract: dict[str, Any],
+    contract_path: Path,
+    root: Path | None = None,
+) -> tuple[list[str], list[dict[str, Any]], list[dict[str, Any]]]:
+    failures: list[str] = []
+    inferred = infer_source_requirements(target, read_target_skill_text(target, root), root)
+    inferred_ids = {str(item.get("requirement_id")) for item in inferred}
+    source_requirements = contract.get("source_requirements", []) if isinstance(contract, dict) else []
+    acceptance_obligations = contract.get("acceptance_obligations", []) if isinstance(contract, dict) else []
+    skill_specific_checks = contract.get("skill_specific_checks", []) if isinstance(contract, dict) else []
+    closure_blockers = contract.get("closure_blockers", []) if isinstance(contract, dict) else []
+    manifest_ids = check_manifest_ids(target, root)
+    contract_checks = contract.get("check_scripts", [])
+    if not isinstance(contract_checks, list):
+        contract_checks = []
+    contract_check_ids = {
+        str(item.get("check_id"))
+        for item in contract_checks
+        if isinstance(item, dict) and isinstance(item.get("check_id"), str)
+    }
+    available_check_ids = contract_check_ids | manifest_ids
+    source_ids = {
+        str(item.get("requirement_id"))
+        for item in source_requirements
+        if isinstance(source_requirements, list) and isinstance(item, dict) and isinstance(item.get("requirement_id"), str)
+    }
+    obligation_by_id = contract_lookup(acceptance_obligations, "obligation_id")
+    skill_check_by_id = contract_lookup(skill_specific_checks, "check_id")
+    blocker_by_id = contract_lookup(closure_blockers, "blocker_id")
+
+    for requirement_id in sorted(inferred_ids):
+        if requirement_id not in source_ids:
+            failures.append(f"missing source_requirement for inferred target obligation: {requirement_id}")
+        matching_obligations = [
+            obligation
+            for obligation in obligation_by_id.values()
+            if requirement_id in obligation.get("requirement_ids", [])
+        ]
+        if not matching_obligations:
+            failures.append(f"missing acceptance obligation for source requirement: {requirement_id}")
+            continue
+        for obligation in matching_obligations:
+            obligation_id = str(obligation.get("obligation_id") or "")
+            check_refs = [
+                str(item)
+                for item in obligation.get("covered_by_checks", [])
+                if isinstance(obligation.get("covered_by_checks"), list)
+            ]
+            native_refs = [
+                str(item)
+                for item in obligation.get("native_check_binding_ids", [])
+                if isinstance(obligation.get("native_check_binding_ids"), list)
+            ]
+            if not check_refs and not native_refs:
+                failures.append(f"missing-obligation-check: {obligation_id} cites no check or native check binding")
+            for check_ref in check_refs:
+                if check_ref not in available_check_ids:
+                    failures.append(f"missing-obligation-check: {obligation_id} cites unavailable check {check_ref}")
+            if not any(obligation_id in skill_check.get("obligation_ids", []) for skill_check in skill_check_by_id.values()):
+                failures.append(f"missing skill_specific_checks coverage for obligation: {obligation_id}")
+            if not any(obligation_id in blocker.get("obligation_ids", []) for blocker in blocker_by_id.values()):
+                failures.append(f"missing closure_blocker for obligation: {obligation_id}")
+
+    latest_run = latest_run_record(target, root)
+    if skillguard_runtime_run_required(contract):
+        if latest_run is None:
+            failures.append("missing-run-record: run_record_required is true but no current run JSON exists")
+        else:
+            try:
+                run = load_json(latest_run, root)
+            except ValueError as exc:
+                failures.append(f"stale-run-evidence: latest run record could not be loaded: {exc}")
+            else:
+                run_hash = run.get("contract_ref", {}).get("contract_hash") if isinstance(run.get("contract_ref"), dict) else None
+                current_hash = contract.get("contract_hash")
+                if current_hash and run_hash != current_hash:
+                    failures.append(
+                        "stale-run-evidence: latest run record is not bound to the current work contract hash"
+                    )
+                failures.extend(completed_run_record_failures(run, latest_run, root))
+    elif latest_run is not None:
+        failures.append(
+            "cleanup-required: native or hybrid contract must not retain legacy SkillGuard run records; "
+            f"remove {public_relative_path(latest_run, root)} or convert the contract to skillguard-runtime"
+        )
+
+    cleanup_items = contract.get("cleanup_required", [])
+    if isinstance(cleanup_items, list):
+        for item in cleanup_items:
+            if isinstance(item, dict) and item.get("required") is True and item.get("status") != "complete":
+                failures.append(f"cleanup-required: {item.get('cleanup_id') or 'unknown cleanup'} is not complete")
+
+    evidence = [
+        {
+            "evidence_id": "deep-contract-work-contract",
+            "kind": "parser_output",
+            "fresh": True,
+            "summary": f"Loaded work contract {public_relative_path(contract_path, root)}; sha256={file_sha256(contract_path)}.",
+            "source_path": public_relative_path(contract_path, root),
+        }
+    ]
+    if target is not None and (target / "SKILL.md").is_file():
+        evidence.append(
+            {
+                "evidence_id": "deep-contract-skill-entrypoint",
+                "kind": "source_requirement_scan",
+                "fresh": True,
+                "summary": f"Inferred {len(inferred)} target source requirements from SKILL.md.",
+                "source_path": public_relative_path(target / "SKILL.md", root),
+            }
+        )
+    if latest_run is not None:
+        evidence.append(
+            {
+                "evidence_id": "deep-contract-latest-run",
+                "kind": "run_record",
+                "fresh": True,
+                "summary": f"Found latest run record {public_relative_path(latest_run, root)}.",
+                "source_path": public_relative_path(latest_run, root),
+            }
+        )
+    coverage_rows = [
+        {
+            "requirement_id": item.get("requirement_id"),
+            "contract_declared": item.get("requirement_id") in source_ids,
+            "obligation_count": len(
+                [
+                    obligation
+                    for obligation in obligation_by_id.values()
+                    if item.get("requirement_id") in obligation.get("requirement_ids", [])
+                ]
+            ),
+        }
+        for item in inferred
+    ]
+    return failures, evidence, coverage_rows
+
+
+def check_depth(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py check-depth", description="Check deep target-specific SkillGuard contract coverage.")
+    parser.add_argument("--target", required=True, help="Target skill directory or work-contract JSON file.")
+    parser.add_argument("--target-root", help="Explicit root for read-only external target checks.")
+    parser.add_argument("--contract", help="Contract path. Defaults to target/.skillguard/work-contract.json.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    target_root = Path(args.target_root).resolve() if args.target_root else None
+    if target_root is not None and not target_root.is_dir():
+        raise SkillGuardCliError("check-depth", f"--target-root is missing or not a directory: {args.target_root}", "missing_file")
+    target, contract_path, contract, load_failures = resolve_depth_target(args.target, args.contract, target_root)
+    semantic_failures = contract_semantic_failures(contract, target, contract_path, target_root)
+    depth_failures: list[str] = []
+    depth_evidence: list[dict[str, Any]] = []
+    coverage_rows: list[dict[str, Any]] = []
+    if isinstance(contract, dict):
+        depth_failures, depth_evidence, coverage_rows = deep_contract_failures(target, contract, contract_path, target_root)
+    failures = [*load_failures, *semantic_failures, *depth_failures]
+    blockers: list[str] = []
+    classification = classify_depth_failures(failures, blockers)
+    payload = base_result("check-depth", public_relative_path(target, target_root) if target is not None else public_relative_path(contract_path, target_root))
+    payload["contract_path"] = public_relative_path(contract_path, target_root)
+    payload["depth_classification"] = classification
+    payload["coverage_rows"] = coverage_rows
+    payload["checks"] = [
+        {
+            "check_id": "check-depth:contract-shape",
+            "name": "Deep contract fields",
+            "required": True,
+            "status": "pass" if not semantic_failures else "fail",
+            "summary": "Validated deep contract fields, native binding rules, check references, closure blockers, and canonical hash.",
+        },
+        {
+            "check_id": "check-depth:target-obligations",
+            "name": "Target-specific obligation coverage",
+            "required": True,
+            "status": "pass" if not depth_failures else "fail",
+            "summary": "Compared inferred target skill obligations with contract obligations, runnable checks, run records, and closure blockers.",
+        },
+    ]
+    payload["evidence"] = depth_evidence
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "pass" if classification == "deep-pass" else "fail"
+    payload["claim_boundary"] = (
+        "This depth check proves only that the current target contract maps inferred target obligations to declared checks, "
+        "native bindings, run evidence, and closure blockers. It does not prove AI judgment quality or future task behavior."
+    )
+    return write_and_exit(payload, args.output)
+
+
+README_RELEASE_HEADING_PAIRS = (
+    ("## Why It Exists", "## \u4e3a\u4ec0\u4e48\u9700\u8981\u5b83"),
+    ("## What It Can Do", "## \u5b83\u73b0\u5728\u80fd\u505a\u4ec0\u4e48"),
+    ("## Current Status", "## \u5f53\u524d\u72b6\u6001"),
+    ("## Command Surface", "## \u547d\u4ee4\u9762"),
+    ("## Runtime Contract Executor", "## \u8fd0\u884c\u5408\u540c\u6267\u884c\u5668"),
+    ("## Native-First Integration", "## \u539f\u751f\u8def\u7ebf\u4f18\u5148"),
+    ("## Typical Workflows", "## \u5e38\u89c1\u5de5\u4f5c\u6d41"),
+    ("## README And Release Gates", "## README \u548c\u53d1\u5e03\u95e8\u7981"),
+    ("## Validation", "## \u9a8c\u8bc1"),
+    ("## What SkillGuard Is Not", "## SkillGuard \u4e0d\u662f\u4ec0\u4e48"),
+    ("## Public Boundary", "## \u516c\u5f00\u8fb9\u754c"),
+    ("## Repository Layout", "## \u4ed3\u5e93\u7ed3\u6784"),
+    ("## Release History", "## \u53d1\u5e03\u5386\u53f2"),
+    ("## License", "## \u8bb8\u53ef\u8bc1"),
+)
+
+
+def read_text_if_file(path: Path) -> str:
+    if not path.is_file():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
+def pyproject_version_value(text: str, key: str) -> str:
+    match = re.search(rf"(?m)^{re.escape(key)}\s*=\s*\"([^\"]+)\"", text)
+    return match.group(1) if match else ""
+
+
+def check_readme_release(argv: list[str]) -> int:
+    parser = JsonArgumentParser(
+        prog="skillguard.py check-readme-release",
+        description="Check SkillGuard README release gates for bilingual, hero, model, public-boundary, and version evidence.",
+    )
+    parser.add_argument("--repo", default=".", help="Repository root to check. Defaults to the current SkillGuard repository.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+
+    repo = ensure_under_root(args.repo)
+    require_directory(repo, "check-readme-release")
+    readme_path = repo / "README.md"
+    version_path = repo / "VERSION"
+    pyproject_path = repo / "pyproject.toml"
+    changelog_path = repo / "CHANGELOG.md"
+    hero_dir = repo / "assets" / "readme-hero"
+    hero_path = hero_dir / "hero.png"
+    hero_prompt_path = hero_dir / "hero_prompt.md"
+    hero_design_path = hero_dir / "hero_design_note.md"
+    model_evidence_path = hero_dir / "readme_model_evidence.md"
+    required_paths = [
+        readme_path,
+        version_path,
+        pyproject_path,
+        changelog_path,
+        hero_path,
+        hero_prompt_path,
+        hero_design_path,
+        model_evidence_path,
+    ]
+
+    payload = base_result("check-readme-release", public_relative_path(repo))
+    payload["claim_boundary"] = (
+        "This README release gate checks the current local README, version files, hero evidence, model evidence, "
+        "command-surface wording, and public-safety scans. It does not prove package publication, GitHub release creation, "
+        "external links beyond local path checks, or future AI behavior."
+    )
+    failures: list[str] = []
+    blockers: list[str] = []
+    files_inspected: list[dict[str, Any]] = []
+    public_safety: list[dict[str, Any]] = []
+    unsafe_claim_findings: list[dict[str, Any]] = []
+
+    before_failures, before_blockers = len(failures), len(blockers)
+    for path in required_paths:
+        if not path.is_file():
+            failures.append(f"required README release file missing: {public_relative_path(path)}")
+        else:
+            if path.suffix.lower() == ".png":
+                files_inspected.append(
+                    {
+                        "path": public_relative_path(path),
+                        "kind": "image",
+                        "sha256": file_sha256(path),
+                        "byte_count": path.stat().st_size,
+                    }
+                )
+            else:
+                files_inspected.append(checked_file(path, "markdown" if path.suffix.lower() == ".md" else "file"))
+    append_check(
+        payload,
+        "check-readme-release:required-files",
+        "README release files",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Checked README, version, changelog, hero image, hero notes, and README model evidence files.",
+    )
+
+    readme_text = read_text_if_file(readme_path)
+    hero_prompt_text = read_text_if_file(hero_prompt_path)
+    hero_design_text = read_text_if_file(hero_design_path)
+    model_text = read_text_if_file(model_evidence_path)
+    pyproject_text = read_text_if_file(pyproject_path)
+    changelog_text = read_text_if_file(changelog_path)
+    version_text = read_text_if_file(version_path).strip()
+
+    before_failures, before_blockers = len(failures), len(blockers)
+    if readme_text:
+        if "English comes first; the second half is a full Chinese mirror." not in readme_text:
+            failures.append("missing-bilingual-mirror: README is missing the English-first Chinese-mirror note")
+        chinese_marker = "# SkillGuard \u4e2d\u6587\u8bf4\u660e"
+        if chinese_marker not in readme_text:
+            failures.append("missing-bilingual-mirror: README is missing the Chinese mirror section")
+        elif readme_text.index(chinese_marker) <= readme_text.find("## Why It Exists"):
+            failures.append("bilingual-drift: Chinese mirror must appear after the English section")
+        for english_heading, chinese_heading in README_RELEASE_HEADING_PAIRS:
+            if english_heading not in readme_text:
+                failures.append(f"bilingual-drift: English heading missing from README mirror set: {english_heading}")
+            if chinese_heading not in readme_text:
+                failures.append(f"bilingual-drift: Chinese mirror heading missing for {english_heading}")
+        if chinese_marker in readme_text:
+            english_part = readme_text[: readme_text.index(chinese_marker)]
+            chinese_part = readme_text[readme_text.index(chinese_marker) :]
+            if len(chinese_part.splitlines()) < max(20, int(len(english_part.splitlines()) * 0.55)):
+                failures.append("bilingual-drift: Chinese mirror is too short compared with the English section")
+    append_check(
+        payload,
+        "check-readme-release:bilingual-mirror",
+        "English-first Chinese mirror",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Checked the README language note, Chinese mirror section, paired headings, order, and mirror length.",
+    )
+
+    before_failures, before_blockers = len(failures), len(blockers)
+    if readme_text:
+        if readme_text.count("<!-- README HERO START -->") != 1 or readme_text.count("<!-- README HERO END -->") != 1:
+            failures.append("missing-hero-evidence: README must contain exactly one hero block")
+        if "./assets/readme-hero/hero.png" not in readme_text:
+            failures.append("missing-hero-evidence: README hero block must reference ./assets/readme-hero/hero.png")
+    if hero_path.is_file() and hero_path.stat().st_size < 10_000:
+        failures.append("missing-hero-evidence: hero.png is too small to be a rendered concept hero image")
+    prompt_lower = hero_prompt_text.lower()
+    design_lower = hero_design_text.lower()
+    if "text-to-image" not in prompt_lower:
+        failures.append("invalid-hero-provenance: hero_prompt.md must state text-to-image generation")
+    if "prompt" not in prompt_lower or "visual" not in prompt_lower:
+        failures.append("missing-hero-evidence: hero_prompt.md must preserve a project-specific visual prompt")
+    if "visual concept" not in design_lower or "core workflow" not in design_lower:
+        failures.append("missing-hero-evidence: hero_design_note.md must record visual concept and core workflow evidence")
+    deterministic_pattern = re.compile(r"(?i)\b(?:deterministic\s+svg|deterministic\s+html|deterministic\s+canvas|pillow\s+composition|canvas\s+composition)\b")
+    for path, text in ((hero_prompt_path, hero_prompt_text), (hero_design_path, hero_design_text)):
+        if text and deterministic_pattern.search(text):
+            failures.append(f"invalid-hero-provenance: deterministic main hero provenance found in {public_relative_path(path)}")
+    append_check(
+        payload,
+        "check-readme-release:hero-provenance",
+        "Text-to-image hero evidence",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Checked hero block count, renderable raster asset size, prompt evidence, design note, and deterministic-hero exclusions.",
+    )
+
+    before_failures, before_blockers = len(failures), len(blockers)
+    model_lower = model_text.lower()
+    for term in ("logicguard", "capability model", "mechanism", "evidence", "boundary", "objection"):
+        if term not in model_lower:
+            failures.append(f"missing-readme-model-evidence: readme_model_evidence.md missing {term!r}")
+    append_check(
+        payload,
+        "check-readme-release:model-evidence",
+        "README model evidence",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Checked for a recorded LogicGuard-backed capability model with mechanism, evidence, boundary, and objection coverage.",
+    )
+
+    before_failures, before_blockers = len(failures), len(blockers)
+    pyproject_version = pyproject_version_value(pyproject_text, "version")
+    baseline_version = pyproject_version_value(pyproject_text, "baseline_version")
+    if not version_text:
+        failures.append("version-consistency: VERSION is empty")
+    if version_text and pyproject_version != version_text:
+        failures.append("version-consistency: pyproject.toml project version does not match VERSION")
+    if version_text and baseline_version != version_text:
+        failures.append("version-consistency: pyproject.toml SkillGuard baseline_version does not match VERSION")
+    if version_text and f"Current release: `v{version_text}`" not in readme_text:
+        failures.append("version-consistency: README current release line does not match VERSION")
+    if version_text and f"## v{version_text} -" not in changelog_text:
+        failures.append("version-consistency: CHANGELOG is missing the current version entry")
+    append_check(
+        payload,
+        "check-readme-release:version-consistency",
+        "Version consistency",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Checked VERSION, pyproject.toml, README current release line, and CHANGELOG entry.",
+    )
+
+    before_failures, before_blockers = len(failures), len(blockers)
+    if readme_text:
+        for command_name in COMMANDS:
+            if f"`{command_name}`" not in readme_text:
+                failures.append(f"README command surface missing `{command_name}`")
+    for path in [readme_path, changelog_path, hero_prompt_path, hero_design_path, model_evidence_path]:
+        if not path.is_file():
+            continue
+        for finding in public_safety_findings(path):
+            public_safety.append(finding)
+            failures.append(f"{finding['path']}: public-safety scan found {finding['finding_id']} on line {finding['line']}")
+        unsafe_claim_findings.extend(scan_text_for_unsafe_claims(path, failures))
+    append_check(
+        payload,
+        "check-readme-release:public-boundary",
+        "Command surface and public boundary",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Checked README command surface wording and scanned public-facing README release files for private paths and unsafe overclaims.",
+    )
+
+    payload["files_inspected"] = files_inspected
+    payload["public_safety_findings"] = public_safety
+    payload["unsafe_claim_findings"] = unsafe_claim_findings
+    payload["evidence"] = [
+        {
+            "evidence_id": "readme-release-file-set",
+            "kind": "filesystem_check",
+            "fresh": True,
+            "summary": f"Inspected {len(files_inspected)} README release files.",
+            "source_path": public_relative_path(readme_path),
+        },
+        {
+            "evidence_id": "readme-release-version",
+            "kind": "version_consistency",
+            "fresh": True,
+            "summary": f"VERSION={version_text or 'missing'}; pyproject.version={pyproject_version or 'missing'}; baseline_version={baseline_version or 'missing'}.",
+            "source_path": public_relative_path(version_path),
+        },
+        {
+            "evidence_id": "readme-release-hero",
+            "kind": "hero_provenance",
+            "fresh": True,
+            "summary": "Checked text-to-image hero prompt, design note, README hero block, and raster asset.",
+            "source_path": public_relative_path(hero_prompt_path),
+        },
+    ]
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
     return write_and_exit(payload, args.output)
 
 
@@ -3478,7 +4350,29 @@ def global_skill_route_score(item: dict[str, Any], task: str, route_hint: str = 
     if exact:
         score += len(exact) * 4
         reasons.append(f"term-overlap:{','.join(exact[:6])}")
-    if skill_id == "skillguard" and "skillguard" in task_lower and any(token in tokens for token in {"audit", "check", "review", "activation", "boundary", "skill"}):
+    readme_task = any(
+        marker in task_lower
+        for marker in (
+            "readme",
+            "github readme",
+            "hero",
+            "bilingual",
+            "chinese mirror",
+            "\u4e2d\u82f1\u53cc\u8bed",
+            "\u4e2d\u6587\u955c\u50cf",
+            "\u6587\u751f\u56fe",
+            "\u9996\u5c4f",
+        )
+    )
+    if skill_id == "readme-showcase-writer" and readme_task:
+        score += 180
+        reasons.append("readme-showcase-task-bias")
+    if (
+        skill_id == "skillguard"
+        and not readme_task
+        and "skillguard" in task_lower
+        and any(token in tokens for token in {"audit", "check", "review", "activation", "boundary", "skill"})
+    ):
         score += 45
         reasons.append("skillguard-boundary-audit-bias")
     if skill_id == GLOBAL_ROUTER_SKILL_ID and any(token in tokens for token in {"global", "router", "registry", "prompt"}):
@@ -3945,7 +4839,6 @@ def build_generate_skill_scaffold(blueprint: dict[str, Any], target: Path, input
     output_terms = ["evidence", "failures", "blockers", "skipped_checks", "residual_risk", "claim_boundary"]
     generated_at = "generated-scaffold-draft"
     claim_boundary = common_claim_boundary("generated scaffold")
-    runtime_contract, runtime_check_manifest = build_default_work_contract(target)
     runtime_check_templates = {
         f".skillguard/checks/{template_name.replace('.template', '')}": (
             ensure_under_root(skill_root() / "assets" / "templates" / template_name).read_text(encoding="utf-8")
@@ -4024,6 +4917,8 @@ Every result must include these fields: {", ".join(output_terms)}.
 
 Generated at `{generated_at}` from `{input_relative}` by the local `generate-skill` command. {claim_boundary}
 """
+
+    runtime_contract, runtime_check_manifest = build_default_work_contract(target, skill_md)
 
     readme = f"""# {name}
 
@@ -12306,6 +13201,141 @@ def scan_global_skills(argv: list[str]) -> int:
     return write_and_exit(payload, args.output)
 
 
+def installed_skill_audit_skip_reason(skill_dir: Path) -> str:
+    parts = {part.lower() for part in skill_dir.parts}
+    if "fixtures" in parts:
+        return "skip SkillGuard fixture skill"
+    if "_backups" in parts:
+        return "skip backup skill copy"
+    if ".system" in parts:
+        return "skip system skill root"
+    return ""
+
+
+def audit_installed_skills(argv: list[str]) -> int:
+    parser = JsonArgumentParser(
+        prog="skillguard.py audit-installed-skills",
+        description="Audit installed user skills for deep SkillGuard contract coverage.",
+    )
+    parser.add_argument("--root", "--skill-root", action="append", default=[], help="Installed skill root to audit. Repeatable.")
+    parser.add_argument("--codex-home", help="Codex home directory; defaults to ~/.codex when no root is supplied.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+
+    roots, root_blockers = global_skill_roots_from_args(args.root, args.codex_home)
+    rows: list[dict[str, Any]] = []
+    skipped_rows: list[dict[str, Any]] = []
+    failures: list[str] = []
+    blockers = list(root_blockers)
+    seen_skill_dirs: set[Path] = set()
+
+    for root in roots:
+        for skill_file in sorted(root.rglob("SKILL.md")):
+            skill_dir = skill_file.parent.resolve()
+            if skill_dir in seen_skill_dirs:
+                continue
+            seen_skill_dirs.add(skill_dir)
+            skip_reason = installed_skill_audit_skip_reason(skill_dir)
+            if skip_reason:
+                skipped_rows.append({"skill_path": global_public_path(skill_dir), "reason": skip_reason})
+                continue
+            try:
+                skill_text = skill_file.read_text(encoding="utf-8")
+            except UnicodeDecodeError as exc:
+                failures.append(f"{global_public_path(skill_file)} could not be read as UTF-8: {exc}")
+                continue
+            frontmatter = parse_global_skill_frontmatter(skill_text)
+            skill_id = slugify_identifier(frontmatter.get("name") or skill_dir.name)
+            semantic_root = global_contract_semantic_root(skill_dir)
+            contract_path = skill_dir / ".skillguard" / WORK_CONTRACT_FILENAME
+            row: dict[str, Any] = {
+                "skill_id": skill_id,
+                "skill_path": global_public_path(skill_dir),
+                "contract_path": global_public_path(contract_path) if contract_path.is_file() else "",
+                "decision": "fail",
+                "depth_classification": "hollow-contract",
+                "integration_mode": "",
+                "failure_count": 0,
+                "failures": [],
+            }
+            if not contract_path.is_file():
+                row["depth_classification"] = "hollow-contract"
+                row["failures"] = ["missing work contract"]
+                row["failure_count"] = 1
+                failures.append(f"{skill_id}: missing work contract")
+                rows.append(row)
+                continue
+            try:
+                contract = load_json(contract_path, semantic_root)
+            except ValueError as exc:
+                row["depth_classification"] = "blocked"
+                row["failures"] = [f"work contract could not be loaded: {exc}"]
+                row["failure_count"] = 1
+                failures.append(f"{skill_id}: work contract could not be loaded")
+                rows.append(row)
+                continue
+            semantic_failures = contract_semantic_failures(contract, skill_dir, contract_path, semantic_root)
+            depth_failures: list[str] = []
+            if isinstance(contract, dict):
+                depth_failures, _depth_evidence, _coverage_rows = deep_contract_failures(skill_dir, contract, contract_path, semantic_root)
+            combined_failures = [*semantic_failures, *depth_failures]
+            classification = classify_depth_failures(combined_failures, [])
+            row["decision"] = "pass" if classification == "deep-pass" else "fail"
+            row["depth_classification"] = classification
+            row["integration_mode"] = str(contract.get("integration_mode") or "") if isinstance(contract, dict) else ""
+            row["contract_hash"] = str(contract.get("contract_hash") or "") if isinstance(contract, dict) else ""
+            row["failure_count"] = len(combined_failures)
+            row["failures"] = combined_failures[:8]
+            rows.append(row)
+            if row["decision"] != "pass":
+                failures.append(f"{skill_id}: {classification}")
+
+    classification_counts: dict[str, int] = {}
+    for row in rows:
+        classification = str(row.get("depth_classification") or "unknown")
+        classification_counts[classification] = classification_counts.get(classification, 0) + 1
+
+    payload = base_result("audit-installed-skills", ", ".join(global_public_path(root) for root in roots))
+    payload["skill_roots"] = [global_public_path(root) for root in roots]
+    payload["audited_skill_count"] = len(rows)
+    payload["skipped_skill_count"] = len(skipped_rows)
+    payload["classification_counts"] = classification_counts
+    payload["skill_results"] = rows
+    payload["skipped_skills"] = skipped_rows[:50]
+    payload["failures"] = failures
+    payload["blockers"] = blockers
+    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
+    payload["claim_boundary"] = (
+        "This installed-skill audit checks current local SKILL.md files outside fixture, backup, and system roots, "
+        "then validates adjacent SkillGuard work contracts with deep contract logic. It does not execute target skill work, "
+        "prove package publication, prove external services, or guarantee future AI behavior."
+    )
+    append_check(
+        payload,
+        "audit-installed-skills:root-discovery",
+        "Installed skill roots",
+        "block" if blockers else "pass",
+        "Resolved installed skill roots and skipped fixture, backup, and system skill copies.",
+    )
+    append_check(
+        payload,
+        "audit-installed-skills:deep-contracts",
+        "Deep installed skill contracts",
+        "pass" if rows and not failures else "fail" if rows else "block",
+        f"Audited {len(rows)} installed skill(s); classification counts: {classification_counts}.",
+    )
+    payload["evidence"] = [
+        {
+            "evidence_id": "installed-skill-depth-audit",
+            "kind": "deep_contract_audit",
+            "fresh": True,
+            "summary": f"Audited {len(rows)} installed skill(s) and skipped {len(skipped_rows)} non-target skill file(s).",
+            "source_path": payload["target_path"],
+        }
+    ]
+    return write_and_exit(payload, args.output)
+
+
 def build_global_registry(argv: list[str]) -> int:
     parser = JsonArgumentParser(prog="skillguard.py build-global-registry", description="Build a global SkillGuard skill registry JSON artifact.")
     parse_global_roots_args(parser)
@@ -13318,6 +14348,7 @@ def build_runtime_fixture_argv(fixture_path: Path, case_data: dict[str, Any], ta
         return [str(item) for item in explicit_arguments if isinstance(item, (str, int, float))]
 
     if target_command in {
+        "audit-installed-skills",
         "scan-global-skills",
         "build-global-registry",
         "check-global-registry",
@@ -13329,7 +14360,8 @@ def build_runtime_fixture_argv(fixture_path: Path, case_data: dict[str, Any], ta
     }:
         argv: list[str] = []
         for root in fixture_string_list(case_data.get("skill_roots") or case_data.get("skill_root")):
-            argv.extend(["--skill-root", fixture_path_argument(fixture_path, root)])
+            root_flag = "--root" if target_command == "audit-installed-skills" else "--skill-root"
+            argv.extend([root_flag, fixture_path_argument(fixture_path, root)])
         codex_home = case_data.get("codex_home")
         if isinstance(codex_home, str) and codex_home:
             argv.extend(["--codex-home", fixture_path_argument(fixture_path, codex_home)])
@@ -13374,7 +14406,7 @@ def build_runtime_fixture_argv(fixture_path: Path, case_data: dict[str, Any], ta
     if target_command == "route-task":
         return build_route_task_fixture_argv(fixture_path, case_data)
 
-    if target_command in {"compile-contract", "check-contract", "select-route", "start-run"}:
+    if target_command in {"compile-contract", "check-contract", "check-depth", "select-route", "start-run"}:
         target_path_text = case_data.get("target_path") or case_data.get("skill_path")
         if not isinstance(target_path_text, str) or not target_path_text:
             raise ValueError(f"{target_command} fixture must provide target_path")
@@ -13698,6 +14730,9 @@ def evaluate_runtime_fixture_case(
         "check-global-prompt": check_global_prompt,
         "check-global-registry": check_global_registry,
         "check-contract": check_contract,
+        "check-depth": check_depth,
+        "check-readme-release": check_readme_release,
+        "audit-installed-skills": audit_installed_skills,
         "check-run": check_run,
         "check-skill": check_skill,
         "check-suite": check_suite,
@@ -14557,9 +15592,12 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "install-global-prompt": "Install or replace the managed SkillGuard router block in AGENTS.md.",
     "check-global-prompt": "Check the managed global SkillGuard router block is present and current.",
     "refresh-global-router": "Scan skills, refresh registry/projection artifacts, install AGENTS.md, and verify freshness.",
+    "audit-installed-skills": "Audit installed user skills for deep SkillGuard contract coverage.",
     "check-json-schema": "Check one JSON file against an explicit local schema file.",
     "compile-contract": "Compile or write a runnable SkillGuard work contract for a target skill.",
     "check-contract": "Check a target work contract for schema, hash, references, scripts, and closure-rule readiness.",
+    "check-depth": "Check target-specific deep contract coverage against source requirements, checks, run records, and closure blockers.",
+    "check-readme-release": "Check README release gates for bilingual mirror, hero provenance, model evidence, public boundary, and version consistency.",
     "select-route": "Select exactly one work-contract route for a task before skill execution begins.",
     "start-run": "Create a run record bound to a selected route and current work contract.",
     "advance-run": "Advance or mark a run phase while preserving route phase order.",
@@ -14606,9 +15644,12 @@ COMMANDS: dict[str, CommandHandler] = {
     "install-global-prompt": install_global_prompt,
     "check-global-prompt": check_global_prompt,
     "refresh-global-router": refresh_global_router,
+    "audit-installed-skills": audit_installed_skills,
     "check-json-schema": check_json_schema,
     "compile-contract": compile_contract,
     "check-contract": check_contract,
+    "check-depth": check_depth,
+    "check-readme-release": check_readme_release,
     "select-route": select_route,
     "start-run": start_run,
     "advance-run": advance_run,
