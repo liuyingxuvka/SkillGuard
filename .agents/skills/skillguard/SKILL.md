@@ -134,7 +134,7 @@ In this mode SkillGuard should:
 - resolve the user's task to exactly one current skill, then hand off to that skill's own `SKILL.md`, work contract, check manifest, or native route bindings;
 - refresh the global registry and managed prompt block whenever a skill is added or a skill's entrypoint, contract, check manifest, or native route binding changes.
 
-Global Router Mode is a routing and prompt-projection layer only. It does not execute the selected skill, prove target skill tests, prove package publication, or guarantee future AI behavior.
+Global Router Mode is a routing and prompt-projection layer only. It does not execute the selected skill, prove target skill tests, prove package publication, or certify future AI behavior.
 
 ## Hard Gates
 

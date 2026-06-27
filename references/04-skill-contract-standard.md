@@ -235,8 +235,8 @@ A skill contract should avoid claiming more than current evidence proves.
 
 It should not claim:
 
-- future model activation is guaranteed;
-- AI judgment is always correct;
+- future model activation is assured;
+- AI judgment is independently sufficient;
 - scripts, schemas, fixtures, tests, CLI checks, suite automation, package publication, code-contract checks, package metadata, command-line tools, git history, hosted releases, or external integrations are complete without direct evidence;
 - suite-level acceptance when child skills are missing, stale, failed, blocked, or unreviewed.
 

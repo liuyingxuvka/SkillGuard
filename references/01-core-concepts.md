@@ -153,7 +153,7 @@ Operational consequence: judgment can support a decision, but it must be identif
 SkillGuard is an evidence-backed checking workflow. It does not guarantee:
 
 - that Codex will always activate a skill at the right time;
-- that AI judgment is always correct;
+- that AI judgment is independently sufficient;
 - that semantic review can be fully automated;
 - that all skills can be migrated in one automatic batch;
 - it does not prove package publication, git history, external credentials, or hosted release pages exist.

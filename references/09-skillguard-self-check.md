@@ -20,7 +20,7 @@ Self-check may inspect:
 - checker-change and fixture policies;
 - public-safety and privacy boundaries.
 
-Self-check does not prove that future model activation is guaranteed, that AI judgment is always correct, that package installation works, that package publication happened, that external publication has happened, or that unimplemented scripts, schemas, fixtures, tests, CLI checks, suite automation, code-contract checks, checkers, or validation suites are present.
+Self-check does not prove that future model activation is assured, that AI judgment is independently sufficient, that package installation works, that package publication happened, that external publication has happened, or that unimplemented scripts, schemas, fixtures, tests, CLI checks, suite automation, code-contract checks, checkers, or validation suites are present.
 
 ## Target Selection
 
