@@ -1,8 +1,8 @@
 {
   "claim_boundary": "This global registry is a generated index over the scanned local SKILL.md files and their SkillGuard route documents. It selects a skill route but does not replace the selected skill's SKILL.md, work contract, check manifest, runtime checks, tests, package publication, release readiness, external service validation, or future AI behavior evidence.",
-  "current_item_count": 3,
-  "generated_at": "2026-06-27T04:23:57Z",
-  "item_count": 11,
+  "current_item_count": 2,
+  "generated_at": "2026-06-27T04:30:13Z",
+  "item_count": 10,
   "items": [
     {
       "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
@@ -557,84 +557,6 @@
     },
     {
       "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Use when a maintainer needs a complex generated review helper with cross-file evidence notes, fixture guidance, and bounded maintenance instructions.",
-      "do_not_use_when": [
-        "The request asks for package publication, release readiness, external service integration, or sealed task material.",
-        "The target does not have current generated files or direct validation evidence."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/.skillguard/check_manifest.json",
-        "check_manifest_sha256": "A22D329D10EF0ACBC26CE367E999BD0A3338CE7B56F0C037C3F5F6DFBB870DA7",
-        "contract_hash": "246E7F4479DFFCE581CA238CBDA5F1FB453C995DC52934A85ECAD88E6C755E86",
-        "contract_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/.skillguard/work-contract.json",
-        "contract_sha256": "B3338DAD4CB15A3215C2437AECEB2185616D6DA9E01C137F220C953A7257081B",
-        "default_route_id": "audit",
-        "handoff_rule": "Use select-route/start-run/check-run/close-run against the target work contract before claiming closure.",
-        "integration_mode": "skillguard-runtime",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": true,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "route_confidence": "explicit",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/SKILL.md",
-          ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/.skillguard/work-contract.json",
-          ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/.skillguard/check_manifest.json"
-        ],
-        "route_ids": [
-          "audit"
-        ]
-      },
-      "route_terms": [
-        "across",
-        "and",
-        "blockers",
-        "bounded",
-        "complex",
-        "complex-generation-review-helper",
-        "cross-file",
-        "current",
-        "evidence",
-        "fixture",
-        "fixtures",
-        "generated",
-        "guidance",
-        "helper",
-        "instructions.",
-        "maintainer",
-        "maintenance",
-        "must",
-        "needs",
-        "notes",
-        "preserve",
-        "public-safe",
-        "record",
-        "records.",
-        "references",
-        "review",
-        "skill.md",
-        "skillguard",
-        "templates",
-        "tests",
-        "use",
-        "validation.",
-        "when",
-        "with"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/SKILL.md",
-      "skill_id": "complex-generation-review-helper",
-      "skill_name": "complex-generation-review-helper",
-      "skill_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper",
-      "skill_sha256": "ADBEE1BF6DFC340CB84B59B7729E76463A3272C638708710047A8BFEA93727CF",
-      "status": "current",
-      "use_when": [
-        "A maintainer needs to review generated evidence across SKILL.md, references, fixtures, tests, templates, and SkillGuard records.",
-        "A generated helper must preserve public-safe blockers and current maintenance record validation."
-      ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
       "description": "Positive maintained SkillGuard single-skill fixture.",
       "do_not_use_when": [
         "The task needs negative, stale, blocked, or regression fixture behavior.",
@@ -756,13 +678,13 @@
       ]
     }
   ],
-  "registry_hash": "4D10B9F7BEFBE12DC39499644F81D4259199BE0EBEF0931AE3EB6077BE29AE23",
+  "registry_hash": "DABCE65E57EC1D0A468B9F5C241E1A878BA77AE7866564B5B52DCD4A1D96EF60",
   "router_skill_id": "skillguard-global-router",
   "scan_roots": [
     {
       "exists": true,
       "path": ".agents/skills",
-      "skill_file_count": 11
+      "skill_file_count": 10
     }
   ],
   "schema_version": "skillguard.global_registry.v1",

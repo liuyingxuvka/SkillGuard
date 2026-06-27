@@ -1,12 +1,12 @@
 {
   "claim_boundary": "This prompt projection installs a managed routing block only. It does not prove target skill execution, tests, fixture coverage, suite automation, package publication, release readiness, code-contract validation, or future AI behavior.",
-  "generated_at": "2026-06-27T04:23:57Z",
-  "managed_block": "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->\n## SkillGuard Global Router\n\n- Before using a Codex skill for non-trivial skill, prompt, process, or SkillGuard-family work, consult the SkillGuard global router registry when it is present.\n- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a skill-routing claim.\n- Route order: select the target skill from the registry, read the selected `SKILL.md`, then follow that skill's `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` or native route bindings.\n- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.\n- router_skill_id: skillguard-global-router\n- registry_hash: 4D10B9F7BEFBE12DC39499644F81D4259199BE0EBEF0931AE3EB6077BE29AE23\n- registry_path: .agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json\n\n### Current Route Index\n- `skillguard` -> .agents/skills/skillguard/SKILL.md (default_route=audit, integration=skillguard-runtime)\n- `skillguard-global-router` -> .agents/skills/skillguard-global-router/SKILL.md (default_route=audit, integration=skillguard-runtime)\n- `complex-generation-review-helper` -> .agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/SKILL.md (default_route=audit, integration=skillguard-runtime)\n\nClaim boundary: this block is a routing projection only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence.\n<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->\n",
+  "generated_at": "2026-06-27T04:30:13Z",
+  "managed_block": "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->\n## SkillGuard Global Router\n\n- Before using a Codex skill for non-trivial skill, prompt, process, or SkillGuard-family work, consult the SkillGuard global router registry when it is present.\n- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a skill-routing claim.\n- Route order: select the target skill from the registry, read the selected `SKILL.md`, then follow that skill's `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` or native route bindings.\n- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.\n- router_skill_id: skillguard-global-router\n- registry_hash: DABCE65E57EC1D0A468B9F5C241E1A878BA77AE7866564B5B52DCD4A1D96EF60\n- registry_path: .agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json\n\n### Current Route Index\n- `skillguard` -> .agents/skills/skillguard/SKILL.md (default_route=audit, integration=skillguard-runtime)\n- `skillguard-global-router` -> .agents/skills/skillguard-global-router/SKILL.md (default_route=audit, integration=skillguard-runtime)\n\nClaim boundary: this block is a routing projection only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence.\n<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->\n",
   "managed_block_markers": {
     "begin": "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->",
     "end": "<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->"
   },
-  "registry_hash": "4D10B9F7BEFBE12DC39499644F81D4259199BE0EBEF0931AE3EB6077BE29AE23",
+  "registry_hash": "DABCE65E57EC1D0A468B9F5C241E1A878BA77AE7866564B5B52DCD4A1D96EF60",
   "registry_path": ".agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json",
   "route_index": [
     {
@@ -56,12 +56,6 @@
       "skill_file": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member/SKILL.md",
       "skill_id": "stale-member",
       "status": "missing_contract"
-    },
-    {
-      "default_route_id": "audit",
-      "skill_file": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/SKILL.md",
-      "skill_id": "complex-generation-review-helper",
-      "status": "current"
     },
     {
       "default_route_id": "",
