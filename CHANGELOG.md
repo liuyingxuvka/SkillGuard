@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.6 - 2026-06-28
+
+- Tightened `deep-pass` so it now means current, target-specific semantic coverage rather than only structural contract-field presence.
+- Hardened `check-readme-release` to require current-version README model evidence plus the README Showcase Writer fact ledger, capability claim matrix, narrative structure plan, and gap ledger.
+- Added installed-skill publication-status reporting so local coverage is separated from GitHub publication evidence.
+- Added regression coverage for stale README model evidence, compact README model evidence, and installed-audit publication boundaries.
+- Re-synced the installed SkillGuard copy and re-audited installed user-created skills with the stricter checker before publication.
+
 ## v0.1.5 - 2026-06-28
 
 - Promoted Deep Contract Mode into a universal target-lock workflow: every covered skill now needs target rule inventory, route inventory, workflow stage inventory, native check inventory, test gap plan, coverage matrix, and runtime lock policy instead of a generic profile-only wrapper.

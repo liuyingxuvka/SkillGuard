@@ -153,7 +153,11 @@ Deep Contract Mode must verify:
 
 Treat `deep-pass` as the normal acceptance label for maintained target skills. Treat `shallow-contract`, `hollow-contract`, `parallel-route-risk`, `stale-run-evidence`, `missing-native-binding`, `cleanup-required`, and `blocked` as failure or repair labels, not as acceptable release status.
 
+`deep-pass` is a semantic target-lock claim, not a field-presence claim. A contract does not pass merely because the required JSON lists exist. It must show target-specific rows extracted from the target skill's own rules, routes, workflow stages, native checks, expected artifacts, evidence, tests, and closure blockers. Generic rows such as "entrypoint checked", stale version evidence, compact model summaries, or old run records are shallow and must fail until replaced with current target-specific evidence.
+
 For release-facing README work, run `check-readme-release` in addition to the general SkillGuard checks. This gate is the executable bridge to the README Showcase Writer contract: English-first Chinese mirror, text-to-image hero evidence, README model evidence, version consistency, command-surface wording, and public/private boundary checks.
+
+README model evidence must be current to the release being checked and must include the README Showcase Writer's internal artifacts: repository fact ledger, capability claim matrix, narrative structure plan, and gap ledger. A compact "root claim/mechanism/evidence/boundary" note is useful context, but it is not enough to support highest-standard README coverage.
 
 ## Global Router Mode
 

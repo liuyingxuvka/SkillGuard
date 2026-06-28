@@ -306,3 +306,64 @@
 
 ### Next Actions
 - Commit scoped changes on `master`, push `master`, create annotated `v0.1.5` tag, push the tag, create GitHub release, verify release, then record KB postflight.
+
+## repair-skillguard-deep-pass-semantics - Repair deep-pass semantics after shallow README evidence was found
+
+- Project: SkillGuard
+- Trigger reason: user found that README depth and installed-skill `deep-pass` claims were inconsistent under the current checker
+- Status: in_progress
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-06-28T03:20:00Z
+- Latest evidence: 2026-06-28T03:27:16Z
+- Commands OK: True
+
+### Findings
+- Started OpenSpec change `repair-skillguard-deep-pass-semantics` to tighten `deep-pass` from structural coverage to target-specific semantic coverage.
+- FlowGuard package/schema preflight passed with package `0.52.2`, schema `1.0`, and project audit `pass`.
+- OpenSpec strict validation passed for the new change artifacts before implementation.
+- The previous installed-skill `deep-pass` aggregate is now treated as stale under the stricter standard until the upgraded checker reruns.
+
+### Risk Evidence Summary
+- This record proves only pre-implementation routing and validation setup.
+- It does not prove the stricter checker until code, tests, installed audit, and release checks are rerun.
+
+### Friction Points
+- The prior `deep-pass` wording overclaimed what the checker proved; this repair separates structural field coverage from target-specific semantic coverage.
+
+### Skipped Steps
+- No checker code, installed skill files, git push, tag, or release was completed at this stage.
+
+### Next Actions
+- Harden `check-depth`, `check-readme-release`, installed audit publication-status reporting, fixtures, tests, SkillGuard self evidence, installed sync, final audit, then publish only after current verification.
+
+## repair-skillguard-deep-pass-semantics-final-validation - Complete stricter deep-pass repair before v0.1.6 publication
+
+- Project: SkillGuard
+- Trigger reason: user required SkillGuard to deeply cover itself and covered user skills, while preserving native routes and separating local coverage from GitHub publication
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-06-28T03:20:00Z
+- Ended: 2026-06-28T03:55:16Z
+- Commands OK: True
+
+### Findings
+- `check-depth` now treats `deep-pass` as target-specific semantic coverage and requires evidence ids in coverage rows instead of accepting generic field presence alone.
+- `check-readme-release` now blocks stale README model evidence and requires current-version README Showcase Writer artifacts: fact ledger, capability claim matrix, narrative structure plan, and gap ledger.
+- Installed-skill audit reports local coverage separately from GitHub publication: 64 audited user skills, `deep-pass:64`, `publication_status not-a-git-repo:64`, failures `0`, blockers `0`.
+- High-risk direct checks for SkillGuard, SkillGuard global router, FlowPilot, README showcase writer, UI/design skills, and release skills all passed under the upgraded checker.
+- OpenSpec verify passed after correcting the verification contract's path model; the earlier failure was a verification-contract issue, not an implementation pass.
+
+### Risk Evidence Summary
+- Current local evidence supports a source-only `v0.1.6` patch release from `master`; no binary asset build is required because the README says binary artifacts are not provided.
+- Installed-skill audit proves local target-lock coverage only; it does not prove individual GitHub publication for installed skill directories.
+
+### Friction Points
+- The formal verification contract had to be corrected because OpenSpec runs from the planning root while SkillGuard CLI resolves target arguments from the SkillGuard repository root.
+- Large JSON command output is truncated in the terminal; key release evidence is summarized as counts and pass/fail status instead of committing local installed-skill inventory details.
+
+### Skipped Steps
+- No binary artifact build was run because this release is source-only.
+- GitHub push, tag, release creation, and post-publication verification are not covered by this record; they are the next release steps.
+
+### Next Actions
+- Run final privacy and remote-release checks, commit scoped changes on `master`, push `master`, create annotated `v0.1.6` tag, create GitHub release, verify remote release, rerun post-publication verification, and record KB postflight.

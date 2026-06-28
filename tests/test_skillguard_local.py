@@ -329,6 +329,48 @@ class SkillGuardLocalExamplesTest(unittest.TestCase):
             if isinstance(row, dict) and row.get("validation_id")
         }
 
+    def write_minimal_readme_release_repo(self, root: Path, *, version: str, model_text: str) -> None:
+        hero_dir = root / "assets" / "readme-hero"
+        hero_dir.mkdir(parents=True)
+        (hero_dir / "hero.png").write_bytes(b"0" * 12_000)
+        (hero_dir / "hero_prompt.md").write_text(
+            "Prompt: SkillGuard visual concept with contract gates.\nGeneration method: text-to-image model.\n",
+            encoding="utf-8",
+        )
+        (hero_dir / "hero_design_note.md").write_text(
+            "# Hero\n\n## Core workflow\n\nWorkflow evidence.\n\n## Visual concept\n\nVisual evidence.\n",
+            encoding="utf-8",
+        )
+        (hero_dir / "readme_model_evidence.md").write_text(model_text, encoding="utf-8")
+        (root / "VERSION").write_text(f"{version}\n", encoding="utf-8")
+        (root / "pyproject.toml").write_text(
+            f'[project]\nversion = "{version}"\n\n[tool.skillguard.repository]\nbaseline_version = "{version}"\n',
+            encoding="utf-8",
+        )
+        (root / "CHANGELOG.md").write_text(f"# Changelog\n\n## v{version} - 2026-06-28\n", encoding="utf-8")
+        english_sections = [english for english, _chinese in checker_engine.README_RELEASE_HEADING_PAIRS]
+        chinese_sections = [chinese for _english, chinese in checker_engine.README_RELEASE_HEADING_PAIRS]
+        command_index = ", ".join(f"`{name}`" for name in checker_engine.COMMANDS)
+        readme_lines = [
+            "# SkillGuard",
+            "",
+            "<!-- README HERO START -->",
+            '<img src="./assets/readme-hero/hero.png" alt="SkillGuard concept hero image" width="100%" />',
+            "<!-- README HERO END -->",
+            "",
+            f"Current release: `v{version}`",
+            "",
+            "English comes first; the second half is a full Chinese mirror.",
+            "",
+        ]
+        for heading in english_sections:
+            readme_lines.extend([heading, "English section content.", ""])
+        readme_lines.extend([command_index, "", "# SkillGuard 中文说明", "", f"当前版本：`v{version}`", ""])
+        for heading in chinese_sections:
+            readme_lines.extend([heading, "中文镜像内容。", ""])
+        readme_lines.append(command_index)
+        (root / "README.md").write_text("\n".join(readme_lines) + "\n", encoding="utf-8")
+
     def validation_registry_blocker_codes(self, registry: dict[str, Any]) -> set[str]:
         return {
             str(row.get("blocker_code"))
@@ -688,6 +730,70 @@ Read `references/README.md` before closing.
         self.assertIn("check-readme-release:version-consistency", check_ids)
         self.assertIn("check-readme-release:public-boundary", check_ids)
 
+    def test_check_readme_release_blocks_stale_model_version(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-readme-stale-model-", dir=REPO_ROOT) as tmp:
+            tmp_root = Path(tmp)
+            model_text = """
+# SkillGuard README Model Evidence
+
+This LogicGuard-backed capability model is for `v0.1.4`.
+
+## Repository Fact Ledger
+- product surface: local SkillGuard command surface.
+- entry points: README and skillguard.py.
+- release/version facts: current public notes reference v0.1.4.
+- privacy-sensitive exclusions: no private data.
+
+## Capability Claim Matrix
+- claim: SkillGuard checks README releases.
+- problem: stale claims can pass.
+- mechanism: checker reads files.
+- evidence: README files.
+- warrant: local files support local claims.
+- reader value: clearer release boundary.
+- boundary: source-only.
+- objection: future behavior is not guaranteed.
+
+## Narrative Structure Plan
+- first-screen promise: explain SkillGuard.
+- section order: definition, workflow, commands, validation.
+- visual proof placement: hero near the top.
+- quick-start placement: command section.
+- public/private boundary placement: near release gates.
+
+## Gap Ledger
+- unsupported claims: package publication.
+- missing evidence: none for this fixture.
+- maturity: local test fixture only.
+- privacy risks: none.
+"""
+            self.write_minimal_readme_release_repo(tmp_root, version="0.1.5", model_text=model_text)
+
+            report = run_skillguard("check-readme-release", "--repo", rel(tmp_root), expected_exit=1)
+
+            self.assertEqual(report.get("decision"), "fail")
+            failures = "\n".join(report.get("failures", []))
+            self.assertIn("stale-readme-model-evidence", failures)
+            self.assertIn("v0.1.4", failures)
+
+    def test_check_readme_release_blocks_compact_model_without_showcase_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-readme-compact-model-", dir=REPO_ROOT) as tmp:
+            tmp_root = Path(tmp)
+            model_text = (
+                "# SkillGuard README Model Evidence\n\n"
+                "This LogicGuard-backed capability model is for `v0.1.5` and includes mechanism, "
+                "evidence, boundary, and objection notes, but no full README Showcase Writer matrix.\n"
+            )
+            self.write_minimal_readme_release_repo(tmp_root, version="0.1.5", model_text=model_text)
+
+            report = run_skillguard("check-readme-release", "--repo", rel(tmp_root), expected_exit=1)
+
+            self.assertEqual(report.get("decision"), "fail")
+            failures = "\n".join(report.get("failures", []))
+            self.assertIn("missing-readme-model-artifact", failures)
+            self.assertIn("Repository Fact Ledger", failures)
+            self.assertIn("Capability Claim Matrix", failures)
+
     def test_check_readme_release_blocks_missing_chinese_mirror(self) -> None:
         with tempfile.TemporaryDirectory(prefix="skillguard-readme-release-", dir=REPO_ROOT) as tmp:
             tmp_root = Path(tmp)
@@ -742,6 +848,194 @@ Read `references/README.md` before closing.
                 any("missing-bilingual-mirror" in item for item in report.get("failures", [])),
                 report.get("failures", []),
             )
+
+    def test_audit_installed_skills_separates_local_coverage_from_github_publication(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-installed-local-only-") as tmp:
+            codex_home = Path(tmp)
+            skills_root = codex_home / "skills"
+            target = skills_root / "local-only-skill"
+            checks_dir = target / ".skillguard" / "checks"
+            checks_dir.mkdir(parents=True)
+            skill_text = "\n".join(
+                [
+                    "---",
+                    "name: local-only-skill",
+                    "description: Use for local installed audit publication boundary tests.",
+                    "---",
+                    "",
+                    "# Purpose",
+                    "Audit local installed skill coverage without claiming GitHub publication.",
+                    "",
+                    "## Use When",
+                    "- Use when a local installed skill must be audited.",
+                    "",
+                    "## Required Workflow",
+                    "- Read the target route and run the required check before closure.",
+                    "",
+                    "## Hard Gates",
+                    "- Do not claim GitHub publication from local installed coverage.",
+                    "",
+                ]
+            )
+            (target / "SKILL.md").write_text(skill_text, encoding="utf-8")
+            (checks_dir / "check_route.py").write_text("print('ok')\n", encoding="utf-8")
+            check_ids = ["check_route"]
+            deep_fields = checker_engine.default_deep_contract_fields(target, check_ids, skill_text=skill_text)
+            for row in deep_fields.get("coverage_matrix", []):
+                row["check_ids"] = check_ids
+                row["native_check_binding_ids"] = ["native-check-binding"]
+                row["evidence_ids"] = ["task_summary"]
+            for obligation in deep_fields.get("acceptance_obligations", []):
+                obligation["covered_by_checks"] = check_ids
+                obligation["native_check_binding_ids"] = ["native-check-binding"]
+            for skill_check in deep_fields.get("skill_specific_checks", []):
+                skill_check["check_manifest_ids"] = check_ids
+                skill_check["native_check_binding_ids"] = ["native-check-binding"]
+            for gap in deep_fields.get("test_gap_plan", []):
+                gap["planned_check_ids"] = check_ids
+            deep_fields["run_record_required"] = False
+            deep_fields["not_parallel_route_proof"] = {
+                "proof_id": "local_only.native.no_parallel_route",
+                "summary": "Local-only fixture binds SkillGuard checks to the target-owned native route.",
+                "native_route_binding_ids": ["native-audit-binding"],
+                "evidence_source": "local-only fixture contract",
+            }
+            contract = {
+                "schema_version": "skillguard.work_contract.v1",
+                "contract_version": "local-only-audit-1",
+                "skill_id": "local-only-skill",
+                "target_path": "skills/local-only-skill",
+                "integration_mode": "native-integrated",
+                "skillguard_role": "native_contract_executor",
+                "native_route_owner": "local-only.native",
+                "may_define_parallel_execution_route": False,
+                "may_define_skillguard_runtime_route": False,
+                "integration_claim_boundary": "Local-only audit fixture.",
+                "native_route_bindings": [
+                    {
+                        "binding_id": "native-audit-binding",
+                        "native_route_id": "native.audit",
+                        "source": "fixture native route",
+                        "required_before_closure": True,
+                    }
+                ],
+                "native_check_bindings": [
+                    {
+                        "binding_id": "native-check-binding",
+                        "native_check_id": "native.check",
+                        "evidence_source": "fixture native check",
+                        "required": True,
+                    }
+                ],
+                "phase_native_bindings": [
+                    {
+                        "phase_id": "intake",
+                        "native_route_binding_id": "native-audit-binding",
+                        "native_check_binding_ids": ["native-check-binding"],
+                        "evidence_source": "fixture native route/check evidence",
+                        "required": True,
+                    }
+                ],
+                "routes": [
+                    {
+                        "route_id": "audit",
+                        "route_source": "native_binding",
+                        "phase_order": ["intake"],
+                        "activation_keywords": ["audit"],
+                        "do_not_use_when": ["Task is outside the local-only audit route."],
+                        "summary": "Execute native audit route with SkillGuard gates.",
+                    }
+                ],
+                "phases": [
+                    {
+                        "phase_id": "intake",
+                        "summary": "Confirm native audit route.",
+                        "required_evidence": ["task_summary"],
+                        "required_checks": check_ids,
+                        "allowed_next": [],
+                    }
+                ],
+                "required_evidence": [
+                    {
+                        "evidence_id": "task_summary",
+                        "kind": "task_record",
+                        "phase_id": "intake",
+                        "source": ".skillguard/runs/",
+                        "required": True,
+                    }
+                ],
+                "check_scripts": [
+                    {
+                        "check_id": "check_route",
+                        "phase_id": "intake",
+                        "command": "python .skillguard/checks/check_route.py",
+                        "script_path": ".skillguard/checks/check_route.py",
+                        "required": True,
+                        "failure_class": "route",
+                    }
+                ],
+                "closure_rules": [
+                    {
+                        "rule_id": "accepted_requires_check",
+                        "required_checks": check_ids,
+                        "required_evidence": ["task_summary"],
+                        "allowed_decision": "accepted",
+                        "scope": "local-only fixture",
+                    }
+                ],
+                "quality_floors": [
+                    {
+                        "floor_id": "no_publication_overclaim",
+                        "required_checks": check_ids,
+                        "failure_effect": "block closure",
+                        "summary": "Local installed coverage must not imply GitHub publication.",
+                    }
+                ],
+                "forbidden_shortcuts": [
+                    {
+                        "shortcut_id": "publication_overclaim",
+                        "summary": "Do not claim GitHub publication from local installed coverage.",
+                    }
+                ],
+                "stale_bindings": [],
+                "claim_boundary": "Local-only audit fixture.",
+            }
+            contract.update(deep_fields)
+            contract["contract_hash"] = checker_engine.work_contract_hash(contract)
+            write_json(target / ".skillguard" / "work-contract.json", contract)
+            write_json(
+                target / ".skillguard" / "check_manifest.json",
+                {
+                    "schema_version": "skillguard.check_manifest.v1",
+                    "target_skill": "skills/local-only-skill",
+                    "contract_ref": "skills/local-only-skill/.skillguard/work-contract.json",
+                    "checks": [
+                        {
+                            "check_id": "check_route",
+                            "phase_id": "intake",
+                            "command": "python .skillguard/checks/check_route.py",
+                            "required": True,
+                            "failure_class": "route",
+                            "inputs": [".skillguard/work-contract.json"],
+                        }
+                    ],
+                    "output_schema": "skillguard.cli_result.v1",
+                    "freshness": {"watch": ["SKILL.md", ".skillguard/work-contract.json"]},
+                    "claim_boundary": "Local-only fixture check manifest.",
+                },
+            )
+
+            report = run_skillguard("audit-installed-skills", "--root", str(skills_root))
+
+            self.assert_clean_pass(report)
+            rows = report.get("skill_results", [])
+            self.assertEqual(len(rows), 1, rows)
+            row = rows[0]
+            self.assertEqual(row.get("decision"), "pass")
+            self.assertEqual(row.get("depth_classification"), "deep-pass")
+            self.assertEqual(row.get("publication_status"), "not-a-git-repo")
+            self.assertIs(row.get("github_publication_checked"), False)
+            self.assertIn("Local installed skill coverage only", row.get("claim_boundary", ""))
 
     def test_global_route_score_prefers_readme_skill_for_readme_task(self) -> None:
         task = "用 README 技能给 SkillGuard 写发布 README，中英双语，文生图 hero"

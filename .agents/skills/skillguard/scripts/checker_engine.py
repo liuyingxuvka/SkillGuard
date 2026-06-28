@@ -3116,6 +3116,7 @@ def deep_contract_failures(
     route_inventory = contract.get("route_inventory", []) if isinstance(contract, dict) else []
     workflow_stage_inventory = contract.get("workflow_stage_inventory", []) if isinstance(contract, dict) else []
     coverage_matrix = contract.get("coverage_matrix", []) if isinstance(contract, dict) else []
+    required_evidence = contract.get("required_evidence", []) if isinstance(contract, dict) else []
     runtime_lock_policy = contract.get("runtime_lock_policy", {}) if isinstance(contract, dict) else {}
     acceptance_obligations = contract.get("acceptance_obligations", []) if isinstance(contract, dict) else []
     skill_specific_checks = contract.get("skill_specific_checks", []) if isinstance(contract, dict) else []
@@ -3148,6 +3149,7 @@ def deep_contract_failures(
         for item in coverage_matrix:
             if isinstance(item, dict) and isinstance(item.get("requirement_id"), str):
                 coverage_rows_by_requirement.setdefault(str(item["requirement_id"]), []).append(item)
+    evidence_by_id = contract_lookup(required_evidence, "evidence_id")
     obligation_by_id = contract_lookup(acceptance_obligations, "obligation_id")
     skill_check_by_id = contract_lookup(skill_specific_checks, "check_id")
     blocker_by_id = contract_lookup(closure_blockers, "blocker_id")
@@ -3225,6 +3227,16 @@ def deep_contract_failures(
                 for check_ref in row_check_refs:
                     if check_ref not in available_check_ids:
                         failures.append(f"coverage_matrix {row_id}: cites unavailable check {check_ref}")
+                evidence_refs = [
+                    str(item)
+                    for item in row.get("evidence_ids", [])
+                    if isinstance(row.get("evidence_ids"), list)
+                ]
+                if not evidence_refs:
+                    failures.append(f"coverage_matrix {row_id}: missing evidence_ids")
+                for evidence_ref in evidence_refs:
+                    if evidence_ref not in evidence_by_id:
+                        failures.append(f"coverage_matrix {row_id}: cites unavailable evidence {evidence_ref}")
                 if not row.get("closure_blocker_id"):
                     failures.append(f"coverage_matrix {row_id}: missing closure_blocker_id")
 
@@ -3374,6 +3386,83 @@ README_RELEASE_HEADING_PAIRS = (
 )
 
 
+README_MODEL_REQUIRED_SECTIONS = {
+    "Repository Fact Ledger": (
+        "product surface",
+        "entry points",
+        "release/version facts",
+        "privacy-sensitive exclusions",
+    ),
+    "Capability Claim Matrix": (
+        "claim",
+        "problem",
+        "mechanism",
+        "evidence",
+        "warrant",
+        "reader value",
+        "boundary",
+        "objection",
+    ),
+    "Narrative Structure Plan": (
+        "first-screen promise",
+        "section order",
+        "visual proof placement",
+        "quick-start placement",
+        "public/private boundary placement",
+    ),
+    "Gap Ledger": (
+        "unsupported claims",
+        "missing evidence",
+        "maturity",
+        "privacy risks",
+    ),
+}
+
+
+def markdown_section_body(text: str, heading: str) -> str:
+    pattern = re.compile(rf"(?ms)^##+\s+{re.escape(heading)}\s*$\n(?P<body>.*?)(?=^##+\s+|\Z)")
+    match = pattern.search(text)
+    return match.group("body").strip() if match else ""
+
+
+def readme_model_evidence_failures(model_text: str, version_text: str) -> list[str]:
+    failures: list[str] = []
+    model_lower = model_text.lower()
+    for term in ("logicguard", "capability model", "mechanism", "evidence", "boundary", "objection"):
+        if term not in model_lower:
+            failures.append(f"missing-readme-model-evidence: readme_model_evidence.md missing {term!r}")
+
+    current_version = version_text.strip()
+    if current_version:
+        current_tag = f"v{current_version}"
+        version_mentions = sorted(set(re.findall(r"\bv\d+\.\d+\.\d+\b", model_text)))
+        if current_tag not in version_mentions:
+            failures.append(
+                f"stale-readme-model-evidence: readme_model_evidence.md must explicitly name current release `{current_tag}`"
+            )
+        stale_mentions = [item for item in version_mentions if item != current_tag]
+        if stale_mentions:
+            failures.append(
+                "stale-readme-model-evidence: readme_model_evidence.md references non-current release tag(s): "
+                + ", ".join(stale_mentions)
+            )
+
+    for heading, required_terms in README_MODEL_REQUIRED_SECTIONS.items():
+        body = markdown_section_body(model_text, heading)
+        if not body:
+            failures.append(f"missing-readme-model-artifact: readme_model_evidence.md missing section `## {heading}`")
+            continue
+        body_lower = body.lower()
+        if len([line for line in body.splitlines() if line.strip()]) < 2:
+            failures.append(f"missing-readme-model-artifact: section `## {heading}` must contain concrete model rows")
+        for term in required_terms:
+            if term.lower() not in body_lower:
+                failures.append(
+                    f"missing-readme-model-artifact: section `## {heading}` missing required term {term!r}"
+                )
+    return failures
+
+
 def read_text_if_file(path: Path) -> str:
     if not path.is_file():
         return ""
@@ -3516,16 +3605,13 @@ def check_readme_release(argv: list[str]) -> int:
     )
 
     before_failures, before_blockers = len(failures), len(blockers)
-    model_lower = model_text.lower()
-    for term in ("logicguard", "capability model", "mechanism", "evidence", "boundary", "objection"):
-        if term not in model_lower:
-            failures.append(f"missing-readme-model-evidence: readme_model_evidence.md missing {term!r}")
+    failures.extend(readme_model_evidence_failures(model_text, version_text))
     append_check(
         payload,
         "check-readme-release:model-evidence",
         "README model evidence",
         check_status(failures, blockers, before_failures, before_blockers),
-        "Checked for a recorded LogicGuard-backed capability model with mechanism, evidence, boundary, and objection coverage.",
+        "Checked for current-version LogicGuard-backed README model evidence, fact ledger, capability matrix, narrative plan, and gap ledger.",
     )
 
     before_failures, before_blockers = len(failures), len(blockers)
@@ -13781,6 +13867,50 @@ def installed_skill_audit_skip_reason(skill_dir: Path) -> str:
     return ""
 
 
+def find_git_root_between(path: Path, stop_root: Path) -> Path | None:
+    current = path.resolve()
+    stop = stop_root.resolve()
+    while True:
+        if (current / ".git").exists():
+            return current
+        if current == stop or current == current.parent:
+            return None
+        try:
+            current.relative_to(stop)
+        except ValueError:
+            return None
+        current = current.parent
+
+
+def installed_skill_publication_status(skill_dir: Path, scan_root: Path) -> dict[str, Any]:
+    git_root = find_git_root_between(skill_dir, scan_root)
+    if git_root is None:
+        return {
+            "publication_status": "not-a-git-repo",
+            "github_publication_checked": False,
+            "git_root_status": "absent",
+            "claim_boundary": "Local installed skill coverage only; no independent GitHub publication was checked or implied.",
+        }
+
+    config_path = git_root / ".git" / "config"
+    remote_verified = False
+    if config_path.is_file():
+        try:
+            remote_verified = "github.com" in config_path.read_text(encoding="utf-8", errors="replace").lower()
+        except OSError:
+            remote_verified = False
+    return {
+        "publication_status": "remote-verified" if remote_verified else "git-root-found",
+        "github_publication_checked": remote_verified,
+        "git_root_status": "present",
+        "git_root_path": global_public_path(git_root),
+        "claim_boundary": (
+            "Publication status is only a local git-root/remote inspection; it does not prove branch push, tag, "
+            "release creation, or package publication."
+        ),
+    }
+
+
 def audit_installed_skills(argv: list[str]) -> int:
     parser = JsonArgumentParser(
         prog="skillguard.py audit-installed-skills",
@@ -13832,6 +13962,7 @@ def audit_installed_skills(argv: list[str]) -> int:
                 "failure_count": 0,
                 "failures": [],
             }
+            row.update(installed_skill_publication_status(skill_dir, root))
             if not contract_path.is_file():
                 row["depth_classification"] = "hollow-contract"
                 row["failures"] = ["missing work contract"]
@@ -13899,7 +14030,7 @@ def audit_installed_skills(argv: list[str]) -> int:
     payload["claim_boundary"] = (
         "This installed-skill audit checks current local SKILL.md files outside fixture, backup, and system roots, "
         "then validates adjacent SkillGuard work contracts with deep contract logic. It does not execute target skill work, "
-        "prove package publication, prove external services, or guarantee future AI behavior."
+        "prove GitHub publication, prove package publication, prove external services, or guarantee future AI behavior."
     )
     append_check(
         payload,
@@ -16188,7 +16319,7 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "compile-contract": "Compile or write a runnable SkillGuard work contract for a target skill.",
     "check-contract": "Check a target work contract for schema, hash, references, scripts, and closure-rule readiness.",
     "check-depth": "Check target-specific deep contract coverage against source requirements, checks, run records, and closure blockers.",
-    "check-readme-release": "Check README release gates for bilingual mirror, hero provenance, model evidence, public boundary, and version consistency.",
+    "check-readme-release": "Check README release gates for bilingual mirror, hero provenance, current-version model artifacts, public boundary, and version consistency.",
     "select-route": "Select exactly one work-contract route for a task before skill execution begins.",
     "start-run": "Create a run record bound to a selected route and current work contract.",
     "advance-run": "Advance or mark a run phase while preserving route phase order.",
