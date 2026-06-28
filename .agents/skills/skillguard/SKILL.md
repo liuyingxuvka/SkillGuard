@@ -127,9 +127,22 @@ Use Deep Contract Mode when the question is not only "does a contract file exist
 
 In this mode SkillGuard must compare the target `SKILL.md`, adjacent native route/check materials, `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, and current `.skillguard/runs/` records only for `skillguard-runtime` contracts. The `check-contract` command checks the contract structure; the `check-depth` command checks whether the contract is deep enough to be useful.
 
+Deep Contract Mode is a universal target-lock process for every covered skill, including SkillGuard itself. Do not reserve deep extraction for README, UI, release, FlowPilot, FlowGuard, or other familiar categories. Those categories are examples, not exceptions.
+
+When covering a target skill, SkillGuard must:
+
+1. Read the target skill's own entrypoint and adjacent native route/check records.
+2. Inventory the target's entrypoints, routes, workflow stages, source rules, native checks, added SkillGuard checks, evidence requirements, test gaps, and closure blockers.
+3. Write those items into the target-local work contract as `target_rule_inventory`, `route_inventory`, `workflow_stage_inventory`, `native_check_inventory`, `test_gap_plan`, `coverage_matrix`, and `runtime_lock_policy`.
+4. Bind every required source rule to an obligation, route, stage, check or native-check binding, evidence id, and closure blocker.
+5. Preserve the target skill's original entrypoint and native route owner when they exist. Do not make the global SkillGuard router a mandatory pre-execution gate for ordinary use of that skill.
+6. Require the target-local runtime lock to be visible when the covered skill is used for non-trivial work, so the AI can see the selected route, required stages, checks, evidence, and closure blockers before claiming completion.
+7. Run `check-depth` before claiming that SkillGuard coverage is complete. A contract with only generic phases, generic source requirements, or profile-only coverage is shallow and must fail.
+
 Deep Contract Mode must verify:
 
 - source requirements from the target skill are listed in `source_requirements`;
+- target-local rules, routes, stages, checks, evidence, and blockers are represented in `target_rule_inventory`, `route_inventory`, `workflow_stage_inventory`, `native_check_inventory`, `test_gap_plan`, `coverage_matrix`, and `runtime_lock_policy`;
 - every required source requirement has an `acceptance_obligation`;
 - every required obligation is covered by SkillGuard check-manifest checks, native check bindings, or both;
 - skill-specific checks exist for target-specific obligations such as README bilingual/hero gates, native route binding, hard gates, release gates, or global-router freshness;

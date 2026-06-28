@@ -26,6 +26,14 @@
       "path": "cases/missing-run-record-fail.json"
     },
     {
+      "fixture_id": "deep-missing-target-lock-fail",
+      "fixture_type": "negative",
+      "target_rule": "An ordinary covered skill contract that omits the target-local rule, route, stage, check, evidence, and closure matrix fails deep coverage.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/missing-target-lock-fail.json"
+    },
+    {
       "fixture_id": "deep-parallel-native-route-fail",
       "fixture_type": "negative",
       "target_rule": "A native contract that permits a parallel SkillGuard execution route fails deep coverage.",
@@ -39,6 +47,8 @@
     ".agents/skills/skillguard/fixtures/deep_contract/bad_readme_missing_bilingual/.skillguard/work-contract.json",
     ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record/SKILL.md",
     ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record/.skillguard/work-contract.json",
+    ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_target_lock/SKILL.md",
+    ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_target_lock/.skillguard/work-contract.json",
     ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_parallel_route_contract.json"
   ],
   "skipped_checks": [],

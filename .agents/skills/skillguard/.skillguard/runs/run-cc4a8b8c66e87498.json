@@ -9,6 +9,16 @@
       "evidence_id": "task_summary"
     },
     {
+      "command": "advance-run:intake:checked",
+      "decision": "pass",
+      "evidence_id": "intake"
+    },
+    {
+      "command": "advance-run:intake:check:check_route",
+      "decision": "pass",
+      "evidence_id": "check_route"
+    },
+    {
       "command": "advance-run:inventory:checked",
       "decision": "pass",
       "evidence_id": "inventory"
@@ -49,33 +59,13 @@
       "evidence_id": "check_closure"
     },
     {
-      "command": "advance-run:intake:checked",
-      "decision": "pass",
-      "evidence_id": "intake"
-    },
-    {
-      "command": "advance-run:intake:check:check_route",
-      "decision": "pass",
-      "evidence_id": "check_route"
-    },
-    {
       "command": "close-run:accepted",
       "decision": "pass",
       "evidence_id": "closure_report"
-    },
-    {
-      "command": "advance-run:closure:checked",
-      "decision": "pass",
-      "evidence_id": "closure"
-    },
-    {
-      "command": "advance-run:closure:check:check_closure",
-      "decision": "pass",
-      "evidence_id": "check_closure"
     }
   ],
   "contract_ref": {
-    "contract_hash": "219C0B09C1B2E70604D8B856D90B1996CA02698314A03333D3966B8009555C4D",
+    "contract_hash": "0D9CC6CF422D5B41A957ED1F0241264D86B7FEFF87BE6B4719C002C9356B159B",
     "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
     "contract_version": "1"
   },
@@ -86,35 +76,35 @@
       "fresh": true,
       "kind": "task_record",
       "phase_id": "intake",
-      "source_path": ".agents/skills/skillguard/.skillguard/runs/run-3a5414fba2b744b8.json"
+      "source_path": ".agents/skills/skillguard/.skillguard/runs/run-cc4a8b8c66e87498.json"
     },
     {
       "evidence_id": "target_inventory",
       "fresh": true,
       "kind": "phase_evidence",
       "phase_id": "inventory",
-      "source_path": ".agents/skills/skillguard/SKILL.md"
+      "source_path": ".agents/skills/skillguard/.skillguard/work-contract.json"
     },
     {
       "evidence_id": "direct_evidence",
       "fresh": true,
       "kind": "phase_evidence",
       "phase_id": "evidence",
-      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/check_contract_self_current.json"
+      "source_path": ".agents/skills/skillguard/SKILL.md"
     },
     {
       "evidence_id": "check_output",
       "fresh": true,
       "kind": "phase_evidence",
       "phase_id": "checks",
-      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json"
+      "source_path": "tests/test_skillguard_local.py"
     },
     {
       "evidence_id": "closure_report",
       "fresh": true,
       "kind": "phase_evidence",
       "phase_id": "closure",
-      "source_path": ".agents/skills/skillguard/fixtures/evidence_outputs/check_readme_release_current.json"
+      "source_path": ".agents/skills/skillguard/.skillguard/check_manifest.json"
     }
   ],
   "phase_statuses": [
@@ -140,10 +130,10 @@
     }
   ],
   "quality_failures": [],
-  "run_id": "run-3a5414fba2b744b8",
+  "run_id": "run-cc4a8b8c66e87498",
   "schema_version": "skillguard.run_record.v1",
   "selected_route": "audit",
   "skipped_checks": [],
   "target_skill": ".agents/skills/skillguard",
-  "task_summary": "SkillGuard deep contract coverage upgrade self-verification"
+  "task_summary": "SkillGuard self target-lock refresh after SKILL.md universal target-lock wording update"
 }

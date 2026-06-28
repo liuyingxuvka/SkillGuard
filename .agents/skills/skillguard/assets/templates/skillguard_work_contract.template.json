@@ -18,6 +18,97 @@
       "required": true
     }
   ],
+  "target_rule_inventory": [
+    {
+      "rule_id": "target.entrypoint.acceptance.rule",
+      "requirement_id": "target.entrypoint.acceptance",
+      "category": "entrypoint",
+      "summary": "Target skill entrypoint requirements must be mapped before closure.",
+      "source_path": "SKILL.md",
+      "required": true
+    }
+  ],
+  "route_inventory": [
+    {
+      "route_id": "audit",
+      "summary": "Inspect the target skill and close only after required checks pass.",
+      "source_path": "SKILL.md",
+      "required": true,
+      "native_binding_id": ""
+    }
+  ],
+  "workflow_stage_inventory": [
+    {
+      "stage_id": "entrypoint_intake",
+      "route_id": "audit",
+      "summary": "Read the target SKILL.md, select the target-local route, and expose required checks before work starts.",
+      "source_path": "SKILL.md",
+      "required": true
+    }
+  ],
+  "native_check_inventory": [
+    {
+      "check_id": "skillguard_check_manifest",
+      "kind": "skillguard_added_check",
+      "summary": "No separate target-native check was declared; SkillGuard check manifest supplies the executable coverage.",
+      "source_path": "SKILL.md",
+      "command": "",
+      "required": true
+    }
+  ],
+  "test_gap_plan": [
+    {
+      "gap_id": "target.entrypoint.acceptance.test-gap",
+      "requirement_ids": [
+        "target.entrypoint.acceptance"
+      ],
+      "summary": "Runnable or native check coverage for target.entrypoint.acceptance.",
+      "status": "complete",
+      "planned_check_ids": [
+        "check_evidence",
+        "check_quality_floor",
+        "check_closure"
+      ]
+    }
+  ],
+  "coverage_matrix": [
+    {
+      "row_id": "target.entrypoint.acceptance.matrix",
+      "requirement_id": "target.entrypoint.acceptance",
+      "rule_id": "target.entrypoint.acceptance.rule",
+      "obligation_id": "target.entrypoint.acceptance.covered",
+      "route_id": "audit",
+      "stage_id": "entrypoint_intake",
+      "check_ids": [
+        "check_evidence",
+        "check_quality_floor",
+        "check_closure"
+      ],
+      "native_check_binding_ids": [],
+      "evidence_ids": [
+        "task_summary",
+        "target_inventory",
+        "direct_evidence",
+        "check_output",
+        "closure_report"
+      ],
+      "closure_blocker_id": "target.entrypoint.acceptance.blocker",
+      "source_path": "SKILL.md",
+      "required": true
+    }
+  ],
+  "runtime_lock_policy": {
+    "policy_id": "target_local_runtime_lock",
+    "summary": "The covered skill keeps its own entrypoint and must expose route, stage, check, evidence, and closure blockers from this target-local contract.",
+    "applies_when": "Before and during non-trivial work that uses this covered target skill.",
+    "target_local_contract_required": true,
+    "route_selection_required": true,
+    "stage_sequence_required": true,
+    "checks_before_closure": true,
+    "evidence_before_closure": true,
+    "coverage_matrix_required": true,
+    "global_skillguard_pregate_required": false
+  },
   "acceptance_obligations": [
     {
       "obligation_id": "target.entrypoint.acceptance.covered",

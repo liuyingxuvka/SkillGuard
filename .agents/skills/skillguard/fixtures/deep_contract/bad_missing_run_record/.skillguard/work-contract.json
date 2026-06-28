@@ -1,168 +1,455 @@
 {
-  "schema_version": "skillguard.work_contract.v1",
-  "skill_id": "missing-run-fixture",
-  "target_path": ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record",
-  "contract_version": "bad-missing-run-1",
-  "contract_hash": "BAD_HASH",
-  "integration_mode": "skillguard-runtime",
-  "native_route_owner": "",
-  "native_route_bindings": [],
-  "native_check_bindings": [],
-  "phase_native_bindings": [],
-  "source_requirements": [
-    {
-      "requirement_id": "target.entrypoint.acceptance",
-      "category": "entrypoint",
-      "summary": "The target skill entrypoint and hard gates must be represented by the runtime contract.",
-      "source_path": "SKILL.md",
-      "required": true
-    },
-    {
-      "requirement_id": "target.hard_gates",
-      "category": "quality-gate",
-      "summary": "Declared hard gates and required workflow steps must be represented by checks and closure blockers.",
-      "source_path": "SKILL.md",
-      "required": true
-    }
-  ],
   "acceptance_obligations": [
     {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "skillguard.runtime_contract_mode.covered",
+      "required": true,
+      "requirement_ids": [
+        "skillguard.runtime_contract_mode"
+      ],
+      "summary": "Contract coverage for skillguard.runtime_contract_mode."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.check-gate.do-not-close-without-a-current-run-record.covered",
+      "required": true,
+      "requirement_ids": [
+        "target.check-gate.do-not-close-without-a-current-run-record"
+      ],
+      "summary": "Contract coverage for target.check-gate.do-not-close-without-a-current-run-record."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.check-gate.hard-gates.covered",
+      "required": true,
+      "requirement_ids": [
+        "target.check-gate.hard-gates"
+      ],
+      "summary": "Contract coverage for target.check-gate.hard-gates."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.covered",
+      "required": true,
+      "requirement_ids": [
+        "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when"
+      ],
+      "summary": "Contract coverage for target.check-gate.use-for-checking-that-skillguard-blocks-closure-when."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.covered",
+      "required": true,
+      "requirement_ids": [
+        "target.description.runtime-contract-fixture-requiring-current-run-evidence"
+      ],
+      "summary": "Contract coverage for target.description.runtime-contract-fixture-requiring-current-run-evidence."
+    },
+    {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
       "obligation_id": "target.entrypoint.acceptance.covered",
+      "required": true,
       "requirement_ids": [
         "target.entrypoint.acceptance"
       ],
-      "summary": "Entry coverage.",
-      "required": true,
+      "summary": "Contract coverage for target.entrypoint.acceptance."
+    },
+    {
       "covered_by_checks": [
         "check_route"
       ],
-      "native_check_binding_ids": []
+      "native_check_binding_ids": [],
+      "obligation_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.covered",
+      "required": true,
+      "requirement_ids": [
+        "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence"
+      ],
+      "summary": "Contract coverage for target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence."
     },
     {
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
       "obligation_id": "target.hard_gates.covered",
+      "required": true,
       "requirement_ids": [
         "target.hard_gates"
       ],
-      "summary": "Hard gate coverage.",
-      "required": true,
+      "summary": "Contract coverage for target.hard_gates."
+    },
+    {
       "covered_by_checks": [
         "check_route"
       ],
-      "native_check_binding_ids": []
-    }
-  ],
-  "skill_specific_checks": [
-    {
-      "check_id": "target.entrypoint.acceptance.check",
-      "obligation_ids": [
-        "target.entrypoint.acceptance.covered"
-      ],
-      "check_manifest_ids": [
-        "check_route"
-      ],
       "native_check_binding_ids": [],
+      "obligation_id": "target.workflow-route.required-workflow.covered",
       "required": true,
-      "summary": "Entry check."
+      "requirement_ids": [
+        "target.workflow-route.required-workflow"
+      ],
+      "summary": "Contract coverage for target.workflow-route.required-workflow."
     },
     {
-      "check_id": "target.hard_gates.check",
-      "obligation_ids": [
-        "target.hard_gates.covered"
-      ],
-      "check_manifest_ids": [
+      "covered_by_checks": [
         "check_route"
       ],
       "native_check_binding_ids": [],
+      "obligation_id": "target.workflow-route.run-records-must-exist-before-closure.covered",
       "required": true,
-      "summary": "Hard gate check."
+      "requirement_ids": [
+        "target.workflow-route.run-records-must-exist-before-closure"
+      ],
+      "summary": "Contract coverage for target.workflow-route.run-records-must-exist-before-closure."
     }
   ],
+  "check_scripts": [
+    {
+      "check_id": "check_route",
+      "command": "python .skillguard/checks/check_route.py",
+      "failure_class": "route",
+      "phase_id": "intake",
+      "required": true,
+      "script_path": ".skillguard/checks/check_route.py"
+    }
+  ],
+  "claim_boundary": "Negative fixture only.",
+  "cleanup_required": [],
   "closure_blockers": [
     {
-      "blocker_id": "target.entrypoint.acceptance.blocker",
-      "obligation_ids": [
-        "target.entrypoint.acceptance.covered"
-      ],
-      "failure_class": "missing_target_specific_coverage",
+      "blocker_id": "skillguard.runtime_contract_mode.blocker",
       "blocks_decisions": [
         "checked",
         "accepted"
       ],
-      "summary": "Entry blocker."
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "skillguard.runtime_contract_mode.covered"
+      ],
+      "summary": "Block closure when skillguard.runtime_contract_mode lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.check-gate.do-not-close-without-a-current-run-record.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.check-gate.do-not-close-without-a-current-run-record.covered"
+      ],
+      "summary": "Block closure when target.check-gate.do-not-close-without-a-current-run-record lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.check-gate.hard-gates.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.check-gate.hard-gates.covered"
+      ],
+      "summary": "Block closure when target.check-gate.hard-gates lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.covered"
+      ],
+      "summary": "Block closure when target.check-gate.use-for-checking-that-skillguard-blocks-closure-when lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.description.runtime-contract-fixture-requiring-current-run-evidence.covered"
+      ],
+      "summary": "Block closure when target.description.runtime-contract-fixture-requiring-current-run-evidence lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.entrypoint.acceptance.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.entrypoint.acceptance.covered"
+      ],
+      "summary": "Block closure when target.entrypoint.acceptance lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.covered"
+      ],
+      "summary": "Block closure when target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence lacks runnable or native check evidence."
     },
     {
       "blocker_id": "target.hard_gates.blocker",
-      "obligation_ids": [
-        "target.hard_gates.covered"
-      ],
-      "failure_class": "missing_target_specific_coverage",
       "blocks_decisions": [
         "checked",
         "accepted"
       ],
-      "summary": "Hard gate blocker."
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.hard_gates.covered"
+      ],
+      "summary": "Block closure when target.hard_gates lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.workflow-route.required-workflow.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.workflow-route.required-workflow.covered"
+      ],
+      "summary": "Block closure when target.workflow-route.required-workflow lacks runnable or native check evidence."
+    },
+    {
+      "blocker_id": "target.workflow-route.run-records-must-exist-before-closure.blocker",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "failure_class": "missing_target_specific_coverage",
+      "obligation_ids": [
+        "target.workflow-route.run-records-must-exist-before-closure.covered"
+      ],
+      "summary": "Block closure when target.workflow-route.run-records-must-exist-before-closure lacks runnable or native check evidence."
     }
   ],
-  "run_record_required": true,
-  "not_parallel_route_proof": {
-    "proof_id": "runtime-owner-no-native-route",
-    "summary": "No native route is declared in this missing-run fixture.",
-    "native_route_binding_ids": [],
-    "evidence_source": "Fixture contract"
-  },
-  "cleanup_required": [],
-  "skillguard_role": "runtime_owner",
-  "may_define_parallel_execution_route": false,
-  "may_define_skillguard_runtime_route": true,
-  "integration_claim_boundary": "Missing-run fixture.",
-  "routes": [
+  "closure_rules": [
     {
-      "route_id": "audit",
-      "route_source": "skillguard_runtime",
-      "summary": "Generic audit route.",
-      "activation_keywords": [
-        "audit"
+      "allowed_decision": "accepted",
+      "required_checks": [
+        "check_route"
       ],
-      "default_route": true,
-      "route_priority": 0,
-      "do_not_use_when": [
-        "Outside fixture scope."
-      ],
-      "phase_order": [
-        "intake"
-      ]
-    }
-  ],
-  "phases": [
-    {
-      "phase_id": "intake",
-      "summary": "Generic intake.",
       "required_evidence": [
         "task_summary"
       ],
-      "required_checks": [
-        "check_route"
-      ],
-      "allowed_next": []
+      "rule_id": "accepted_requires_route_check",
+      "scope": "fixture only"
     }
   ],
-  "required_evidence": [
+  "contract_hash": "C5E58BD06125F2AAE435D2758B8E738B0BD6A068DE952E6C58C1ECBBF5D0D79C",
+  "contract_version": "bad-missing-run-1",
+  "coverage_matrix": [
     {
-      "evidence_id": "task_summary",
-      "phase_id": "intake",
-      "kind": "task_record",
-      "source": ".skillguard/runs/",
-      "required": true
-    }
-  ],
-  "quality_floors": [
-    {
-      "floor_id": "no_prose_only_completion",
-      "summary": "Do not use prose-only closure.",
-      "required_checks": [
+      "check_ids": [
         "check_route"
       ],
-      "failure_effect": "block closure"
+      "closure_blocker_id": "skillguard.runtime_contract_mode.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "skillguard.runtime_contract_mode.covered",
+      "required": true,
+      "requirement_id": "skillguard.runtime_contract_mode",
+      "route_id": "entrypoint",
+      "row_id": "skillguard.runtime_contract_mode.matrix",
+      "rule_id": "skillguard.runtime_contract_mode.rule",
+      "source_path": "SKILL.md",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.check-gate.do-not-close-without-a-current-run-record.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.check-gate.do-not-close-without-a-current-run-record.covered",
+      "required": true,
+      "requirement_id": "target.check-gate.do-not-close-without-a-current-run-record",
+      "route_id": "entrypoint",
+      "row_id": "target.check-gate.do-not-close-without-a-current-run-record.matrix",
+      "rule_id": "target.check-gate.do-not-close-without-a-current-run-record.rule",
+      "source_path": "SKILL.md#L18",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.check-gate.hard-gates.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.check-gate.hard-gates.covered",
+      "required": true,
+      "requirement_id": "target.check-gate.hard-gates",
+      "route_id": "entrypoint",
+      "row_id": "target.check-gate.hard-gates.matrix",
+      "rule_id": "target.check-gate.hard-gates.rule",
+      "source_path": "SKILL.md#L16",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.covered",
+      "required": true,
+      "requirement_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when",
+      "route_id": "entrypoint",
+      "row_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.matrix",
+      "rule_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.rule",
+      "source_path": "SKILL.md#L10",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.covered",
+      "required": true,
+      "requirement_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence",
+      "route_id": "entrypoint",
+      "row_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.matrix",
+      "rule_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.rule",
+      "source_path": "SKILL.md frontmatter",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.entrypoint.acceptance.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.entrypoint.acceptance.covered",
+      "required": true,
+      "requirement_id": "target.entrypoint.acceptance",
+      "route_id": "entrypoint",
+      "row_id": "target.entrypoint.acceptance.matrix",
+      "rule_id": "target.entrypoint.acceptance.rule",
+      "source_path": "SKILL.md",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.covered",
+      "required": true,
+      "requirement_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence",
+      "route_id": "entrypoint",
+      "row_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.matrix",
+      "rule_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.rule",
+      "source_path": "SKILL.md#L3",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.hard_gates.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.hard_gates.covered",
+      "required": true,
+      "requirement_id": "target.hard_gates",
+      "route_id": "entrypoint",
+      "row_id": "target.hard_gates.matrix",
+      "rule_id": "target.hard_gates.rule",
+      "source_path": "SKILL.md",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.workflow-route.required-workflow.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.workflow-route.required-workflow.covered",
+      "required": true,
+      "requirement_id": "target.workflow-route.required-workflow",
+      "route_id": "entrypoint",
+      "row_id": "target.workflow-route.required-workflow.matrix",
+      "rule_id": "target.workflow-route.required-workflow.rule",
+      "source_path": "SKILL.md#L12",
+      "stage_id": "required_workflow"
+    },
+    {
+      "check_ids": [
+        "check_route"
+      ],
+      "closure_blocker_id": "target.workflow-route.run-records-must-exist-before-closure.blocker",
+      "evidence_ids": [
+        "task_summary"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_id": "target.workflow-route.run-records-must-exist-before-closure.covered",
+      "required": true,
+      "requirement_id": "target.workflow-route.run-records-must-exist-before-closure",
+      "route_id": "entrypoint",
+      "row_id": "target.workflow-route.run-records-must-exist-before-closure.matrix",
+      "rule_id": "target.workflow-route.run-records-must-exist-before-closure.rule",
+      "source_path": "SKILL.md#L14",
+      "stage_id": "required_workflow"
     }
   ],
   "forbidden_shortcuts": [
@@ -171,27 +458,344 @@
       "summary": "Do not skip checks."
     }
   ],
-  "check_scripts": [
+  "integration_claim_boundary": "Missing-run fixture.",
+  "integration_mode": "skillguard-runtime",
+  "may_define_parallel_execution_route": false,
+  "may_define_skillguard_runtime_route": true,
+  "native_check_bindings": [],
+  "native_check_inventory": [
     {
-      "check_id": "check_route",
-      "phase_id": "intake",
-      "script_path": ".skillguard/checks/check_route.py",
-      "command": "python .skillguard/checks/check_route.py",
+      "check_id": "description_runtime_contract_fixture_requiring_current_run_evide",
+      "command": "",
+      "kind": "target_declared_check",
       "required": true,
-      "failure_class": "route"
+      "source_path": "SKILL.md#L3",
+      "summary": "description: Runtime contract fixture requiring current run evidence."
+    },
+    {
+      "check_id": "do_not_close_without_a_current_run_record",
+      "command": "",
+      "kind": "target_declared_check",
+      "required": true,
+      "source_path": "SKILL.md#L18",
+      "summary": "Do not close without a current run record."
+    },
+    {
+      "check_id": "hard_gates",
+      "command": "",
+      "kind": "target_declared_check",
+      "required": true,
+      "source_path": "SKILL.md#L16",
+      "summary": "## Hard Gates"
+    },
+    {
+      "check_id": "missing_run_fixture",
+      "command": "",
+      "kind": "target_declared_check",
+      "required": true,
+      "source_path": "SKILL.md#L6",
+      "summary": "# Missing Run Fixture"
+    },
+    {
+      "check_id": "run_records_must_exist_before_closure",
+      "command": "",
+      "kind": "target_declared_check",
+      "required": true,
+      "source_path": "SKILL.md#L14",
+      "summary": "Run records must exist before closure."
+    },
+    {
+      "check_id": "use_for_checking_that_skillguard_blocks_closure_when_a_non_trivi",
+      "command": "",
+      "kind": "target_declared_check",
+      "required": true,
+      "source_path": "SKILL.md#L10",
+      "summary": "Use for checking that SkillGuard blocks closure when a non-trivial contract has no current run record."
     }
   ],
-  "closure_rules": [
+  "native_route_bindings": [],
+  "native_route_owner": "",
+  "not_parallel_route_proof": {
+    "evidence_source": "Fixture contract",
+    "native_route_binding_ids": [],
+    "proof_id": "runtime-owner-no-native-route",
+    "summary": "No native route is declared in this missing-run fixture."
+  },
+  "phase_native_bindings": [],
+  "phases": [
     {
-      "rule_id": "accepted_requires_route_check",
-      "scope": "fixture only",
-      "allowed_decision": "accepted",
+      "allowed_next": [],
+      "phase_id": "intake",
       "required_checks": [
         "check_route"
       ],
       "required_evidence": [
         "task_summary"
-      ]
+      ],
+      "summary": "Generic intake."
+    }
+  ],
+  "quality_floors": [
+    {
+      "failure_effect": "block closure",
+      "floor_id": "no_prose_only_completion",
+      "required_checks": [
+        "check_route"
+      ],
+      "summary": "Do not use prose-only closure."
+    }
+  ],
+  "required_evidence": [
+    {
+      "evidence_id": "task_summary",
+      "kind": "task_record",
+      "phase_id": "intake",
+      "required": true,
+      "source": ".skillguard/runs/"
+    }
+  ],
+  "route_inventory": [
+    {
+      "native_binding_id": "",
+      "required": true,
+      "route_id": "entrypoint",
+      "source_path": "SKILL.md frontmatter",
+      "summary": "Entrypoint described by frontmatter: Runtime contract fixture requiring current run evidence."
+    },
+    {
+      "native_binding_id": "",
+      "required": true,
+      "route_id": "required_workflow",
+      "source_path": "SKILL.md#L12",
+      "summary": "Target workflow or route section: Required Workflow"
+    }
+  ],
+  "routes": [
+    {
+      "activation_keywords": [
+        "audit"
+      ],
+      "default_route": true,
+      "do_not_use_when": [
+        "Outside fixture scope."
+      ],
+      "phase_order": [
+        "intake"
+      ],
+      "route_id": "audit",
+      "route_priority": 0,
+      "route_source": "skillguard_runtime",
+      "summary": "Generic audit route."
+    }
+  ],
+  "run_record_required": true,
+  "runtime_lock_policy": {
+    "applies_when": "Before and during non-trivial work that uses this covered target skill.",
+    "checks_before_closure": true,
+    "coverage_matrix_required": true,
+    "evidence_before_closure": true,
+    "global_skillguard_pregate_required": false,
+    "policy_id": "target_local_runtime_lock",
+    "route_selection_required": true,
+    "stage_sequence_required": true,
+    "summary": "The covered skill keeps its own entrypoint and must expose route, stage, check, evidence, and closure blockers from this target-local contract.",
+    "target_local_contract_required": true
+  },
+  "schema_version": "skillguard.work_contract.v1",
+  "skill_id": "missing-run-fixture",
+  "skill_specific_checks": [
+    {
+      "check_id": "skillguard.runtime_contract_mode.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "skillguard.runtime_contract_mode.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for skillguard.runtime_contract_mode."
+    },
+    {
+      "check_id": "target.check-gate.do-not-close-without-a-current-run-record.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.check-gate.do-not-close-without-a-current-run-record.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.check-gate.do-not-close-without-a-current-run-record."
+    },
+    {
+      "check_id": "target.check-gate.hard-gates.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.check-gate.hard-gates.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.check-gate.hard-gates."
+    },
+    {
+      "check_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.check-gate.use-for-checking-that-skillguard-blocks-closure-when."
+    },
+    {
+      "check_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.description.runtime-contract-fixture-requiring-current-run-evidence.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.description.runtime-contract-fixture-requiring-current-run-evidence."
+    },
+    {
+      "check_id": "target.entrypoint.acceptance.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.entrypoint.acceptance.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.entrypoint.acceptance."
+    },
+    {
+      "check_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence."
+    },
+    {
+      "check_id": "target.hard_gates.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.hard_gates.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.hard_gates."
+    },
+    {
+      "check_id": "target.workflow-route.required-workflow.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.workflow-route.required-workflow.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.workflow-route.required-workflow."
+    },
+    {
+      "check_id": "target.workflow-route.run-records-must-exist-before-closure.check",
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "obligation_ids": [
+        "target.workflow-route.run-records-must-exist-before-closure.covered"
+      ],
+      "required": true,
+      "summary": "Check-manifest coverage for target.workflow-route.run-records-must-exist-before-closure."
+    }
+  ],
+  "skillguard_role": "runtime_owner",
+  "source_requirements": [
+    {
+      "category": "runtime-contract",
+      "required": true,
+      "requirement_id": "skillguard.runtime_contract_mode",
+      "source_path": "SKILL.md",
+      "summary": "Runtime contract work must enforce selected route, run record, phase evidence, checks, quality floors, and closure gates."
+    },
+    {
+      "category": "check-gate",
+      "required": true,
+      "requirement_id": "target.check-gate.do-not-close-without-a-current-run-record",
+      "source_path": "SKILL.md#L18",
+      "summary": "Do not close without a current run record."
+    },
+    {
+      "category": "check-gate",
+      "required": true,
+      "requirement_id": "target.check-gate.hard-gates",
+      "source_path": "SKILL.md#L16",
+      "summary": "The target section 'Hard Gates' must be represented by route, check, evidence, or closure coverage."
+    },
+    {
+      "category": "check-gate",
+      "required": true,
+      "requirement_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when",
+      "source_path": "SKILL.md#L10",
+      "summary": "Use for checking that SkillGuard blocks closure when a non-trivial contract has no current run record."
+    },
+    {
+      "category": "entrypoint-description",
+      "required": true,
+      "requirement_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence",
+      "source_path": "SKILL.md frontmatter",
+      "summary": "The target skill description must be represented in the contract: Runtime contract fixture requiring current run evidence."
+    },
+    {
+      "category": "entrypoint",
+      "required": true,
+      "requirement_id": "target.entrypoint.acceptance",
+      "source_path": "SKILL.md",
+      "summary": "The target skill entrypoint and hard gates must be represented by the runtime contract."
+    },
+    {
+      "category": "evidence",
+      "required": true,
+      "requirement_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence",
+      "source_path": "SKILL.md#L3",
+      "summary": "description: Runtime contract fixture requiring current run evidence."
+    },
+    {
+      "category": "quality-gate",
+      "required": true,
+      "requirement_id": "target.hard_gates",
+      "source_path": "SKILL.md",
+      "summary": "Declared hard gates and required workflow steps must be represented by checks and closure blockers."
+    },
+    {
+      "category": "workflow-route",
+      "required": true,
+      "requirement_id": "target.workflow-route.required-workflow",
+      "source_path": "SKILL.md#L12",
+      "summary": "The target section 'Required Workflow' must be represented by route, check, evidence, or closure coverage."
+    },
+    {
+      "category": "workflow-route",
+      "required": true,
+      "requirement_id": "target.workflow-route.run-records-must-exist-before-closure",
+      "source_path": "SKILL.md#L14",
+      "summary": "Run records must exist before closure."
     }
   ],
   "stale_bindings": [
@@ -204,5 +808,208 @@
       ]
     }
   ],
-  "claim_boundary": "Negative fixture only."
+  "target_path": ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record",
+  "target_rule_inventory": [
+    {
+      "category": "runtime-contract",
+      "required": true,
+      "requirement_id": "skillguard.runtime_contract_mode",
+      "rule_id": "skillguard.runtime_contract_mode.rule",
+      "source_path": "SKILL.md",
+      "summary": "Runtime contract work must enforce selected route, run record, phase evidence, checks, quality floors, and closure gates."
+    },
+    {
+      "category": "check-gate",
+      "required": true,
+      "requirement_id": "target.check-gate.do-not-close-without-a-current-run-record",
+      "rule_id": "target.check-gate.do-not-close-without-a-current-run-record.rule",
+      "source_path": "SKILL.md#L18",
+      "summary": "Do not close without a current run record."
+    },
+    {
+      "category": "check-gate",
+      "required": true,
+      "requirement_id": "target.check-gate.hard-gates",
+      "rule_id": "target.check-gate.hard-gates.rule",
+      "source_path": "SKILL.md#L16",
+      "summary": "The target section 'Hard Gates' must be represented by route, check, evidence, or closure coverage."
+    },
+    {
+      "category": "check-gate",
+      "required": true,
+      "requirement_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when",
+      "rule_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.rule",
+      "source_path": "SKILL.md#L10",
+      "summary": "Use for checking that SkillGuard blocks closure when a non-trivial contract has no current run record."
+    },
+    {
+      "category": "entrypoint-description",
+      "required": true,
+      "requirement_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence",
+      "rule_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.rule",
+      "source_path": "SKILL.md frontmatter",
+      "summary": "The target skill description must be represented in the contract: Runtime contract fixture requiring current run evidence."
+    },
+    {
+      "category": "entrypoint",
+      "required": true,
+      "requirement_id": "target.entrypoint.acceptance",
+      "rule_id": "target.entrypoint.acceptance.rule",
+      "source_path": "SKILL.md",
+      "summary": "The target skill entrypoint and hard gates must be represented by the runtime contract."
+    },
+    {
+      "category": "evidence",
+      "required": true,
+      "requirement_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence",
+      "rule_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.rule",
+      "source_path": "SKILL.md#L3",
+      "summary": "description: Runtime contract fixture requiring current run evidence."
+    },
+    {
+      "category": "quality-gate",
+      "required": true,
+      "requirement_id": "target.hard_gates",
+      "rule_id": "target.hard_gates.rule",
+      "source_path": "SKILL.md",
+      "summary": "Declared hard gates and required workflow steps must be represented by checks and closure blockers."
+    },
+    {
+      "category": "workflow-route",
+      "required": true,
+      "requirement_id": "target.workflow-route.required-workflow",
+      "rule_id": "target.workflow-route.required-workflow.rule",
+      "source_path": "SKILL.md#L12",
+      "summary": "The target section 'Required Workflow' must be represented by route, check, evidence, or closure coverage."
+    },
+    {
+      "category": "workflow-route",
+      "required": true,
+      "requirement_id": "target.workflow-route.run-records-must-exist-before-closure",
+      "rule_id": "target.workflow-route.run-records-must-exist-before-closure.rule",
+      "source_path": "SKILL.md#L14",
+      "summary": "Run records must exist before closure."
+    }
+  ],
+  "test_gap_plan": [
+    {
+      "gap_id": "skillguard.runtime_contract_mode.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "skillguard.runtime_contract_mode"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for skillguard.runtime_contract_mode."
+    },
+    {
+      "gap_id": "target.check-gate.do-not-close-without-a-current-run-record.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.check-gate.do-not-close-without-a-current-run-record"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.check-gate.do-not-close-without-a-current-run-record."
+    },
+    {
+      "gap_id": "target.check-gate.hard-gates.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.check-gate.hard-gates"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.check-gate.hard-gates."
+    },
+    {
+      "gap_id": "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.check-gate.use-for-checking-that-skillguard-blocks-closure-when"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.check-gate.use-for-checking-that-skillguard-blocks-closure-when."
+    },
+    {
+      "gap_id": "target.description.runtime-contract-fixture-requiring-current-run-evidence.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.description.runtime-contract-fixture-requiring-current-run-evidence"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.description.runtime-contract-fixture-requiring-current-run-evidence."
+    },
+    {
+      "gap_id": "target.entrypoint.acceptance.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.entrypoint.acceptance"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.entrypoint.acceptance."
+    },
+    {
+      "gap_id": "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.evidence.description-runtime-contract-fixture-requiring-current-run-evidence."
+    },
+    {
+      "gap_id": "target.hard_gates.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.hard_gates"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.hard_gates."
+    },
+    {
+      "gap_id": "target.workflow-route.required-workflow.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.workflow-route.required-workflow"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.workflow-route.required-workflow."
+    },
+    {
+      "gap_id": "target.workflow-route.run-records-must-exist-before-closure.test-gap",
+      "planned_check_ids": [
+        "check_route"
+      ],
+      "requirement_ids": [
+        "target.workflow-route.run-records-must-exist-before-closure"
+      ],
+      "status": "complete",
+      "summary": "Runnable or native check coverage for target.workflow-route.run-records-must-exist-before-closure."
+    }
+  ],
+  "workflow_stage_inventory": [
+    {
+      "required": true,
+      "route_id": "entrypoint",
+      "source_path": "SKILL.md#L12",
+      "stage_id": "required_workflow",
+      "summary": "Target workflow section: Required Workflow"
+    }
+  ]
 }

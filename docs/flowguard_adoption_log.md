@@ -186,4 +186,123 @@
 - FlowGuard project audit and OpenSpec verification remain to be rerun after the final edits.
 
 ### Next Actions
-- Run final full verification, OpenSpec verification, project audit, privacy diff, commit on master, push, and publish `v0.1.4` only after all checks stay current.
+- Run final full verification, OpenSpec verification, project audit, privacy diff, commit on master, push, and publish the next `0.1.x` release only after all checks stay current.
+
+## skillguard-universal-target-lock-final-validation - Final pre-release validation for universal target-lock SkillGuard upgrade
+
+- Project: SkillGuard
+- Trigger reason: user required SkillGuard to deeply cover every covered skill, including SkillGuard itself, without replacing target-native routes
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-06-28T02:01:00Z
+- Ended: 2026-06-28T02:05:15Z
+- Commands OK: True
+
+### Findings
+- Universal target-lock extraction and validation are active for SkillGuard itself: target rules, routes, workflow stages, native checks, test gaps, coverage matrix, runtime lock policy, and source requirements are checked by `check-depth`.
+- Installed SkillGuard audit reported 64 user-created installed skills with `deep-pass:64`.
+- FlowPilot remained `native-integrated` and passed `check-depth`, preserving its own route/check surface instead of becoming a SkillGuard-owned parallel route.
+- README release gate passed after README/CHANGELOG text was aligned with the universal target-lock capability.
+- Global router refresh and `check-global-prompt` passed with registry hash `7F9792ABD7EC99E3068EAD5DE0483D75DEE2FC88B7ABC350A866C95B8B49CB3C`.
+- Negative fixtures proved missing target lock, README shallow coverage, stale/missing run evidence, and parallel route risk are blocked.
+
+### Risk Evidence Summary
+- `pytest` passed: 70 tests and 12 subtests.
+- SkillGuard source `check-depth` passed with 51 coverage rows.
+- README release gate passed and inspected README, VERSION, pyproject, changelog, hero asset, prompt, design note, and README model evidence.
+- Installed audit passed for 64 user-created skills with `deep-pass:64`.
+- FlowGuard project audit passed for package `0.52.2` and schema `1.0`.
+- OpenSpec strict validation passed for `deepen-skillguard-contract-coverage`.
+- Deep-contract fixture manifest passed with `expected_fail:4`; runtime-contract fixture manifest passed with `expected_pass:5`, `expected_fail:11`, `blocker_condition:3`.
+
+### Skipped Steps
+- No GitHub push, tag, release object creation, package artifact build, or binary asset publication was performed in this validation step.
+- This record does not prove future peer-agent changes to installed skill files after the checked timestamp.
+
+### Next Actions
+- Review git diff and privacy boundary, commit scoped changes on `master`, push `master`, create or verify the correct GitHub release for `v0.1.5`, then perform KB postflight.
+
+## skillguard-covered-skill-sequential-audit - Sequentially inspect every covered installed skill for real target-lock depth
+
+- Project: SkillGuard
+- Trigger reason: user challenged that rerunning tests alone does not prove deeper coverage
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Ended: 2026-06-28T02:08:10Z
+
+### Findings
+- Sequential covered-skill audit produced one row per covered installed user skill, not only an aggregate test result.
+- All 64 covered installed user skills had `deep-pass`, complete target-lock status, non-empty target rules, non-empty route inventory, non-empty workflow stage inventory, non-empty coverage matrix, and `may_define_parallel_execution_route=false`.
+- Only `skillguard` and `skillguard-global-router` remained `skillguard-runtime` with `run_record_required=true`; native-integrated and hybrid-extension skills retained `run_record_required=false`.
+- FlowPilot specifically remained `native-integrated` with 45 source requirements, 45 target rules, 6 route inventory rows, 1 workflow-stage inventory row, 16 native checks, 45 coverage matrix rows, 5 phase native bindings, `parallel_allowed=false`, and `run_record_required=false`.
+
+### Risk Evidence Summary
+- This sequential audit confirms coverage depth by contract content counts, not by merely rerunning the test suite.
+- Each covered skill row was checked for source requirements, target rules, route inventory, workflow stages, native checks, coverage matrix, phase bindings, parallel route flag, run-record policy, and ok status.
+
+### Skipped Steps
+- The full per-skill CSV was reviewed in-terminal and summarized here; it was not committed as a public evidence artifact to avoid publishing local installed-skill inventory details.
+
+## skillguard-covered-skill-final-depth-reaudit - Repeat per-skill deep contract audit after user challenged test-only coverage claims
+
+- Project: SkillGuard
+- Trigger reason: user reminded that rerunning tests does not make SkillGuard coverage deeper
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-06-28T02:20:57Z
+- Ended: 2026-06-28T02:23:16Z
+- Commands OK: True
+
+### Findings
+- Reran installed FlowPilot `check-depth` after peer-agent activity and confirmed it is `native-integrated`, not a SkillGuard-owned parallel route.
+- Parsed FlowPilot's installed contract fields directly: 45 source requirements, 45 target rules, 6 route rows, 1 workflow-stage row, 16 native checks, 45 coverage matrix rows, 5 phase native bindings, `may_define_parallel_execution_route=false`, `may_define_skillguard_runtime_route=false`, and `run_record_required=false`.
+- Reran installed audit and parsed all 64 covered skill contracts: `deep-pass=64`, `bad_rows=0`, `hybrid-extension=17`, `native-integrated=45`, `skillguard-runtime=2`.
+- Direct checks for `readme-showcase-writer` and `frontend-design` passed, confirming README-specific bilingual/hero/model gates and UI-design target rules are present in their own contracts.
+- Global prompt freshness check passed against registry hash `7F9792ABD7EC99E3068EAD5DE0483D75DEE2FC88B7ABC350A866C95B8B49CB3C`.
+
+### Risk Evidence Summary
+- This record answers the user's concern that tests alone do not prove depth: every covered installed skill was checked for source requirements, target rules, routes, stages, native checks, coverage matrix, phase bindings, parallel-route policy, and run-record policy.
+- The claim boundary remains current local installed files at the checked timestamp; it does not guarantee future peer-agent edits after the final audit.
+
+### Friction Points
+- The aggregate installed audit alone was not treated as enough evidence; the follow-up parser inspected each target contract's content fields to prove depth rather than only test success.
+- Parallel agents can still change installed skill files after a passing check, so the release workflow must repeat installed audit immediately before commit/release.
+
+### Skipped Steps
+- No GitHub push, tag, or release was performed in this validation step.
+- No public per-skill installed inventory artifact was committed; local user skill inventory stayed in terminal evidence and summarized counts.
+
+### Next Actions
+- Run final repo tests, README release gate, OpenSpec strict validation, privacy scan, short-delay installed audit, then commit on `master` and publish `v0.1.5` only if evidence remains current.
+
+## skillguard-v015-final-prepublish-validation - Final validation, privacy review, installed-skill recheck, and release-boundary review before v0.1.5 publication
+
+- Project: SkillGuard
+- Trigger reason: release only after deep SkillGuard coverage and user-requested sequential installed-skill audit remained current
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-06-28T02:25:36Z
+- Ended: 2026-06-28T02:32:30Z
+- Commands OK: True
+
+### Findings
+- Final pre-commit validation passed after the last documentation/log edits.
+- Tests passed with 70 tests and 12 subtests; source `py_compile`, SkillGuard self `check-depth`, README release gate, OpenSpec strict validation, deep-contract fixtures, runtime-contract fixtures, and installed skill audit all passed.
+- A short-delay installed audit still reported 64 covered user skills with `deep-pass:64`, reducing the chance that parallel-agent edits immediately stale the installed-skill claim.
+- Privacy and stale-release-target scans returned no matches for local machine paths or obsolete public release-target wording in active public release files.
+- GitHub repository ruleset `Protect default branch` is active for `~DEFAULT_BRANCH` with `deletion` and `non_fast_forward` rules; `v0.1.5` tag and release did not exist before publication.
+
+### Risk Evidence Summary
+- Current evidence supports a source-only `v0.1.5` release from `master` after commit; it does not prove future installed-skill state after additional peer-agent writes.
+- No package binary assets are part of this release contract.
+
+### Friction Points
+- The first parallel `pytest` invocation timed out, so `pytest` was rerun alone with a longer timeout and passed.
+- A fixed-string stale-version scan had to be rerun with PowerShell-safe quoting; the rerun returned no matches.
+
+### Skipped Steps
+- No binary asset build was run because this release is source-only.
+- GitHub push, tag, and release creation were not performed before this record; they are the next release steps.
+
+### Next Actions
+- Commit scoped changes on `master`, push `master`, create annotated `v0.1.5` tag, push the tag, create GitHub release, verify release, then record KB postflight.

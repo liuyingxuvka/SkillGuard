@@ -1,0 +1,165 @@
+{
+  "schema_version": "skillguard.work_contract.v1",
+  "skill_id": "missing-target-lock-fixture",
+  "target_path": ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_target_lock",
+  "contract_version": "bad-missing-target-lock-1",
+  "contract_hash": "BAD_HASH",
+  "integration_mode": "skillguard-runtime",
+  "native_route_owner": "",
+  "native_route_bindings": [],
+  "native_check_bindings": [],
+  "phase_native_bindings": [],
+  "source_requirements": [
+    {
+      "requirement_id": "target.matrix.required",
+      "category": "runtime-lock",
+      "summary": "The ordinary covered target requires a route, stage, check, evidence, and closure matrix.",
+      "source_path": "SKILL.md",
+      "required": true
+    }
+  ],
+  "acceptance_obligations": [
+    {
+      "obligation_id": "target.matrix.required.covered",
+      "requirement_ids": [
+        "target.matrix.required"
+      ],
+      "summary": "Matrix requirement is declared but not locked into a coverage matrix.",
+      "required": true,
+      "covered_by_checks": [
+        "check_route"
+      ],
+      "native_check_binding_ids": []
+    }
+  ],
+  "skill_specific_checks": [
+    {
+      "check_id": "target.matrix.required.check",
+      "obligation_ids": [
+        "target.matrix.required.covered"
+      ],
+      "check_manifest_ids": [
+        "check_route"
+      ],
+      "native_check_binding_ids": [],
+      "required": true,
+      "summary": "Check route is present but the target-local coverage matrix is missing."
+    }
+  ],
+  "closure_blockers": [
+    {
+      "blocker_id": "target.matrix.required.blocker",
+      "obligation_ids": [
+        "target.matrix.required.covered"
+      ],
+      "failure_class": "missing_target_lock",
+      "blocks_decisions": [
+        "checked",
+        "accepted"
+      ],
+      "summary": "Closure must fail when the target-local matrix is missing."
+    }
+  ],
+  "run_record_required": true,
+  "not_parallel_route_proof": {
+    "proof_id": "runtime-owner-no-native-route",
+    "summary": "No native route is declared in this target-lock fixture.",
+    "native_route_binding_ids": [],
+    "evidence_source": "Fixture contract"
+  },
+  "cleanup_required": [],
+  "skillguard_role": "runtime_owner",
+  "may_define_parallel_execution_route": false,
+  "may_define_skillguard_runtime_route": true,
+  "integration_claim_boundary": "Negative fixture: target lock fields are intentionally missing.",
+  "routes": [
+    {
+      "route_id": "audit",
+      "route_source": "skillguard_runtime",
+      "summary": "Generic audit route.",
+      "activation_keywords": [
+        "audit"
+      ],
+      "default_route": true,
+      "route_priority": 0,
+      "do_not_use_when": [
+        "Outside fixture scope."
+      ],
+      "phase_order": [
+        "intake"
+      ]
+    }
+  ],
+  "phases": [
+    {
+      "phase_id": "intake",
+      "summary": "Generic intake.",
+      "required_evidence": [
+        "task_summary"
+      ],
+      "required_checks": [
+        "check_route"
+      ],
+      "allowed_next": []
+    }
+  ],
+  "required_evidence": [
+    {
+      "evidence_id": "task_summary",
+      "phase_id": "intake",
+      "kind": "task_record",
+      "source": ".skillguard/runs/",
+      "required": true
+    }
+  ],
+  "quality_floors": [
+    {
+      "floor_id": "matrix_required",
+      "summary": "Do not accept coverage without the target-local matrix.",
+      "required_checks": [
+        "check_route"
+      ],
+      "failure_effect": "block closure"
+    }
+  ],
+  "forbidden_shortcuts": [
+    {
+      "shortcut_id": "source_only_coverage",
+      "summary": "Do not accept source-only coverage without route, stage, check, evidence, and blocker rows."
+    }
+  ],
+  "check_scripts": [
+    {
+      "check_id": "check_route",
+      "phase_id": "intake",
+      "script_path": ".skillguard/checks/check_route.py",
+      "command": "python .skillguard/checks/check_route.py",
+      "required": true,
+      "failure_class": "route"
+    }
+  ],
+  "closure_rules": [
+    {
+      "rule_id": "accepted_requires_route_check",
+      "scope": "fixture only",
+      "allowed_decision": "accepted",
+      "required_checks": [
+        "check_route"
+      ],
+      "required_evidence": [
+        "task_summary"
+      ]
+    }
+  ],
+  "stale_bindings": [
+    {
+      "binding_id": "target_skill_prompt",
+      "path": "SKILL.md",
+      "stales": [
+        "route_selection",
+        "closure_report"
+      ]
+    }
+  ],
+  "claim_boundary": "Negative fixture only."
+}

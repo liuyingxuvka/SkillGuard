@@ -10,7 +10,7 @@
     }
   ],
   "contract_ref": {
-    "contract_hash": "219C0B09C1B2E70604D8B856D90B1996CA02698314A03333D3966B8009555C4D",
+    "contract_hash": "CBBDA2D1186BEAFC23CC8C55AE842609E6C3691188512AADE166D9D4BF33823E",
     "contract_path": ".agents/skills/skillguard/fixtures/runtime_contract/contracts/runtime_owner_contract.json",
     "contract_version": "1"
   },

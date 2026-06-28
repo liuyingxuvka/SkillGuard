@@ -506,7 +506,7 @@ Read `references/README.md` before closing.
 
         deep_contract = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/deep_contract/fixture-manifest.json")
         self.assert_clean_pass(deep_contract)
-        self.assertEqual(deep_contract.get("fixture_class_counts", {}).get("expected_fail"), 3)
+        self.assertEqual(deep_contract.get("fixture_class_counts", {}).get("expected_fail"), 4)
 
         bad_routing = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json")
         self.assert_clean_pass(bad_routing)
@@ -554,6 +554,7 @@ Read `references/README.md` before closing.
             contract_path = target / ".skillguard" / "work-contract.json"
             contract = json.loads(contract_path.read_text(encoding="utf-8"))
             contract["target_path"] = rel(target)
+            contract["contract_hash"] = checker_engine.work_contract_hash(contract)
             write_json(contract_path, contract)
 
             runs_dir = target / ".skillguard" / "runs"
@@ -914,6 +915,11 @@ Read `references/README.md` before closing.
                     "claim_boundary": "This fixture contract covers only local native-route registry tests.",
                 }
                 deep_fields = checker_engine.default_deep_contract_fields(skill_dir, ["check_route"])
+                for row in deep_fields.get("coverage_matrix", []):
+                    row["check_ids"] = ["check_route"]
+                    row["evidence_ids"] = ["task_summary"]
+                for gap in deep_fields.get("test_gap_plan", []):
+                    gap["planned_check_ids"] = ["check_route"]
                 if valid:
                     deep_fields["not_parallel_route_proof"] = {
                         "proof_id": "fixture.native.no_parallel_route",

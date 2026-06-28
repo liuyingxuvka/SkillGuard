@@ -1550,6 +1550,130 @@ def source_requirement(
     }
 
 
+GENERIC_SOURCE_REQUIREMENT_IDS = {
+    "target.entrypoint.acceptance",
+}
+
+TARGET_LOCK_LIST_FIELDS = (
+    "target_rule_inventory",
+    "route_inventory",
+    "workflow_stage_inventory",
+    "native_check_inventory",
+    "test_gap_plan",
+    "coverage_matrix",
+)
+
+TARGET_LOCK_STRONG_KEYWORDS = (
+    "must",
+    "required",
+    "shall",
+    "do not",
+    "never",
+    "cannot",
+    "block",
+    "fail",
+    "gate",
+    "check",
+    "test",
+    "verify",
+    "validate",
+    "evidence",
+    "closure",
+    "output",
+    "workflow",
+    "route",
+    "entrypoint",
+    "native",
+    "runtime",
+    "release",
+    "privacy",
+    "\u5fc5\u987b",
+    "\u7981\u6b62",
+    "\u4e0d\u8981",
+    "\u68c0\u67e5",
+    "\u9a8c\u8bc1",
+    "\u8bc1\u636e",
+    "\u8f93\u51fa",
+    "\u6d41\u7a0b",
+    "\u8def\u7ebf",
+)
+
+
+def normalize_requirement_text(value: str, *, max_length: int = 190) -> str:
+    text = re.sub(r"`([^`]+)`", r"\1", value)
+    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
+    text = re.sub(r"^\s*(?:[-*+]|\d+[.)])\s+", "", text)
+    text = re.sub(r"\s+", " ", text).strip(" -:\t")
+    if len(text) > max_length:
+        text = text[: max_length - 1].rstrip() + "."
+    return text
+
+
+def requirement_slug(value: str, *, prefix: str = "rule", max_words: int = 8) -> str:
+    words = re.findall(r"[A-Za-z0-9]+", value.lower())[:max_words]
+    slug = "-".join(words)
+    if not slug:
+        slug = slugify_identifier(value)[:48]
+    return f"{prefix}.{slug or 'item'}"
+
+
+def markdown_frontmatter(skill_text: str) -> dict[str, str]:
+    if not skill_text.startswith("---"):
+        return {}
+    lines = skill_text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return {}
+    fields: dict[str, str] = {}
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        fields[key.strip().lower()] = clean_scalar(value.strip())
+    return fields
+
+
+def heading_category(heading: str, body_line: str = "") -> str:
+    haystack = f"{heading} {body_line}".lower()
+    if "do not use" in haystack or "forbidden" in haystack or "shortcut" in haystack:
+        return "non-use-boundary"
+    if "use when" in haystack or "activation" in haystack or "entrypoint" in haystack:
+        return "activation-boundary"
+    if "workflow" in haystack or "mode" in haystack or "route" in haystack or "path" in haystack:
+        return "workflow-route"
+    if "hard gate" in haystack or "gate" in haystack or "check" in haystack or "test" in haystack:
+        return "check-gate"
+    if "evidence" in haystack or "fresh" in haystack:
+        return "evidence"
+    if "output" in haystack or "report" in haystack:
+        return "output"
+    if "release" in haystack or "publish" in haystack or "version" in haystack:
+        return "release"
+    if "privacy" in haystack or "public" in haystack or "secret" in haystack:
+        return "public-boundary"
+    if "closure" in haystack or "complete" in haystack:
+        return "closure"
+    return "target-rule"
+
+
+def add_unique_requirement(
+    requirements: dict[str, dict[str, Any]],
+    requirement_id: str,
+    category: str,
+    summary: str,
+    source_path: str = "SKILL.md",
+) -> None:
+    if requirement_id in requirements:
+        return
+    requirements[requirement_id] = source_requirement(
+        requirement_id,
+        category,
+        normalize_requirement_text(summary),
+        source_path,
+    )
+
+
 def read_target_skill_text(target: Path | None, root: Path | None = None) -> str:
     if target is None:
         return ""
@@ -1568,13 +1692,23 @@ def infer_source_requirements(target: Path | None, skill_text: str, root: Path |
     requirements: dict[str, dict[str, Any]] = {}
 
     def add(requirement_id: str, category: str, summary: str, source_path: str = "SKILL.md") -> None:
-        requirements[requirement_id] = source_requirement(requirement_id, category, summary, source_path)
+        add_unique_requirement(requirements, requirement_id, category, summary, source_path)
 
     if skill_text.strip():
         add(
             "target.entrypoint.acceptance",
             "entrypoint",
             "The target skill entrypoint and hard gates must be represented by the runtime contract.",
+        )
+
+    frontmatter = markdown_frontmatter(skill_text)
+    description = frontmatter.get("description", "")
+    if description:
+        add(
+            requirement_slug(description, prefix="target.description"),
+            "entrypoint-description",
+            f"The target skill description must be represented in the contract: {description}",
+            "SKILL.md frontmatter",
         )
 
     frontmatter_hint = lower[:1200]
@@ -1629,6 +1763,57 @@ def infer_source_requirements(target: Path | None, skill_text: str, root: Path |
             "quality-gate",
             "Declared hard gates and required workflow steps must be represented by checks and closure blockers.",
         )
+    if "deep contract mode" in lower or "target-specific" in lower or "coverage matrix" in lower:
+        add(
+            "skillguard.deep_contract_mode",
+            "deep-contract",
+            "Deep contract work must extract target-specific rules and map them to checks, evidence, and closure blockers.",
+        )
+    if "runtime lock" in lower or "target-local" in lower or "work-contract.json" in lower:
+        add(
+            "skillguard.universal_target_lock",
+            "runtime-lock",
+            "Covered target skills must expose a target-local runtime lock before work starts and before closure.",
+        )
+
+    active_heading = ""
+    extracted_count = 0
+    for line_number, raw_line in enumerate(skill_text.splitlines(), start=1):
+        stripped = raw_line.strip()
+        if not stripped:
+            continue
+        heading_match = re.match(r"^(#{1,4})\s+(.+?)\s*$", stripped)
+        if heading_match:
+            active_heading = normalize_requirement_text(heading_match.group(2), max_length=90)
+            heading_lower = active_heading.lower()
+            if any(term in heading_lower for term in ("mode", "workflow", "route", "gate", "output", "evidence", "use when", "do not use")):
+                category = heading_category(active_heading)
+                add(
+                    requirement_slug(active_heading, prefix=f"target.{category}"),
+                    category,
+                    f"The target section '{active_heading}' must be represented by route, check, evidence, or closure coverage.",
+                    f"SKILL.md#L{line_number}",
+                )
+            continue
+        normalized = normalize_requirement_text(stripped)
+        if not normalized or len(normalized) < 20:
+            continue
+        is_structured_line = bool(re.match(r"^\s*(?:[-*+]|\d+[.)])\s+", raw_line))
+        line_lower = normalized.lower()
+        if not is_structured_line and not any(keyword in line_lower for keyword in TARGET_LOCK_STRONG_KEYWORDS):
+            continue
+        category = heading_category(active_heading, normalized)
+        if active_heading.lower() in {"purpose", "context"} and not any(keyword in line_lower for keyword in TARGET_LOCK_STRONG_KEYWORDS):
+            continue
+        add(
+            requirement_slug(normalized, prefix=f"target.{category}"),
+            category,
+            normalized,
+            f"SKILL.md#L{line_number}",
+        )
+        extracted_count += 1
+        if extracted_count >= 40:
+            break
 
     if not requirements:
         add(
@@ -1641,9 +1826,202 @@ def infer_source_requirements(target: Path | None, skill_text: str, root: Path |
     return sorted(requirements.values(), key=lambda item: str(item["requirement_id"]))
 
 
+def infer_route_inventory(skill_text: str) -> list[dict[str, Any]]:
+    routes: dict[str, dict[str, Any]] = {}
+
+    def add(route_id: str, summary: str, source_path: str) -> None:
+        routes.setdefault(
+            route_id,
+            {
+                "route_id": route_id,
+                "summary": normalize_requirement_text(summary),
+                "source_path": source_path,
+                "required": True,
+                "native_binding_id": "",
+            },
+        )
+
+    frontmatter = markdown_frontmatter(skill_text)
+    if frontmatter.get("description"):
+        add("entrypoint", f"Entrypoint described by frontmatter: {frontmatter['description']}", "SKILL.md frontmatter")
+    for line_number, raw_line in enumerate(skill_text.splitlines(), start=1):
+        stripped = raw_line.strip()
+        heading_match = re.match(r"^(#{1,4})\s+(.+?)\s*$", stripped)
+        if not heading_match:
+            continue
+        heading = normalize_requirement_text(heading_match.group(2), max_length=80)
+        lower = heading.lower()
+        if not any(term in lower for term in ("mode", "workflow", "route", "path", "entrypoint", "use when")):
+            continue
+        add(slugify_identifier(heading).replace("-", "_")[:64], f"Target workflow or route section: {heading}", f"SKILL.md#L{line_number}")
+    if not routes:
+        add("entrypoint", "Default target entrypoint route from SKILL.md.", "SKILL.md")
+    return sorted(routes.values(), key=lambda item: str(item["route_id"]))
+
+
+def infer_workflow_stage_inventory(skill_text: str, route_id: str) -> list[dict[str, Any]]:
+    stages: dict[str, dict[str, Any]] = {}
+    in_workflow = False
+    for line_number, raw_line in enumerate(skill_text.splitlines(), start=1):
+        stripped = raw_line.strip()
+        heading_match = re.match(r"^(#{1,4})\s+(.+?)\s*$", stripped)
+        if heading_match:
+            heading = normalize_requirement_text(heading_match.group(2), max_length=80)
+            in_workflow = any(term in heading.lower() for term in ("workflow", "route", "mode", "steps", "process"))
+            if in_workflow:
+                stage_id = slugify_identifier(heading).replace("-", "_")[:64]
+                stages.setdefault(
+                    stage_id,
+                    {
+                        "stage_id": stage_id,
+                        "route_id": route_id,
+                        "summary": f"Target workflow section: {heading}",
+                        "source_path": f"SKILL.md#L{line_number}",
+                        "required": True,
+                    },
+                )
+            continue
+        if not in_workflow or not re.match(r"^\s*(?:[-*+]|\d+[.)])\s+", raw_line):
+            continue
+        summary = normalize_requirement_text(stripped)
+        if not summary:
+            continue
+        stage_id = slugify_identifier(summary).replace("-", "_")[:64]
+        stages.setdefault(
+            stage_id,
+            {
+                "stage_id": stage_id,
+                "route_id": route_id,
+                "summary": summary,
+                "source_path": f"SKILL.md#L{line_number}",
+                "required": True,
+            },
+        )
+        if len(stages) >= 16:
+            break
+    if not stages:
+        stages["entrypoint_intake"] = {
+            "stage_id": "entrypoint_intake",
+            "route_id": route_id,
+            "summary": "Read the target SKILL.md, select the target-local route, and expose required checks before work starts.",
+            "source_path": "SKILL.md",
+            "required": True,
+        }
+    return sorted(stages.values(), key=lambda item: str(item["stage_id"]))
+
+
+def infer_native_check_inventory(skill_text: str) -> list[dict[str, Any]]:
+    checks: dict[str, dict[str, Any]] = {}
+    for line_number, raw_line in enumerate(skill_text.splitlines(), start=1):
+        normalized = normalize_requirement_text(raw_line)
+        lower = normalized.lower()
+        if not normalized or not any(term in lower for term in ("check", "test", "verify", "validate", "run ", "pytest", "evidence", "gate", "script")):
+            continue
+        check_id = slugify_identifier(normalized).replace("-", "_")[:64]
+        checks.setdefault(
+            check_id,
+            {
+                "check_id": check_id,
+                "kind": "target_declared_check",
+                "summary": normalized,
+                "source_path": f"SKILL.md#L{line_number}",
+                "command": "",
+                "required": True,
+            },
+        )
+        if len(checks) >= 16:
+            break
+    if not checks:
+        checks["skillguard_check_manifest"] = {
+            "check_id": "skillguard_check_manifest",
+            "kind": "skillguard_added_check",
+            "summary": "No separate target-native check was declared; SkillGuard check manifest supplies the executable coverage.",
+            "source_path": "SKILL.md",
+            "command": "",
+            "required": True,
+        }
+    return sorted(checks.values(), key=lambda item: str(item["check_id"]))
+
+
+def default_target_lock_fields(
+    source_requirements: list[dict[str, Any]],
+    check_ids: list[str],
+    skill_text: str,
+) -> dict[str, Any]:
+    routes = infer_route_inventory(skill_text)
+    route_id = str(routes[0]["route_id"]) if routes else "entrypoint"
+    stages = infer_workflow_stage_inventory(skill_text, route_id)
+    stage_id = str(stages[0]["stage_id"]) if stages else "entrypoint_intake"
+    native_checks = infer_native_check_inventory(skill_text)
+    target_rules: list[dict[str, Any]] = []
+    test_gap_plan: list[dict[str, Any]] = []
+    coverage_matrix: list[dict[str, Any]] = []
+    evidence_ids = ["task_summary", "target_inventory", "direct_evidence", "check_output", "closure_report"]
+    for requirement in source_requirements:
+        requirement_id = str(requirement["requirement_id"])
+        rule_id = f"{requirement_id}.rule"
+        obligation_id = f"{requirement_id}.covered"
+        target_rules.append(
+            {
+                "rule_id": rule_id,
+                "requirement_id": requirement_id,
+                "category": str(requirement.get("category") or "target-rule"),
+                "summary": str(requirement.get("summary") or requirement_id),
+                "source_path": str(requirement.get("source_path") or "SKILL.md"),
+                "required": bool(requirement.get("required", True)),
+            }
+        )
+        test_gap_plan.append(
+            {
+                "gap_id": f"{requirement_id}.test-gap",
+                "requirement_ids": [requirement_id],
+                "summary": f"Runnable or native check coverage for {requirement_id}.",
+                "status": "complete",
+                "planned_check_ids": list(check_ids),
+            }
+        )
+        coverage_matrix.append(
+            {
+                "row_id": f"{requirement_id}.matrix",
+                "requirement_id": requirement_id,
+                "rule_id": rule_id,
+                "obligation_id": obligation_id,
+                "route_id": route_id,
+                "stage_id": stage_id,
+                "check_ids": list(check_ids),
+                "native_check_binding_ids": [],
+                "evidence_ids": evidence_ids,
+                "closure_blocker_id": f"{requirement_id}.blocker",
+                "source_path": str(requirement.get("source_path") or "SKILL.md"),
+                "required": bool(requirement.get("required", True)),
+            }
+        )
+    return {
+        "target_rule_inventory": target_rules,
+        "route_inventory": routes,
+        "workflow_stage_inventory": stages,
+        "native_check_inventory": native_checks,
+        "test_gap_plan": test_gap_plan,
+        "coverage_matrix": coverage_matrix,
+        "runtime_lock_policy": {
+            "policy_id": "target_local_runtime_lock",
+            "summary": "The covered skill keeps its own entrypoint and must expose route, stage, check, evidence, and closure blockers from this target-local contract.",
+            "applies_when": "Before and during non-trivial work that uses this covered target skill.",
+            "target_local_contract_required": True,
+            "route_selection_required": True,
+            "stage_sequence_required": True,
+            "checks_before_closure": True,
+            "evidence_before_closure": True,
+            "coverage_matrix_required": True,
+            "global_skillguard_pregate_required": False,
+        },
+    }
+
+
 def default_deep_contract_fields(target: Path, check_ids: list[str], skill_text: str | None = None) -> dict[str, Any]:
     source_text = read_target_skill_text(target) if skill_text is None else skill_text
     source_requirements = infer_source_requirements(target, source_text)
+    target_lock_fields = default_target_lock_fields(source_requirements, check_ids, source_text)
     acceptance_obligations: list[dict[str, Any]] = []
     skill_specific_checks: list[dict[str, Any]] = []
     closure_blockers: list[dict[str, Any]] = []
@@ -1682,6 +2060,7 @@ def default_deep_contract_fields(target: Path, check_ids: list[str], skill_text:
         )
     return {
         "source_requirements": source_requirements,
+        **target_lock_fields,
         "acceptance_obligations": acceptance_obligations,
         "skill_specific_checks": skill_specific_checks,
         "closure_blockers": closure_blockers,
@@ -1960,6 +2339,13 @@ def contract_semantic_failures(
     native_check_bindings = contract.get("native_check_bindings")
     phase_native_bindings = contract.get("phase_native_bindings")
     source_requirements = contract.get("source_requirements")
+    target_rule_inventory = contract.get("target_rule_inventory")
+    route_inventory = contract.get("route_inventory")
+    workflow_stage_inventory = contract.get("workflow_stage_inventory")
+    native_check_inventory = contract.get("native_check_inventory")
+    test_gap_plan = contract.get("test_gap_plan")
+    coverage_matrix = contract.get("coverage_matrix")
+    runtime_lock_policy = contract.get("runtime_lock_policy")
     acceptance_obligations = contract.get("acceptance_obligations")
     skill_specific_checks = contract.get("skill_specific_checks")
     closure_blockers = contract.get("closure_blockers")
@@ -1976,12 +2362,30 @@ def contract_semantic_failures(
         ("quality_floors", floors),
         ("forbidden_shortcuts", shortcuts),
         ("source_requirements", source_requirements),
+        ("target_rule_inventory", target_rule_inventory),
+        ("route_inventory", route_inventory),
+        ("workflow_stage_inventory", workflow_stage_inventory),
+        ("native_check_inventory", native_check_inventory),
+        ("test_gap_plan", test_gap_plan),
+        ("coverage_matrix", coverage_matrix),
         ("acceptance_obligations", acceptance_obligations),
         ("skill_specific_checks", skill_specific_checks),
         ("closure_blockers", closure_blockers),
     ):
         if not isinstance(value, list) or not value:
             failures.append(f"$.{field_name}: must be a non-empty list")
+    if not isinstance(runtime_lock_policy, dict) or not runtime_lock_policy.get("policy_id"):
+        failures.append("$.runtime_lock_policy: must be an object with policy_id")
+    elif runtime_lock_policy.get("coverage_matrix_required") is not True:
+        failures.append("$.runtime_lock_policy.coverage_matrix_required: must be true")
+    elif runtime_lock_policy.get("target_local_contract_required") is not True:
+        failures.append("$.runtime_lock_policy.target_local_contract_required: must be true")
+    elif runtime_lock_policy.get("checks_before_closure") is not True:
+        failures.append("$.runtime_lock_policy.checks_before_closure: must be true")
+    elif runtime_lock_policy.get("stage_sequence_required") is not True:
+        failures.append("$.runtime_lock_policy.stage_sequence_required: must be true")
+    elif runtime_lock_policy.get("global_skillguard_pregate_required") is not False:
+        failures.append("$.runtime_lock_policy.global_skillguard_pregate_required: must be false")
     if not isinstance(cleanup_required, list):
         failures.append("$.cleanup_required: must be a list")
     if not isinstance(not_parallel_route_proof, dict) or not not_parallel_route_proof.get("proof_id"):
@@ -2037,6 +2441,12 @@ def contract_semantic_failures(
     native_check_binding_by_id = contract_lookup(native_check_bindings, "binding_id")
     phase_native_binding_by_phase = contract_lookup(phase_native_bindings, "phase_id")
     source_requirement_by_id = contract_lookup(source_requirements, "requirement_id")
+    target_rule_by_id = contract_lookup(target_rule_inventory, "rule_id")
+    route_inventory_by_id = contract_lookup(route_inventory, "route_id")
+    workflow_stage_by_id = contract_lookup(workflow_stage_inventory, "stage_id")
+    native_check_inventory_by_id = contract_lookup(native_check_inventory, "check_id")
+    test_gap_by_id = contract_lookup(test_gap_plan, "gap_id")
+    coverage_row_by_id = contract_lookup(coverage_matrix, "row_id")
     obligation_by_id = contract_lookup(acceptance_obligations, "obligation_id")
     skill_specific_check_by_id = contract_lookup(skill_specific_checks, "check_id")
     closure_blocker_by_id = contract_lookup(closure_blockers, "blocker_id")
@@ -2049,6 +2459,12 @@ def contract_semantic_failures(
         ("quality_floors", floors, "floor_id"),
         ("forbidden_shortcuts", shortcuts, "shortcut_id"),
         ("source_requirements", source_requirements, "requirement_id"),
+        ("target_rule_inventory", target_rule_inventory, "rule_id"),
+        ("route_inventory", route_inventory, "route_id"),
+        ("workflow_stage_inventory", workflow_stage_inventory, "stage_id"),
+        ("native_check_inventory", native_check_inventory, "check_id"),
+        ("test_gap_plan", test_gap_plan, "gap_id"),
+        ("coverage_matrix", coverage_matrix, "row_id"),
         ("acceptance_obligations", acceptance_obligations, "obligation_id"),
         ("skill_specific_checks", skill_specific_checks, "check_id"),
         ("closure_blockers", closure_blockers, "blocker_id"),
@@ -2173,6 +2589,81 @@ def contract_semantic_failures(
             if isinstance(obligation.get("requirement_ids"), list)
         ):
             failures.append(f"source_requirement {requirement_id}: no acceptance obligation covers this requirement")
+        if requirement.get("required") is True and not any(
+            requirement_id == rule.get("requirement_id")
+            for rule in target_rule_by_id.values()
+        ):
+            failures.append(f"source_requirement {requirement_id}: no target_rule_inventory row covers this requirement")
+        if requirement.get("required") is True and not any(
+            requirement_id == row.get("requirement_id")
+            for row in coverage_row_by_id.values()
+        ):
+            failures.append(f"source_requirement {requirement_id}: no coverage_matrix row covers this requirement")
+
+    non_generic_source_ids = {
+        requirement_id
+        for requirement_id in source_requirement_by_id
+        if requirement_id not in GENERIC_SOURCE_REQUIREMENT_IDS
+    }
+    if not non_generic_source_ids:
+        failures.append("shallow-contract: source_requirements contains only generic target entrypoint coverage")
+
+    for rule_id, rule in target_rule_by_id.items():
+        requirement_id = str(rule.get("requirement_id") or "")
+        if requirement_id not in source_requirement_by_id:
+            failures.append(f"target_rule_inventory {rule_id}: unknown requirement_id {requirement_id}")
+
+    for stage_id, stage in workflow_stage_by_id.items():
+        route_id = str(stage.get("route_id") or "")
+        if route_id not in route_inventory_by_id:
+            failures.append(f"workflow_stage_inventory {stage_id}: unknown route_id {route_id}")
+
+    for gap_id, gap in test_gap_by_id.items():
+        status = str(gap.get("status") or "")
+        if status in {"required", "blocked"}:
+            failures.append(f"test_gap_plan {gap_id}: status {status} blocks deep coverage")
+        for requirement_id in gap.get("requirement_ids", []) if isinstance(gap.get("requirement_ids"), list) else []:
+            if requirement_id not in source_requirement_by_id:
+                failures.append(f"test_gap_plan {gap_id}: unknown requirement_id {requirement_id}")
+        for check_id in gap.get("planned_check_ids", []) if isinstance(gap.get("planned_check_ids"), list) else []:
+            if check_id not in check_by_id and check_id not in native_check_inventory_by_id:
+                failures.append(f"test_gap_plan {gap_id}: unknown planned_check_id {check_id}")
+
+    for row_id, row in coverage_row_by_id.items():
+        requirement_id = str(row.get("requirement_id") or "")
+        rule_id = str(row.get("rule_id") or "")
+        obligation_id = str(row.get("obligation_id") or "")
+        route_id = str(row.get("route_id") or "")
+        stage_id = str(row.get("stage_id") or "")
+        blocker_id = str(row.get("closure_blocker_id") or "")
+        if requirement_id not in source_requirement_by_id:
+            failures.append(f"coverage_matrix {row_id}: unknown requirement_id {requirement_id}")
+        if rule_id not in target_rule_by_id:
+            failures.append(f"coverage_matrix {row_id}: unknown rule_id {rule_id}")
+        if obligation_id not in obligation_by_id:
+            failures.append(f"coverage_matrix {row_id}: unknown obligation_id {obligation_id}")
+        if route_id not in route_inventory_by_id:
+            failures.append(f"coverage_matrix {row_id}: unknown route_id {route_id}")
+        if stage_id not in workflow_stage_by_id:
+            failures.append(f"coverage_matrix {row_id}: unknown stage_id {stage_id}")
+        if blocker_id not in closure_blocker_by_id:
+            failures.append(f"coverage_matrix {row_id}: unknown closure_blocker_id {blocker_id}")
+        check_ids = row.get("check_ids", [])
+        native_check_binding_ids = row.get("native_check_binding_ids", [])
+        if not isinstance(check_ids, list) or not isinstance(native_check_binding_ids, list):
+            failures.append(f"coverage_matrix {row_id}: check_ids and native_check_binding_ids must be lists")
+            continue
+        if row.get("required") is True and not check_ids and not native_check_binding_ids:
+            failures.append(f"coverage_matrix {row_id}: required row must cite check_ids or native_check_binding_ids")
+        for check_id in check_ids:
+            if check_id not in check_by_id:
+                failures.append(f"coverage_matrix {row_id}: unknown check_id {check_id}")
+        for binding_id in native_check_binding_ids:
+            if binding_id not in native_check_binding_by_id:
+                failures.append(f"coverage_matrix {row_id}: unknown native_check_binding_id {binding_id}")
+        for evidence_id in row.get("evidence_ids", []) if isinstance(row.get("evidence_ids"), list) else []:
+            if evidence_id not in evidence_by_id:
+                failures.append(f"coverage_matrix {row_id}: unknown evidence_id {evidence_id}")
 
     for skill_check_id, skill_check in skill_specific_check_by_id.items():
         for obligation_id in skill_check.get("obligation_ids", []) if isinstance(skill_check.get("obligation_ids"), list) else []:
@@ -2589,14 +3080,23 @@ def classify_depth_failures(failures: list[str], blockers: list[str]) -> str:
         return "blocked"
     if "parallel" in haystack or "duplicate execution paths" in haystack:
         return "parallel-route-risk"
+    if (
+        "missing-target-lock" in haystack
+        or "shallow-contract" in haystack
+        or "source_requirements" in haystack
+        or "target_rule_inventory" in haystack
+        or "coverage_matrix" in haystack
+        or "runtime_lock_policy" in haystack
+        or "acceptance_obligations" in haystack
+        or "skill_specific_checks" in haystack
+    ):
+        return "shallow-contract"
     if "native" in haystack and ("binding" in haystack or "owner" in haystack):
         return "missing-native-binding"
     if "missing-run-record" in haystack or "stale-run-evidence" in haystack:
         return "stale-run-evidence"
     if "cleanup" in haystack:
         return "cleanup-required"
-    if "source_requirements" in haystack or "acceptance_obligations" in haystack or "skill_specific_checks" in haystack:
-        return "shallow-contract"
     if "must be a non-empty list" in haystack or "required property" in haystack:
         return "hollow-contract"
     return "shallow-contract" if failures else "deep-pass"
@@ -2612,6 +3112,11 @@ def deep_contract_failures(
     inferred = infer_source_requirements(target, read_target_skill_text(target, root), root)
     inferred_ids = {str(item.get("requirement_id")) for item in inferred}
     source_requirements = contract.get("source_requirements", []) if isinstance(contract, dict) else []
+    target_rule_inventory = contract.get("target_rule_inventory", []) if isinstance(contract, dict) else []
+    route_inventory = contract.get("route_inventory", []) if isinstance(contract, dict) else []
+    workflow_stage_inventory = contract.get("workflow_stage_inventory", []) if isinstance(contract, dict) else []
+    coverage_matrix = contract.get("coverage_matrix", []) if isinstance(contract, dict) else []
+    runtime_lock_policy = contract.get("runtime_lock_policy", {}) if isinstance(contract, dict) else {}
     acceptance_obligations = contract.get("acceptance_obligations", []) if isinstance(contract, dict) else []
     skill_specific_checks = contract.get("skill_specific_checks", []) if isinstance(contract, dict) else []
     closure_blockers = contract.get("closure_blockers", []) if isinstance(contract, dict) else []
@@ -2630,13 +3135,41 @@ def deep_contract_failures(
         for item in source_requirements
         if isinstance(source_requirements, list) and isinstance(item, dict) and isinstance(item.get("requirement_id"), str)
     }
+    target_rule_ids_by_requirement = {
+        str(item.get("requirement_id")): str(item.get("rule_id"))
+        for item in target_rule_inventory
+        if isinstance(target_rule_inventory, list)
+        and isinstance(item, dict)
+        and isinstance(item.get("requirement_id"), str)
+        and isinstance(item.get("rule_id"), str)
+    }
+    coverage_rows_by_requirement: dict[str, list[dict[str, Any]]] = {}
+    if isinstance(coverage_matrix, list):
+        for item in coverage_matrix:
+            if isinstance(item, dict) and isinstance(item.get("requirement_id"), str):
+                coverage_rows_by_requirement.setdefault(str(item["requirement_id"]), []).append(item)
     obligation_by_id = contract_lookup(acceptance_obligations, "obligation_id")
     skill_check_by_id = contract_lookup(skill_specific_checks, "check_id")
     blocker_by_id = contract_lookup(closure_blockers, "blocker_id")
 
+    for field_name, value in (
+        ("target_rule_inventory", target_rule_inventory),
+        ("route_inventory", route_inventory),
+        ("workflow_stage_inventory", workflow_stage_inventory),
+        ("coverage_matrix", coverage_matrix),
+    ):
+        if not isinstance(value, list) or not value:
+            failures.append(f"missing-target-lock: {field_name} is required for deep target coverage")
+    if not isinstance(runtime_lock_policy, dict) or runtime_lock_policy.get("coverage_matrix_required") is not True:
+        failures.append("missing-target-lock: runtime_lock_policy must require the coverage matrix")
+    if not any(requirement_id not in GENERIC_SOURCE_REQUIREMENT_IDS for requirement_id in source_ids):
+        failures.append("shallow-contract: contract has only generic source requirements")
+
     for requirement_id in sorted(inferred_ids):
         if requirement_id not in source_ids:
             failures.append(f"missing source_requirement for inferred target obligation: {requirement_id}")
+        if requirement_id not in target_rule_ids_by_requirement:
+            failures.append(f"missing target_rule_inventory row for inferred target obligation: {requirement_id}")
         matching_obligations = [
             obligation
             for obligation in obligation_by_id.values()
@@ -2645,6 +3178,9 @@ def deep_contract_failures(
         if not matching_obligations:
             failures.append(f"missing acceptance obligation for source requirement: {requirement_id}")
             continue
+        matching_matrix_rows = coverage_rows_by_requirement.get(requirement_id, [])
+        if not matching_matrix_rows:
+            failures.append(f"missing coverage_matrix row for source requirement: {requirement_id}")
         for obligation in matching_obligations:
             obligation_id = str(obligation.get("obligation_id") or "")
             check_refs = [
@@ -2666,6 +3202,31 @@ def deep_contract_failures(
                 failures.append(f"missing skill_specific_checks coverage for obligation: {obligation_id}")
             if not any(obligation_id in blocker.get("obligation_ids", []) for blocker in blocker_by_id.values()):
                 failures.append(f"missing closure_blocker for obligation: {obligation_id}")
+            for row in matching_matrix_rows:
+                row_id = str(row.get("row_id") or requirement_id)
+                matrix_obligation = str(row.get("obligation_id") or "")
+                if matrix_obligation != obligation_id:
+                    failures.append(
+                        f"coverage_matrix {row_id}: obligation_id {matrix_obligation or '<missing>'} does not cover {obligation_id}"
+                    )
+                    continue
+                row_check_refs = [
+                    str(item)
+                    for item in row.get("check_ids", [])
+                    if isinstance(row.get("check_ids"), list)
+                ]
+                row_native_refs = [
+                    str(item)
+                    for item in row.get("native_check_binding_ids", [])
+                    if isinstance(row.get("native_check_binding_ids"), list)
+                ]
+                if not row_check_refs and not row_native_refs:
+                    failures.append(f"coverage_matrix {row_id}: cites no check or native check binding")
+                for check_ref in row_check_refs:
+                    if check_ref not in available_check_ids:
+                        failures.append(f"coverage_matrix {row_id}: cites unavailable check {check_ref}")
+                if not row.get("closure_blocker_id"):
+                    failures.append(f"coverage_matrix {row_id}: missing closure_blocker_id")
 
     latest_run = latest_run_record(target, root)
     if skillguard_runtime_run_required(contract):
@@ -2729,6 +3290,8 @@ def deep_contract_failures(
         {
             "requirement_id": item.get("requirement_id"),
             "contract_declared": item.get("requirement_id") in source_ids,
+            "target_rule_declared": item.get("requirement_id") in target_rule_ids_by_requirement,
+            "coverage_matrix_count": len(coverage_rows_by_requirement.get(str(item.get("requirement_id")), [])),
             "obligation_count": len(
                 [
                     obligation
@@ -3619,6 +4182,12 @@ def close_run(argv: list[str]) -> int:
             failures.append("contract has no closure rule allowing accepted")
     if not failures and not blockers:
         run["closure_decision"] = args.decision
+        selected_route = str(run.get("selected_route") or "")
+        route = contract_lookup(contract.get("routes", []), "route_id").get(selected_route)
+        if isinstance(route, dict):
+            phase_order = route.get("phase_order", [])
+            if isinstance(phase_order, list) and phase_order:
+                run["current_phase"] = str(phase_order[-1])
         run.setdefault("commands_run", []).append(
             {
                 "command": f"close-run:{args.decision}",
@@ -13255,6 +13824,11 @@ def audit_installed_skills(argv: list[str]) -> int:
                 "decision": "fail",
                 "depth_classification": "hollow-contract",
                 "integration_mode": "",
+                "target_lock_status": "missing",
+                "source_requirement_count": 0,
+                "target_specific_requirement_count": 0,
+                "target_rule_count": 0,
+                "coverage_matrix_count": 0,
                 "failure_count": 0,
                 "failures": [],
             }
@@ -13276,14 +13850,31 @@ def audit_installed_skills(argv: list[str]) -> int:
                 continue
             semantic_failures = contract_semantic_failures(contract, skill_dir, contract_path, semantic_root)
             depth_failures: list[str] = []
+            coverage_rows: list[dict[str, Any]] = []
             if isinstance(contract, dict):
-                depth_failures, _depth_evidence, _coverage_rows = deep_contract_failures(skill_dir, contract, contract_path, semantic_root)
+                depth_failures, _depth_evidence, coverage_rows = deep_contract_failures(skill_dir, contract, contract_path, semantic_root)
             combined_failures = [*semantic_failures, *depth_failures]
             classification = classify_depth_failures(combined_failures, [])
             row["decision"] = "pass" if classification == "deep-pass" else "fail"
             row["depth_classification"] = classification
             row["integration_mode"] = str(contract.get("integration_mode") or "") if isinstance(contract, dict) else ""
             row["contract_hash"] = str(contract.get("contract_hash") or "") if isinstance(contract, dict) else ""
+            source_requirements = contract.get("source_requirements", []) if isinstance(contract, dict) else []
+            target_rules = contract.get("target_rule_inventory", []) if isinstance(contract, dict) else []
+            coverage_matrix = contract.get("coverage_matrix", []) if isinstance(contract, dict) else []
+            source_requirement_ids = {
+                str(item.get("requirement_id"))
+                for item in source_requirements
+                if isinstance(source_requirements, list) and isinstance(item, dict) and item.get("requirement_id")
+            }
+            row["source_requirement_count"] = len(source_requirement_ids)
+            row["target_specific_requirement_count"] = len(
+                [item for item in source_requirement_ids if item not in GENERIC_SOURCE_REQUIREMENT_IDS]
+            )
+            row["target_rule_count"] = len(target_rules) if isinstance(target_rules, list) else 0
+            row["coverage_matrix_count"] = len(coverage_matrix) if isinstance(coverage_matrix, list) else 0
+            row["coverage_row_count"] = len(coverage_rows)
+            row["target_lock_status"] = "complete" if classification == "deep-pass" else "incomplete"
             row["failure_count"] = len(combined_failures)
             row["failures"] = combined_failures[:8]
             rows.append(row)

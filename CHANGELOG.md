@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.5 - 2026-06-28
+
+- Promoted Deep Contract Mode into a universal target-lock workflow: every covered skill now needs target rule inventory, route inventory, workflow stage inventory, native check inventory, test gap plan, coverage matrix, and runtime lock policy instead of a generic profile-only wrapper.
+- Added universal target extraction and depth checks so each target skill's own entrypoints, routes, workflow stages, hard gates, output requirements, native checks, evidence requirements, and closure blockers must be represented before coverage can pass.
+- Re-audited covered installed user skills one by one: 64 covered skills passed with complete target-lock rows, non-empty route/stage/matrix coverage, and `may_define_parallel_execution_route=false`.
+- Kept FlowPilot native-integrated during the deeper audit, preserving its own route/check surface with `run_record_required=false` instead of creating a SkillGuard-owned parallel route.
+- Fixed runtime closure bookkeeping so accepted SkillGuard-owned runs advance to the final route phase instead of leaving stale phase state behind.
+
 ## v0.1.4 - 2026-06-28
 
 - Added deep runtime-contract coverage fields for source requirements, acceptance obligations, skill-specific checks, closure blockers, current run records, non-parallel route proof, and cleanup gates.

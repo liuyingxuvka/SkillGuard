@@ -736,6 +736,333 @@
     "target_path": {
       "minLength": 1,
       "type": "string"
+    },
+    "target_rule_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requirement_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "rule_id",
+          "requirement_id",
+          "category",
+          "summary",
+          "source_path",
+          "required"
+        ]
+      }
+    },
+    "route_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "route_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "native_binding_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "route_id",
+          "summary",
+          "source_path",
+          "required",
+          "native_binding_id"
+        ]
+      }
+    },
+    "workflow_stage_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "stage_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "route_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "stage_id",
+          "route_id",
+          "summary",
+          "source_path",
+          "required"
+        ]
+      }
+    },
+    "native_check_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "command": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "check_id",
+          "kind",
+          "summary",
+          "source_path",
+          "command",
+          "required"
+        ]
+      }
+    },
+    "test_gap_plan": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "gap_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requirement_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "not-needed",
+              "required",
+              "complete",
+              "blocked"
+            ]
+          },
+          "planned_check_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "gap_id",
+          "requirement_ids",
+          "summary",
+          "status",
+          "planned_check_ids"
+        ]
+      }
+    },
+    "coverage_matrix": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "row_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "requirement_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rule_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "obligation_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "route_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stage_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "check_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "native_check_binding_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "evidence_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "closure_blocker_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "row_id",
+          "requirement_id",
+          "rule_id",
+          "obligation_id",
+          "route_id",
+          "stage_id",
+          "check_ids",
+          "native_check_binding_ids",
+          "evidence_ids",
+          "closure_blocker_id",
+          "source_path",
+          "required"
+        ]
+      }
+    },
+    "runtime_lock_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "applies_when": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_local_contract_required": {
+          "type": "boolean"
+        },
+        "route_selection_required": {
+          "type": "boolean"
+        },
+        "stage_sequence_required": {
+          "type": "boolean"
+        },
+        "checks_before_closure": {
+          "type": "boolean"
+        },
+        "evidence_before_closure": {
+          "type": "boolean"
+        },
+        "coverage_matrix_required": {
+          "type": "boolean"
+        },
+        "global_skillguard_pregate_required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "policy_id",
+        "summary",
+        "applies_when",
+        "target_local_contract_required",
+        "route_selection_required",
+        "stage_sequence_required",
+        "checks_before_closure",
+        "evidence_before_closure",
+        "coverage_matrix_required",
+        "global_skillguard_pregate_required"
+      ]
     }
   },
   "required": [
@@ -750,6 +1077,13 @@
     "native_check_bindings",
     "phase_native_bindings",
     "source_requirements",
+    "target_rule_inventory",
+    "route_inventory",
+    "workflow_stage_inventory",
+    "native_check_inventory",
+    "test_gap_plan",
+    "coverage_matrix",
+    "runtime_lock_policy",
     "acceptance_obligations",
     "skill_specific_checks",
     "closure_blockers",
