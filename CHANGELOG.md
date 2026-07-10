@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.0 - 2026-07-10
+
+- Added the FlowGuard-backed executable-contract V2 compiler: a target model and confirmed binding source now deterministically produce a compiled contract and exact check manifest.
+- Added typed route composition, target-local claimed runs, append-only event replay, immutable hard/witnessed/judged receipts, conditional skip proof, artifact validators, bounded loops, and monotonic routine/functional/release/highest-quality closure profiles.
+- Added strict supervisor-packet consumption so unknown, misspelled, unreachable, or unselected evidence fields fail closed instead of disappearing silently.
+- Added Guard-runtime fingerprints to run identity, receipts, and closure freshness so a SkillGuard behavior change creates a new run and invalidates affected older proof.
+- Added audited failed/dead-writer lock recovery: live overlapping writers still block, exited or verified-failed owners can be recovered, legacy failed locks remain compatible, and idempotent resume reacquires its write locks.
+- Added complete V1 field/command lifecycle control so V1 artifacts remain migration inputs or diagnostics and cannot become an alternate success path after a V2 contract is present.
+- Added fast, focused, and full TestMesh profiles with source/command fingerprints, final child receipts, timeouts, cancellation, liveness-only progress events, and large-output capture without pipe deadlock.
+- Added whole-tree staged installation with source-manifest parity, installed-layout smoke checks, atomic activation, retained backup, and automatic rollback on post-activation failure.
+- Added canonical/installed/Git/tag/GitHub Release provenance checks, tracked-plus-unignored public-export privacy checks, hash-bound image review, and Windows/Linux GitHub Actions workflow definitions.
+- Completed two-stage SkillGuard self-hosting and an Autonomous UI external pressure run under the current Guard fingerprint; these local results do not by themselves prove remote CI or GitHub publication.
+
 ## v0.1.6 - 2026-06-28
 
 - Tightened `deep-pass` so it now means current, target-specific semantic coverage rather than only structural contract-field presence.

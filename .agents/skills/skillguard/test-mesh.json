@@ -1,0 +1,211 @@
+{
+  "schema_version": "skillguard.test_mesh_manifest.v1",
+  "mesh_id": "skillguard-parent-regression-mesh",
+  "source_model_id": "skillguard.executable_contract_runtime.v2",
+  "target_split_derivation": {
+    "source_model_path": ".flowguard/development_process_flow/skillguard_executable_contract_model.py",
+    "target_suite_ids": [
+      "v2-runtime-suite",
+      "legacy-compatibility-suite"
+    ],
+    "rationale": "V2 executable-contract behavior and V1 migration compatibility have different runtime, duration, and release ownership; the parent gate consumes their final result artifacts without flattening child cases."
+  },
+  "partition_items": [
+    {
+      "partition_id": "model-and-compilation",
+      "boundary": "model and deterministic compilation",
+      "owner_suite_id": "v2-runtime-suite"
+    },
+    {
+      "partition_id": "route-and-claimed-run",
+      "boundary": "routing, locking, replay, and Guard-compatible run identity",
+      "owner_suite_id": "v2-runtime-suite"
+    },
+    {
+      "partition_id": "evidence-artifact-closure",
+      "boundary": "checks, artifacts, receipts, skip policy, and monotonic closure",
+      "owner_suite_id": "v2-runtime-suite"
+    },
+    {
+      "partition_id": "v1-lifecycle",
+      "boundary": "V1 field, artifact, command, and fallback disposition",
+      "owner_suite_id": "v2-runtime-suite"
+    },
+    {
+      "partition_id": "installation-and-provenance",
+      "boundary": "whole-tree staged installation, parity, rollback, privacy, and release provenance",
+      "owner_suite_id": "v2-runtime-suite"
+    },
+    {
+      "partition_id": "legacy-compatibility",
+      "boundary": "unmigrated public CLI, generators, fixtures, and migration diagnostics",
+      "owner_suite_id": "legacy-compatibility-suite"
+    }
+  ],
+  "suites": [
+    {
+      "suite_id": "v2-runtime-suite",
+      "layer": "child",
+      "owned_partition_ids": [
+        "model-and-compilation",
+        "route-and-claimed-run",
+        "evidence-artifact-closure",
+        "v1-lifecycle",
+        "installation-and-provenance"
+      ],
+      "commands": {
+        "fast": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_executable_contract_model.py",
+          "tests/test_contract_compiler_v2.py",
+          "tests/test_claimed_run_runtime.py",
+          "tests/test_v1_lifecycle.py",
+          "-q"
+        ],
+        "focused": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_executable_contract_model.py",
+          "tests/test_contract_compiler_v2.py",
+          "tests/test_route_runtime_v2.py",
+          "tests/test_claimed_run_runtime.py",
+          "tests/test_run_replay.py",
+          "tests/test_evidence_receipts.py",
+          "tests/test_check_runner_v2.py",
+          "tests/test_artifact_validators.py",
+          "tests/test_closure_profiles_v2.py",
+          "tests/test_false_closure_v2.py",
+          "tests/test_self_host_failure_matrix_v2.py",
+          "tests/test_skillguard_self_host_v2.py",
+          "tests/test_v1_lifecycle.py",
+          "tests/test_test_mesh_runtime.py",
+          "tests/test_provenance.py",
+          "tests/test_privacy.py",
+          "tests/test_installation.py",
+          "-q"
+        ],
+        "full": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_executable_contract_model.py",
+          "tests/test_contract_compiler_v2.py",
+          "tests/test_route_runtime_v2.py",
+          "tests/test_claimed_run_runtime.py",
+          "tests/test_run_replay.py",
+          "tests/test_evidence_receipts.py",
+          "tests/test_check_runner_v2.py",
+          "tests/test_artifact_validators.py",
+          "tests/test_closure_profiles_v2.py",
+          "tests/test_false_closure_v2.py",
+          "tests/test_self_host_failure_matrix_v2.py",
+          "tests/test_skillguard_self_host_v2.py",
+          "tests/test_v1_lifecycle.py",
+          "tests/test_test_mesh_runtime.py",
+          "tests/test_provenance.py",
+          "tests/test_privacy.py",
+          "tests/test_installation.py",
+          "-q"
+        ]
+      },
+      "timeout_seconds": 240,
+      "source_paths": [
+        ".flowguard/development_process_flow/skillguard_executable_contract_model.py",
+        ".agents/skills/skillguard/scripts/skillguard_v2",
+        "tests/test_executable_contract_model.py",
+        "tests/test_contract_compiler_v2.py",
+        "tests/test_route_runtime_v2.py",
+        "tests/test_claimed_run_runtime.py",
+        "tests/test_run_replay.py",
+        "tests/test_evidence_receipts.py",
+        "tests/test_check_runner_v2.py",
+        "tests/test_artifact_validators.py",
+        "tests/test_closure_profiles_v2.py",
+        "tests/test_false_closure_v2.py",
+        "tests/test_self_host_failure_matrix_v2.py",
+        "tests/test_skillguard_self_host_v2.py",
+        "tests/test_v1_lifecycle.py",
+        "tests/test_test_mesh_runtime.py",
+        "tests/test_provenance.py",
+        "tests/test_privacy.py",
+        "tests/test_installation.py",
+        ".agents/skills/skillguard/scripts/skillguard_install.py",
+        ".github/workflows/ci.yml"
+      ]
+    },
+    {
+      "suite_id": "legacy-compatibility-suite",
+      "layer": "child_release",
+      "owned_partition_ids": [
+        "legacy-compatibility"
+      ],
+      "commands": {
+        "full": [
+          "python",
+          "-m",
+          "pytest",
+          "tests/test_skillguard_local.py",
+          "-q"
+        ]
+      },
+      "timeout_seconds": 600,
+      "source_paths": [
+        ".agents/skills/skillguard/scripts/checker_engine.py",
+        ".agents/skills/skillguard/scripts/skillguard.py",
+        ".agents/skills/skillguard/assets/schemas",
+        ".agents/skills/skillguard/fixtures",
+        "tests/test_skillguard_local.py"
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "profile_id": "fast",
+      "scope": "routine_preflight",
+      "suite_ids": [
+        "v2-runtime-suite"
+      ],
+      "required_partition_ids": [
+        "model-and-compilation",
+        "route-and-claimed-run",
+        "v1-lifecycle"
+      ],
+      "claim_boundary": "Fast preflight covers the core V2 model, compiler, claimed-run identity, and V1 lifecycle. It does not prove the full receipt/closure matrix or legacy compatibility."
+    },
+    {
+      "profile_id": "focused",
+      "scope": "functional",
+      "suite_ids": [
+        "v2-runtime-suite"
+      ],
+      "required_partition_ids": [
+        "model-and-compilation",
+        "route-and-claimed-run",
+        "evidence-artifact-closure",
+        "v1-lifecycle",
+        "installation-and-provenance"
+      ],
+      "claim_boundary": "Focused validation covers the complete V2 executable-contract runtime, lifecycle, installation, privacy, and provenance suite. It does not prove legacy CLI compatibility or an actual GitHub publication."
+    },
+    {
+      "profile_id": "full",
+      "scope": "release",
+      "suite_ids": [
+        "v2-runtime-suite",
+        "legacy-compatibility-suite"
+      ],
+      "required_partition_ids": [
+        "model-and-compilation",
+        "route-and-claimed-run",
+        "evidence-artifact-closure",
+        "v1-lifecycle",
+        "installation-and-provenance",
+        "legacy-compatibility"
+      ],
+      "claim_boundary": "Full validation covers current V2 behavior, staged installation and rollback, privacy/provenance logic, and the maintained legacy migration surface. Other operating systems and actual GitHub publication require their own current gates."
+    }
+  ]
+}

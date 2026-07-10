@@ -1,0 +1,181 @@
+contract_version: 1
+change: add-skill-functional-closure-audit
+obligations:
+  - id: req.contract.outcomes
+    source: "specs/skill-functional-closure-contract/spec.md#Requirement: Required outcomes are explicit"
+    claim: Required outcomes identify useful results, paths, quality requirements, and non-goals.
+    required: true
+    evidence: [check.functional-fixtures, check.self-capability]
+  - id: req.contract.paths
+    source: "specs/skill-functional-closure-contract/spec.md#Requirement: Closure paths cover the user-visible lifecycle"
+    claim: Every required path covers trigger through terminal in valid order with bindings.
+    required: true
+    evidence: [check.functional-fixtures, check.self-capability, check.flowguard-model]
+  - id: req.contract.failures
+    source: "specs/skill-functional-closure-contract/spec.md#Requirement: Failure and recovery boundaries are closed"
+    claim: Failures have detection, disposition, recovery or blocking terminal, and current evidence.
+    required: true
+    evidence: [check.functional-fixtures, check.flowguard-model]
+  - id: req.contract.terminals
+    source: "specs/skill-functional-closure-contract/spec.md#Requirement: Stop conditions and non-goals prevent false completion"
+    claim: Safe terminals and non-goal rejection prevent false success.
+    required: true
+    evidence: [check.functional-fixtures, check.flowguard-model]
+  - id: req.evidence.axes
+    source: "specs/skill-capability-evidence/spec.md#Requirement: Evidence records independent proof axes"
+    claim: Evidence records execution, environment, quality, result, freshness, assertion, and coverage axes.
+    required: true
+    evidence: [check.functional-fixtures, check.unit]
+  - id: req.evidence.no-prose-runtime
+    source: "specs/skill-capability-evidence/spec.md#Requirement: Prose and static structure are not runtime proof"
+    claim: Structural deep-pass and prose cannot satisfy functional execution.
+    required: true
+    evidence: [check.functional-fixtures, check.unit]
+  - id: req.evidence.freshness
+    source: "specs/skill-capability-evidence/spec.md#Requirement: Stale or non-passing evidence cannot close a path"
+    claim: Stale, missing, mismatched, skipped, or non-passing evidence invalidates dependent closure.
+    required: true
+    evidence: [check.functional-fixtures, check.unit]
+  - id: req.evidence.scope-floors
+    source: "specs/skill-capability-evidence/spec.md#Requirement: Claim scopes enforce minimum evidence floors"
+    claim: Routine, functional, release, and highest-quality scopes enforce independent minimum floors.
+    required: true
+    evidence: [check.functional-fixtures, check.self-capability]
+  - id: req.audit.single-target
+    source: "specs/skill-functional-closure-audit/spec.md#Requirement: One-target capability audit is deterministic and read-only"
+    claim: One-target audit is parseable, deterministic, read-only, and preserves child detail.
+    required: true
+    evidence: [check.functional-fixtures, check.unit]
+  - id: req.audit.repairs
+    source: "specs/skill-functional-closure-audit/spec.md#Requirement: Audit output drives repairs"
+    claim: Reports contain stable gap codes and separate repair actions.
+    required: true
+    evidence: [check.functional-fixtures, check.unit]
+  - id: req.audit.portfolio
+    source: "specs/skill-functional-closure-audit/spec.md#Requirement: Portfolio audit preserves child truth"
+    claim: Portfolio aggregation cannot hide missing, failed, blocked, skipped, or stale children.
+    required: true
+    evidence: [check.portfolio-fixture, check.unit]
+  - id: req.audit.separate-status
+    source: "specs/skill-functional-closure-audit/spec.md#Requirement: Structural and functional status remain separate"
+    claim: Structural deep-pass is reported separately from functional closure.
+    required: true
+    evidence: [check.functional-fixtures, check.installed-audit-regression]
+  - id: req.provenance.owner
+    source: "specs/skill-source-provenance/spec.md#Requirement: Canonical source ownership is explicit"
+    claim: Active skills have one existing canonical source owner.
+    required: true
+    evidence: [check.source-sync-fixtures, check.unit]
+  - id: req.provenance.non-downgrade
+    source: "specs/skill-source-provenance/spec.md#Requirement: Installed synchronization cannot downgrade capability protection"
+    claim: Source-to-installed downgrade is blocked while normalization-only drift is distinguished.
+    required: true
+    evidence: [check.source-sync-fixtures, check.unit]
+  - id: req.provenance.retired
+    source: "specs/skill-source-provenance/spec.md#Requirement: Retired skills are excluded without deletion"
+    claim: Retired/private skills remain recorded but leave active repair counts.
+    required: true
+    evidence: [check.source-sync-fixtures, check.unit]
+  - id: req.provenance.privacy
+    source: "specs/skill-source-provenance/spec.md#Requirement: Public records never expose private source roots"
+    claim: Public outputs sanitize canonical source and installed absolute paths.
+    required: true
+    evidence: [check.source-sync-fixtures, check.self-check]
+checks:
+  - id: check.syntax
+    kind: command
+    command: python
+    args: [-m, py_compile, .agents/skills/skillguard/scripts/checker_engine.py, .agents/skills/skillguard/scripts/capability_engine.py, .agents/skills/skillguard/scripts/skillguard.py]
+    required: true
+    covers: [req.audit.single-target]
+    expected: {exit_code: 0}
+  - id: check.unit
+    kind: command
+    command: python
+    args: [tests/test_skillguard_local.py]
+    required: true
+    covers: [req.evidence.axes, req.evidence.no-prose-runtime, req.evidence.freshness, req.audit.single-target, req.audit.repairs, req.audit.portfolio, req.provenance.owner, req.provenance.non-downgrade, req.provenance.retired]
+    expected: {exit_code: 0}
+  - id: check.functional-fixtures
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, fixture-test, --manifest, .agents/skills/skillguard/fixtures/functional_closure/fixture-manifest.json, --output, -]
+    required: true
+    covers: [req.contract.outcomes, req.contract.paths, req.contract.failures, req.contract.terminals, req.evidence.axes, req.evidence.no-prose-runtime, req.evidence.freshness, req.evidence.scope-floors, req.audit.single-target, req.audit.repairs, req.audit.separate-status]
+    expected: {exit_code: 0}
+  - id: check.self-capability
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, check-capability, --target, .agents/skills/skillguard, --claim-scope, release, --output, -]
+    required: true
+    covers: [req.contract.outcomes, req.contract.paths, req.evidence.scope-floors]
+    expected: {exit_code: 0}
+  - id: check.portfolio-fixture
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, audit-capabilities, --root, .agents/skills/skillguard/fixtures/functional_closure/portfolio, --claim-scope, functional, --output, -]
+    required: true
+    covers: [req.audit.portfolio]
+    expected: {exit_code: 1}
+  - id: check.source-sync-fixtures
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, check-source-sync, --registry, .agents/skills/skillguard/fixtures/functional_closure/source_sync/portfolio-registry.json, --output, -]
+    required: true
+    covers: [req.provenance.owner, req.provenance.non-downgrade, req.provenance.retired, req.provenance.privacy]
+    expected: {exit_code: 1}
+  - id: check.installed-audit-regression
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, audit-installed-skills, --root, .agents/skills/skillguard, --output, -]
+    required: true
+    covers: [req.audit.separate-status]
+    expected: {exit_code: 0}
+  - id: check.self-check
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, self-check, --output, -]
+    required: true
+    covers: [req.provenance.privacy]
+    expected: {exit_code: 0}
+  - id: check.existing-regression
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, check-depth, --target, .agents/skills/skillguard, --output, -]
+    required: true
+    covers: [req.audit.separate-status]
+    expected: {exit_code: 0}
+  - id: check.flowguard-model
+    kind: command
+    command: python
+    args: [.flowguard/development_process_flow/skillguard_capability_closure_model.py]
+    required: true
+    covers: [req.contract.paths, req.contract.failures, req.contract.terminals]
+    expected: {exit_code: 0}
+  - id: check.openspec
+    kind: command
+    command: openspec
+    args: [validate, add-skill-functional-closure-audit, --strict]
+    required: true
+    covers: [req.contract.outcomes, req.audit.single-target, req.provenance.owner]
+    expected: {exit_code: 0}
+freshness:
+  watch:
+    - openspec/changes/add-skill-functional-closure-audit/proposal.md
+    - openspec/changes/add-skill-functional-closure-audit/design.md
+    - openspec/changes/add-skill-functional-closure-audit/tasks.md
+    - openspec/changes/add-skill-functional-closure-audit/specs/**/*.md
+    - openspec/changes/add-skill-functional-closure-audit/verification-contract.yaml
+    - .agents/skills/skillguard/SKILL.md
+    - .agents/skills/skillguard/scripts/checker_engine.py
+    - .agents/skills/skillguard/scripts/capability_engine.py
+    - .agents/skills/skillguard/scripts/skillguard.py
+    - .agents/skills/skillguard/assets/schemas/*.json
+    - .agents/skills/skillguard/assets/templates/*.json
+    - .agents/skills/skillguard/.skillguard/*.json
+    - .agents/skills/skillguard/fixtures/functional_closure/**/*
+    - tests/test_skillguard_local.py
+    - .flowguard/development_process_flow/skillguard_capability_closure_model.py
+    - README.md
+    - VERSION
+    - pyproject.toml

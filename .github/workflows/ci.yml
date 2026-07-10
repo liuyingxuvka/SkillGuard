@@ -1,0 +1,52 @@
+name: SkillGuard CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v2-focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.10", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.54.0"
+      - run: python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --profile focused --repository-root . --progress-interval-seconds 30
+
+  clean-installed-layout:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.54.0"
+      - run: python .agents/skills/skillguard/scripts/skillguard_install.py --canonical-skill-root .agents/skills/skillguard --stage-root .install-smoke/.codex/skills/skillguard --prepare
+
+  full-legacy-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.54.0"
+      - run: python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --profile full --repository-root . --progress-interval-seconds 30

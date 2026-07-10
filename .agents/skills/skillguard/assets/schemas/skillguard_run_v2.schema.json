@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_run_v2.schema.json",
+  "title": "SkillGuard Claimed Run V2",
+  "type": "object",
+  "required": ["schema_version", "run_id", "skill_id", "contract_hash", "route_ids", "claim_scope", "status"],
+  "properties": {
+    "schema_version": {"const": "skillguard.run.v2"},
+    "run_id": {"type": "string", "minLength": 1},
+    "skill_id": {"type": "string", "minLength": 1},
+    "contract_hash": {"type": "string", "minLength": 1},
+    "route_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "claim_scope": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

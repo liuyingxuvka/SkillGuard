@@ -25,7 +25,7 @@ Start from the current layout instead of assuming generated files exist. SkillGu
 - Use the repository README, pyproject metadata, VERSION file, and AGENTS file for the public repository contract, metadata, version, and contributor boundaries only when the source repository layout is present.
 - Use the repository references directory for the maintained SkillGuard standards only when the source repository layout is present.
 - Use `assets/schemas/` and `assets/templates/` for local schema and template checks.
-- Use `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` when a task needs runtime contract routing, phase gates, or closure rules.
+- Use `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` when a task needs legacy runtime contract routing, phase gates, or closure rules; for V2, use `.skillguard/contract-source.json` plus the target's declared FlowGuard model as the two authority inputs and treat `.skillguard/compiled-contract.json` and `.skillguard/check-manifest.json` as deterministic generated outputs, never as hand-edited authority.
 - Use `.skillguard/checks/` for local runtime check script stubs and `.skillguard/runs/` for run records created before non-trivial skill work begins.
 - Use other `.skillguard/` material under the skill directory when the task asks for maintained SkillGuard records, evidence, reports, or self-check material.
 - Use the `skillguard-global-router` skill and the `scan-global-skills`, `build-global-registry`, `check-global-registry`, `resolve-global-skill`, `render-global-prompt`, `install-global-prompt`, `check-global-prompt`, and `refresh-global-router` commands when the task is about user-level skill routing, global prompt projection, managed user-level AGENTS prompt blocks, or new-skill onboarding defaults.
@@ -112,14 +112,36 @@ In this mode SkillGuard should help the target skill:
 - compile or maintain a `.skillguard/work-contract.json` that records the integration mode before any runtime claim: `native-integrated` when the target skill already has its own route/check system, `hybrid-extension` when SkillGuard is filling missing gates around a partial native system, and `skillguard-runtime` only when no native runtime system exists;
 - bind native routes and native checks directly when the target skill already owns routing, validation, controller, or closure behavior; do not create a second SkillGuard execution router beside the native system;
 - require the native route decision or SkillGuard-owned route decision before non-trivial skill work starts, depending on the declared integration mode;
-- create or update a `.skillguard/runs/` run record only when the contract is `skillguard-runtime` and SkillGuard owns the execution route;
+- claim a V2 target-local run for every non-trivial supervised task, including native-integrated and hybrid-extension targets, while preserving the target skill as the only owner of its domain action;
+- use the V2 run only for route selection, prerequisites, native action/check binding, immutable evidence, freshness, and closure supervision; never use it as a second target-domain executor;
 - advance phases only when required evidence and checks are present for earlier phases;
 - run route, phase-order, evidence, quality-floor, freshness, suite-child, and closure checks before closure;
 - block missing contracts, hollow contracts, ambiguous routes, skipped phases, stale evidence, prose-only evidence, quality downgrades, and closure overclaims.
 
-For native-integrated and hybrid-extension targets, SkillGuard is the runtime contract executor attached to the original skill system. It may add start gates, evidence checks, quality floors, freshness checks, and closure blockers around the original workflow, but it must execute those gates through the original skill's router, controller, simulator, checker, or release flow. It must not retain a parallel SkillGuard-owned run record for those targets. Duplicate SkillGuard-owned execution paths are invalid.
+For native-integrated and hybrid-extension targets, SkillGuard is the contract supervisor attached to the original skill system. It may retain a V2 evidence run, but every domain action and native check must bind back to the original router, controller, simulator, checker, or release flow. A second implementation of the target workflow is invalid. Legacy V1 run records do not gain success authority from this V2 evidence boundary.
 
 AI or human judgment may be recorded after deterministic evidence is clear, but it cannot replace required runnable checks or make skipped work pass.
+
+## Executable Contract V2
+
+For V2 maintenance and self-hosting:
+
+- compile with `scripts/skillguard_v2_compile.py`; `--check` is read-only and fails on missing or stale generated files;
+- execute any confirmed target contract with `scripts/skillguard_v2_supervise.py` and follow `references/skillguard-v2-supervisor.md`; pass the skill root, packet path, target root, and repository root as command arguments. The packet supplies the request, per-step witnessed or judged evidence, optional-skip proof, and closure profiles, while the supervisor performs route selection, the target-local claim, native checks, artifact validation, immutable receipts, closure, and replay;
+- use the function and route ids in the compiled contract instead of inferring workflow from headings;
+- claim the run before target work and resume only by replaying its contract snapshot and hash-chained events;
+- treat AI “complete” as evidence submission only; a native check, artifact validator, witnessed action verifier, or versioned judgment rubric must issue the authoritative receipt;
+- enforce the primary evidence class declared by each action: a hard model/check receipt cannot stand in for a `judged` step, and a model/check receipt cannot stand in for a `witness` step;
+- require immutable stored check/artifact records before hard evidence can pass;
+- include declared implementation source in the contract fingerprint while excluding only transient runtime material such as `.skillguard`, `__pycache__`, test/tool caches, bytecode, and `node_modules`; a real source change must still stale the generated contract and prior closure;
+- include the SkillGuard V2 runtime fingerprint in external receipts so a Guard behavior change makes affected prior evidence stale;
+- follow `references/skillguard-v1-field-lifecycle.md`: once `.skillguard/contract-source.json` exists, V1 runtime-authority commands must block and V1 artifacts remain migration inputs or read-only diagnostics, never fallback closure proof;
+- close with monotonic routine, functional, release, or highest-quality profiles and preserve missing, failed, blocked, skipped, stale, uncertain, and not-run gaps;
+- use `scripts/skillguard_v2_self_host.py` and `references/skillguard-v2-self-host.md` for the frozen-old/new-verifier bootstrap.
+- run `scripts/skillguard_test_mesh.py` against `test-mesh.json` with the fast, focused, or full profile; progress events prove liveness only, while parent confidence requires final child result artifacts, current source fingerprints, exit status, visible skips/timeouts, and no cancellation.
+- run `scripts/skillguard_provenance.py` before installed sync and release claims; keep the canonical local source, installed copy, Git origin, version/tag, and GitHub Release identities distinct, and block any installed downgrade or partial-file sync.
+- run `scripts/skillguard_privacy.py` over tracked and unignored release candidates; reject secrets, machine-specific paths, runtime state, private file types, and images without a current hash-bound visual review.
+- run `scripts/skillguard_install.py` for whole-tree staged installation; require source-manifest parity and installed-layout smoke checks before activation, preserve the previous active copy as a backup, and automatically restore it if post-activation validation fails. Partial file copying is not an acceptable installation or upgrade path.
 
 ## Deep Contract Mode
 

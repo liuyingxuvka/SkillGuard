@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_closure_receipt_v2.schema.json",
+  "title": "SkillGuard Closure Receipt V2",
+  "type": "object",
+  "required": ["schema_version", "closure_receipt_id", "run_id", "profile", "status", "consumed_receipt_ids", "safe_claim"],
+  "properties": {
+    "schema_version": {"const": "skillguard.closure_receipt.v2"},
+    "closure_receipt_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "profile": {"enum": ["routine", "functional", "release", "highest_quality"]},
+    "status": {"type": "string", "minLength": 1},
+    "consumed_receipt_ids": {"type": "array", "items": {"type": "string"}},
+    "safe_claim": {"type": "string"}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "skillguard.v2_failure_matrix.v1",
+  "fixture_version": "skillguard-v2-self-host-failures.1",
+  "cases": [
+    {"case_id": "false-pass", "expected": "blocked"},
+    {"case_id": "illegal-required-skip", "expected": "blocked"},
+    {"case_id": "stale-artifact", "expected": "stale"},
+    {"case_id": "unrelated-check", "expected": "incomplete"},
+    {"case_id": "forged-evidence", "expected": "blocked"},
+    {"case_id": "crash-replay", "expected": "resumed"},
+    {"case_id": "context-loss", "expected": "resumed"},
+    {"case_id": "concurrent-writer", "expected": "blocked"},
+    {"case_id": "no-progress-loop", "expected": "blocked"}
+  ],
+  "claim_boundary": "These cases cover the named SkillGuard V2 self-host failure classes only; they do not prove external target skills or publication readiness."
+}

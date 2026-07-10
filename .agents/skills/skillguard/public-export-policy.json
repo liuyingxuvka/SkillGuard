@@ -1,0 +1,39 @@
+{
+  "schema_version": "skillguard.public_export_policy.v1",
+  "blocked_extensions": [
+    ".bak",
+    ".db",
+    ".key",
+    ".log",
+    ".p12",
+    ".pem",
+    ".sqlite",
+    ".sqlite3"
+  ],
+  "blocked_names": [
+    ".env",
+    "credentials.json",
+    "secrets.json"
+  ],
+  "runtime_path_prefixes": [
+    ".skillguard/bootstrap/",
+    ".skillguard/locks/",
+    ".skillguard/runs/",
+    ".skillguard/test-results/"
+  ],
+  "allowed_binary_extensions": [
+    ".gif",
+    ".ico",
+    ".jpeg",
+    ".jpg",
+    ".png",
+    ".webp"
+  ],
+  "visual_review_records": [
+    {
+      "asset_path": "assets/readme-hero/hero.png",
+      "review_path": "assets/readme-hero/visual-privacy-review.json"
+    }
+  ],
+  "claim_boundary": "This policy protects the public repository/export boundary. Runtime evidence remains local unless an explicitly sanitized release artifact is separately approved."
+}

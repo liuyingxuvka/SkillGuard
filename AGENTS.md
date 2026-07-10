@@ -51,19 +51,27 @@ process changes.
 FlowGuard repository:
 https://github.com/liuyingxuvka/FlowGuard
 
+FlowGuard agent skill suite:
+- Primary agent surface: `.agents/skills/`
+- Default entry skill: `.agents/skills/model-first-function-flow/SKILL.md`
+- Complete AI-agent setup means the agent can read `AGENTS.md` and all
+  FlowGuard sibling `SKILL.md` files under `.agents/skills/`.
+- The Python `flowguard` module/CLI is executable check support, not the
+  AI-agent skill installation surface.
+
 Project FlowGuard record:
 - Manifest: `.flowguard/project.toml`
 - Machine log: `.flowguard/adoption_log.jsonl`
 - Human log: `docs/flowguard_adoption_log.md`
 
 Current adoption record:
-- FlowGuard package version: `0.52.2`
+- FlowGuard check-engine version: `0.53.1`
 - FlowGuard schema version: `1.0`
 
 Before non-trivial work:
-1. Verify the real package:
+1. Verify the real FlowGuard check engine:
    `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
-2. Check the installed package version:
+2. Check the installed check-engine version:
    `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`
 3. Audit the project record:
    `python -m flowguard project-audit --root .`
@@ -75,8 +83,8 @@ Before non-trivial work:
    the current FlowGuard shape. Use `--records-only` only when intentionally
    scoping out artifact/model/test upgrade scanning.
    Then rerun affected models/tests before broad confidence and record the result.
-6. If the installed version is older than the project record, stop and upgrade
-   the local FlowGuard toolchain before claiming FlowGuard confidence.
+6. If the installed version is older than the project record, stop and connect
+   a current FlowGuard check engine before claiming FlowGuard confidence.
 
 FlowGuard runtime guidance is latest-schema-first: old artifacts may be
 detected and upgraded at project/tool boundaries, but normal route logic should

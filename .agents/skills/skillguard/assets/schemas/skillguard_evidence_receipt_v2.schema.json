@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_evidence_receipt_v2.schema.json",
+  "title": "SkillGuard Evidence Receipt V2",
+  "type": "object",
+  "required": ["schema_version", "receipt_id", "run_id", "step_id", "evidence_class", "status", "input_fingerprints"],
+  "properties": {
+    "schema_version": {"const": "skillguard.evidence_receipt.v2"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "step_id": {"type": "string", "minLength": 1},
+    "evidence_class": {"enum": ["hard", "witnessed", "judged"]},
+    "status": {"type": "string", "minLength": 1},
+    "input_fingerprints": {"type": "object"}
+  },
+  "additionalProperties": true
+}

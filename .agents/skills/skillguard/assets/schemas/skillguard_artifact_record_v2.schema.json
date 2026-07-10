@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_artifact_record_v2.schema.json",
+  "title": "SkillGuard Artifact Record V2",
+  "type": "object",
+  "required": ["schema_version", "artifact_id", "run_id", "kind", "producer_step_id", "fingerprint", "status"],
+  "properties": {
+    "schema_version": {"const": "skillguard.artifact_record.v2"},
+    "artifact_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "kind": {"type": "string", "minLength": 1},
+    "producer_step_id": {"type": "string", "minLength": 1},
+    "fingerprint": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

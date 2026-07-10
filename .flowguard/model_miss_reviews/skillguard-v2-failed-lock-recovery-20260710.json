@@ -1,0 +1,64 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-v2-failed-lock-recovery-20260710",
+  "status": "repaired_and_revalidated",
+  "observed_failure": {
+    "surface": "SkillGuard V2 self-host claim",
+    "prior_run_id": "run-9d43698ebbb1c4b58a0a",
+    "new_claim_status": "blocked",
+    "failure_code": "conflicting_writer_claim",
+    "last_prior_event": "step_failed",
+    "path_tokens": [
+      "repository_root/.skillguard/locks",
+      "repository_root/.skillguard/runs/<run-id>"
+    ]
+  },
+  "prior_claim_boundary": "Live overlapping writers were blocked, but the model and runtime did not distinguish a live writer from a failed or exited process whose transient lock remained.",
+  "classification": {
+    "owner": "SkillGuard claimed-run runtime",
+    "miss_type": "model_and_runtime_recovery_gap",
+    "affected_feature_tags": [
+      "run-state",
+      "routing",
+      "closure"
+    ]
+  },
+  "generalized_repair": {
+    "model_invariant": "failed_or_dead_writer_lock_cannot_block_forever",
+    "scenario": "stale_failed_writer_lock_blocks_progress",
+    "contract_exhaustion_case": "case:concurrency:stale-lock-not-recovered",
+    "runtime_rules": [
+      "A lock owned by a live process still blocks every overlapping claim.",
+      "A lock whose recorded owner process no longer exists is recovered under the atomic claim guard and emits stale_locks_recovered on the prior run.",
+      "A legacy lock without owner metadata is recoverable only when its verified final event is step_failed, locks_released, or closure_issued.",
+      "An idempotently resumed run reacquires or renews every declared lock before work continues."
+    ]
+  },
+  "field_lifecycle": {
+    "field": "owner_pid",
+    "owner": "skillguard_v2.run_store lock payload",
+    "storage": "target-local transient lock JSON only",
+    "default_for_new_records": "current process id",
+    "legacy_absence_disposition": "accepted only with verified terminal-event recovery; otherwise remains blocking",
+    "public_contract_or_schema_change": false
+  },
+  "evidence": [
+    "tests/test_claimed_run_runtime.py::test_idempotent_resume_reacquires_released_write_locks",
+    "tests/test_claimed_run_runtime.py::test_dead_owner_lock_is_recovered_with_an_audit_event",
+    "tests/test_claimed_run_runtime.py::test_legacy_failed_lock_without_owner_pid_is_recovered",
+    "tests/test_executable_contract_model.py",
+    "compiled contract 2F182C00A7738D484D2164A0ACDC3AD70BAA780AD5A5C49035F20DB272FD8B3D and exact manifest parity",
+    "focused TestMesh: 106 passed with zero skips",
+    "full TestMesh: 106 V2 plus 73 legacy passed with zero skips",
+    "full self-host run-ef474980c6cf42a6aaa1 with current functional and release closures",
+    "Autonomous UI run-a54aaf8d36bb481aebb4 under Guard source hash CB1FF76E70287A9698C269D7D099224DDA3A0F97BA574F447D2D180A276BDE71"
+  ],
+  "required_revalidation": [
+    "SkillGuard installed-source parity",
+    "SkillGuard focused and full TestMesh",
+    "SkillGuard frozen-old/new self-host",
+    "Autonomous UI latest-Guard pressure run",
+    "affected prior graduate scan"
+  ],
+  "claim_boundary": "Current local evidence proves the repaired lock-recovery class, SkillGuard full regression/self-host closure, and one affected external target rerun. It does not prove GitHub publication, other operating systems, or unrelated portfolio targets."
+}

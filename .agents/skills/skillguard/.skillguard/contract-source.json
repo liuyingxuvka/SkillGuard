@@ -1,0 +1,955 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "artifact:self-compiled-contract",
+      "kind": "json",
+      "path_template": ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+      "producer_step_id": "step:compile-generated-contract",
+      "required": true,
+      "validators": [
+        "exists",
+        "json",
+        "contract_hash"
+      ]
+    },
+    {
+      "artifact_id": "artifact:self-check-manifest",
+      "kind": "json",
+      "path_template": ".agents/skills/skillguard/.skillguard/check-manifest.json",
+      "producer_step_id": "step:compile-generated-contract",
+      "required": true,
+      "validators": [
+        "exists",
+        "json",
+        "manifest_hash"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "check_id": "check:self:inventory-static-surface",
+      "covers_obligation_ids": [
+        "obligation:static-audit"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard.py",
+        "check-skill",
+        "--target",
+        ".agents/skills/skillguard"
+      ],
+      "check_id": "check:self:run-native-static-checks",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:static-audit"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:issue-static-audit-receipt",
+      "covers_obligation_ids": [
+        "obligation:static-audit"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:load-target-depth-boundary",
+      "covers_obligation_ids": [
+        "obligation:deep-audit"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard.py",
+        "check-depth",
+        "--target",
+        ".agents/skills/skillguard"
+      ],
+      "check_id": "check:self:run-native-depth-checks",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:deep-audit"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:verify-target-specific-coverage",
+      "covers_obligation_ids": [
+        "obligation:deep-audit"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        ".flowguard/development_process_flow/skillguard_executable_contract_model.py"
+      ],
+      "check_id": "check:self:load-model-export",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:model-authority"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:validate-binding",
+      "covers_obligation_ids": [
+        "obligation:model-authority"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard_v2_compile.py",
+        ".agents/skills/skillguard",
+        "--repository-root",
+        "."
+      ],
+      "check_id": "check:self:compile-generated-contract",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:model-authority"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_contract_compiler_v2.py",
+        "-q"
+      ],
+      "check_id": "check:self:verify-generated-parity",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:model-authority"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard_test_mesh.py",
+        "--profile",
+        "fast",
+        "--repository-root",
+        ".",
+        "--progress-interval-seconds",
+        "5"
+      ],
+      "check_id": "check:self:test-mesh-fast",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:model-authority"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:select-function-route",
+      "covers_obligation_ids": [
+        "obligation:route-ownership"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_contract_compiler_v2.py",
+        "-q",
+        "-k",
+        "supervisor_rejects"
+      ],
+      "check_id": "check:self:packet-consumption",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:packet-consumption"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:claim-run",
+      "covers_obligation_ids": [
+        "obligation:claimed-run"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_claimed_run_runtime.py",
+        "-q",
+        "-k",
+        "guard_runtime_change_claims"
+      ],
+      "check_id": "check:self:guard-run-identity",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:guard-run-identity"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_claimed_run_runtime.py",
+        "-q",
+        "-k",
+        "reacquires_released_write_locks or dead_owner_lock or legacy_failed_lock"
+      ],
+      "check_id": "check:self:failed-lock-recovery",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:failed-lock-recovery"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:next-ready-step",
+      "covers_obligation_ids": [
+        "obligation:durable-resume"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:record-step-event",
+      "covers_obligation_ids": [
+        "obligation:durable-resume"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_evidence_receipts.py",
+        "tests/test_artifact_validators.py",
+        "tests/test_check_runner_v2.py",
+        "-q"
+      ],
+      "check_id": "check:self:validate-step-evidence",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:verifier-pass"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:issue-step-receipt",
+      "covers_obligation_ids": [
+        "obligation:model-authority"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_closure_profiles_v2.py",
+        "tests/test_false_closure_v2.py",
+        "-q"
+      ],
+      "check_id": "check:self:check-run-closure",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:artifact-freshness"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:issue-closure-receipt",
+      "covers_obligation_ids": [
+        "obligation:exact-closure"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:scan-graduate-freshness",
+      "covers_obligation_ids": [
+        "obligation:portfolio-freshness"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:revalidate-affected-graduates",
+      "covers_obligation_ids": [
+        "obligation:model-authority"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:issue-portfolio-receipt",
+      "covers_obligation_ids": [
+        "obligation:portfolio-freshness"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:refresh-global-router",
+      "covers_obligation_ids": [
+        "obligation:global-router-handoff"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:check-global-registry-and-prompt",
+      "covers_obligation_ids": [
+        "obligation:global-router-handoff"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:verify-target-handoff",
+      "covers_obligation_ids": [
+        "obligation:global-router-handoff"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:resolve-canonical-source",
+      "covers_obligation_ids": [
+        "obligation:provenance"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:compare-installed-and-repository",
+      "covers_obligation_ids": [
+        "obligation:provenance"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard_provenance.py",
+        "--repository-root",
+        ".",
+        "--expected-origin",
+        "https://github.com/liuyingxuvka/SkillGuard.git",
+        "--github-repository",
+        "liuyingxuvka/SkillGuard",
+        "--development"
+      ],
+      "check_id": "check:self:installed-provenance",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:provenance"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:verify-release-provenance",
+      "covers_obligation_ids": [
+        "obligation:provenance"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_installation.py",
+        "-q"
+      ],
+      "check_id": "check:self:installation-safety",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:provenance"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard_privacy.py",
+        "--repository-root",
+        "."
+      ],
+      "check_id": "check:self:public-export-privacy",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:provenance"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "check_id": "check:self:obligation:loop-liveness",
+      "covers_obligation_ids": [
+        "obligation:loop-liveness"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:obligation:no-v1-success",
+      "covers_obligation_ids": [
+        "obligation:no-v1-success"
+      ],
+      "evidence_class": "hard",
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_v1_lifecycle.py",
+        "-q"
+      ],
+      "check_id": "check:self:v1-field-lifecycle",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:no-v1-success"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 180
+    }
+  ],
+  "claim_boundary": "This binding covers SkillGuard self-maintenance routes and current local checks. Publication, clean installation, and GitHub release require separate release-profile evidence.",
+  "closure_profiles": [
+    {
+      "profile_id": "routine",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:route-ownership"
+      ]
+    },
+    {
+      "profile_id": "functional",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:route-ownership",
+        "obligation:deep-audit",
+        "obligation:claimed-run",
+        "obligation:verifier-pass",
+        "obligation:artifact-freshness",
+        "obligation:durable-resume",
+        "obligation:loop-liveness",
+        "obligation:exact-closure",
+        "obligation:no-v1-success"
+      ]
+    },
+    {
+      "profile_id": "release",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:route-ownership",
+        "obligation:deep-audit",
+        "obligation:claimed-run",
+        "obligation:verifier-pass",
+        "obligation:artifact-freshness",
+        "obligation:durable-resume",
+        "obligation:loop-liveness",
+        "obligation:exact-closure",
+        "obligation:no-v1-success",
+        "obligation:global-router-handoff",
+        "obligation:provenance"
+      ]
+    },
+    {
+      "profile_id": "highest_quality",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:route-ownership",
+        "obligation:deep-audit",
+        "obligation:claimed-run",
+        "obligation:verifier-pass",
+        "obligation:artifact-freshness",
+        "obligation:durable-resume",
+        "obligation:loop-liveness",
+        "obligation:exact-closure",
+        "obligation:no-v1-success",
+        "obligation:global-router-handoff",
+        "obligation:provenance",
+        "obligation:portfolio-freshness"
+      ]
+    }
+  ],
+  "confirmed": true,
+  "implementation_paths": [
+    ".agents/skills/skillguard/scripts/skillguard_v2",
+    ".agents/skills/skillguard/scripts/skillguard_v2_compile.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2_self_host.py",
+    ".agents/skills/skillguard/scripts/skillguard_test_mesh.py",
+    ".agents/skills/skillguard/scripts/skillguard_provenance.py",
+    ".agents/skills/skillguard/scripts/skillguard_privacy.py",
+    ".agents/skills/skillguard/scripts/skillguard_install.py",
+    ".agents/skills/skillguard/scripts/skillguard.py",
+    ".agents/skills/skillguard/test-mesh.json",
+    ".agents/skills/skillguard/public-export-policy.json",
+    ".github/workflows/ci.yml",
+    ".gitignore",
+    "assets/readme-hero/hero.png",
+    "assets/readme-hero/visual-privacy-review.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_work_contract.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_run_record.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_check_manifest.schema.json",
+    ".agents/skills/skillguard/references/skillguard-v1-field-lifecycle.md"
+  ],
+  "judgment_rubrics": [
+    {
+      "claim_boundary": "Self-review supports functional-depth judgment only and is not hard release proof.",
+      "criteria": [
+        "native static and deep checks are current",
+        "V2 false-pass and replay fixtures are green",
+        "safe claim remains narrower than release publication"
+      ],
+      "rubric_id": "rubric:self-host-functional-depth",
+      "version": "1"
+    }
+  ],
+  "model_id": "skillguard.executable_contract_runtime.v2",
+  "model_path": ".flowguard/development_process_flow/skillguard_executable_contract_model.py",
+  "release_eligible": true,
+  "schema_version": "skillguard.contract_source.v2",
+  "skill_id": "skillguard",
+  "step_bindings": [
+    {
+      "action": {
+        "kind": "inventory",
+        "summary": "Execute and verify the self-host step step:inventory-static-surface."
+      },
+      "check_ids": [
+        "check:self:inventory-static-surface"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:inventory-static-surface"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Run the existing static SkillGuard check through its native owner."
+      },
+      "check_ids": [
+        "check:self:run-native-static-checks"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:run-native-static-checks"
+    },
+    {
+      "action": {
+        "kind": "receipt",
+        "summary": "Execute and verify the self-host step step:issue-static-audit-receipt."
+      },
+      "check_ids": [
+        "check:self:issue-static-audit-receipt"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:issue-static-audit-receipt"
+    },
+    {
+      "action": {
+        "kind": "inventory",
+        "summary": "Execute and verify the self-host step step:load-target-depth-boundary."
+      },
+      "check_ids": [
+        "check:self:load-target-depth-boundary"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:load-target-depth-boundary"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Run the existing deep-contract check through its native owner."
+      },
+      "check_ids": [
+        "check:self:run-native-depth-checks"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:run-native-depth-checks"
+    },
+    {
+      "action": {
+        "kind": "judged",
+        "rubric_id": "rubric:self-host-functional-depth",
+        "summary": "Execute and verify the self-host step step:verify-target-specific-coverage."
+      },
+      "check_ids": [
+        "check:self:verify-target-specific-coverage"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:verify-target-specific-coverage"
+    },
+    {
+      "action": {
+        "kind": "flowguard_model",
+        "summary": "Execute the authoritative FlowGuard model and governance reviews."
+      },
+      "check_ids": [
+        "check:self:load-model-export"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:load-model-export"
+    },
+    {
+      "action": {
+        "kind": "validator",
+        "summary": "Execute and verify the self-host step step:validate-binding."
+      },
+      "check_ids": [
+        "check:self:validate-binding"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:validate-binding"
+    },
+    {
+      "action": {
+        "kind": "compiler",
+        "summary": "Compile SkillGuard's own deterministic V2 contract and manifest through the real compiler facade."
+      },
+      "check_ids": [
+        "check:self:compile-generated-contract"
+      ],
+      "output_artifact_ids": [
+        "artifact:self-compiled-contract",
+        "artifact:self-check-manifest"
+      ],
+      "step_id": "step:compile-generated-contract"
+    },
+    {
+      "action": {
+        "kind": "validator",
+        "summary": "Run deterministic compiler and bad-topology fixtures."
+      },
+      "check_ids": [
+        "check:self:verify-generated-parity",
+        "check:self:test-mesh-fast"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:verify-generated-parity"
+    },
+    {
+      "action": {
+        "kind": "router",
+        "summary": "Execute and verify the self-host step step:select-function-route."
+      },
+      "check_ids": [
+        "check:self:select-function-route",
+        "check:self:packet-consumption",
+        "check:self:obligation:no-v1-success",
+        "check:self:v1-field-lifecycle"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:select-function-route"
+    },
+    {
+      "action": {
+        "kind": "state_write",
+        "summary": "Execute and verify the self-host step step:claim-run."
+      },
+      "check_ids": [
+        "check:self:claim-run",
+        "check:self:guard-run-identity",
+        "check:self:failed-lock-recovery"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:claim-run"
+    },
+    {
+      "action": {
+        "kind": "router",
+        "summary": "Execute and verify the self-host step step:next-ready-step."
+      },
+      "check_ids": [
+        "check:self:next-ready-step"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:next-ready-step"
+    },
+    {
+      "action": {
+        "kind": "state_write",
+        "summary": "Execute and verify the self-host step step:record-step-event."
+      },
+      "check_ids": [
+        "check:self:record-step-event",
+        "check:self:obligation:loop-liveness"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:record-step-event"
+    },
+    {
+      "action": {
+        "kind": "verifier",
+        "summary": "Run receipt, artifact, witnessed action, judged rubric, and native-check fixtures."
+      },
+      "check_ids": [
+        "check:self:validate-step-evidence"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:validate-step-evidence"
+    },
+    {
+      "action": {
+        "kind": "receipt",
+        "summary": "Execute and verify the self-host step step:issue-step-receipt."
+      },
+      "check_ids": [
+        "check:self:issue-step-receipt"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:issue-step-receipt"
+    },
+    {
+      "action": {
+        "kind": "verifier",
+        "summary": "Run monotonic closure and false-closure fixtures."
+      },
+      "check_ids": [
+        "check:self:check-run-closure"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:check-run-closure"
+    },
+    {
+      "action": {
+        "kind": "receipt",
+        "summary": "Execute and verify the self-host step step:issue-closure-receipt."
+      },
+      "check_ids": [
+        "check:self:issue-closure-receipt"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:issue-closure-receipt"
+    },
+    {
+      "action": {
+        "kind": "validator",
+        "summary": "Execute and verify the self-host step step:scan-graduate-freshness."
+      },
+      "check_ids": [
+        "check:self:scan-graduate-freshness"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:scan-graduate-freshness"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Execute and verify the self-host step step:revalidate-affected-graduates."
+      },
+      "check_ids": [
+        "check:self:revalidate-affected-graduates"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:revalidate-affected-graduates"
+    },
+    {
+      "action": {
+        "kind": "receipt",
+        "summary": "Execute and verify the self-host step step:issue-portfolio-receipt."
+      },
+      "check_ids": [
+        "check:self:issue-portfolio-receipt"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:issue-portfolio-receipt"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Execute and verify the self-host step step:refresh-global-router."
+      },
+      "check_ids": [
+        "check:self:refresh-global-router"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:refresh-global-router"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Execute and verify the self-host step step:check-global-registry-and-prompt."
+      },
+      "check_ids": [
+        "check:self:check-global-registry-and-prompt"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:check-global-registry-and-prompt"
+    },
+    {
+      "action": {
+        "kind": "verifier",
+        "summary": "Execute and verify the self-host step step:verify-target-handoff."
+      },
+      "check_ids": [
+        "check:self:verify-target-handoff"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:verify-target-handoff"
+    },
+    {
+      "action": {
+        "kind": "inventory",
+        "summary": "Execute and verify the self-host step step:resolve-canonical-source."
+      },
+      "check_ids": [
+        "check:self:resolve-canonical-source"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:resolve-canonical-source"
+    },
+    {
+      "action": {
+        "kind": "validator",
+        "summary": "Execute and verify the self-host step step:compare-installed-and-repository."
+      },
+      "check_ids": [
+        "check:self:compare-installed-and-repository",
+        "check:self:installed-provenance"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:compare-installed-and-repository"
+    },
+    {
+      "action": {
+        "kind": "validator",
+        "summary": "Execute and verify the self-host step step:verify-release-provenance."
+      },
+      "check_ids": [
+        "check:self:verify-release-provenance",
+        "check:self:installation-safety",
+        "check:self:public-export-privacy"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:verify-release-provenance"
+    }
+  ]
+}

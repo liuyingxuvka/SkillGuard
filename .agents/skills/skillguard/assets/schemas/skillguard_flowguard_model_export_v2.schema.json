@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_flowguard_model_export_v2.schema.json",
+  "title": "SkillGuard FlowGuard Model Export V2",
+  "type": "object",
+  "required": ["schema_version", "flowguard_schema_version", "model_id", "parent_model_id", "functions", "routes", "steps", "obligations", "invariant_ids", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": "skillguard.flowguard_model_export.v2"},
+    "flowguard_schema_version": {"type": "string", "minLength": 1},
+    "model_id": {"type": "string", "minLength": 1},
+    "parent_model_id": {"type": "string", "minLength": 1},
+    "functions": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["function_id", "business_intent", "owner_id", "route_ids"]}},
+    "routes": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["route_id", "function_id", "owner_id", "start_step_id", "step_ids", "success_terminal_step_id", "blocked_terminal_step_id", "handoffs"]}},
+    "steps": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["step_id", "route_id", "owner_id", "action_kind", "prerequisite_step_ids", "required", "terminal_kind"]}},
+    "obligations": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["obligation_id", "invariant_id", "owner_step_ids", "required"]}},
+    "invariant_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

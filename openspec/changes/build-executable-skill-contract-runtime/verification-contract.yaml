@@ -1,0 +1,213 @@
+contract_version: 1
+change: build-executable-skill-contract-runtime
+obligations:
+  - id: req.compile.flowguard-authority
+    source: "specs/executable-skill-contract-compilation/spec.md#Requirement: FlowGuard model is the behavior authority"
+    claim: Supported FlowGuard model exports are the only release authority for behavior and route semantics.
+    required: true
+    evidence: [check.flowguard-model, check.compiler-fixtures]
+  - id: req.compile.deterministic
+    source: "specs/executable-skill-contract-compilation/spec.md#Requirement: Published generation is minimal and deterministic"
+    claim: Two published generated artifacts are deterministic and stale-checkable without writes.
+    required: true
+    evidence: [check.compiler-fixtures, check.self-compile]
+  - id: req.compile.topology
+    source: "specs/executable-skill-contract-compilation/spec.md#Requirement: Compilation rejects incomplete topology and coverage"
+    claim: Bad ownership, handoffs, loops, terminals, artifacts, and check mappings fail closed.
+    required: true
+    evidence: [check.compiler-fixtures, check.route-fixtures]
+  - id: req.run.claim
+    source: "specs/claimed-skill-run-runtime/spec.md#Requirement: Every real task claims a contract run"
+    claim: All supervised tasks have idempotent, locked, target-local runs.
+    required: true
+    evidence: [check.run-fixtures]
+  - id: req.run.authority
+    source: "specs/claimed-skill-run-runtime/spec.md#Requirement: Step authority is verifier-derived"
+    claim: AI submissions cannot directly set pass.
+    required: true
+    evidence: [check.run-fixtures, check.false-pass-fixtures]
+  - id: req.run.resume
+    source: "specs/claimed-skill-run-runtime/spec.md#Requirement: Runs resume from durable events"
+    claim: Replay and resume do not depend on conversation memory.
+    required: true
+    evidence: [check.replay-fixtures]
+  - id: req.run.liveness
+    source: "specs/claimed-skill-run-runtime/spec.md#Requirement: Skip and loops fail closed"
+    claim: Required skip and no-progress or unbounded loops cannot pass.
+    required: true
+    evidence: [check.route-fixtures, check.false-pass-fixtures]
+  - id: req.evidence.classes
+    source: "specs/skill-evidence-receipts/spec.md#Requirement: Evidence classes remain distinct"
+    claim: Hard, witnessed, and judged evidence keep separate authority.
+    required: true
+    evidence: [check.receipt-fixtures]
+  - id: req.evidence.freshness
+    source: "specs/skill-evidence-receipts/spec.md#Requirement: Receipts are immutable and freshness is derived"
+    claim: Callers cannot author pass/current and covered changes propagate stale state.
+    required: true
+    evidence: [check.receipt-fixtures, check.replay-fixtures]
+  - id: req.evidence.artifacts
+    source: "specs/skill-evidence-receipts/spec.md#Requirement: Artifacts are first-class evidence"
+    claim: Declared files, images, screenshots, documents, UI, and native outputs are validated as target artifacts.
+    required: true
+    evidence: [check.artifact-fixtures, check.autonomous-ui-pilot]
+  - id: req.evidence.children
+    source: "specs/skill-evidence-receipts/spec.md#Requirement: Parent closure consumes exact child receipts"
+    claim: Parent closure records exact child receipts and invalidates on supersession.
+    required: true
+    evidence: [check.receipt-fixtures]
+  - id: req.closure.current
+    source: "specs/skill-functional-closure/spec.md#Requirement: Only current exact evidence closes a run"
+    claim: Required missing, failed, stale, skipped, partial, or not-run evidence blocks full closure.
+    required: true
+    evidence: [check.closure-fixtures, check.self-host]
+  - id: req.closure.replay
+    source: "specs/skill-functional-closure/spec.md#Requirement: Closure is replay-verifiable"
+    claim: Closure can be independently replayed and tampering invalidates it.
+    required: true
+    evidence: [check.replay-fixtures, check.self-host]
+  - id: req.provenance.canonical
+    source: "specs/skill-source-provenance/spec.md#Requirement: Canonical local source remains publication authority"
+    claim: Installed and GitHub targets cannot replace or downgrade canonical local source.
+    required: true
+    evidence: [check.provenance-fixtures, check.install-shadow]
+  - id: req.provenance.adoption
+    source: "specs/skill-source-provenance/spec.md#Requirement: Adopted skills preserve upstream and maintainer identities"
+    claim: Fork, derivative, overlay, and publication decisions preserve upstream identity and license.
+    required: true
+    evidence: [check.adoption-fixtures]
+  - id: req.portfolio.calibration
+    source: "specs/portfolio-skill-calibration-loop/spec.md#Requirement: Target failures feed Guard misses back to the owner"
+    claim: Real target failures become classified, generalized, executable Guard regression evidence before repair.
+    required: true
+    evidence: [check.portfolio-calibration-fixtures]
+  - id: req.portfolio.revalidation
+    source: "specs/portfolio-skill-calibration-loop/spec.md#Requirement: Guard changes invalidate affected prior graduates"
+    claim: Guard changes stale affected graduates and restore currentness only through scoped revalidation.
+    required: true
+    evidence: [check.portfolio-calibration-fixtures, check.portfolio-graduation]
+  - id: req.portfolio.parent
+    source: "specs/portfolio-skill-calibration-loop/spec.md#Requirement: Parent graduation preserves child truth"
+    claim: Parent graduation consumes current full receipts or proof-bound reuse tickets for every graduate.
+    required: true
+    evidence: [check.portfolio-graduation]
+checks:
+  - id: check.flowguard-model
+    kind: command
+    command: python
+    args: [.flowguard/development_process_flow/skillguard_executable_contract_model.py]
+    required: true
+    covers: [req.compile.flowguard-authority]
+    expected: {exit_code: 0}
+  - id: check.compiler-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_contract_compiler_v2.py, -q]
+    required: true
+    covers: [req.compile.flowguard-authority, req.compile.deterministic, req.compile.topology]
+    expected: {exit_code: 0}
+  - id: check.route-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_route_runtime_v2.py, -q]
+    required: true
+    covers: [req.compile.topology, req.run.liveness]
+    expected: {exit_code: 0}
+  - id: check.run-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_claimed_run_runtime.py, -q]
+    required: true
+    covers: [req.run.claim, req.run.authority]
+    expected: {exit_code: 0}
+  - id: check.replay-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_run_replay.py, -q]
+    required: true
+    covers: [req.run.resume, req.evidence.freshness, req.closure.replay]
+    expected: {exit_code: 0}
+  - id: check.false-pass-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_false_closure_v2.py, -q]
+    required: true
+    covers: [req.run.authority, req.run.liveness]
+    expected: {exit_code: 0}
+  - id: check.receipt-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_evidence_receipts.py, -q]
+    required: true
+    covers: [req.evidence.classes, req.evidence.freshness, req.evidence.children]
+    expected: {exit_code: 0}
+  - id: check.artifact-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_artifact_validators.py, -q]
+    required: true
+    covers: [req.evidence.artifacts]
+    expected: {exit_code: 0}
+  - id: check.closure-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_closure_profiles_v2.py, -q]
+    required: true
+    covers: [req.closure.current]
+    expected: {exit_code: 0}
+  - id: check.self-compile
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, compile-contract, .agents/skills/skillguard, --check]
+    required: true
+    covers: [req.compile.deterministic]
+    expected: {exit_code: 0}
+  - id: check.self-host
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, check-run, .skillguard/self-host/current, --profile, release]
+    required: true
+    covers: [req.closure.current, req.closure.replay]
+    expected: {exit_code: 0}
+  - id: check.autonomous-ui-pilot
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, check-run, .skillguard/pilots/autonomous-ui/current, --profile, functional]
+    required: true
+    covers: [req.evidence.artifacts]
+    expected: {exit_code: 0}
+  - id: check.provenance-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_provenance_v2.py, -q]
+    required: true
+    covers: [req.provenance.canonical]
+    expected: {exit_code: 0}
+  - id: check.adoption-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_skill_adoption.py, -q]
+    required: true
+    covers: [req.provenance.adoption]
+    expected: {exit_code: 0}
+  - id: check.install-shadow
+    kind: command
+    command: python
+    args: [scripts/check_installed_shadow.py, --json]
+    required: true
+    covers: [req.provenance.canonical]
+    expected: {exit_code: 0}
+  - id: check.portfolio-calibration-fixtures
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_portfolio_calibration_loop.py, -q]
+    required: true
+    covers: [req.portfolio.calibration, req.portfolio.revalidation]
+    expected: {exit_code: 0}
+  - id: check.portfolio-graduation
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, audit-portfolio, .skillguard/portfolio-registry.json, --require-current-graduates]
+    required: true
+    covers: [req.portfolio.revalidation, req.portfolio.parent]
+    expected: {exit_code: 0}

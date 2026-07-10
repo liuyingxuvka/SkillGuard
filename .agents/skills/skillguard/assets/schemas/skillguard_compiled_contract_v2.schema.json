@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_compiled_contract_v2.schema.json",
+  "title": "SkillGuard Compiled Contract V2",
+  "type": "object",
+  "required": ["schema_version", "compiler_version", "skill_id", "model_id", "parent_model_id", "flowguard_schema_version", "functions", "routes", "steps", "obligations", "artifacts", "closure_profiles", "source_fingerprints", "claim_boundary", "contract_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.compiled_contract.v2"},
+    "compiler_version": {"type": "string", "minLength": 1},
+    "skill_id": {"type": "string", "minLength": 1},
+    "model_id": {"type": "string", "minLength": 1},
+    "parent_model_id": {"type": "string", "minLength": 1},
+    "flowguard_schema_version": {"type": "string", "minLength": 1},
+    "functions": {"type": "array", "minItems": 1},
+    "routes": {"type": "array", "minItems": 1},
+    "steps": {"type": "array", "minItems": 1},
+    "obligations": {"type": "array", "minItems": 1},
+    "artifacts": {"type": "array"},
+    "closure_profiles": {"type": "array", "minItems": 4},
+    "judgment_rubrics": {"type": "array"},
+    "source_fingerprints": {"type": "object"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "contract_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}
+  },
+  "additionalProperties": false
+}

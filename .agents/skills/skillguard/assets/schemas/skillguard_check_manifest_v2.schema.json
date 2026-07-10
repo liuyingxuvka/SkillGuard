@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_check_manifest_v2.schema.json",
+  "title": "SkillGuard Check Manifest V2",
+  "type": "object",
+  "required": ["schema_version", "compiler_version", "skill_id", "model_id", "contract_hash", "checks", "source_fingerprints", "claim_boundary", "manifest_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.check_manifest.v2"},
+    "compiler_version": {"type": "string", "minLength": 1},
+    "skill_id": {"type": "string", "minLength": 1},
+    "model_id": {"type": "string", "minLength": 1},
+    "contract_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "checks": {"type": "array", "minItems": 1},
+    "source_fingerprints": {"type": "object"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "manifest_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}
+  },
+  "additionalProperties": false
+}

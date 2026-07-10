@@ -1406,14 +1406,63 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertEqual([skills_root.resolve(), plugin_root.resolve()], roots)
 
     def test_runtime_contract_command_family_enforces_route_run_and_closure_gates(self) -> None:
-        target = REPO_ROOT / ".agents" / "skills" / "skillguard"
+        source_target = REPO_ROOT / ".agents" / "skills" / "skillguard"
+        workspace = Path(tempfile.mkdtemp(prefix="skillguard-legacy-runtime-", dir=REPO_ROOT))
+        self.addCleanup(shutil.rmtree, workspace, True)
+        target = workspace / "skillguard"
+        target.mkdir()
+        shutil.copy2(source_target / "SKILL.md", target / "SKILL.md")
+        shutil.copytree(source_target / ".skillguard" / "checks", target / ".skillguard" / "checks")
         contract = target / ".skillguard" / "work-contract.json"
         manifest = target / ".skillguard" / "check_manifest.json"
-        good_run = target / "fixtures" / "runtime_contract" / "runs" / "good_run.json"
-        quality_run = target / "fixtures" / "runtime_contract" / "runs" / "quality_failure_run.json"
-        overclaim_run = target / "fixtures" / "runtime_contract" / "runs" / "overclaim_run.json"
-        hollow_contract = target / "fixtures" / "runtime_contract" / "contracts" / "hollow_contract.json"
-        ambiguous_contract = target / "fixtures" / "runtime_contract" / "contracts" / "ambiguous_routes_contract.json"
+        compiled = run_skillguard("compile-contract", "--target", rel(target), "--dry-run")
+        self.assert_clean_pass(compiled)
+        self.assertEqual(compiled.get("compiled_contract", {}).get("integration_mode"), "skillguard-runtime")
+        self.assertFalse(compiled.get("compiled_contract", {}).get("may_define_parallel_execution_route"))
+        self.assertTrue(compiled.get("compiled_contract", {}).get("may_define_skillguard_runtime_route"))
+        write_json(contract, compiled["compiled_contract"])
+        write_json(manifest, compiled["compiled_check_manifest"])
+
+        fixture_root = source_target / "fixtures" / "runtime_contract"
+        run_root = target / "fixtures" / "runtime_contract" / "runs"
+        contract_root = target / "fixtures" / "runtime_contract" / "contracts"
+        run_root.mkdir(parents=True)
+        contract_root.mkdir(parents=True)
+
+        def migrated_run(name: str) -> Path:
+            payload = json.loads((fixture_root / "runs" / name).read_text(encoding="utf-8"))
+            payload["target_skill"] = rel(target)
+            payload["contract_ref"] = {
+                "contract_path": rel(contract),
+                "contract_version": compiled["compiled_contract"]["contract_version"],
+                "contract_hash": compiled["compiled_contract"]["contract_hash"],
+            }
+            path = run_root / name
+            write_json(path, payload)
+            return path
+
+        def migrated_contract(name: str) -> Path:
+            payload = json.loads((fixture_root / "contracts" / name).read_text(encoding="utf-8"))
+            payload["target_path"] = rel(target)
+            payload["contract_hash"] = checker_engine.work_contract_hash(payload)
+            path = contract_root / name
+            write_json(path, payload)
+            return path
+
+        good_run = migrated_run("good_run.json")
+        quality_run = migrated_run("quality_failure_run.json")
+        overclaim_run = migrated_run("overclaim_run.json")
+        hollow_contract = migrated_contract("hollow_contract.json")
+        ambiguous_contract = migrated_contract("ambiguous_routes_contract.json")
+        checked_only_contract = migrated_contract("checked_only_contract.json")
+        overclaim_payload = json.loads(overclaim_run.read_text(encoding="utf-8"))
+        checked_only_payload = json.loads(checked_only_contract.read_text(encoding="utf-8"))
+        overclaim_payload["contract_ref"] = {
+            "contract_path": rel(checked_only_contract),
+            "contract_version": checked_only_payload["contract_version"],
+            "contract_hash": checked_only_payload["contract_hash"],
+        }
+        write_json(overclaim_run, overclaim_payload)
 
         for command, input_path in (
             ("check-work-contract", contract),
@@ -1423,11 +1472,6 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             report = run_skillguard(command, "--input", rel(input_path))
             self.assert_clean_pass(report)
 
-        compiled = run_skillguard("compile-contract", "--target", rel(target), "--dry-run")
-        self.assert_clean_pass(compiled)
-        self.assertEqual(compiled.get("compiled_contract", {}).get("integration_mode"), "skillguard-runtime")
-        self.assertFalse(compiled.get("compiled_contract", {}).get("may_define_parallel_execution_route"))
-        self.assertTrue(compiled.get("compiled_contract", {}).get("may_define_skillguard_runtime_route"))
         check_contract = run_skillguard("check-contract", "--target", rel(target))
         self.assert_clean_pass(check_contract)
         hollow = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(hollow_contract), expected_exit=1)
@@ -2016,7 +2060,9 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                     "command": "detect-stale-evidence",
                     "decision": "pass",
                     "checked_at": utc_timestamp(),
-                    "openspec_status": {"changes_directory_present": True},
+                    "openspec_status": {
+                        "changes_directory_present": not checker_engine.current_openspec_changes_present()
+                    },
                     "claim_boundary": "Synthetic OpenSpec status evidence.",
                 },
             )

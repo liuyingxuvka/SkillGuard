@@ -1,0 +1,1500 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "artifact:self-compiled-contract",
+      "kind": "json",
+      "path_template": ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+      "producer_step_id": "step:compile-generated-contract",
+      "required": true,
+      "validators": [
+        "exists",
+        "json",
+        "contract_hash"
+      ]
+    },
+    {
+      "artifact_id": "artifact:self-check-manifest",
+      "kind": "json",
+      "path_template": ".agents/skills/skillguard/.skillguard/check-manifest.json",
+      "producer_step_id": "step:compile-generated-contract",
+      "required": true,
+      "validators": [
+        "exists",
+        "json",
+        "manifest_hash"
+      ]
+    }
+  ],
+  "claim_boundary": "This binding covers SkillGuard self-maintenance routes and current local checks. Publication, clean installation, and GitHub release require separate release-profile evidence.",
+  "closure_profiles": [
+    {
+      "profile_id": "routine",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:route-ownership"
+      ]
+    },
+    {
+      "profile_id": "functional",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:route-ownership",
+        "obligation:deep-audit",
+        "obligation:claimed-run",
+        "obligation:verifier-pass",
+        "obligation:artifact-freshness",
+        "obligation:durable-resume",
+        "obligation:loop-liveness",
+        "obligation:exact-closure",
+        "obligation:no-v1-success"
+      ]
+    },
+    {
+      "profile_id": "release",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:route-ownership",
+        "obligation:deep-audit",
+        "obligation:claimed-run",
+        "obligation:verifier-pass",
+        "obligation:artifact-freshness",
+        "obligation:durable-resume",
+        "obligation:loop-liveness",
+        "obligation:exact-closure",
+        "obligation:no-v1-success",
+        "obligation:global-router-handoff",
+        "obligation:provenance"
+      ]
+    },
+    {
+      "profile_id": "highest_quality",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:route-ownership",
+        "obligation:deep-audit",
+        "obligation:claimed-run",
+        "obligation:verifier-pass",
+        "obligation:artifact-freshness",
+        "obligation:durable-resume",
+        "obligation:loop-liveness",
+        "obligation:exact-closure",
+        "obligation:no-v1-success",
+        "obligation:global-router-handoff",
+        "obligation:provenance",
+        "obligation:portfolio-freshness"
+      ]
+    }
+  ],
+  "compiler_version": "skillguard.contract_compiler.v2",
+  "contract_hash": "2F182C00A7738D484D2164A0ACDC3AD70BAA780AD5A5C49035F20DB272FD8B3D",
+  "flowguard_schema_version": "1.0",
+  "functions": [
+    {
+      "business_intent": "audit skill static boundary",
+      "composable_with": [
+        "deep_audit",
+        "compile_contract",
+        "supervise_run",
+        "verify_evidence",
+        "derive_closure",
+        "graduate_portfolio",
+        "global_router_handoff",
+        "audit_provenance"
+      ],
+      "function_id": "static_audit",
+      "owner_id": "static-audit-v2",
+      "route_ids": [
+        "route:static-audit"
+      ]
+    },
+    {
+      "business_intent": "audit skill functional depth",
+      "composable_with": [
+        "static_audit",
+        "compile_contract",
+        "supervise_run",
+        "verify_evidence",
+        "derive_closure",
+        "graduate_portfolio",
+        "global_router_handoff",
+        "audit_provenance"
+      ],
+      "function_id": "deep_audit",
+      "owner_id": "deep-audit-v2",
+      "route_ids": [
+        "route:deep-audit"
+      ]
+    },
+    {
+      "business_intent": "compile executable contract",
+      "composable_with": [
+        "static_audit",
+        "deep_audit",
+        "supervise_run",
+        "verify_evidence",
+        "derive_closure",
+        "graduate_portfolio",
+        "global_router_handoff",
+        "audit_provenance"
+      ],
+      "function_id": "compile_contract",
+      "owner_id": "contract-compiler-v2",
+      "route_ids": [
+        "route:compile-contract"
+      ]
+    },
+    {
+      "business_intent": "supervise target skill task",
+      "composable_with": [
+        "static_audit",
+        "deep_audit",
+        "compile_contract",
+        "verify_evidence",
+        "derive_closure",
+        "graduate_portfolio",
+        "global_router_handoff",
+        "audit_provenance"
+      ],
+      "function_id": "supervise_run",
+      "owner_id": "run-runtime-v2",
+      "route_ids": [
+        "route:supervise-run"
+      ]
+    },
+    {
+      "business_intent": "verify target evidence",
+      "composable_with": [
+        "static_audit",
+        "deep_audit",
+        "compile_contract",
+        "supervise_run",
+        "derive_closure",
+        "graduate_portfolio",
+        "global_router_handoff",
+        "audit_provenance"
+      ],
+      "function_id": "verify_evidence",
+      "owner_id": "evidence-runtime-v2",
+      "route_ids": [
+        "route:verify-evidence"
+      ]
+    },
+    {
+      "business_intent": "derive skill closure",
+      "composable_with": [
+        "static_audit",
+        "deep_audit",
+        "compile_contract",
+        "supervise_run",
+        "verify_evidence",
+        "graduate_portfolio",
+        "global_router_handoff",
+        "audit_provenance"
+      ],
+      "function_id": "derive_closure",
+      "owner_id": "closure-runtime-v2",
+      "route_ids": [
+        "route:derive-closure"
+      ]
+    },
+    {
+      "business_intent": "graduate skill portfolio",
+      "composable_with": [
+        "static_audit",
+        "deep_audit",
+        "compile_contract",
+        "supervise_run",
+        "verify_evidence",
+        "derive_closure",
+        "global_router_handoff",
+        "audit_provenance"
+      ],
+      "function_id": "graduate_portfolio",
+      "owner_id": "portfolio-runtime-v2",
+      "route_ids": [
+        "route:portfolio-graduation"
+      ]
+    },
+    {
+      "business_intent": "refresh and verify global skill routing",
+      "composable_with": [
+        "static_audit",
+        "deep_audit",
+        "compile_contract",
+        "supervise_run",
+        "verify_evidence",
+        "derive_closure",
+        "graduate_portfolio",
+        "audit_provenance"
+      ],
+      "function_id": "global_router_handoff",
+      "owner_id": "global-router-handoff-v2",
+      "route_ids": [
+        "route:global-router-handoff"
+      ]
+    },
+    {
+      "business_intent": "audit canonical installed repository and release provenance",
+      "composable_with": [
+        "static_audit",
+        "deep_audit",
+        "compile_contract",
+        "supervise_run",
+        "verify_evidence",
+        "derive_closure",
+        "graduate_portfolio",
+        "global_router_handoff"
+      ],
+      "function_id": "audit_provenance",
+      "owner_id": "provenance-audit-v2",
+      "route_ids": [
+        "route:provenance-audit"
+      ]
+    }
+  ],
+  "judgment_rubrics": [
+    {
+      "claim_boundary": "Self-review supports functional-depth judgment only and is not hard release proof.",
+      "criteria": [
+        "native static and deep checks are current",
+        "V2 false-pass and replay fixtures are green",
+        "safe claim remains narrower than release publication"
+      ],
+      "rubric_id": "rubric:self-host-functional-depth",
+      "version": "1"
+    }
+  ],
+  "model_id": "skillguard.executable_contract_runtime.v2",
+  "model_path": ".flowguard/development_process_flow/skillguard_executable_contract_model.py",
+  "obligations": [
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "artifacts_and_checks_are_current",
+      "obligation_id": "obligation:static-audit",
+      "owner_step_ids": [
+        "step:inventory-static-surface",
+        "step:run-native-static-checks",
+        "step:issue-static-audit-receipt"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:inventory-static-surface",
+        "check:self:issue-static-audit-receipt",
+        "check:self:run-native-static-checks"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard",
+        "judged"
+      ],
+      "invariant_id": "artifacts_and_checks_are_current",
+      "obligation_id": "obligation:deep-audit",
+      "owner_step_ids": [
+        "step:load-target-depth-boundary",
+        "step:run-native-depth-checks",
+        "step:verify-target-specific-coverage"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:load-target-depth-boundary",
+        "check:self:run-native-depth-checks",
+        "check:self:verify-target-specific-coverage"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "model_and_binding_are_authoritative",
+      "obligation_id": "obligation:model-authority",
+      "owner_step_ids": [
+        "step:load-model-export",
+        "step:validate-binding"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:compile-generated-contract",
+        "check:self:issue-step-receipt",
+        "check:self:load-model-export",
+        "check:self:revalidate-affected-graduates",
+        "check:self:test-mesh-fast",
+        "check:self:validate-binding",
+        "check:self:verify-generated-parity"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "routes_are_typed_and_uniquely_owned",
+      "obligation_id": "obligation:route-ownership",
+      "owner_step_ids": [
+        "step:select-function-route"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:select-function-route"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "packet_fields_are_declared_and_consumed",
+      "obligation_id": "obligation:packet-consumption",
+      "owner_step_ids": [
+        "step:select-function-route"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:packet-consumption"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "guard_change_claims_a_new_run",
+      "obligation_id": "obligation:guard-run-identity",
+      "owner_step_ids": [
+        "step:claim-run"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:guard-run-identity"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "every_task_is_claimed_and_locked",
+      "obligation_id": "obligation:claimed-run",
+      "owner_step_ids": [
+        "step:claim-run"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:claim-run"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "failed_or_dead_writer_lock_cannot_block_forever",
+      "obligation_id": "obligation:failed-lock-recovery",
+      "owner_step_ids": [
+        "step:claim-run"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:failed-lock-recovery"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "pass_and_skip_are_verifier_owned",
+      "obligation_id": "obligation:verifier-pass",
+      "owner_step_ids": [
+        "step:validate-step-evidence"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:validate-step-evidence"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "artifacts_and_checks_are_current",
+      "obligation_id": "obligation:artifact-freshness",
+      "owner_step_ids": [
+        "step:validate-step-evidence",
+        "step:check-run-closure"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:check-run-closure"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "resume_uses_durable_events",
+      "obligation_id": "obligation:durable-resume",
+      "owner_step_ids": [
+        "step:record-step-event",
+        "step:next-ready-step"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:next-ready-step",
+        "check:self:record-step-event"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "loops_require_progress_and_a_finite_bound",
+      "obligation_id": "obligation:loop-liveness",
+      "owner_step_ids": [
+        "step:record-step-event"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:obligation:loop-liveness"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "closure_consumes_current_exact_receipts",
+      "obligation_id": "obligation:exact-closure",
+      "owner_step_ids": [
+        "step:check-run-closure",
+        "step:issue-closure-receipt"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:issue-closure-receipt"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "failures_and_old_paths_cannot_hide",
+      "obligation_id": "obligation:no-v1-success",
+      "owner_step_ids": [
+        "step:select-function-route",
+        "step:check-run-closure"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:obligation:no-v1-success",
+        "check:self:v1-field-lifecycle"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "portfolio_children_remain_current",
+      "obligation_id": "obligation:portfolio-freshness",
+      "owner_step_ids": [
+        "step:scan-graduate-freshness",
+        "step:issue-portfolio-receipt"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:issue-portfolio-receipt",
+        "check:self:scan-graduate-freshness"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "routes_are_typed_and_uniquely_owned",
+      "obligation_id": "obligation:global-router-handoff",
+      "owner_step_ids": [
+        "step:refresh-global-router",
+        "step:check-global-registry-and-prompt",
+        "step:verify-target-handoff"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:check-global-registry-and-prompt",
+        "check:self:refresh-global-router",
+        "check:self:verify-target-handoff"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "model_and_binding_are_authoritative",
+      "obligation_id": "obligation:provenance",
+      "owner_step_ids": [
+        "step:resolve-canonical-source",
+        "step:compare-installed-and-repository",
+        "step:verify-release-provenance"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:compare-installed-and-repository",
+        "check:self:installation-safety",
+        "check:self:installed-provenance",
+        "check:self:public-export-privacy",
+        "check:self:resolve-canonical-source",
+        "check:self:verify-release-provenance"
+      ]
+    }
+  ],
+  "parent_model_id": "skillguard.runtime_contract_executor.v1",
+  "routes": [
+    {
+      "blocked_terminal_step_id": "terminal:static-audit-blocked",
+      "function_id": "static_audit",
+      "handoffs": [],
+      "owner_id": "static-audit-v2",
+      "route_id": "route:static-audit",
+      "start_step_id": "step:inventory-static-surface",
+      "step_ids": [
+        "step:inventory-static-surface",
+        "step:run-native-static-checks",
+        "step:issue-static-audit-receipt",
+        "terminal:static-audit-closed",
+        "terminal:static-audit-blocked"
+      ],
+      "success_terminal_step_id": "terminal:static-audit-closed"
+    },
+    {
+      "blocked_terminal_step_id": "terminal:deep-audit-blocked",
+      "function_id": "deep_audit",
+      "handoffs": [],
+      "owner_id": "deep-audit-v2",
+      "route_id": "route:deep-audit",
+      "start_step_id": "step:load-target-depth-boundary",
+      "step_ids": [
+        "step:load-target-depth-boundary",
+        "step:run-native-depth-checks",
+        "step:verify-target-specific-coverage",
+        "terminal:deep-audit-closed",
+        "terminal:deep-audit-blocked"
+      ],
+      "success_terminal_step_id": "terminal:deep-audit-closed"
+    },
+    {
+      "blocked_terminal_step_id": "terminal:compile-blocked",
+      "function_id": "compile_contract",
+      "handoffs": [],
+      "owner_id": "contract-compiler-v2",
+      "route_id": "route:compile-contract",
+      "start_step_id": "step:load-model-export",
+      "step_ids": [
+        "step:load-model-export",
+        "step:validate-binding",
+        "step:compile-generated-contract",
+        "step:verify-generated-parity",
+        "terminal:compiled",
+        "terminal:compile-blocked"
+      ],
+      "success_terminal_step_id": "terminal:compiled"
+    },
+    {
+      "blocked_terminal_step_id": "terminal:run-blocked",
+      "function_id": "supervise_run",
+      "handoffs": [
+        {
+          "claim_scope": "current step only",
+          "condition": "evidence_submitted",
+          "target_id": "route:verify-evidence",
+          "target_kind": "internal_route"
+        },
+        {
+          "claim_scope": "current run only",
+          "condition": "no_ready_required_steps",
+          "target_id": "route:derive-closure",
+          "target_kind": "internal_route"
+        }
+      ],
+      "loop_policy": {
+        "allowed_delta": "strictly_adds_or_supersedes_required_receipt",
+        "blocked_terminal_step_id": "terminal:run-blocked",
+        "max_reentries": 20,
+        "progress_measure": "new_current_step_receipt_ids",
+        "success_terminal_step_id": "terminal:run-ready-for-closure"
+      },
+      "owner_id": "run-runtime-v2",
+      "route_id": "route:supervise-run",
+      "start_step_id": "step:select-function-route",
+      "step_ids": [
+        "step:select-function-route",
+        "step:claim-run",
+        "step:next-ready-step",
+        "step:record-step-event",
+        "terminal:run-ready-for-closure",
+        "terminal:run-blocked"
+      ],
+      "success_terminal_step_id": "terminal:run-ready-for-closure"
+    },
+    {
+      "blocked_terminal_step_id": "terminal:evidence-rejected",
+      "function_id": "verify_evidence",
+      "handoffs": [
+        {
+          "claim_scope": "current run only",
+          "condition": "more_ready_or_rework_steps",
+          "target_id": "route:supervise-run",
+          "target_kind": "internal_route"
+        }
+      ],
+      "loop_policy": {
+        "allowed_delta": "strictly_adds_or_supersedes_required_receipt",
+        "blocked_terminal_step_id": "terminal:evidence-rejected",
+        "max_reentries": 20,
+        "progress_measure": "new_current_step_receipt_ids",
+        "success_terminal_step_id": "terminal:evidence-accepted"
+      },
+      "owner_id": "evidence-runtime-v2",
+      "route_id": "route:verify-evidence",
+      "start_step_id": "step:validate-step-evidence",
+      "step_ids": [
+        "step:validate-step-evidence",
+        "step:issue-step-receipt",
+        "terminal:evidence-accepted",
+        "terminal:evidence-rejected"
+      ],
+      "success_terminal_step_id": "terminal:evidence-accepted"
+    },
+    {
+      "blocked_terminal_step_id": "terminal:closure-blocked",
+      "function_id": "derive_closure",
+      "handoffs": [],
+      "owner_id": "closure-runtime-v2",
+      "route_id": "route:derive-closure",
+      "start_step_id": "step:check-run-closure",
+      "step_ids": [
+        "step:check-run-closure",
+        "step:issue-closure-receipt",
+        "terminal:run-closed",
+        "terminal:closure-blocked"
+      ],
+      "success_terminal_step_id": "terminal:run-closed"
+    },
+    {
+      "blocked_terminal_step_id": "terminal:portfolio-revalidation-required",
+      "function_id": "graduate_portfolio",
+      "handoffs": [],
+      "owner_id": "portfolio-runtime-v2",
+      "route_id": "route:portfolio-graduation",
+      "start_step_id": "step:scan-graduate-freshness",
+      "step_ids": [
+        "step:scan-graduate-freshness",
+        "step:revalidate-affected-graduates",
+        "step:issue-portfolio-receipt",
+        "terminal:portfolio-graduated",
+        "terminal:portfolio-revalidation-required"
+      ],
+      "success_terminal_step_id": "terminal:portfolio-graduated"
+    },
+    {
+      "blocked_terminal_step_id": "terminal:global-router-blocked",
+      "function_id": "global_router_handoff",
+      "handoffs": [],
+      "owner_id": "global-router-handoff-v2",
+      "route_id": "route:global-router-handoff",
+      "start_step_id": "step:refresh-global-router",
+      "step_ids": [
+        "step:refresh-global-router",
+        "step:check-global-registry-and-prompt",
+        "step:verify-target-handoff",
+        "terminal:global-router-current",
+        "terminal:global-router-blocked"
+      ],
+      "success_terminal_step_id": "terminal:global-router-current"
+    },
+    {
+      "blocked_terminal_step_id": "terminal:provenance-blocked",
+      "function_id": "audit_provenance",
+      "handoffs": [],
+      "owner_id": "provenance-audit-v2",
+      "route_id": "route:provenance-audit",
+      "start_step_id": "step:resolve-canonical-source",
+      "step_ids": [
+        "step:resolve-canonical-source",
+        "step:compare-installed-and-repository",
+        "step:verify-release-provenance",
+        "terminal:provenance-current",
+        "terminal:provenance-blocked"
+      ],
+      "success_terminal_step_id": "terminal:provenance-current"
+    }
+  ],
+  "schema_version": "skillguard.compiled_contract.v2",
+  "skill_id": "skillguard",
+  "source_fingerprints": {
+    "binding": "EF4FFA6AEB96A205B57D50A8C5B9FB28D808E31EF8C1D42A2EBA05AF1433570B",
+    "entrypoint": "BAD200C6091DD794FE2CD38B55C6891C3D079519B4CC2CA2F8AE446B548368EB",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_check_manifest.schema.json": "9EAC494F35CFC4B3B9D7E4E88F3E9080D900B9C02F083BE9C9A9B4A9B1ED2190",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_run_record.schema.json": "F42358D3C6E52AC783A108C1C5F8B9FFD2C3F47D6D3FDD47643B47EB61822B25",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_work_contract.schema.json": "215E9E77C66A5BA364F7C72BFAC986970680F5A3D58F0F53AE3438161141250B",
+    "implementation:.agents/skills/skillguard/public-export-policy.json": "71B5587C45B585E741AB458A99588D4E4B454B83D93872531B4884F0DCC17754",
+    "implementation:.agents/skills/skillguard/references/skillguard-v1-field-lifecycle.md": "98D5942EB5B1F52B11612710BCF040F17A867AFA9A61C4D28CA41F0BDD0C36DF",
+    "implementation:.agents/skills/skillguard/scripts/skillguard.py": "F19BC2539292869A5B893BF775871EA5ABEF328F7B765419ABC60C894FA671A2",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_install.py": "DD746A184FE22B331DF6A839BC54D3EFB3A347C0A55ADD82A67BD8FC43F06D4E",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_privacy.py": "84E7FA6693D655F9F7BC4976AA12656AE71C9EF67FDC2B1AD3747C514A35319C",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_provenance.py": "E33A05B4DD4F879A093493674578042E893F07C2393D7235FF4B2E73F24291D9",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_test_mesh.py": "CB9214F1A999260EE3B0CE5B327E5D2DCC263559310EB9B0B6099C48C98F1C18",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2": "A4E30F7E52BD4F046E27031745D234C584DD3B46333953244745EB7E7498ADEC",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2_compile.py": "CE3582684C87123A9B3E4B927BE41D5A1B5A77D08AB82248D4196FB51CD90339",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2_self_host.py": "A9063434C9C1B023AF76A8FDF1E11C9C9B490D9099CCE16275FAE63C0490F825",
+    "implementation:.agents/skills/skillguard/test-mesh.json": "1C0F3923A7C6A840FE0D30F9722478D0D48202645D76689D5A02ECA508BB9DA7",
+    "implementation:.github/workflows/ci.yml": "DBD6CD77F9336D882F3B9356530013AEDDAF0065F2E8FA979A0B3D0FE3BF88B2",
+    "implementation:.gitignore": "6E5B3D555323A67076CAE1BC5025C67ACC2AB4C637566977D571A943CCE3674C",
+    "implementation:assets/readme-hero/hero.png": "5610DB4D8A567BB689D51609F06E5B7695B018CB661ABE4FF24FA00EECCD33EB",
+    "implementation:assets/readme-hero/visual-privacy-review.json": "C3AE8A080654FBAA801D1D962D6BEC7B3C6514E2B1FF986C900C107E2112A745",
+    "model": "3620C7C8A10212197971E610F20909888C43629CE23951B1D318D4EC9904E71C",
+    "model_export": "289950CA664C03F998FF9927DD2FD1EF9925B1BB1106927F61D601E32966EB6B"
+  },
+  "steps": [
+    {
+      "action_kind": "inventory",
+      "binding": {
+        "action": {
+          "kind": "inventory",
+          "summary": "Execute and verify the self-host step step:inventory-static-surface."
+        },
+        "check_ids": [
+          "check:self:inventory-static-surface"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "static-audit-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:static-audit",
+      "step_id": "step:inventory-static-surface",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "native",
+      "binding": {
+        "action": {
+          "kind": "native",
+          "summary": "Run the existing static SkillGuard check through its native owner."
+        },
+        "check_ids": [
+          "check:self:run-native-static-checks"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "static-audit-v2",
+      "prerequisite_step_ids": [
+        "step:inventory-static-surface"
+      ],
+      "required": true,
+      "route_id": "route:static-audit",
+      "step_id": "step:run-native-static-checks",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "receipt",
+      "binding": {
+        "action": {
+          "kind": "receipt",
+          "summary": "Execute and verify the self-host step step:issue-static-audit-receipt."
+        },
+        "check_ids": [
+          "check:self:issue-static-audit-receipt"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "static-audit-v2",
+      "prerequisite_step_ids": [
+        "step:run-native-static-checks"
+      ],
+      "required": true,
+      "route_id": "route:static-audit",
+      "step_id": "step:issue-static-audit-receipt",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "static-audit-v2",
+      "prerequisite_step_ids": [
+        "step:issue-static-audit-receipt"
+      ],
+      "required": true,
+      "route_id": "route:static-audit",
+      "step_id": "terminal:static-audit-closed",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "static-audit-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:static-audit",
+      "step_id": "terminal:static-audit-blocked",
+      "terminal_kind": "blocked"
+    },
+    {
+      "action_kind": "inventory",
+      "binding": {
+        "action": {
+          "kind": "inventory",
+          "summary": "Execute and verify the self-host step step:load-target-depth-boundary."
+        },
+        "check_ids": [
+          "check:self:load-target-depth-boundary"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "deep-audit-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:deep-audit",
+      "step_id": "step:load-target-depth-boundary",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "native",
+      "binding": {
+        "action": {
+          "kind": "native",
+          "summary": "Run the existing deep-contract check through its native owner."
+        },
+        "check_ids": [
+          "check:self:run-native-depth-checks"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "deep-audit-v2",
+      "prerequisite_step_ids": [
+        "step:load-target-depth-boundary"
+      ],
+      "required": true,
+      "route_id": "route:deep-audit",
+      "step_id": "step:run-native-depth-checks",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "judged",
+      "binding": {
+        "action": {
+          "kind": "judged",
+          "rubric_id": "rubric:self-host-functional-depth",
+          "summary": "Execute and verify the self-host step step:verify-target-specific-coverage."
+        },
+        "check_ids": [
+          "check:self:verify-target-specific-coverage"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "deep-audit-v2",
+      "prerequisite_step_ids": [
+        "step:run-native-depth-checks"
+      ],
+      "required": true,
+      "route_id": "route:deep-audit",
+      "step_id": "step:verify-target-specific-coverage",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "deep-audit-v2",
+      "prerequisite_step_ids": [
+        "step:verify-target-specific-coverage"
+      ],
+      "required": true,
+      "route_id": "route:deep-audit",
+      "step_id": "terminal:deep-audit-closed",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "deep-audit-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:deep-audit",
+      "step_id": "terminal:deep-audit-blocked",
+      "terminal_kind": "blocked"
+    },
+    {
+      "action_kind": "flowguard_model",
+      "binding": {
+        "action": {
+          "kind": "flowguard_model",
+          "summary": "Execute the authoritative FlowGuard model and governance reviews."
+        },
+        "check_ids": [
+          "check:self:load-model-export"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "contract-compiler-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:compile-contract",
+      "step_id": "step:load-model-export",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "validator",
+      "binding": {
+        "action": {
+          "kind": "validator",
+          "summary": "Execute and verify the self-host step step:validate-binding."
+        },
+        "check_ids": [
+          "check:self:validate-binding"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "contract-compiler-v2",
+      "prerequisite_step_ids": [
+        "step:load-model-export"
+      ],
+      "required": true,
+      "route_id": "route:compile-contract",
+      "step_id": "step:validate-binding",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "compiler",
+      "binding": {
+        "action": {
+          "kind": "compiler",
+          "summary": "Compile SkillGuard's own deterministic V2 contract and manifest through the real compiler facade."
+        },
+        "check_ids": [
+          "check:self:compile-generated-contract"
+        ],
+        "output_artifact_ids": [
+          "artifact:self-compiled-contract",
+          "artifact:self-check-manifest"
+        ]
+      },
+      "owner_id": "contract-compiler-v2",
+      "prerequisite_step_ids": [
+        "step:validate-binding"
+      ],
+      "required": true,
+      "route_id": "route:compile-contract",
+      "step_id": "step:compile-generated-contract",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "validator",
+      "binding": {
+        "action": {
+          "kind": "validator",
+          "summary": "Run deterministic compiler and bad-topology fixtures."
+        },
+        "check_ids": [
+          "check:self:verify-generated-parity",
+          "check:self:test-mesh-fast"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "contract-compiler-v2",
+      "prerequisite_step_ids": [
+        "step:compile-generated-contract"
+      ],
+      "required": true,
+      "route_id": "route:compile-contract",
+      "step_id": "step:verify-generated-parity",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "contract-compiler-v2",
+      "prerequisite_step_ids": [
+        "step:verify-generated-parity"
+      ],
+      "required": true,
+      "route_id": "route:compile-contract",
+      "step_id": "terminal:compiled",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "contract-compiler-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:compile-contract",
+      "step_id": "terminal:compile-blocked",
+      "terminal_kind": "blocked"
+    },
+    {
+      "action_kind": "router",
+      "binding": {
+        "action": {
+          "kind": "router",
+          "summary": "Execute and verify the self-host step step:select-function-route."
+        },
+        "check_ids": [
+          "check:self:select-function-route",
+          "check:self:packet-consumption",
+          "check:self:obligation:no-v1-success",
+          "check:self:v1-field-lifecycle"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "run-runtime-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:supervise-run",
+      "step_id": "step:select-function-route",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "state_write",
+      "binding": {
+        "action": {
+          "kind": "state_write",
+          "summary": "Execute and verify the self-host step step:claim-run."
+        },
+        "check_ids": [
+          "check:self:claim-run",
+          "check:self:guard-run-identity",
+          "check:self:failed-lock-recovery"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "run-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:select-function-route"
+      ],
+      "required": true,
+      "route_id": "route:supervise-run",
+      "step_id": "step:claim-run",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "router",
+      "binding": {
+        "action": {
+          "kind": "router",
+          "summary": "Execute and verify the self-host step step:next-ready-step."
+        },
+        "check_ids": [
+          "check:self:next-ready-step"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "run-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:claim-run"
+      ],
+      "required": true,
+      "route_id": "route:supervise-run",
+      "step_id": "step:next-ready-step",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "state_write",
+      "binding": {
+        "action": {
+          "kind": "state_write",
+          "summary": "Execute and verify the self-host step step:record-step-event."
+        },
+        "check_ids": [
+          "check:self:record-step-event",
+          "check:self:obligation:loop-liveness"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "run-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:next-ready-step"
+      ],
+      "required": true,
+      "route_id": "route:supervise-run",
+      "step_id": "step:record-step-event",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "run-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:record-step-event"
+      ],
+      "required": true,
+      "route_id": "route:supervise-run",
+      "step_id": "terminal:run-ready-for-closure",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "run-runtime-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:supervise-run",
+      "step_id": "terminal:run-blocked",
+      "terminal_kind": "blocked"
+    },
+    {
+      "action_kind": "verifier",
+      "binding": {
+        "action": {
+          "kind": "verifier",
+          "summary": "Run receipt, artifact, witnessed action, judged rubric, and native-check fixtures."
+        },
+        "check_ids": [
+          "check:self:validate-step-evidence"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "evidence-runtime-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:verify-evidence",
+      "step_id": "step:validate-step-evidence",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "receipt",
+      "binding": {
+        "action": {
+          "kind": "receipt",
+          "summary": "Execute and verify the self-host step step:issue-step-receipt."
+        },
+        "check_ids": [
+          "check:self:issue-step-receipt"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "evidence-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:validate-step-evidence"
+      ],
+      "required": true,
+      "route_id": "route:verify-evidence",
+      "step_id": "step:issue-step-receipt",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "evidence-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:issue-step-receipt"
+      ],
+      "required": true,
+      "route_id": "route:verify-evidence",
+      "step_id": "terminal:evidence-accepted",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "evidence-runtime-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:verify-evidence",
+      "step_id": "terminal:evidence-rejected",
+      "terminal_kind": "blocked"
+    },
+    {
+      "action_kind": "verifier",
+      "binding": {
+        "action": {
+          "kind": "verifier",
+          "summary": "Run monotonic closure and false-closure fixtures."
+        },
+        "check_ids": [
+          "check:self:check-run-closure"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "closure-runtime-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:derive-closure",
+      "step_id": "step:check-run-closure",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "receipt",
+      "binding": {
+        "action": {
+          "kind": "receipt",
+          "summary": "Execute and verify the self-host step step:issue-closure-receipt."
+        },
+        "check_ids": [
+          "check:self:issue-closure-receipt"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "closure-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:check-run-closure"
+      ],
+      "required": true,
+      "route_id": "route:derive-closure",
+      "step_id": "step:issue-closure-receipt",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "closure-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:issue-closure-receipt"
+      ],
+      "required": true,
+      "route_id": "route:derive-closure",
+      "step_id": "terminal:run-closed",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "closure-runtime-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:derive-closure",
+      "step_id": "terminal:closure-blocked",
+      "terminal_kind": "blocked"
+    },
+    {
+      "action_kind": "validator",
+      "binding": {
+        "action": {
+          "kind": "validator",
+          "summary": "Execute and verify the self-host step step:scan-graduate-freshness."
+        },
+        "check_ids": [
+          "check:self:scan-graduate-freshness"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "portfolio-runtime-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:portfolio-graduation",
+      "step_id": "step:scan-graduate-freshness",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "native",
+      "binding": {
+        "action": {
+          "kind": "native",
+          "summary": "Execute and verify the self-host step step:revalidate-affected-graduates."
+        },
+        "check_ids": [
+          "check:self:revalidate-affected-graduates"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "portfolio-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:scan-graduate-freshness"
+      ],
+      "required": true,
+      "route_id": "route:portfolio-graduation",
+      "step_id": "step:revalidate-affected-graduates",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "receipt",
+      "binding": {
+        "action": {
+          "kind": "receipt",
+          "summary": "Execute and verify the self-host step step:issue-portfolio-receipt."
+        },
+        "check_ids": [
+          "check:self:issue-portfolio-receipt"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "portfolio-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:revalidate-affected-graduates"
+      ],
+      "required": true,
+      "route_id": "route:portfolio-graduation",
+      "step_id": "step:issue-portfolio-receipt",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "portfolio-runtime-v2",
+      "prerequisite_step_ids": [
+        "step:issue-portfolio-receipt"
+      ],
+      "required": true,
+      "route_id": "route:portfolio-graduation",
+      "step_id": "terminal:portfolio-graduated",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "portfolio-runtime-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:portfolio-graduation",
+      "step_id": "terminal:portfolio-revalidation-required",
+      "terminal_kind": "blocked"
+    },
+    {
+      "action_kind": "native",
+      "binding": {
+        "action": {
+          "kind": "native",
+          "summary": "Execute and verify the self-host step step:refresh-global-router."
+        },
+        "check_ids": [
+          "check:self:refresh-global-router"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "global-router-handoff-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:global-router-handoff",
+      "step_id": "step:refresh-global-router",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "native",
+      "binding": {
+        "action": {
+          "kind": "native",
+          "summary": "Execute and verify the self-host step step:check-global-registry-and-prompt."
+        },
+        "check_ids": [
+          "check:self:check-global-registry-and-prompt"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "global-router-handoff-v2",
+      "prerequisite_step_ids": [
+        "step:refresh-global-router"
+      ],
+      "required": true,
+      "route_id": "route:global-router-handoff",
+      "step_id": "step:check-global-registry-and-prompt",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "verifier",
+      "binding": {
+        "action": {
+          "kind": "verifier",
+          "summary": "Execute and verify the self-host step step:verify-target-handoff."
+        },
+        "check_ids": [
+          "check:self:verify-target-handoff"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "global-router-handoff-v2",
+      "prerequisite_step_ids": [
+        "step:check-global-registry-and-prompt"
+      ],
+      "required": true,
+      "route_id": "route:global-router-handoff",
+      "step_id": "step:verify-target-handoff",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "global-router-handoff-v2",
+      "prerequisite_step_ids": [
+        "step:verify-target-handoff"
+      ],
+      "required": true,
+      "route_id": "route:global-router-handoff",
+      "step_id": "terminal:global-router-current",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "global-router-handoff-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:global-router-handoff",
+      "step_id": "terminal:global-router-blocked",
+      "terminal_kind": "blocked"
+    },
+    {
+      "action_kind": "inventory",
+      "binding": {
+        "action": {
+          "kind": "inventory",
+          "summary": "Execute and verify the self-host step step:resolve-canonical-source."
+        },
+        "check_ids": [
+          "check:self:resolve-canonical-source"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "provenance-audit-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:provenance-audit",
+      "step_id": "step:resolve-canonical-source",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "validator",
+      "binding": {
+        "action": {
+          "kind": "validator",
+          "summary": "Execute and verify the self-host step step:compare-installed-and-repository."
+        },
+        "check_ids": [
+          "check:self:compare-installed-and-repository",
+          "check:self:installed-provenance"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "provenance-audit-v2",
+      "prerequisite_step_ids": [
+        "step:resolve-canonical-source"
+      ],
+      "required": true,
+      "route_id": "route:provenance-audit",
+      "step_id": "step:compare-installed-and-repository",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "validator",
+      "binding": {
+        "action": {
+          "kind": "validator",
+          "summary": "Execute and verify the self-host step step:verify-release-provenance."
+        },
+        "check_ids": [
+          "check:self:verify-release-provenance",
+          "check:self:installation-safety",
+          "check:self:public-export-privacy"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "provenance-audit-v2",
+      "prerequisite_step_ids": [
+        "step:compare-installed-and-repository"
+      ],
+      "required": true,
+      "route_id": "route:provenance-audit",
+      "step_id": "step:verify-release-provenance",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "provenance-audit-v2",
+      "prerequisite_step_ids": [
+        "step:verify-release-provenance"
+      ],
+      "required": true,
+      "route_id": "route:provenance-audit",
+      "step_id": "terminal:provenance-current",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "provenance-audit-v2",
+      "prerequisite_step_ids": [],
+      "required": true,
+      "route_id": "route:provenance-audit",
+      "step_id": "terminal:provenance-blocked",
+      "terminal_kind": "blocked"
+    }
+  ]
+}

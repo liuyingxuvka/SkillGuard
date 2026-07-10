@@ -1,6 +1,6 @@
 [project]
 name = "skillguard"
-version = "0.1.6"
+version = "0.2.0"
 description = "A local runtime-contract and maintenance framework for Codex skills."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,6 +26,6 @@ classifiers = [
 ]
 
 [tool.skillguard.repository]
-baseline_version = "0.1.6"
+baseline_version = "0.2.0"
 implementation_status = "local-cli-dispatch-runtime-contract"
-public_claim_boundary = "Local script dispatch, runtime work-contract commands, explicit fixture manifests, examples, and standard-library smoke checks exist; packaged CLI installation, broad fixture coverage, suite automation, git history, publication, release readiness, and code-contract validation are separate downstream work."
+public_claim_boundary = "Local V1 dispatch, V2 executable-contract runtime, focused/full TestMesh, staged whole-tree install/rollback, privacy/provenance checks, and two-stage self-host evidence exist. Packaged CLI distribution, hosted service behavior, binary artifacts, remote CI execution, GitHub publication, and future AI correctness remain separate claims."
