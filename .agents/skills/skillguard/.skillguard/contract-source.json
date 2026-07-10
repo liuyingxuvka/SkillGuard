@@ -614,6 +614,7 @@
     ".agents/skills/skillguard/test-mesh.json",
     ".agents/skills/skillguard/public-export-policy.json",
     ".github/workflows/ci.yml",
+    ".gitattributes",
     ".gitignore",
     "assets/readme-hero/hero.png",
     "assets/readme-hero/visual-privacy-review.json",

@@ -22,6 +22,10 @@ SkillGuard SHALL publish only the compiled contract and check manifest as genera
 - **WHEN** identical committed text source is checked out with LF or CRLF line endings while binary assets are unchanged
 - **THEN** SkillGuard generates the same contract source fingerprint, while a real binary-byte change still makes the contract stale
 
+#### Scenario: Clean Windows checkout preserves generated contract bytes
+- **WHEN** Git checks out the committed compiled contract and check manifest on Windows with automatic text conversion enabled
+- **THEN** repository attributes preserve canonical LF bytes so read-only compiler parity remains current
+
 ### Requirement: Compilation rejects incomplete topology and coverage
 SkillGuard SHALL reject dangling or mistyped handoffs, duplicate or missing owners, uncovered success terminals, unbounded cycles, orphan checks, orphan artifacts, and obligation mappings that indiscriminately bind unrelated checks.
 

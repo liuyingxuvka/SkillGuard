@@ -16,6 +16,17 @@ from skillguard_v2.self_host import run_frozen_old_verifier  # noqa: E402
 
 
 class SkillGuardSelfHostV2Tests(unittest.TestCase):
+    def test_generated_contracts_keep_canonical_lf_in_git_checkouts(self) -> None:
+        attributes = set((ROOT / ".gitattributes").read_text(encoding="utf-8").splitlines())
+        self.assertIn(
+            "/.agents/skills/skillguard/.skillguard/compiled-contract.json text eol=lf",
+            attributes,
+        )
+        self.assertIn(
+            "/.agents/skills/skillguard/.skillguard/check-manifest.json text eol=lf",
+            attributes,
+        )
+
     def test_self_contract_is_current_exact_and_not_broad_all(self) -> None:
         skill_root = ROOT / ".agents" / "skills" / "skillguard"
         result = compile_skill_contract(skill_root, repository_root=ROOT, write=False)
