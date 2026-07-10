@@ -93,14 +93,32 @@ def file_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest().upper()
 
 
+TEXT_SOURCE_SUFFIXES = frozenset(
+    {".py", ".json", ".md", ".toml", ".yaml", ".yml", ".txt", ".html", ".css", ".js"}
+)
+TEXT_SOURCE_NAMES = frozenset({".gitignore", ".gitattributes"})
+
+
+def source_file_hash(path: Path) -> str:
+    data = path.read_bytes()
+    if path.suffix.lower() in TEXT_SOURCE_SUFFIXES or path.name in TEXT_SOURCE_NAMES:
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            pass
+        else:
+            data = text.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    return hashlib.sha256(data).hexdigest().upper()
+
+
 def path_fingerprint(path: Path) -> str:
     if path.is_file():
-        return file_hash(path)
+        return source_file_hash(path)
     if path.is_dir():
         rows = [
             {
                 "path": child.relative_to(path).as_posix(),
-                "sha256": file_hash(child),
+                "sha256": source_file_hash(child),
             }
             for child in sorted(item for item in path.rglob("*") if item.is_file())
             if not (set(child.relative_to(path).parts) & TRANSIENT_IMPLEMENTATION_PARTS)
@@ -394,9 +412,9 @@ def compile_skill_contract(
 
     entrypoint = skill_root / "SKILL.md"
     source_fingerprints = {
-        "model": file_hash(model_path),
-        "binding": file_hash(binding_path),
-        "entrypoint": file_hash(entrypoint) if entrypoint.is_file() else "MISSING",
+        "model": source_file_hash(model_path),
+        "binding": source_file_hash(binding_path),
+        "entrypoint": source_file_hash(entrypoint) if entrypoint.is_file() else "MISSING",
         "model_export": canonical_hash(model),
     }
     for index, path_text in enumerate(binding.get("implementation_paths", [])):

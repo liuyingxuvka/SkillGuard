@@ -20,6 +20,7 @@ from skillguard_v2.contract_compiler import (  # noqa: E402
     COMPILED_CONTRACT_FILE,
     compile_skill_contract,
     migrate_v1_binding_candidate,
+    path_fingerprint,
 )
 from skillguard_v2.contract_schema import BINDING_SOURCE_SCHEMA  # noqa: E402
 from skillguard_v2 import flowguard_adapter  # noqa: E402
@@ -78,6 +79,19 @@ class ContractCompilerV2Tests(unittest.TestCase):
             self.implementation.relative_to(self.repo).as_posix()
         ]
         self._write_binding(self.binding)
+
+    def test_source_fingerprint_normalizes_text_line_endings_but_not_binary_bytes(self) -> None:
+        left = self.repo / "lf"
+        right = self.repo / "crlf"
+        left.mkdir()
+        right.mkdir()
+        left.joinpath("source.py").write_bytes(b"VALUE = 1\nVALUE = 2\n")
+        right.joinpath("source.py").write_bytes(b"VALUE = 1\r\nVALUE = 2\r\n")
+        left.joinpath("asset.bin").write_bytes(b"\x00\n")
+        right.joinpath("asset.bin").write_bytes(b"\x00\n")
+        self.assertEqual(path_fingerprint(left), path_fingerprint(right))
+        right.joinpath("asset.bin").write_bytes(b"\x00\r\n")
+        self.assertNotEqual(path_fingerprint(left), path_fingerprint(right))
 
     def tearDown(self) -> None:
         self.temp.cleanup()

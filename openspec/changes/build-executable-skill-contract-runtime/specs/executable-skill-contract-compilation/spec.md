@@ -18,6 +18,10 @@ SkillGuard SHALL publish only the compiled contract and check manifest as genera
 - **WHEN** the model, binding, or covered entrypoint boundary changes
 - **THEN** check mode reports the affected generated artifact stale without modifying it
 
+#### Scenario: Same text checkout uses platform line endings
+- **WHEN** identical committed text source is checked out with LF or CRLF line endings while binary assets are unchanged
+- **THEN** SkillGuard generates the same contract source fingerprint, while a real binary-byte change still makes the contract stale
+
 ### Requirement: Compilation rejects incomplete topology and coverage
 SkillGuard SHALL reject dangling or mistyped handoffs, duplicate or missing owners, uncovered success terminals, unbounded cycles, orphan checks, orphan artifacts, and obligation mappings that indiscriminately bind unrelated checks.
 

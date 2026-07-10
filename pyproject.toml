@@ -3,7 +3,7 @@ name = "skillguard"
 version = "0.2.0"
 description = "A local runtime-contract and maintenance framework for Codex skills."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = "MIT"
 authors = [
   { name = "SkillGuard contributors" }
@@ -19,7 +19,6 @@ classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Topic :: Software Development :: Quality Assurance"

@@ -1,0 +1,40 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-v2-cross-platform-source-fingerprint-20260710",
+  "status": "repaired_pending_cross_platform_ci",
+  "observed_failure": {
+    "surface": "GitHub Actions focused and full TestMesh",
+    "prior_local_claim": "generated SkillGuard V2 contract was current",
+    "observed_result": "the same commit produced different contract hashes on local, Windows CI, and Linux CI checkouts",
+    "failure_code": "stale_generated_contract"
+  },
+  "classification": {
+    "owner": "SkillGuard contract compiler source fingerprint",
+    "miss_type": "platform_representation_model_gap",
+    "affected_feature_tags": [
+      "compiler",
+      "schema",
+      "provenance",
+      "closure"
+    ]
+  },
+  "generalized_repair": {
+    "rule": "Normalize UTF-8 text CRLF/CR/LF before source hashing; preserve exact bytes for binary files.",
+    "regression": "test_source_fingerprint_normalizes_text_line_endings_but_not_binary_bytes",
+    "openspec_scenario": "Same text checkout uses platform line endings",
+    "negative_boundary": "A true binary-byte change remains stale and cannot be normalized away."
+  },
+  "additional_environment_boundary": {
+    "finding": "The pinned FlowGuard runtime imports standard-library tomllib and therefore cannot execute on Python 3.10.",
+    "disposition": "Declare Python 3.11+ and test 3.11/3.12 instead of injecting an undocumented compatibility shim."
+  },
+  "required_revalidation": [
+    "deterministic compiler regression",
+    "installed-source parity",
+    "focused and full local TestMesh",
+    "two-stage self-host",
+    "affected external target rerun",
+    "Windows/Linux GitHub Actions"
+  ],
+  "claim_boundary": "The code repair is local until the refreshed contract, self-host, external target, and Windows/Linux CI all pass under the same committed source."
+}

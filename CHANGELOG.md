@@ -11,6 +11,7 @@
 - Added fast, focused, and full TestMesh profiles with source/command fingerprints, final child receipts, timeouts, cancellation, liveness-only progress events, and large-output capture without pipe deadlock.
 - Added whole-tree staged installation with source-manifest parity, installed-layout smoke checks, atomic activation, retained backup, and automatic rollback on post-activation failure.
 - Added canonical/installed/Git/tag/GitHub Release provenance checks, tracked-plus-unignored public-export privacy checks, hash-bound image review, and Windows/Linux GitHub Actions workflow definitions.
+- Made committed contract fingerprints platform-stable by normalizing text LF/CRLF while preserving exact binary hashing, and set the supported runtime boundary to Python 3.11+ to match the current FlowGuard dependency.
 - Completed two-stage SkillGuard self-hosting and an Autonomous UI external pressure run under the current Guard fingerprint; these local results do not by themselves prove remote CI or GitHub publication.
 
 ## v0.1.6 - 2026-06-28
