@@ -1,7 +1,7 @@
 {
   "schema_version": "flowguard.model_miss_review.v1",
   "review_id": "skillguard-v2-cross-platform-source-fingerprint-20260710",
-  "status": "repaired_pending_cross_platform_ci",
+  "status": "repaired_and_revalidated",
   "observed_failure": {
     "surface": "GitHub Actions focused and full TestMesh",
     "prior_local_claim": "generated SkillGuard V2 contract was current",
@@ -36,5 +36,15 @@
     "affected external target rerun",
     "Windows/Linux GitHub Actions"
   ],
-  "claim_boundary": "The code repair is local until the refreshed contract, self-host, external target, and Windows/Linux CI all pass under the same committed source."
+  "revalidation_evidence": {
+    "contract_hash": "CD25C9C9DE3036A8A6751E5A5142472B2B5BE7F6BE8A8E9CB322BA3D3A5DDB29",
+    "manifest_hash": "F326821D65DDFE9371C2400BAF3E3E10F0D9CE70B9B988FE41B7C8B176DD8FA8",
+    "clean_windows_checkout": "f94c9e5 with core.autocrlf=true; read-only compile wrote zero files",
+    "focused_test_mesh": "109 passed before the Git checkout boundary regression and 110 passed in final full V2 partition",
+    "full_test_mesh": "110 V2 plus 73 legacy passed with zero skips; parent report 755A6952654BCEB98348365BE17E47D3198D637DB3A1AA4DF2078A93DECDF9B8",
+    "self_host": "functional run-132eca39e41f5827ba24 and release run-5e5d6945076be058a58b",
+    "external_target": "Autonomous UI run-478f9363ccad2bb2977b under Guard source hash 4AF0446CC399F4D80C7EE5EAE82D9DEB284E524712D08D44AF1E910AA42DDAB5",
+    "github_actions": "run 29088309097 passed Windows/Linux, Python 3.11/3.12, clean-install, and full legacy jobs"
+  },
+  "claim_boundary": "Current evidence proves the repaired source and generated-artifact representation class locally and in the named Windows/Linux CI matrix. It does not prove GitHub release publication, future platform behavior, or unrelated portfolio targets."
 }

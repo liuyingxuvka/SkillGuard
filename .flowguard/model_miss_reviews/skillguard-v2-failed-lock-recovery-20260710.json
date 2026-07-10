@@ -1,7 +1,7 @@
 {
   "schema_version": "flowguard.model_miss_review.v1",
   "review_id": "skillguard-v2-failed-lock-recovery-20260710",
-  "status": "repaired_revalidation_pending_after_ci_compatibility_change",
+  "status": "repaired_and_revalidated",
   "observed_failure": {
     "surface": "SkillGuard V2 self-host claim",
     "prior_run_id": "run-9d43698ebbb1c4b58a0a",
@@ -47,11 +47,12 @@
     "tests/test_claimed_run_runtime.py::test_dead_owner_lock_is_recovered_with_an_audit_event",
     "tests/test_claimed_run_runtime.py::test_legacy_failed_lock_without_owner_pid_is_recovered",
     "tests/test_executable_contract_model.py",
-    "prior compiled contract and exact manifest parity; current contract CD25C9C9DE3036A8A6751E5A5142472B2B5BE7F6BE8A8E9CB322BA3D3A5DDB29 requires refreshed final receipts",
-    "focused TestMesh: 106 passed with zero skips",
-    "full TestMesh: 106 V2 plus 73 legacy passed with zero skips",
-    "full self-host run-ef474980c6cf42a6aaa1 with current functional and release closures",
-    "Autonomous UI run-a54aaf8d36bb481aebb4 under Guard source hash CB1FF76E70287A9698C269D7D099224DDA3A0F97BA574F447D2D180A276BDE71"
+    "compiled contract CD25C9C9DE3036A8A6751E5A5142472B2B5BE7F6BE8A8E9CB322BA3D3A5DDB29 and manifest F326821D65DDFE9371C2400BAF3E3E10F0D9CE70B9B988FE41B7C8B176DD8FA8",
+    "full TestMesh: 110 V2 plus 73 legacy passed with zero skips",
+    "functional self-host run-132eca39e41f5827ba24 with closure-e7af6b43b2d843ff3186d015",
+    "release self-host run-5e5d6945076be058a58b with closure-eb277da444b87459b6f48078",
+    "Autonomous UI run-478f9363ccad2bb2977b under Guard source hash 4AF0446CC399F4D80C7EE5EAE82D9DEB284E524712D08D44AF1E910AA42DDAB5",
+    "GitHub Actions run 29088309097 passed Windows/Linux focused, clean-install, and full legacy jobs"
   ],
   "required_revalidation": [
     "SkillGuard installed-source parity",
@@ -60,5 +61,5 @@
     "Autonomous UI latest-Guard pressure run",
     "affected prior graduate scan"
   ],
-  "claim_boundary": "Current local evidence proves the repaired lock-recovery class, SkillGuard full regression/self-host closure, and one affected external target rerun. It does not prove GitHub publication, other operating systems, or unrelated portfolio targets."
+  "claim_boundary": "Current local and named CI evidence proves the repaired lock-recovery class, SkillGuard full regression/self-host closure, and one affected external target rerun. It does not prove GitHub release publication, future process behavior, or unrelated portfolio targets."
 }
