@@ -12,10 +12,35 @@ import sys
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
-from skillguard_v2.provenance import audit_release_provenance, compare_skill_sources  # noqa: E402
+from skillguard_v2.provenance import (  # noqa: E402
+    audit_release_provenance,
+    compare_skill_sources,
+    normalize_remote_identity,
+    project_version,
+)
 
 
 class ProvenanceTests(unittest.TestCase):
+    def test_github_remote_identity_normalizes_https_ssh_case_and_git_suffix(self) -> None:
+        expected = "github.com/liuyingxuvka/skillguard"
+        for remote in (
+            "https://github.com/liuyingxuvka/SkillGuard.git",
+            "https://github.com/liuyingxuvka/SkillGuard",
+            "https://x-access-token@github.com/liuyingxuvka/SkillGuard",
+            "git@github.com:liuyingxuvka/SkillGuard.git",
+        ):
+            self.assertEqual(expected, normalize_remote_identity(remote))
+
+    def test_project_version_parser_has_a_python_310_fallback(self) -> None:
+        import skillguard_v2.provenance as provenance
+
+        original = provenance.tomllib
+        try:
+            provenance.tomllib = None
+            self.assertEqual("0.2.0", project_version(ROOT / "pyproject.toml"))
+        finally:
+            provenance.tomllib = original
+
     def test_complete_source_manifest_detects_missing_changed_and_unexpected_files(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

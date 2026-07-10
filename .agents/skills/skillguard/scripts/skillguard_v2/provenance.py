@@ -4,16 +4,60 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
-import tomllib
 from pathlib import Path
 from typing import Any, Mapping
+from urllib.parse import urlsplit
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10 compatibility
+    tomllib = None
 
 from .contract_compiler import canonical_hash, file_hash
 
 
 TRANSIENT_PARTS = frozenset({"__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache", "node_modules"})
+
+
+def normalize_remote_identity(value: str) -> str:
+    text = value.strip()
+    if re.match(r"^[^/@:]+@[^/:]+:", text):
+        user_host, path = text.split(":", 1)
+        host = user_host.rsplit("@", 1)[-1]
+        text = f"ssh://{host}/{path}"
+    parsed = urlsplit(text)
+    if parsed.hostname:
+        host = parsed.hostname.lower()
+        path = parsed.path.strip("/")
+        if path.lower().endswith(".git"):
+            path = path[:-4]
+        return f"{host}/{path.lower()}"
+    normalized = text.replace("\\", "/").rstrip("/")
+    return normalized[:-4] if normalized.lower().endswith(".git") else normalized
+
+
+def project_version(pyproject_path: Path) -> str:
+    text = pyproject_path.read_text(encoding="utf-8")
+    if tomllib is not None:
+        payload = tomllib.loads(text)
+        return str(payload.get("project", {}).get("version", ""))
+    section = ""
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            section = line[1:-1].strip()
+            continue
+        if section != "project":
+            continue
+        match = re.match(r'''version\s*=\s*["']([^"']+)["']\s*(?:#.*)?$''', line)
+        if match:
+            return match.group(1)
+    raise RuntimeError("pyproject [project].version is missing")
 
 
 def _included(path: Path, root: Path) -> bool:
@@ -128,12 +172,11 @@ def audit_release_provenance(
     status_rows = [row for row in _git(repository_root, "status", "--short").splitlines() if row]
     tags_at_head = [row for row in _git(repository_root, "tag", "--points-at", "HEAD").splitlines() if row]
     version = (repository_root / "VERSION").read_text(encoding="utf-8").strip()
-    pyproject = tomllib.loads((repository_root / "pyproject.toml").read_text(encoding="utf-8"))
-    package_version = str(pyproject.get("project", {}).get("version", ""))
+    package_version = project_version(repository_root / "pyproject.toml")
     expected_tag = f"v{version}"
     source_comparison = compare_skill_sources(canonical_skill_root, installed_skill_root)
 
-    if origin != expected_origin:
+    if normalize_remote_identity(origin) != normalize_remote_identity(expected_origin):
         blockers.append("origin_identity_mismatch")
     if version != package_version:
         blockers.append("version_sources_mismatch")
@@ -186,6 +229,8 @@ def audit_release_provenance(
         "repository_source": {
             "remote_identity": origin,
             "expected_remote_identity": expected_origin,
+            "normalized_remote_identity": normalize_remote_identity(origin),
+            "expected_normalized_remote_identity": normalize_remote_identity(expected_origin),
             "expected_tag": expected_tag,
         },
         "release_source": release,

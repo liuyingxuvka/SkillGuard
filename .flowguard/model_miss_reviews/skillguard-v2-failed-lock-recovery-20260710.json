@@ -1,7 +1,7 @@
 {
   "schema_version": "flowguard.model_miss_review.v1",
   "review_id": "skillguard-v2-failed-lock-recovery-20260710",
-  "status": "repaired_and_revalidated",
+  "status": "repaired_revalidation_pending_after_ci_compatibility_change",
   "observed_failure": {
     "surface": "SkillGuard V2 self-host claim",
     "prior_run_id": "run-9d43698ebbb1c4b58a0a",
@@ -47,7 +47,7 @@
     "tests/test_claimed_run_runtime.py::test_dead_owner_lock_is_recovered_with_an_audit_event",
     "tests/test_claimed_run_runtime.py::test_legacy_failed_lock_without_owner_pid_is_recovered",
     "tests/test_executable_contract_model.py",
-    "compiled contract 2F182C00A7738D484D2164A0ACDC3AD70BAA780AD5A5C49035F20DB272FD8B3D and exact manifest parity",
+    "prior compiled contract and exact manifest parity; current contract 950F3AC86E628781753E8E2C32E5ADB3C149D975514E4003FADEA1A48352DD97 requires refreshed final receipts",
     "focused TestMesh: 106 passed with zero skips",
     "full TestMesh: 106 V2 plus 73 legacy passed with zero skips",
     "full self-host run-ef474980c6cf42a6aaa1 with current functional and release closures",
