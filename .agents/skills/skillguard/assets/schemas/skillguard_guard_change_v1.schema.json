@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkillGuard Guard change v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "change_id", "guard_before", "guard_after", "affected_feature_tags", "broad_semantic_change", "reason"],
+  "properties": {
+    "schema_version": {"const": "skillguard.guard_change.v1"},
+    "change_id": {"type": "string", "minLength": 1},
+    "guard_before": {"$ref": "#/$defs/guard"},
+    "guard_after": {"$ref": "#/$defs/guard"},
+    "affected_feature_tags": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "broad_semantic_change": {"type": "boolean"},
+    "reason": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_id", "file_count", "source_hash"],
+      "properties": {
+        "runtime_id": {"const": "skillguard-v2"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "source_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}
+      }
+    }
+  }
+}

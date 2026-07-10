@@ -110,6 +110,12 @@ class ExecutableContractCase:
     closure_profile_monotonic: bool = True
     safe_claim_scoped: bool = True
     graduated_children_current: bool = True
+    guard_change_registered: bool = True
+    affected_graduates_invalidated: bool = True
+    reuse_ticket_proof_bound: bool = True
+    portfolio_receipt_exact: bool = True
+    portfolio_capability_coverage_exact: bool = True
+    portfolio_registry_writer_serialized: bool = True
 
 
 @dataclass(frozen=True)
@@ -143,6 +149,12 @@ class ExecutableContractState:
     closure_profile_monotonic: bool = False
     safe_claim_scoped: bool = False
     graduated_children_current: bool = False
+    guard_change_registered: bool = False
+    affected_graduates_invalidated: bool = False
+    reuse_ticket_proof_bound: bool = False
+    portfolio_receipt_exact: bool = False
+    portfolio_capability_coverage_exact: bool = False
+    portfolio_registry_writer_serialized: bool = False
 
 
 class EvaluateExecutableContract:
@@ -367,6 +379,42 @@ def portfolio_children_remain_current(state: ExecutableContractState, _trace: ob
     return _pass()
 
 
+def portfolio_revalidation_is_executable(state: ExecutableContractState, _trace: object) -> InvariantResult:
+    if _empty(state) or not state.closure_requested:
+        return _pass()
+    if not state.guard_change_registered:
+        return _fail(
+            "portfolio_revalidation_is_executable",
+            "a Guard behavior change must be registered before prior confidence can be evaluated",
+        )
+    if not state.affected_graduates_invalidated:
+        return _fail(
+            "portfolio_revalidation_is_executable",
+            "affected prior graduates cannot retain old green status after a Guard change",
+        )
+    if not state.reuse_ticket_proof_bound:
+        return _fail(
+            "portfolio_revalidation_is_executable",
+            "reuse must bind unchanged source, contract, command, environment, and coverage identities and reject broad or intersecting changes",
+        )
+    if not state.portfolio_receipt_exact:
+        return _fail(
+            "portfolio_revalidation_is_executable",
+            "portfolio graduation must issue an exact parent receipt naming the target and current prior evidence",
+        )
+    if not state.portfolio_capability_coverage_exact:
+        return _fail(
+            "portfolio_revalidation_is_executable",
+            "portfolio graduation must cover every declared target capability through receipt-bound representative jobs",
+        )
+    if not state.portfolio_registry_writer_serialized:
+        return _fail(
+            "portfolio_revalidation_is_executable",
+            "portfolio registry mutations must serialize live writers and recover abandoned locks",
+        )
+    return _pass()
+
+
 def static_audit_is_current(state: ExecutableContractState, trace: object) -> InvariantResult:
     """Self-host contract owner for current static-audit evidence."""
 
@@ -456,6 +504,11 @@ INVARIANTS = (
         "portfolio_children_remain_current",
         "Portfolio graduation consumes current prior-skill evidence.",
         portfolio_children_remain_current,
+    ),
+    Invariant(
+        "portfolio_revalidation_is_executable",
+        "Portfolio invalidation, proof-bound reuse, and parent receipts are executable rather than model-only.",
+        portfolio_revalidation_is_executable,
     ),
 )
 
@@ -614,6 +667,48 @@ SCENARIOS = (
         "The current target cannot graduate while a prior skill needs revalidation.",
         ExecutableContractCase("stale_prior_graduate", graduated_children_current=False),
         _violation("prior stale", "portfolio_children_remain_current"),
+    ),
+    _scenario(
+        "undeclared_guard_change_blocks_portfolio",
+        "A Guard behavior change cannot preserve portfolio confidence without a registered change record.",
+        ExecutableContractCase("undeclared_guard_change", guard_change_registered=False),
+        _violation("guard change missing", "portfolio_revalidation_is_executable"),
+    ),
+    _scenario(
+        "old_green_after_guard_change_blocks_portfolio",
+        "Affected prior graduates must become revalidation-required instead of retaining old green status.",
+        ExecutableContractCase("old_green_after_guard_change", affected_graduates_invalidated=False),
+        _violation("old green preserved", "portfolio_revalidation_is_executable"),
+    ),
+    _scenario(
+        "broad_or_changed_identity_reuse_blocks_portfolio",
+        "A broad, intersecting, or identity-changing reuse request cannot restore current status.",
+        ExecutableContractCase("invalid_reuse_ticket", reuse_ticket_proof_bound=False),
+        _violation("reuse unbound", "portfolio_revalidation_is_executable"),
+    ),
+    _scenario(
+        "portfolio_receipt_without_prior_evidence_blocks",
+        "A parent portfolio receipt must name current target and prior-child evidence.",
+        ExecutableContractCase("portfolio_receipt_inexact", portfolio_receipt_exact=False),
+        _violation("parent receipt inexact", "portfolio_revalidation_is_executable"),
+    ),
+    _scenario(
+        "partial_capability_coverage_blocks_portfolio",
+        "One representative job cannot graduate a multi-capability target while declared routes remain untested.",
+        ExecutableContractCase(
+            "partial_portfolio_capability_coverage",
+            portfolio_capability_coverage_exact=False,
+        ),
+        _violation("capability coverage incomplete", "portfolio_revalidation_is_executable"),
+    ),
+    _scenario(
+        "concurrent_portfolio_writer_blocks",
+        "Two live portfolio writers cannot both mutate the private registry from the same prior state.",
+        ExecutableContractCase(
+            "concurrent_portfolio_writer",
+            portfolio_registry_writer_serialized=False,
+        ),
+        _violation("portfolio writer conflict", "portfolio_revalidation_is_executable"),
     ),
 )
 
@@ -1332,6 +1427,15 @@ def build_contract_exhaustion_plan() -> ContractExhaustionPlan:
             mutation_types=("unknown_enum", "malformed_input"),
             description="step and parent receipt currentness",
         ),
+        ContractDimension(
+            "portfolio_revalidation",
+            "state",
+            source_route="model_test_alignment",
+            owner_model_id=MODEL_ID,
+            values=("registered", "old_green", "broad_reuse", "affected_reuse", "identity_changed", "exact_parent_receipt", "capability_gap", "concurrent_writer"),
+            mutation_types=("unknown_enum", "malformed_input"),
+            description="Guard change registration, old-green invalidation, proof-bound reuse, and exact parent receipt",
+        ),
     )
     block_oracle = ContractOracle(
         "oracle:block-before-close",
@@ -1365,6 +1469,14 @@ def build_contract_exhaustion_plan() -> ContractExhaustionPlan:
         ContractMutationCase("case:loop:no-delta", "loop_progress", "no_progress", oracle_id=block_oracle.oracle_id, input_delta={"progress_changed": False, "reentries": 1}, expected_status="blocked", required_test_cell_id="test:model:no-delta"),
         ContractMutationCase("case:loop:over-bound", "loop_progress", "out_of_range", oracle_id=block_oracle.oracle_id, input_delta={"reentries": 4, "max_reentries": 3}, expected_status="blocked", required_test_cell_id="test:model:over-bound"),
         ContractMutationCase("case:portfolio:prior-stale", "receipt_freshness", "stale", oracle_id=stale_oracle.oracle_id, input_delta={"prior_graduate": "revalidation_required"}, expected_status="revalidation_required", required_test_cell_id="test:model:portfolio-prior-stale"),
+        ContractMutationCase("case:portfolio:guard-change-unregistered", "portfolio_revalidation", "missing_change", oracle_id=block_oracle.oracle_id, input_delta={"guard_change_registered": False}, expected_status="blocked", required_test_cell_id="test:model:portfolio-change-missing"),
+        ContractMutationCase("case:portfolio:old-green-preserved", "portfolio_revalidation", "old_green", oracle_id=stale_oracle.oracle_id, input_delta={"affected_graduate": "current_old_guard"}, expected_status="revalidation_required", required_test_cell_id="test:model:portfolio-old-green"),
+        ContractMutationCase("case:portfolio:broad-reuse", "portfolio_revalidation", "broad_reuse", oracle_id=block_oracle.oracle_id, input_delta={"broad_semantic_change": True, "reuse_requested": True}, expected_status="blocked", required_test_cell_id="test:model:portfolio-broad-reuse"),
+        ContractMutationCase("case:portfolio:affected-reuse", "portfolio_revalidation", "affected_reuse", oracle_id=block_oracle.oracle_id, input_delta={"feature_intersection": True, "reuse_requested": True}, expected_status="blocked", required_test_cell_id="test:model:portfolio-affected-reuse"),
+        ContractMutationCase("case:portfolio:identity-changed-reuse", "portfolio_revalidation", "identity_changed", oracle_id=block_oracle.oracle_id, input_delta={"source_or_contract_or_command_or_environment_or_coverage_changed": True}, expected_status="blocked", required_test_cell_id="test:model:portfolio-identity-reuse"),
+        ContractMutationCase("case:portfolio:inexact-parent-receipt", "portfolio_revalidation", "missing_prior_evidence", oracle_id=block_oracle.oracle_id, input_delta={"prior_evidence": []}, expected_status="blocked", required_test_cell_id="test:model:portfolio-parent-receipt"),
+        ContractMutationCase("case:portfolio:capability-gap", "portfolio_revalidation", "capability_gap", oracle_id=block_oracle.oracle_id, input_delta={"required_capability": "uncovered"}, expected_status="blocked", required_test_cell_id="test:model:portfolio-capability-gap"),
+        ContractMutationCase("case:portfolio:concurrent-writer", "portfolio_revalidation", "concurrent_writer", oracle_id=block_oracle.oracle_id, input_delta={"live_registry_writers": 2}, expected_status="blocked", required_test_cell_id="test:model:portfolio-concurrent-writer"),
     )
     return ContractExhaustionPlan(
         "skillguard-v2-contract-exhaustion",

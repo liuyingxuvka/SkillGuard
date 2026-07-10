@@ -1,18 +1,18 @@
 {
   "baseline_binding": {
     "checker_version": "skillguard.local_cli_dispatch.v1",
-    "command_count": 26,
+    "command_count": 52,
     "evidence_record_count": 0,
-    "fixture_manifest_count": 2,
+    "fixture_manifest_count": 3,
     "path": ".agents/skills/skillguard/fixtures/checker_change/current-baseline.json",
-    "route_count": 14,
-    "route_registry_version": "skillguard.route_registry.v1",
+    "route_count": 24,
+    "route_registry_version": "skillguard.route_registry.v2",
     "route_version": "4",
     "schema_version": "skillguard.checker_change_baseline.v1",
-    "sha256": "7DAC75026421453CA217E5FCC15AD5883419126A7C64383B720FD943893E2C0C"
+    "sha256": "3F3166ED111A62640EE5DA9D3086A4DB8968B251C8BA4DF79C59B5AF892A6078"
   },
   "blockers": [],
-  "checked_at": "2026-06-25T14:11:48Z",
+  "checked_at": "2026-07-10T12:43:45Z",
   "checker_change_blockers": [],
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
@@ -21,35 +21,35 @@
       "name": "Baseline metadata",
       "required": true,
       "status": "pass",
-      "summary": "Loaded checker-change baseline with 26 command binding(s) and 14 route binding(s)."
+      "summary": "Loaded checker-change baseline with 52 command binding(s) and 24 route binding(s)."
     },
     {
       "check_id": "review-checker-change:command-bindings",
       "name": "Checker command bindings",
       "required": true,
       "status": "pass",
-      "summary": "Compared baseline command bindings with 26 current dispatch command(s)."
+      "summary": "Compared baseline command bindings with 52 current dispatch command(s)."
     },
     {
       "check_id": "review-checker-change:route-bindings",
       "name": "Route-task bindings",
       "required": true,
       "status": "pass",
-      "summary": "Compared baseline route bindings with 14 current route-task binding(s)."
+      "summary": "Compared baseline route bindings with 24 current route-task binding(s)."
     },
     {
       "check_id": "review-checker-change:evidence-freshness",
       "name": "Evidence freshness",
       "required": true,
       "status": "pass",
-      "summary": "Checked 6 evidence artifact(s) for current freshness metadata."
+      "summary": "Checked 0 evidence artifact(s) for current freshness metadata."
     },
     {
       "check_id": "review-checker-change:fixture-expectations",
       "name": "Fixture expectation bindings",
       "required": true,
       "status": "pass",
-      "summary": "Compared 2 fixture manifest binding(s) against baseline expectations."
+      "summary": "Compared 3 fixture manifest binding(s) against baseline expectations."
     },
     {
       "check_id": "review-checker-change:public-boundary",
@@ -63,7 +63,7 @@
       "name": "Read-only input behavior",
       "required": true,
       "status": "pass",
-      "summary": "Watched 9 input artifact(s) and detected 0 input mutation(s)."
+      "summary": "Watched 4 input artifact(s) and detected 0 input mutation(s)."
     }
   ],
   "claim_boundary": "This review-checker-change result compares approved public checker-change metadata with the current local dispatch, route registry, supplied fixture manifests, supplied evidence records, and public-boundary scans. It is read-only for input artifacts and does not rewrite checker baselines, refresh evidence, inspect sealed FlowPilot packet bodies, expose sibling role text, make closure decisions, prove release readiness, or validate future AI behavior.",
@@ -75,6 +75,29 @@
     "plan-skill",
     "generate-skill",
     "generate-suite",
+    "scan-global-skills",
+    "build-global-registry",
+    "check-global-registry",
+    "resolve-global-skill",
+    "render-global-prompt",
+    "install-global-prompt",
+    "check-global-prompt",
+    "refresh-global-router",
+    "audit-installed-skills",
+    "audit-portfolio",
+    "mark-portfolio-impact",
+    "issue-portfolio-reuse-ticket",
+    "graduate-portfolio",
+    "check-json-schema",
+    "compile-contract",
+    "check-contract",
+    "check-depth",
+    "check-readme-release",
+    "select-route",
+    "start-run",
+    "advance-run",
+    "check-run",
+    "close-run",
     "init-target",
     "init-suite",
     "mark",
@@ -84,6 +107,9 @@
     "check-suite-map",
     "check-suite-contract",
     "check-fixture-manifest",
+    "check-work-contract",
+    "check-run-record",
+    "check-check-manifest",
     "fixture-test",
     "detect-stale-evidence",
     "refresh-maintenance",
@@ -99,9 +125,9 @@
   "compatible_changes": [],
   "current_binding": {
     "checker_version": "skillguard.local_cli_dispatch.v1",
-    "command_count": 26,
+    "command_count": 52,
     "openspec_status": {
-      "changes_directory_present": false
+      "changes_directory_present": true
     },
     "public_safety_checks": [
       "private-local-path",
@@ -109,8 +135,8 @@
       "private-key-material",
       "credential-assignment"
     ],
-    "route_count": 14,
-    "route_registry_version": "skillguard.route_registry.v1",
+    "route_count": 24,
+    "route_registry_version": "skillguard.route_registry.v2",
     "route_version": "4"
   },
   "current_route_registry": [
@@ -144,6 +170,86 @@
       "responsibility": "generator",
       "route_id": "skillguard.route.generate-suite.v1",
       "route_node_id": "generate-suite",
+      "status": "current"
+    },
+    {
+      "command_family": "compile-contract",
+      "next_step": "Run compile-contract against the target skill before expecting runtime phase checks.",
+      "responsibility": "contract-compiler",
+      "route_id": "skillguard.route.compile-contract.v1",
+      "route_node_id": "compile-contract",
+      "status": "current"
+    },
+    {
+      "command_family": "check-contract",
+      "next_step": "Run check-contract against the target skill work contract.",
+      "responsibility": "checker",
+      "route_id": "skillguard.route.check-contract.v1",
+      "route_node_id": "check-contract",
+      "status": "current"
+    },
+    {
+      "command_family": "check-depth",
+      "next_step": "Run check-depth when a target skill contract must prove source-specific obligations, current run evidence, and non-parallel route binding.",
+      "responsibility": "checker",
+      "route_id": "skillguard.route.check-depth.v1",
+      "route_node_id": "check-depth",
+      "status": "current"
+    },
+    {
+      "command_family": "check-readme-release",
+      "next_step": "Run check-readme-release before publishing README-facing SkillGuard releases.",
+      "responsibility": "checker",
+      "route_id": "skillguard.route.check-readme-release.v1",
+      "route_node_id": "check-readme-release",
+      "status": "current"
+    },
+    {
+      "command_family": "audit-installed-skills",
+      "next_step": "Run audit-installed-skills against the installed user skill root before broad installed-skill coverage claims.",
+      "responsibility": "checker",
+      "route_id": "skillguard.route.audit-installed-skills.v1",
+      "route_node_id": "audit-installed-skills",
+      "status": "current"
+    },
+    {
+      "command_family": "audit-portfolio",
+      "next_step": "Audit the private portfolio registry before impact propagation, reuse, or one-target graduation.",
+      "responsibility": "portfolio-runtime",
+      "route_id": "skillguard.route.audit-portfolio.v1",
+      "route_node_id": "audit-portfolio",
+      "status": "current"
+    },
+    {
+      "command_family": "select-route",
+      "next_step": "Run select-route before starting a SkillGuard-governed task run.",
+      "responsibility": "runtime-router",
+      "route_id": "skillguard.route.select-route.v1",
+      "route_node_id": "select-route",
+      "status": "current"
+    },
+    {
+      "command_family": "start-run",
+      "next_step": "Run start-run after select-route has chosen the route.",
+      "responsibility": "runtime-ledger",
+      "route_id": "skillguard.route.start-run.v1",
+      "route_node_id": "start-run",
+      "status": "current"
+    },
+    {
+      "command_family": "check-run",
+      "next_step": "Run check-run against the current run record before claiming progress or closure.",
+      "responsibility": "runtime-checker",
+      "route_id": "skillguard.route.check-run.v1",
+      "route_node_id": "check-run",
+      "status": "current"
+    },
+    {
+      "command_family": "close-run",
+      "next_step": "Run close-run only after check-run supports the requested closure decision.",
+      "responsibility": "closure",
+      "route_id": "skillguard.route.close-run.v1",
+      "route_node_id": "close-run",
       "status": "current"
     },
     {
@@ -241,7 +347,7 @@
       "fresh": true,
       "kind": "command_table_check",
       "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
-      "summary": "Compared current checker version skillguard.local_cli_dispatch.v1, route registry skillguard.route_registry.v1, and 26 command(s)."
+      "summary": "Compared current checker version skillguard.local_cli_dispatch.v1, route registry skillguard.route_registry.v2, and 52 command(s)."
     },
     {
       "evidence_id": "review-checker-change-public-boundary",
@@ -251,101 +357,34 @@
       "summary": "Scanned 7 public file(s) for public-safe checker-change reporting."
     }
   ],
-  "evidence_freshness_reviews": [
-    {
-      "checked_binding_count": 1,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/command_surface_current.json",
-      "sha256": "DB2C6F48EE5F5B9F4EFBB7342C16B2F698893257CF663F382EF3C411A8B1E572",
-      "stale_blocker_codes": []
-    },
-    {
-      "checked_binding_count": 6,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_complex_generation_current.json",
-      "sha256": "40E0BCBF200F0817B2EE4FA5123D1681A948A0BED990DB722DC82FF176C2F07E",
-      "stale_blocker_codes": []
-    },
-    {
-      "checked_binding_count": 5,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_simple_generation_current.json",
-      "sha256": "251CED0F7AC6606F1B57DD1BCFFD3ADC1B46BF0D0FB813B5482B1A21FC75A663",
-      "stale_blocker_codes": []
-    },
-    {
-      "checked_binding_count": 28,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json",
-      "sha256": "D7D2A41B1D9E2FF15F3133601ED3E2FD81B33301C2151E6B488F6DC3E13076E4",
-      "stale_blocker_codes": []
-    },
-    {
-      "checked_binding_count": 1,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
-      "sha256": "E2F4563DE58F5D5E5456EA8E317AB3E4F6E301EF6A3DEA744C3DA365FA9FE78D",
-      "stale_blocker_codes": []
-    },
-    {
-      "checked_binding_count": 12,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
-      "sha256": "32059D3C6E5B821D38914511271100E8CE81D221488DD7D3D30CF18A38BA225E",
-      "stale_blocker_codes": []
-    }
-  ],
-  "expected_route_registry_version": "skillguard.route_registry.v1",
+  "evidence_freshness_reviews": [],
+  "expected_route_registry_version": "skillguard.route_registry.v2",
   "expected_route_version": "4",
   "failures": [],
   "files_inspected": [
     {
       "kind": "json",
-      "line_count": 161,
+      "line_count": 106,
       "path": ".agents/skills/skillguard/fixtures/checker_change/current-baseline.json",
-      "sha256": "7DAC75026421453CA217E5FCC15AD5883419126A7C64383B720FD943893E2C0C"
+      "sha256": "3F3166ED111A62640EE5DA9D3086A4DB8968B251C8BA4DF79C59B5AF892A6078"
     },
     {
       "kind": "json",
       "line_count": 50,
       "path": ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
-      "sha256": "BE2E92B79D3D915F3E0EA482986E91A2A44D9455C478DA24998F470C48A1C87F"
+      "sha256": "FDF922CAE3C370B944D984522A403E3C987C02A4E932CE95FC5AE6AB704BD678"
     },
     {
       "kind": "json",
       "line_count": 63,
       "path": ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
-      "sha256": "C0D6A3E7FA983F618EC1497651C2B8EA23B14B9943A5402A60214FE963FA4AE9"
+      "sha256": "2A795ACDF826742D96EC1A812A0B4F36630C35B08DC66F07B1D693E0CE4C40C2"
     },
     {
       "kind": "json",
-      "line_count": 442,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/self_check_current.json",
-      "sha256": "D7D2A41B1D9E2FF15F3133601ED3E2FD81B33301C2151E6B488F6DC3E13076E4"
-    },
-    {
-      "kind": "json",
-      "line_count": 895,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/target_check_current.json",
-      "sha256": "32059D3C6E5B821D38914511271100E8CE81D221488DD7D3D30CF18A38BA225E"
-    },
-    {
-      "kind": "json",
-      "line_count": 409,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/command_surface_current.json",
-      "sha256": "DB2C6F48EE5F5B9F4EFBB7342C16B2F698893257CF663F382EF3C411A8B1E572"
-    },
-    {
-      "kind": "json",
-      "line_count": 206,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/standard_library_tests_current.json",
-      "sha256": "E2F4563DE58F5D5E5456EA8E317AB3E4F6E301EF6A3DEA744C3DA365FA9FE78D"
-    },
-    {
-      "kind": "json",
-      "line_count": 334,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_simple_generation_current.json",
-      "sha256": "251CED0F7AC6606F1B57DD1BCFFD3ADC1B46BF0D0FB813B5482B1A21FC75A663"
-    },
-    {
-      "kind": "json",
-      "line_count": 438,
-      "path": ".agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_complex_generation_current.json",
-      "sha256": "40E0BCBF200F0817B2EE4FA5123D1681A948A0BED990DB722DC82FF176C2F07E"
+      "line_count": 66,
+      "path": ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
+      "sha256": "E3B7F3C54870ECAB55527E361929AA22ED095109A95BE1337F1AAE664B9A65CE"
     }
   ],
   "fixture_reviews": [
@@ -357,7 +396,7 @@
           "generate_skill_complex_public_input"
         ],
         "path": ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
-        "sha256": "C0D6A3E7FA983F618EC1497651C2B8EA23B14B9943A5402A60214FE963FA4AE9"
+        "sha256": "2A795ACDF826742D96EC1A812A0B4F36630C35B08DC66F07B1D693E0CE4C40C2"
       },
       "current": {
         "expected_decisions": [
@@ -372,7 +411,34 @@
         ],
         "path": ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
         "schema_version": "skillguard.fixture_manifest.v1",
-        "sha256": "C0D6A3E7FA983F618EC1497651C2B8EA23B14B9943A5402A60214FE963FA4AE9",
+        "sha256": "2A795ACDF826742D96EC1A812A0B4F36630C35B08DC66F07B1D693E0CE4C40C2",
+        "target_commands": []
+      }
+    },
+    {
+      "baseline": {
+        "fixture_ids": [
+          "portfolio_audit_current_passes",
+          "portfolio_graduation_covers_declared_capability",
+          "portfolio_impact_invalidates_old_green",
+          "portfolio_reuse_requires_registered_change"
+        ],
+        "path": ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
+        "sha256": "E3B7F3C54870ECAB55527E361929AA22ED095109A95BE1337F1AAE664B9A65CE"
+      },
+      "current": {
+        "expected_decisions": [
+          "pass"
+        ],
+        "fixture_ids": [
+          "portfolio_audit_current_passes",
+          "portfolio_graduation_covers_declared_capability",
+          "portfolio_impact_invalidates_old_green",
+          "portfolio_reuse_requires_registered_change"
+        ],
+        "path": ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
+        "schema_version": "skillguard.fixture_manifest.v1",
+        "sha256": "E3B7F3C54870ECAB55527E361929AA22ED095109A95BE1337F1AAE664B9A65CE",
         "target_commands": []
       }
     },
@@ -383,7 +449,7 @@
           "generate_skill_simple_public_input"
         ],
         "path": ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
-        "sha256": "BE2E92B79D3D915F3E0EA482986E91A2A44D9455C478DA24998F470C48A1C87F"
+        "sha256": "FDF922CAE3C370B944D984522A403E3C987C02A4E932CE95FC5AE6AB704BD678"
       },
       "current": {
         "expected_decisions": [
@@ -396,7 +462,7 @@
         ],
         "path": ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
         "schema_version": "skillguard.fixture_manifest.v1",
-        "sha256": "BE2E92B79D3D915F3E0EA482986E91A2A44D9455C478DA24998F470C48A1C87F",
+        "sha256": "FDF922CAE3C370B944D984522A403E3C987C02A4E932CE95FC5AE6AB704BD678",
         "target_commands": []
       }
     }
@@ -414,6 +480,29 @@
         "plan-skill",
         "generate-skill",
         "generate-suite",
+        "scan-global-skills",
+        "build-global-registry",
+        "check-global-registry",
+        "resolve-global-skill",
+        "render-global-prompt",
+        "install-global-prompt",
+        "check-global-prompt",
+        "refresh-global-router",
+        "audit-installed-skills",
+        "audit-portfolio",
+        "mark-portfolio-impact",
+        "issue-portfolio-reuse-ticket",
+        "graduate-portfolio",
+        "check-json-schema",
+        "compile-contract",
+        "check-contract",
+        "check-depth",
+        "check-readme-release",
+        "select-route",
+        "start-run",
+        "advance-run",
+        "check-run",
+        "close-run",
         "init-target",
         "init-suite",
         "mark",
@@ -423,6 +512,9 @@
         "check-suite-map",
         "check-suite-contract",
         "check-fixture-manifest",
+        "check-work-contract",
+        "check-run-record",
+        "check-check-manifest",
         "fixture-test",
         "detect-stale-evidence",
         "refresh-maintenance",
@@ -466,6 +558,86 @@
           "responsibility": "generator",
           "route_id": "skillguard.route.generate-suite.v1",
           "route_node_id": "generate-suite",
+          "status": "current"
+        },
+        {
+          "command_family": "compile-contract",
+          "next_step": "Run compile-contract against the target skill before expecting runtime phase checks.",
+          "responsibility": "contract-compiler",
+          "route_id": "skillguard.route.compile-contract.v1",
+          "route_node_id": "compile-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "check-contract",
+          "next_step": "Run check-contract against the target skill work contract.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-contract.v1",
+          "route_node_id": "check-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "check-depth",
+          "next_step": "Run check-depth when a target skill contract must prove source-specific obligations, current run evidence, and non-parallel route binding.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-depth.v1",
+          "route_node_id": "check-depth",
+          "status": "current"
+        },
+        {
+          "command_family": "check-readme-release",
+          "next_step": "Run check-readme-release before publishing README-facing SkillGuard releases.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-readme-release.v1",
+          "route_node_id": "check-readme-release",
+          "status": "current"
+        },
+        {
+          "command_family": "audit-installed-skills",
+          "next_step": "Run audit-installed-skills against the installed user skill root before broad installed-skill coverage claims.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.audit-installed-skills.v1",
+          "route_node_id": "audit-installed-skills",
+          "status": "current"
+        },
+        {
+          "command_family": "audit-portfolio",
+          "next_step": "Audit the private portfolio registry before impact propagation, reuse, or one-target graduation.",
+          "responsibility": "portfolio-runtime",
+          "route_id": "skillguard.route.audit-portfolio.v1",
+          "route_node_id": "audit-portfolio",
+          "status": "current"
+        },
+        {
+          "command_family": "select-route",
+          "next_step": "Run select-route before starting a SkillGuard-governed task run.",
+          "responsibility": "runtime-router",
+          "route_id": "skillguard.route.select-route.v1",
+          "route_node_id": "select-route",
+          "status": "current"
+        },
+        {
+          "command_family": "start-run",
+          "next_step": "Run start-run after select-route has chosen the route.",
+          "responsibility": "runtime-ledger",
+          "route_id": "skillguard.route.start-run.v1",
+          "route_node_id": "start-run",
+          "status": "current"
+        },
+        {
+          "command_family": "check-run",
+          "next_step": "Run check-run against the current run record before claiming progress or closure.",
+          "responsibility": "runtime-checker",
+          "route_id": "skillguard.route.check-run.v1",
+          "route_node_id": "check-run",
+          "status": "current"
+        },
+        {
+          "command_family": "close-run",
+          "next_step": "Run close-run only after check-run supports the requested closure decision.",
+          "responsibility": "closure",
+          "route_id": "skillguard.route.close-run.v1",
+          "route_node_id": "close-run",
           "status": "current"
         },
         {
@@ -550,9 +722,9 @@
         }
       ]
     },
-    "content_hash": "C44F652C58876FD7027F80524FB3606FEA611B4E28AB75FA64DBBA0EBC243E6D",
-    "evidence_timestamp": "2026-06-25T14:11:48Z",
-    "record_id": "checker_change_review:F107C9E75535B228",
+    "content_hash": "3DF2042C13892650A831E2E2C57F8DD329B04EEF8C8FE085314D768B28718DB5",
+    "evidence_timestamp": "2026-07-10T12:43:45Z",
+    "record_id": "checker_change_review:4BB8DD944950028B",
     "record_kind": "checker_change_review",
     "refresh_action": {
       "action": "review_only",
@@ -560,8 +732,8 @@
       "status": "not_applicable"
     },
     "route_node_id": "review-checker-change",
-    "route_registry_version": "skillguard.route_registry.v1",
-    "route_version": "4",
+    "route_registry_version": "skillguard.route_registry.v2",
+    "route_version": "5",
     "schema_version": "skillguard.maintenance_record.v1",
     "status": "pass"
   },
@@ -569,14 +741,14 @@
   "mutation_check": {
     "mutated_input_paths": [],
     "read_only": true,
-    "watched_input_count": 9
+    "watched_input_count": 4
   },
   "public_safety_findings": [],
   "residual_risk": [
     "This command checks explicit checker-change bindings and supplied evidence artifacts; semantic adequacy of a checker change still requires responsible reviewer judgment.",
     "Additive command or route changes are compatible only within this baseline comparison and still require their own direct evidence before supporting broader claims."
   ],
-  "route_registry_version": "skillguard.route_registry.v1",
+  "route_registry_version": "skillguard.route_registry.v2",
   "route_version": "4",
   "schema_version": "skillguard.review_checker_change_result.v1",
   "skipped_checks": [

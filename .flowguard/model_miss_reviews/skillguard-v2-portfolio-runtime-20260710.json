@@ -1,0 +1,84 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-v2-portfolio-runtime-20260710",
+  "status": "repair_in_progress",
+  "observed_failure": {
+    "surface": "one-skill-at-a-time portfolio rollout before SourceGuard graduation",
+    "prior_claim_boundary": "The executable model declared portfolio freshness and self-host traversed portfolio steps.",
+    "observed_result": "No native portfolio registry, Guard impact propagation, proof-bound reuse ticket, or prior-child graduation gate existed behind those modeled steps.",
+    "failure_code": "modeled_portfolio_owner_without_native_runtime"
+  },
+  "classification": {
+    "owner": "SkillGuard portfolio-runtime-v2",
+    "miss_type": "skillguard_runtime_or_validator_gap",
+    "affected_feature_tags": [
+      "portfolio",
+      "routing",
+      "run-state",
+      "receipt",
+      "closure",
+      "provenance"
+    ]
+  },
+  "generalized_repair": {
+    "runtime": "Add private registry validation, Guard impact invalidation, history-verifiable proof-bound reuse tickets, complete capability coverage, one-writer mutations, one-target graduation, and exact parent portfolio receipts.",
+    "native_self_host": "Replace three portfolio model assertions with executable audit, impact/reuse, and graduation commands, then run all four public commands through disposable CLI fixtures.",
+    "repair_extensions": [
+      "Replace non-empty representative-job sufficiency with a current required-capability inventory and receipt-bound job/evidence coverage fingerprint.",
+      "Expand the Guard fingerprint from the internal package alone to scripts, schemas, Skill instructions, references, TestMesh, and compiled contract/check bindings.",
+      "Reject reuse tickets that cannot be revalidated against the registered Guard change and previous full receipt.",
+      "Serialize registry mutations, recover abandoned local locks, and write child ticket/receipt artifacts before registry references.",
+      "Make repository, installed-skill, scripts, and package runtime-root inputs resolve to the same Guard identity."
+    ],
+    "negative_boundaries": [
+      "prior stale graduate blocks the next target",
+      "broad Guard change forbids reuse",
+      "affected feature intersection forbids reuse",
+      "source, contract, command, environment, or coverage identity change forbids reuse",
+      "excluded private and system skills never enter the graduation queue",
+      "one representative job cannot hide an uncovered declared capability",
+      "an unregistered Guard change cannot authorize reuse",
+      "two live writers cannot both commit from the same registry state"
+    ]
+  },
+  "required_revalidation": [
+    "portfolio unit and CLI tests",
+    "FlowGuard model and model-test alignment",
+    "SkillGuard focused and full TestMesh",
+    "two-stage SkillGuard self-host",
+    "Autonomous UI affected prior-target rerun",
+    "SkillGuard portfolio graduation under the final fingerprint",
+    "Autonomous UI full-route graduation under the final fingerprint",
+    "SourceGuard candidate audit after both prior targets are current",
+    "Windows/Linux GitHub Actions"
+  ],
+  "current_evidence": {
+    "full_test_mesh": {
+      "status": "passed",
+      "v2_runtime_tests": 123,
+      "legacy_compatibility_tests": 73,
+      "skipped_checks": 0,
+      "report_hash": "AAC9E0A2793BEA478E54A72467DD10AFA4B2549875109C299790DE95719EF86E"
+    },
+    "two_stage_self_host": {
+      "status": "passed",
+      "executed_step_count": 27,
+      "contract_hash": "BC57DE17CB4B3AA2C293FAAD15580F16B40609B78E86D88192E0D8A9E65F7303",
+      "report_hash": "2C7BABB7337008F94BFF4803B8D576F348FCDA1568ACE385C0D57A54C4D2C35B"
+    },
+    "installed_source_parity": {
+      "status": "passed",
+      "file_count": 396,
+      "manifest_hash": "ACD381594B9472882591F1686DA1261624873C79E2500A97F84187DC5C3EB272"
+    },
+    "autonomous_ui_public_pressure_test": {
+      "status": "passed",
+      "portfolio_receipt_id": "portfolio-0cc0014ca12558978c58",
+      "public_tag_verification_hash": "3E3F583D4AA283F751AEE8480856F330DCB7D8ECEBD54D8F72490F06CDAC3D49"
+    },
+    "cross_platform_ci": {
+      "status": "pending_candidate_branch"
+    }
+  },
+  "claim_boundary": "The repair is incomplete until native checks, self-host, SkillGuard and Autonomous UI portfolio graduation, next-target ordering audit, and cross-platform CI are current."
+}

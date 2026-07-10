@@ -1,0 +1,15 @@
+{
+  "fixture_id": "portfolio_audit_current_passes",
+  "target_command": "audit-portfolio",
+  "expected_decision": "pass",
+  "arguments": [
+    "--workspace-root",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+    "--registry",
+    "audit-registry.json",
+    "--runtime-root",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace/runtime",
+    "--output",
+    "-"
+  ]
+}

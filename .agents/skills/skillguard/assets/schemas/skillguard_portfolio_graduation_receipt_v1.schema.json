@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkillGuard portfolio graduation receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "receipt_id", "registry_id", "skill_id", "status", "guard_runtime", "contract_hash", "source_fingerprint", "target_identity", "representative_jobs", "representative_job_ids", "full_run_receipt_id", "full_run_result_hash", "prior_evidence", "issued_at", "claim_boundary", "receipt_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_graduation_receipt.v1"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "registry_id": {"type": "string", "minLength": 1},
+    "skill_id": {"type": "string", "minLength": 1},
+    "status": {"const": "current"},
+    "guard_runtime": {"$ref": "#/$defs/guard"},
+    "contract_hash": {"$ref": "#/$defs/hash"},
+    "source_fingerprint": {"$ref": "#/$defs/hash"},
+    "target_identity": {"$ref": "#/$defs/identity"},
+    "representative_jobs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/job"}},
+    "representative_job_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "full_run_receipt_id": {"type": "string", "minLength": 1},
+    "full_run_result_hash": {"$ref": "#/$defs/hash"},
+    "prior_evidence": {"type": "array", "items": {"$ref": "#/$defs/prior_proof"}},
+    "issued_at": {"type": "string", "minLength": 1},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "receipt_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_id", "file_count", "source_hash"],
+      "properties": {
+        "runtime_id": {"const": "skillguard-v2"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "source_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_fingerprint", "contract_hash", "command_fingerprint", "environment_fingerprint", "coverage_fingerprint"],
+      "properties": {
+        "source_fingerprint": {"$ref": "#/$defs/hash"},
+        "contract_hash": {"$ref": "#/$defs/hash"},
+        "command_fingerprint": {"$ref": "#/$defs/hash"},
+        "environment_fingerprint": {"$ref": "#/$defs/hash"},
+        "coverage_fingerprint": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_id", "covered_capability_ids", "evidence_refs"],
+      "properties": {
+        "job_id": {"type": "string", "minLength": 1},
+        "covered_capability_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "prior_proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_id", "proof_id", "proof_hash", "guard_runtime"],
+      "properties": {
+        "skill_id": {"type": "string", "minLength": 1},
+        "proof_id": {"type": "string", "minLength": 1},
+        "proof_hash": {"$ref": "#/$defs/hash"},
+        "guard_runtime": {"$ref": "#/$defs/guard"}
+      }
+    }
+  }
+}

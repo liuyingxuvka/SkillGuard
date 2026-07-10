@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-07-10T12:41:42Z",
+  "checked_at": "2026-07-10T12:41:47Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -26,263 +26,158 @@
       "evidence_id": "fixture-manifest-parse",
       "fresh": true,
       "kind": "parser_output",
-      "source_path": ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
-      "summary": "Inspected 1 manifest JSON file(s) and executed 3 fixture case(s)."
+      "source_path": ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
+      "summary": "Inspected 1 manifest JSON file(s) and executed 4 fixture case(s)."
     },
     {
       "evidence_id": "fixture-case-results",
       "fresh": true,
       "kind": "command_output",
-      "source_path": ".agents/skills/skillguard/fixtures/complex_generation",
-      "summary": "Observed fixture result classes: {'expected_pass': 1, 'blocker_condition': 1, 'expected_fail': 1}."
+      "source_path": ".agents/skills/skillguard/fixtures/portfolio_runtime",
+      "summary": "Observed fixture result classes: {'expected_pass': 4}."
     }
   ],
   "failures": [],
   "files_inspected": [
     {
       "kind": "json",
-      "line_count": 63,
-      "path": ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
-      "sha256": "2A795ACDF826742D96EC1A812A0B4F36630C35B08DC66F07B1D693E0CE4C40C2"
+      "line_count": 66,
+      "path": ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
+      "sha256": "E3B7F3C54870ECAB55527E361929AA22ED095109A95BE1337F1AAE664B9A65CE"
     }
   ],
   "fixture_class_counts": {
-    "blocker_condition": 1,
-    "expected_fail": 1,
-    "expected_pass": 1
+    "expected_pass": 4
   },
   "fixture_results": [
     {
       "case_class": "expected_pass",
       "case_status": "pass",
       "command_arguments": [
-        "--input",
-        ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/skill-blueprint.json"
+        "--workspace-root",
+        ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+        "--registry",
+        "audit-registry.json",
+        "--runtime-root",
+        ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace/runtime",
+        "--output",
+        "-"
       ],
       "command_exit_code": 0,
-      "deterministic_repeat_checked": true,
       "expected_decision": "pass",
-      "fixture_id": "generate_skill_complex_public_input",
-      "fixture_path": ".agents/skills/skillguard/fixtures/complex_generation/cases/generate_skill_complex_public_input.fixture.json",
-      "generation_validation": {
-        "check_maintenance_record_decision": "pass",
-        "check_maintenance_record_exit_code": 0,
-        "cleanup_expected": true,
-        "detect_stale_evidence_count": 0,
-        "detect_stale_evidence_decision": "pass",
-        "detect_stale_evidence_exit_code": 0,
-        "deterministic_repeat_checked": true,
-        "generate_decision": "pass",
-        "generated_content_checks": [
-          {
-            "expected_substring_count": 7,
-            "missing_substrings": [],
-            "path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/SKILL.md"
-          },
-          {
-            "expected_substring_count": 3,
-            "missing_substrings": [],
-            "path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/README.md"
-          },
-          {
-            "expected_substring_count": 2,
-            "missing_substrings": [],
-            "path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/fixtures/fixture-manifest.json"
-          },
-          {
-            "expected_substring_count": 2,
-            "missing_substrings": [],
-            "path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/assets/templates/check_report.template.json"
-          },
-          {
-            "expected_substring_count": 3,
-            "missing_substrings": [],
-            "path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper/.skillguard/skillguard_manifest.json"
-          }
-        ],
-        "generated_manifest_schema_failures": [],
-        "missing_required_files": [],
-        "plan_decision": "pass",
-        "post_generation_checks": [
-          {
-            "command": "check-skill",
-            "reported_decision": "pass",
-            "status": "pass"
-          },
-          {
-            "command": "check-contract",
-            "reported_decision": "pass",
-            "status": "pass"
-          }
-        ],
-        "public_boundary_problem_count": 0,
-        "refresh_maintenance_decision": "pass",
-        "refresh_maintenance_exit_code": 0,
-        "repeat_created_file_count": 0,
-        "required_file_count": 20,
-        "target_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper"
-      },
-      "line_count": 107,
-      "no_mutation_paths": {
-        ".agents/skills/skillguard/fixtures/complex_generation/probes/preserve-note.txt": {
-          "exists": true,
-          "kind": "file",
-          "sha256": "20267A4B3D788AE3D0B044F3100E8D069684C88BBFAE7FBE3EED2196DF8E4D2A",
-          "valid": true
-        }
-      },
+      "fixture_id": "portfolio_audit_current_passes",
+      "fixture_path": ".agents/skills/skillguard/fixtures/portfolio_runtime/cases/portfolio_audit_current_passes.fixture.json",
+      "line_count": 15,
       "observed_blocker_count": 0,
       "observed_blockers": [],
+      "observed_checks": [],
       "observed_decision": "pass",
       "observed_failure_count": 0,
       "observed_failures": [],
-      "post_generation_mutations": [],
-      "preexisting_files": [],
       "problems": [],
-      "sha256": "26BEEF345F617BBC034BCD83B140F34DCA867D31270FBF1325310A47B9FF23C3",
-      "target_command": "generate-skill",
-      "target_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-public-input/complex-generation-review-helper"
+      "sha256": "731CD2103B5295E130578B74B5587E55601FDD383315BF1A1565E2EE6CF4D5C2",
+      "target_command": "audit-portfolio",
+      "target_path": ""
     },
     {
-      "case_class": "blocker_condition",
+      "case_class": "expected_pass",
       "case_status": "pass",
       "command_arguments": [
-        "--input",
-        ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-missing-description-blocks/skill-blueprint.json"
-      ],
-      "command_exit_code": 1,
-      "expected_decision": "block",
-      "fixture_id": "generate_skill_complex_missing_description_blocks",
-      "fixture_path": ".agents/skills/skillguard/fixtures/complex_generation/cases/generate_skill_complex_missing_description_blocks.fixture.json",
-      "generation_validation": {
-        "check_maintenance_record_decision": "pass",
-        "check_maintenance_record_exit_code": 0,
-        "cleanup_expected": true,
-        "generate_decision": "block",
-        "missing_required_files": [
-          "SKILL.md",
-          "README.md",
-          "references/README.md",
-          "assets/schemas/skillguard_generated_record.schema.json",
-          "assets/templates/check_report.template.json",
-          "scripts/README.md",
-          "scripts/run_checks.py",
-          "fixtures/README.md",
-          "fixtures/fixture-manifest.json",
-          "tests/README.md",
-          "tests/test_smoke.py",
-          ".skillguard/work-contract.json",
-          ".skillguard/check_manifest.json",
-          ".skillguard/checks/check_route.py",
-          ".skillguard/checks/check_phase_order.py",
-          ".skillguard/checks/check_evidence.py",
-          ".skillguard/checks/check_quality_floor.py",
-          ".skillguard/checks/check_closure.py",
-          ".skillguard/skillguard_manifest.json"
-        ],
-        "plan_decision": "pass",
-        "post_generation_checks": [],
-        "required_file_count": 19,
-        "target_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-missing-description-blocks/complex-generation-malformed-helper"
-      },
-      "line_count": 47,
-      "no_mutation_paths": {},
-      "observed_blocker_count": 1,
-      "observed_blockers": [
-        "Skill Blueprint skill object missing required field: description"
-      ],
-      "observed_decision": "block",
-      "observed_failure_count": 0,
-      "observed_failures": [],
-      "post_generation_mutations": [],
-      "preexisting_files": [],
-      "problems": [
-        "blocker: Skill Blueprint skill object missing required field: description"
-      ],
-      "sha256": "429363632A7E31380388E0C044529D5985031FB8683CB88AA3F9A6D63756928F",
-      "target_command": "generate-skill",
-      "target_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-missing-description-blocks/complex-generation-malformed-helper"
-    },
-    {
-      "case_class": "expected_fail",
-      "case_status": "pass",
-      "command_arguments": [
-        "--input",
-        ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-corrupted-output-fails/skill-blueprint.json"
+        "--workspace-root",
+        ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+        "--registry",
+        "impact-registry.json",
+        "--change",
+        "impact-change.json",
+        "--write",
+        "--output",
+        "-"
       ],
       "command_exit_code": 0,
-      "expected_decision": "fail",
-      "fixture_id": "generate_skill_complex_corrupted_output_fails",
-      "fixture_path": ".agents/skills/skillguard/fixtures/complex_generation/cases/generate_skill_complex_corrupted_output_fails.fixture.json",
-      "generation_validation": {
-        "check_maintenance_record_decision": "pass",
-        "check_maintenance_record_exit_code": 0,
-        "cleanup_expected": true,
-        "detect_stale_evidence_count": 3,
-        "detect_stale_evidence_decision": "block",
-        "detect_stale_evidence_exit_code": 1,
-        "generate_decision": "pass",
-        "generated_content_checks": [],
-        "generated_manifest_schema_failures": [
-          "$.fixture_version: missing required field",
-          "$.checker_version: missing required field",
-          "$.compatibility: missing required field",
-          "$.evidence: missing required field",
-          "$.skipped_checks: missing required field",
-          "$.residual_risk: missing required field",
-          "$.claim_boundary: missing required field",
-          "$.fixtures[0]: expected object"
-        ],
-        "missing_required_files": [
-          "SKILL.md"
-        ],
-        "plan_decision": "pass",
-        "post_generation_checks": [
-          {
-            "command": "check-skill",
-            "reported_decision": "pass",
-            "status": "pass"
-          },
-          {
-            "command": "check-contract",
-            "reported_decision": "pass",
-            "status": "pass"
-          }
-        ],
-        "public_boundary_problem_count": 0,
-        "required_file_count": 19,
-        "target_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-corrupted-output-fails/complex-generation-corrupted-helper"
-      },
-      "line_count": 52,
-      "no_mutation_paths": {},
+      "expected_decision": "pass",
+      "fixture_id": "portfolio_impact_invalidates_old_green",
+      "fixture_path": ".agents/skills/skillguard/fixtures/portfolio_runtime/cases/portfolio_impact_invalidates_old_green.fixture.json",
+      "line_count": 16,
       "observed_blocker_count": 0,
       "observed_blockers": [],
-      "observed_decision": "fail",
+      "observed_checks": [],
+      "observed_decision": "pass",
       "observed_failure_count": 0,
       "observed_failures": [],
-      "post_generation_mutations": [
-        {
-          "action": "remove_file",
-          "path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-corrupted-output-fails/complex-generation-corrupted-helper/SKILL.md"
-        },
-        {
-          "action": "override_file",
-          "path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-corrupted-output-fails/complex-generation-corrupted-helper/fixtures/fixture-manifest.json"
-        }
+      "problems": [],
+      "sha256": "4B4BACA6DDFEFDE344626E93368621BF66486A938870076B75EAD43A5A4685C1",
+      "target_command": "mark-portfolio-impact",
+      "target_path": ""
+    },
+    {
+      "case_class": "expected_pass",
+      "case_status": "pass",
+      "command_arguments": [
+        "--workspace-root",
+        ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+        "--registry",
+        "reuse-registry.json",
+        "--request",
+        "reuse-request.json",
+        "--ticket-output",
+        "reuse-ticket.json",
+        "--write",
+        "--output",
+        "-"
       ],
-      "preexisting_files": [],
-      "problems": [
-        "generated scaffold is missing required files: ['SKILL.md']",
-        "generated fixture manifest is not schema compliant",
-        "detect-stale-evidence did not pass for current generated evidence"
+      "command_exit_code": 0,
+      "expected_decision": "pass",
+      "fixture_id": "portfolio_reuse_requires_registered_change",
+      "fixture_path": ".agents/skills/skillguard/fixtures/portfolio_runtime/cases/portfolio_reuse_requires_registered_change.fixture.json",
+      "line_count": 18,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [],
+      "observed_decision": "pass",
+      "observed_failure_count": 0,
+      "observed_failures": [],
+      "problems": [],
+      "sha256": "0F6F1E5E612899256E10144F0A9B1D7E99F65250466319C6AB8861819489A1EB",
+      "target_command": "issue-portfolio-reuse-ticket",
+      "target_path": ""
+    },
+    {
+      "case_class": "expected_pass",
+      "case_status": "pass",
+      "command_arguments": [
+        "--workspace-root",
+        ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+        "--registry",
+        "graduation-registry.json",
+        "--evidence",
+        "graduation-evidence.json",
+        "--runtime-root",
+        ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace/runtime",
+        "--receipt-output",
+        "graduation-receipt.json",
+        "--write",
+        "--output",
+        "-"
       ],
-      "sha256": "1FEA932142DA0F0073E342EC825B26C0230891CBB2B5776CD383508AD12BC2E2",
-      "target_command": "generate-skill",
-      "target_path": ".agents/skills/skillguard/fixtures/complex_generation/workspace/generate-skill-complex-corrupted-output-fails/complex-generation-corrupted-helper"
+      "command_exit_code": 0,
+      "expected_decision": "pass",
+      "fixture_id": "portfolio_graduation_covers_declared_capability",
+      "fixture_path": ".agents/skills/skillguard/fixtures/portfolio_runtime/cases/portfolio_graduation_covers_declared_capability.fixture.json",
+      "line_count": 20,
+      "observed_blocker_count": 0,
+      "observed_blockers": [],
+      "observed_checks": [],
+      "observed_decision": "pass",
+      "observed_failure_count": 0,
+      "observed_failures": [],
+      "problems": [],
+      "sha256": "27637E54DA26A840BB2834FB8CAF5BBA2E20B2D356E52DCF90AD7E070FA37137",
+      "target_command": "graduate-portfolio",
+      "target_path": ""
     }
   ],
   "maintenance_record": {
-    "artifact_id": ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
+    "artifact_id": ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
     "blockers": [],
     "command_surface": {
       "checker_name": "fixture-test",
@@ -536,13 +431,13 @@
         }
       ]
     },
-    "content_hash": "D5A83A2E2DB794E042AC1EF61A5496BE6BAF241A97BD1D52CF2A3D3D43194AC4",
-    "evidence_timestamp": "2026-07-10T12:41:42Z",
-    "record_id": "fixture_evidence:B277A9C051EDA639",
+    "content_hash": "177EAC98A94B8D32771839039D4A614F42E1967742239B94F47268E7D7849956",
+    "evidence_timestamp": "2026-07-10T12:41:47Z",
+    "record_id": "fixture_evidence:C119425AAE10E9D2",
     "record_kind": "fixture_evidence",
     "refresh_action": {
       "action": "fixture_test",
-      "fixture_result_count": 3,
+      "fixture_result_count": 4,
       "status": "pass"
     },
     "route_node_id": "fixture-test",
@@ -557,5 +452,5 @@
   ],
   "schema_version": "skillguard.cli_result.v1",
   "skipped_checks": [],
-  "target_path": ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json"
+  "target_path": ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json"
 }

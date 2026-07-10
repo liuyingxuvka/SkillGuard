@@ -1,0 +1,27 @@
+{
+  "schema_version": "skillguard.portfolio_registry.v1",
+  "registry_id": "portfolio:fixture:graduation",
+  "active_guard": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+  },
+  "entries": [
+    {
+      "skill_id": "fixture-skill",
+      "order": 0,
+      "lifecycle": "active_owned",
+      "graduation_status": "pending",
+      "capability_inventory_status": "current",
+      "required_capability_ids": ["capability:primary"],
+      "canonical_source": {"path_token": "fixture/source"},
+      "consumed_guard_feature_tags": ["portfolio"],
+      "contract_hash": "",
+      "representative_jobs": [],
+      "representative_job_ids": [],
+      "full_run_receipt": null,
+      "reuse_ticket": null,
+      "failure_classification": null
+    }
+  ]
+}

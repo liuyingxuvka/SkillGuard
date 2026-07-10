@@ -1,0 +1,20 @@
+{
+  "fixture_id": "portfolio_graduation_covers_declared_capability",
+  "target_command": "graduate-portfolio",
+  "expected_decision": "pass",
+  "arguments": [
+    "--workspace-root",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+    "--registry",
+    "graduation-registry.json",
+    "--evidence",
+    "graduation-evidence.json",
+    "--runtime-root",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace/runtime",
+    "--receipt-output",
+    "graduation-receipt.json",
+    "--write",
+    "--output",
+    "-"
+  ]
+}

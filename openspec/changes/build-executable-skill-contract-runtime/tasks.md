@@ -75,11 +75,12 @@
 
 ## 10. One-skill-at-a-time portfolio calibration
 
-- [ ] 10.1 Freeze the optimization queue from self-host and Autonomous UI pilot through SourceGuard, WorldGuard, Research Investigation, Academic Thesis, TraceGuard, Storyline, LogicGuard, Travel Story Planner, DataBank, Khaos Brain, PhysicsGuard, and later adopted candidates.
-- [ ] 10.2 Extend the private portfolio registry with order, target source/version, Guard compatibility fingerprint, contract hash, representative job ids, full-run receipt, reuse ticket, last revalidation, and graduation status.
+- [x] 10.1 Freeze the optimization queue from self-host and Autonomous UI through SourceGuard, WorldGuard, Research Investigation, Academic Thesis, TraceGuard, Storyline, LogicGuard, Travel Story Planner, Khaos Brain, PhysicsGuard, user-owned software, later adopted candidates, and finally FlowGuard/FlowPilot; explicitly exclude the private DataBank skill and other user-declared retired/system skills.
+- [x] 10.2 Extend the private portfolio registry with order, target source/version, complete/pending capability inventory, Guard compatibility fingerprint, contract hash, receipt-bound representative jobs, full-run receipt, reuse ticket, last revalidation, graduation status, explicit exclusion records, supporting repositories, and unresolved adoption metadata.
 - [ ] 10.3 For every target, capture pre-change real-job baselines and run positive, invalid-input, recovery/resume, out-of-scope, native, artifact, and judged-quality evidence after the functional repair.
 - [ ] 10.4 Classify each failure as target implementation, target binding, SkillGuard model miss, SkillGuard runtime/validator gap, or external blocker and preserve the classification in the run and portfolio records.
 - [ ] 10.5 For every SkillGuard miss, add the observed regression and generalized ContractExhaustion cases before the Guard repair; rerun MTA, TestMesh, self-host, and the current target.
 - [ ] 10.6 Emit affected Guard feature tags for every Guard change and set matching prior graduates to `revalidation_required` instead of preserving old green status.
 - [ ] 10.7 Run universal compile/schema/freshness scans across all graduates and real functional regression across every affected graduate; issue TestResultReuseTickets only with current source, contract, Guard, command, environment, and coverage fingerprints.
 - [ ] 10.8 Before each target graduates, run the parent Portfolio Graduation Gate and require every current/prior target to provide a current full receipt or valid reuse ticket; require all-real full reruns for broad closure/schema/receipt/routing changes and final release.
+- [ ] 10.9 Require every graduation to cover all declared capabilities, hash the canonical representative-job/evidence map into the full receipt, verify reuse against registered Guard history, and serialize impact/reuse/graduation writes with recoverable one-writer locking.

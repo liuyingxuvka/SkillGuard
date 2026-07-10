@@ -8,6 +8,29 @@
     "plan-skill",
     "generate-skill",
     "generate-suite",
+    "scan-global-skills",
+    "build-global-registry",
+    "check-global-registry",
+    "resolve-global-skill",
+    "render-global-prompt",
+    "install-global-prompt",
+    "check-global-prompt",
+    "refresh-global-router",
+    "audit-installed-skills",
+    "audit-portfolio",
+    "mark-portfolio-impact",
+    "issue-portfolio-reuse-ticket",
+    "graduate-portfolio",
+    "check-json-schema",
+    "compile-contract",
+    "check-contract",
+    "check-depth",
+    "check-readme-release",
+    "select-route",
+    "start-run",
+    "advance-run",
+    "check-run",
+    "close-run",
     "init-target",
     "init-suite",
     "mark",
@@ -17,6 +40,9 @@
     "check-suite-map",
     "check-suite-contract",
     "check-fixture-manifest",
+    "check-work-contract",
+    "check-run-record",
+    "check-check-manifest",
     "fixture-test",
     "detect-stale-evidence",
     "refresh-maintenance",
@@ -30,132 +56,51 @@
     "write-report"
   ],
   "current_route_registry": [
-    {
-      "command_family": "route-task",
-      "responsibility": "router",
-      "route_id": "skillguard.route.route-task.v1",
-      "route_node_id": "route-task",
-      "status": "current"
-    },
-    {
-      "command_family": "plan-skill",
-      "responsibility": "planner",
-      "route_id": "skillguard.route.plan-skill.v1",
-      "route_node_id": "plan-skill",
-      "status": "current"
-    },
-    {
-      "command_family": "generate-skill",
-      "responsibility": "generator",
-      "route_id": "skillguard.route.generate-skill.v1",
-      "route_node_id": "generate-skill",
-      "status": "current"
-    },
-    {
-      "command_family": "generate-suite",
-      "responsibility": "generator",
-      "route_id": "skillguard.route.generate-suite.v1",
-      "route_node_id": "generate-suite",
-      "status": "current"
-    },
-    {
-      "command_family": "check-skill",
-      "responsibility": "checker",
-      "route_id": "skillguard.route.check-skill.v1",
-      "route_node_id": "check-skill",
-      "status": "current"
-    },
-    {
-      "command_family": "check-suite",
-      "responsibility": "checker",
-      "route_id": "skillguard.route.check-suite.v1",
-      "route_node_id": "check-suite",
-      "status": "current"
-    },
-    {
-      "command_family": "fixture-test",
-      "responsibility": "checker",
-      "route_id": "skillguard.route.fixture-test.v1",
-      "route_node_id": "fixture-test",
-      "status": "current"
-    },
-    {
-      "command_family": "detect-stale-evidence",
-      "responsibility": "checker",
-      "route_id": "skillguard.route.detect-stale-evidence.v1",
-      "route_node_id": "detect-stale-evidence",
-      "status": "current"
-    },
-    {
-      "command_family": "refresh-maintenance",
-      "responsibility": "maintainer",
-      "route_id": "skillguard.route.refresh-maintenance.v1",
-      "route_node_id": "refresh-maintenance",
-      "status": "current"
-    },
-    {
-      "command_family": "review-checker-change",
-      "responsibility": "reviewer",
-      "route_id": "skillguard.route.review-checker-change.v1",
-      "route_node_id": "review-checker-change",
-      "status": "current"
-    },
-    {
-      "command_family": "check-maintenance-record",
-      "responsibility": "checker",
-      "route_id": "skillguard.route.check-maintenance-record.v1",
-      "route_node_id": "check-maintenance-record",
-      "status": "current"
-    },
-    {
-      "command_family": "make-closure",
-      "responsibility": "closure",
-      "route_id": "skillguard.route.make-closure.v1",
-      "route_node_id": "make-closure",
-      "status": "current"
-    },
-    {
-      "command_family": "self-check",
-      "responsibility": "checker",
-      "route_id": "skillguard.route.self-check.v1",
-      "route_node_id": "self-check",
-      "status": "current"
-    },
-    {
-      "command_family": "inventory",
-      "responsibility": "inventory",
-      "route_id": "skillguard.route.inventory.v1",
-      "route_node_id": "inventory",
-      "status": "current"
-    }
+    {"command_family": "route-task", "responsibility": "router", "route_id": "skillguard.route.route-task.v1", "route_node_id": "route-task", "status": "current"},
+    {"command_family": "plan-skill", "responsibility": "planner", "route_id": "skillguard.route.plan-skill.v1", "route_node_id": "plan-skill", "status": "current"},
+    {"command_family": "generate-skill", "responsibility": "generator", "route_id": "skillguard.route.generate-skill.v1", "route_node_id": "generate-skill", "status": "current"},
+    {"command_family": "generate-suite", "responsibility": "generator", "route_id": "skillguard.route.generate-suite.v1", "route_node_id": "generate-suite", "status": "current"},
+    {"command_family": "compile-contract", "responsibility": "contract-compiler", "route_id": "skillguard.route.compile-contract.v1", "route_node_id": "compile-contract", "status": "current"},
+    {"command_family": "check-contract", "responsibility": "checker", "route_id": "skillguard.route.check-contract.v1", "route_node_id": "check-contract", "status": "current"},
+    {"command_family": "check-depth", "responsibility": "checker", "route_id": "skillguard.route.check-depth.v1", "route_node_id": "check-depth", "status": "current"},
+    {"command_family": "check-readme-release", "responsibility": "checker", "route_id": "skillguard.route.check-readme-release.v1", "route_node_id": "check-readme-release", "status": "current"},
+    {"command_family": "audit-installed-skills", "responsibility": "checker", "route_id": "skillguard.route.audit-installed-skills.v1", "route_node_id": "audit-installed-skills", "status": "current"},
+    {"command_family": "audit-portfolio", "responsibility": "portfolio-runtime", "route_id": "skillguard.route.audit-portfolio.v1", "route_node_id": "audit-portfolio", "status": "current"},
+    {"command_family": "select-route", "responsibility": "runtime-router", "route_id": "skillguard.route.select-route.v1", "route_node_id": "select-route", "status": "current"},
+    {"command_family": "start-run", "responsibility": "runtime-ledger", "route_id": "skillguard.route.start-run.v1", "route_node_id": "start-run", "status": "current"},
+    {"command_family": "check-run", "responsibility": "runtime-checker", "route_id": "skillguard.route.check-run.v1", "route_node_id": "check-run", "status": "current"},
+    {"command_family": "close-run", "responsibility": "closure", "route_id": "skillguard.route.close-run.v1", "route_node_id": "close-run", "status": "current"},
+    {"command_family": "check-skill", "responsibility": "checker", "route_id": "skillguard.route.check-skill.v1", "route_node_id": "check-skill", "status": "current"},
+    {"command_family": "check-suite", "responsibility": "checker", "route_id": "skillguard.route.check-suite.v1", "route_node_id": "check-suite", "status": "current"},
+    {"command_family": "fixture-test", "responsibility": "checker", "route_id": "skillguard.route.fixture-test.v1", "route_node_id": "fixture-test", "status": "current"},
+    {"command_family": "detect-stale-evidence", "responsibility": "checker", "route_id": "skillguard.route.detect-stale-evidence.v1", "route_node_id": "detect-stale-evidence", "status": "current"},
+    {"command_family": "refresh-maintenance", "responsibility": "maintainer", "route_id": "skillguard.route.refresh-maintenance.v1", "route_node_id": "refresh-maintenance", "status": "current"},
+    {"command_family": "review-checker-change", "responsibility": "reviewer", "route_id": "skillguard.route.review-checker-change.v1", "route_node_id": "review-checker-change", "status": "current"},
+    {"command_family": "check-maintenance-record", "responsibility": "checker", "route_id": "skillguard.route.check-maintenance-record.v1", "route_node_id": "check-maintenance-record", "status": "current"},
+    {"command_family": "make-closure", "responsibility": "closure", "route_id": "skillguard.route.make-closure.v1", "route_node_id": "make-closure", "status": "current"},
+    {"command_family": "self-check", "responsibility": "checker", "route_id": "skillguard.route.self-check.v1", "route_node_id": "self-check", "status": "current"},
+    {"command_family": "inventory", "responsibility": "inventory", "route_id": "skillguard.route.inventory.v1", "route_node_id": "inventory", "status": "current"}
   ],
   "evidence_records": [],
   "fixture_manifests": [
     {
-      "fixture_ids": [
-        "generate_skill_existing_user_file_blocks",
-        "generate_skill_simple_public_input"
-      ],
+      "fixture_ids": ["generate_skill_existing_user_file_blocks", "generate_skill_simple_public_input"],
       "path": ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
-      "sha256": "BE2E92B79D3D915F3E0EA482986E91A2A44D9455C478DA24998F470C48A1C87F"
+      "sha256": "FDF922CAE3C370B944D984522A403E3C987C02A4E932CE95FC5AE6AB704BD678"
     },
     {
-      "fixture_ids": [
-        "generate_skill_complex_corrupted_output_fails",
-        "generate_skill_complex_missing_description_blocks",
-        "generate_skill_complex_public_input"
-      ],
+      "fixture_ids": ["generate_skill_complex_corrupted_output_fails", "generate_skill_complex_missing_description_blocks", "generate_skill_complex_public_input"],
       "path": ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
-      "sha256": "C0D6A3E7FA983F618EC1497651C2B8EA23B14B9943A5402A60214FE963FA4AE9"
+      "sha256": "2A795ACDF826742D96EC1A812A0B4F36630C35B08DC66F07B1D693E0CE4C40C2"
+    },
+    {
+      "fixture_ids": ["portfolio_audit_current_passes", "portfolio_graduation_covers_declared_capability", "portfolio_impact_invalidates_old_green", "portfolio_reuse_requires_registered_change"],
+      "path": ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
+      "sha256": "E3B7F3C54870ECAB55527E361929AA22ED095109A95BE1337F1AAE664B9A65CE"
     }
   ],
-  "public_safety_checks": [
-    "private-local-path",
-    "private-runtime-id",
-    "private-key-material",
-    "credential-assignment"
-  ],
-  "route_registry_version": "skillguard.route_registry.v1",
+  "public_safety_checks": ["private-local-path", "private-runtime-id", "private-key-material", "credential-assignment"],
+  "route_registry_version": "skillguard.route_registry.v2",
   "route_version": "4",
   "schema_version": "skillguard.checker_change_baseline.v1"
 }

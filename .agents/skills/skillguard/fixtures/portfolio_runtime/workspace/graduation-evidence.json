@@ -1,0 +1,36 @@
+{
+  "schema_version": "skillguard.portfolio_graduation_evidence.v1",
+  "skill_id": "fixture-skill",
+  "version": "1.0.0",
+  "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+  "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "guard_runtime": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+  },
+  "representative_jobs": [
+    {
+      "job_id": "job:primary",
+      "covered_capability_ids": ["capability:primary"],
+      "evidence_refs": ["evidence:primary"]
+    }
+  ],
+  "full_run_receipt": {
+    "receipt_id": "receipt:fixture-skill",
+    "status": "current",
+    "guard_runtime": {
+      "runtime_id": "skillguard-v2",
+      "file_count": 1,
+      "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+    },
+    "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+    "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+    "command_fingerprint": "3333333333333333333333333333333333333333333333333333333333333333",
+    "environment_fingerprint": "4444444444444444444444444444444444444444444444444444444444444444",
+    "coverage_fingerprint": "766803FBF520B1CCB82AA6FA33672EDBF8610C3BCFE2ECBFE37AB107C4E39B6E",
+    "result_hash": "5555555555555555555555555555555555555555555555555555555555555555",
+    "completed_at": "2026-07-10T00:00:00Z"
+  },
+  "failure_classification": null
+}

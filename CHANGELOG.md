@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.0 - 2026-07-10
+
+- Added a native private portfolio runtime with ordered active/adopted targets, explicit excluded/retired/system lifecycles, supporting-repository ownership, candidate audits, Guard-change impact propagation, proof-bound reuse, and one-target graduation receipts.
+- Replaced non-empty “representative job” sufficiency with current capability inventories: every graduation job names covered capability ids and direct evidence refs, and the canonical job map must match the full receipt coverage fingerprint.
+- Made old green evidence fail closed after every registered Guard change. Reuse now requires an append-only registered non-broad change, no consumed-feature intersection, the unchanged five-part source/contract/command/environment/coverage identity, and the previous full receipt.
+- Added exclusive portfolio-registry writer locks with abandoned local-lock recovery; ticket and receipt artifacts are written before a successful registry reference to prevent concurrent lost updates and dangling success claims.
+- Expanded the Guard compatibility fingerprint from the inner Python package to the complete executable protection surface: scripts, schemas, Skill instructions, references, TestMesh configuration, and compiled contract/check bindings.
+- Added repository/installed-skill/scripts/package runtime-root normalization with expected-versus-actual mismatch diagnostics.
+- Replaced portfolio model assertions with native self-check commands and four disposable CLI fixtures covering audit, impact, reuse, and graduation. Added FlowGuard scenarios and ContractExhaustion cases for partial capability coverage and concurrent portfolio writers.
+
 ## v0.2.0 - 2026-07-10
 
 - Added the FlowGuard-backed executable-contract V2 compiler: a target model and confirmed binding source now deterministically produce a compiled contract and exact check manifest.

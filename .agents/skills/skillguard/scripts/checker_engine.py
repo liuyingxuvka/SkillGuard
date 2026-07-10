@@ -26,6 +26,7 @@ from skillguard_utils import (
     utc_timestamp,
     write_report,
 )
+from skillguard_v2.portfolio_cli import PORTFOLIO_COMMANDS
 
 
 CHECKER_VERSION = "skillguard.local_cli_dispatch.v1"
@@ -203,6 +204,10 @@ FIXTURE_TARGET_RUNTIME_COMMANDS = {
     "install-global-prompt",
     "refresh-global-router",
     "audit-installed-skills",
+    "audit-portfolio",
+    "mark-portfolio-impact",
+    "issue-portfolio-reuse-ticket",
+    "graduate-portfolio",
     "render-global-prompt",
     "resolve-global-skill",
     "route-task",
@@ -430,7 +435,7 @@ GENERATE_SUITE_REQUIRED_FILES = (
     ".skillguard/suite/evidence/suite_closure.json",
     ".skillguard/suite/reports/suite_generation_report.json",
 )
-ROUTE_TASK_REGISTRY_VERSION = "skillguard.route_registry.v1"
+ROUTE_TASK_REGISTRY_VERSION = "skillguard.route_registry.v2"
 ROUTE_TASK_PATH_FIELDS = {
     "blueprint",
     "blueprint_path",
@@ -636,6 +641,23 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
             "global skill audit",
             "installed skill depth",
             "skillguard optimized skills",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.audit-portfolio.v1",
+        "route_node_id": "audit-portfolio",
+        "command_family": "audit-portfolio",
+        "responsibility": "portfolio-runtime",
+        "next_step": "Audit the private portfolio registry before impact propagation, reuse, or one-target graduation.",
+        "status": "current",
+        "hints": ("audit-portfolio", "portfolio-audit", "portfolio-graduation"),
+        "keywords": (
+            "audit portfolio",
+            "portfolio registry",
+            "graduate skill portfolio",
+            "prior skill revalidation",
+            "reuse ticket",
+            "skillguard compatibility fingerprint",
         ),
     },
     {
@@ -14592,6 +14614,9 @@ def run_fixture_handler(handler: Callable[[list[str]], int], argv: list[str]) ->
 MUTATING_RUNTIME_FIXTURE_COMMANDS = {
     "build-global-registry",
     "install-global-prompt",
+    "mark-portfolio-impact",
+    "issue-portfolio-reuse-ticket",
+    "graduate-portfolio",
     "refresh-global-router",
     "render-global-prompt",
 }
@@ -15461,6 +15486,10 @@ def evaluate_runtime_fixture_case(
         "close-run": close_run,
         "compile-contract": compile_contract,
         "install-global-prompt": install_global_prompt,
+        "audit-portfolio": PORTFOLIO_COMMANDS["audit-portfolio"],
+        "mark-portfolio-impact": PORTFOLIO_COMMANDS["mark-portfolio-impact"],
+        "issue-portfolio-reuse-ticket": PORTFOLIO_COMMANDS["issue-portfolio-reuse-ticket"],
+        "graduate-portfolio": PORTFOLIO_COMMANDS["graduate-portfolio"],
         "refresh-global-router": refresh_global_router,
         "render-global-prompt": render_global_prompt,
         "resolve-global-skill": resolve_global_skill,
@@ -16315,6 +16344,10 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "check-global-prompt": "Check the managed global SkillGuard router block is present and current.",
     "refresh-global-router": "Scan skills, refresh registry/projection artifacts, install AGENTS.md, and verify freshness.",
     "audit-installed-skills": "Audit installed user skills for deep SkillGuard contract coverage.",
+    "audit-portfolio": "Audit private portfolio structure, Guard compatibility, child evidence currentness, and prior-skill visibility.",
+    "mark-portfolio-impact": "Invalidate current portfolio evidence after a declared Guard change without silently preserving old green status.",
+    "issue-portfolio-reuse-ticket": "Issue proof-bound reuse only for an unchanged target identity outside a non-broad Guard change.",
+    "graduate-portfolio": "Graduate one target only when its full evidence and every prior active portfolio entry are current.",
     "check-json-schema": "Check one JSON file against an explicit local schema file.",
     "compile-contract": "Compile or write a runnable SkillGuard work contract for a target skill.",
     "check-contract": "Check a target work contract for schema, hash, references, scripts, and closure-rule readiness.",
@@ -16367,6 +16400,7 @@ COMMANDS: dict[str, CommandHandler] = {
     "check-global-prompt": check_global_prompt,
     "refresh-global-router": refresh_global_router,
     "audit-installed-skills": audit_installed_skills,
+    **PORTFOLIO_COMMANDS,
     "check-json-schema": check_json_schema,
     "compile-contract": compile_contract,
     "check-contract": check_contract,

@@ -50,6 +50,12 @@ class ExecutableContractModelTests(unittest.TestCase):
             "v1_alternate_success_blocks",
             "non_monotonic_profile_blocks",
             "stale_prior_graduate_blocks",
+            "undeclared_guard_change_blocks_portfolio",
+            "old_green_after_guard_change_blocks_portfolio",
+            "broad_or_changed_identity_reuse_blocks_portfolio",
+            "portfolio_receipt_without_prior_evidence_blocks",
+            "partial_capability_coverage_blocks_portfolio",
+            "concurrent_portfolio_writer_blocks",
         }
         self.assertTrue(expected.issubset(scenario_names))
 
@@ -84,6 +90,14 @@ class ExecutableContractModelTests(unittest.TestCase):
             "case:loop:no-delta",
             "case:loop:over-bound",
             "case:portfolio:prior-stale",
+            "case:portfolio:guard-change-unregistered",
+            "case:portfolio:old-green-preserved",
+            "case:portfolio:broad-reuse",
+            "case:portfolio:affected-reuse",
+            "case:portfolio:identity-changed-reuse",
+            "case:portfolio:inexact-parent-receipt",
+            "case:portfolio:capability-gap",
+            "case:portfolio:concurrent-writer",
         }
         self.assertTrue(expected.issubset(case_ids))
 

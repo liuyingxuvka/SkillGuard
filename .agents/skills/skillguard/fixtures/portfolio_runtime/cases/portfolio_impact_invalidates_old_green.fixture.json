@@ -1,0 +1,16 @@
+{
+  "fixture_id": "portfolio_impact_invalidates_old_green",
+  "target_command": "mark-portfolio-impact",
+  "expected_decision": "pass",
+  "arguments": [
+    "--workspace-root",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+    "--registry",
+    "impact-registry.json",
+    "--change",
+    "impact-change.json",
+    "--write",
+    "--output",
+    "-"
+  ]
+}

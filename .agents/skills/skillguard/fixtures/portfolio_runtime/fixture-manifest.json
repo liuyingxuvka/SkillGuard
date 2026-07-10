@@ -1,0 +1,66 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "portfolio-runtime-fixtures.v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "compatibility": {
+    "status": "compatible",
+    "notes": [
+      "Portfolio fixtures execute the public audit, impact, reuse, and graduation command paths.",
+      "Mutating cases run only in marker-owned repository-local sandbox copies that are removed after each case."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "portfolio_audit_current_passes",
+      "fixture_type": "regression",
+      "target_rule": "audit-portfolio accepts exact current capability and receipt evidence under the supplied runtime identity.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/portfolio_audit_current_passes.fixture.json",
+      "known_limitations": ["Uses a synthetic one-file Guard runtime and does not prove a real target job."]
+    },
+    {
+      "fixture_id": "portfolio_impact_invalidates_old_green",
+      "fixture_type": "regression",
+      "target_rule": "mark-portfolio-impact serializes a declared Guard change and invalidates old current evidence.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/portfolio_impact_invalidates_old_green.fixture.json",
+      "known_limitations": ["Covers one broad synthetic Guard change."]
+    },
+    {
+      "fixture_id": "portfolio_reuse_requires_registered_change",
+      "fixture_type": "regression",
+      "target_rule": "issue-portfolio-reuse-ticket accepts only a registered non-broad non-intersecting change and unchanged five-part identity.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/portfolio_reuse_requires_registered_change.fixture.json",
+      "known_limitations": ["Covers one valid reuse path; negative families remain in unit and FlowGuard model tests."]
+    },
+    {
+      "fixture_id": "portfolio_graduation_covers_declared_capability",
+      "fixture_type": "regression",
+      "target_rule": "graduate-portfolio binds representative jobs to receipt coverage and graduates exactly one active target.",
+      "expected_decision": "pass",
+      "status": "checked",
+      "path": "cases/portfolio_graduation_covers_declared_capability.fixture.json",
+      "known_limitations": ["Covers one target without prior graduates; prior-child blocking is covered by unit and model tests."]
+    }
+  ],
+  "evidence": [
+    "cases/portfolio_audit_current_passes.fixture.json",
+    "cases/portfolio_impact_invalidates_old_green.fixture.json",
+    "cases/portfolio_reuse_requires_registered_change.fixture.json",
+    "cases/portfolio_graduation_covers_declared_capability.fixture.json",
+    "../evidence_outputs/fixture_test_portfolio_runtime_current.json"
+  ],
+  "skipped_checks": [
+    "These synthetic fixtures do not claim real target-domain quality, package publication, GitHub release readiness, or future AI behavior.",
+    "They do not replace the full V2 TestMesh, legacy regression, self-host, external UI pressure test, or portfolio graduation evidence."
+  ],
+  "residual_risk": [
+    "Real portfolio entries still require private source, contract, environment, command, and coverage evidence.",
+    "Cross-process behavior still requires the dedicated lock regressions and real CLI runs."
+  ],
+  "claim_boundary": "This manifest proves only the listed synthetic portfolio command cases in disposable local workspaces. It does not prove runtime checker execution beyond this fixture invocation, broad fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, real target outcomes, external services, or future AI behavior without separate current evidence."
+}

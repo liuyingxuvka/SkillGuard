@@ -355,31 +355,83 @@
       "timeout_seconds": 30
     },
     {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard_portfolio_self_check.py",
+        "--mode",
+        "audit"
+      ],
       "check_id": "check:self:scan-graduate-freshness",
+      "command": "python",
       "covers_obligation_ids": [
         "obligation:portfolio-freshness"
       ],
+      "cwd_token": "repository_root",
       "evidence_class": "hard",
-      "kind": "model_assertion",
-      "timeout_seconds": 30
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 60
     },
     {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard_portfolio_self_check.py",
+        "--mode",
+        "impact"
+      ],
       "check_id": "check:self:revalidate-affected-graduates",
-      "covers_obligation_ids": [
-        "obligation:model-authority"
-      ],
-      "evidence_class": "hard",
-      "kind": "model_assertion",
-      "timeout_seconds": 30
-    },
-    {
-      "check_id": "check:self:issue-portfolio-receipt",
+      "command": "python",
       "covers_obligation_ids": [
         "obligation:portfolio-freshness"
       ],
+      "cwd_token": "repository_root",
       "evidence_class": "hard",
-      "kind": "model_assertion",
-      "timeout_seconds": 30
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 60
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard_portfolio_self_check.py",
+        "--mode",
+        "graduation"
+      ],
+      "check_id": "check:self:issue-portfolio-receipt",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:portfolio-freshness"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 60
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard.py",
+        "fixture-test",
+        "--manifest",
+        ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
+        "--output",
+        "-"
+      ],
+      "check_id": "check:self:portfolio-cli-fixtures",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:portfolio-freshness"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 120
     },
     {
       "check_id": "check:self:refresh-global-router",
@@ -611,6 +663,10 @@
     ".agents/skills/skillguard/scripts/skillguard_privacy.py",
     ".agents/skills/skillguard/scripts/skillguard_install.py",
     ".agents/skills/skillguard/scripts/skillguard.py",
+    ".agents/skills/skillguard/scripts/checker_engine.py",
+    ".agents/skills/skillguard/scripts/skillguard_utils.py",
+    ".agents/skills/skillguard/scripts/skillguard_portfolio_self_check.py",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime",
     ".agents/skills/skillguard/test-mesh.json",
     ".agents/skills/skillguard/public-export-policy.json",
     ".github/workflows/ci.yml",
@@ -621,7 +677,14 @@
     ".agents/skills/skillguard/assets/schemas/skillguard_work_contract.schema.json",
     ".agents/skills/skillguard/assets/schemas/skillguard_run_record.schema.json",
     ".agents/skills/skillguard/assets/schemas/skillguard_check_manifest.schema.json",
-    ".agents/skills/skillguard/references/skillguard-v1-field-lifecycle.md"
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_registry_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_guard_change_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_graduation_evidence_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_test_result_reuse_request_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_test_result_reuse_ticket_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_graduation_receipt_v1.schema.json",
+    ".agents/skills/skillguard/references/skillguard-v1-field-lifecycle.md",
+    ".agents/skills/skillguard/references/skillguard-v2-portfolio.md"
   ],
   "judgment_rubrics": [
     {
@@ -878,7 +941,8 @@
         "summary": "Execute and verify the self-host step step:issue-portfolio-receipt."
       },
       "check_ids": [
-        "check:self:issue-portfolio-receipt"
+        "check:self:issue-portfolio-receipt",
+        "check:self:portfolio-cli-fixtures"
       ],
       "output_artifact_ids": [],
       "step_id": "step:issue-portfolio-receipt"

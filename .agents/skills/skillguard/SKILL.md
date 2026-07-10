@@ -143,6 +143,19 @@ For V2 maintenance and self-hosting:
 - run `scripts/skillguard_privacy.py` over tracked and unignored release candidates; reject secrets, machine-specific paths, runtime state, private file types, and images without a current hash-bound visual review.
 - run `scripts/skillguard_install.py` for whole-tree staged installation; require source-manifest parity and installed-layout smoke checks before activation, preserve the previous active copy as a backup, and automatically restore it if post-activation validation fails. Partial file copying is not an acceptable installation or upgrade path.
 
+## Portfolio Calibration Mode
+
+Use Portfolio Calibration Mode after SkillGuard self-hosting when maintained targets are optimized one at a time. Follow `references/skillguard-v2-portfolio.md`.
+
+- Keep the portfolio registry private and outside public target repositories when it contains local source locations, private repository metadata, or unpublished evidence.
+- Run `audit-portfolio` before target work and before the next target graduates. Pending or revalidation-required skills remain visible; excluded private/system skills and supporting repositories use explicit non-active lifecycle records.
+- After any SkillGuard behavior change, run `mark-portfolio-impact` with the old/new Guard identities, affected feature tags, broad-change flag, and reason. Never preserve old green status silently.
+- Use `issue-portfolio-reuse-ticket` only for a non-broad, non-intersecting Guard change when source, contract, command, environment, and coverage fingerprints are all unchanged.
+- Run `graduate-portfolio` only after the target has a current, non-empty capability inventory and receipt-bound representative real jobs that cover every declared capability. It must block on a coverage gap or if any prior active entry lacks current full evidence or a history-verifiable reuse ticket.
+- Treat impact, reuse, and graduation as single-writer registry mutations. A live registry writer blocks a second writer; an abandoned local writer lock is recoverable without accepting concurrent lost updates.
+- Classify target failures as `target_implementation_gap`, `target_contract_binding_gap`, `skillguard_model_miss`, `skillguard_runtime_or_validator_gap`, or `environment_or_external_blocker`; an unresolved classification blocks graduation.
+- If a target exposes a SkillGuard miss, add the observed regression and generalized bad family first, repair SkillGuard, rerun self-host and affected prior targets, then retry the current target.
+
 ## Deep Contract Mode
 
 Use Deep Contract Mode when the question is not only "does a contract file exist?" but "does this contract actually cover what the target skill promises to do?"

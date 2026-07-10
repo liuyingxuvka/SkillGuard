@@ -37,7 +37,7 @@ class ProvenanceTests(unittest.TestCase):
         original = provenance.tomllib
         try:
             provenance.tomllib = None
-            self.assertEqual("0.2.0", project_version(ROOT / "pyproject.toml"))
+            self.assertEqual("0.3.0", project_version(ROOT / "pyproject.toml"))
         finally:
             provenance.tomllib = original
 

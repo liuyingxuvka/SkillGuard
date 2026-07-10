@@ -37,6 +37,11 @@
       "owner_suite_id": "v2-runtime-suite"
     },
     {
+      "partition_id": "portfolio-calibration",
+      "boundary": "private registry, Guard impact invalidation, proof-bound reuse, prior-child visibility, and one-target graduation",
+      "owner_suite_id": "v2-runtime-suite"
+    },
+    {
       "partition_id": "legacy-compatibility",
       "boundary": "unmigrated public CLI, generators, fixtures, and migration diagnostics",
       "owner_suite_id": "legacy-compatibility-suite"
@@ -51,7 +56,8 @@
         "route-and-claimed-run",
         "evidence-artifact-closure",
         "v1-lifecycle",
-        "installation-and-provenance"
+        "installation-and-provenance",
+        "portfolio-calibration"
       ],
       "commands": {
         "fast": [
@@ -61,6 +67,7 @@
           "tests/test_executable_contract_model.py",
           "tests/test_contract_compiler_v2.py",
           "tests/test_claimed_run_runtime.py",
+          "tests/test_portfolio_runtime_v2.py",
           "tests/test_v1_lifecycle.py",
           "-q"
         ],
@@ -85,6 +92,7 @@
           "tests/test_provenance.py",
           "tests/test_privacy.py",
           "tests/test_installation.py",
+          "tests/test_portfolio_runtime_v2.py",
           "-q"
         ],
         "full": [
@@ -108,6 +116,7 @@
           "tests/test_provenance.py",
           "tests/test_privacy.py",
           "tests/test_installation.py",
+          "tests/test_portfolio_runtime_v2.py",
           "-q"
         ]
       },
@@ -132,6 +141,7 @@
         "tests/test_provenance.py",
         "tests/test_privacy.py",
         "tests/test_installation.py",
+        "tests/test_portfolio_runtime_v2.py",
         ".agents/skills/skillguard/scripts/skillguard_install.py",
         ".github/workflows/ci.yml"
       ]
@@ -171,7 +181,8 @@
       "required_partition_ids": [
         "model-and-compilation",
         "route-and-claimed-run",
-        "v1-lifecycle"
+        "v1-lifecycle",
+        "portfolio-calibration"
       ],
       "claim_boundary": "Fast preflight covers the core V2 model, compiler, claimed-run identity, and V1 lifecycle. It does not prove the full receipt/closure matrix or legacy compatibility."
     },
@@ -186,7 +197,8 @@
         "route-and-claimed-run",
         "evidence-artifact-closure",
         "v1-lifecycle",
-        "installation-and-provenance"
+        "installation-and-provenance",
+        "portfolio-calibration"
       ],
       "claim_boundary": "Focused validation covers the complete V2 executable-contract runtime, lifecycle, installation, privacy, and provenance suite. It does not prove legacy CLI compatibility or an actual GitHub publication."
     },
@@ -203,6 +215,7 @@
         "evidence-artifact-closure",
         "v1-lifecycle",
         "installation-and-provenance",
+        "portfolio-calibration",
         "legacy-compatibility"
       ],
       "claim_boundary": "Full validation covers current V2 behavior, staged installation and rollback, privacy/provenance logic, and the maintained legacy migration surface. Other operating systems and actual GitHub publication require their own current gates."

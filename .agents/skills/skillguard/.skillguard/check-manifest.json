@@ -429,9 +429,10 @@
     },
     {
       "args": [
-        ".flowguard/development_process_flow/skillguard_executable_contract_model.py"
+        ".agents/skills/skillguard/scripts/skillguard_portfolio_self_check.py",
+        "--mode",
+        "audit"
       ],
-      "assertion_scope": "current_full_flowguard_model",
       "check_id": "check:self:scan-graduate-freshness",
       "command": "python",
       "covers_obligation_ids": [
@@ -442,32 +443,34 @@
       "expected": {
         "exit_code": 0
       },
-      "kind": "model_assertion",
-      "timeout_seconds": 30
+      "kind": "command",
+      "timeout_seconds": 60
     },
     {
       "args": [
-        ".flowguard/development_process_flow/skillguard_executable_contract_model.py"
+        ".agents/skills/skillguard/scripts/skillguard_portfolio_self_check.py",
+        "--mode",
+        "impact"
       ],
-      "assertion_scope": "current_full_flowguard_model",
       "check_id": "check:self:revalidate-affected-graduates",
       "command": "python",
       "covers_obligation_ids": [
-        "obligation:model-authority"
+        "obligation:portfolio-freshness"
       ],
       "cwd_token": "repository_root",
       "evidence_class": "hard",
       "expected": {
         "exit_code": 0
       },
-      "kind": "model_assertion",
-      "timeout_seconds": 30
+      "kind": "command",
+      "timeout_seconds": 60
     },
     {
       "args": [
-        ".flowguard/development_process_flow/skillguard_executable_contract_model.py"
+        ".agents/skills/skillguard/scripts/skillguard_portfolio_self_check.py",
+        "--mode",
+        "graduation"
       ],
-      "assertion_scope": "current_full_flowguard_model",
       "check_id": "check:self:issue-portfolio-receipt",
       "command": "python",
       "covers_obligation_ids": [
@@ -478,8 +481,30 @@
       "expected": {
         "exit_code": 0
       },
-      "kind": "model_assertion",
-      "timeout_seconds": 30
+      "kind": "command",
+      "timeout_seconds": 60
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard.py",
+        "fixture-test",
+        "--manifest",
+        ".agents/skills/skillguard/fixtures/portfolio_runtime/fixture-manifest.json",
+        "--output",
+        "-"
+      ],
+      "check_id": "check:self:portfolio-cli-fixtures",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:portfolio-freshness"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "expected": {
+        "exit_code": 0
+      },
+      "kind": "command",
+      "timeout_seconds": 120
     },
     {
       "args": [
@@ -711,34 +736,45 @@
   ],
   "claim_boundary": "This manifest binds checks to exact model obligations. Passing checks do not by themselves prove target execution, user-visible quality, full closure, installation, or publication.",
   "compiler_version": "skillguard.contract_compiler.v2",
-  "contract_hash": "CD25C9C9DE3036A8A6751E5A5142472B2B5BE7F6BE8A8E9CB322BA3D3A5DDB29",
-  "manifest_hash": "F326821D65DDFE9371C2400BAF3E3E10F0D9CE70B9B988FE41B7C8B176DD8FA8",
+  "contract_hash": "BC57DE17CB4B3AA2C293FAAD15580F16B40609B78E86D88192E0D8A9E65F7303",
+  "manifest_hash": "F12C4CF0AB605E06CA0FC529938E88F77EA01668AFE2674FE8B10E97ECFBE471",
   "model_id": "skillguard.executable_contract_runtime.v2",
   "schema_version": "skillguard.check_manifest.v2",
   "skill_id": "skillguard",
   "source_fingerprints": {
-    "binding": "62EB393DBE4C83C4015890C8A236C4727AD617C261E4CCBBEA6E98B73A3D2A6B",
-    "entrypoint": "8D5081D38BDE476188DC7D5A7A56981E34436DA3F4F9C84D30AE8DF600632CEC",
+    "binding": "FB34DB94CE62A0EC125D688DDE7927839DF32393D6E203E78DEE2ED8021F0B0F",
+    "entrypoint": "28B5A1DFE5360ADC9FE4FF2995FF5896E9B11E4D296CC12944C453730E09470D",
     "implementation:.agents/skills/skillguard/assets/schemas/skillguard_check_manifest.schema.json": "70DF18A58C624B3DEF44BD149826BD041203C5A24A03ABC1D2A6FEE20DD3B84C",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_guard_change_v1.schema.json": "224A60947EC63A226A04053A37F7BDEF9A2B029B577900A73DD906994B03A7C1",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_portfolio_graduation_evidence_v1.schema.json": "5E4D7EDB79B3D0222966497DA0CF954E9AFF50F791E9225BBDCA465805D3FA68",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_portfolio_graduation_receipt_v1.schema.json": "93C14AD9791565904C3167ECF9BF9A85A06BB9F514D208CDF9D924845D9DF972",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_portfolio_registry_v1.schema.json": "0BCCCE3B40789C48B6426E05C0C8D860E77DDADFBC9CBCDAE6D4495BEFC283F7",
     "implementation:.agents/skills/skillguard/assets/schemas/skillguard_run_record.schema.json": "75231E93699963BBEE9507D97200614DECB9FB066B55E8156626C35F7F809235",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_test_result_reuse_request_v1.schema.json": "4FE715120A6ABD7EECDF0240BBC9B28C5DB973BB2BE30682DE5C26179D05F374",
+    "implementation:.agents/skills/skillguard/assets/schemas/skillguard_test_result_reuse_ticket_v1.schema.json": "9DC9B946EE7C0A0C1E9CF1BBFE8973D805CCD8D146B69723BED46E3421FA5A8A",
     "implementation:.agents/skills/skillguard/assets/schemas/skillguard_work_contract.schema.json": "DEAF8E45DEF2C2BC0D1969FA917EF3CC7057956FD59C26CA12909C324EDF5CB7",
+    "implementation:.agents/skills/skillguard/fixtures/portfolio_runtime": "ECD3CBAD548F1C7CCC1ED312CE647F479B5A779FE6D7F087B7C7FCE4E4B91810",
     "implementation:.agents/skills/skillguard/public-export-policy.json": "71B5587C45B585E741AB458A99588D4E4B454B83D93872531B4884F0DCC17754",
     "implementation:.agents/skills/skillguard/references/skillguard-v1-field-lifecycle.md": "98D5942EB5B1F52B11612710BCF040F17A867AFA9A61C4D28CA41F0BDD0C36DF",
+    "implementation:.agents/skills/skillguard/references/skillguard-v2-portfolio.md": "F7F9FE9BE20E5169EB008FF1122E0A00E233FC881333D9D4CA3D520682BCB856",
+    "implementation:.agents/skills/skillguard/scripts/checker_engine.py": "1F4740C6D14C2DA7CFFE77FF95DD9DE4BCA14BF42BF02970A2FE39BED889131C",
     "implementation:.agents/skills/skillguard/scripts/skillguard.py": "3E3E10BF663C265FC77B3E742DFF6FA859E76976D017257EA0A90E8AD45D82F3",
     "implementation:.agents/skills/skillguard/scripts/skillguard_install.py": "DD746A184FE22B331DF6A839BC54D3EFB3A347C0A55ADD82A67BD8FC43F06D4E",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_portfolio_self_check.py": "6971B6BDFBD26A30C66CF0E2E988A0564FD3B65BD6C4790871D34B53804E8377",
     "implementation:.agents/skills/skillguard/scripts/skillguard_privacy.py": "84E7FA6693D655F9F7BC4976AA12656AE71C9EF67FDC2B1AD3747C514A35319C",
     "implementation:.agents/skills/skillguard/scripts/skillguard_provenance.py": "E33A05B4DD4F879A093493674578042E893F07C2393D7235FF4B2E73F24291D9",
     "implementation:.agents/skills/skillguard/scripts/skillguard_test_mesh.py": "CB9214F1A999260EE3B0CE5B327E5D2DCC263559310EB9B0B6099C48C98F1C18",
-    "implementation:.agents/skills/skillguard/scripts/skillguard_v2": "9028ABA9C5CE5BC3A653E71B262FD66A96C72AFE99FBA89C6AB55A2481CDC451",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_utils.py": "80AE8AA18FA781946050D32D100A52684F2A9A8FCA02CC1F252B5A3CBBE048E0",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2": "055568A788A2ADBD5DF41D9298973501989261EAE973C2B63514463F16BBA268",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2_compile.py": "CE3582684C87123A9B3E4B927BE41D5A1B5A77D08AB82248D4196FB51CD90339",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2_self_host.py": "A9063434C9C1B023AF76A8FDF1E11C9C9B490D9099CCE16275FAE63C0490F825",
-    "implementation:.agents/skills/skillguard/test-mesh.json": "1C0F3923A7C6A840FE0D30F9722478D0D48202645D76689D5A02ECA508BB9DA7",
+    "implementation:.agents/skills/skillguard/test-mesh.json": "5099EDAE2A0D846867E7295F812AB58AB5DED42191C7FB7054B87C69C35C631B",
     "implementation:.gitattributes": "B7474917DC75B0F8472CC62CEC74F650E035BDC5CC6B1C1628D6C109050262EE",
     "implementation:.github/workflows/ci.yml": "971AD8CDD74C00FA8DA9290274F6DAC26FEC18BF5BA90247F33D4897D1A00AEA",
     "implementation:.gitignore": "61E204D6904E853B653322BF47B08D48961610B835FB8F199BC9F875E31BEF6A",
     "implementation:assets/readme-hero/hero.png": "5610DB4D8A567BB689D51609F06E5B7695B018CB661ABE4FF24FA00EECCD33EB",
     "implementation:assets/readme-hero/visual-privacy-review.json": "C3AE8A080654FBAA801D1D962D6BEC7B3C6514E2B1FF986C900C107E2112A745",
-    "model": "3620C7C8A10212197971E610F20909888C43629CE23951B1D318D4EC9904E71C",
-    "model_export": "289950CA664C03F998FF9927DD2FD1EF9925B1BB1106927F61D601E32966EB6B"
+    "model": "743830749E1DFB4B838A01C472DB62811D935286402C8520D52D21FE2332B676",
+    "model_export": "2823C0BBE763AD62A4DC1CE4DBADD1BD46A8BEB0C08C018572547284622D3B93"
   }
 }

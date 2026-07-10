@@ -1,0 +1,51 @@
+{
+  "schema_version": "skillguard.portfolio_registry.v1",
+  "registry_id": "portfolio:fixture:impact",
+  "active_guard": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "entries": [
+    {
+      "skill_id": "fixture-skill",
+      "order": 0,
+      "lifecycle": "active_owned",
+      "graduation_status": "current",
+      "capability_inventory_status": "current",
+      "required_capability_ids": ["capability:primary"],
+      "canonical_source": {
+        "path_token": "fixture/source",
+        "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "consumed_guard_feature_tags": ["portfolio"],
+      "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "representative_jobs": [
+        {
+          "job_id": "job:primary",
+          "covered_capability_ids": ["capability:primary"],
+          "evidence_refs": ["evidence:primary"]
+        }
+      ],
+      "representative_job_ids": ["job:primary"],
+      "full_run_receipt": {
+        "receipt_id": "receipt:fixture-skill",
+        "status": "current",
+        "guard_runtime": {
+          "runtime_id": "skillguard-v2",
+          "file_count": 1,
+          "source_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+        },
+        "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+        "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "command_fingerprint": "3333333333333333333333333333333333333333333333333333333333333333",
+        "environment_fingerprint": "4444444444444444444444444444444444444444444444444444444444444444",
+        "coverage_fingerprint": "766803FBF520B1CCB82AA6FA33672EDBF8610C3BCFE2ECBFE37AB107C4E39B6E",
+        "result_hash": "5555555555555555555555555555555555555555555555555555555555555555",
+        "completed_at": "2026-07-10T00:00:00Z"
+      },
+      "reuse_ticket": null,
+      "failure_classification": null
+    }
+  ]
+}

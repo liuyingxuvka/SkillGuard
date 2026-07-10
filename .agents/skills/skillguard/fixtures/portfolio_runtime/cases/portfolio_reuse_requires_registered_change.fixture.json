@@ -1,0 +1,18 @@
+{
+  "fixture_id": "portfolio_reuse_requires_registered_change",
+  "target_command": "issue-portfolio-reuse-ticket",
+  "expected_decision": "pass",
+  "arguments": [
+    "--workspace-root",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+    "--registry",
+    "reuse-registry.json",
+    "--request",
+    "reuse-request.json",
+    "--ticket-output",
+    "reuse-ticket.json",
+    "--write",
+    "--output",
+    "-"
+  ]
+}

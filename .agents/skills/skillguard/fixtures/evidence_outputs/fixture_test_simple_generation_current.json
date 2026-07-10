@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "checked_at": "2026-06-26T11:25:51Z",
+  "checked_at": "2026-07-10T12:41:38Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
   "checks": [
     {
@@ -43,7 +43,7 @@
       "kind": "json",
       "line_count": 50,
       "path": ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
-      "sha256": "BE2E92B79D3D915F3E0EA482986E91A2A44D9455C478DA24998F470C48A1C87F"
+      "sha256": "FDF922CAE3C370B944D984522A403E3C987C02A4E932CE95FC5AE6AB704BD678"
     }
   ],
   "fixture_class_counts": {
@@ -105,7 +105,7 @@
       "post_generation_mutations": [],
       "preexisting_files": [],
       "problems": [],
-      "sha256": "A753011EA334FC7F2ED2516E5D3859D55DE0B1C3819574B4ED2041AFADE8F76A",
+      "sha256": "E19A840B17FC22D3F23F53F4DBB711E26D73DF89F9992622B1048C71D0A1C176",
       "target_command": "generate-skill",
       "target_path": ".agents/skills/skillguard/fixtures/simple_generation/workspace/generate-skill-simple-public-input/simple-generation-review-helper"
     },
@@ -167,7 +167,7 @@
       "problems": [
         "blocker: unexpected_existing_file: .agents/skills/skillguard/fixtures/simple_generation/workspace/generate-skill-existing-user-file-blocks/simple-generation-conflict-helper/notes.md is not safe for generate-skill; safe remediation path: .agents/skills/skillguard/fixtures/simple_generation/workspace/generate-skill-existing-user-file-blocks/simple-generation-conflict-helper/notes.md"
       ],
-      "sha256": "B2E78BAD51EDA42323B5DC3375F950ABEF22835A2495ACE40C9DBD86B3570865",
+      "sha256": "E927C1309FA44BB8B18F4E0396B86BA5905E5142527264AD0ADFF7CFEE8604EC",
       "target_command": "generate-skill",
       "target_path": ".agents/skills/skillguard/fixtures/simple_generation/workspace/generate-skill-existing-user-file-blocks/simple-generation-conflict-helper"
     }
@@ -185,9 +185,24 @@
         "plan-skill",
         "generate-skill",
         "generate-suite",
+        "scan-global-skills",
+        "build-global-registry",
+        "check-global-registry",
+        "resolve-global-skill",
+        "render-global-prompt",
+        "install-global-prompt",
+        "check-global-prompt",
+        "refresh-global-router",
+        "audit-installed-skills",
+        "audit-portfolio",
+        "mark-portfolio-impact",
+        "issue-portfolio-reuse-ticket",
+        "graduate-portfolio",
         "check-json-schema",
         "compile-contract",
         "check-contract",
+        "check-depth",
+        "check-readme-release",
         "select-route",
         "start-run",
         "advance-run",
@@ -264,6 +279,38 @@
           "responsibility": "checker",
           "route_id": "skillguard.route.check-contract.v1",
           "route_node_id": "check-contract",
+          "status": "current"
+        },
+        {
+          "command_family": "check-depth",
+          "next_step": "Run check-depth when a target skill contract must prove source-specific obligations, current run evidence, and non-parallel route binding.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-depth.v1",
+          "route_node_id": "check-depth",
+          "status": "current"
+        },
+        {
+          "command_family": "check-readme-release",
+          "next_step": "Run check-readme-release before publishing README-facing SkillGuard releases.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.check-readme-release.v1",
+          "route_node_id": "check-readme-release",
+          "status": "current"
+        },
+        {
+          "command_family": "audit-installed-skills",
+          "next_step": "Run audit-installed-skills against the installed user skill root before broad installed-skill coverage claims.",
+          "responsibility": "checker",
+          "route_id": "skillguard.route.audit-installed-skills.v1",
+          "route_node_id": "audit-installed-skills",
+          "status": "current"
+        },
+        {
+          "command_family": "audit-portfolio",
+          "next_step": "Audit the private portfolio registry before impact propagation, reuse, or one-target graduation.",
+          "responsibility": "portfolio-runtime",
+          "route_id": "skillguard.route.audit-portfolio.v1",
+          "route_node_id": "audit-portfolio",
           "status": "current"
         },
         {
@@ -381,7 +428,7 @@
       ]
     },
     "content_hash": "791A5654EA190774E426ACEA24F72D7DF7E7E9AF6990992754C4D1C9975B3634",
-    "evidence_timestamp": "2026-06-26T11:25:51Z",
+    "evidence_timestamp": "2026-07-10T12:41:38Z",
     "record_id": "fixture_evidence:D2A0E9C1716AC313",
     "record_kind": "fixture_evidence",
     "refresh_action": {
@@ -390,7 +437,7 @@
       "status": "pass"
     },
     "route_node_id": "fixture-test",
-    "route_registry_version": "skillguard.route_registry.v1",
+    "route_registry_version": "skillguard.route_registry.v2",
     "route_version": "5",
     "schema_version": "skillguard.maintenance_record.v1",
     "status": "pass"

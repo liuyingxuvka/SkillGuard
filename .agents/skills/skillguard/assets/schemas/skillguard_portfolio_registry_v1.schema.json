@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/skillguard/schemas/skillguard_portfolio_registry_v1.schema.json",
+  "title": "SkillGuard private portfolio registry v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "registry_id", "active_guard", "entries"],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_registry.v1"},
+    "registry_id": {"type": "string", "minLength": 1},
+    "active_guard": {"$ref": "#/$defs/guard"},
+    "entries": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entry"}
+    }
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_id", "file_count", "source_hash"],
+      "properties": {
+        "runtime_id": {"const": "skillguard-v2"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "source_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["skill_id", "order", "lifecycle", "graduation_status"],
+      "properties": {
+        "skill_id": {"type": "string", "minLength": 1},
+        "order": {"type": ["integer", "null"], "minimum": 0},
+        "lifecycle": {
+          "enum": ["active_owned", "active_adopted", "pending_adoption", "supporting_repository", "retired_private", "excluded_private", "excluded_system"]
+        },
+        "graduation_status": {
+          "enum": ["pending", "baseline", "current", "revalidation_required", "blocked", "excluded", "supporting"]
+        },
+        "capability_inventory_status": {"enum": ["pending", "current"]},
+        "required_capability_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "consumed_guard_feature_tags": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "contract_hash": {"type": "string"},
+        "representative_jobs": {"type": "array", "items": {"$ref": "#/$defs/job"}},
+        "representative_job_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "failure_classification": {
+          "type": ["string", "null"],
+          "enum": [null, "target_implementation_gap", "target_contract_binding_gap", "skillguard_model_miss", "skillguard_runtime_or_validator_gap", "environment_or_external_blocker"]
+        }
+      }
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_id", "covered_capability_ids", "evidence_refs"],
+      "properties": {
+        "job_id": {"type": "string", "minLength": 1},
+        "covered_capability_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "evidence_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}
