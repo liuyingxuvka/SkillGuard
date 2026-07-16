@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -25,10 +26,18 @@ from skillguard_utils import json_text  # noqa: E402
 from skillguard_v2.contract_compiler import compile_skill_contract  # noqa: E402
 
 
-def _run(*args: str, cwd: Path = ROOT) -> tuple[int, dict[str, object]]:
+def _run(
+    *args: str,
+    cwd: Path = ROOT,
+    codex_home: Path | None = None,
+) -> tuple[int, dict[str, object]]:
+    env = os.environ.copy()
+    if codex_home is not None:
+        env["CODEX_HOME"] = str(codex_home)
     completed = subprocess.run(
         [sys.executable, str(CLI), *args],
         cwd=cwd,
+        env=env,
         capture_output=True,
         text=True,
         check=False,
@@ -116,12 +125,18 @@ def test_external_nested_contract_and_static_checks_share_canonical_binding(
 def test_standalone_dot_remains_one_repository_member_binding(tmp_path: Path) -> None:
     target = tmp_path / "good_single_skill"
     shutil.copytree(FIXTURE, target)
+    codex_home = tmp_path / "empty-codex-home"
+    codex_home.mkdir()
 
-    contract_code, contract = _run("check-contract", "--target", ".", cwd=target)
-    static_code, static = _run("check-skill", "--target", ".", cwd=target)
+    contract_code, contract = _run(
+        "check-contract", "--target", ".", cwd=target, codex_home=codex_home
+    )
+    static_code, static = _run(
+        "check-skill", "--target", ".", cwd=target, codex_home=codex_home
+    )
 
-    assert contract_code == 0
-    assert static_code == 0
+    assert contract_code == 0, contract
+    assert static_code == 0, static
     _assert_current_binding(contract, mode="standalone_dot", member_root_path=".")
     _assert_current_binding(static, mode="standalone_dot", member_root_path=".")
 

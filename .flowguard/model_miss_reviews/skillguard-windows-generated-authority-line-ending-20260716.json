@@ -1,0 +1,56 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-windows-generated-authority-line-ending-20260716",
+  "status": "repair_local_and_installation_validated_remote_gate_pending",
+  "observed_failure": {
+    "surface": "SkillGuard v0.3.2 candidate GitHub Actions full-current-suite on a clean Windows checkout",
+    "prior_local_claim": "the generated contract and manifest were current after local compilation",
+    "observed_result": "the isolated standalone target check blocked after 474 tests had passed because Git's Windows checkout changed generated JSON line endings from LF to CRLF and the compiler compared raw bytes",
+    "failure_code": "generated_authority_checkout_line_ending_false_stale"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "commitment:compile-model-contract",
+    "owner": "contract-compiler-v2",
+    "miss_type": "code_boundary_mismatch",
+    "error_signature": "compiled-contract.json and check-manifest.json report stale_generated_contract only after a clean CRLF checkout",
+    "affected_feature_tags": [
+      "windows",
+      "clean-checkout",
+      "generated-authority",
+      "line-ending",
+      "release"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "source fingerprints already normalized text line endings, but the same compiler's generated-authority parity boundary still used raw-byte equality and therefore assigned two identities to the same canonical JSON text",
+    "would_have_failed_if": "the release model had replayed a clean Windows checkout whose generated JSON files were projected with CRLF while their canonical compiler payload remained LF",
+    "new_model_item": "generated text authority has one canonical text identity across supported checkout line endings; byte spelling alone cannot make it stale",
+    "owner_code_contract": "contract-compiler-v2 compile generated contract and verify generated parity"
+  },
+  "generalized_repair": {
+    "rule": "Normalize only physical line-ending bytes before comparing generated canonical JSON authority, while preserving all JSON content, keys, values, and ordering as authoritative.",
+    "observed_regression": "both generated authority files remain current after LF is projected as CRLF",
+    "same_class_regression": "LF, CRLF, and lone-CR physical spellings map to the same canonical text identity",
+    "negative_boundary": "a real generated JSON content change still produces stale_generated_contract; no semantic fallback, alternate reader, or weakened contract is introduced"
+  },
+  "required_revalidation": [
+    "FlowGuard executable contract and validation-composition models",
+    "compiler line-ending positive and semantic-change negative regressions",
+    "standalone external-target replay with an explicitly empty CODEX_HOME",
+    "contract compiler and external binding modules",
+    "deterministic contract regeneration and check mode",
+    "transactional installed projection parity",
+    "clean Windows and Ubuntu GitHub Actions before v0.3.2 release"
+  ],
+  "revalidation_evidence": {
+    "model": "both current executable model entrypoints pass with the raw-byte authority case rejected as known bad",
+    "focused_regressions": "2 passed: generated authority checkout line-ending identity and standalone empty-install replay",
+    "affected_modules": "59 tests and 7 subtests passed across the complete contract compiler and external target binding modules",
+    "full_local_snapshot": "474 tests passed, 2 capability-dependent cases skipped, and 146 subtests passed on the frozen candidate source",
+    "contract_compilation": "contract CBD0CADE7889AA02DCC1F472F47A759F9076F80659F10B667741EF79AC269A8D and manifest 1497B91BA48E75C9BFA212308AEBD1D2F6430904E26DE83B1E73374F498741F2 compiled current with zero findings",
+    "installed_parity": "transaction install-3905228458294fc18388e4942ef6833d committed with all installed smoke checks passed; installation receipt installation-cace11889a23773c3b6f372c replayed current canonical-to-active parity",
+    "remote_observation": "GitHub Actions run 29481096934 passed all six focused Windows/Ubuntu jobs and failed only the clean full-current-suite at the generated-authority parity boundary"
+  },
+  "claim_boundary": "The repair proves the named local model, focused, affected-module, and complete frozen-source regressions, deterministic contract compilation, transactional installation, and installed parity. A new clean GitHub run, tag, and GitHub Release remain pending claims."
+}

@@ -146,6 +146,17 @@ def canonical_hash(payload: object) -> str:
     return hashlib.sha256(canonical_json_bytes(payload)).hexdigest().upper()
 
 
+def _generated_authority_text_is_current(path: Path, expected: bytes) -> bool:
+    """Compare generated JSON by its canonical text identity across checkouts."""
+
+    try:
+        current = path.read_bytes()
+    except OSError:
+        return False
+    normalized = current.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return normalized == expected
+
+
 def file_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest().upper()
 
@@ -1619,12 +1630,12 @@ def compile_skill_contract(
         expected = canonical_json_bytes(payload)
         if write:
             path.parent.mkdir(parents=True, exist_ok=True)
-            if not path.is_file() or path.read_bytes() != expected:
+            if not path.is_file() or not _generated_authority_text_is_current(path, expected):
                 path.write_bytes(expected)
                 written.append(path.relative_to(skill_root).as_posix())
         elif not path.is_file():
             parity_findings.append(SchemaFinding("generated_file_missing", path.name, path.name))
-        elif path.read_bytes() != expected:
+        elif not _generated_authority_text_is_current(path, expected):
             parity_findings.append(SchemaFinding("stale_generated_contract", path.name, path.name))
     all_findings = tuple(parity_findings)
     return CompileResult(

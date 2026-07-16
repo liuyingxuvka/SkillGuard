@@ -82,6 +82,7 @@ class ExecutableContractCase:
     case_name: str
     model_current: bool = True
     binding_current: bool = True
+    generated_authority_text_identity_current: bool = True
     model_authority_read_side_effect_free: bool = True
     route_owner_unique: bool = True
     route_typed: bool = True
@@ -139,6 +140,7 @@ class ExecutableContractState:
     case_name: str = ""
     model_current: bool = False
     binding_current: bool = False
+    generated_authority_text_identity_current: bool = False
     model_authority_read_side_effect_free: bool = False
     route_owner_unique: bool = False
     route_typed: bool = False
@@ -239,6 +241,20 @@ def model_and_binding_are_authoritative(state: ExecutableContractState, _trace: 
         return _fail(
             "model_and_binding_are_authoritative",
             "release behavior requires a current FlowGuard model, a matching target binding, and a side-effect-free authority read",
+        )
+    return _pass()
+
+
+def generated_authority_uses_canonical_text_identity(
+    state: ExecutableContractState,
+    _trace: object,
+) -> InvariantResult:
+    if _empty(state):
+        return _pass()
+    if not state.generated_authority_text_identity_current:
+        return _fail(
+            "generated_authority_uses_canonical_text_identity",
+            "generated JSON authority parity must ignore checkout-only LF/CRLF spelling while preserving every semantic byte change",
         )
     return _pass()
 
@@ -578,6 +594,11 @@ INVARIANTS = (
         model_and_binding_are_authoritative,
     ),
     Invariant(
+        "generated_authority_uses_canonical_text_identity",
+        "Generated JSON authority compares canonical text identity across supported checkouts.",
+        generated_authority_uses_canonical_text_identity,
+    ),
+    Invariant(
         "routes_are_typed_and_uniquely_owned",
         "Every route has a typed handoff and one owner.",
         routes_are_typed_and_uniquely_owned,
@@ -707,6 +728,18 @@ SCENARIOS = (
         "Prompt prose without a current FlowGuard model cannot compile for release.",
         ExecutableContractCase("missing_model", model_current=False),
         _violation("model missing", "model_and_binding_are_authoritative"),
+    ),
+    _scenario(
+        "checkout_newline_bytes_cannot_define_generated_authority",
+        "Checkout-only LF/CRLF spelling cannot make semantically identical generated JSON stale.",
+        ExecutableContractCase(
+            "checkout_newline_identity_missing",
+            generated_authority_text_identity_current=False,
+        ),
+        _violation(
+            "generated authority uses raw checkout bytes",
+            "generated_authority_uses_canonical_text_identity",
+        ),
     ),
     _scenario(
         "model_authority_read_side_effect_blocks",

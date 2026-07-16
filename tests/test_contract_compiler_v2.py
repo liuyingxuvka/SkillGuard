@@ -1383,6 +1383,28 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.assertFalse((self.control / COMPILED_CONTRACT_FILE).exists())
         self.assertFalse((self.control / CHECK_MANIFEST_FILE).exists())
 
+    def test_generated_authority_parity_normalizes_checkout_line_endings(self) -> None:
+        written = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
+        self.assertTrue(written.ok, written.to_dict())
+
+        for name in (COMPILED_CONTRACT_FILE, CHECK_MANIFEST_FILE):
+            path = self.control / name
+            path.write_bytes(path.read_bytes().replace(b"\n", b"\r\n"))
+
+        checked = compile_skill_contract(self.skill, repository_root=self.repo, write=False)
+        self.assertTrue(checked.ok, checked.to_dict())
+
+        changed = self.control / COMPILED_CONTRACT_FILE
+        changed.write_bytes(
+            changed.read_bytes().replace(
+                b"skillguard.compiled_contract.v2",
+                b"skillguard.compiled_contract.changed",
+                1,
+            )
+        )
+        stale = compile_skill_contract(self.skill, repository_root=self.repo, write=False)
+        self.assertEqual({"stale_generated_contract"}, {row.code for row in stale.findings})
+
     def test_entrypoint_change_invalidates_generated_outputs(self) -> None:
         self.assertTrue(compile_skill_contract(self.skill, repository_root=self.repo, write=True).ok)
         (self.skill / "SKILL.md").write_text("# changed boundary\n", encoding="utf-8")
