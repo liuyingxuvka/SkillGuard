@@ -1,0 +1,77 @@
+{
+  "schema_version": "skillguard.portfolio_registry.v1",
+  "registry_id": "portfolio:fixture:audit",
+  "active_guard": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+  },
+  "entries": [
+    {
+      "skill_id": "fixture-skill",
+      "order": 0,
+      "lifecycle": "active_owned",
+      "graduation_status": "current",
+      "capability_inventory_status": "current",
+      "required_capability_ids": ["capability:primary"],
+      "required_job_class_ids": ["positive", "invalid_input", "recovery_or_resume", "out_of_scope", "native_check", "artifact_check"],
+      "canonical_source": {
+        "path_token": "fixture/source",
+        "version": "1.0.0",
+        "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      "consumed_guard_feature_tags": ["portfolio"],
+      "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+      "representative_jobs": [
+        {
+          "job_id": "job:primary",
+          "job_class_ids": ["artifact_check", "invalid_input", "native_check", "out_of_scope", "positive", "recovery_or_resume"],
+          "covered_capability_ids": ["capability:primary"],
+          "evidence_refs": ["record:evidence/graduation-primary.json@9CD047C81BDE9BAF2A0491804FCD652EA581F74458976312E90A43A63DAFDAA1"]
+        }
+      ],
+      "representative_job_ids": ["job:primary"],
+      "full_run_receipt": {
+        "receipt_id": "receipt:fixture-skill",
+        "status": "current",
+        "guard_runtime": {
+          "runtime_id": "skillguard-v2",
+          "file_count": 1,
+          "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+        },
+        "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+        "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+        "command_set": {
+          "jobs": [
+            {
+              "job_id": "job:primary",
+              "commands": ["fixture:portfolio-graduation"]
+            }
+          ]
+        },
+        "command_fingerprint": "362E44EE7C1BAA5FC1657205D495FBBD4FF54D1CF00D49ADE9B77540466EE0DA",
+        "environment": {
+          "fixture": "portfolio-runtime",
+          "platform": "portable"
+        },
+        "environment_fingerprint": "A15803D5BBD708D0BEF876436B5AB54E83E1242A061622C0421E30C7991434A9",
+        "coverage_fingerprint": "EAA6C48E44C7AC3F27ACCE3ECAF90955F6BF317098E1E03A3A347529177DB565",
+        "result_bundle": {
+          "representative_job_results": [
+            {
+              "job_id": "job:primary",
+              "job_class_ids": ["artifact_check", "invalid_input", "native_check", "out_of_scope", "positive", "recovery_or_resume"],
+              "covered_capability_ids": ["capability:primary"],
+              "evidence_refs": ["record:evidence/graduation-primary.json@9CD047C81BDE9BAF2A0491804FCD652EA581F74458976312E90A43A63DAFDAA1"],
+              "status": "passed"
+            }
+          ]
+        },
+        "result_hash": "1700391E2A06481F0F7CA8AAFB43752ED685A39306F6DF6028795F307602E129",
+        "completed_at": "2026-07-10T00:00:00Z"
+      },
+      "reuse_ticket": null,
+      "failure_classification": null
+    }
+  ]
+}

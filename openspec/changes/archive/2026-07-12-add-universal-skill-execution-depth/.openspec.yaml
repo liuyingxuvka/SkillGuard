@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-07-11
+goal: Prevent shallow skill use across all covered skills without replacing
+  target-owned domain routes or checks.

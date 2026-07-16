@@ -1,0 +1,45 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-external-full-testmesh-source-authority-20260715",
+  "status": "repair_in_progress",
+  "observed_failure": {
+    "surface": "PhysicsGuard external repository creating its first final full TestMesh aggregation",
+    "prior_local_claim": "the generic TestMesh can aggregate and replay a fully validated maintained target outside the SkillGuard repository",
+    "observed_result": "full aggregation derived the canonical SkillGuard source only as <target-repository>/.agents/skills/skillguard, so a valid external target was blocked even though the current canonical and installed SkillGuard authorities existed",
+    "failure_code": "external_full_testmesh_canonical_source_unaddressable"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.testmesh.external-full-currentness",
+    "owner": "SkillGuard TestMesh installation binding and read-only replay",
+    "miss_type": "boundary_missing",
+    "error_signature": "installation_receipt_verification_failed:FileNotFoundError",
+    "affected_feature_tags": [
+      "external-target",
+      "full-testmesh",
+      "installation-currentness",
+      "canonical-source",
+      "openspec-projection"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "TestMesh modeled the canonical SkillGuard source as a fixed child of the maintained target repository instead of an explicit single current authority location",
+    "would_have_failed_if": "the full-gate model had included an external repository with no embedded SkillGuard source tree but a valid current canonical/installed pair",
+    "new_model_item": "full aggregation, replay, and OpenSpec projection must accept and re-check one explicit canonical SkillGuard root when the target repository is external",
+    "owner_code_contract": "skillguard_test_mesh CLI -> execute/replay/project current TestMesh -> installation binding -> exact canonical/installed projection comparison"
+  },
+  "generalized_repair": {
+    "rule": "An external target binds exactly one canonical SkillGuard source root for full currentness replay; the location is propagated unchanged through aggregation, replay, and OpenSpec projection.",
+    "observed_regression": "pending final installed replay from PhysicsGuard",
+    "same_class_regression": "an explicit external root reaches both canonical SkillGuard and sibling global-router projection comparisons",
+    "negative_boundary": "the binding is not a mode, does not select semantics, and cannot provide a fallback or second authority"
+  },
+  "required_revalidation": [
+    "focused TestMesh installation-binding tests",
+    "generic SkillGuard regressions and contract parity",
+    "transactional SkillGuard reinstall and installed self-host",
+    "PhysicsGuard full TestMesh aggregation, read-only replay, and OpenSpec projection"
+  ],
+  "revalidation_evidence": {},
+  "claim_boundary": "The review remains open until the repaired installed SkillGuard completes the external PhysicsGuard full aggregation and read-only projection path."
+}

@@ -2,8 +2,8 @@
   "schema_version": "skillguard.fixture_manifest.v1",
   "fixture_version": "simple-generation-fixtures.v1",
   "checker_version": "skillguard.local_cli_dispatch.v1",
-  "compatibility": {
-    "status": "compatible",
+  "current_status": {
+    "status": "current",
     "notes": [
       "Simple generation fixtures target the current public plan-skill and generate-skill command path.",
       "Fixture workspaces are marker-owned, repository-local, and removed after each fixture case."

@@ -1,0 +1,52 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-task-checkbox-source-freshness-20260715",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "SkillGuard current contract compilation for a maintained OpenSpec tasks.md file",
+    "prior_local_claim": "progress checkbox state is evidence output and cannot refresh maintained source authority",
+    "observed_result": "changing only one task from unchecked to checked made check-contract report stale generated authority",
+    "failure_code": "task_checkbox_changed_contract_hash"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.validation-source-freshness.progress-exclusion",
+    "owner": "SkillGuard shared source and content-impact hashing",
+    "miss_type": "normalization_missing",
+    "error_signature": "tasks.md checkbox-only progress mutation changes source_file_hash",
+    "affected_feature_tags": [
+      "skillguard",
+      "contract-compiler",
+      "freshness",
+      "openspec",
+      "task-checkbox"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "OpenSpec receipt projection normalized task checkbox state, but the shared SkillGuard source_file_hash normalized only line endings",
+    "would_have_failed_if": "contract compiler regression had toggled a tasks.md checkbox while preserving its task text",
+    "new_model_item": "all maintained-source fingerprints that consume tasks.md must preserve task text while normalizing only the Markdown checkbox state",
+    "owner_code_contract": "source_file_hash -> implementation fingerprint -> content-impact component -> compiled contract currentness"
+  },
+  "generalized_repair": {
+    "rule": "Normalize only leading Markdown list checkbox state in files named tasks.md before source hashing; keep every other byte of normalized task text authoritative.",
+    "observed_regression": "The installed SkillGuard accepted a real TraceGuard tasks.md [x] to [X] checkbox-only change with the exact unchanged contract hash 2F05A96EC0BEB85BCC1D8428436E26CC62E8CDC142BB450566A41F6B39C1C7C6.",
+    "same_class_regression": "Focused compiler and TestMesh suites passed checkbox, nested-task, fenced-example, task-text-change, source-manifest, and shared projection cases.",
+    "negative_boundary": "do not ignore task text, other Markdown content, code, contracts, tests, configuration, or any non-checkbox source change"
+  },
+  "required_revalidation": [
+    "focused contract compiler checkbox and semantic-change regressions",
+    "existing validation-composition FlowGuard checkbox counterexample",
+    "complete SkillGuard affected regression",
+    "transactional SkillGuard reinstall and installed currentness check",
+    "real TraceGuard checkbox-only contract currentness replay"
+  ],
+  "revalidation_evidence": {
+    "focused_regressions": "76 tests and 7 subtests passed before installation; the final focused shared-policy subset passed 12 tests after fenced-example hardening.",
+    "flowguard_model": "validation-composition model passed 19/19 positive gates and 7/7 known-bad gates.",
+    "openspec": "compose-validation-evidence strict validation passed.",
+    "installation": "transaction install install-de9c5d4df3984ca988be7da660d1efa1 passed stage parity, active parity, SkillGuard/router authority, self-check, check-skill, and runtime import smoke.",
+    "real_target_replay": "TraceGuard check-contract passed after a checkbox-only [x] to [X] mutation and preserved contract hash 2F05A96EC0BEB85BCC1D8428436E26CC62E8CDC142BB450566A41F6B39C1C7C6; the display state was restored afterward."
+  },
+  "claim_boundary": "The repair is validated for the current source and installed SkillGuard, the existing validation-composition model, focused compiler/TestMesh regressions, and a real TraceGuard checkbox-only currentness replay. It does not prove Guard-domain behavior, the pending five-family installation parent, release, publication, or future AI behavior."
+}

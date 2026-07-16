@@ -1,0 +1,19 @@
+{
+  "fixture_id": "portfolio_graduation_missing_evidence_ref_blocks",
+  "target_command": "graduate-portfolio",
+  "expected_decision": "block",
+  "arguments": [
+    "--workspace-root",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace",
+    "--registry",
+    "graduation-registry.json",
+    "--evidence",
+    "graduation-missing-ref-evidence.json",
+    "--runtime-root",
+    ".agents/skills/skillguard/fixtures/portfolio_runtime/workspace/runtime",
+    "--target-repository-root",
+    "missing-target-repository",
+    "--output",
+    "-"
+  ]
+}

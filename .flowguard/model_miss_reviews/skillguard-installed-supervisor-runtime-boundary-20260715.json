@@ -1,0 +1,54 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-installed-supervisor-runtime-boundary-20260715",
+  "status": "repair_validated_current_targets",
+  "observed_failure": {
+    "surface": "installed SkillGuard supervising the first upgraded PhysicsGuard skill",
+    "prior_local_claim": "the current installed SkillGuard has canonical parity and can supervise external maintained skills",
+    "observed_result": "the supervisor used the canonical-source runtime boundary while executing from the active installation and rejected its own exact .sg-runtime/installation verification-receipt subtree before any PhysicsGuard check ran",
+    "failure_code": "active_installation_receipt_misclassified_as_canonical_runtime"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.current-installed-supervision",
+    "owner": "SkillGuard runtime fingerprint and claimed-run supervisor",
+    "miss_type": "input_branch_missing",
+    "error_signature": "skillguard portable boundary blocked: runtime:.sg-runtime",
+    "affected_feature_tags": [
+      "installed-runtime",
+      "supervisor",
+      "runtime-fingerprint",
+      "installation-receipt"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the runtime fingerprint already distinguished canonical and active-installation boundaries, but supervisor execution always called the canonical-only function",
+    "would_have_failed_if": "the model and regression suite had included an external target supervised by the formally installed SkillGuard after installation receipts were written",
+    "new_model_item": "derive one non-selectable runtime boundary from the executing SkillGuard location: exact CODEX_HOME/skills/skillguard receives the active receipt projection; every other location remains canonical or staged",
+    "owner_code_contract": "guard_execution_runtime_fingerprint -> supervise_contract_run"
+  },
+  "generalized_repair": {
+    "rule": "Runtime-boundary selection is automatic and location-derived, never caller-selectable. Only the exact active installation may exclude the exact installation receipt subtree from runtime identity.",
+    "observed_regression": "installed SkillGuard completes a real PhysicsGuard claimed run without rejecting its valid installation receipt",
+    "same_class_regression": "source or staged content carrying .sg-runtime remains blocked, and an active installation with any sibling runtime content also remains blocked",
+    "negative_boundary": "the repair does not delete receipts, accept arbitrary runtime output, weaken canonical/staged portability, or introduce a user-selectable mode"
+  },
+  "required_revalidation": [
+    "runtime-boundary observed and same-class regressions",
+    "SkillGuard affected contract and supervisor tests",
+    "SkillGuard model-test and process checks",
+    "SkillGuard self-host closure",
+    "transactional SkillGuard reinstall and current installed parity",
+    "real installed SkillGuard supervision of all PhysicsGuard targets"
+  ],
+  "revalidation_evidence": {
+    "affected_and_same_class_regressions": "58 passed plus 21 subtests, including exact active install, canonical-source blocker, and active-install unexpected-sibling blocker",
+    "flowguard": "development process model passed; validation composition 19/19 positive and 7/7 known-bad gates passed",
+    "final_contract_hash": "B466F5C2CC55185B73441F6E8FD54F18A484FBFBA3677D9CA6B5B6A90750495D",
+    "final_install_transaction": "install-80a74a79ebd1477c8e22dbd2035d4142",
+    "final_installation_receipt": "installation-86580971c064363e187ed3b3 / 26D8D828D0C62567E850A283CE91239F16D6BBB76CC4CE4C2A08084ECEB1EBF8",
+    "final_self_host": "closure-9681dfeb459dfa9fcf1fbd1f / 6AD0F763F98D5C29BA2BECE4D7621CA154F13BE35F6C2EE55E0C79313027A7C0",
+    "installed_external_targets": "all 10 PhysicsGuard skills passed exact installed SkillGuard supervision and closure replay"
+  },
+  "claim_boundary": "The repair is validated for the current SkillGuard source/install pair and the 10 named PhysicsGuard targets. It does not prove unrelated external targets, publication, or future AI behavior."
+}

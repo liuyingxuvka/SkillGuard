@@ -172,7 +172,15 @@ freshness:
     - .agents/skills/skillguard/scripts/skillguard.py
     - .agents/skills/skillguard/assets/schemas/*.json
     - .agents/skills/skillguard/assets/templates/*.json
-    - .agents/skills/skillguard/.skillguard/*.json
+    - .agents/skills/skillguard/.skillguard/contract-source.json
+    - .agents/skills/skillguard/.skillguard/compiled-contract.json
+    - .agents/skills/skillguard/.skillguard/check-manifest.json
+    - .agents/skills/skillguard/.skillguard/flowguard_contract_model.py
+    - .agents/skills/skillguard/.skillguard/skillguard_closure_policy.json
+    - .agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json
+    - .agents/skills/skillguard/.skillguard/skillguard_manifest.json
+    - .agents/skills/skillguard/.skillguard/skillguard_profile.json
+    - .agents/skills/skillguard/.skillguard/skillguard_skill_contract.json
     - .agents/skills/skillguard/fixtures/functional_closure/**/*
     - tests/test_skillguard_local.py
     - .flowguard/development_process_flow/skillguard_capability_closure_model.py

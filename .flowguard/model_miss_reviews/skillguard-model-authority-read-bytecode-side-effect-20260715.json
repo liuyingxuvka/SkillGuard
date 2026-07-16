@@ -1,0 +1,56 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-model-authority-read-bytecode-side-effect-20260715",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "compiling six current LogicGuard target contracts",
+    "prior_local_claim": "contract compilation is a read plus deterministic generated-authority write",
+    "observed_result": "loading each executable FlowGuard contract model also created .skillguard/__pycache__, which the target correctly rejected as mutable former-authority residue",
+    "failure_code": "model_authority_read_left_bytecode_residue"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "commitment:compile-model-contract",
+    "owner": "SkillGuard FlowGuard model adapter",
+    "miss_type": "unmodeled_side_effect_boundary",
+    "error_signature": "retirement_residuals_present:**/__pycache__/**",
+    "affected_feature_tags": [
+      "contract-compilation",
+      "model-authority",
+      "read-side-effect",
+      "bytecode-cache"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the adapter used the standard import loader, whose bytecode-cache write was outside the prior model and tests",
+    "would_have_failed_if": "the compile route had asserted that loading governed model authority leaves no filesystem residue in the target tree",
+    "new_model_item": "a model-authority read used for contract compilation is side-effect-free inside the governed target tree",
+    "owner_code_contract": "flowguard_adapter.load_flowguard_model reads and executes exact source bytes without import-cache writes"
+  },
+  "generalized_repair": {
+    "rule": "SkillGuard compilation may write only its declared generated current-authority outputs; reading a target-owned executable model must not create bytecode or another undeclared mutable authority.",
+    "observed_regression": "loading and compiling a target model leaves no adjacent __pycache__ directory",
+    "same_class_regression": "the returned model snapshot and schema validation remain unchanged",
+    "negative_boundary": "the repair does not ignore caches during retirement checks, add a target opt-out, or move Guard semantics into SkillGuard"
+  },
+  "required_revalidation": [
+    "focused model-adapter no-bytecode regression",
+    "SkillGuard executable model scenario review",
+    "SkillGuard current contract recompilation",
+    "affected SkillGuard validation",
+    "transactional installation sync",
+    "installed SkillGuard self-host",
+    "LogicGuard six-target compilation without control-root caches"
+  ],
+  "revalidation_evidence": {
+    "focused_adapter_tests": "3 passed, including direct no-bytecode assertion",
+    "flowguard_model_tests": "9 passed, including side-effecting model-authority read rejection",
+    "contract_hash": "20C41DB5CA27466A50BFCCC981053CE3DD16C1473E7D34931BA74EBEB38A4D58",
+    "manifest_hash": "0DB17C3DA49636D074C6333711F572FD8CC29C0E9691D5152CF469E018330C5D",
+    "install_transaction": "install-efc3fb6ca1174a98a5e0d4e7e33c7ba7",
+    "activation_receipt_hash": "9D30F7435FFE2B626ACEDD8A2679EAB723DAECA70EA8323DA8E77793104B9CEF",
+    "installed_self_host": "closure-13b1b2f7b18af27b677788fc / 2C7F7221E2FDF4472C742FFB2B2B9FC5E0A81145CA99DE3D927859A14C4E1763",
+    "installed_self_host_status": "passed"
+  },
+  "claim_boundary": "This review covers only the model-authority read side effect and its SkillGuard compile route. Target-native Guard semantics and target installation closure remain separately owned and evidenced."
+}

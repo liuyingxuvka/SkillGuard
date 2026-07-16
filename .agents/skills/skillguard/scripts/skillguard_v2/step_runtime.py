@@ -96,10 +96,12 @@ def replay_run(run_root) -> ReplayedRun:
         "contract_hash"
     ):
         raise StepRuntimeError("contract_snapshot_hash_mismatch", "contract snapshot was modified")
+    selected_route_ids = {str(route_id) for route_id in run.get("route_ids", [])}
     statuses = {
         step_id: STEP_PENDING
         for step_id, step in _step_index(contract).items()
         if not step.get("terminal_kind")
+        and str(step.get("route_id", "")) in selected_route_ids
     }
     run_status = "claimed"
     hard_run_blocked = False

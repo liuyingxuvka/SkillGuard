@@ -1,0 +1,61 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-external-target-binding-20260715",
+  "status": "focused_repair_validated",
+  "observed_failure": {
+    "surface": "check-contract and check-skill against a nested Logic Writing target in an external repository",
+    "prior_local_claim": "an explicit external target root preserves the target's current contract and static reference authority",
+    "observed_result": "check-contract originally recompiled repository-relative paths from the member directory; a later focused audit also found that check-skill retried a missing canonical .agents/skills reference from a same-named member path while reporting fallback_used=false",
+    "failure_code": "external_repository_reference_member_fallback"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.external-target-current-check",
+    "owner": "SkillGuard check-contract/check-skill target binding",
+    "miss_type": "code_boundary_mismatch",
+    "error_signature": "flowguard_model_missing: $.model_path: contract_model.py",
+    "affected_feature_tags": [
+      "external-target",
+      "canonical-repository-root",
+      "member-root",
+      "contract-check",
+      "static-check"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the public commands originally had no shared canonical repository/member binding; after the first repair, resolve_declared_reference still selected between canonical and member paths by existence for source-layout references",
+    "would_have_failed_if": "the existing executable-contract model separately prohibited repository-relative reference fallback instead of relying only on the binding report's caller-authored fallback_used=false projection",
+    "new_model_item": "external target checks bind one canonical repository root plus one exact member root and separately reject any missing repository-relative reference that would otherwise resolve from a same-named member copy",
+    "owner_code_contract": "checker_engine.resolve_check_target_binding -> check_contract/check_skill"
+  },
+  "generalized_repair": {
+    "rule": "External target checks resolve all repository-relative material from the explicit canonical repository root and never retry from another root.",
+    "observed_regression": "a nested external current target passes check-contract with repository-relative model and check paths",
+    "same_class_regression": "the same nested target passes check-skill reference resolution, but a canonical reference or model path missing from the repository still fails when a same-named member copy exists; member escape blocks, removed target-root is rejected, and standalone dot remains current",
+    "negative_boundary": "the repair adds no compatibility alias, guessed root, portfolio replacement, frozen-runner change, installation, or router mutation"
+  },
+  "revalidation_evidence": {
+    "focused_cli_tests": {
+      "status": "passed",
+      "command": "python -m pytest -q tests/test_external_target_binding.py",
+      "result": "7 passed"
+    },
+    "flowguard_model": {
+      "status": "passed",
+      "command": "python .agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
+      "result": "34 scenarios passed, including the explicit repository-relative reference fallback rejection"
+    },
+    "executable_contract_model_tests": {
+      "status": "passed",
+      "command": "python -m pytest -q tests/test_executable_contract_model.py",
+      "result": "9 passed"
+    },
+    "validation_composition_model": {
+      "status": "passed",
+      "command": "python .flowguard/validation_composition/run_checks.py --json",
+      "result": "status=pass"
+    },
+    "remaining_gate": "none inside the focused external-target binding scope; installation, router refresh, final full validation, release, and archive remain deliberately not run"
+  },
+  "claim_boundary": "This review covers only explicit canonical repository/member binding for check-contract and check-skill. It does not prove installation, portfolio, router, full validation, release, or publication."
+}

@@ -1,0 +1,5 @@
+schema: spec-driven
+created: 2026-07-12
+goal: Bind native depth evidence to exact target, owner, route, check, run,
+  obligation, immutable receipt, semantic range, and evidence domain so shallow
+  catalog expansion cannot pass.

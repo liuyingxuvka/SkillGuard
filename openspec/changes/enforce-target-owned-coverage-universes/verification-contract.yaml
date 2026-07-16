@@ -1,0 +1,193 @@
+contract_version: 1
+change: enforce-target-owned-coverage-universes
+obligations:
+  - id: req.depth.nonempty-target-owned-profile
+    source: "specs/universal-execution-depth/spec.md#Requirement: Target-neutral depth profile"
+    claim: Required dimensions have non-empty obligations and target-owned coverage-universe bindings while domain rules remain native.
+    required: true
+    evidence:
+      - check.depth.focused-runtime
+      - check.depth.compiler-parity
+  - id: req.depth.current-receipt
+    source: "specs/universal-execution-depth/spec.md#Requirement: Current target execution receipt"
+    claim: Current receipts preserve coverage, provider/runtime, calibration, fingerprint, and closure evidence.
+    required: true
+    evidence:
+      - check.depth.focused-runtime
+      - check.depth.flowguard-model
+  - id: req.depth.immutable-uniqueness
+    source: "specs/universal-execution-depth/spec.md#Requirement: Unique evidence contribution"
+    claim: Receipt/payload/range identity, not caller labels, decides whether evidence is unique.
+    required: true
+    evidence:
+      - check.depth.focused-runtime
+  - id: req.depth.bound-calibration
+    source: "specs/universal-execution-depth/spec.md#Requirement: Calibration before enforcement"
+    claim: Positive and shallow keys bind the complete current input manifest, command, expected outcome, actual native observed outcome, and exact native artifact bytes/hash/reference.
+    required: true
+    evidence:
+      - check.depth.focused-runtime
+      - check.depth.compiler-parity
+  - id: req.depth.coverage-adequacy
+    source: "specs/universal-execution-depth/spec.md#Requirement: Target-owned coverage-universe adequacy"
+    claim: Counts, floors, strata, class-aware per-object depth, native-critical scope, critical uncovered items, and requested/covered scope fail closed when inadequate.
+    required: true
+    evidence:
+      - check.depth.focused-runtime
+      - check.depth.flowguard-model
+  - id: req.depth.dynamic-floor-anti-shrink
+    source: "specs/universal-execution-depth/spec.md#Requirement: Native-bound dynamic floor"
+    claim: Dynamic universes reconcile discovered/declared/excluded objects, bind child universes, and use the stricter compiled/native precommitted floor.
+    required: true
+    evidence:
+      - check.depth.focused-runtime
+      - check.depth.flowguard-model
+  - id: req.depth.dual-root-replay
+    source: "specs/universal-execution-depth/spec.md#Requirement: Current target execution receipt"
+    claim: Issuance, closure, and replay preserve separate skill/model repository and task-data target roots using portable content bindings.
+    required: true
+    evidence:
+      - check.depth.focused-runtime
+      - check.depth.flowguard-model
+  - id: req.depth.provider-readiness
+    source: "specs/universal-execution-depth/spec.md#Requirement: Provider runtime readiness and enrollment"
+    claim: Compatible active runtime identity and current enrollment receipts are required; prompt-new/runtime-old is blocked.
+    required: true
+    evidence:
+      - check.depth.focused-runtime
+      - check.depth.flowguard-model
+  - id: req.depth.native-route-preserved
+    source: "../../../../openspec/specs/universal-execution-depth/spec.md#Requirement: Native route preservation"
+    claim: The existing supervisor/closure owners are extended without a parallel target-domain executor.
+    required: true
+    evidence:
+      - check.depth.existing-model-preflight
+      - check.depth.executable-contract-model
+  - id: req.depth.project-adoption-current
+    source: "../../../../openspec/specs/universal-execution-depth/spec.md#Requirement: Safe project prompt lifecycle"
+    claim: SkillGuard project adoption remains current after entrypoint and contract changes.
+    required: true
+    evidence:
+      - check.depth.project-audit
+checks:
+  - id: check.depth.focused-runtime
+    kind: command
+    command: python
+    args:
+      - -m
+      - pytest
+      - tests/test_execution_depth.py
+      - tests/test_execution_depth_coverage_universes.py
+      - tests/test_execution_depth_dynamic_floor.py
+      - tests/test_depth_portfolio_calibration.py
+      - tests/test_skillguard_execution_depth.py
+      - -q
+      - -p
+      - no:cacheprovider
+    required: true
+    covers:
+      - req.depth.nonempty-target-owned-profile
+      - req.depth.current-receipt
+      - req.depth.immutable-uniqueness
+      - req.depth.bound-calibration
+      - req.depth.coverage-adequacy
+      - req.depth.provider-readiness
+      - req.depth.dual-root-replay
+      - req.depth.dynamic-floor-anti-shrink
+    expected:
+      exit_code: 0
+  - id: check.depth.compiler-parity
+    kind: command
+    command: python
+    args:
+      - .agents/skills/skillguard/scripts/skillguard_compile.py
+      - .agents/skills/skillguard
+      - --repository-root
+      - .
+      - --check
+    required: true
+    covers:
+      - req.depth.nonempty-target-owned-profile
+      - req.depth.bound-calibration
+    expected:
+      exit_code: 0
+  - id: check.depth.existing-model-preflight
+    kind: command
+    command: python
+    args:
+      - .flowguard/existing_model_preflight/execution_depth_preflight.py
+    required: true
+    covers:
+      - req.depth.native-route-preserved
+    expected:
+      exit_code: 0
+  - id: check.depth.flowguard-model
+    kind: command
+    command: python
+    args:
+      - .flowguard/execution_depth/run_checks.py
+    required: true
+    covers:
+      - req.depth.current-receipt
+      - req.depth.coverage-adequacy
+      - req.depth.provider-readiness
+      - req.depth.dual-root-replay
+      - req.depth.dynamic-floor-anti-shrink
+    expected:
+      exit_code: 0
+  - id: check.depth.executable-contract-model
+    kind: command
+    command: python
+    args:
+      - -m
+      - unittest
+      - tests.test_executable_contract_model
+    required: true
+    covers:
+      - req.depth.native-route-preserved
+    expected:
+      exit_code: 0
+  - id: check.depth.project-audit
+    kind: command
+    command: python
+    args:
+      - .agents/skills/skillguard/scripts/skillguard.py
+      - project-audit
+      - --root
+      - .
+    required: true
+    covers:
+      - req.depth.project-adoption-current
+    expected:
+      exit_code: 0
+freshness:
+  watch:
+    - openspec/changes/enforce-target-owned-coverage-universes/**/*.md
+    - openspec/changes/enforce-target-owned-coverage-universes/verification-contract.yaml
+    - openspec/specs/universal-execution-depth/spec.md
+    - .agents/skills/skillguard/SKILL.md
+    - README.md
+    - .agents/skills/skillguard/references/skillguard-execution-depth.md
+    - .agents/skills/skillguard/assets/schemas/skillguard_depth_profile_v2.schema.json
+    - .agents/skills/skillguard/assets/schemas/skillguard_target_execution_receipt_v2.schema.json
+    - .agents/skills/skillguard/assets/schemas/skillguard_depth_calibration_record_v2.schema.json
+    - .agents/skills/skillguard/assets/schemas/skillguard_native_depth_calibration_evidence_v2.schema.json
+    - .agents/skills/skillguard/assets/schemas/skillguard_native_depth_calibration_observation_v2.schema.json
+    - .agents/skills/skillguard/assets/schemas/skillguard_check_execution_result_sidecar_current.schema.json
+    - .agents/skills/skillguard/scripts/skillguard_v2/**/*.py
+    - .agents/skills/skillguard/.skillguard/contract-source.json
+    - .agents/skills/skillguard/.skillguard/compiled-contract.json
+    - .agents/skills/skillguard/.skillguard/check-manifest.json
+    - .agents/skills/skillguard/.skillguard/flowguard_contract_model.py
+    - .agents/skills/skillguard/.skillguard/skillguard_closure_policy.json
+    - .agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json
+    - .agents/skills/skillguard/.skillguard/skillguard_manifest.json
+    - .agents/skills/skillguard/.skillguard/skillguard_profile.json
+    - .agents/skills/skillguard/.skillguard/skillguard_skill_contract.json
+    - .flowguard/execution_depth/**/*.py
+    - .flowguard/execution_depth/**/*.md
+    - .flowguard/existing_model_preflight/**/*.py
+    - .flowguard/development_process_flow/skillguard_executable_contract_model.py
+    - tests/test_execution_depth*.py
+    - tests/test_depth_portfolio_calibration.py
+    - tests/test_skillguard_execution_depth.py

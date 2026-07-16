@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillguard_check_execution_receipt_current.schema.json",
+  "title": "SkillGuard current reusable owner execution receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "execution_owner_id", "execution_key", "owner_declaration_hash", "owner_input_projection_hash", "input_components", "dependency_receipts", "target_input_fingerprint", "toolchain_fingerprint", "execution_environment_fingerprint", "evidence_domain_id", "impact_policy_id", "status", "sidecars", "claim_boundary", "receipt_id", "receipt_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.check_execution_receipt.current"},
+    "execution_owner_id": {"type": "string", "minLength": 1},
+    "execution_key": {"$ref": "#/$defs/hash"},
+    "owner_declaration_hash": {"$ref": "#/$defs/hash"},
+    "owner_input_projection_hash": {"$ref": "#/$defs/hash"},
+    "input_components": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["component_id", "component_hash"],
+        "properties": {
+          "component_id": {"type": "string", "minLength": 1},
+          "component_hash": {"$ref": "#/$defs/hash"}
+        }
+      }
+    },
+    "dependency_receipts": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["execution_owner_id", "receipt_id", "receipt_hash"],
+        "properties": {
+          "execution_owner_id": {"type": "string", "minLength": 1},
+          "receipt_id": {"$ref": "#/$defs/hash"},
+          "receipt_hash": {"$ref": "#/$defs/hash"}
+        }
+      }
+    },
+    "target_input_fingerprint": {"type": "string", "pattern": "^(?:|sha256:[0-9a-f]{64})$"},
+    "toolchain_fingerprint": {"$ref": "#/$defs/hash"},
+    "execution_environment_fingerprint": {"$ref": "#/$defs/hash"},
+    "evidence_domain_id": {"type": "string"},
+    "impact_policy_id": {"type": "string", "minLength": 1},
+    "status": {"const": "passed"},
+    "sidecars": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stdout", "stderr", "result", "termination"],
+      "properties": {
+        "stdout": {"$ref": "#/$defs/contentRef"},
+        "stderr": {"$ref": "#/$defs/contentRef"},
+        "result": {"$ref": "#/$defs/contentRef"},
+        "termination": {"$ref": "#/$defs/contentRef"}
+      }
+    },
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "receipt_id": {"$ref": "#/$defs/hash"},
+    "receipt_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "contentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_token", "relative_path", "content_hash", "media_type", "byte_count"],
+      "properties": {
+        "path_token": {"const": "owner_evidence_root"},
+        "relative_path": {"type": "string", "minLength": 1},
+        "content_hash": {"$ref": "#/$defs/hash"},
+        "media_type": {"enum": ["application/json", "application/octet-stream"]},
+        "byte_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

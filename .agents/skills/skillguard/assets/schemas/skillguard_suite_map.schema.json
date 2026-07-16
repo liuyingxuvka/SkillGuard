@@ -1,6 +1,6 @@
 {
   "title": "SkillGuard Suite Map",
-  "description": "Record-family schema for a generic suite map that groups skills, relationships, routing hints, evidence expectations, ownership, and compatibility. This schema defines record shape only; it does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
+  "description": "Record-family schema for a generic suite map that groups skills, relationships, routing hints, evidence expectations, ownership, and one current identity. This schema defines record shape only; it does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
   "type": "object",
   "required": [
     "schema_version",
@@ -12,7 +12,7 @@
     "routing_hints",
     "evidence_expectations",
     "maintenance_ownership",
-    "compatibility",
+    "current_identity",
     "claim_boundary"
   ],
   "properties": {
@@ -165,17 +165,17 @@
         "type": "string"
       }
     },
-    "compatibility": {
+    "current_identity": {
       "type": "object",
       "required": [
-        "version_boundary",
-        "known_incompatibilities"
+        "schema_boundary",
+        "rejected_noncurrent_shapes"
       ],
       "properties": {
-        "version_boundary": {
+        "schema_boundary": {
           "type": "string"
         },
-        "known_incompatibilities": {
+        "rejected_noncurrent_shapes": {
           "type": "array",
           "items": {
             "type": "string"

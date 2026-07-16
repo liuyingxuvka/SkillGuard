@@ -1,0 +1,43 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-v2-empty-non-production-schedule-20260714",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "Storyline Design current SkillGuard functional supervisor run",
+    "prior_local_claim": "capability-validation depth may carry the protocol's empty scheduled_production_identity sentinel without requiring an installation receipt",
+    "observed_result": "the native depth bridge and execution-depth evaluator treated an empty object as no scheduled-production identity, while the supervisor treated every mapping, including the empty sentinel, as scheduled production and attempted to load a nonexistent installation receipt root",
+    "failure_code": "empty_non_production_schedule_loaded_as_installation"
+  },
+  "classification": {
+    "owner": "SkillGuard V2 supervisor depth preflight",
+    "miss_type": "cross_layer_sentinel_semantics_gap",
+    "affected_feature_tags": [
+      "supervisor",
+      "execution-depth",
+      "scheduled-production",
+      "target-closure"
+    ]
+  },
+  "generalized_repair": {
+    "rule": "Installation receipt loading is owned only by the scheduled_production evidence domain. Capability-validation and fixture-calibration packets must accept only the canonical empty or absent schedule sentinel and must block any non-empty schedule identity.",
+    "regression": "test_supervisor_does_not_load_installation_context_for_empty_non_production_schedule and the affected Storyline Design formal supervisor run",
+    "negative_boundary": "A scheduled_production packet still requires one exact non-empty current installation identity; the repair does not weaken installation verification or accept malformed scheduled identities."
+  },
+  "required_revalidation": [
+    "focused supervisor/compiler regression",
+    "current SkillGuard deterministic contract compilation",
+    "transactional affected SkillGuard installation",
+    "affected Storyline Design formal supervisor rerun",
+    "one portfolio-level final full validation after all governed sources freeze"
+  ],
+  "revalidation_evidence": {
+    "compiler_and_supervisor_regression": "current compiler suite passed with non-production empty sentinel and scheduled-production cases",
+    "self_installation_regression": "15/15 passed",
+    "flowguard_validation_composition": "--check all passed",
+    "openspec": "compose-validation-evidence strict validation passed",
+    "storyline_formal_supervisor": "run-e432eba6435c1b0e1795 passed with EXECUTION_DEPTH_PASS",
+    "storyline_closure_sha256": "A2BC64C73C951F7975B60DDDF620D0BCBC59E3233849F7126A08E35DEC15AB18",
+    "storyline_target_install_receipt_sha256": "54B3BF4BD0ED4B76BBEA40DFB5864640DC6D59B79462C96907D9F15B3CACC9DB"
+  },
+  "claim_boundary": "The repair covers evidence-domain gating for empty versus non-empty schedule identities. It does not prove the final SkillGuard full parent, unrelated targets, publication, or future AI behavior."
+}

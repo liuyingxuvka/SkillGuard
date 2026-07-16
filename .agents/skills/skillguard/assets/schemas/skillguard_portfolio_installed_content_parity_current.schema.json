@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_portfolio_installed_content_parity_current.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "owner_id",
+    "verifier_id",
+    "manifest_policy_id",
+    "portfolio_projection_hash",
+    "target",
+    "members",
+    "status",
+    "blockers",
+    "claim_boundary",
+    "receipt_id",
+    "receipt_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_installed_content_parity.current"},
+    "owner_id": {"const": "owner:installed-content-parity"},
+    "verifier_id": {"const": "skillguard-installed-content-parity-current"},
+    "manifest_policy_id": {"type": "string", "minLength": 1},
+    "portfolio_projection_hash": {"$ref": "#/$defs/wire_hash"},
+    "target": {"$ref": "#/$defs/target"},
+    "members": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/member"}
+    },
+    "status": {"enum": ["current", "blocked"]},
+    "blockers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "receipt_id": {"$ref": "#/$defs/wire_hash"},
+    "receipt_hash": {"$ref": "#/$defs/wire_hash"}
+  },
+  "$defs": {
+    "wire_hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?:\\.|[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*)$"
+    },
+    "target_member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_skill_id", "skill_path"],
+      "properties": {
+        "member_skill_id": {"$ref": "#/$defs/identifier"},
+        "skill_path": {"$ref": "#/$defs/path"}
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_id", "target_kind", "members"],
+      "properties": {
+        "skill_id": {"$ref": "#/$defs/identifier"},
+        "target_kind": {"enum": ["single_skill", "skill_suite"]},
+        "members": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/target_member"}
+        }
+      }
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "skill_id",
+        "input_component_ids",
+        "projection_declaration_hash",
+        "input_projection_hash",
+        "consumer_projection_hash",
+        "identity_hash"
+      ],
+      "properties": {
+        "schema_version": {"const": "skillguard.installation_projection.current"},
+        "skill_id": {"$ref": "#/$defs/identifier"},
+        "input_component_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/identifier"}
+        },
+        "projection_declaration_hash": {"$ref": "#/$defs/wire_hash"},
+        "input_projection_hash": {"$ref": "#/$defs/wire_hash"},
+        "consumer_projection_hash": {"$ref": "#/$defs/wire_hash"},
+        "identity_hash": {"$ref": "#/$defs/wire_hash"}
+      }
+    },
+    "file_hashes": {
+      "type": "object",
+      "propertyNames": {"$ref": "#/$defs/path"},
+      "additionalProperties": {"$ref": "#/$defs/wire_hash"}
+    },
+    "path_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/path"}
+    },
+    "member": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "member_skill_id",
+        "skill_path",
+        "projection_schema",
+        "canonical_installation_projection",
+        "installed_installation_projection",
+        "canonical_file_hashes",
+        "installed_file_hashes",
+        "missing_in_installed",
+        "changed_in_installed",
+        "unexpected_in_installed",
+        "status"
+      ],
+      "properties": {
+        "member_skill_id": {"$ref": "#/$defs/identifier"},
+        "skill_path": {"$ref": "#/$defs/path"},
+        "projection_schema": {"const": "skillguard.installation_projection.current"},
+        "canonical_installation_projection": {"$ref": "#/$defs/projection"},
+        "installed_installation_projection": {"$ref": "#/$defs/projection"},
+        "canonical_file_hashes": {"$ref": "#/$defs/file_hashes"},
+        "installed_file_hashes": {"$ref": "#/$defs/file_hashes"},
+        "missing_in_installed": {"$ref": "#/$defs/path_list"},
+        "changed_in_installed": {"$ref": "#/$defs/path_list"},
+        "unexpected_in_installed": {"$ref": "#/$defs/path_list"},
+        "status": {"enum": ["current", "blocked"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SkillGuard test result reuse ticket v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "ticket_id", "skill_id", "status", "change_id", "from_guard", "to_guard", "affected_feature_tags", "broad_semantic_change", "identity", "issued_at", "ticket_hash", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": "skillguard.test_result_reuse_ticket.v1"},
+    "ticket_id": {"type": "string", "minLength": 1},
+    "skill_id": {"type": "string", "minLength": 1},
+    "status": {"const": "current"},
+    "change_id": {"type": "string", "minLength": 1},
+    "from_guard": {"$ref": "#/$defs/guard"},
+    "to_guard": {"$ref": "#/$defs/guard"},
+    "affected_feature_tags": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "broad_semantic_change": {"const": false},
+    "identity": {"$ref": "#/$defs/identity"},
+    "issued_at": {"type": "string", "minLength": 1},
+    "ticket_hash": {"$ref": "#/$defs/hash"},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_id", "file_count", "source_hash"],
+      "properties": {
+        "runtime_id": {"const": "skillguard-v2"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "source_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_fingerprint", "contract_hash", "command_fingerprint", "environment_fingerprint", "coverage_fingerprint"],
+      "properties": {
+        "source_fingerprint": {"$ref": "#/$defs/hash"},
+        "contract_hash": {"$ref": "#/$defs/hash"},
+        "command_fingerprint": {"$ref": "#/$defs/hash"},
+        "environment_fingerprint": {"$ref": "#/$defs/hash"},
+        "coverage_fingerprint": {"$ref": "#/$defs/hash"}
+      }
+    }
+  }
+}

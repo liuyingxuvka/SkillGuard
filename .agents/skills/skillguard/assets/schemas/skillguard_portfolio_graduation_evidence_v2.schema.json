@@ -1,0 +1,533 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_portfolio_graduation_evidence_v2.schema.json",
+  "title": "SkillGuard portfolio graduation evidence v2",
+  "description": "Strict graduation request matching the current embedded full-run receipt and verifier-derived target identity fields, with explicit scope, job-spec, unresolved-failure, and whole-evidence bindings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "transaction_id",
+    "expected_registry_revision",
+    "base_registry_hash",
+    "registry_id",
+    "scope_manifest_id",
+    "scope_manifest_hash",
+    "skill_id",
+    "target_kind",
+    "skill_paths",
+    "version",
+    "source_fingerprint",
+    "contract_hash",
+    "guard_runtime",
+    "preparation_receipt",
+    "installed_parity_receipt",
+    "target_identity_receipt",
+    "job_plan_refs",
+    "job_plan_hash",
+    "job_spec_refs",
+    "job_spec_hash",
+    "representative_jobs",
+    "production_revalidation_binding_refs",
+    "production_revalidation_fingerprint",
+    "full_run_receipt",
+    "failure_classification",
+    "unresolved_failure_ids",
+    "submitted_at",
+    "claim_boundary",
+    "evidence_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_graduation_evidence.v2"},
+    "transaction_id": {"$ref": "#/$defs/non_empty_string"},
+    "expected_registry_revision": {"type": "integer", "minimum": 1},
+    "base_registry_hash": {"$ref": "#/$defs/hash"},
+    "registry_id": {"$ref": "#/$defs/non_empty_string"},
+    "scope_manifest_id": {"$ref": "#/$defs/non_empty_string"},
+    "scope_manifest_hash": {"$ref": "#/$defs/hash"},
+    "skill_id": {"$ref": "#/$defs/non_empty_string"},
+    "target_kind": {"enum": ["single_skill", "skill_suite"]},
+    "skill_paths": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/skill_path_token"}
+    },
+    "version": {"type": "string"},
+    "source_fingerprint": {"$ref": "#/$defs/hash"},
+    "contract_hash": {"$ref": "#/$defs/hash"},
+    "guard_runtime": {"$ref": "#/$defs/guard"},
+    "preparation_receipt": {"$ref": "#/$defs/receipt_binding"},
+    "installed_parity_receipt": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/receipt_binding"}
+      ]
+    },
+    "target_identity_receipt": {"$ref": "#/$defs/receipt_binding"},
+    "job_plan_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash_bound_ref"}
+    },
+    "job_plan_hash": {"$ref": "#/$defs/hash"},
+    "job_spec_refs": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash_bound_ref"}
+    },
+    "job_spec_hash": {"$ref": "#/$defs/hash"},
+    "representative_jobs": {"$ref": "#/$defs/required_representative_jobs"},
+    "production_revalidation_binding_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/hash_bound_ref"}
+    },
+    "production_revalidation_fingerprint": {"$ref": "#/$defs/hash"},
+    "full_run_receipt": {"$ref": "#/$defs/full_run_receipt"},
+    "failure_classification": {
+      "type": ["string", "null"],
+      "enum": [
+        null,
+        "target_implementation_gap",
+        "target_contract_binding_gap",
+        "skillguard_model_miss",
+        "skillguard_runtime_or_validator_gap",
+        "environment_or_external_blocker"
+      ]
+    },
+    "unresolved_failure_ids": {
+      "type": "array",
+      "maxItems": 0,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/non_empty_string"}
+    },
+    "submitted_at": {"$ref": "#/$defs/timestamp"},
+    "claim_boundary": {"$ref": "#/$defs/non_empty_string"},
+    "evidence_hash": {"$ref": "#/$defs/hash"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"target_kind": {"const": "single_skill"}},
+        "required": ["target_kind"]
+      },
+      "then": {"properties": {"skill_paths": {"maxItems": 1}}}
+    },
+    {
+      "if": {
+        "properties": {"target_kind": {"const": "skill_suite"}},
+        "required": ["target_kind"]
+      },
+      "then": {
+        "properties": {
+          "skill_paths": {"minItems": 2},
+          "installed_parity_receipt": {"$ref": "#/$defs/receipt_binding"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "non_empty_string": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "path_token": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$",
+      "not": {"pattern": "(^|/)\\.\\.?($|/)"}
+    },
+    "skill_path_token": {
+      "oneOf": [
+        {"const": "."},
+        {"$ref": "#/$defs/path_token"}
+      ]
+    },
+    "hash_bound_ref": {
+      "type": "string",
+      "pattern": "^record:[A-Za-z0-9._/-]+@[A-F0-9]{64}$",
+      "not": {"pattern": "record:(?:\\.\\.?/|.*/\\.\\.?/)"}
+    },
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_id", "file_count", "source_hash"],
+      "properties": {
+        "runtime_id": {"const": "skillguard-v2"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "source_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "receipt_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "receipt_id", "receipt_hash"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/hash_bound_ref"},
+        "receipt_id": {"$ref": "#/$defs/non_empty_string"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "job_class_id": {
+      "enum": [
+        "positive",
+        "invalid_input",
+        "recovery_or_resume",
+        "out_of_scope",
+        "native_check",
+        "artifact_check",
+        "judged_quality"
+      ]
+    },
+    "class_outcome": {
+      "enum": [
+        "closed",
+        "expected_rejection_observed",
+        "resume_replay_closed",
+        "declined_without_mutation",
+        "native_check_current",
+        "artifact_current",
+        "judged_quality_current"
+      ]
+    },
+    "one_job_class": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/job_class_id"}
+    },
+    "representative_job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "job_class_ids",
+        "member_skill_id",
+        "member_contract_hash",
+        "job_spec_ref",
+        "job_spec_hash",
+        "covered_capability_ids",
+        "evidence_refs",
+        "expected_outcome",
+        "observed_outcome"
+      ],
+      "properties": {
+        "job_id": {"$ref": "#/$defs/non_empty_string"},
+        "job_class_ids": {"$ref": "#/$defs/one_job_class"},
+        "member_skill_id": {"$ref": "#/$defs/non_empty_string"},
+        "member_contract_hash": {"$ref": "#/$defs/hash"},
+        "job_spec_ref": {"$ref": "#/$defs/hash_bound_ref"},
+        "job_spec_hash": {"$ref": "#/$defs/hash"},
+        "covered_capability_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/non_empty_string"}
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/hash_bound_ref"}
+        },
+        "expected_outcome": {"$ref": "#/$defs/class_outcome"},
+        "observed_outcome": {"$ref": "#/$defs/class_outcome"}
+      },
+      "allOf": [
+        {"$ref": "#/$defs/job_positive"},
+        {"$ref": "#/$defs/job_invalid_input"},
+        {"$ref": "#/$defs/job_recovery"},
+        {"$ref": "#/$defs/job_out_of_scope"},
+        {"$ref": "#/$defs/job_native_check"},
+        {"$ref": "#/$defs/job_artifact_check"},
+        {"$ref": "#/$defs/job_judged_quality"}
+      ]
+    },
+    "required_representative_jobs": {
+      "type": "array",
+      "minItems": 6,
+      "items": {"$ref": "#/$defs/representative_job"},
+      "allOf": [
+        {"contains": {"properties": {"job_class_ids": {"contains": {"const": "positive"}}}}},
+        {"contains": {"properties": {"job_class_ids": {"contains": {"const": "invalid_input"}}}}},
+        {"contains": {"properties": {"job_class_ids": {"contains": {"const": "recovery_or_resume"}}}}},
+        {"contains": {"properties": {"job_class_ids": {"contains": {"const": "out_of_scope"}}}}},
+        {"contains": {"properties": {"job_class_ids": {"contains": {"const": "native_check"}}}}},
+        {"contains": {"properties": {"job_class_ids": {"contains": {"const": "artifact_check"}}}}}
+      ]
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_record_id",
+        "check_record_hash",
+        "command",
+        "args",
+        "cwd_token",
+        "cwd_relative",
+        "exit_code",
+        "expected_exit_code",
+        "stdout_content_hash",
+        "stderr_content_hash",
+        "execution_environment_fingerprint"
+      ],
+      "properties": {
+        "check_record_id": {"$ref": "#/$defs/non_empty_string"},
+        "check_record_hash": {"$ref": "#/$defs/hash"},
+        "command": {"$ref": "#/$defs/non_empty_string"},
+        "args": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "cwd_token": {"$ref": "#/$defs/non_empty_string"},
+        "cwd_relative": {"type": "string"},
+        "exit_code": {"type": "integer"},
+        "expected_exit_code": {"type": "integer"},
+        "stdout_content_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "stderr_content_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "execution_environment_fingerprint": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "command_job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_id", "executions"],
+      "properties": {
+        "job_id": {"$ref": "#/$defs/non_empty_string"},
+        "executions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/execution"}
+        }
+      }
+    },
+    "command_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobs"],
+      "properties": {
+        "jobs": {
+          "type": "array",
+          "minItems": 6,
+          "items": {"$ref": "#/$defs/command_job"}
+        }
+      }
+    },
+    "execution_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os_name",
+        "platform",
+        "python_implementation",
+        "python_version"
+      ],
+      "properties": {
+        "os_name": {"$ref": "#/$defs/non_empty_string"},
+        "platform": {"$ref": "#/$defs/non_empty_string"},
+        "python_implementation": {"$ref": "#/$defs/non_empty_string"},
+        "python_version": {"$ref": "#/$defs/non_empty_string"}
+      }
+    },
+    "environment_execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "check_record_id",
+        "environment",
+        "environment_fingerprint"
+      ],
+      "properties": {
+        "job_id": {"$ref": "#/$defs/non_empty_string"},
+        "check_record_id": {"$ref": "#/$defs/non_empty_string"},
+        "environment": {"$ref": "#/$defs/execution_environment"},
+        "environment_fingerprint": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executions"],
+      "properties": {
+        "executions": {
+          "type": "array",
+          "minItems": 6,
+          "items": {"$ref": "#/$defs/environment_execution"}
+        }
+      }
+    },
+    "job_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "job_id",
+        "job_class_ids",
+        "member_skill_id",
+        "member_contract_hash",
+        "covered_capability_ids",
+        "evidence_refs",
+        "outcome",
+        "status"
+      ],
+      "properties": {
+        "job_id": {"$ref": "#/$defs/non_empty_string"},
+        "job_class_ids": {"$ref": "#/$defs/one_job_class"},
+        "member_skill_id": {"$ref": "#/$defs/non_empty_string"},
+        "member_contract_hash": {"$ref": "#/$defs/hash"},
+        "covered_capability_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/non_empty_string"}
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/hash_bound_ref"}
+        },
+        "outcome": {"$ref": "#/$defs/class_outcome"},
+        "status": {"const": "verified"}
+      },
+      "allOf": [
+        {"$ref": "#/$defs/result_positive"},
+        {"$ref": "#/$defs/result_invalid_input"},
+        {"$ref": "#/$defs/result_recovery"},
+        {"$ref": "#/$defs/result_out_of_scope"},
+        {"$ref": "#/$defs/result_native_check"},
+        {"$ref": "#/$defs/result_artifact_check"},
+        {"$ref": "#/$defs/result_judged_quality"}
+      ]
+    },
+    "result_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["representative_job_results"],
+      "properties": {
+        "representative_job_results": {
+          "type": "array",
+          "minItems": 6,
+          "items": {"$ref": "#/$defs/job_result"}
+        }
+      }
+    },
+    "full_run_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "status",
+        "guard_runtime",
+        "source_fingerprint",
+        "contract_hash",
+        "command_set",
+        "command_fingerprint",
+        "environment",
+        "environment_fingerprint",
+        "coverage_fingerprint",
+        "production_revalidation_bindings",
+        "production_revalidation_fingerprint",
+        "result_bundle",
+        "result_hash",
+        "completed_at",
+        "claim_boundary",
+        "receipt_hash"
+      ],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/non_empty_string"},
+        "status": {"const": "current"},
+        "guard_runtime": {"$ref": "#/$defs/guard"},
+        "source_fingerprint": {"$ref": "#/$defs/hash"},
+        "contract_hash": {"$ref": "#/$defs/hash"},
+        "command_set": {"$ref": "#/$defs/command_set"},
+        "command_fingerprint": {"$ref": "#/$defs/hash"},
+        "environment": {"$ref": "#/$defs/environment"},
+        "environment_fingerprint": {"$ref": "#/$defs/hash"},
+        "coverage_fingerprint": {"$ref": "#/$defs/hash"},
+        "production_revalidation_bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/production_revalidation_binding"}
+        },
+        "production_revalidation_fingerprint": {"$ref": "#/$defs/hash"},
+        "result_bundle": {"$ref": "#/$defs/result_bundle"},
+        "result_hash": {"$ref": "#/$defs/hash"},
+        "completed_at": {"$ref": "#/$defs/timestamp"},
+        "claim_boundary": {"$ref": "#/$defs/non_empty_string"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "production_revalidation_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["member_skill_id", "binding_ref", "binding_hash"],
+      "properties": {
+        "member_skill_id": {"$ref": "#/$defs/non_empty_string"},
+        "binding_ref": {"$ref": "#/$defs/hash_bound_ref"},
+        "binding_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "result_positive": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "positive"}}}},
+      "then": {"properties": {"outcome": {"const": "closed"}}}
+    },
+    "result_invalid_input": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "invalid_input"}}}},
+      "then": {"properties": {"outcome": {"const": "expected_rejection_observed"}}}
+    },
+    "result_recovery": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "recovery_or_resume"}}}},
+      "then": {"properties": {"outcome": {"const": "resume_replay_closed"}}}
+    },
+    "result_out_of_scope": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "out_of_scope"}}}},
+      "then": {"properties": {"outcome": {"const": "declined_without_mutation"}}}
+    },
+    "result_native_check": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "native_check"}}}},
+      "then": {"properties": {"outcome": {"const": "native_check_current"}}}
+    },
+    "result_artifact_check": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "artifact_check"}}}},
+      "then": {"properties": {"outcome": {"const": "artifact_current"}}}
+    },
+    "result_judged_quality": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "judged_quality"}}}},
+      "then": {"properties": {"outcome": {"const": "judged_quality_current"}}}
+    },
+    "job_positive": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "positive"}}}},
+      "then": {"properties": {"expected_outcome": {"const": "closed"}, "observed_outcome": {"const": "closed"}}}
+    },
+    "job_invalid_input": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "invalid_input"}}}},
+      "then": {"properties": {"expected_outcome": {"const": "expected_rejection_observed"}, "observed_outcome": {"const": "expected_rejection_observed"}}}
+    },
+    "job_recovery": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "recovery_or_resume"}}}},
+      "then": {"properties": {"expected_outcome": {"const": "resume_replay_closed"}, "observed_outcome": {"const": "resume_replay_closed"}}}
+    },
+    "job_out_of_scope": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "out_of_scope"}}}},
+      "then": {"properties": {"expected_outcome": {"const": "declined_without_mutation"}, "observed_outcome": {"const": "declined_without_mutation"}}}
+    },
+    "job_native_check": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "native_check"}}}},
+      "then": {"properties": {"expected_outcome": {"const": "native_check_current"}, "observed_outcome": {"const": "native_check_current"}}}
+    },
+    "job_artifact_check": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "artifact_check"}}}},
+      "then": {"properties": {"expected_outcome": {"const": "artifact_current"}, "observed_outcome": {"const": "artifact_current"}}}
+    },
+    "job_judged_quality": {
+      "if": {"properties": {"job_class_ids": {"contains": {"const": "judged_quality"}}}},
+      "then": {"properties": {"expected_outcome": {"const": "judged_quality_current"}, "observed_outcome": {"const": "judged_quality_current"}}}
+    }
+  }
+}

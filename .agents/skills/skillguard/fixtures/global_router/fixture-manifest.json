@@ -2,8 +2,8 @@
   "schema_version": "skillguard.fixture_manifest.v1",
   "fixture_version": "global-router-v1",
   "checker_version": "skillguard.local_cli_dispatch.v1",
-  "compatibility": {
-    "status": "compatible",
+  "current_status": {
+    "status": "current",
     "notes": [
       "Exercises the global SkillGuard router command path against explicit local roots and a fixture-local Codex home."
     ]

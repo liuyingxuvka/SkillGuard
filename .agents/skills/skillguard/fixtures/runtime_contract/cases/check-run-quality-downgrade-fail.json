@@ -1,7 +1,0 @@
-{
-  "fixture_id": "runtime-check-run-quality-downgrade-fail",
-  "target_command": "check-run",
-  "expected_decision": "fail",
-  "run_path": "../runs/quality_failure_run.json",
-  "complete": true
-}

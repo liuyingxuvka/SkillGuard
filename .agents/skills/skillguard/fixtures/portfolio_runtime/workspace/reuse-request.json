@@ -1,0 +1,35 @@
+{
+  "schema_version": "skillguard.test_result_reuse_request.v1",
+  "skill_id": "fixture-skill",
+  "guard_change": {
+    "schema_version": "skillguard.guard_change.v1",
+    "change_id": "change:fixture:docs",
+    "guard_before": {
+      "runtime_id": "skillguard-v2",
+      "file_count": 1,
+      "source_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    },
+    "guard_after": {
+      "runtime_id": "skillguard-v2",
+      "file_count": 1,
+      "source_hash": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+    },
+    "affected_feature_tags": ["readme"],
+    "broad_semantic_change": false,
+    "reason": "Synthetic documentation-only fixture change."
+  },
+  "previous_result": {
+    "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+    "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+    "command_fingerprint": "3333333333333333333333333333333333333333333333333333333333333333",
+    "environment_fingerprint": "4444444444444444444444444444444444444444444444444444444444444444",
+    "coverage_fingerprint": "766803FBF520B1CCB82AA6FA33672EDBF8610C3BCFE2ECBFE37AB107C4E39B6E"
+  },
+  "current_identity": {
+    "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+    "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+    "command_fingerprint": "3333333333333333333333333333333333333333333333333333333333333333",
+    "environment_fingerprint": "4444444444444444444444444444444444444444444444444444444444444444",
+    "coverage_fingerprint": "766803FBF520B1CCB82AA6FA33672EDBF8610C3BCFE2ECBFE37AB107C4E39B6E"
+  }
+}

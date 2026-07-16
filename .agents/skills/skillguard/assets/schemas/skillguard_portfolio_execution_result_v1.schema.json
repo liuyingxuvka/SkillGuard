@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_portfolio_execution_result_v1.schema.json",
+  "title": "SkillGuard portfolio execution result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "preparation_id", "preparation_ref",
+    "preparation_receipt_hash", "status", "representative_jobs",
+    "coverage_fingerprint", "completed_at", "claim_boundary", "result_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_execution_result.v1"},
+    "preparation_id": {"type": "string", "minLength": 1},
+    "preparation_ref": {"$ref": "#/$defs/ref"},
+    "preparation_receipt_hash": {"$ref": "#/$defs/hash"},
+    "status": {"const": "executed"},
+    "representative_jobs": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "coverage_fingerprint": {"$ref": "#/$defs/hash"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "result_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "ref": {"type": "string", "pattern": "^record:[A-Za-z0-9._/-]+@[A-F0-9]{64}$"}
+  }
+}

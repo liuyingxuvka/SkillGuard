@@ -1,0 +1,57 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-install-upgrade-head-source-drift-20260715",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "transactional SkillGuard reinstall after the canonical source changed",
+    "prior_local_claim": "a committed installation head can be replaced transactionally by a newer verified source projection",
+    "observed_result": "activation recovery treated expected canonical source evolution as corruption of the committed head, rolled the head back, and then blocked the upgrade because the restored older head also differed from the new source",
+    "failure_code": "install_head_target_not_current"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.transactional-upgrade",
+    "owner": "SkillGuard installation recovery and activation head precondition",
+    "miss_type": "state_transition_conflated_with_corruption",
+    "error_signature": "committed head rollback on canonical projection drift before replacement",
+    "affected_feature_tags": [
+      "installation",
+      "upgrade",
+      "recovery",
+      "install-head",
+      "source-freshness"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "one currentness helper combined two different questions: whether the active installation still matches its committed receipt, and whether the maintained source still matches that historical receipt",
+    "would_have_failed_if": "the installation model and tests had changed one portable canonical source component between two consecutive hardened installations",
+    "new_model_item": "recovery protects the active installed identity recorded by the committed head; source-to-installed parity belongs to currentness claims and the incoming replacement transaction, not rollback eligibility",
+    "owner_code_contract": "committed head active replay -> incoming stage revalidation -> atomic replacement -> new committed head"
+  },
+  "generalized_repair": {
+    "rule": "A committed head remains recoverably sound while its active installed tree and stored activation receipt are exact, even when the canonical source has advanced. Canonical drift makes the old install stale for parity claims but eligible for replacement, not rollback.",
+    "observed_regression": "the real stale committed head can be replaced by the newly compiled SkillGuard source without rollback deadlock",
+    "same_class_regression": "two consecutive hardened installs with a portable canonical source change retain the first transaction as committed history and link the second transaction to it",
+    "negative_boundary": "active installed drift, invalid receipts, generation mismatch, unsafe runtime residuals, and stage drift remain blockers"
+  },
+  "required_revalidation": [
+    "source-upgrade installation regression",
+    "installation recovery and rollback suite",
+    "FlowGuard validation-composition checks",
+    "SkillGuard full regression",
+    "contract recompilation",
+    "real transactional reinstall",
+    "installation receipt capture and replay",
+    "installed self-host closure"
+  ],
+  "revalidation_evidence": {
+    "same_class_regression": "three consecutive installation/recovery tests passed, including a portable canonical source change between committed heads",
+    "source_self_host_before_first_reinstall": "closure-1e197bdf38c4d3e2e013162b / 8D41FC209C9B2CF4BD4E19C9C206422A21972C24BBB5BDFAFDFE4F4F8F94D2E4",
+    "first_real_upgrade_after_deadlock_fix": "install-6bc3af4060034ace89d422f40446d51a committed without rolling back the stale but intact head",
+    "final_real_upgrade": "install-0af5811e7a7b4f2cb6af4b3a3758cd90 committed from the next canonical source revision",
+    "installation_receipt": "installation-7265db0247774903bf9d7c79 / 1D3FFBF51CF7BF60279B89E0E5FACD75734EA0BE8476838B5FDEA1BF1339D01C",
+    "installed_self_host": "closure-eb3f69575e9fdf8fcd6b586e current",
+    "full_test_mesh": "aggregation sha256:283cf0014bf133864f11aa1b2ed0fe9ef4bfc83b0ab7622d3db3d62dc80485b7 with exact current installation binding and zero execution"
+  },
+  "claim_boundary": "The repair is validated for the current two-member SkillGuard suite upgrade chain and active installation. It does not prove unrelated installers, publication, release, or future concurrent mutations."
+}

@@ -47,22 +47,36 @@ class ExecutableContractModelTests(unittest.TestCase):
             "over_bound_loop_blocks",
             "stale_child_blocks_parent",
             "hidden_failure_blocks",
-            "v1_alternate_success_blocks",
-            "non_monotonic_profile_blocks",
+            "former_authority_residual_blocks",
+            "non_enforced_closure_blocks",
             "stale_prior_graduate_blocks",
+            "parallel_domain_executor_blocks",
+            "contract_only_depth_blocks_closure",
+            "duplicate_generic_evidence_blocks",
+            "declared_check_inventory_not_frozen_blocks",
+            "declared_check_missing_blocks",
+            "declared_check_stale_blocks",
+            "prompt_new_runtime_old_blocks",
+            "separate_repository_and_target_roots_collapsed_blocks",
+            "external_repository_root_missing_blocks",
+            "external_member_escape_blocks",
+            "external_binding_fallback_blocks",
+            "external_reference_member_fallback_blocks",
+            "standalone_member_path_mismatch_blocks",
+            "missing_project_adoption_blocks_maintenance_closure",
         }
         self.assertTrue(expected.issubset(scenario_names))
 
     def test_behavior_commitment_ledger_passes(self) -> None:
         report = self.model.run_governance_reviews()["behavior_commitment_ledger"]
         self.assertTrue(report.ok, report.format_text())
-        self.assertEqual(6, len(self.model.build_behavior_commitment_ledger().commitments))
+        self.assertEqual(8, len(self.model.build_behavior_commitment_ledger().commitments))
 
     def test_primary_path_authority_passes(self) -> None:
         report = self.model.run_governance_reviews()["primary_path_authority"]
         self.assertTrue(report.ok, report.format_text())
         plan = self.model.build_primary_path_authority_plan()
-        self.assertTrue(all(not row.returns_success_after_primary_failure for row in plan.fallback_candidates))
+        self.assertEqual((), plan.fallback_candidates)
 
     def test_contract_exhaustion_covers_required_families(self) -> None:
         report = self.model.run_governance_reviews()["contract_exhaustion"]
@@ -90,7 +104,7 @@ class ExecutableContractModelTests(unittest.TestCase):
     def test_model_test_alignment_passes(self) -> None:
         report = self.model.run_governance_reviews()["model_test_alignment"]
         self.assertTrue(report.ok, report.format_text())
-        self.assertEqual(17, len(self.model.build_model_test_alignment_plan().obligations))
+        self.assertEqual(21, len(self.model.build_model_test_alignment_plan().obligations))
 
     def test_self_host_functions_have_distinct_routes_and_terminals(self) -> None:
         export = self.model.export_contract_model()
@@ -102,6 +116,7 @@ class ExecutableContractModelTests(unittest.TestCase):
             "deep_audit",
             "global_router_handoff",
             "audit_provenance",
+            "adopt_project",
         }
         self.assertTrue(required.issubset(functions))
         routes = {row["route_id"]: row for row in export["routes"]}

@@ -20,7 +20,7 @@ Required information:
 - short purpose;
 - repository or maintained target location;
 - owner or maintainer role;
-- version or compatibility baseline when available;
+- current suite identity and schema baseline when available;
 - public claim boundary for what the map proves.
 
 Pass criteria: the suite identity is clear and public-safe.
@@ -163,30 +163,31 @@ A suite map should state who or what owns maintenance for the suite and for each
 
 Ownership can be a person, team, repository role, or documented maintainer process. It should not be a private local runtime detail.
 
-Pass criteria: maintainers can tell who updates suite membership, routing hints, evidence rules, and compatibility boundaries.
+Pass criteria: maintainers can tell who updates suite membership, routing hints, evidence rules, and the one current authority boundary.
 
 Fail criteria: ownership is missing or points to private workspace state.
 
 Block criteria: ownership is required to resolve a conflict and no public-safe owner is available.
 
-## Compatibility And Version Boundaries
+## Current Authority And Direct Replacement
 
-When a suite map uses versions, it should describe compatibility boundaries without overstating them.
+A covered skill suite has one current runtime authority and one current serialized contract shape. A suite map records the current suite and child identities plus the former paths or shapes that must be absent. It does not advertise compatibility, fallback, or migration readers for skill runtime artifacts.
 
 Useful fields include:
 
-- suite version;
-- child skill version;
-- minimum supported schema or metadata version;
-- known incompatible versions;
-- migration status;
-- accepted compatibility evidence.
+- current suite identity;
+- current child skill identity;
+- current schema and metadata identity;
+- exact former paths or shapes that must be absent;
+- direct-replacement evidence.
 
-Pass criteria: compatibility claims cite current child versions and evidence.
+Pass criteria: every child points to the current authority and former skill-runtime surfaces are absent.
 
-Fail criteria: compatibility is asserted without evidence or conflicts with child metadata.
+Fail criteria: the map offers a compatibility or fallback route, accepts a former shape, or conflicts with current child metadata.
 
-Block criteria: a required version or compatibility decision is missing.
+Block criteria: the current authority cannot be identified or a former authority is still live.
+
+An ordinary software product may retain a bounded historical-data reader only when that product requirement is explicit and modeled in the product's own FlowGuard path. That exception is not a SkillGuard skill-runtime compatibility route.
 
 ## Status Reporting
 
@@ -235,6 +236,6 @@ Before accepting a suite map, verify:
 - routing hints include use and non-use boundaries;
 - evidence expectations are tied to child evidence;
 - ownership is public-safe;
-- compatibility and version claims are bounded;
+- the one current authority and former-path absence are explicit;
 - status reporting does not overclaim;
 - no private or credential material is present.

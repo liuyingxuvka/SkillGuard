@@ -1,0 +1,87 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-installed-target-supervisor-recompile-20260715",
+  "status": "repair_validated",
+  "observed_failure": {
+    "surface": "SkillGuard supervision of six installed LogicGuard skills",
+    "prior_local_claim": "an exact installed target projection remains current while its declared checks are supervised",
+    "observed_result": "default supervision recompiled the installed projection as if it were a complete source tree, omitted intentional source-only fixtures from the content plan, rewrote installed contract hashes, and invalidated the installation receipt",
+    "failure_code": "installed_projection_recompiled_as_source"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.current-installed-target-supervision",
+    "owner": "SkillGuard generic supervisor runtime-pair resolution",
+    "miss_type": "source_consumer_role_collapse",
+    "error_signature": "installed compiled contract hash differs after successful target installation",
+    "affected_feature_tags": [
+      "installed-target",
+      "supervision",
+      "content-projection",
+      "installation-currentness"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the supervisor default always invoked the source compiler even when skill_root was the active CODEX_HOME installation projection",
+    "would_have_failed_if": "the model distinguished source-maintenance roots from installed consumer roots and asserted that installed supervision is read-only over the current contract pair",
+    "new_model_item": "an active installed projection loads its exact current compiled contract and check manifest without compilation or mutation; source roots continue to compile",
+    "owner_code_contract": "supervisor._load_or_compile_runtime_pair"
+  },
+  "generalized_repair": {
+    "rule": "Default supervision compiles source-maintenance roots but read-loads current authority for the exact active CODEX_HOME skills projection.",
+    "observed_regression": "an installed target with intentionally absent source-only fixtures supervises without calling the compiler and without changing contract or manifest bytes",
+    "same_class_regression": "ordinary source roots still compile before supervision and stale installed authority still blocks",
+    "negative_boundary": "the repair adds no compatibility reader, fallback authority, selectable mode, or target-domain semantics"
+  },
+  "required_revalidation": [
+    "focused installed-projection no-recompile test",
+    "source supervisor regression",
+    "SkillGuard contract recompilation and self-host",
+    "transactional SkillGuard reinstall and installed self-host",
+    "LogicGuard six-target reinstall and installed supervision",
+    "LogicGuard family parent receipt replay"
+  ],
+  "revalidation_evidence": {
+    "focused_tests": {
+      "status": "passed",
+      "command": "python -m pytest -q tests/test_executable_contract_model.py tests/test_supervisor_cli.py tests/test_contract_compiler_v2.py",
+      "result": "59 passed and 7 subtests passed"
+    },
+    "skillguard_installation": {
+      "status": "committed",
+      "transaction_id": "install-c4ab012703184d9b8e22b2a01a1591e3",
+      "activation_receipt_hash": "516C34861D5B5130B4467D42F9313CD8B11829719DB6BABA38C36D99295DA211"
+    },
+    "installed_self_host": {
+      "status": "passed",
+      "closure_receipt_id": "closure-e80b2f8dd62b4ff5d7dac4a9",
+      "closure_hash": "A7CFD523EF82B5FE7A2F1B52985FC64D3D69870966414674C8C37BEF2E2E754F"
+    },
+    "logicguard_external_targets": {
+      "status": "passed",
+      "target_count": 6,
+      "contract_bytes_unchanged": true,
+      "manifest_bytes_unchanged": true,
+      "profiles": [
+        "enforced"
+      ],
+      "closure_receipt_ids": [
+        "closure-7ccd77ca68ac239acd67c66c",
+        "closure-50440a0c05cae61143d79bc5",
+        "closure-3c22be97de70f5aeac7f1dac",
+        "closure-f2cac79812155e3725d764ec",
+        "closure-07c6be0e7be2f5270eae19f8",
+        "closure-2ca7103e9f9ea9eddcbfb60d"
+      ]
+    },
+    "logicguard_family_parent": {
+      "status": "passed",
+      "child_count": 6,
+      "child_execution_count": 0,
+      "closure_receipt_id": "closure-ed4f89724d6062ff62d51a5c",
+      "closure_hash": "57D87E9918FBCD0B5E91405058951F92E1BC39E0A30C8F90A9CAA759917E625E"
+    },
+    "remaining_gate": null
+  },
+  "claim_boundary": "This review covers the source-versus-installed runtime-pair boundary. It does not prove any target Guard semantics or publication state."
+}

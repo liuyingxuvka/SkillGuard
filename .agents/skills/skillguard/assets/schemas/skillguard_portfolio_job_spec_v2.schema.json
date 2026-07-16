@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_portfolio_job_spec_v2.schema.json",
+  "title": "SkillGuard portfolio job specification v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "registry_id", "scope_manifest_id", "scope_manifest_hash",
+    "skill_id", "target_kind", "skill_paths", "member_skill_id",
+    "member_contract_hash", "job_id", "job_class_id", "covered_capability_ids",
+    "capability_bindings", "required_check_ids", "expected_outcome", "created_at",
+    "claim_boundary", "job_spec_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_job_spec.v2"},
+    "registry_id": {"type": "string", "minLength": 1},
+    "scope_manifest_id": {"type": "string", "minLength": 1},
+    "scope_manifest_hash": {"$ref": "#/$defs/hash"},
+    "skill_id": {"type": "string", "minLength": 1},
+    "target_kind": {"enum": ["single_skill", "skill_suite"]},
+    "skill_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "member_skill_id": {"type": "string", "minLength": 1},
+    "member_contract_hash": {"$ref": "#/$defs/hash"},
+    "job_id": {"type": "string", "minLength": 1},
+    "job_class_id": {"enum": ["positive", "invalid_input", "recovery_or_resume", "out_of_scope", "native_check", "artifact_check", "judged_quality"]},
+    "covered_capability_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "capability_bindings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/capability_binding"}},
+    "required_check_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "expected_outcome": {"enum": ["closed", "expected_rejection_observed", "resume_replay_closed", "declined_without_mutation", "native_check_current", "artifact_current", "judged_quality_current"]},
+    "execution_packet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request", "profiles", "steps"],
+      "properties": {
+        "request": {"type": "object"},
+        "profiles": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "steps": {"type": "object"}
+      }
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "job_spec_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "id_list": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "capability_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_id", "function_ids", "route_ids", "step_ids", "obligation_ids", "check_ids", "artifact_ids", "evidence_requirements"],
+      "properties": {
+        "capability_id": {"type": "string", "minLength": 1},
+        "function_ids": {"$ref": "#/$defs/id_list"},
+        "route_ids": {"$ref": "#/$defs/id_list"},
+        "step_ids": {"$ref": "#/$defs/id_list"},
+        "obligation_ids": {"$ref": "#/$defs/id_list"},
+        "check_ids": {"$ref": "#/$defs/id_list"},
+        "artifact_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "evidence_requirements": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"enum": ["manifest_check_passed", "closure_replay_current", "resume_replay_current", "artifact_current", "no_mutation", "judgment_current"]}}
+      }
+    }
+  }
+}

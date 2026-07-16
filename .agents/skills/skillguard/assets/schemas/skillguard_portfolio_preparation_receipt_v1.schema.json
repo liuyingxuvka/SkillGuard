@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_portfolio_preparation_receipt_v1.schema.json",
+  "title": "SkillGuard portfolio preparation receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_id", "preparation_id", "status", "seed_hash",
+    "registry_id", "registry_revision", "registry_hash", "scope_manifest_id",
+    "scope_manifest_hash", "skill_id", "target_kind", "skill_root_token", "skill_paths",
+    "guard_runtime", "target_identity_receipt", "member_contracts",
+    "job_plan_ref", "job_plan_hash", "job_specs", "job_set_hash",
+    "installed_parity_receipt", "prepared_sequence", "prepared_at",
+    "claim_boundary", "receipt_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_preparation_receipt.v1"},
+    "receipt_id": {"$ref": "#/$defs/text"},
+    "preparation_id": {"$ref": "#/$defs/text"},
+    "status": {"const": "prepared"},
+    "seed_hash": {"$ref": "#/$defs/hash"},
+    "registry_id": {"$ref": "#/$defs/text"},
+    "registry_revision": {"type": "integer", "minimum": 1},
+    "registry_hash": {"$ref": "#/$defs/hash"},
+    "scope_manifest_id": {"$ref": "#/$defs/text"},
+    "scope_manifest_hash": {"$ref": "#/$defs/hash"},
+    "skill_id": {"$ref": "#/$defs/text"},
+    "target_kind": {"enum": ["single_skill", "skill_suite"]},
+    "skill_root_token": {"$ref": "#/$defs/path"},
+    "skill_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/path"}},
+    "guard_runtime": {"$ref": "#/$defs/guard"},
+    "target_identity_receipt": {"$ref": "#/$defs/receipt_binding"},
+    "member_contracts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/member"}},
+    "job_plan_ref": {"$ref": "#/$defs/ref"},
+    "job_plan_hash": {"$ref": "#/$defs/hash"},
+    "job_specs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/spec"}},
+    "job_set_hash": {"$ref": "#/$defs/hash"},
+    "installed_parity_receipt": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/receipt_binding"}]},
+    "prepared_sequence": {"const": 1},
+    "prepared_at": {"type": "string", "format": "date-time"},
+    "claim_boundary": {"$ref": "#/$defs/text"},
+    "receipt_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "path": {"oneOf": [{"const": "."}, {"type": "string", "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$"}]},
+    "ref": {"type": "string", "pattern": "^record:[A-Za-z0-9._/-]+@[A-F0-9]{64}$"},
+    "guard": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runtime_id", "file_count", "source_hash"],
+      "properties": {
+        "runtime_id": {"const": "skillguard-v2"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "source_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "receipt_binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "receipt_id", "receipt_hash"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/ref"},
+        "receipt_id": {"$ref": "#/$defs/text"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "member": {
+      "type": "object", "additionalProperties": false,
+      "required": ["member_skill_id", "skill_path", "contract_ref", "contract_hash", "manifest_ref", "manifest_hash"],
+      "properties": {
+        "member_skill_id": {"$ref": "#/$defs/text"},
+        "skill_path": {"$ref": "#/$defs/path"},
+        "contract_ref": {"$ref": "#/$defs/ref"},
+        "contract_hash": {"$ref": "#/$defs/hash"},
+        "manifest_ref": {"$ref": "#/$defs/ref"},
+        "manifest_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "spec": {
+      "type": "object", "additionalProperties": false,
+      "required": ["order", "job_id", "job_spec_ref", "job_spec_hash"],
+      "properties": {
+        "order": {"type": "integer", "minimum": 0},
+        "job_id": {"$ref": "#/$defs/text"},
+        "job_spec_ref": {"$ref": "#/$defs/ref"},
+        "job_spec_hash": {"$ref": "#/$defs/hash"}
+      }
+    }
+  }
+}

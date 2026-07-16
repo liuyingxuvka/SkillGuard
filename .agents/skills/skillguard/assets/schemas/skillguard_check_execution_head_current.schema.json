@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillguard_check_execution_head_current.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "execution_owner_id", "execution_key", "receipt_id", "receipt_hash", "receipt_ref", "observed_at", "claim_boundary", "head_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.check_execution_head.current"},
+    "execution_owner_id": {"type": "string", "minLength": 1},
+    "execution_key": {"$ref": "#/$defs/hash"},
+    "receipt_id": {"$ref": "#/$defs/hash"},
+    "receipt_hash": {"$ref": "#/$defs/hash"},
+    "receipt_ref": {"$ref": "#/$defs/contentRef"},
+    "observed_at": {"type": "string", "minLength": 1},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "head_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "contentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_token", "relative_path", "content_hash", "media_type", "byte_count"],
+      "properties": {
+        "path_token": {"const": "owner_evidence_root"},
+        "relative_path": {"type": "string", "minLength": 1},
+        "content_hash": {"$ref": "#/$defs/hash"},
+        "media_type": {"const": "application/json"},
+        "byte_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

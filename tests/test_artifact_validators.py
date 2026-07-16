@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_contract  # noqa: F401
+from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.artifact_validators import (
     ArtifactValidationError,
     hard_evidence_from_artifact,
@@ -29,6 +29,7 @@ class ArtifactValidatorTests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["outputs"], "request": "artifact fixture"},
             self.target,
             decision,
+            check_manifest=runtime_check_manifest(self.contract),
         )
         self.run_root = claim.run_root
         (self.target / "outputs").mkdir()

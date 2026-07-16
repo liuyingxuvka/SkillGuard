@@ -6,15 +6,10 @@
   "status": "draft",
   "fixture_version": "{{fixture_version}}",
   "checker_version": "{{checker_version}}",
-  "compatibility": {
-    "compatible_checker_versions": [
-      "{{checker_version}}"
-    ],
-    "compatible_schema_versions": [
-      "{{schema_version}}"
-    ],
-    "incompatible_conditions": [
-      "{{incompatible_condition}}"
+  "current_status": {
+    "status": "needs-review",
+    "notes": [
+      "This manifest must be rewritten directly to the current checker and schema identities before use."
     ]
   },
   "fixtures": [

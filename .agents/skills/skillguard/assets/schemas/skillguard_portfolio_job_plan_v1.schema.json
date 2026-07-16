@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_portfolio_job_plan_v1.schema.json",
+  "title": "SkillGuard portfolio job plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "registry_id", "scope_manifest_id", "scope_manifest_hash",
+    "skill_id", "target_kind", "skill_paths", "jobs", "created_at",
+    "claim_boundary", "job_plan_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_job_plan.v1"},
+    "registry_id": {"type": "string", "minLength": 1},
+    "scope_manifest_id": {"type": "string", "minLength": 1},
+    "scope_manifest_hash": {"$ref": "#/$defs/hash"},
+    "skill_id": {"type": "string", "minLength": 1},
+    "target_kind": {"enum": ["single_skill", "skill_suite"]},
+    "skill_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "jobs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/job"}},
+    "created_at": {"type": "string", "format": "date-time"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "job_plan_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "ref": {"type": "string", "pattern": "^record:[A-Za-z0-9._/-]+@[A-F0-9]{64}$"},
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_id", "job_class_id", "member_skill_id", "member_contract_hash", "job_spec_ref", "job_spec_hash", "covered_capability_ids"],
+      "properties": {
+        "job_id": {"type": "string", "minLength": 1},
+        "job_class_id": {"enum": ["positive", "invalid_input", "recovery_or_resume", "out_of_scope", "native_check", "artifact_check", "judged_quality"]},
+        "member_skill_id": {"type": "string", "minLength": 1},
+        "member_contract_hash": {"$ref": "#/$defs/hash"},
+        "job_spec_ref": {"$ref": "#/$defs/ref"},
+        "job_spec_hash": {"$ref": "#/$defs/hash"},
+        "covered_capability_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

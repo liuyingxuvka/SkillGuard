@@ -1,4 +1,4 @@
-"""Generic claimed-run supervisor for any compiled SkillGuard V2 contract."""
+"""Generic claimed-run supervisor for any compiled current SkillGuard contract."""
 
 from __future__ import annotations
 
@@ -10,13 +10,30 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .artifact_validators import WITNESS_KINDS, validate_artifact
-from .check_runner import execute_check, hard_evidence_from_check, store_check_result
+from .check_runner import (
+    get_or_execute_check,
+    hard_evidence_from_check,
+    load_run_owner_receipt_index,
+    resolve_owner_evidence_root,
+)
 from .closure import close_run, verify_closure
 from .contract_compiler import canonical_hash, canonical_json_bytes, compile_skill_contract
 from .evidence_policy import required_evidence_class
+from .execution_depth import (
+    DepthError,
+    issue_target_execution_receipt,
+)
+from .execution_records import filesystem_path
+from .installation_receipt import (
+    VerifiedInstallationContext,
+    load_scheduled_production_installation_context,
+    validate_verified_installation_context,
+    verify_scheduled_production_installation_identity,
+)
 from .receipts import build_action_witness, fingerprint_value, issue_receipt, load_receipts
 from .route_runtime import select_routes
-from .runtime_fingerprint import guard_runtime_fingerprint
+from .runtime_authority import AUTHORITY_CURRENT, resolve_runtime_authority
+from .runtime_fingerprint import guard_execution_runtime_fingerprint
 from .run_store import claim_run, utc_now
 from .step_runtime import (
     approve_skip,
@@ -27,6 +44,11 @@ from .step_runtime import (
     record_verification,
     replay_run,
     request_skip,
+)
+from .target_inputs import (
+    TargetInputError,
+    fingerprint_target_input_roles,
+    fingerprint_target_inputs,
 )
 
 
@@ -39,9 +61,44 @@ class SupervisorError(RuntimeError):
         return f"{self.code}: {self.message}"
 
 
-_TOP_LEVEL_PACKET_FIELDS = frozenset({"request", "profiles", "steps"})
+_TOP_LEVEL_PACKET_FIELDS = frozenset(
+    {
+        "supervision_mode",
+        "request",
+        "profiles",
+        "steps",
+        "execution_depth",
+        "native_terminal",
+    }
+)
 _REQUEST_PACKET_FIELDS = frozenset(
-    {"route_ids", "function_ids", "compose", "request", "intent", "claim_scope", "write_targets"}
+    {
+        "route_ids",
+        "function_ids",
+        "compose",
+        "request",
+        "intent",
+        "claim_scope",
+        "write_targets",
+        "target_input_paths",
+        "target_input_roles",
+        "portfolio_job_id",
+        "portfolio_job_class_id",
+        "portfolio_job_plan_ref",
+        "portfolio_job_plan_hash",
+        "portfolio_job_spec_ref",
+        "portfolio_job_spec_hash",
+        "portfolio_preparation_id",
+        "portfolio_preparation_ref",
+        "portfolio_preparation_hash",
+        "portfolio_member_skill_id",
+        "portfolio_member_contract_hash",
+        "portfolio_covered_capability_ids",
+        "portfolio_mutation_fingerprint_before",
+        "portfolio_input",
+        "portfolio_scope",
+        "portfolio_artifact_path",
+    }
 )
 _STEP_PACKET_FIELDS = frozenset({"skip", "witness", "judgment", "artifact_witnesses"})
 _SKIP_PACKET_FIELDS = frozenset(
@@ -76,6 +133,29 @@ _WITNESS_PACKET_FIELDS = frozenset(
         "state_id",
         "interaction_receipt_id",
         "interaction_receipt_step_id",
+    }
+)
+_EXECUTION_DEPTH_PACKET_FIELDS = frozenset(
+    {
+        "observations",
+        "run_started",
+        "boundary_only",
+        "evidence_domain",
+        "scheduled_production_identity",
+    }
+)
+_NATIVE_TERMINAL_PACKET_FIELDS = frozenset(
+    {"receipt_ref", "expected_route_id", "expected_branch_id"}
+)
+_DEPTH_OBSERVATION_FIELDS = frozenset(
+    {
+        "obligation_id",
+        "step_id",
+        "check_id",
+        "contribution_id",
+        "contribution",
+        "contribution_range_id",
+        "shared_evidence_rationale",
     }
 )
 
@@ -113,10 +193,62 @@ def validate_supervisor_packet(
     _reject_unknown_fields(packet, _TOP_LEVEL_PACKET_FIELDS, "$")
     request = _packet_object(packet.get("request", {}), "$.request")
     _reject_unknown_fields(request, _REQUEST_PACKET_FIELDS, "$.request")
-    profiles = packet.get("profiles", [request.get("claim_scope", "functional")])
+    supervision_mode = str(packet.get("supervision_mode", "close"))
+    if supervision_mode not in {"stage_depth", "close"}:
+        raise SupervisorError(
+            "supervision_mode_invalid", "$.supervision_mode"
+        )
+    profiles = packet.get("profiles", ["enforced"])
     if isinstance(profiles, (str, bytes)) or not isinstance(profiles, Sequence):
         raise SupervisorError("packet_array_required", "$.profiles")
     steps_packet = _packet_object(packet.get("steps", {}), "$.steps")
+    execution_depth = _packet_object(packet.get("execution_depth", {}), "$.execution_depth")
+    _reject_unknown_fields(execution_depth, _EXECUTION_DEPTH_PACKET_FIELDS, "$.execution_depth")
+    observations = execution_depth.get("observations", [])
+    if isinstance(observations, (str, bytes)) or not isinstance(observations, Sequence):
+        raise SupervisorError("packet_array_required", "$.execution_depth.observations")
+    for index, observation in enumerate(observations):
+        row = _packet_object(observation, f"$.execution_depth.observations[{index}]")
+        _reject_unknown_fields(row, _DEPTH_OBSERVATION_FIELDS, f"$.execution_depth.observations[{index}]")
+    native_terminal = _packet_object(
+        packet.get("native_terminal", {}), "$.native_terminal"
+    )
+    _reject_unknown_fields(
+        native_terminal, _NATIVE_TERMINAL_PACKET_FIELDS, "$.native_terminal"
+    )
+    if native_terminal:
+        receipt_ref = _packet_object(
+            native_terminal.get("receipt_ref", {}),
+            "$.native_terminal.receipt_ref",
+        )
+        _reject_unknown_fields(
+            receipt_ref,
+            frozenset({"path_token", "relative_path"}),
+            "$.native_terminal.receipt_ref",
+        )
+        if receipt_ref.get("path_token") != "run_root" or not str(
+            receipt_ref.get("relative_path", "")
+        ):
+            raise SupervisorError(
+                "native_terminal_receipt_ref_invalid",
+                "$.native_terminal.receipt_ref",
+            )
+    if supervision_mode == "stage_depth":
+        if list(profiles):
+            raise SupervisorError(
+                "stage_depth_profiles_forbidden",
+                "stage_depth requires profiles=[] and never closes a run",
+            )
+        if native_terminal:
+            raise SupervisorError(
+                "stage_depth_native_terminal_forbidden",
+                "a terminal receipt can only be consumed by the close stage",
+            )
+    elif list(profiles) != ["enforced"]:
+        raise SupervisorError(
+            "enforced_closure_profile_required",
+            "close always uses the sole enforced closure profile",
+        )
     for step_id_value, raw_step_packet in steps_packet.items():
         step_id = str(step_id_value)
         step_path = f"$.steps.{step_id}"
@@ -151,6 +283,26 @@ def validate_supervisor_packet(
 
     if contract is None:
         return
+    if execution_depth and not isinstance(contract.get("depth_profile"), Mapping):
+        raise SupervisorError("unconsumed_packet_field", "$.execution_depth")
+    selected_profiles = {str(item) for item in profiles}
+    has_branch_contract = any(
+        isinstance(row, Mapping)
+        and str(row.get("profile_id", "")) in selected_profiles
+        and any(
+            isinstance(requirement, Mapping)
+            and str(requirement.get("native_route_id", "")) in set(route_ids)
+            for requirement in row.get("route_branch_requirements", [])
+        )
+        for row in contract.get("closure_profiles", [])
+    )
+    if native_terminal and not has_branch_contract:
+        raise SupervisorError("unconsumed_packet_field", "$.native_terminal")
+    if supervision_mode == "close" and has_branch_contract and not native_terminal:
+        raise SupervisorError(
+            "native_terminal_receipt_required",
+            "selected route/profile has a branch closure contract",
+        )
     selected_route_ids = set(route_ids)
     step_index = {
         str(row.get("step_id", "")): row
@@ -212,14 +364,94 @@ def validate_supervisor_packet(
 
 
 def _atomic_write(path: Path, payload: Mapping[str, Any]) -> None:
+    path = filesystem_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     temporary.write_bytes(canonical_json_bytes(payload))
     os.replace(temporary, path)
 
 
+def _is_installed_projection_root(skill_root: Path) -> bool:
+    configured = os.environ.get("CODEX_HOME")
+    codex_home = (
+        Path(configured).expanduser()
+        if configured
+        else Path.home() / ".codex"
+    ).resolve()
+    return skill_root.resolve().parent == (codex_home / "skills").resolve()
+
+
+def _load_current_runtime_object(path: Path, error_code: str) -> Mapping[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SupervisorError(error_code, path.as_posix()) from exc
+    if not isinstance(payload, Mapping):
+        raise SupervisorError(error_code, path.as_posix())
+    return payload
+
+
+def _load_or_compile_runtime_pair(
+    skill_root: Path,
+    repository_root: Path,
+    compiled_contract: Mapping[str, Any] | None,
+    check_manifest: Mapping[str, Any] | None,
+) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+    if (compiled_contract is None) != (check_manifest is None):
+        raise SupervisorError(
+            "compiled_runtime_pair_incomplete",
+            "compiled_contract and check_manifest must be supplied together",
+        )
+    if compiled_contract is not None:
+        assert check_manifest is not None
+        contract = compiled_contract
+        manifest = check_manifest
+    elif _is_installed_projection_root(skill_root):
+        authority = resolve_runtime_authority(skill_root)
+        if not authority.ok or authority.authority != AUTHORITY_CURRENT:
+            raise SupervisorError(
+                "runtime_authority_blocked",
+                json.dumps(authority.to_dict(), sort_keys=True),
+            )
+        control = skill_root / ".skillguard"
+        contract = _load_current_runtime_object(
+            control / "compiled-contract.json",
+            "installed_compiled_contract_unreadable",
+        )
+        manifest = _load_current_runtime_object(
+            control / "check-manifest.json",
+            "installed_check_manifest_unreadable",
+        )
+    else:
+        compiled = compile_skill_contract(
+            skill_root, repository_root=repository_root, write=True
+        )
+        if (
+            not compiled.ok
+            or compiled.compiled_contract is None
+            or compiled.check_manifest is None
+        ):
+            raise SupervisorError(
+                "contract_compile_failed",
+                json.dumps(compiled.to_dict(), sort_keys=True),
+            )
+        contract = compiled.compiled_contract
+        manifest = compiled.check_manifest
+    authority = resolve_runtime_authority(skill_root)
+    if not authority.ok or authority.authority != AUTHORITY_CURRENT:
+        raise SupervisorError(
+            "runtime_authority_blocked",
+            json.dumps(authority.to_dict(), sort_keys=True),
+        )
+    return contract, manifest
+
+
 def _current_fingerprints(
-    contract: Mapping[str, Any], request: Mapping[str, Any]
+    contract: Mapping[str, Any],
+    request: Mapping[str, Any],
+    target_root: Path | None = None,
+    *,
+    guard_runtime_identity: Mapping[str, Any] | None = None,
 ) -> Mapping[str, Mapping[str, str]]:
     sources = contract.get("source_fingerprints", {})
     implementation = {
@@ -227,8 +459,10 @@ def _current_fingerprints(
         for key, value in sources.items()
         if str(key).startswith("implementation:")
     }
-    return {
-        "guard_runtime": fingerprint_value(guard_runtime_fingerprint()),
+    fingerprints: dict[str, Mapping[str, str]] = {
+        "guard_runtime": fingerprint_value(
+            guard_runtime_identity or guard_execution_runtime_fingerprint()
+        ),
         "contract": fingerprint_value(str(contract.get("contract_hash", ""))),
         "implementation": fingerprint_value(implementation),
         "model_export": fingerprint_value(str(sources.get("model_export", ""))),
@@ -240,6 +474,32 @@ def _current_fingerprints(
             }
         ),
     }
+    target_input_paths = request.get("target_input_paths")
+    if target_input_paths is not None:
+        if target_root is None:
+            raise SupervisorError(
+                "target_input_root_missing",
+                "target_root is required to derive target input fingerprints",
+            )
+        try:
+            target_inputs = fingerprint_target_inputs(target_root, target_input_paths)
+        except TargetInputError as exc:
+            raise SupervisorError(exc.code, exc.detail) from exc
+        fingerprints["target_inputs"] = fingerprint_value(target_inputs)
+    target_input_roles = request.get("target_input_roles")
+    if target_input_roles is not None:
+        if target_root is None:
+            raise SupervisorError(
+                "target_input_root_missing",
+                "target_root is required to derive target input role fingerprints",
+            )
+        try:
+            role_inputs = fingerprint_target_input_roles(target_root, target_input_roles)
+        except TargetInputError as exc:
+            raise SupervisorError(exc.code, exc.detail) from exc
+        for role, inventory in sorted(role_inputs.items()):
+            fingerprints[f"target_role:{role}"] = fingerprint_value(inventory)
+    return fingerprints
 
 
 def _step_sort_key(
@@ -343,6 +603,14 @@ def supervise_contract_run(
     target_root: Path,
     repository_root: Path,
     packet: Mapping[str, Any],
+    *,
+    compiled_contract: Mapping[str, Any] | None = None,
+    check_manifest: Mapping[str, Any] | None = None,
+    claim_snapshots: Mapping[str, Mapping[str, Any]] | None = None,
+    run_state_root: Path | None = None,
+    owner_evidence_root: Path | None = None,
+    guard_runtime_identity: Mapping[str, Any] | None = None,
+    verified_installation_context: VerifiedInstallationContext | None = None,
 ) -> Mapping[str, Any]:
     """Compile, claim, execute, evidence, close, and replay one target-local run."""
 
@@ -350,35 +618,73 @@ def supervise_contract_run(
     skill_root = skill_root.resolve()
     target_root = target_root.resolve()
     repository_root = repository_root.resolve()
-    request = packet.get("request", {})
-    if not isinstance(request, Mapping):
+    persistent_owner_root = resolve_owner_evidence_root(
+        repository_root,
+        owner_evidence_root,
+    )
+    request_packet = packet.get("request", {})
+    if not isinstance(request_packet, Mapping):
         raise SupervisorError("request_packet_invalid", "request must be an object")
+    request = dict(request_packet)
     steps_packet = packet.get("steps", {})
     if not isinstance(steps_packet, Mapping):
         raise SupervisorError("steps_packet_invalid", "steps must be an object")
-    profiles = tuple(str(item) for item in packet.get("profiles", [request.get("claim_scope", "functional")]))
+    supervision_mode = str(packet.get("supervision_mode", "close"))
+    profiles = tuple(str(item) for item in packet.get("profiles", ["enforced"]))
 
-    compiled = compile_skill_contract(skill_root, repository_root=repository_root, write=True)
-    if not compiled.ok or compiled.compiled_contract is None or compiled.check_manifest is None:
-        raise SupervisorError("contract_compile_failed", json.dumps(compiled.to_dict(), sort_keys=True))
-    contract = compiled.compiled_contract
-    manifest = compiled.check_manifest
+    contract, manifest = _load_or_compile_runtime_pair(
+        skill_root,
+        repository_root,
+        compiled_contract,
+        check_manifest,
+    )
+    if "target_input_paths" in request:
+        try:
+            target_inputs = fingerprint_target_inputs(
+                target_root,
+                request["target_input_paths"],
+            )
+        except TargetInputError as exc:
+            raise SupervisorError(exc.code, exc.detail) from exc
+        request["target_input_paths"] = list(target_inputs["paths"])
+        request["target_input_fingerprint"] = str(target_inputs["fingerprint"])
+    if "target_input_roles" in request:
+        try:
+            target_input_roles = fingerprint_target_input_roles(
+                target_root,
+                request["target_input_roles"],
+            )
+        except TargetInputError as exc:
+            raise SupervisorError(exc.code, exc.detail) from exc
+        request["target_input_roles"] = {
+            role: list(inventory["paths"])
+            for role, inventory in sorted(target_input_roles.items())
+        }
     decision = select_routes(contract, request)
     if not decision.ok:
         raise SupervisorError("route_selection_blocked", json.dumps(decision.to_dict(), sort_keys=True))
     validate_supervisor_packet(packet, contract=contract, route_ids=decision.route_ids)
-    guard_compatibility = guard_runtime_fingerprint()
+    effective_guard = dict(
+        guard_runtime_identity or guard_execution_runtime_fingerprint()
+    )
     claim = claim_run(
         contract,
         request,
-        target_root,
+        (run_state_root or target_root).resolve(),
         decision,
-        guard_compatibility=guard_compatibility,
+        check_manifest=manifest,
+        claim_snapshots=claim_snapshots,
+        guard_runtime_identity=effective_guard,
     )
     if not claim.ok or claim.run_root is None:
         raise SupervisorError("run_claim_blocked", json.dumps(claim.to_dict(), sort_keys=True))
     run_root = claim.run_root
-    fingerprints = _current_fingerprints(contract, request)
+    fingerprints = _current_fingerprints(
+        contract,
+        request,
+        target_root,
+        guard_runtime_identity=effective_guard,
+    )
     check_index = {
         str(row.get("check_id", "")): row
         for row in manifest.get("checks", [])
@@ -390,6 +696,15 @@ def supervise_contract_run(
         if isinstance(row, Mapping)
     }
     executed_steps: list[dict[str, Any]] = []
+    owner_rows = {
+        str(row.get("execution_owner_id", "")): row
+        for row in contract.get("content_impact_plan", {}).get("owners", [])
+        if isinstance(row, Mapping)
+    }
+    owner_receipts = load_run_owner_receipt_index(
+        run_root,
+        persistent_owner_root,
+    )
 
     while True:
         ready = sorted(
@@ -428,6 +743,7 @@ def supervise_contract_run(
         begin_step(run_root, step_id)
         binding = step.get("binding", {}) if isinstance(step.get("binding"), Mapping) else {}
         check_records: list[Mapping[str, Any]] = []
+        check_executions: list[Mapping[str, Any]] = []
         failures: list[str] = []
         for check_id_value in binding.get("check_ids", []):
             check_id = str(check_id_value)
@@ -435,21 +751,71 @@ def supervise_contract_run(
             if check is None:
                 failures.append(f"missing check declaration:{check_id}")
                 continue
-            raw = execute_check(
+            owner_id = str(check.get("execution_owner_id", ""))
+            owner_row = owner_rows.get(owner_id, {})
+            dependency_receipts = {
+                str(dependency_owner_id): owner_receipts[
+                    str(dependency_owner_id)
+                ]
+                for dependency_owner_id in owner_row.get(
+                    "depends_on_owner_ids", []
+                )
+                if str(dependency_owner_id) in owner_receipts
+            }
+            execution = get_or_execute_check(
                 check,
+                skill_root=skill_root,
                 target_root=target_root,
                 repository_root=repository_root,
                 run_root=run_root,
+                step_id=step_id,
+                owner_evidence_root=persistent_owner_root,
+                dependency_execution_receipts=dependency_receipts,
             )
-            record = store_check_result(run_root, step_id, raw)
+            check_executions.append(execution)
+            if isinstance(execution.get("execution_receipt"), Mapping):
+                owner_receipts[owner_id] = execution["execution_receipt"]
+            record = execution["record"]
             check_records.append(record)
-            if raw.get("status") != "passed":
-                failures.append(f"{check_id}:{raw.get('status')}:{raw.get('reason')}")
+            if record.get("status") != "passed":
+                result = (
+                    record.get("result", {})
+                    if isinstance(record.get("result"), Mapping)
+                    else {}
+                )
+                failures.append(
+                    f"{check_id}:{record.get('status')}:{result.get('reason')}"
+                )
         record_step(
             run_root,
             step_id,
             {
                 "check_record_ids": [str(row["check_record_id"]) for row in check_records],
+                "check_execution_receipt_ids": [
+                    str(row["execution_receipt"]["receipt_id"])
+                    for row in check_executions
+                    if isinstance(row.get("execution_receipt"), Mapping)
+                ],
+                "owner_execution_receipts": [
+                    {
+                        "check_id": str(row["record"].get("check_id", "")),
+                        "execution_owner_id": str(
+                            row["record"].get("execution_owner_id", "")
+                        ),
+                        "receipt_id": str(
+                            row["execution_receipt"].get("receipt_id", "")
+                        ),
+                        "receipt_hash": str(
+                            row["execution_receipt"].get("receipt_hash", "")
+                        ),
+                        "receipt_ref": dict(
+                            row.get("execution_receipt_ref", {})
+                        ),
+                    }
+                    for row in check_executions
+                    if isinstance(row.get("execution_receipt"), Mapping)
+                    and isinstance(row.get("execution_receipt_ref"), Mapping)
+                ],
                 "packet_hash": canonical_hash(packet_for_step),
                 "action_summary": str(binding.get("action", {}).get("summary", "")),
             },
@@ -516,6 +882,7 @@ def supervise_contract_run(
                         if index == 0
                         else []
                     ),
+                    owner_evidence_root=persistent_owner_root,
                 )
             )
         primary_class = required_evidence_class(step)
@@ -576,6 +943,14 @@ def supervise_contract_run(
                 "primary_receipt_id": str(primary["receipt_id"]),
                 "primary_evidence_class": primary_class,
                 "check_record_ids": [str(row["check_record_id"]) for row in check_records],
+                "check_execution_dispositions": [
+                    str(row.get("disposition", "")) for row in check_executions
+                ],
+                "check_execution_receipt_ids": [
+                    str(row["execution_receipt"]["receipt_id"])
+                    for row in check_executions
+                    if isinstance(row.get("execution_receipt"), Mapping)
+                ],
                 "artifact_record_ids": [str(row["artifact_record_id"]) for row in artifact_records],
             }
         )
@@ -596,15 +971,144 @@ def supervise_contract_run(
     }
     if unfinished:
         raise SupervisorError("run_unfinished", json.dumps(unfinished, sort_keys=True))
+    depth_receipt: Mapping[str, Any] | None = None
+    installation_context = (
+        validate_verified_installation_context(verified_installation_context)
+        if verified_installation_context is not None
+        else None
+    )
+    # Re-read every target input immediately before depth and closure.  A file
+    # changed after the native check invalidates the earlier receipts.
+    fingerprints = _current_fingerprints(
+        contract,
+        request,
+        target_root,
+        guard_runtime_identity=effective_guard,
+    )
+    if isinstance(contract.get("depth_profile"), Mapping):
+        raw_depth_packet = packet.get("execution_depth", {})
+        if not isinstance(raw_depth_packet, Mapping):
+            raise SupervisorError("execution_depth_packet_invalid", "execution_depth must be an object")
+        depth_packet = dict(raw_depth_packet)
+        evidence_domain = str(
+            depth_packet.get("evidence_domain", "capability_validation")
+        )
+        scheduled_identity = depth_packet.get("scheduled_production_identity")
+        if evidence_domain == "scheduled_production":
+            if not isinstance(scheduled_identity, Mapping):
+                raise SupervisorError(
+                    "scheduled_production_identity_missing",
+                    "scheduled production requires an installation-bound identity",
+                )
+            try:
+                if installation_context is None:
+                    installation_context = load_scheduled_production_installation_context(
+                        scheduled_identity
+                    )
+                else:
+                    verify_scheduled_production_installation_identity(
+                        scheduled_identity,
+                        verified_context=installation_context,
+                    )
+            except (OSError, TypeError, ValueError) as exc:
+                raise SupervisorError(
+                    "scheduled_production_installation_not_current",
+                    str(exc),
+                ) from exc
+        elif scheduled_identity not in (None, {}):
+            raise SupervisorError(
+                "non_production_schedule_identity_forbidden",
+                evidence_domain,
+            )
+        depth_receipt = issue_target_execution_receipt(
+            run_root,
+            contract,
+            depth_packet,
+            current_fingerprints=fingerprints,
+            repository_root=repository_root,
+            target_root=target_root,
+            active_runtime_identity=effective_guard,
+            verified_installation_context=installation_context,
+        )
+    if supervision_mode == "stage_depth":
+        if depth_receipt is None:
+            raise SupervisorError(
+                "stage_depth_receipt_missing",
+                "stage_depth requires an enforced execution-depth profile",
+            )
+        report: dict[str, Any] = {
+            "schema_version": "skillguard.supervisor_result.v2",
+            "status": "staged",
+            "supervision_mode": "stage_depth",
+            "skill_id": str(contract.get("skill_id", "")),
+            "run_id": str(claim.run_id),
+            "run_root": run_root.as_posix(),
+            "contract_hash": str(contract["contract_hash"]),
+            "manifest_hash": str(manifest["manifest_hash"]),
+            "route_ids": list(decision.route_ids),
+            "executed_steps": executed_steps,
+            "target_execution_depth_receipt": dict(depth_receipt),
+            "closures": [],
+            "created_at": utc_now(),
+            "claim_boundary": (
+                "This stage proves only current execution and one exact target-depth receipt. "
+                "It is intentionally not a closure claim; the target must build a native terminal "
+                "receipt from this depth receipt before resuming the same run in close mode."
+            ),
+        }
+        report["report_hash"] = canonical_hash(report)
+        _atomic_write(run_root / "supervisor-result.json", report)
+        return report
     closures: list[Mapping[str, Any]] = []
+    native_terminal_packet = packet.get("native_terminal", {})
+    if not isinstance(native_terminal_packet, Mapping):
+        native_terminal_packet = {}
+    native_terminal_ref = native_terminal_packet.get("receipt_ref")
+    expected_native_route_id = str(
+        native_terminal_packet.get("expected_route_id", "")
+    )
+    expected_native_branch_id = str(
+        native_terminal_packet.get("expected_branch_id", "")
+    )
     for profile in profiles:
-        evaluation, closure = close_run(run_root, profile=profile, current_fingerprints=fingerprints)
+        fingerprints = _current_fingerprints(
+            contract,
+            request,
+            target_root,
+            guard_runtime_identity=effective_guard,
+        )
+        evaluation, closure = close_run(
+            run_root,
+            profile=profile,
+            current_fingerprints=fingerprints,
+            target_root=target_root,
+            repository_root=repository_root,
+            owner_evidence_root=persistent_owner_root,
+            native_terminal_receipt_ref=(
+                native_terminal_ref
+                if isinstance(native_terminal_ref, Mapping)
+                else None
+            ),
+            expected_route_id=expected_native_route_id,
+            expected_branch_id=expected_native_branch_id,
+            verified_installation_context=installation_context,
+        )
         if evaluation.status != "closed" or closure is None:
             raise SupervisorError("closure_failed", json.dumps(evaluation.to_dict(), sort_keys=True))
+        fingerprints = _current_fingerprints(
+            contract,
+            request,
+            target_root,
+            guard_runtime_identity=effective_guard,
+        )
         verification = verify_closure(
             run_root,
             str(closure["closure_receipt_id"]),
             current_fingerprints=fingerprints,
+            target_root=target_root,
+            repository_root=repository_root,
+            owner_evidence_root=persistent_owner_root,
+            verified_installation_context=installation_context,
         )
         if not verification.get("ok"):
             raise SupervisorError("closure_replay_failed", json.dumps(verification, sort_keys=True))
@@ -619,6 +1123,7 @@ def supervise_contract_run(
     report: dict[str, Any] = {
         "schema_version": "skillguard.supervisor_result.v2",
         "status": "passed",
+        "supervision_mode": "close",
         "skill_id": str(contract.get("skill_id", "")),
         "run_id": str(claim.run_id),
         "run_root": run_root.as_posix(),
@@ -626,11 +1131,12 @@ def supervise_contract_run(
         "manifest_hash": str(manifest["manifest_hash"]),
         "route_ids": list(decision.route_ids),
         "executed_steps": executed_steps,
+        "target_execution_depth_receipt": dict(depth_receipt) if depth_receipt is not None else None,
         "closures": closures,
         "created_at": utc_now(),
         "claim_boundary": (
             "This result proves only the selected routes, declared checks, supplied evaluator/witness packets, "
-            "current artifacts, and replayed closure profiles for this exact target-local run."
+            "current artifacts, and the enforced closure for this exact target-local run."
         ),
     }
     report["report_hash"] = canonical_hash(report)

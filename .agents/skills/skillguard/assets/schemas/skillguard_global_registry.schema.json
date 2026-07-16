@@ -9,6 +9,10 @@
       "minimum": 0,
       "type": "integer"
     },
+    "diagnostic_inventory_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
     "generated_at": {
       "minLength": 1,
       "type": "string"
@@ -61,14 +65,13 @@
             "type": "string"
           },
           "skill_sha256": {
-            "minLength": 64,
+            "pattern": "^sha256:[0-9a-f]{64}$",
             "type": "string"
           },
           "status": {
             "enum": [
               "current",
-              "missing_contract",
-              "invalid_contract"
+              "blocked"
             ],
             "type": "string"
           },
@@ -98,7 +101,7 @@
       "type": "array"
     },
     "registry_hash": {
-      "minLength": 64,
+      "pattern": "^sha256:[0-9a-f]{64}$",
       "type": "string"
     },
     "router_skill_id": {
@@ -131,7 +134,7 @@
       "type": "array"
     },
     "schema_version": {
-      "const": "skillguard.global_registry.v1",
+      "const": "skillguard.global_registry.current",
       "type": "string"
     },
     "warnings": {
@@ -150,6 +153,7 @@
     "current_item_count",
     "items",
     "warnings",
+    "diagnostic_inventory_hash",
     "claim_boundary",
     "registry_hash"
   ],

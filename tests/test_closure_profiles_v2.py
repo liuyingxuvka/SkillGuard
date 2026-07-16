@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_contract  # noqa: F401
+from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.closure import ClosureError, close_run, evaluate_closure, verify_closure
 from skillguard_v2.contract_compiler import canonical_hash
 from skillguard_v2.receipts import fingerprint_value, issue_receipt
 from skillguard_v2.route_runtime import select_routes
 from skillguard_v2.run_store import claim_run
-from skillguard_v2.step_runtime import begin_step, record_step, record_verification, replay_run
+from skillguard_v2.step_runtime import begin_step, record_step, record_verification
 
 
 class ClosureProfilesV2Tests(unittest.TestCase):
@@ -22,10 +21,17 @@ class ClosureProfilesV2Tests(unittest.TestCase):
         decision = select_routes(self.contract, {"function_ids": ["analyze"]})
         claim = claim_run(
             self.contract,
-            {"function_ids": ["analyze"], "write_targets": ["out"], "request": "closure fixture"},
+            {
+                "function_ids": ["analyze"],
+                "claim_scope": "enforced",
+                "write_targets": ["out"],
+                "request": "closure fixture",
+            },
             self.target,
             decision,
+            check_manifest=runtime_check_manifest(self.contract),
         )
+        self.assertTrue(claim.ok, claim)
         self.run_root = claim.run_root
         self.current = {
             "implementation": fingerprint_value("version 1"),
@@ -63,42 +69,52 @@ class ClosureProfilesV2Tests(unittest.TestCase):
         )
         return receipt
 
-    def _complete_functional(self):
+    def _complete_steps(self):
         intake = self._complete_step("step:intake", "check:intake")
-        review = self._complete_step("step:optional-review", "check:review")
-        finish = self._complete_step("step:finish", "check:finish")
-        return intake, review, finish
+        self._complete_step("step:optional-review", "check:review")
+        self._complete_step("step:finish", "check:finish")
+        return intake
 
-    def test_functional_can_close_while_release_names_missing_release_evidence(self) -> None:
-        self._complete_functional()
-        functional, closure = close_run(
+    def _issue_independent_quality(self) -> None:
+        issue_receipt(
             self.run_root,
-            profile="functional",
-            current_fingerprints=self.current,
+            step_id="step:finish",
+            evidence_class="judged",
+            evidence={
+                "rubric_id": "rubric:quality",
+                "rubric_version": "2",
+                "evaluator_id": "independent-reviewer",
+                "input_fingerprint": "artifact:quality",
+                "conclusion": "meets the versioned rubric",
+                "limitations": ["fixture scope"],
+                "self_review": False,
+            },
+            decision="passed",
+            verifier_id="judgment-verifier",
+            input_fingerprints=self.current,
         )
-        self.assertEqual("closed", functional.status)
-        self.assertIsNotNone(closure)
-        release = evaluate_closure(
-            self.run_root,
-            profile="release",
-            current_fingerprints=self.current,
-        )
-        self.assertEqual("incomplete", release.status)
-        self.assertIn("obligation:release", release.gaps["missing"])
-        self.assertIn("Resolve missing: obligation:release", release.next_actions)
 
-    def test_release_and_highest_quality_are_monotonic_and_judgment_bounded(self) -> None:
-        self._complete_functional()
-        release_receipt = self._hard_receipt("step:finish", "check:release")
-        release, release_closure = close_run(
+    def _complete_enforced(self):
+        intake = self._complete_steps()
+        self._hard_receipt("step:finish", "check:release")
+        self._issue_independent_quality()
+        return intake
+
+    def test_enforced_closure_cannot_skip_later_declared_evidence(self) -> None:
+        self._complete_steps()
+        evaluation = evaluate_closure(
             self.run_root,
-            profile="release",
+            profile="enforced",
             current_fingerprints=self.current,
         )
-        self.assertEqual("closed", release.status)
-        self.assertIn(release_receipt["receipt_id"], release.consumed_receipt_ids)
-        self.assertIsNotNone(release_closure)
-        self_review = issue_receipt(
+        self.assertEqual("incomplete", evaluation.status)
+        self.assertIn("obligation:release", evaluation.gaps["missing"])
+        self.assertIn("obligation:quality", evaluation.gaps["missing"])
+
+    def test_enforced_closure_rejects_self_review_and_accepts_independent_judgment(self) -> None:
+        self._complete_steps()
+        self._hard_receipt("step:finish", "check:release")
+        issue_receipt(
             self.run_root,
             step_id="step:finish",
             evidence_class="judged",
@@ -116,54 +132,38 @@ class ClosureProfilesV2Tests(unittest.TestCase):
             verifier_id="judgment-verifier",
             input_fingerprints=self.current,
         )
-        highest = evaluate_closure(
+        blocked = evaluate_closure(
             self.run_root,
-            profile="highest_quality",
+            profile="enforced",
             current_fingerprints=self.current,
         )
-        self.assertEqual("incomplete", highest.status)
-        self.assertIn("obligation:quality", highest.gaps["uncertain"])
-        independent = issue_receipt(
-            self.run_root,
-            step_id="step:finish",
-            evidence_class="judged",
-            evidence={
-                "rubric_id": "rubric:quality",
-                "rubric_version": "2",
-                "evaluator_id": "independent-reviewer",
-                "input_fingerprint": "artifact:quality",
-                "conclusion": "meets the versioned rubric",
-                "limitations": ["fixture scope"],
-                "self_review": False,
-            },
-            decision="passed",
-            verifier_id="judgment-verifier",
-            input_fingerprints=self.current,
-        )
-        self.assertEqual(self_review["receipt_id"], independent["supersedes_receipt_id"])
+        self.assertEqual("incomplete", blocked.status)
+        self.assertIn("obligation:quality", blocked.gaps["uncertain"])
+        self._issue_independent_quality()
         closed = evaluate_closure(
             self.run_root,
-            profile="highest_quality",
+            profile="enforced",
             current_fingerprints=self.current,
         )
         self.assertEqual("closed", closed.status)
 
     def test_closure_is_replay_verifiable_and_supersession_invalidates_old_closure(self) -> None:
-        intake, _, _ = self._complete_functional()
-        evaluation, closure = close_run(
+        intake = self._complete_enforced()
+        _evaluation, closure = close_run(
             self.run_root,
-            profile="functional",
+            profile="enforced",
             current_fingerprints=self.current,
         )
+        self.assertIsNotNone(closure)
         verified = verify_closure(
             self.run_root,
             closure["closure_receipt_id"],
             current_fingerprints=self.current,
         )
         self.assertTrue(verified["ok"], verified)
-        repeated_evaluation, repeated_closure = close_run(
+        _repeated, repeated_closure = close_run(
             self.run_root,
-            profile="functional",
+            profile="enforced",
             current_fingerprints=self.current,
         )
         self.assertEqual(closure["closure_receipt_id"], repeated_closure["closure_receipt_id"])
@@ -177,36 +177,58 @@ class ClosureProfilesV2Tests(unittest.TestCase):
         self.assertFalse(stale["ok"])
         self.assertIn("closure_consumed_receipts_changed", stale["findings"])
 
-    def test_non_monotonic_contract_profiles_fail_closed(self) -> None:
-        broken = runtime_contract()
-        broken["closure_profiles"][2]["required_obligation_ids"] = ["obligation:release"]
-        broken["contract_hash"] = canonical_hash({key: value for key, value in broken.items() if key != "contract_hash"})
-        target = self.target / "broken"
-        decision = select_routes(broken, {"function_ids": ["analyze"]})
-        claim = claim_run(
-            broken,
-            {"function_ids": ["analyze"], "write_targets": ["out"], "request": "broken"},
-            target,
-            decision,
-        )
+    def test_non_enforced_profile_is_rejected(self) -> None:
         with self.assertRaises(ClosureError) as raised:
-            evaluate_closure(claim.run_root, profile="release", current_fingerprints=self.current)
-        self.assertEqual("closure_profiles_non_monotonic", raised.exception.code)
+            evaluate_closure(
+                self.run_root,
+                profile="functional",
+                current_fingerprints=self.current,
+            )
+        self.assertEqual("closure_profile_unknown", raised.exception.code)
 
-    def test_conditional_obligation_accepts_only_verifier_approved_not_applicable_step(self) -> None:
+    def test_conditional_obligation_rejects_generic_skip_without_native_terminal(self) -> None:
         conditional = runtime_contract()
-        next(row for row in conditional["obligations"] if row["obligation_id"] == "obligation:review")["conditional"] = True
+        next(
+            row
+            for row in conditional["obligations"]
+            if row["obligation_id"] == "obligation:review"
+        )["conditional"] = True
+        conditional["route_branch_closure_required"] = True
+        conditional["closure_profiles"][0]["route_branch_requirements"] = [
+            {
+                "native_route_id": "route:analyze",
+                "branch_ids": ["fixture-default"],
+                "required_obligation_ids": ["obligation:intake"],
+                "applicability_rules": [
+                    {
+                        "obligation_id": "obligation:review",
+                        "allowed_disposition": "not_applicable",
+                        "verifier_check_id": "check:intake",
+                    }
+                ],
+            }
+        ]
         conditional["contract_hash"] = canonical_hash(
             {key: value for key, value in conditional.items() if key != "contract_hash"}
         )
         target = self.target / "conditional"
-        decision = select_routes(conditional, {"function_ids": ["analyze"]})
+        decision = select_routes(
+            conditional,
+            {"function_ids": ["analyze"], "claim_scope": "enforced"},
+        )
         claim = claim_run(
             conditional,
-            {"function_ids": ["analyze"], "write_targets": ["out"], "request": "conditional"},
+            {
+                "function_ids": ["analyze"],
+                "claim_scope": "enforced",
+                "write_targets": ["out"],
+                "request": "conditional",
+            },
             target,
             decision,
+            check_manifest=runtime_check_manifest(conditional),
         )
+        self.assertTrue(claim.ok, claim)
         old_root = self.run_root
         self.run_root = claim.run_root
         intake = self._complete_step("step:intake", "check:intake")
@@ -215,16 +237,13 @@ class ClosureProfilesV2Tests(unittest.TestCase):
         request_skip(self.run_root, "step:optional-review", "not applicable", intake["receipt_id"])
         approve_skip(self.run_root, "step:optional-review", intake["receipt_id"])
         self._complete_step("step:finish", "check:finish")
-        evaluation = evaluate_closure(
-            self.run_root,
-            profile="functional",
-            current_fingerprints=self.current,
-        )
-        self.assertEqual("closed", evaluation.status)
-        self.assertEqual(
-            "not_applicable",
-            next(row for row in evaluation.obligation_results if row["obligation_id"] == "obligation:review")["status"],
-        )
+        with self.assertRaises(ClosureError) as raised:
+            evaluate_closure(
+                self.run_root,
+                profile="enforced",
+                current_fingerprints=self.current,
+            )
+        self.assertEqual("native_terminal_receipt_missing", raised.exception.code)
         self.run_root = old_root
 
 

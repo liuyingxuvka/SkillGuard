@@ -1,0 +1,53 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-frozen-owner-runner-shared-owner-process-count-20260715",
+  "status": "repair_validated_source_scope",
+  "observed_failure": {
+    "surface": "public TestMesh owner_execution_only frozen-plan runner",
+    "prior_local_claim": "the runner preserves the exact declared-check denominator and reports whether any owner process started",
+    "observed_result": "a current compiler-valid owner with two semantic checks was blocked as missing, and a process that completed before sidecar persistence failed was reported with process_started=false and execution_count=0",
+    "failure_code": "frozen_owner_projection_and_process_start_accounting_incomplete"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.testmesh.frozen-owner-execution",
+    "owner": "SkillGuard TestMesh owner execution and check runner",
+    "miss_type": "boundary_missing",
+    "error_signature": "current_test_mesh_owner_check_missing / post-launch owner_execution_error reported as not-run",
+    "affected_feature_tags": [
+      "testmesh",
+      "frozen-plan",
+      "shared-owner",
+      "semantic-check-projection",
+      "process-start-accounting"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the runner collapsed an owner to owner_checks[0] and later asserted one manifest check per owner; its exception path inferred process_started only from a result record that post-launch persistence failure prevented",
+    "would_have_failed_if": "the model and regression matrix had included two semantic checks sharing one compiler-derived owner plus an injected durable-sidecar failure after an observable process side effect",
+    "new_model_item": "freeze all check projections per owner and preserve process-start observation independently of terminal record persistence",
+    "owner_code_contract": "current TestMesh plan -> owner_execution_only -> single-flight check runner -> immutable owner receipt -> aggregation"
+  },
+  "generalized_repair": {
+    "rule": "one owner may execute once for several identical semantic projections only when every projection is frozen and aggregation-visible; every successful process launch remains counted even when later evidence persistence fails",
+    "observed_regression": "shared owner with check:intake and check:review executes once and aggregates both projections",
+    "same_class_regression": "removing one frozen projection blocks before execution; injected post-launch sidecar failure reports failed/process_started/one execution and no success receipt",
+    "negative_boundary": "the repair does not merge non-identical commands, broaden the owner set, add a second executor, or make failed persistence reusable"
+  },
+  "required_revalidation": [
+    "focused current TestMesh owner-runner tests",
+    "TestMesh current schema tests",
+    "declared-check supervision FlowGuard checks",
+    "validation-composition FlowGuard checks",
+    "strict OpenSpec validation"
+  ],
+  "revalidation_evidence": {
+    "focused_testmesh_and_schema_tests": "51 passed plus 14 schema subtests",
+    "affected_check_runner_and_testmesh_tests": "72 passed plus 14 schema subtests",
+    "declared_check_supervision_flowguard": "passed scenario, contract, refinement, loop, progress, and exact known-bad reviews",
+    "validation_composition_flowguard": "19/19 positive gates and 7/7 known-bad gates passed",
+    "current_contract_parity": "contract sha256:7B7BA3B7F88D5719841B08063AF797D04D4DCBB7872F2BB96D253243A6F76478; manifest sha256:EA9577F402463B85FCA5AD4D4D4D279B1A417D0F00BCE06FF5B4D16BC107F31A",
+    "openspec_strict_validation": "harden-native-depth-evidence-identity passed with zero issues"
+  },
+  "claim_boundary": "The source repair is validated for shared-owner projection, omission rejection, repeated single-flight reuse, same-plan aggregation, and post-launch process accounting. Installation, router refresh, downstream target recompilation, and the one final full owner remain outside this work package."
+}

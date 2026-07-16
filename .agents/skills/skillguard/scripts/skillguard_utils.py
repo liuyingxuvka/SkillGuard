@@ -9,6 +9,14 @@ from pathlib import Path
 from typing import Any, TextIO
 
 
+REPORT_OUTPUT_DIRECTORIES = (
+    "work",
+    ".skillguard/runs",
+    ".skillguard/reports",
+    ".skillguard/test-results",
+)
+
+
 def skill_root() -> Path:
     return Path(__file__).resolve().parent.parent
 
@@ -95,4 +103,13 @@ def write_report(payload: Any, output: str | Path | None = None, root: Path | No
     if output is None or str(output) == "-":
         emit_json(payload)
         return None
-    return dump_json(payload, output, root)
+    base = (root or skill_root()).resolve()
+    path = ensure_under_root(output, base)
+    allowed_roots = [(base / relative).resolve() for relative in REPORT_OUTPUT_DIRECTORIES]
+    if not any(path == allowed or path.is_relative_to(allowed) for allowed in allowed_roots):
+        allowed_text = ", ".join(REPORT_OUTPUT_DIRECTORIES)
+        raise ValueError(
+            f"report output must be stdout or stay under a runtime evidence directory ({allowed_text}); "
+            "maintained source and fixture trees are not report destinations"
+        )
+    return dump_json(payload, path, base)

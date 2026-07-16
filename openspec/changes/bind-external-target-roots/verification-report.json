@@ -1,0 +1,359 @@
+{
+  "version": 2,
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "change": "bind-external-target-roots",
+  "status": "pass",
+  "generated_at": "2026-07-16T00:09:13.859Z",
+  "contract_path": "openspec/changes/bind-external-target-roots/verification-contract.yaml",
+  "report_path": "openspec/changes/bind-external-target-roots/verification-report.json",
+  "contract_hash": "sha256:7e0a6a39a715628c8255529dba472531622e8aabb85df2d3290843287ae0d770",
+  "source_hashes": {
+    ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py": "sha256:6f2215a4b26b5ded41b7c520dd93b05eb892daca6fbff1bafd84e8973e766141",
+    ".agents/skills/skillguard/assets/schemas/skillguard_external_target_binding_v1.schema.json": "sha256:3b2249ce871fd4951815b473da2c387fb070fba585e55b484f394d663547f4b3",
+    ".agents/skills/skillguard/scripts/checker_engine.py": "sha256:e98448e78bbe85cee2816804d1d5d51e863eda8eeb782ab5bec731a8125c6660",
+    ".flowguard/development_process_flow/skillguard_executable_contract_model.py": "sha256:749a853204032ae2f61d00e76683c2e28af4592d0809b2257ec60714b70ed7ce",
+    ".flowguard/model_miss_reviews/skillguard-external-target-binding-20260715.json": "sha256:c1e257e559618e06ee465222e842fc6fbb7b2abad8ebe4d1a157ac7ce481d7e5",
+    "README.md": "sha256:dc6cc053aad3cf70e1af4bd7b43699bdca7af3504ecf9bd64608dd5385348851",
+    "openspec/changes/bind-external-target-roots/.openspec.yaml": "sha256:c20b385f3b1548dde635af44b093b7204e8b4c12f38453792084ca2834078947",
+    "openspec/changes/bind-external-target-roots/design.md": "sha256:dfa18e1f0fb698536bf319e0cc1a1ba074e44ee3d752add67bf2538596862a57",
+    "openspec/changes/bind-external-target-roots/proposal.md": "sha256:eb327fa9a28b5a2ecdc4e1edccd82660de2da201d4f82429e5cfb61c8780bbc9",
+    "openspec/changes/bind-external-target-roots/specs/external-target-binding/spec.md": "sha256:accaf55498ee2ef644f654edd4ca495cbe1a1294a7fd6c3879fa31164bd9ef63",
+    "openspec/changes/bind-external-target-roots/tasks.md": "sha256:5f64544b78ddd0fb48f3444d3c96730fad676d9d9cfb8813637d3fd0014d7fce",
+    "openspec/changes/bind-external-target-roots/verification-contract.yaml": "sha256:7e0a6a39a715628c8255529dba472531622e8aabb85df2d3290843287ae0d770",
+    "references/10-practical-workflows.md": "sha256:43a3d2fbc5b283c4457f230cc6680e06278828786dbada49cb9dfdc2002b6ba1",
+    "tests/test_executable_contract_model.py": "sha256:3bbeaba34241b094b82447829abf2487b8662a2bc200c7a19146db216facf250",
+    "tests/test_external_target_binding.py": "sha256:79025417da08e64cd9d4c7e0cf7d7a3e9c9e2c7c4d5ad5faf981f40ad04c24ae"
+  },
+  "source_hash_policy": {
+    "version": 2,
+    "algorithm": "sha256",
+    "task_checkbox_normalization": "markdown-checkbox-state-v1",
+    "output_classifier_version": "verification-generated-output-v2"
+  },
+  "issues": [],
+  "checks": [
+    {
+      "id": "check.external-binding.cli",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.external-binding.explicit-pair",
+        "req.external-binding.standalone-dot",
+        "req.external-binding.schema",
+        "req.external-binding.former-option"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_external_target_binding.py"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "duration_ms": 20570,
+      "stdout": ".......                                                                  [100%]\r\n7 passed in 18.72s\r\n",
+      "stderr": "",
+      "timeout_seconds": 600,
+      "attempt": 1,
+      "started_at": "2026-07-16T00:08:49.904Z",
+      "completed_at": "2026-07-16T00:09:10.474Z",
+      "semantic_check_id": "skillguard.external-target-binding.cli",
+      "execution_id": "bind-external-target-roots.cli.v1",
+      "execution_key": "sha256:50073ec4c008d8027e074054a851e59fbbf18064fb9366cb3bcff84ab0b96b8b",
+      "input_hashes": {
+        ".agents/skills/skillguard/assets/schemas/skillguard_external_target_binding_v1.schema.json": "sha256:3b2249ce871fd4951815b473da2c387fb070fba585e55b484f394d663547f4b3",
+        ".agents/skills/skillguard/scripts/checker_engine.py": "sha256:e98448e78bbe85cee2816804d1d5d51e863eda8eeb782ab5bec731a8125c6660",
+        "tests/test_external_target_binding.py": "sha256:79025417da08e64cd9d4c7e0cf7d7a3e9c9e2c7c4d5ad5faf981f40ad04c24ae"
+      },
+      "depends_on_receipt_ids": [],
+      "toolchain_identity": "{\"declared\":\"python-pytest\",\"command\":\"python\",\"node\":\"22.14.0\",\"platform\":\"win32\",\"arch\":\"x64\",\"nodeExecutable\":{\"size\":83344536,\"modifiedMs\":1739227510000},\"versions\":{\"project\":\"unresolved\"},\"packageHashes\":{}}",
+      "snapshot_policy": "frozen",
+      "validation_scope": "focused",
+      "snapshot_manifest_id": "sha256:316762a88d27f75acd7198407d68a1f144fefb17e4e027c5b799e467ee944079",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      },
+      "accounting": "executed",
+      "receipt_id": "sha256:11b98d91c6d13041fd62f04c2f5d391dd546b4e553d24556b38c5d157793e15f",
+      "result_hash": "sha256:668f59c97fa1b3039a726d489eafdcc7430aa5fbfd0c50165685ef333645ac18",
+      "stdout_hash": "sha256:3ef1792cbffb81e8aef09f0ed923e34b2a4c16b7eb446cd5e528af4ca1d8d73d",
+      "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "receipt_sidecar_path": "openspec/changes/bind-external-target-roots/verification-receipts/11b98d91c6d13041fd62f04c2f5d391dd546b4e553d24556b38c5d157793e15f.json"
+    },
+    {
+      "id": "check.external-binding.model",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.external-binding.standalone-dot",
+        "req.external-binding.former-option"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "duration_ms": 1176,
+      "stdout": "=== scenarios ===\r\n=== flowguard scenario review ===\r\n\r\ntotal: 34\r\npassed: 1\r\nexpected violations observed: 33\r\nunexpected violations: 0\r\nmissing expected violations: 0\r\nneeds human review: 0\r\nknown limitations: 0\r\noracle mismatches: 0\r\nstatus: OK\r\n\r\nScenario: good_run_passes\r\nExpected: good run\r\nObserved: OK\r\nStatus: PASS\r\nOutcome: scenario matched the expected ok behavior\r\nEvidence:\r\n  - traces=1\r\n  - final_states=1\r\n  - violations=0\r\n  - dead_branches=0\r\n  - exceptions=0\r\n  - observed labels: good_contract_run\r\n\r\nScenario: missing_model_blocks\r\nExpected: model missing\r\nObserved: VIOLATION; model_and_binding_are_authoritative\r\nStatus: EXPECTED_VIOLATION_OBSERVED\r\nOutcome: scenario intentionally expected a violation and FlowGuard observed it\r\nEvidence:\r\n  - traces=1\r\n  - final_states=1\r\n  - violations=1\r\n  - dead_branches=0\r\n  - exceptions=0\r\n  - violation_names=model_and_binding_are_authoritative\r\n  - observed labels: missing_model\r\nCounterexample:\r\nexternal_inputs: (ExecutableContractCase(case_name='missing_model', model_current=False, binding_current=True, model_authority_read_side_effect_free=True, route_owner_unique=True, route_typed=True, packet_fields_consumed=True, guard_runtime_changed=False, guard_compatible_run_claimed=True, run_claimed=True, writer_lock_owned=True, failed_or_dead_writer_lock_recoverable=True, required_steps_passed=True, caller_authored_pass=False, illegal_required_skip=False, artifacts_current=True, checks_current=True, resume_from_events=True, progress_changed=True, reentry_count=0, max_reentries=3, parent_receipts_current=True, failure_visible=True, former_authority_residual=False, closure_requested=True, enforced_closure_exact=True, safe_claim_scoped=True, graduated_children_current=True, depth_profile_present=True, depth_profile_target_neutral=True, native_route_preserved=True, parallel_domain_executor=False, unique_evidence_contribution=True, execution_depth_status='EXECUTION_DEPTH_PASS', depth_receipt_current=True, depth_receipt_consumed=True, enforcement_level='enforced', declared_check_inventory_frozen=True, declared_check_results_complete=True, declared_check_receipts_current=True, provider_runtime_current=True, root_role_binding_current=True, repository_root_supplied=True, target_root_supplied=True, canonical_repository_root_bound=True, member_root_bound=True, member_within_repository=True, member_binding_fallback_used=False, repository_relative_reference_fallback_used=False, standalone_member_root_path_current=True, project_adoption_current=True),)\r\n1. EvaluateExecutableContract [missing_model]: ExecutableContractCase(case_name='missing_model', model_current=False, binding_current=True, model_authority_read_side_effect_free=True, route_owner_unique=True, route_typed=True, packet_fields_consumed=True, guard_runtime_changed=False, guard_compatible_run_claimed=True, run_claimed=True, writer_lock_owned=True, failed_or_dead_writer_lock_recoverable=True, required_steps_passed=True, caller_authored_pass=False, illegal_required_skip=False, artifacts_current=True, checks_current=True, resume_from_events=True, progress_changed=True, reentry_count=0, max_reentries=3, parent_receipts_current=True, failure_visible=True, former_authority_residual=False, closure_requested=True, enforced_closure_exact=True, safe_claim_scoped=True, graduated_children_current=True, depth_profile_present=True, depth_profile_target_neutral=True, native_route_preserved=True, parallel_domain_executor=False, unique_evidence_contribution=True, execution_depth_status='EXECUTION_DEPTH_PASS', depth_receipt_current=True, depth_receipt_consumed=True, enforcement_level='enforced', declared_check_inventory_frozen=True, declared_check_results_complete=True, declared_check_receipts_current=True, provider_runtime_current=True, root_role_binding_current=True, repository_root_supplied=True, target_root_supplied=True, canonical_repository_root_bound=True, member_root_bound=True, member_within_repository=True, member_binding_fallback_used=F\n...[truncated]",
+      "stderr": "",
+      "timeout_seconds": 600,
+      "attempt": 1,
+      "started_at": "2026-07-16T00:09:10.489Z",
+      "completed_at": "2026-07-16T00:09:11.665Z",
+      "semantic_check_id": "skillguard.external-target-binding.flowguard",
+      "execution_id": "bind-external-target-roots.flowguard.v1",
+      "execution_key": "sha256:d355fc4e58a502331a1040f654a79c046dd862c78b37ac2bd8f8e6d3b775f44a",
+      "input_hashes": {
+        ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py": "sha256:6f2215a4b26b5ded41b7c520dd93b05eb892daca6fbff1bafd84e8973e766141",
+        ".flowguard/development_process_flow/skillguard_executable_contract_model.py": "sha256:749a853204032ae2f61d00e76683c2e28af4592d0809b2257ec60714b70ed7ce",
+        ".flowguard/model_miss_reviews/skillguard-external-target-binding-20260715.json": "sha256:c1e257e559618e06ee465222e842fc6fbb7b2abad8ebe4d1a157ac7ce481d7e5",
+        "tests/test_executable_contract_model.py": "sha256:3bbeaba34241b094b82447829abf2487b8662a2bc200c7a19146db216facf250"
+      },
+      "depends_on_receipt_ids": [
+        "sha256:11b98d91c6d13041fd62f04c2f5d391dd546b4e553d24556b38c5d157793e15f"
+      ],
+      "toolchain_identity": "{\"declared\":\"flowguard-0.55.0-python\",\"command\":\"python\",\"node\":\"22.14.0\",\"platform\":\"win32\",\"arch\":\"x64\",\"nodeExecutable\":{\"size\":83344536,\"modifiedMs\":1739227510000},\"versions\":{\"project\":\"unresolved\"},\"packageHashes\":{}}",
+      "snapshot_policy": "frozen",
+      "validation_scope": "focused",
+      "snapshot_manifest_id": "sha256:316762a88d27f75acd7198407d68a1f144fefb17e4e027c5b799e467ee944079",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      },
+      "accounting": "executed",
+      "receipt_id": "sha256:3f18f5b462fc7eadc3401c2c3e5f88a22f4b877263eb68ed9430c8581f951179",
+      "result_hash": "sha256:b5a96309d48637c748392a3d0b5d5d5eed338c039c7a942f7440b2688999db98",
+      "stdout_hash": "sha256:0639e1d060d00fad8e1e5424543da6921d6206ca4b7dbebf6019be613f4b9701",
+      "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "receipt_sidecar_path": "openspec/changes/bind-external-target-roots/verification-receipts/3f18f5b462fc7eadc3401c2c3e5f88a22f4b877263eb68ed9430c8581f951179.json"
+    },
+    {
+      "id": "check.external-binding.openspec",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.external-binding.explicit-pair",
+        "req.external-binding.schema"
+      ],
+      "status": "passed",
+      "command": "openspec",
+      "args": [
+        "validate",
+        "bind-external-target-roots",
+        "--strict"
+      ],
+      "expected_exit_code": 0,
+      "exit_code": 0,
+      "duration_ms": 1385,
+      "stdout": "Change 'bind-external-target-roots' is valid\n",
+      "stderr": "",
+      "timeout_seconds": 300,
+      "attempt": 1,
+      "started_at": "2026-07-16T00:09:11.679Z",
+      "completed_at": "2026-07-16T00:09:13.064Z",
+      "semantic_check_id": "skillguard.external-target-binding.openspec-strict",
+      "execution_id": "bind-external-target-roots.openspec.v1",
+      "execution_key": "sha256:a499164e2919cb94401a00b9b3c1962f844c40c58e4c74aecf0803576dd55925",
+      "input_hashes": {
+        "openspec/changes/bind-external-target-roots/.openspec.yaml": "sha256:c20b385f3b1548dde635af44b093b7204e8b4c12f38453792084ca2834078947",
+        "openspec/changes/bind-external-target-roots/design.md": "sha256:dfa18e1f0fb698536bf319e0cc1a1ba074e44ee3d752add67bf2538596862a57",
+        "openspec/changes/bind-external-target-roots/proposal.md": "sha256:eb327fa9a28b5a2ecdc4e1edccd82660de2da201d4f82429e5cfb61c8780bbc9",
+        "openspec/changes/bind-external-target-roots/specs/external-target-binding/spec.md": "sha256:accaf55498ee2ef644f654edd4ca495cbe1a1294a7fd6c3879fa31164bd9ef63",
+        "openspec/changes/bind-external-target-roots/tasks.md": "sha256:5f64544b78ddd0fb48f3444d3c96730fad676d9d9cfb8813637d3fd0014d7fce",
+        "openspec/changes/bind-external-target-roots/verification-contract.yaml": "sha256:7e0a6a39a715628c8255529dba472531622e8aabb85df2d3290843287ae0d770"
+      },
+      "depends_on_receipt_ids": [
+        "sha256:3f18f5b462fc7eadc3401c2c3e5f88a22f4b877263eb68ed9430c8581f951179"
+      ],
+      "toolchain_identity": "{\"declared\":\"openspec-1.6.0\",\"command\":\"openspec\",\"node\":\"22.14.0\",\"platform\":\"win32\",\"arch\":\"x64\",\"nodeExecutable\":{\"size\":83344536,\"modifiedMs\":1739227510000},\"versions\":{\"project\":\"unresolved\"},\"packageHashes\":{}}",
+      "snapshot_policy": "frozen",
+      "validation_scope": "focused",
+      "snapshot_manifest_id": "sha256:316762a88d27f75acd7198407d68a1f144fefb17e4e027c5b799e467ee944079",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      },
+      "accounting": "executed",
+      "receipt_id": "sha256:64ea415fc5977c61f95de1f10827ba366fe582ccec67aadb09779272adc4826b",
+      "result_hash": "sha256:51dece85b692cfd61b319932b0d9b285e3c06cdfcc355078c06241fcb488bbfb",
+      "stdout_hash": "sha256:f3eff3f08d10bb19c8bea5d4237ae01ad3be6b71cb10d37c74ce23fd71620f8c",
+      "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "receipt_sidecar_path": "openspec/changes/bind-external-target-roots/verification-receipts/64ea415fc5977c61f95de1f10827ba366fe582ccec67aadb09779272adc4826b.json"
+    }
+  ],
+  "run": {
+    "id": "aa7f8d3e-501a-4047-88e8-28f695692bdc",
+    "protocol_version": 3,
+    "state": "completed",
+    "attempt": 1,
+    "started_at": "2026-07-16T00:08:33.857Z",
+    "updated_at": "2026-07-16T00:09:13.859Z",
+    "completed_at": "2026-07-16T00:09:13.859Z",
+    "plan_hash": "sha256:1bb840ee2d1e97a47935fc0a60b80cf4bd9ce63dbdde38734e68b9bda288a9cb",
+    "validation_mode": "full",
+    "selection": {
+      "mode": "all",
+      "check_ids": [
+        "check.external-binding.cli",
+        "check.external-binding.model",
+        "check.external-binding.openspec"
+      ]
+    },
+    "resumed_from_run_id": null,
+    "cancellation": null,
+    "snapshot_manifest_id": "sha256:316762a88d27f75acd7198407d68a1f144fefb17e4e027c5b799e467ee944079",
+    "toolchain_isolation": "content-identity-guarded"
+  },
+  "accounting": {
+    "executed": 3,
+    "reused": 0,
+    "aggregated": 0,
+    "not_run": 0,
+    "stale": 0,
+    "executed_check_ids": [
+      "check.external-binding.cli",
+      "check.external-binding.model",
+      "check.external-binding.openspec"
+    ],
+    "reused_check_ids": [],
+    "aggregated_check_ids": [],
+    "not_run_check_ids": [],
+    "stale_check_ids": []
+  },
+  "receipts": [
+    {
+      "id": "sha256:11b98d91c6d13041fd62f04c2f5d391dd546b4e553d24556b38c5d157793e15f",
+      "check_id": "check.external-binding.cli",
+      "kind": "execution",
+      "execution_key": "sha256:50073ec4c008d8027e074054a851e59fbbf18064fb9366cb3bcff84ab0b96b8b",
+      "result_hash": "sha256:668f59c97fa1b3039a726d489eafdcc7430aa5fbfd0c50165685ef333645ac18",
+      "content_path": "openspec/changes/bind-external-target-roots/verification-receipts/11b98d91c6d13041fd62f04c2f5d391dd546b4e553d24556b38c5d157793e15f.json",
+      "execution": {
+        "semantic_check_id": "skillguard.external-target-binding.cli",
+        "execution_id": "bind-external-target-roots.cli.v1",
+        "owner_check_id": "check.external-binding.cli"
+      },
+      "result": {
+        "status": "passed",
+        "expected_exit_code": 0,
+        "exit_code": 0,
+        "stdout_hash": "sha256:3ef1792cbffb81e8aef09f0ed923e34b2a4c16b7eb446cd5e528af4ca1d8d73d",
+        "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "termination": null
+      },
+      "dependencies": [],
+      "snapshot": {
+        "policy": "frozen",
+        "manifest_id": "sha256:316762a88d27f75acd7198407d68a1f144fefb17e4e027c5b799e467ee944079",
+        "input_hashes": {
+          ".agents/skills/skillguard/assets/schemas/skillguard_external_target_binding_v1.schema.json": "sha256:3b2249ce871fd4951815b473da2c387fb070fba585e55b484f394d663547f4b3",
+          ".agents/skills/skillguard/scripts/checker_engine.py": "sha256:e98448e78bbe85cee2816804d1d5d51e863eda8eeb782ab5bec731a8125c6660",
+          "tests/test_external_target_binding.py": "sha256:79025417da08e64cd9d4c7e0cf7d7a3e9c9e2c7c4d5ad5faf981f40ad04c24ae"
+        }
+      },
+      "toolchain_identity": "{\"declared\":\"python-pytest\",\"command\":\"python\",\"node\":\"22.14.0\",\"platform\":\"win32\",\"arch\":\"x64\",\"nodeExecutable\":{\"size\":83344536,\"modifiedMs\":1739227510000},\"versions\":{\"project\":\"unresolved\"},\"packageHashes\":{}}",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      }
+    },
+    {
+      "id": "sha256:3f18f5b462fc7eadc3401c2c3e5f88a22f4b877263eb68ed9430c8581f951179",
+      "check_id": "check.external-binding.model",
+      "kind": "execution",
+      "execution_key": "sha256:d355fc4e58a502331a1040f654a79c046dd862c78b37ac2bd8f8e6d3b775f44a",
+      "result_hash": "sha256:b5a96309d48637c748392a3d0b5d5d5eed338c039c7a942f7440b2688999db98",
+      "content_path": "openspec/changes/bind-external-target-roots/verification-receipts/3f18f5b462fc7eadc3401c2c3e5f88a22f4b877263eb68ed9430c8581f951179.json",
+      "execution": {
+        "semantic_check_id": "skillguard.external-target-binding.flowguard",
+        "execution_id": "bind-external-target-roots.flowguard.v1",
+        "owner_check_id": "check.external-binding.model"
+      },
+      "result": {
+        "status": "passed",
+        "expected_exit_code": 0,
+        "exit_code": 0,
+        "stdout_hash": "sha256:0639e1d060d00fad8e1e5424543da6921d6206ca4b7dbebf6019be613f4b9701",
+        "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "termination": null
+      },
+      "dependencies": [
+        "sha256:11b98d91c6d13041fd62f04c2f5d391dd546b4e553d24556b38c5d157793e15f"
+      ],
+      "snapshot": {
+        "policy": "frozen",
+        "manifest_id": "sha256:316762a88d27f75acd7198407d68a1f144fefb17e4e027c5b799e467ee944079",
+        "input_hashes": {
+          ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py": "sha256:6f2215a4b26b5ded41b7c520dd93b05eb892daca6fbff1bafd84e8973e766141",
+          ".flowguard/development_process_flow/skillguard_executable_contract_model.py": "sha256:749a853204032ae2f61d00e76683c2e28af4592d0809b2257ec60714b70ed7ce",
+          ".flowguard/model_miss_reviews/skillguard-external-target-binding-20260715.json": "sha256:c1e257e559618e06ee465222e842fc6fbb7b2abad8ebe4d1a157ac7ce481d7e5",
+          "tests/test_executable_contract_model.py": "sha256:3bbeaba34241b094b82447829abf2487b8662a2bc200c7a19146db216facf250"
+        }
+      },
+      "toolchain_identity": "{\"declared\":\"flowguard-0.55.0-python\",\"command\":\"python\",\"node\":\"22.14.0\",\"platform\":\"win32\",\"arch\":\"x64\",\"nodeExecutable\":{\"size\":83344536,\"modifiedMs\":1739227510000},\"versions\":{\"project\":\"unresolved\"},\"packageHashes\":{}}",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      }
+    },
+    {
+      "id": "sha256:64ea415fc5977c61f95de1f10827ba366fe582ccec67aadb09779272adc4826b",
+      "check_id": "check.external-binding.openspec",
+      "kind": "execution",
+      "execution_key": "sha256:a499164e2919cb94401a00b9b3c1962f844c40c58e4c74aecf0803576dd55925",
+      "result_hash": "sha256:51dece85b692cfd61b319932b0d9b285e3c06cdfcc355078c06241fcb488bbfb",
+      "content_path": "openspec/changes/bind-external-target-roots/verification-receipts/64ea415fc5977c61f95de1f10827ba366fe582ccec67aadb09779272adc4826b.json",
+      "execution": {
+        "semantic_check_id": "skillguard.external-target-binding.openspec-strict",
+        "execution_id": "bind-external-target-roots.openspec.v1",
+        "owner_check_id": "check.external-binding.openspec"
+      },
+      "result": {
+        "status": "passed",
+        "expected_exit_code": 0,
+        "exit_code": 0,
+        "stdout_hash": "sha256:f3eff3f08d10bb19c8bea5d4237ae01ad3be6b71cb10d37c74ce23fd71620f8c",
+        "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "termination": null
+      },
+      "dependencies": [
+        "sha256:3f18f5b462fc7eadc3401c2c3e5f88a22f4b877263eb68ed9430c8581f951179"
+      ],
+      "snapshot": {
+        "policy": "frozen",
+        "manifest_id": "sha256:316762a88d27f75acd7198407d68a1f144fefb17e4e027c5b799e467ee944079",
+        "input_hashes": {
+          "openspec/changes/bind-external-target-roots/.openspec.yaml": "sha256:c20b385f3b1548dde635af44b093b7204e8b4c12f38453792084ca2834078947",
+          "openspec/changes/bind-external-target-roots/design.md": "sha256:dfa18e1f0fb698536bf319e0cc1a1ba074e44ee3d752add67bf2538596862a57",
+          "openspec/changes/bind-external-target-roots/proposal.md": "sha256:eb327fa9a28b5a2ecdc4e1edccd82660de2da201d4f82429e5cfb61c8780bbc9",
+          "openspec/changes/bind-external-target-roots/specs/external-target-binding/spec.md": "sha256:accaf55498ee2ef644f654edd4ca495cbe1a1294a7fd6c3879fa31164bd9ef63",
+          "openspec/changes/bind-external-target-roots/tasks.md": "sha256:5f64544b78ddd0fb48f3444d3c96730fad676d9d9cfb8813637d3fd0014d7fce",
+          "openspec/changes/bind-external-target-roots/verification-contract.yaml": "sha256:7e0a6a39a715628c8255529dba472531622e8aabb85df2d3290843287ae0d770"
+        }
+      },
+      "toolchain_identity": "{\"declared\":\"openspec-1.6.0\",\"command\":\"openspec\",\"node\":\"22.14.0\",\"platform\":\"win32\",\"arch\":\"x64\",\"nodeExecutable\":{\"size\":83344536,\"modifiedMs\":1739227510000},\"versions\":{\"project\":\"unresolved\"},\"packageHashes\":{}}",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      }
+    }
+  ]
+}

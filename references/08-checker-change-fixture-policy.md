@@ -27,7 +27,7 @@ A checker change should trigger fixture review when it affects:
 - suite or child evidence aggregation;
 - parser behavior;
 - report fields;
-- compatibility or version handling.
+- current schema/version identity and noncurrent rejection.
 
 Pass criteria: every behavior-changing checker update names the fixture impact.
 
@@ -47,14 +47,14 @@ Useful fields:
 - expected decision;
 - expected findings;
 - freshness date or source date when relevant;
-- compatibility notes;
+- current identity notes;
 - known limitations.
 
 Pass criteria: fixture expectations are versioned or otherwise tied to a clear checker policy state.
 
 Fail criteria: fixtures have ambiguous expectations or silently inherit changed behavior.
 
-Block criteria: a required compatibility decision is missing.
+Block criteria: the required current identity or noncurrent-rejection decision is missing.
 
 ## Positive Fixtures
 
@@ -139,24 +139,24 @@ Fail criteria: stale fixtures are treated as current evidence.
 
 Block criteria: required fixture freshness cannot be determined.
 
-## Compatibility Expectations
+## Current Identity Expectations
 
-Checker changes should describe compatibility expectations.
+Checker changes must name the sole current schema, fixture, and report identities.
 
-Compatibility questions:
+Current-identity questions:
 
-- Are old fixtures still valid?
-- Are old result records still readable?
+- Are former fixtures kept only as explicit rejection inputs?
+- Are former result records rejected rather than read or converted?
 - Does the status vocabulary change?
 - Does a schema version change?
 - Do public report fields change?
-- Are migration notes required?
+- Does every affected fixture get rewritten directly to the current shape?
 
-Pass criteria: compatibility impact is documented and tested where needed.
+Pass criteria: the current identity is explicit and former shapes are rejected by exact negative fixtures.
 
-Fail criteria: compatibility changes are implicit or contradict existing fixtures.
+Fail criteria: more than one live identity exists or a former shape can still execute.
 
-Block criteria: compatibility cannot be assessed for a required public contract.
+Block criteria: the sole current identity or former-shape rejection cannot be assessed for a required public contract.
 
 ## Evidence Requirements
 
@@ -170,7 +170,7 @@ Evidence may include:
 - fixture hashes;
 - positive and negative fixture results;
 - skipped fixture reasons;
-- compatibility notes;
+- current identity notes;
 - reviewer judgment for semantic fixture adequacy.
 
 Fresh evidence is required when checker behavior changes, fixture expectations change, fixture content changes, schema or status vocabulary changes, or the closure boundary changes.
@@ -209,7 +209,7 @@ Reviewer checklist:
 - inspect negative fixture coverage;
 - check regression scenarios;
 - check stale fixture handling;
-- check compatibility notes;
+- check current identity notes and former-shape rejection;
 - check public-safety scans for fixture content;
 - verify skipped fixtures are named with reasons;
 - verify no implementation, validation-suite, package, git, hosted release, or external integration claim is made without evidence.

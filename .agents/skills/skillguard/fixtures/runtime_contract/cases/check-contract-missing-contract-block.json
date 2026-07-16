@@ -1,7 +1,0 @@
-{
-  "fixture_id": "runtime-check-contract-missing-contract-block",
-  "target_command": "check-contract",
-  "expected_decision": "block",
-  "target_path": ".agents/skills/skillguard",
-  "contract_path": "../contracts/missing_contract.json"
-}

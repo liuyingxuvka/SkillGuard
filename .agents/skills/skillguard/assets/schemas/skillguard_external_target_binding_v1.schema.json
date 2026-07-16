@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_external_target_binding_v1.schema.json",
+  "title": "SkillGuard external target binding v1",
+  "description": "Portable projection of one canonical repository root and one target skill member root.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "binding_mode",
+    "repository_root_role",
+    "member_root_role",
+    "member_root_path",
+    "repository_root_explicit",
+    "repository_root_verified",
+    "member_root_verified",
+    "member_within_repository",
+    "fallback_used",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.external_target_binding.v1"},
+    "artifact_type": {"const": "skillguard_external_target_binding"},
+    "binding_mode": {
+      "enum": [
+        "explicit_repository",
+        "standalone_dot",
+        "skillguard_self"
+      ]
+    },
+    "repository_root_role": {"const": "canonical_repository_root"},
+    "member_root_role": {"const": "target_skill_member_root"},
+    "member_root_path": {
+      "type": "string",
+      "pattern": "^(?:\\.|[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*)$"
+    },
+    "repository_root_explicit": {"type": "boolean"},
+    "repository_root_verified": {"const": true},
+    "member_root_verified": {"type": "boolean"},
+    "member_within_repository": {"const": true},
+    "fallback_used": {"const": false},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

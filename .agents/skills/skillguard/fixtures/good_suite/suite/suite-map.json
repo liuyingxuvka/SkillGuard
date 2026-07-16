@@ -30,9 +30,9 @@
   "maintenance_ownership": [
     "Fixture maintainers refresh suite records when checker schema or member-root rules change."
   ],
-  "compatibility": {
-    "version_boundary": "good-fixtures.v1 with skillguard.local_cli_dispatch.v1",
-    "known_incompatibilities": []
+  "current_identity": {
+    "schema_boundary": "good-fixtures.v1 with skillguard.local_cli_dispatch.v1",
+    "rejected_noncurrent_shapes": []
   },
   "evidence": [
     "evidence/good_suite_closure.json"

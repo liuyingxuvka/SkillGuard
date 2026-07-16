@@ -1,0 +1,50 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-windows-long-path-parent-replay-20260715",
+  "status": "repair_validated_current_sourceguard",
+  "observed_failure": {
+    "surface": "SourceGuard replaying a current full TestMesh parent from a deeply nested persistent owner-evidence root on Windows",
+    "prior_local_claim": "a current parent aggregation can be replayed and projected read-only from the exact persistent evidence authority that produced it",
+    "observed_result": "the parent file existed, matched the emitted reference, and remained valid, but direct Path.read_bytes raised an OS error beyond the legacy Windows path budget and was reported as aggregation_unreadable",
+    "failure_code": "windows_long_path_parent_replay_unreadable"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.parent-replay.physical-path-currentness",
+    "owner": "SkillGuard TestMesh read-only aggregation replay and OpenSpec projection",
+    "miss_type": "boundary_missing",
+    "error_signature": "aggregation_unreadable for an existing hash-bound parent below a path longer than 260 characters",
+    "affected_feature_tags": [
+      "windows",
+      "long-path",
+      "parent-aggregation",
+      "read-only-replay",
+      "openspec-projection"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "portable evidence writes already used the platform-aware physical path converter, but TestMesh replay and projection retained several direct physical reads",
+    "would_have_failed_if": "the external-target model had replayed the emitted parent from the real nested owner-evidence root instead of a short temporary root",
+    "new_model_item": "every physical TestMesh read must use the same platform-aware path conversion as immutable writes while portable wire paths stay canonical and relative",
+    "owner_code_contract": "test_mesh replay/project/manifest/source reads -> execution_records.filesystem_path -> exact existing file bytes"
+  },
+  "generalized_repair": {
+    "rule": "Normalize physical paths for registry, prompt, manifest, aggregation, and projection-source reads without changing receipt identities, wire references, execution ownership, or evidence meaning.",
+    "observed_regression": "a parent aggregation beyond 260 characters now replays and projects to OpenSpec with execution_count zero",
+    "same_class_regression": "the Windows regression executes aggregation replay and projection from the long owner-evidence authority and checks the unchanged zero-execution boundary",
+    "negative_boundary": "the repair adds no alias evidence root, fallback reader, optional mode, new receipt shape, or second authority"
+  },
+  "required_revalidation": [
+    "focused TestMesh long-path replay and projection regressions",
+    "current SkillGuard contract compilation",
+    "transactional SkillGuard reinstall and installed parity",
+    "real SourceGuard parent aggregation replay and OpenSpec projection"
+  ],
+  "revalidation_evidence": {
+    "focused_regression": "24 passed in the focused TestMesh module, including real Windows path length above 260 characters",
+    "current_contract_hash": "296124C226A9EC94E7F2762CAE1AC52497BD9E4AA6772BB1F4F50BD54B9CBE53",
+    "installation": "transaction install-4457e2e05df94c9f859c73227ac44f52; current-parity receipt installation-30e90a7db282af9181c479d4 / B2B09C8BCBE58317A9C0E511EC33D4F6430A74DC3B00CA1D81A84705FFB8843A",
+    "real_sourceguard_projection": "SourceGuard aggregation sha256:5491453da0ecb16a4495b316a0f954cd5b275054f36b96b4eed21dbf067e593a replayed and projected with execution_count 0; OpenSpec receipt sha256:21339550594723aad4b456fc836bebab30df1e7b11ebdd6b25f640bcfe6d9a06 verified"
+  },
+  "claim_boundary": "The current source, transactional installed projection, real long-path SourceGuard aggregation, and receipt-only OpenSpec consumer all passed. This closes the physical path class without claiming unrelated target behavior."
+}

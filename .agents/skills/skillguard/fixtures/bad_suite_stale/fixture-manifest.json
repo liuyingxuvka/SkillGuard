@@ -2,8 +2,8 @@
   "schema_version": "skillguard.fixture_manifest.v1",
   "fixture_version": "bad-suite-stale-fixtures.v1",
   "checker_version": "skillguard.local_cli_dispatch.v1",
-  "compatibility": {
-    "status": "compatible",
+  "current_status": {
+    "status": "current",
     "notes": [
       "Suite and policy bad fixtures use expected_decision=fail because the current checker reports these isolated defects as fail-class findings.",
       "Each case targets one current command surface and preserves separate failure attribution for suite records, child closure, stale evidence, and checker-policy self-check protection."

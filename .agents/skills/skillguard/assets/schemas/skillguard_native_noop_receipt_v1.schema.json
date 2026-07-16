@@ -1,0 +1,233 @@
+{
+  "$defs": {
+    "portable_ref": {
+      "additionalProperties": false,
+      "properties": {
+        "path_token": {
+          "const": "run_root"
+        },
+        "relative_path": {
+          "minLength": 1,
+          "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path_token",
+        "relative_path"
+      ],
+      "type": "object"
+    },
+    "receipt": {
+      "additionalProperties": false,
+      "properties": {
+        "branch_id": {
+          "enum": [
+            "no-update",
+            "waiting-for-user",
+            "ui-running"
+          ]
+        },
+        "closure_disposition": {
+          "const": "terminal_completion"
+        },
+        "closure_profile": {
+          "const": "enforced"
+        },
+        "created_at": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "depth_profile_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "depth_receipt_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "depth_receipt_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_domain": {
+          "const": "scheduled_production"
+        },
+        "native_check_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "native_owner_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "native_receipt_artifact_ref": {
+          "$ref": "#/$defs/portable_ref"
+        },
+        "native_receipt_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "native_route_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "observed_state_fingerprint": {
+          "$ref": "#/$defs/sha256"
+        },
+        "reason_code": {
+          "enum": [
+            "no-update",
+            "waiting-for-user",
+            "ui-running"
+          ]
+        },
+        "receipt_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "receipt_id": {
+          "pattern": "^native-noop-[a-f0-9]{24}$",
+          "type": "string"
+        },
+        "run_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "scheduled_production_identity": {
+          "$ref": "#/$defs/scheduled_identity"
+        },
+        "schema_version": {
+          "const": "skillguard.native_noop_receipt.v1"
+        },
+        "target_contract_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "target_obligation_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "target_skill_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "terminal_kind": {
+          "const": "legitimate_noop"
+        }
+      },
+      "required": [
+        "schema_version",
+        "receipt_id",
+        "target_skill_id",
+        "target_contract_hash",
+        "depth_profile_hash",
+        "native_owner_id",
+        "native_route_id",
+        "native_check_id",
+        "run_id",
+        "branch_id",
+        "terminal_kind",
+        "closure_profile",
+        "closure_disposition",
+        "reason_code",
+        "observed_state_fingerprint",
+        "target_obligation_ids",
+        "evidence_domain",
+        "scheduled_production_identity",
+        "depth_receipt_id",
+        "depth_receipt_hash",
+        "native_receipt_artifact_ref",
+        "native_receipt_hash",
+        "created_at",
+        "receipt_hash"
+      ],
+      "type": "object"
+    },
+    "scheduled_identity": {
+      "additionalProperties": false,
+      "properties": {
+        "installation_receipt_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "installation_receipt_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "installation_receipt_root_ref": {
+          "additionalProperties": false,
+          "properties": {
+            "path_token": {
+              "const": "active_skill_root"
+            },
+            "relative_path": {
+              "minLength": 1,
+              "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "path_token",
+            "relative_path"
+          ],
+          "type": "object"
+        },
+        "installed_runtime_fingerprint": {
+          "$ref": "#/$defs/sha256"
+        },
+        "scheduled_execution_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "scheduler_or_trigger_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "scheduler_or_trigger_id",
+        "scheduled_execution_id",
+        "installation_receipt_id",
+        "installation_receipt_hash",
+        "installation_receipt_root_ref",
+        "installed_runtime_fingerprint"
+      ],
+      "type": "object"
+    },
+    "sha256": {
+      "pattern": "^[A-F0-9]{64}$",
+      "type": "string"
+    }
+  },
+  "$id": "https://skillguard.local/schemas/skillguard_native_noop_receipt_v1.schema.json",
+  "$ref": "#/$defs/receipt",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "target_skill_id",
+    "target_contract_hash",
+    "depth_profile_hash",
+    "native_owner_id",
+    "native_route_id",
+    "native_check_id",
+    "run_id",
+    "branch_id",
+    "terminal_kind",
+    "closure_profile",
+    "closure_disposition",
+    "reason_code",
+    "observed_state_fingerprint",
+    "target_obligation_ids",
+    "evidence_domain",
+    "scheduled_production_identity",
+    "depth_receipt_id",
+    "depth_receipt_hash",
+    "native_receipt_artifact_ref",
+    "native_receipt_hash",
+    "created_at",
+    "receipt_hash"
+  ],
+  "title": "SkillGuard Native No-op Receipt V1",
+  "type": "object"
+}

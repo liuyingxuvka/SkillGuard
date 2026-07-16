@@ -1,0 +1,96 @@
+contract_version: 1
+change: enforce-current-runtime-authority
+obligations:
+  - id: req.current-authority.single-path
+    source: "specs/current-runtime-authority/spec.md#Requirement: Single current daily authority"
+    claim: Daily authority resolves only current or blocked and never falls back to an old pair.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.no-retirement-surface
+    source: "specs/current-runtime-authority/spec.md#Requirement: No live retirement or conversion surface"
+    claim: Maintained and installed surfaces contain no retirement receipt, validator, schema, converter, renewal command, or history-driven freshness input.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.fields
+    source: "specs/current-runtime-authority/spec.md#Requirement: Old lifecycle fields are not current contract fields"
+    claim: Current contracts reject old lifecycle fields and do not auto-convert them.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.commands
+    source: "specs/current-runtime-authority/spec.md#Requirement: Legacy runtime commands are rejection-only"
+    claim: Old compile/route/run commands and records cannot execute or close daily work.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.residual
+    source: "specs/current-runtime-authority/spec.md#Requirement: Former runtime residuals block current authority"
+    claim: Former authority residuals block while current run directories and unrelated stable protocols are preserved.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.consumers
+    source: "specs/current-runtime-authority/spec.md#Requirement: Current-only consumer parity"
+    claim: Every consumer uses the same current decision and exact impact projections without repository escape.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.direct-replacement
+    source: "specs/current-runtime-authority/spec.md#Requirement: Direct current replacement has no conversion route"
+    claim: Old targets remain blocked until ordinary maintenance writes the complete current shape; no converter or old-shape reader supplies a second route.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.maintenance-current-only
+    source: "specs/current-runtime-authority/spec.md#Requirement: Maintenance has no refresh or upgrade route"
+    claim: Maintenance accepts explicit current inputs and exposes no refresh or project-upgrade route.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.functional-inputs
+    source: "specs/current-runtime-authority/spec.md#Requirement: Functional freshness excludes execution output"
+    claim: Functional identity is component-exact and excludes receipts, reports, logs, caches, timestamps, generated status, and result sidecars.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.covered-skill-current-only
+    source: "specs/current-runtime-authority/spec.md#Requirement: Covered skill upgrades are current-only"
+    claim: Skill upgrades have no fallback or compatibility path; explicit ordinary-software historical readers remain separately bounded by FlowGuard.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.current-authority.boundary
+    source: "specs/current-runtime-authority/spec.md#Requirement: Current-authority claim boundary"
+    claim: Authority evidence does not claim target-domain correctness, future behavior, publication, or release.
+    required: true
+    evidence: [check.current-authority.final-parent]
+  - id: req.depth.current-only
+    source: "specs/universal-execution-depth/spec.md#Requirement: Execution depth has no former-path input"
+    claim: Current depth and parity consume only current functional identities and exact receipts.
+    required: true
+    evidence: [check.current-authority.final-parent]
+checks:
+  - id: check.current-authority.final-parent
+    kind: receipt
+    semantic_check_id: semantic.current-authority.skillguard-final-parent
+    consumer: openspec-current-authority-verifier
+    receipt_ref:
+      provider_id: skillguard
+      work_package_id: enforce-current-runtime-authority
+      adapter: portable-receipt.v1
+      ref_path: <SKILLGUARD_EVIDENCE>/portable/enforce-current-runtime-authority/ref.json
+    required: true
+    covers:
+      - req.current-authority.single-path
+      - req.current-authority.no-retirement-surface
+      - req.current-authority.fields
+      - req.current-authority.commands
+      - req.current-authority.residual
+      - req.current-authority.consumers
+      - req.current-authority.direct-replacement
+      - req.current-authority.maintenance-current-only
+      - req.current-authority.functional-inputs
+      - req.current-authority.covered-skill-current-only
+      - req.current-authority.boundary
+      - req.depth.current-only
+freshness:
+  watch:
+    - openspec/changes/enforce-current-runtime-authority/proposal.md
+    - openspec/changes/enforce-current-runtime-authority/design.md
+    - openspec/changes/enforce-current-runtime-authority/tasks.md
+    - openspec/changes/enforce-current-runtime-authority/specs/**/*.md
+    - openspec/changes/enforce-current-runtime-authority/verification-contract.yaml
+evidence_roots:
+  SKILLGUARD_EVIDENCE: work/verification/final-skillguard

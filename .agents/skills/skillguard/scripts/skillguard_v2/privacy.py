@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from .contract_compiler import file_hash
+from .portable_content import RUNTIME, classify_relative_path
 from .provenance import _git
 
 
@@ -38,7 +39,16 @@ def public_path_token(path: Path, repository_root: Path, installed_root: Path | 
 
 def git_public_candidates(repository_root: Path) -> list[str]:
     output = _git(repository_root, "ls-files", "--cached", "--others", "--exclude-standard")
-    return sorted({row.strip().replace("\\", "/") for row in output.splitlines() if row.strip()})
+    candidates = {
+        row.strip().replace("\\", "/")
+        for row in output.splitlines()
+        if row.strip()
+    }
+    return sorted(
+        path_text
+        for path_text in candidates
+        if (repository_root / path_text).is_file()
+    )
 
 
 def _line_findings(path_text: str, text: str, sensitive_literals: Iterable[str]) -> list[dict[str, Any]]:
@@ -88,11 +98,26 @@ def audit_public_export(
             continue
         lower_name = path.name.lower()
         suffix = path.suffix.lower()
+        portable_decision = classify_relative_path(path_text)
+        if portable_decision.classification == RUNTIME:
+            findings.append(
+                {
+                    "code": "runtime_state_in_public_export",
+                    "path": path_text,
+                    "line": 0,
+                }
+            )
         if lower_name in blocked_names or suffix in blocked_extensions:
             findings.append({"code": "blocked_private_file_type", "path": path_text, "line": 0})
         if any(path_text.startswith(prefix) for prefix in runtime_prefixes):
             findings.append({"code": "runtime_state_in_public_export", "path": path_text, "line": 0})
-        data = path.read_bytes()
+        try:
+            data = path.read_bytes()
+        except OSError:
+            findings.append(
+                {"code": "candidate_unreadable", "path": path_text, "line": 0}
+            )
+            continue
         if b"\x00" in data[:4096] or suffix in allowed_binary:
             scanned_binary += 1
             if suffix in allowed_binary:

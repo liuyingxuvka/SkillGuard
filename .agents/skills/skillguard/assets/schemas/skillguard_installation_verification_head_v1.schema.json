@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyingxuvka/SkillGuard/schemas/skillguard_installation_verification_head_v1.schema.json",
+  "title": "SkillGuard installation verification HEAD v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "receipt_id", "receipt_hash", "receipt_ref", "head_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.installation_verification_head.v1"},
+    "receipt_id": {"type": "string", "pattern": "^installation-[a-f0-9]{24}$"},
+    "receipt_hash": {"$ref": "#/$defs/hash"},
+    "receipt_ref": {"type": "object", "additionalProperties": false, "required": ["path_token", "relative_path"], "properties": {"path_token": {"const": "receipt_root"}, "relative_path": {"type": "string", "pattern": "^receipts/[a-f0-9]{24}\\.json$"}}},
+    "head_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}}
+}

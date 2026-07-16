@@ -1,0 +1,49 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-windows-long-path-portable-projection-20260715",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "PhysicsGuard projecting a current full TestMesh aggregation into its deeply nested OpenSpec evidence root on Windows",
+    "prior_local_claim": "the generic immutable evidence writer and mutable projection pointer can publish a portable receipt below an external repository evidence root",
+    "observed_result": "the immutable envelope first failed at MoveFileExW beyond the legacy path budget; after that write was repaired, the mutable ref parent creation failed for the same reason",
+    "failure_code": "windows_long_path_portable_projection_unpublishable"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.openspec-projection.windows-path-currentness",
+    "owner": "SkillGuard immutable execution-record writer and OpenSpec projection pointer publisher",
+    "miss_type": "boundary_missing",
+    "error_signature": "MoveFileExW or mkdir failed when the portable projection destination exceeded the legacy Windows path budget",
+    "affected_feature_tags": [
+      "windows",
+      "long-path",
+      "immutable-evidence",
+      "openspec-projection",
+      "external-target"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the portable projection modeled atomicity and immutability but did not normalize every Windows filesystem operation to one extended-length path representation",
+    "would_have_failed_if": "the model had included both immutable blob publication and mutable pointer replacement below a real nested external OpenSpec change root",
+    "new_model_item": "every physical filesystem operation in portable evidence publication must use the same Windows extended-length path conversion while portable wire paths remain canonical slash-separated relative paths",
+    "owner_code_contract": "execution_records.filesystem_path -> durable immutable writes and test_mesh._atomic_replace_projection_ref"
+  },
+  "generalized_repair": {
+    "rule": "Use one platform-aware physical path conversion for parent creation, temporary writes, immutable moves, mutable replacement, and cleanup without changing portable receipt wire paths.",
+    "observed_regression": "the real PhysicsGuard OpenSpec projection now publishes its immutable envelope, source manifest, sidecars, and mutable ref in the original deeply nested evidence root",
+    "same_class_regression": "Windows tests cover immutable destinations and mutable pointer parents beyond 260 characters, including idempotent immutable publication",
+    "negative_boundary": "the repair does not shorten, relocate, alias, or silently fall back to a second evidence root"
+  },
+  "required_revalidation": [
+    "focused Windows immutable and mutable long-path regressions",
+    "complete SkillGuard regression suite",
+    "transactional SkillGuard reinstall and installed self-host",
+    "real PhysicsGuard full aggregation replay and OpenSpec projection"
+  ],
+  "revalidation_evidence": {
+    "focused_regressions": "20 focused execution-record and projection tests passed",
+    "complete_regression_before_follow_on_ref_fix": "419 passed, 1 skipped, and 141 subtests passed",
+    "real_external_projection": "PhysicsGuard projection reached passed with execution_count=0 in the original nested evidence root"
+  },
+  "claim_boundary": "The repair is validated for the current Windows workspace and PhysicsGuard projection path. It does not prove arbitrary filesystems, unrelated consumers, or future path lengths beyond platform support."
+}

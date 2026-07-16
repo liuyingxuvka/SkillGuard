@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_contract  # noqa: F401
+from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.closure import ClosureError, close_run, evaluate_closure, load_closure, verify_closure
 from skillguard_v2.receipts import fingerprint_value, issue_receipt
 from skillguard_v2.route_runtime import select_routes
@@ -30,6 +30,7 @@ class FalseClosureV2Tests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["out"], "request": "negative closure"},
             self.target,
             decision,
+            check_manifest=runtime_check_manifest(self.contract),
         )
         self.run_root = claim.run_root
         self.current = {"implementation": fingerprint_value("v1")}
@@ -62,12 +63,46 @@ class FalseClosureV2Tests(unittest.TestCase):
         )
         return receipt
 
-    def _complete_functional(self):
+    def _complete_enforced(self):
         rows = [
             self._pass("step:intake", "check:intake"),
             self._pass("step:optional-review", "check:review"),
             self._pass("step:finish", "check:finish"),
         ]
+        rows.append(
+            issue_receipt(
+                self.run_root,
+                step_id="step:finish",
+                evidence_class="hard",
+                evidence={
+                    "proof_kind": "fixture_assertion",
+                    "proof_fingerprint": "proof:check:release",
+                    "check_id": "check:release",
+                },
+                decision="passed",
+                verifier_id="verifier",
+                input_fingerprints=self.current,
+            )
+        )
+        rows.append(
+            issue_receipt(
+                self.run_root,
+                step_id="step:finish",
+                evidence_class="judged",
+                evidence={
+                    "rubric_id": "rubric:quality",
+                    "rubric_version": "2",
+                    "evaluator_id": "independent-reviewer",
+                    "input_fingerprint": "artifact:quality",
+                    "conclusion": "meets the fixture rubric",
+                    "limitations": ["fixture scope"],
+                    "self_review": False,
+                },
+                decision="passed",
+                verifier_id="judgment-verifier",
+                input_fingerprints=self.current,
+            )
+        )
         return rows
 
     def test_optional_runtime_skip_cannot_satisfy_required_functional_obligation(self) -> None:
@@ -77,32 +112,38 @@ class FalseClosureV2Tests(unittest.TestCase):
         self._pass("step:finish", "check:finish")
         evaluation, closure = close_run(
             self.run_root,
-            profile="functional",
+            profile="enforced",
             current_fingerprints=self.current,
         )
         self.assertEqual("incomplete", evaluation.status)
         self.assertIsNone(closure)
         self.assertIn("step:step:optional-review", evaluation.gaps["skipped"])
-        self.assertTrue((self.run_root / "reports" / "closure-functional.json").is_file())
+        self.assertTrue((self.run_root / "reports" / "closure-enforced.json").is_file())
 
     def test_source_change_makes_previous_pass_stale(self) -> None:
-        self._complete_functional()
+        self._complete_enforced()
         stale = evaluate_closure(
             self.run_root,
-            profile="functional",
+            profile="enforced",
             current_fingerprints={"implementation": fingerprint_value("v2")},
         )
         self.assertEqual("stale", stale.status)
         self.assertEqual(
-            {"obligation:intake", "obligation:review", "obligation:finish"},
+            {
+                "obligation:intake",
+                "obligation:review",
+                "obligation:finish",
+                "obligation:release",
+                "obligation:quality",
+            },
             set(stale.gaps["stale"]),
         )
 
     def test_tampered_closure_receipt_and_event_history_are_rejected(self) -> None:
-        self._complete_functional()
+        self._complete_enforced()
         _, closure = close_run(
             self.run_root,
-            profile="functional",
+            profile="enforced",
             current_fingerprints=self.current,
         )
         path = self.run_root / "closures" / f"{closure['closure_receipt_id']}.json"
@@ -121,13 +162,14 @@ class FalseClosureV2Tests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["out"], "request": "event tamper"},
             other_target,
             decision,
+            check_manifest=runtime_check_manifest(self.contract),
         )
         old_root = self.run_root
         self.run_root = other_claim.run_root
-        self._complete_functional()
+        self._complete_enforced()
         _, other_closure = close_run(
             self.run_root,
-            profile="functional",
+            profile="enforced",
             current_fingerprints=self.current,
         )
         events_path = self.run_root / "events.jsonl"
@@ -170,12 +212,12 @@ class FalseClosureV2Tests(unittest.TestCase):
         )
         evaluation = evaluate_closure(
             self.run_root,
-            profile="functional",
+            profile="enforced",
             current_fingerprints=self.current,
         )
         self.assertIn("obligation:intake", evaluation.gaps["failed"])
         self.assertIn("terminal:terminal:analyzed", evaluation.gaps["blocked"])
-        self.assertIn("No full functional completion claim is safe", evaluation.safe_claim)
+        self.assertIn("No full enforced completion claim is safe", evaluation.safe_claim)
 
 
 if __name__ == "__main__":

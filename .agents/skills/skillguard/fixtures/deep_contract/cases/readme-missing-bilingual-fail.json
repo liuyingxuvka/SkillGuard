@@ -1,6 +1,6 @@
 {
   "fixture_id": "deep-readme-missing-bilingual-fail",
   "target_command": "check-depth",
-  "expected_decision": "fail",
+  "expected_decision": "block",
   "target_path": "../bad_readme_missing_bilingual"
 }

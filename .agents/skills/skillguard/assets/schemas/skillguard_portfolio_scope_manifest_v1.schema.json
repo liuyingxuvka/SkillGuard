@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_portfolio_scope_manifest_v1.schema.json",
+  "title": "SkillGuard reviewed portfolio scope manifest v1",
+  "description": "Strict schema for the user-confirmed portfolio scope consumed by the current SkillGuard portfolio runtime.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_id",
+    "revision",
+    "approved_at",
+    "approval",
+    "scope_policy",
+    "targets",
+    "claim_boundary",
+    "manifest_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_scope_manifest.v1"},
+    "manifest_id": {"$ref": "#/$defs/non_empty_string"},
+    "revision": {"type": "integer", "minimum": 1},
+    "approved_at": {"$ref": "#/$defs/timestamp"},
+    "approval": {"$ref": "#/$defs/approval"},
+    "scope_policy": {"$ref": "#/$defs/scope_policy"},
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {"$ref": "#/$defs/active_target"},
+          {"$ref": "#/$defs/excluded_target"},
+          {"$ref": "#/$defs/supporting_target"}
+        ]
+      }
+    },
+    "claim_boundary": {"$ref": "#/$defs/non_empty_string"},
+    "manifest_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "non_empty_string": {"type": "string", "minLength": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "path_token": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$",
+      "not": {"pattern": "(^|/)\\.\\.?($|/)"}
+    },
+    "skill_path_token": {
+      "oneOf": [
+        {"const": "."},
+        {"$ref": "#/$defs/path_token"}
+      ]
+    },
+    "job_class_id": {
+      "enum": [
+        "positive",
+        "invalid_input",
+        "recovery_or_resume",
+        "out_of_scope",
+        "native_check",
+        "artifact_check",
+        "judged_quality"
+      ]
+    },
+    "required_job_classes": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/job_class_id"},
+      "allOf": [
+        {"contains": {"const": "positive"}},
+        {"contains": {"const": "invalid_input"}},
+        {"contains": {"const": "recovery_or_resume"}},
+        {"contains": {"const": "out_of_scope"}},
+        {"contains": {"const": "native_check"}},
+        {"contains": {"const": "artifact_check"}}
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "decision_id"],
+      "properties": {
+        "status": {"const": "user_confirmed"},
+        "decision_id": {"$ref": "#/$defs/non_empty_string"}
+      }
+    },
+    "scope_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local_first", "active_target_count"],
+      "properties": {
+        "local_first": {"const": true},
+        "active_target_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "repository_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "owner", "name", "visibility"],
+      "properties": {
+        "host": {"$ref": "#/$defs/non_empty_string"},
+        "owner": {"$ref": "#/$defs/non_empty_string"},
+        "name": {"$ref": "#/$defs/non_empty_string"},
+        "visibility": {"$ref": "#/$defs/non_empty_string"}
+      }
+    },
+    "canonical_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path_token",
+        "skill_path",
+        "version",
+        "source_fingerprint",
+        "repository_identity"
+      ],
+      "properties": {
+        "path_token": {"$ref": "#/$defs/path_token"},
+        "skill_path": {"$ref": "#/$defs/skill_path_token"},
+        "version": {"type": "string"},
+        "source_fingerprint": {"$ref": "#/$defs/hash"},
+        "repository_identity": {"$ref": "#/$defs/repository_identity"}
+      }
+    },
+    "member_capability_inventory": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "member_skill_id",
+          "skill_path",
+          "required_capability_ids"
+        ],
+        "properties": {
+          "member_skill_id": {"$ref": "#/$defs/non_empty_string"},
+          "skill_path": {"$ref": "#/$defs/skill_path_token"},
+          "required_capability_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"$ref": "#/$defs/non_empty_string"}
+          }
+        }
+      }
+    },
+    "active_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_id",
+        "target_kind",
+        "skill_paths",
+        "order",
+        "lifecycle",
+        "canonical_source",
+        "required_capability_ids",
+        "member_capability_inventory",
+        "required_job_class_ids",
+        "consumed_guard_feature_tags"
+      ],
+      "properties": {
+        "skill_id": {"$ref": "#/$defs/non_empty_string"},
+        "target_kind": {"enum": ["single_skill", "skill_suite"]},
+        "skill_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/skill_path_token"}
+        },
+        "order": {"type": "integer", "minimum": 0},
+        "lifecycle": {
+          "enum": ["active_owned", "active_adopted", "pending_adoption"]
+        },
+        "canonical_source": {"$ref": "#/$defs/canonical_source"},
+        "required_capability_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/non_empty_string"}
+        },
+        "member_capability_inventory": {
+          "$ref": "#/$defs/member_capability_inventory"
+        },
+        "required_job_class_ids": {"$ref": "#/$defs/required_job_classes"},
+        "consumed_guard_feature_tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/non_empty_string"}
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"target_kind": {"const": "single_skill"}},
+            "required": ["target_kind"]
+          },
+          "then": {"properties": {"skill_paths": {"maxItems": 1}}}
+        },
+        {
+          "if": {
+            "properties": {"target_kind": {"const": "skill_suite"}},
+            "required": ["target_kind"]
+          },
+          "then": {"properties": {"skill_paths": {"minItems": 2}}}
+        }
+      ]
+    },
+    "exclusion_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "decision_id", "reason"],
+      "properties": {
+        "status": {"const": "user_confirmed"},
+        "decision_id": {"$ref": "#/$defs/non_empty_string"},
+        "reason": {"$ref": "#/$defs/non_empty_string"}
+      }
+    },
+    "excluded_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_id", "order", "lifecycle", "exclusion_approval"],
+      "properties": {
+        "skill_id": {"$ref": "#/$defs/non_empty_string"},
+        "order": {"type": "null"},
+        "lifecycle": {
+          "enum": ["retired_private", "excluded_private", "excluded_system"]
+        },
+        "exclusion_approval": {"$ref": "#/$defs/exclusion_approval"},
+        "retirement_disposition": {"const": "superseded"},
+        "superseded_by_skill_id": {"$ref": "#/$defs/non_empty_string"},
+        "installation_disposition": {"const": "absent"},
+        "router_authority": {"const": "blocked"}
+      },
+      "dependentRequired": {
+        "retirement_disposition": [
+          "superseded_by_skill_id",
+          "installation_disposition",
+          "router_authority"
+        ],
+        "superseded_by_skill_id": [
+          "retirement_disposition",
+          "installation_disposition",
+          "router_authority"
+        ],
+        "installation_disposition": [
+          "retirement_disposition",
+          "superseded_by_skill_id",
+          "router_authority"
+        ],
+        "router_authority": [
+          "retirement_disposition",
+          "superseded_by_skill_id",
+          "installation_disposition"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {"required": ["superseded_by_skill_id"]},
+          "then": {"properties": {"lifecycle": {"const": "retired_private"}}}
+        }
+      ]
+    },
+    "supporting_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["skill_id", "order", "lifecycle", "parent_skill_id"],
+      "properties": {
+        "skill_id": {"$ref": "#/$defs/non_empty_string"},
+        "order": {"type": "null"},
+        "lifecycle": {"const": "supporting_repository"},
+        "parent_skill_id": {"$ref": "#/$defs/non_empty_string"}
+      }
+    }
+  }
+}

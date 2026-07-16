@@ -1,0 +1,103 @@
+contract_version: 1
+change: bind-external-target-roots
+
+obligations:
+  - id: req.external-binding.explicit-pair
+    source: "specs/external-target-binding/spec.md#Requirement: External checks bind one canonical repository and one member"
+    claim: Both commands consume one explicit canonical repository/member pair and block escapes or missing repository-relative material without retrying from the member.
+    required: true
+    evidence: [check.external-binding.cli]
+  - id: req.external-binding.standalone-dot
+    source: "specs/external-target-binding/spec.md#Requirement: Standalone dot binding remains deterministic"
+    claim: Standalone dot binds one directory as repository and member with no fallback.
+    required: true
+    evidence: [check.external-binding.cli, check.external-binding.model]
+  - id: req.external-binding.schema
+    source: "specs/external-target-binding/spec.md#Requirement: Binding reports are portable and schema-governed"
+    claim: Binding projections validate against the current schema and contain only portable path identity.
+    required: true
+    evidence: [check.external-binding.cli]
+  - id: req.external-binding.former-option
+    source: "specs/external-target-binding/spec.md#Requirement: Former target-root spelling has no success route"
+    claim: The former check-contract target-root option is rejected without compatibility or fallback.
+    required: true
+    evidence: [check.external-binding.cli, check.external-binding.model]
+
+checks:
+  - id: check.external-binding.cli
+    kind: command
+    semantic_check_id: skillguard.external-target-binding.cli
+    execution_id: bind-external-target-roots.cli.v1
+    validation_scope: focused
+    snapshot_policy: live
+    toolchain_identity: python-pytest
+    input_selectors:
+      - .agents/skills/skillguard/scripts/checker_engine.py
+      - .agents/skills/skillguard/assets/schemas/skillguard_external_target_binding_v1.schema.json
+      - tests/test_external_target_binding.py
+    depends_on_receipts: []
+    command: python
+    args: [-m, pytest, -q, tests/test_external_target_binding.py]
+    timeout_seconds: 600
+    required: true
+    covers: [req.external-binding.explicit-pair, req.external-binding.standalone-dot, req.external-binding.schema, req.external-binding.former-option]
+    expected: {exit_code: 0}
+
+  - id: check.external-binding.model
+    kind: command
+    semantic_check_id: skillguard.external-target-binding.flowguard
+    execution_id: bind-external-target-roots.flowguard.v1
+    validation_scope: focused
+    snapshot_policy: live
+    toolchain_identity: flowguard-0.55.0-python
+    input_selectors:
+      - .agents/skills/skillguard/.skillguard/flowguard_contract_model.py
+      - .flowguard/development_process_flow/skillguard_executable_contract_model.py
+      - .flowguard/model_miss_reviews/skillguard-external-target-binding-20260715.json
+      - tests/test_executable_contract_model.py
+    depends_on_receipts: [check.external-binding.cli]
+    command: python
+    args: [.agents/skills/skillguard/.skillguard/flowguard_contract_model.py]
+    timeout_seconds: 600
+    required: true
+    covers: [req.external-binding.standalone-dot, req.external-binding.former-option]
+    expected: {exit_code: 0}
+
+  - id: check.external-binding.openspec
+    kind: command
+    semantic_check_id: skillguard.external-target-binding.openspec-strict
+    execution_id: bind-external-target-roots.openspec.v1
+    validation_scope: focused
+    snapshot_policy: live
+    toolchain_identity: openspec-1.6.0
+    input_selectors:
+      - openspec/changes/bind-external-target-roots/**
+    depends_on_receipts: [check.external-binding.model]
+    command: openspec
+    args: [validate, bind-external-target-roots, --strict]
+    timeout_seconds: 300
+    required: true
+    covers: [req.external-binding.explicit-pair, req.external-binding.schema]
+    expected: {exit_code: 0}
+
+freshness:
+  watch:
+    - openspec/changes/bind-external-target-roots/**
+    - .agents/skills/skillguard/scripts/checker_engine.py
+    - .agents/skills/skillguard/assets/schemas/skillguard_external_target_binding_v1.schema.json
+    - .agents/skills/skillguard/.skillguard/flowguard_contract_model.py
+    - .flowguard/development_process_flow/skillguard_executable_contract_model.py
+    - .flowguard/model_miss_reviews/skillguard-external-target-binding-20260715.json
+    - tests/test_external_target_binding.py
+    - tests/test_executable_contract_model.py
+    - README.md
+    - references/10-practical-workflows.md
+  exclude:
+    - "**/verification-report.json"
+    - "**/verification-receipts/**"
+    - "**/.skillguard/runs/**"
+    - "**/.flowguard/evidence/**"
+    - "**/run-artifacts/**"
+    - "**/run_artifacts/**"
+    - "**/__pycache__/**"
+    - "**/.pytest_cache/**"

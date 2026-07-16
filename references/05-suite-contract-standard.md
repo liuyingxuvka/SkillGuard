@@ -1,6 +1,6 @@
 # Reference 05: Suite Contract Standard
 
-This reference defines the standard for a suite contract. A suite contract is the public agreement that explains what a collection of skills contains, how skills relate to each other, how evidence is shared, which compatibility boundaries matter, and how suite-level status is reported.
+This reference defines the standard for a suite contract. A suite contract is the public agreement that explains what a collection of skills contains, how skills relate to each other, how evidence is shared, which single current authority applies, and how suite-level status is reported.
 
 A suite contract extends a suite map. The map explains the current grouping; the contract defines the obligations that make suite-level claims acceptable.
 
@@ -39,7 +39,7 @@ Each item should include:
 - skill name;
 - skill path;
 - role in the suite;
-- version or compatibility field when applicable;
+- current identity field when applicable;
 - current status;
 - evidence source;
 - owner or maintainer role;
@@ -112,26 +112,25 @@ Fail criteria: shared evidence is stale, overbroad, detached from child files, o
 
 Block criteria: required evidence cannot be traced to current files.
 
-## Compatibility And Version Boundaries
+## Current Authority And Former-Surface Rejection
 
-The suite contract should define compatibility expectations.
+The suite contract must name one current authority and reject former skill-runtime shapes instead of reading, converting, or falling back to them.
 
-Useful compatibility fields include:
+Useful current-authority fields include:
 
-- suite version;
-- child skill version;
-- minimum supported metadata version;
-- supported schema version;
-- fixture compatibility;
-- known incompatible combinations;
-- migration status;
-- deprecation status.
+- current suite identity;
+- current child identity;
+- current metadata and schema identity;
+- exact former files, commands, or shapes that must be absent;
+- direct-replacement evidence.
 
-Pass criteria: compatibility claims are bounded and tied to current metadata.
+Pass criteria: all executable paths resolve to the current authority and former surfaces are absent.
 
-Fail criteria: version claims diverge, compatibility is untested but asserted, or deprecated items are presented as accepted without a boundary.
+Fail criteria: identities diverge, any compatibility or fallback route remains live, or a former item is presented as accepted input.
 
-Block criteria: required version or compatibility information is missing.
+Block criteria: the current identity is missing or a former authority cannot be proven absent.
+
+An explicitly required historical-data reader for an ordinary software product belongs to that product's own modeled behavior. It does not authorize compatibility readers in a covered skill's runtime contract.
 
 ## Suite Validation
 
@@ -145,7 +144,7 @@ Expected validation layers:
 - declared dependencies resolve;
 - routing conflicts are identified;
 - shared evidence is fresh;
-- compatibility boundaries are checked;
+- the one current authority and former-surface absence are checked;
 - privacy and public-safety scans pass;
 - suite-level status does not exceed child evidence.
 
@@ -167,7 +166,7 @@ Ownership information should cover:
 - child skill owner;
 - dependency owner;
 - evidence owner;
-- version and compatibility owner;
+- current-authority owner;
 - release decision owner when release is in scope.
 
 Pass criteria: ownership is public-safe and sufficient to resolve maintenance questions.
@@ -188,7 +187,7 @@ Recommended report fields:
 - child statuses;
 - suite evidence;
 - dependency findings;
-- compatibility findings;
+- current-authority and former-surface findings;
 - routing findings;
 - privacy findings;
 - skipped checks;
@@ -199,7 +198,7 @@ Pass criteria: the suite report exposes child evidence and supports the stated d
 
 Fail criteria: the report hides child failures, treats skipped checks as passing, or claims suite acceptance while required children are missing, stale, blocked, failed, or unreviewed.
 
-Block criteria: required child evidence, dependency information, compatibility evidence, or owner decisions are missing.
+Block criteria: required child evidence, dependency information, current-authority evidence, or owner decisions are missing.
 
 ## Public-Safety Requirements
 
@@ -244,7 +243,7 @@ Before accepting a suite contract, verify:
 - inter-skill routing is explicit;
 - dependencies are declared;
 - shared evidence rules preserve child evidence;
-- compatibility and version boundaries are clear;
+- the one current authority and former-surface rejection boundary are clear;
 - suite validation layers are stated;
 - maintenance ownership is public-safe;
 - status reporting exposes child states;

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillguard_check_execution_result_sidecar_current.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "result", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": "skillguard.check_execution_result_sidecar.current"},
+    "result": {"type": "object"},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

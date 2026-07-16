@@ -1,4 +1,4 @@
-"""Typed function-route selection for compiled SkillGuard V2 contracts."""
+"""Typed function-route selection for compiled current SkillGuard contracts."""
 
 from __future__ import annotations
 
@@ -92,6 +92,15 @@ def select_routes(contract: Mapping[str, Any], request: Mapping[str, Any]) -> Ro
         if isinstance(row, Mapping)
     }
     findings: list[RouteFinding] = []
+    claim_scope = str(request.get("claim_scope", "enforced"))
+    if claim_scope != "enforced":
+        findings.append(
+            RouteFinding(
+                "claim_scope_must_be_enforced",
+                "SkillGuard has one fixed enforced completion boundary",
+                claim_scope,
+            )
+        )
     selected_functions: list[str] = []
     explicit_routes = tuple(str(item) for item in request.get("route_ids", []))
     explicit_functions = tuple(str(item) for item in request.get("function_ids", []))
@@ -158,7 +167,7 @@ def select_routes(contract: Mapping[str, Any], request: Mapping[str, Any]) -> Ro
             "blocked",
             tuple(selected_functions),
             tuple(selected_routes),
-            str(request.get("claim_scope", "routine")),
+            claim_scope,
             tuple(findings),
         )
     return RouteDecision(
@@ -166,5 +175,5 @@ def select_routes(contract: Mapping[str, Any], request: Mapping[str, Any]) -> Ro
         "selected",
         tuple(selected_functions),
         tuple(dict.fromkeys(selected_routes)),
-        str(request.get("claim_scope", "routine")),
+        claim_scope,
     )

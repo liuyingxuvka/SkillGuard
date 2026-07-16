@@ -4,7 +4,7 @@
   "target_type": "skill",
   "status": "pass",
   "checker_version": "skillguard.local_cli_dispatch.v1",
-  "compatibility": {
+  "current_identity": {
     "checker_version": "skillguard.local_cli_dispatch.v1",
     "fixture_version": "good-fixtures.v1",
     "notes": "Positive suite fixture member evidence."

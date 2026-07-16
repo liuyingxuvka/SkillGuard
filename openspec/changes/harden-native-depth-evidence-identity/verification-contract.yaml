@@ -1,0 +1,114 @@
+contract_version: 1
+change: harden-native-depth-evidence-identity
+evidence_roots:
+  SKILLGUARD_EVIDENCE: work/verification/final-skillguard
+obligations:
+  - id: req.native.exact-identity
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Exact declared-check execution identity"
+    claim: Every accepted result matches the exact current target, contract, owner, route, check, run, obligation, request, input, receipt, locator, and domain declared by the target.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.complete-inventory
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Complete declared-check inventory"
+    claim: Every required target-declared check has one owner and one visible current terminal disposition.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.target-domain-authority
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Target retains domain authority"
+    claim: SkillGuard does not require or interpret Guard-specific purpose, protected-failure, semantic-obligation, native-finding, or counterexample fields.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.no-purpose-mode
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: No selectable purpose mode"
+    claim: There is one fixed declared-check supervision behavior and no selector can bypass a required check.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.observation-locator
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Generic native observation locator"
+    claim: Declared content-addressed observations retain exact generic identity without SkillGuard interpreting domain semantics.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.evidence-domains
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Typed evidence domains"
+    claim: Target-declared evidence domains remain exact and non-promotable.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.retired-fields
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Retired Guard-specific fields fail closed"
+    claim: Removed purpose and semantic fields are rejected by the sole current runtime with no alias or fallback.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.current-receipt
+    source: "specs/universal-execution-depth/spec.md#Requirement: Current target execution receipt"
+    claim: Current receipts bind the complete declared-check inventory, owners, execution results, visible gaps, inputs, runtime, and closure scope.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.no-universal-test-category
+    source: "specs/universal-execution-depth/spec.md#Requirement: Declared checks, not universal test categories"
+    claim: An ordinary non-Guard skill passes its own declared checks without a Guard-style purpose or positive/shallow pair.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.no-hidden-gaps
+    source: "specs/universal-execution-depth/spec.md#Requirement: No hidden execution gaps"
+    claim: Every non-pass and cleanup-unconfirmed result remains visible and blocks the relevant closure.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.native-route-preserved
+    source: "specs/universal-execution-depth/spec.md#Requirement: Native route preservation"
+    claim: SkillGuard consumes target-native receipts without creating a parallel domain evaluator.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.installed-parity
+    source: "specs/universal-execution-depth/spec.md#Requirement: Canonical source and installed parity"
+    claim: Transactional installation and exact installed parity remain current.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.full-mesh-consumption
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Existing branch, installation, and receipt-consumer gates remain current"
+    claim: One frozen full validation owner emits one immutable parent receipt and OpenSpec consumes it read-only.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.frozen-owner-runner
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Existing branch, installation, and receipt-consumer gates remain current"
+    claim: The public TestMesh owner runner validates one immutable plan, preserves every semantic check projection for a shared owner, resolves only its will_execute partition through existing single-flight owners, truthfully counts post-launch failures, and leaves that same plan available for aggregation.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+checks:
+  - id: check.native.consume-full-mesh-receipt
+    kind: receipt
+    semantic_check_id: semantic.native.skillguard-current-final-parent
+    execution_id: execution.skillguard.test-mesh-parent.current
+    receipt_ref:
+      provider_id: skillguard
+      work_package_id: harden-native-depth-evidence-identity
+      adapter: portable-receipt.v1
+      ref_path: <SKILLGUARD_EVIDENCE>/portable/harden-native-depth-evidence-identity/ref.json
+    consumer: openspec.verify-change
+    validation_scope: full
+    snapshot_policy: frozen
+    required: true
+    covers: [req.native.exact-identity, req.native.complete-inventory, req.native.target-domain-authority, req.native.no-purpose-mode, req.native.observation-locator, req.native.evidence-domains, req.native.retired-fields, req.depth.current-receipt, req.depth.no-universal-test-category, req.depth.no-hidden-gaps, req.depth.native-route-preserved, req.depth.installed-parity, req.depth.full-mesh-consumption, req.depth.frozen-owner-runner]
+    expected: {exit_code: 0}
+freshness:
+  watch:
+    - openspec/changes/harden-native-depth-evidence-identity/proposal.md
+    - openspec/changes/harden-native-depth-evidence-identity/design.md
+    - openspec/changes/harden-native-depth-evidence-identity/tasks.md
+    - openspec/changes/harden-native-depth-evidence-identity/specs/**/*.md
+    - openspec/changes/harden-native-depth-evidence-identity/verification-contract.yaml
+    - .agents/skills/skillguard/SKILL.md
+    - .agents/skills/skillguard/references/skillguard-execution-depth.md
+    - .agents/skills/skillguard/assets/schemas/**/*.json
+    - .agents/skills/skillguard/assets/templates/**/*.json
+    - .agents/skills/skillguard/scripts/skillguard_v2/**/*.py
+    - .agents/skills/skillguard/.skillguard/contract-source.json
+    - .agents/skills/skillguard/.skillguard/compiled-contract.json
+    - .agents/skills/skillguard/.skillguard/check-manifest.json
+    - .flowguard/declared_check_supervision/**/*.py
+    - .flowguard/validation_composition/**/*.py
+    - tests/test_skillguard_generic_supervision.py
+    - tests/test_skillguard_retired_guard_fields.py
+    - tests/test_installation.py
+    - tests/test_installation_verification_receipt.py
+    - tests/test_test_mesh_current.py
+    - tests/test_test_mesh_installation_binding.py

@@ -1,0 +1,376 @@
+{
+  "artifacts": [],
+  "check_declarations_hash": "AFFB818B5B706FCE5416DDEB2F99A4EF2B1590228093A657DA63A7C533A67F93",
+  "checks": [
+    {
+      "args": [
+        "scripts/run_checks.py"
+      ],
+      "check_id": "check:generated-current",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:generated-current-check"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "generated_skill_current",
+      "execution_owner_id": "owner:document-artifact",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_component_ids": [
+        "component:documentation_model:57a89bda96173d44",
+        "component:runtime_source:26fedb0fbbdfe7df"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "SKILL.md"
+        },
+        {
+          "kind": "path",
+          "path": "scripts/run_checks.py"
+        }
+      ],
+      "kind": "command",
+      "owner_declaration_hash": "sha256:0aa7be64723eaf18058667a488804d577f0e3b15ada5047ab6e21580266071f2",
+      "owner_input_projection_hash": "sha256:6818052767693ee43af5a1d5cdaa19641f61fae99f0a77fcfb998c5b91de87ae",
+      "projection_declaration_hash": "sha256:6f72026f476855fa9ac71290842c1610a79ae8dcda79a6af26e34b8808e2836b",
+      "semantic_check_id": "semantic:document-artifact:generated-current",
+      "timeout_seconds": 30
+    }
+  ],
+  "claim_boundary": "This generated binding proves only deterministic current contract structure. It does not prove target execution, semantic acceptance, installation, or release.",
+  "closure_profiles": [
+    {
+      "profile_id": "enforced",
+      "required_obligation_ids": [
+        "obligation:generated-current-check"
+      ]
+    }
+  ],
+  "compiler_version": "skillguard.contract_compiler.v2",
+  "content_impact_plan": {
+    "all_owner_component_ids": [
+      "component:documentation_model:57a89bda96173d44",
+      "component:runtime_source:26fedb0fbbdfe7df"
+    ],
+    "check_projections": [
+      {
+        "check_id": "check:generated-current",
+        "covers_obligation_ids": [
+          "obligation:generated-current-check"
+        ],
+        "evidence_class": "hard",
+        "execution_owner_id": "owner:document-artifact",
+        "projection_declaration_hash": "sha256:6f72026f476855fa9ac71290842c1610a79ae8dcda79a6af26e34b8808e2836b",
+        "semantic_check_id": "semantic:document-artifact:generated-current"
+      }
+    ],
+    "components": [
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:contract_schema"
+        ],
+        "component_hash": "sha256:789c4360516e63a8b194cbb0048229602c66e94d0bf11af852f4df9223eebb87",
+        "component_id": "component:contract_schema:4f90d3ef5eeadaa2",
+        "consumer_ids": [
+          "projection:contract-compile",
+          "projection:installation"
+        ],
+        "install_disposition": "copy",
+        "member_paths": [
+          ".skillguard/contract-source.json"
+        ],
+        "role": "contract_schema"
+      },
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:documentation_model"
+        ],
+        "component_hash": "sha256:a8c68e2fd4a90d77c6a62affb94db0bb64568dd1ccb838f5732935e5c4e69c6e",
+        "component_id": "component:documentation_model:57a89bda96173d44",
+        "consumer_ids": [
+          "owner:document-artifact",
+          "projection:installation"
+        ],
+        "install_disposition": "copy",
+        "member_paths": [
+          "SKILL.md"
+        ],
+        "role": "documentation_model"
+      },
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:documentation_model"
+        ],
+        "component_hash": "sha256:6c17c4fbd3b200167546d00a6a9b065d0e7aaf29417918afa32f21f9c6c96691",
+        "component_id": "component:documentation_model:cc36a95fe48682bf",
+        "consumer_ids": [
+          "projection:contract-compile",
+          "projection:installation"
+        ],
+        "install_disposition": "copy",
+        "member_paths": [
+          ".skillguard/flowguard_contract_model.py"
+        ],
+        "role": "documentation_model"
+      },
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:runtime_source"
+        ],
+        "component_hash": "sha256:a252bf6e001cfb1d57246975efda264caa994797261c11897325e1f62eef7a65",
+        "component_id": "component:runtime_source:26fedb0fbbdfe7df",
+        "consumer_ids": [
+          "owner:document-artifact",
+          "projection:installation"
+        ],
+        "install_disposition": "copy",
+        "member_paths": [
+          "scripts/run_checks.py"
+        ],
+        "role": "runtime_source"
+      }
+    ],
+    "full_admission_reason_codes": [
+      "explicit_final_gate",
+      "explicit_release_gate",
+      "impact_policy_or_compiler_changed",
+      "shared_validation_runtime_changed",
+      "all_owner_component_changed"
+    ],
+    "health": {
+      "ambiguous_role_paths": [],
+      "dependency_parse_errors": [],
+      "duplicate_owner_ids": [],
+      "invalid_dependency_edges": [],
+      "owner_cycles": [],
+      "unmapped_paths": []
+    },
+    "impact_graph_hash": "sha256:9714d0e2ce25b94fe14f06c42a9c075eb235b0f8c68179e707f731a51a835be0",
+    "inventory": [
+      {
+        "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
+        "content_hash": "sha256:c966ad2f8bc71939daf38fee0672e0a4316417d052f13524760c0beb7d9c57ea",
+        "install_disposition": "copy",
+        "path": ".skillguard/contract-source.json",
+        "role": "contract_schema"
+      },
+      {
+        "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
+        "content_hash": "sha256:46d303098b4773b864088f6cfe603f1f47ecd298e6c79c48c72f9045aa5576dd",
+        "install_disposition": "copy",
+        "path": ".skillguard/flowguard_contract_model.py",
+        "role": "documentation_model"
+      },
+      {
+        "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
+        "content_hash": "sha256:5378e03234ac1863a20400c393ac407949b6559346bcf6134f0dd4161debe86b",
+        "install_disposition": "copy",
+        "path": "SKILL.md",
+        "role": "documentation_model"
+      },
+      {
+        "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
+        "content_hash": "sha256:3f79a39b42462886b1f9d25a3a8a4ebf30fe0029eda892855737dee93c3128e7",
+        "install_disposition": "copy",
+        "path": "scripts/run_checks.py",
+        "role": "runtime_source"
+      }
+    ],
+    "inventory_hash": "sha256:bc54fe2f8012a3978abf1765515132a12569825945799fd209ecfd5de66ba8a4",
+    "member_root_path": ".",
+    "owner_receipt_root_ref": {
+      "path_token": "owner_evidence_root",
+      "relative_path": "check-executions"
+    },
+    "owners": [
+      {
+        "check_ids": [
+          "check:generated-current"
+        ],
+        "depends_on_owner_ids": [],
+        "evidence_domain_id": "generated_skill_current",
+        "execution_owner_id": "owner:document-artifact",
+        "input_component_ids": [
+          "component:documentation_model:57a89bda96173d44",
+          "component:runtime_source:26fedb0fbbdfe7df"
+        ],
+        "input_selectors": [
+          {
+            "kind": "path",
+            "path": "SKILL.md"
+          },
+          {
+            "kind": "path",
+            "path": "scripts/run_checks.py"
+          }
+        ],
+        "owner_declaration_hash": "sha256:0aa7be64723eaf18058667a488804d577f0e3b15ada5047ab6e21580266071f2",
+        "owner_input_projection_hash": "sha256:6818052767693ee43af5a1d5cdaa19641f61fae99f0a77fcfb998c5b91de87ae"
+      }
+    ],
+    "policy_id": "skillguard.content_impact_policy.current",
+    "portfolio_target_edges": [],
+    "projection_consumers": [
+      {
+        "consumer_id": "projection:contract-compile",
+        "consumer_projection_hash": "sha256:6422a16a3697eacf6729760a5d847fb4713cd248f171fc5cd481b843f31cafe2",
+        "impact_plan_schema_version": "skillguard.content_impact_plan.current",
+        "impact_policy_id": "skillguard.content_impact_policy.current",
+        "input_component_ids": [
+          "component:contract_schema:4f90d3ef5eeadaa2",
+          "component:documentation_model:cc36a95fe48682bf"
+        ],
+        "input_projection_hash": "sha256:713f18250a5be69b7b31973b11d7dc0d7c298925542c5ebe3522be6fb0be895f",
+        "kind": "contract_compile",
+        "projection_declaration_hash": "sha256:82b45a937099cf6163a559ff4904e0b9850f35dfb787df76fac67d138a34c7b0"
+      },
+      {
+        "consumer_id": "projection:global-router",
+        "consumer_projection_hash": "sha256:c05984df180fa719bed1a62a48db6052b1a7e03b87e7a9e6eda3430a1905cf86",
+        "impact_plan_schema_version": "skillguard.content_impact_plan.current",
+        "impact_policy_id": "skillguard.content_impact_policy.current",
+        "input_component_ids": [],
+        "input_projection_hash": "sha256:37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "kind": "global_router",
+        "projection_declaration_hash": "sha256:667973c38b6c505040402a17baf7ebb4fb1ebe562415b046f317c029a3861f2a"
+      },
+      {
+        "consumer_id": "projection:installation",
+        "consumer_projection_hash": "sha256:254bc4f498ed562500b9604fc915334402e36160b53d87ad035f295f1f7f3360",
+        "impact_plan_schema_version": "skillguard.content_impact_plan.current",
+        "impact_policy_id": "skillguard.content_impact_policy.current",
+        "input_component_ids": [
+          "component:contract_schema:4f90d3ef5eeadaa2",
+          "component:documentation_model:57a89bda96173d44",
+          "component:documentation_model:cc36a95fe48682bf",
+          "component:runtime_source:26fedb0fbbdfe7df"
+        ],
+        "input_projection_hash": "sha256:63b54f0c4eb30b8302e825b1d247fdf0a0a5de41c87e4cefb2bba396c7a3597e",
+        "kind": "installation",
+        "projection_declaration_hash": "sha256:6ca4360d987915cc43729c87377917078c81876d6712fba843908cae125a37cd"
+      },
+      {
+        "consumer_id": "projection:portfolio",
+        "consumer_projection_hash": "sha256:9829573143198c085bf05b11cfa1f5d2f0b51f7dcf833f143c0b53b00bf4bbae",
+        "impact_plan_schema_version": "skillguard.content_impact_plan.current",
+        "impact_policy_id": "skillguard.content_impact_policy.current",
+        "input_component_ids": [],
+        "input_projection_hash": "sha256:37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "kind": "portfolio",
+        "projection_declaration_hash": "sha256:9194e37d395a5756ddd87565ee97fe8dcdae46c150b4b03754291a80060b8b26"
+      },
+      {
+        "consumer_id": "projection:source-maintenance",
+        "consumer_projection_hash": "sha256:13be01e10a981898727db9510b3c43dc1fddb727f0fd9bbb8c5009db65106e6c",
+        "impact_plan_schema_version": "skillguard.content_impact_plan.current",
+        "impact_policy_id": "skillguard.content_impact_policy.current",
+        "input_component_ids": [],
+        "input_projection_hash": "sha256:37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "kind": "source_maintenance",
+        "projection_declaration_hash": "sha256:b55f389a1ff76e45148a5e9c63699fe47970e1d99e9b1d3805bec3f98aafa235"
+      }
+    ],
+    "schema_version": "skillguard.content_impact_plan.current",
+    "unknown_mapping_disposition": "block"
+  },
+  "contract_hash": "541354958DBA35DAD9286B1D894FAAE4EAFB512761BAFB194E897956F43376AB",
+  "flowguard_schema_version": "1.0",
+  "functions": [
+    {
+      "business_intent": "maintain the generated skill under one current SkillGuard contract",
+      "function_id": "function:maintain-generated-skill",
+      "owner_id": "owner:document-artifact",
+      "route_ids": [
+        "route:maintain-generated-skill"
+      ]
+    }
+  ],
+  "judgment_rubrics": [],
+  "model_id": "document-artifact.generated_current_authority.current",
+  "model_path": ".skillguard/flowguard_contract_model.py",
+  "obligations": [
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "invariant:generated-current-check",
+      "obligation_id": "obligation:generated-current-check",
+      "owner_step_ids": [
+        "step:run-generated-current-check"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:generated-current"
+      ]
+    }
+  ],
+  "parent_model_id": "skillguard.generated_skill.current",
+  "portfolio_capability_contracts": [],
+  "routes": [
+    {
+      "blocked_terminal_step_id": "terminal:blocked",
+      "function_id": "function:maintain-generated-skill",
+      "handoffs": [],
+      "owner_id": "owner:document-artifact",
+      "route_id": "route:maintain-generated-skill",
+      "step_ids": [
+        "step:run-generated-current-check",
+        "terminal:current",
+        "terminal:blocked"
+      ],
+      "success_terminal_step_id": "terminal:current"
+    }
+  ],
+  "schema_version": "skillguard.compiled_contract.v2",
+  "skill_id": "document-artifact",
+  "source_fingerprints": {
+    "binding": "C966AD2F8BC71939DAF38FEE0672E0A4316417D052F13524760C0BEB7D9C57EA",
+    "entrypoint": "5378E03234AC1863A20400C393AC407949B6559346BCF6134F0DD4161DEBE86B",
+    "implementation:SKILL.md": "5378E03234AC1863A20400C393AC407949B6559346BCF6134F0DD4161DEBE86B",
+    "implementation:scripts/run_checks.py": "3F79A39B42462886B1F9D25A3A8A4EBF30FE0029EDA892855737DEE93C3128E7",
+    "model": "46D303098B4773B864088F6CFE603F1F47ECD298E6C79C48C72F9045AA5576DD",
+    "model_export": "BDCEC32CB884911EE831F2A9EF4A25415330CDE9B6D85245093E65079CE452E3"
+  },
+  "steps": [
+    {
+      "action_kind": "native",
+      "binding": {
+        "action": {
+          "kind": "native",
+          "summary": "run the generated target-owned current check"
+        },
+        "check_ids": [
+          "check:generated-current"
+        ],
+        "output_artifact_ids": []
+      },
+      "owner_id": "owner:document-artifact",
+      "prerequisite_step_ids": [],
+      "route_id": "route:maintain-generated-skill",
+      "step_id": "step:run-generated-current-check",
+      "terminal_kind": ""
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "owner:document-artifact",
+      "prerequisite_step_ids": [
+        "step:run-generated-current-check"
+      ],
+      "route_id": "route:maintain-generated-skill",
+      "step_id": "terminal:current",
+      "terminal_kind": "success"
+    },
+    {
+      "action_kind": "terminal",
+      "owner_id": "owner:document-artifact",
+      "prerequisite_step_ids": [],
+      "route_id": "route:maintain-generated-skill",
+      "step_id": "terminal:blocked",
+      "terminal_kind": "blocked"
+    }
+  ]
+}

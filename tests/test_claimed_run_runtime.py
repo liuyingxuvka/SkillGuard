@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_contract  # noqa: F401
+from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.contract_compiler import canonical_hash
 from skillguard_v2.route_runtime import select_routes
 from skillguard_v2.run_store import claim_run, load_events, release_run_locks
@@ -30,6 +30,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.target = Path(self.temp.name)
         self.contract = runtime_contract()
+        self.manifest = runtime_check_manifest(self.contract)
         self.decision = select_routes(self.contract, {"function_ids": ["analyze"]})
 
     def tearDown(self) -> None:
@@ -41,7 +42,13 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
             "write_targets": ["src"],
             "request": "audit fixture",
         }
-        result = claim_run(self.contract, request, self.target, self.decision)
+        result = claim_run(
+            self.contract,
+            request,
+            self.target,
+            self.decision,
+            check_manifest=self.manifest,
+        )
         self.assertTrue(result.ok, result.to_dict())
         self.assertIsNotNone(result.run_root)
         return result
@@ -77,7 +84,8 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
             request,
             self.target,
             self.decision,
-            guard_compatibility={"runtime_id": "skillguard-v2", "source_hash": "A"},
+            check_manifest=self.manifest,
+            guard_runtime_identity={"runtime_id": "skillguard-v2", "source_hash": "A"},
         )
         self.assertTrue(first.ok, first.to_dict())
         release_run_locks(first.run_root)
@@ -86,12 +94,13 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
             request,
             self.target,
             self.decision,
-            guard_compatibility={"runtime_id": "skillguard-v2", "source_hash": "B"},
+            check_manifest=self.manifest,
+            guard_runtime_identity={"runtime_id": "skillguard-v2", "source_hash": "B"},
         )
         self.assertFalse(second.idempotent)
         self.assertNotEqual(first.run_id, second.run_id)
         run_record = json.loads(second.run_root.joinpath("run.json").read_text(encoding="utf-8"))
-        self.assertEqual("B", run_record["guard_compatibility"]["source_hash"])
+        self.assertEqual("B", run_record["guard_runtime_identity"]["source_hash"])
 
     def test_conflicting_writer_is_blocked(self) -> None:
         self._claim()
@@ -100,6 +109,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["src"], "request": "different"},
             self.target,
             self.decision,
+            check_manifest=self.manifest,
         )
         self.assertFalse(conflict.ok)
         self.assertEqual({"conflicting_writer_claim"}, {row.code for row in conflict.findings})
@@ -115,6 +125,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
             },
             self.target,
             self.decision,
+            check_manifest=self.manifest,
         )
         self.assertFalse(conflict.ok)
         self.assertEqual({"conflicting_writer_claim"}, {row.code for row in conflict.findings})
@@ -130,6 +141,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["src"], "request": "replacement"},
             self.target,
             self.decision,
+            check_manifest=self.manifest,
         )
         self.assertTrue(recovered.ok, recovered.to_dict())
         self.assertNotEqual(first.run_id, recovered.run_id)
@@ -139,7 +151,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
         self.assertEqual(1, len(recovery_events))
         self.assertEqual(["owner_process_not_alive"], recovery_events[0]["payload"]["reasons"])
 
-    def test_legacy_failed_lock_without_owner_pid_is_recovered(self) -> None:
+    def test_non_current_lock_without_owner_pid_blocks_without_fallback(self) -> None:
         first = self._claim()
         begin_step(first.run_root, "step:intake")
         record_step(first.run_root, "step:intake", {"check_record_ids": ["fixture"]})
@@ -148,18 +160,22 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
             payload = json.loads(path.read_text(encoding="utf-8"))
             payload.pop("owner_pid", None)
             path.write_text(json.dumps(payload), encoding="utf-8")
-        recovered = claim_run(
+        blocked = claim_run(
             self.contract,
             {"function_ids": ["analyze"], "write_targets": ["src"], "request": "post-failure"},
             self.target,
             self.decision,
+            check_manifest=self.manifest,
         )
-        self.assertTrue(recovered.ok, recovered.to_dict())
-        events = load_events(first.run_root)
-        self.assertEqual("stale_locks_recovered", events[-1]["event_type"])
+        self.assertFalse(blocked.ok, blocked.to_dict())
         self.assertEqual(
-            ["legacy_terminal_event:step_failed"],
-            events[-1]["payload"]["reasons"],
+            {"conflicting_writer_claim"},
+            {row.code for row in blocked.findings},
+        )
+        events = load_events(first.run_root)
+        self.assertNotIn(
+            "stale_locks_recovered",
+            {row["event_type"] for row in events},
         )
 
     def test_step_progression_rejects_caller_authored_pass_and_supports_verified_skip(self) -> None:
@@ -233,6 +249,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["src"], "request": "judged fixture"},
             target,
             decision,
+            check_manifest=runtime_check_manifest(judged_contract),
         )
         begin_step(claim.run_root, "step:intake")
         record_step(claim.run_root, "step:intake", {"work_record": "fixture"})

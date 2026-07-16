@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,7 +13,11 @@ SCRIPT_ROOT = ROOT / ".agents" / "skills" / "skillguard" / "scripts"
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
-from skillguard_v2.privacy import audit_public_export, public_path_token  # noqa: E402
+from skillguard_v2.privacy import (  # noqa: E402
+    audit_public_export,
+    git_public_candidates,
+    public_path_token,
+)
 
 
 class PrivacyTests(unittest.TestCase):
@@ -74,12 +79,57 @@ class PrivacyTests(unittest.TestCase):
         self.assertTrue(any(row["code"] == "runtime_state_in_public_export" for row in report["findings"]))
         self.assertTrue(any(row["code"] == "blocked_private_file_type" for row in report["findings"]))
 
+    def test_shared_policy_blocks_reserved_runtime_candidate(self) -> None:
+        runtime = self.workspace / ".sg-runtime" / "case" / "receipt.json"
+        runtime.parent.mkdir(parents=True)
+        runtime.write_text("{}\n", encoding="utf-8")
+        report = audit_public_export(
+            ROOT,
+            self.policy,
+            candidate_paths=[self._relative(runtime)],
+        )
+        self.assertEqual("blocked", report["status"])
+        self.assertTrue(
+            any(
+                row["code"] == "runtime_state_in_public_export"
+                for row in report["findings"]
+            )
+        )
+
     def test_public_image_requires_a_current_hash_bound_visual_review(self) -> None:
         image = self.workspace / "preview.png"
         image.write_bytes(b"\x89PNG\r\n\x1a\nfixture")
         report = audit_public_export(ROOT, self.policy, candidate_paths=[self._relative(image)])
         self.assertEqual("blocked", report["status"])
         self.assertTrue(any(row["code"] == "visual_privacy_review_missing" for row in report["findings"]))
+
+    def test_unreadable_candidate_blocks_without_crashing(self) -> None:
+        candidate = self.workspace / "locked.txt"
+        candidate.write_text("locked\n", encoding="utf-8")
+        original = Path.read_bytes
+
+        def read_bytes(path: Path) -> bytes:
+            if path.resolve() == candidate.resolve():
+                raise PermissionError("fixture locked")
+            return original(path)
+
+        with mock.patch.object(Path, "read_bytes", read_bytes):
+            report = audit_public_export(
+                ROOT,
+                self.policy,
+                candidate_paths=[self._relative(candidate)],
+            )
+        self.assertEqual("blocked", report["status"])
+        self.assertTrue(
+            any(row["code"] == "candidate_unreadable" for row in report["findings"])
+        )
+
+    def test_deleted_tracked_path_is_not_a_current_public_candidate(self) -> None:
+        with mock.patch(
+            "skillguard_v2.privacy._git",
+            return_value="deleted-former-runtime.json\n",
+        ):
+            self.assertEqual([], git_public_candidates(self.workspace))
 
 
 if __name__ == "__main__":

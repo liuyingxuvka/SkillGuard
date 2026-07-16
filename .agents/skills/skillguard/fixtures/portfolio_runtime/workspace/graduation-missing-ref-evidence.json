@@ -1,0 +1,50 @@
+{
+  "schema_version": "skillguard.portfolio_graduation_evidence.v1",
+  "skill_id": "fixture-skill",
+  "version": "1.0.0",
+  "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+  "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "guard_runtime": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+  },
+  "representative_jobs": [
+    {
+      "job_id": "job:primary",
+      "job_class_ids": ["artifact_check", "invalid_input", "native_check", "out_of_scope", "positive", "recovery_or_resume"],
+      "covered_capability_ids": ["capability:primary"],
+      "evidence_refs": ["record:evidence/missing.json@AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"]
+    }
+  ],
+  "full_run_receipt": {
+    "receipt_id": "receipt:fixture-skill:missing-ref",
+    "status": "current",
+    "guard_runtime": {
+      "runtime_id": "skillguard-v2",
+      "file_count": 1,
+      "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+    },
+    "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+    "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+    "command_set": {"jobs": [{"job_id": "job:primary", "commands": ["fixture:portfolio-missing"]}]},
+    "command_fingerprint": "E02881048A7C5E55B043CCD6101937254809B200D5331DBCA6EA1A56C6E868DB",
+    "environment": {"fixture": "portfolio-runtime", "platform": "portable"},
+    "environment_fingerprint": "A15803D5BBD708D0BEF876436B5AB54E83E1242A061622C0421E30C7991434A9",
+    "coverage_fingerprint": "1B1C61AD1D5630E228EE615B2DE8ED71A66EA911CAEC5769E1FED9271B580A55",
+    "result_bundle": {
+      "representative_job_results": [
+        {
+          "job_id": "job:primary",
+          "job_class_ids": ["artifact_check", "invalid_input", "native_check", "out_of_scope", "positive", "recovery_or_resume"],
+          "covered_capability_ids": ["capability:primary"],
+          "evidence_refs": ["record:evidence/missing.json@AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"],
+          "status": "passed"
+        }
+      ]
+    },
+    "result_hash": "519BC25BD60E6F37F4E77D6275D792D4347C5781E5A360835B6CFD20842BF88E",
+    "completed_at": "2026-07-10T00:00:00Z"
+  },
+  "failure_classification": null
+}

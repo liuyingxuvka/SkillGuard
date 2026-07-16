@@ -1,0 +1,59 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-installed-suite-external-root-binding-20260715",
+  "status": "repair_validated",
+  "observed_failure": {
+    "surface": "SkillGuard staged installation smoke for the SkillGuard and global-router suite",
+    "prior_local_claim": "the explicit external repository/member binding change was model- and test-green",
+    "observed_result": "the real staged smoke blocked the sibling skillguard-global-router contract check because the installer omitted the now-required canonical repository root",
+    "failure_code": "installed_suite_member_repository_root_missing"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.transactional-installation.current-smoke",
+    "owner": "skillguard_v2.installation._installed_smoke_plan",
+    "miss_type": "boundary_missing",
+    "error_signature": "installed:check-contract:skillguard-global-router blocks with repository-root required",
+    "affected_feature_tags": [
+      "installation",
+      "external-target-binding",
+      "suite-member",
+      "staged-smoke"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the external target resolver became explicit and fail-closed, but the installation smoke caller still supplied only the suite-relative member path",
+    "would_have_failed_if": "the model and tests required every non-self installed suite member contract check to carry the exact installed layout root",
+    "new_model_item": "every staged or active suite-member contract smoke binds repository_root to the exact installed layout root and target to the member-relative path",
+    "owner_code_contract": "skillguard_v2.installation._installed_smoke_plan"
+  },
+  "generalized_repair": {
+    "rule": "Installation smoke supplies one explicit canonical layout root for every suite member contract check; no member may rely on self detection or inferred fallback.",
+    "observed_regression": "a prepared SkillGuard suite stage passes the sibling global-router contract smoke under the explicit layout root",
+    "same_class_regression": "the smoke plan contains the same exact repository-root binding for both SkillGuard and global-router members",
+    "negative_boundary": "the repair adds no compatibility flag, alternate resolver, inferred path, or optional mode"
+  },
+  "required_revalidation": [
+    "focused installation smoke-plan regression",
+    "complete staged parity and installed-layout smoke",
+    "SkillGuard contract recompilation and currentness check",
+    "fresh isolated transactional installation",
+    "installation receipt capture and current installed parity replay"
+  ],
+  "revalidation_evidence": {
+    "focused_tests": {
+      "status": "passed",
+      "command": "python -m pytest tests/test_installation.py tests/test_external_target_binding.py -q",
+      "result": "24 passed and 6 subtests passed"
+    },
+    "transactional_installation": {
+      "status": "committed",
+      "transaction_id": "install-22e4bc661b394f6a92b37208e5e47438",
+      "installation_receipt_id": "installation-5ad8b445ea99800f023a1ff7",
+      "installation_receipt_hash": "AC5AD3DAD3F120CC93E25DAB8EFEE0CA1FC6D06DEF64048EA3316F2D5F7FBC4E",
+      "installed_parity": "current_installed_parity"
+    },
+    "remaining_gate": null
+  },
+  "claim_boundary": "This review covers the installed suite-member repository-root binding in installation smoke. It does not prove target-domain checks, portfolio graduation, router freshness, or release readiness."
+}

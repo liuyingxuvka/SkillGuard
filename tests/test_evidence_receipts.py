@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_contract  # noqa: F401
+from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.receipts import (
     ReceiptError,
     build_action_witness,
@@ -29,6 +29,7 @@ class EvidenceReceiptTests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["out"], "request": "receipt fixture"},
             self.target,
             decision,
+            check_manifest=runtime_check_manifest(self.contract),
         )
         self.run_root = claim.run_root
         self.fingerprints = {
@@ -85,7 +86,9 @@ class EvidenceReceiptTests(unittest.TestCase):
                 verifier_id="claimed-verifier",
                 input_fingerprints=self.fingerprints,
             )
-        self.assertEqual("hard_check_record_invalid", raised.exception.code)
+        self.assertEqual(
+            "legacy_native_check_evidence_rejected", raised.exception.code
+        )
 
     def test_hard_witnessed_and_judged_classes_remain_distinct(self) -> None:
         hard = self._hard()

@@ -93,7 +93,6 @@
         "checker_change_review",
         "command_surface",
         "fixture_evidence",
-        "maintenance_refresh",
         "route_task_metadata",
         "self_check",
         "stale_evidence_review",
@@ -102,7 +101,7 @@
       ],
       "type": "string"
     },
-    "refresh_action": {
+    "owner_action": {
       "type": "object"
     },
     "route_node_id": {
@@ -143,7 +142,7 @@
     "evidence_timestamp",
     "status",
     "blockers",
-    "refresh_action"
+    "owner_action"
   ],
   "title": "SkillGuardMaintenanceRecord",
   "type": "object"

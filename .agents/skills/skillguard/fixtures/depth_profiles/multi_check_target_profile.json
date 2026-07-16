@@ -1,0 +1,20 @@
+{
+  "schema_version": "skillguard.depth_profile.v2",
+  "profile_id": "profile:multi-check-target",
+  "target_skill_id": "multi-check-target",
+  "integration_mode": "native-integrated",
+  "native_owner_id": "owner:multi-check-target",
+  "native_route_ids": ["route:target-work"],
+  "native_check_ids": ["check:target-primary", "check:target-secondary"],
+  "skillguard_adds_domain_route": false,
+  "enforcement_level": "enforced",
+  "required_closure_profiles": ["enforced"],
+  "provider_runtime": {
+    "provider_id": "skillguard-local-provider",
+    "required_runtime_contract_id": "skillguard-declared-check-supervision-current",
+    "required_capability_ids": ["declared-check-receipt-reconciliation.v1"],
+    "required_enrollment_status": "enrolled",
+    "readiness_check_ids": ["check:target-primary"]
+  },
+  "claim_boundary": "Both target-declared checks are required; their domain meaning remains target-owned."
+}

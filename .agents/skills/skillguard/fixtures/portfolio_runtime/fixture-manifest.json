@@ -1,0 +1,86 @@
+{
+  "schema_version": "skillguard.fixture_manifest.v1",
+  "fixture_version": "portfolio-runtime-fixtures.v1",
+  "checker_version": "skillguard.local_cli_dispatch.v1",
+  "current_status": {
+    "status": "current",
+    "notes": [
+      "These are retired-V1 rejection fixtures only; they execute public audit, impact, reuse, and graduation blockers but provide no current or graduation success path.",
+      "Mutating cases run only in marker-owned repository-local sandbox copies that are removed after each case."
+    ]
+  },
+  "fixtures": [
+    {
+      "fixture_id": "portfolio_audit_current_passes",
+      "fixture_type": "regression",
+      "target_rule": "audit-portfolio rejects a legacy synthetic registry that lacks the current reviewed target-topology contract.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/portfolio_audit_current_passes.fixture.json",
+      "known_limitations": ["This legacy fixture is rejection-only; current audit authority requires V2 production bindings, explicit target repository roots, and installation replay."]
+    },
+    {
+      "fixture_id": "portfolio_impact_invalidates_old_green",
+      "fixture_type": "regression",
+      "target_rule": "mark-portfolio-impact rejects mutation of a legacy synthetic registry that lacks current target-topology evidence.",
+      "expected_decision": "fail",
+      "status": "checked",
+      "path": "cases/portfolio_impact_invalidates_old_green.fixture.json",
+      "known_limitations": ["This legacy fixture is rejection-only; source-only self-check proves capability behavior but never production currentness."]
+    },
+    {
+      "fixture_id": "portfolio_reuse_requires_registered_change",
+      "fixture_type": "regression",
+      "target_rule": "issue-portfolio-reuse-ticket requires both a registered non-broad non-intersecting change and a current rescannable target repository; a missing target blocks reuse.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/portfolio_reuse_requires_registered_change.fixture.json",
+      "known_limitations": ["Covers the required-target-repository rejection path; any valid reuse still replays the exact prior V2 production and installation proof."]
+    },
+    {
+      "fixture_id": "portfolio_graduation_covers_declared_capability",
+      "fixture_type": "regression",
+      "target_rule": "graduate-portfolio requires a current rescannable target repository before any synthetic graduation payload may mutate the registry.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/portfolio_graduation_covers_declared_capability.fixture.json",
+      "known_limitations": ["This legacy synthetic payload is rejection-only; successful graduation is installation-bound integration evidence and is never synthesized by source-only self-check."]
+    },
+    {
+      "fixture_id": "portfolio_graduation_missing_evidence_ref_blocks",
+      "fixture_type": "regression",
+      "target_rule": "graduate-portfolio rejects a non-graduatable request with a missing target repository and a syntactically valid hash-bound reference whose evidence record does not exist.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/portfolio_graduation_missing_evidence_ref_blocks.fixture.json",
+      "known_limitations": ["This fixture is rejection-only; exact missing-record classification is covered by unit tests."]
+    },
+    {
+      "fixture_id": "portfolio_graduation_forged_payload_blocks",
+      "fixture_type": "regression",
+      "target_rule": "graduate-portfolio rejects a non-graduatable request with a missing target repository and a caller-authored structured evidence payload mismatch.",
+      "expected_decision": "block",
+      "status": "checked",
+      "path": "cases/portfolio_graduation_forged_payload_blocks.fixture.json",
+      "known_limitations": ["This fixture is rejection-only; exact payload-hash classification is covered by unit tests."]
+    }
+  ],
+  "evidence": [
+    "cases/portfolio_audit_current_passes.fixture.json",
+    "cases/portfolio_impact_invalidates_old_green.fixture.json",
+    "cases/portfolio_reuse_requires_registered_change.fixture.json",
+    "cases/portfolio_graduation_covers_declared_capability.fixture.json",
+    "cases/portfolio_graduation_missing_evidence_ref_blocks.fixture.json",
+    "cases/portfolio_graduation_forged_payload_blocks.fixture.json",
+    "../evidence_outputs/fixture_test_portfolio_runtime_current.json"
+  ],
+  "skipped_checks": [
+    "These synthetic fixtures do not claim real target-domain quality, package publication, GitHub release readiness, or future AI behavior.",
+    "They do not replace the full V2 TestMesh, legacy regression, self-host, external UI pressure test, or portfolio graduation evidence."
+  ],
+  "residual_risk": [
+    "Real portfolio entries still require private source, contract, environment, command, and coverage evidence.",
+    "Cross-process behavior still requires the dedicated lock regressions and real CLI runs."
+  ],
+  "claim_boundary": "This manifest proves only the listed synthetic portfolio command cases in disposable local workspaces. It does not prove runtime checker execution beyond this fixture invocation, broad fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, real target outcomes, external services, or future AI behavior without separate current evidence."
+}

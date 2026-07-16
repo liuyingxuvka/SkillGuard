@@ -36,10 +36,10 @@
   "maintenance_ownership": [
     "{{maintenance_owner}} refreshes this suite map when member skills, routing hints, evidence expectations, or closure boundaries change."
   ],
-  "compatibility": {
-    "version_boundary": "{{version_boundary}}",
-    "known_incompatibilities": [
-      "{{known_incompatibility}}"
+  "current_identity": {
+    "schema_boundary": "{{schema_boundary}}",
+    "rejected_noncurrent_shapes": [
+      "{{rejected_noncurrent_shape}}"
     ]
   },
   "evidence": [],

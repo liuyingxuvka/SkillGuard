@@ -1,0 +1,180 @@
+{
+  "version": 2,
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "change": "compose-validation-evidence",
+  "status": "pass",
+  "generated_at": "2026-07-16T00:07:52.738Z",
+  "contract_path": "openspec/changes/compose-validation-evidence/verification-contract.yaml",
+  "report_path": "openspec/changes/compose-validation-evidence/verification-report.json",
+  "contract_hash": "sha256:3956e1d85f04b09bdb6e7d3497cba8bac7984becc9e10ad3169b569e1d7e39b7",
+  "source_hashes": {
+    "openspec/changes/compose-validation-evidence/design.md": "sha256:e92543f62108e82dcfa693997d0c941a3372e4b7e4429b7da691dfb4f27342b7",
+    "openspec/changes/compose-validation-evidence/proposal.md": "sha256:5a9659388f47c094ac3d0e7fda44ce6cdc7e74cf705d0dc3c3cec1c7e8e54d4a",
+    "openspec/changes/compose-validation-evidence/specs/composable-validation-evidence/spec.md": "sha256:463ab000f4980b753faecf52a6bedaecf8b0812affd47b6be8a0582f827434fe",
+    "openspec/changes/compose-validation-evidence/specs/portable-artifact-boundary/spec.md": "sha256:67ba81a21d66acc52843024f3c723c8f99c58be07fb6a097777bf63521dd2d1c",
+    "openspec/changes/compose-validation-evidence/specs/universal-execution-depth/spec.md": "sha256:49b5a13b8b621d269315190c2bd7606d17248fb12e5b7038a1de80e61f718a45",
+    "openspec/changes/compose-validation-evidence/tasks.md": "sha256:f95cfe750d3588b2d56760e0bea67dd1d4147b958e67fbf87b7b853d150661f0",
+    "openspec/changes/compose-validation-evidence/verification-contract.yaml": "sha256:3956e1d85f04b09bdb6e7d3497cba8bac7984becc9e10ad3169b569e1d7e39b7"
+  },
+  "source_hash_policy": {
+    "version": 2,
+    "algorithm": "sha256",
+    "task_checkbox_normalization": "markdown-checkbox-state-v1",
+    "output_classifier_version": "verification-generated-output-v2"
+  },
+  "issues": [],
+  "checks": [
+    {
+      "id": "check.composition.final-parent",
+      "kind": "receipt",
+      "required": true,
+      "covers": [
+        "req.composition.ordered-ownership",
+        "req.composition.complete-inputs",
+        "req.composition.proof-bound-reuse",
+        "req.composition.reuse-fails-closed",
+        "req.composition.parent-reattachment",
+        "req.composition.domain-separation",
+        "req.composition.report-collision",
+        "req.composition.replay",
+        "req.composition.single-flight",
+        "req.composition.read-only-parent-consumer",
+        "req.composition.execution-ownership",
+        "req.composition.component-impact",
+        "req.composition.owner-projection",
+        "req.composition.frozen-plan",
+        "req.composition.persistent-receipts",
+        "req.composition.full-admission",
+        "req.composition.shared-projections",
+        "req.composition.current-only",
+        "req.portable.shared-policy",
+        "req.portable.runtime-excluded",
+        "req.portable.static-fixtures",
+        "req.portable.deterministic",
+        "req.portable.semantic-components",
+        "req.portable.cleanup",
+        "req.depth.canonical-parity"
+      ],
+      "status": "passed",
+      "args": [],
+      "semantic_check_id": "semantic.composition.skillguard-current-final-parent",
+      "execution_id": "check.composition.final-parent",
+      "execution_owner": "skillguard:execution.skillguard.test-mesh-parent.current",
+      "consumer": "openspec-final-verifier",
+      "input_hashes": {
+        "openspec/changes/compose-validation-evidence/design.md": "sha256:e92543f62108e82dcfa693997d0c941a3372e4b7e4429b7da691dfb4f27342b7",
+        "openspec/changes/compose-validation-evidence/proposal.md": "sha256:5a9659388f47c094ac3d0e7fda44ce6cdc7e74cf705d0dc3c3cec1c7e8e54d4a",
+        "openspec/changes/compose-validation-evidence/specs/composable-validation-evidence/spec.md": "sha256:463ab000f4980b753faecf52a6bedaecf8b0812affd47b6be8a0582f827434fe",
+        "openspec/changes/compose-validation-evidence/specs/portable-artifact-boundary/spec.md": "sha256:67ba81a21d66acc52843024f3c723c8f99c58be07fb6a097777bf63521dd2d1c",
+        "openspec/changes/compose-validation-evidence/specs/universal-execution-depth/spec.md": "sha256:49b5a13b8b621d269315190c2bd7606d17248fb12e5b7038a1de80e61f718a45",
+        "openspec/changes/compose-validation-evidence/tasks.md": "sha256:f95cfe750d3588b2d56760e0bea67dd1d4147b958e67fbf87b7b853d150661f0",
+        "openspec/changes/compose-validation-evidence/verification-contract.yaml": "sha256:3956e1d85f04b09bdb6e7d3497cba8bac7984becc9e10ad3169b569e1d7e39b7"
+      },
+      "snapshot_policy": "frozen",
+      "validation_scope": "full",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      },
+      "attempt": 1,
+      "accounting": "aggregated",
+      "message": "Verified external skillguard receipt sha256:d71b48047bbf17ac5d1b80caebeaa7dda703c54edd1a7d1a06399e9547dac8b5 without executing its owner.",
+      "started_at": "2026-07-16T00:07:51.642Z",
+      "completed_at": "2026-07-16T00:07:51.642Z",
+      "execution_key": "sha256:10e593aa45aa116d407aec6768dca8ae3bd2d680046504946752e08065a36f5a",
+      "depends_on_receipt_ids": [
+        "sha256:d71b48047bbf17ac5d1b80caebeaa7dda703c54edd1a7d1a06399e9547dac8b5"
+      ],
+      "toolchain_identity": "sha256:b50659a91cf3bb0dc67b2ad8a6eba8fdd6eba7eb9ce94d703698ceb0df2ff7a3",
+      "snapshot_manifest_id": "sha256:50c8254fdf8aa9c9d5737a9e02e3f0defc3f8c5d8264a90f53f015ac2d9f7bf7",
+      "receipt_id": "sha256:908fcd3d42ae7bcdf96e7057a9b9c1c909dfa4a3c65ac3bb92fe26e8620d4d73",
+      "result_hash": "sha256:d1597afa3b8c206c054b381be49919aa43521488664eaf7103e8a6dcdedbdb5c",
+      "stdout_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "receipt_sidecar_path": "openspec/changes/compose-validation-evidence/verification-receipts/908fcd3d42ae7bcdf96e7057a9b9c1c909dfa4a3c65ac3bb92fe26e8620d4d73.json"
+    }
+  ],
+  "run": {
+    "id": "16311541-1670-4572-8622-e8728c12f07a",
+    "protocol_version": 3,
+    "state": "completed",
+    "attempt": 1,
+    "started_at": "2026-07-16T00:07:35.421Z",
+    "updated_at": "2026-07-16T00:07:52.738Z",
+    "completed_at": "2026-07-16T00:07:52.738Z",
+    "plan_hash": "sha256:2b8d6c666357843eefc1b5f2085e63b92fa4463f0599f83d3b66ab43b19509f0",
+    "validation_mode": "full",
+    "selection": {
+      "mode": "all",
+      "check_ids": [
+        "check.composition.final-parent"
+      ]
+    },
+    "resumed_from_run_id": null,
+    "cancellation": null,
+    "snapshot_manifest_id": "sha256:50c8254fdf8aa9c9d5737a9e02e3f0defc3f8c5d8264a90f53f015ac2d9f7bf7",
+    "toolchain_isolation": "content-identity-guarded"
+  },
+  "accounting": {
+    "executed": 0,
+    "reused": 0,
+    "aggregated": 1,
+    "not_run": 0,
+    "stale": 0,
+    "executed_check_ids": [],
+    "reused_check_ids": [],
+    "aggregated_check_ids": [
+      "check.composition.final-parent"
+    ],
+    "not_run_check_ids": [],
+    "stale_check_ids": []
+  },
+  "receipts": [
+    {
+      "id": "sha256:908fcd3d42ae7bcdf96e7057a9b9c1c909dfa4a3c65ac3bb92fe26e8620d4d73",
+      "check_id": "check.composition.final-parent",
+      "kind": "projection",
+      "execution_key": "sha256:10e593aa45aa116d407aec6768dca8ae3bd2d680046504946752e08065a36f5a",
+      "result_hash": "sha256:d1597afa3b8c206c054b381be49919aa43521488664eaf7103e8a6dcdedbdb5c",
+      "content_path": "openspec/changes/compose-validation-evidence/verification-receipts/908fcd3d42ae7bcdf96e7057a9b9c1c909dfa4a3c65ac3bb92fe26e8620d4d73.json",
+      "execution": {
+        "semantic_check_id": "semantic.composition.skillguard-current-final-parent",
+        "execution_id": "check.composition.final-parent",
+        "owner_check_id": "skillguard:execution.skillguard.test-mesh-parent.current",
+        "consumer": "openspec-final-verifier"
+      },
+      "result": {
+        "status": "passed",
+        "stdout_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "termination": null
+      },
+      "dependencies": [
+        "sha256:d71b48047bbf17ac5d1b80caebeaa7dda703c54edd1a7d1a06399e9547dac8b5"
+      ],
+      "snapshot": {
+        "policy": "frozen",
+        "manifest_id": "sha256:50c8254fdf8aa9c9d5737a9e02e3f0defc3f8c5d8264a90f53f015ac2d9f7bf7",
+        "input_hashes": {
+          "openspec/changes/compose-validation-evidence/design.md": "sha256:e92543f62108e82dcfa693997d0c941a3372e4b7e4429b7da691dfb4f27342b7",
+          "openspec/changes/compose-validation-evidence/proposal.md": "sha256:5a9659388f47c094ac3d0e7fda44ce6cdc7e74cf705d0dc3c3cec1c7e8e54d4a",
+          "openspec/changes/compose-validation-evidence/specs/composable-validation-evidence/spec.md": "sha256:463ab000f4980b753faecf52a6bedaecf8b0812affd47b6be8a0582f827434fe",
+          "openspec/changes/compose-validation-evidence/specs/portable-artifact-boundary/spec.md": "sha256:67ba81a21d66acc52843024f3c723c8f99c58be07fb6a097777bf63521dd2d1c",
+          "openspec/changes/compose-validation-evidence/specs/universal-execution-depth/spec.md": "sha256:49b5a13b8b621d269315190c2bd7606d17248fb12e5b7038a1de80e61f718a45",
+          "openspec/changes/compose-validation-evidence/tasks.md": "sha256:f95cfe750d3588b2d56760e0bea67dd1d4147b958e67fbf87b7b853d150661f0",
+          "openspec/changes/compose-validation-evidence/verification-contract.yaml": "sha256:3956e1d85f04b09bdb6e7d3497cba8bac7984becc9e10ad3169b569e1d7e39b7"
+        }
+      },
+      "toolchain_identity": "sha256:b50659a91cf3bb0dc67b2ad8a6eba8fdd6eba7eb9ce94d703698ceb0df2ff7a3",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      }
+    }
+  ]
+}

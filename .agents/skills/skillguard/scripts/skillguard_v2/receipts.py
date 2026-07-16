@@ -12,6 +12,7 @@ from typing import Any, Mapping, Sequence
 
 from .contract_compiler import canonical_hash, canonical_json_bytes
 from .contract_schema import EVIDENCE_CLASSES, RECEIPT_SCHEMA, SchemaFinding, validate_runtime_payload
+from .execution_records import filesystem_path
 from .run_store import append_event, load_contract_snapshot, load_run, utc_now
 
 
@@ -130,7 +131,7 @@ def _validate_fingerprints(values: Mapping[str, Any]) -> tuple[SchemaFinding, ..
 
 
 def _receipts_root(run_root: Path) -> Path:
-    return run_root / "receipts"
+    return filesystem_path(run_root / "receipts")
 
 
 def load_receipts(run_root: Path) -> tuple[Mapping[str, Any], ...]:
@@ -209,6 +210,7 @@ def issue_receipt(
     input_fingerprints: Mapping[str, Mapping[str, str]],
     artifact_record_ids: Sequence[str] = (),
     consumed_child_receipt_ids: Sequence[str] = (),
+    owner_evidence_root: Path | None = None,
 ) -> Mapping[str, Any]:
     if evidence_class not in EVIDENCE_CLASSES:
         raise ReceiptError("evidence_class_invalid", evidence_class, step_id)
@@ -253,7 +255,17 @@ def issue_receipt(
             if artifact_record.get("status") != "passed":
                 raise ReceiptError("receipt_artifact_not_passed", str(artifact_record_id), step_id)
     if evidence_class == "hard" and evidence.get("proof_kind") == "native_check":
-        from .check_runner import CheckRunnerError, load_check_result
+        raise ReceiptError(
+            "legacy_native_check_evidence_rejected",
+            "current hard evidence must project a verified owner receipt",
+            step_id,
+        )
+    if evidence_class == "hard" and evidence.get("proof_kind") == "owner_receipt_projection":
+        from .check_runner import (
+            CheckRunnerError,
+            load_check_result,
+            load_owner_receipt_from_projection,
+        )
 
         check_record_id = str(evidence.get("check_record_id", ""))
         if not check_record_id:
@@ -264,16 +276,83 @@ def issue_receipt(
             raise ReceiptError("hard_check_record_invalid", exc.code, check_record_id) from exc
         if check_record.get("run_id") != run.get("run_id") or check_record.get("contract_hash") != run.get("contract_hash"):
             raise ReceiptError("hard_check_record_wrong_run", check_record_id, step_id)
+        if (
+            check_record.get("check_manifest_hash")
+            != run.get("check_manifest_hash")
+            or check_record.get("check_declarations_hash")
+            != run.get("check_declarations_hash")
+            or check_record.get("check_manifest_hash")
+            != evidence.get("check_manifest_hash")
+            or check_record.get("check_declarations_hash")
+            != evidence.get("check_declarations_hash")
+            or check_record.get("declared_check_hash")
+            != evidence.get("declared_check_hash")
+        ):
+            raise ReceiptError(
+                "hard_check_manifest_binding_mismatch",
+                check_record_id,
+                step_id,
+            )
         if check_record.get("step_id") != step_id:
             raise ReceiptError("hard_check_record_wrong_step", check_record_id, step_id)
         if check_record.get("check_id") != evidence.get("check_id"):
             raise ReceiptError("hard_check_record_wrong_check", check_record_id, step_id)
-        if check_record.get("status") != "passed" or not check_record.get("executed"):
+        if check_record.get("status") != "passed":
             raise ReceiptError("hard_check_record_not_passed", check_record_id, step_id)
+        if check_record.get("execution_disposition") not in {
+            "executed_terminal_success",
+            "reused_terminal_success",
+        }:
+            raise ReceiptError(
+                "hard_check_execution_disposition_invalid",
+                check_record_id,
+                step_id,
+            )
         if check_record.get("proof_fingerprint") != evidence.get("proof_fingerprint"):
             raise ReceiptError("hard_check_fingerprint_mismatch", check_record_id, step_id)
         if check_record.get("record_hash") != evidence.get("check_record_hash"):
             raise ReceiptError("hard_check_record_hash_mismatch", check_record_id, step_id)
+        for field in (
+            "execution_owner_id",
+            "execution_key",
+            "projection_declaration_hash",
+            "owner_receipt_id",
+            "owner_receipt_hash",
+            "owner_receipt_ref",
+        ):
+            if check_record.get(field) != evidence.get(field):
+                raise ReceiptError(
+                    "hard_check_owner_projection_mismatch",
+                    f"{check_record_id}:{field}",
+                    step_id,
+                )
+        if owner_evidence_root is None:
+            raise ReceiptError(
+                "hard_check_owner_evidence_root_missing",
+                check_record_id,
+                step_id,
+            )
+        try:
+            owner_receipt = load_owner_receipt_from_projection(
+                owner_evidence_root.resolve(),
+                check_record,
+            )
+        except CheckRunnerError as exc:
+            raise ReceiptError(
+                "hard_check_owner_receipt_invalid",
+                exc.code,
+                check_record_id,
+            ) from exc
+        if (
+            owner_receipt.get("receipt_id") != evidence.get("owner_receipt_id")
+            or owner_receipt.get("receipt_hash")
+            != evidence.get("owner_receipt_hash")
+        ):
+            raise ReceiptError(
+                "hard_check_owner_receipt_mismatch",
+                check_record_id,
+                step_id,
+            )
     existing = load_receipts(run_root)
     sequence = len(existing) + 1
     subject_id = _evidence_subject_id(evidence_class, evidence)

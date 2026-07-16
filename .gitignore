@@ -33,12 +33,25 @@ htmlcov/
 # Logs and local runtime output
 *.log
 logs/
+/work/
+/.agents/skills/skillguard/work/
+openspec/**/run-artifacts/
+openspec/**/verification-receipts/
+openspec/**/verification-reports/
+openspec/**/provenance/
 tmp/
 temp/
 /.skillguard/
 /.codex/
 .install-smoke/
 .flowpilot/
+**/.sg-runtime/
+**/.sg-fixtures/
+**/.sgf/
+**/.runtime_workspaces/
+**/runtime_workspaces/
+**/fixture-runtime/
+**/fixture-generation/
 /.agents/skills/skillguard/fixtures/evidence_outputs/native_contract_upgrade_audit_current.json
 /.agents/skills/skillguard/fixtures/evidence_outputs/scan_global_user_skills_current.json
 

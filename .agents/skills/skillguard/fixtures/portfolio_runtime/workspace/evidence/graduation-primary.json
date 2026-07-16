@@ -1,0 +1,24 @@
+{
+  "schema_version": "skillguard.portfolio_job_evidence_record.v1",
+  "record_id": "record:fixture-primary",
+  "job_id": "job:primary",
+  "covered_capability_ids": [
+    "capability:primary"
+  ],
+  "evidence_class": "hard",
+  "status": "current",
+  "guard_runtime": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+  },
+  "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+  "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "payload": {
+    "proof_kind": "fixture_command",
+    "proof_fingerprint": "09B67018DF48857E54C78BB4577B4ECBC270EACC68C4A54378801DA5052D47F9",
+    "result_status": "passed"
+  },
+  "payload_hash": "044E15C97628AFC796139679123BC812EDD94C1A4EA515883E6926F77E90C18C",
+  "created_at": "2026-07-10T00:00:00Z"
+}

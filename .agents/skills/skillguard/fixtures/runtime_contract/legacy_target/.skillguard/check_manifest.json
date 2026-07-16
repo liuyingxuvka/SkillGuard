@@ -1,0 +1,6 @@
+{
+  "schema_version": "skillguard.check_manifest.v1",
+  "target_skill": "skillguard",
+  "checks": [],
+  "claim_boundary": "Fixture-only V1 authority marker; explicit contracts own their declared checks."
+}

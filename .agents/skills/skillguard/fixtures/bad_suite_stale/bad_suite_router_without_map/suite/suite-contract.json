@@ -33,10 +33,10 @@
     "Direct member evidence is required for checked member status.",
     "Progress ledgers, runtime ids, and PM text cannot satisfy suite closure."
   ],
-  "compatibility": {
+  "current_identity": {
     "suite_version": "bad-suite-stale-fixtures.v1",
     "checker_version": "skillguard.local_cli_dispatch.v1",
-    "compatibility_notes": [
+    "current_notes": [
       "The contract shape matches the current suite contract schema.",
       "The missing suite map record is intentional for this fixture."
     ]

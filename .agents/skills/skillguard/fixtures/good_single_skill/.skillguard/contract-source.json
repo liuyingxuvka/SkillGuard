@@ -1,0 +1,67 @@
+{
+  "artifacts": [],
+  "checks": [
+    {
+      "args": [
+        "scripts/run_checks.py"
+      ],
+      "check_id": "check:generated-current",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:generated-current-check"
+      ],
+      "cwd_token": "repository_root",
+      "evidence_class": "hard",
+      "evidence_domain_id": "generated_skill_current",
+      "execution_owner_id": "owner:good_single_skill",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "SKILL.md"
+        },
+        {
+          "kind": "path",
+          "path": "scripts/run_checks.py"
+        }
+      ],
+      "kind": "command",
+      "semantic_check_id": "semantic:good_single_skill:generated-current",
+      "timeout_seconds": 30
+    }
+  ],
+  "claim_boundary": "This generated binding proves only deterministic current contract structure. It does not prove target execution, semantic acceptance, installation, or release.",
+  "closure_profiles": [
+    {
+      "profile_id": "enforced",
+      "required_obligation_ids": [
+        "obligation:generated-current-check"
+      ]
+    }
+  ],
+  "confirmed": true,
+  "implementation_paths": [
+    "SKILL.md",
+    "scripts/run_checks.py"
+  ],
+  "judgment_rubrics": [],
+  "model_id": "good_single_skill.generated_current_authority.current",
+  "model_path": ".skillguard/flowguard_contract_model.py",
+  "schema_version": "skillguard.contract_source.v2",
+  "skill_id": "good_single_skill",
+  "step_bindings": [
+    {
+      "action": {
+        "kind": "native",
+        "summary": "run the generated target-owned current check"
+      },
+      "check_ids": [
+        "check:generated-current"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:run-generated-current-check"
+    }
+  ]
+}

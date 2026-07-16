@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_path_role_projection_v1.schema.json",
+  "title": "SkillGuard path-role projection v1",
+  "description": "Persistable, privacy-safe projection of canonical, working, and installed path roles.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "privacy",
+    "roles",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.path_role_projection.v1"},
+    "artifact_type": {"const": "skillguard_path_role_projection"},
+    "privacy": {"const": "persisted_token_or_hashed_identity_only"},
+    "roles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_local_source",
+        "working_root",
+        "installed_root"
+      ],
+      "properties": {
+            "canonical_local_source": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "role",
+                "path_token",
+                "authority",
+                "state",
+                "status",
+                "exists",
+                "is_directory",
+                "identity_verified",
+                "available",
+                "identity_hash"
+              ],
+              "properties": {
+                "role": {"const": "canonical_local_source"},
+                "path_token": {"const": "target_repository_root"},
+                "authority": {"const": "canonical_local_source"},
+                "state": {"enum": ["declared", "resolved", "verified", "missing"]},
+                "status": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["declared", "resolved", "verified", "missing"],
+                  "properties": {
+                    "declared": {"type": "boolean"},
+                    "resolved": {"type": "boolean"},
+                    "verified": {"type": "boolean"},
+                    "missing": {"type": "boolean"}
+                  }
+                },
+                "exists": {"type": "boolean"},
+                "is_directory": {"type": "boolean"},
+                "identity_verified": {"type": "boolean"},
+                "available": {"type": "boolean"},
+                "identity_hash": {
+                  "type": "string",
+                  "pattern": "^(?:[A-F0-9]{64})?$"
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {"available": {"const": true}},
+                    "required": ["available"]
+                  },
+                  "then": {
+                    "properties": {
+                      "state": {"const": "verified"},
+                      "exists": {"const": true},
+                      "is_directory": {"const": true},
+                      "identity_verified": {"const": true},
+                      "identity_hash": {"pattern": "^[A-F0-9]{64}$"}
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {"state": {"const": "missing"}},
+                    "required": ["state"]
+                  },
+                  "then": {
+                    "properties": {
+                      "available": {"const": false},
+                      "identity_verified": {"const": false}
+                    }
+                  }
+                }
+              ]
+            },
+            "working_root": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "role",
+                "path_token",
+                "authority",
+                "state",
+                "status",
+                "exists",
+                "is_directory",
+                "identity_verified",
+                "available",
+                "identity_hash"
+              ],
+              "properties": {
+                "role": {"const": "working_root"},
+                "path_token": {"const": "workspace_root"},
+                "authority": {"const": "private_working_context"},
+                "state": {"enum": ["declared", "resolved", "verified", "missing"]},
+                "status": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["declared", "resolved", "verified", "missing"],
+                  "properties": {
+                    "declared": {"type": "boolean"},
+                    "resolved": {"type": "boolean"},
+                    "verified": {"type": "boolean"},
+                    "missing": {"type": "boolean"}
+                  }
+                },
+                "exists": {"type": "boolean"},
+                "is_directory": {"type": "boolean"},
+                "identity_verified": {"type": "boolean"},
+                "available": {"type": "boolean"},
+                "identity_hash": {
+                  "type": "string",
+                  "pattern": "^(?:[A-F0-9]{64})?$"
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {"available": {"const": true}},
+                    "required": ["available"]
+                  },
+                  "then": {
+                    "properties": {
+                      "state": {"const": "verified"},
+                      "exists": {"const": true},
+                      "is_directory": {"const": true},
+                      "identity_verified": {"const": true},
+                      "identity_hash": {"pattern": "^[A-F0-9]{64}$"}
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {"state": {"const": "missing"}},
+                    "required": ["state"]
+                  },
+                  "then": {
+                    "properties": {
+                      "available": {"const": false},
+                      "identity_verified": {"const": false}
+                    }
+                  }
+                }
+              ]
+            },
+            "installed_root": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "role",
+                "path_token",
+                "authority",
+                "state",
+                "status",
+                "exists",
+                "is_directory",
+                "identity_verified",
+                "available",
+                "identity_hash"
+              ],
+              "properties": {
+                "role": {"const": "installed_root"},
+                "path_token": {"const": "installed_target_root"},
+                "authority": {"const": "installed_copy_non_authoritative"},
+                "state": {"enum": ["declared", "resolved", "verified", "missing"]},
+                "status": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["declared", "resolved", "verified", "missing"],
+                  "properties": {
+                    "declared": {"type": "boolean"},
+                    "resolved": {"type": "boolean"},
+                    "verified": {"type": "boolean"},
+                    "missing": {"type": "boolean"}
+                  }
+                },
+                "exists": {"type": "boolean"},
+                "is_directory": {"type": "boolean"},
+                "identity_verified": {"type": "boolean"},
+                "available": {"type": "boolean"},
+                "identity_hash": {
+                  "type": "string",
+                  "pattern": "^(?:[A-F0-9]{64})?$"
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {"available": {"const": true}},
+                    "required": ["available"]
+                  },
+                  "then": {
+                    "properties": {
+                      "state": {"const": "verified"},
+                      "exists": {"const": true},
+                      "is_directory": {"const": true},
+                      "identity_verified": {"const": true},
+                      "identity_hash": {"pattern": "^[A-F0-9]{64}$"}
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {"state": {"const": "missing"}},
+                    "required": ["state"]
+                  },
+                  "then": {
+                    "properties": {
+                      "available": {"const": false},
+                      "identity_verified": {"const": false}
+                    }
+                  }
+                }
+              ]
+            }
+      }
+    },
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

@@ -5,7 +5,7 @@
   "status": "pass",
   "checked_at": "2020-01-01T00:00:00Z",
   "checker_version": "skillguard.local_cli_dispatch.v1",
-  "compatibility": {
+  "current_identity": {
     "checker_version": "skillguard.local_cli_dispatch.v1",
     "fixture_version": "bad-suite-stale-fixtures.v1",
     "notes": "Intentionally stale member report for evidence freshness validation."

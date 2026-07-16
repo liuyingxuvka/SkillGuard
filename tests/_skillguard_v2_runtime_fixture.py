@@ -10,10 +10,181 @@ SCRIPT_ROOT = ROOT / ".agents" / "skills" / "skillguard" / "scripts"
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
-from skillguard_v2.contract_compiler import canonical_hash  # noqa: E402
+from skillguard_v2.contract_compiler import (  # noqa: E402
+    OWNER_BEHAVIOR_FIELDS,
+    canonical_hash,
+    wire_hash,
+)
+
+
+def _current_checks_and_plan(
+    source_checks: list[dict[str, object]],
+) -> tuple[list[dict[str, object]], dict[str, object]]:
+    checks = copy.deepcopy(source_checks)
+    for check in checks:
+        check_id = str(check.get("check_id", ""))
+        check.setdefault("semantic_check_id", check_id)
+        check.setdefault("execution_owner_id", f"owner:{check_id.removeprefix('check:')}")
+        check.setdefault(
+            "input_selectors",
+            [{"kind": "role", "role": "runtime_source"}],
+        )
+        check.setdefault("input_component_ids", [])
+        check.setdefault("depends_on_check_ids", [])
+        check.setdefault("evidence_domain_id", "validation")
+        check.setdefault(
+            "owner_declaration_hash",
+            wire_hash(
+                {
+                    "behavior": {
+                        key: check[key]
+                        for key in OWNER_BEHAVIOR_FIELDS
+                        if key in check
+                    },
+                    "input_selectors": list(check["input_selectors"]),
+                    "evidence_domain_id": str(check["evidence_domain_id"]),
+                    "impact_policy_id": "skillguard.content_impact_policy.current",
+                }
+            ),
+        )
+        check.setdefault("owner_input_projection_hash", wire_hash([]))
+        projection = {
+            "check_id": check_id,
+            "semantic_check_id": str(check["semantic_check_id"]),
+            "execution_owner_id": str(check["execution_owner_id"]),
+            "covers_obligation_ids": sorted(
+                str(value) for value in check.get("covers_obligation_ids", [])
+            ),
+            "evidence_class": str(check.get("evidence_class", "")),
+        }
+        check.setdefault("projection_declaration_hash", wire_hash(projection))
+
+    check_owner = {
+        str(check["check_id"]): str(check["execution_owner_id"])
+        for check in checks
+    }
+    owner_rows: dict[str, dict[str, object]] = {}
+    for check in checks:
+        owner_id = str(check["execution_owner_id"])
+        dependencies = sorted(
+            {
+                check_owner[str(check_id)]
+                for check_id in check.get("depends_on_check_ids", [])
+                if str(check_id) in check_owner
+                and check_owner[str(check_id)] != owner_id
+            }
+        )
+        row = owner_rows.setdefault(
+            owner_id,
+            {
+                "execution_owner_id": owner_id,
+                "check_ids": [],
+                "owner_declaration_hash": str(check["owner_declaration_hash"]),
+                "input_selectors": list(check.get("input_selectors", [])),
+                "input_component_ids": list(check.get("input_component_ids", [])),
+                "owner_input_projection_hash": str(
+                    check["owner_input_projection_hash"]
+                ),
+                "depends_on_owner_ids": [],
+                "evidence_domain_id": str(check["evidence_domain_id"]),
+            },
+        )
+        row["check_ids"] = sorted(
+            {*row["check_ids"], str(check["check_id"])}
+        )
+        row["depends_on_owner_ids"] = sorted(
+            {*row["depends_on_owner_ids"], *dependencies}
+        )
+    projections = [
+        {
+            "check_id": str(check["check_id"]),
+            "semantic_check_id": str(check["semantic_check_id"]),
+            "execution_owner_id": str(check["execution_owner_id"]),
+            "covers_obligation_ids": sorted(
+                str(value) for value in check.get("covers_obligation_ids", [])
+            ),
+            "evidence_class": str(check.get("evidence_class", "")),
+            "projection_declaration_hash": str(
+                check["projection_declaration_hash"]
+            ),
+        }
+        for check in checks
+    ]
+    plan: dict[str, object] = {
+        "schema_version": "skillguard.content_impact_plan.current",
+        "policy_id": "skillguard.content_impact_policy.current",
+        "member_root_path": ".",
+        "owner_receipt_root_ref": {
+            "path_token": "owner_evidence_root",
+            "relative_path": "check-executions",
+        },
+        "unknown_mapping_disposition": "block",
+        "full_admission_reason_codes": [
+            "explicit_final_gate",
+            "explicit_release_gate",
+            "impact_policy_or_compiler_changed",
+            "shared_validation_runtime_changed",
+            "all_owner_component_changed",
+        ],
+        "inventory": [],
+        "inventory_hash": wire_hash([]),
+        "components": [],
+        "owners": sorted(
+            owner_rows.values(), key=lambda row: str(row["execution_owner_id"])
+        ),
+        "check_projections": projections,
+        "projection_consumers": [],
+        "portfolio_target_edges": [],
+        "all_owner_component_ids": [],
+        "health": {
+            "unmapped_paths": [],
+            "ambiguous_role_paths": [],
+            "duplicate_owner_ids": [],
+            "owner_cycles": [],
+            "invalid_dependency_edges": [],
+            "dependency_parse_errors": [],
+        },
+    }
+    plan["impact_graph_hash"] = wire_hash(
+        {
+            "policy_id": plan["policy_id"],
+            "member_root_path": plan["member_root_path"],
+            "inventory_hash": plan["inventory_hash"],
+            "components": plan["components"],
+            "owners": plan["owners"],
+            "check_projections": plan["check_projections"],
+            "projection_consumers": plan["projection_consumers"],
+            "portfolio_target_edges": plan["portfolio_target_edges"],
+            "health": plan["health"],
+        }
+    )
+    return checks, plan
+
+
+def runtime_checks() -> list[dict[str, object]]:
+    return [
+        {
+            "check_id": check_id,
+            "semantic_check_id": check_id,
+            "kind": "command",
+            "command": sys.executable,
+            "args": ["-c", "raise SystemExit(0)"],
+            "cwd_token": "target_root",
+            "timeout_seconds": 5,
+            "expected": {"exit_code": 0},
+            "covers_obligation_ids": [obligation_id],
+        }
+        for check_id, obligation_id in (
+            ("check:intake", "obligation:intake"),
+            ("check:review", "obligation:review"),
+            ("check:finish", "obligation:finish"),
+            ("check:release", "obligation:release"),
+        )
+    ]
 
 
 def runtime_contract() -> dict[str, object]:
+    checks, content_impact_plan = _current_checks_and_plan(runtime_checks())
     contract: dict[str, object] = {
         "schema_version": "skillguard.compiled_contract.v2",
         "compiler_version": "fixture",
@@ -21,6 +192,7 @@ def runtime_contract() -> dict[str, object]:
         "model_id": "runtime-fixture-model",
         "parent_model_id": "fixture-parent",
         "flowguard_schema_version": "1.0",
+        "model_path": ".flowguard/runtime_fixture.py",
         "functions": [
             {
                 "function_id": "analyze",
@@ -166,30 +338,10 @@ def runtime_contract() -> dict[str, object]:
             },
         ],
         "artifacts": [],
+        "portfolio_capability_contracts": [],
         "closure_profiles": [
             {
-                "profile_id": "routine",
-                "required_obligation_ids": ["obligation:intake"],
-            },
-            {
-                "profile_id": "functional",
-                "required_obligation_ids": [
-                    "obligation:intake",
-                    "obligation:review",
-                    "obligation:finish",
-                ],
-            },
-            {
-                "profile_id": "release",
-                "required_obligation_ids": [
-                    "obligation:intake",
-                    "obligation:review",
-                    "obligation:finish",
-                    "obligation:release",
-                ],
-            },
-            {
-                "profile_id": "highest_quality",
+                "profile_id": "enforced",
                 "required_obligation_ids": [
                     "obligation:intake",
                     "obligation:review",
@@ -197,7 +349,7 @@ def runtime_contract() -> dict[str, object]:
                     "obligation:release",
                     "obligation:quality",
                 ],
-            },
+            }
         ],
         "judgment_rubrics": [
             {
@@ -208,10 +360,50 @@ def runtime_contract() -> dict[str, object]:
             }
         ],
         "source_fingerprints": {},
+        "checks": checks,
+        "content_impact_plan": content_impact_plan,
+        "check_declarations_hash": canonical_hash({"checks": checks}),
         "claim_boundary": "Runtime fixture only.",
     }
     contract["contract_hash"] = canonical_hash(contract)
     return contract
+
+
+def runtime_check_manifest(
+    contract: dict[str, object],
+    checks: list[dict[str, object]] | None = None,
+) -> dict[str, object]:
+    checks, content_impact_plan = _current_checks_and_plan(
+        copy.deepcopy(checks if checks is not None else runtime_checks())
+    )
+    manifest: dict[str, object] = {
+        "schema_version": "skillguard.check_manifest.v2",
+        "compiler_version": "fixture",
+        "skill_id": contract["skill_id"],
+        "model_id": contract["model_id"],
+        "contract_hash": contract["contract_hash"],
+        "check_declarations_hash": contract["check_declarations_hash"],
+        "checks": checks,
+        "content_impact_plan": content_impact_plan,
+        "source_fingerprints": {},
+        "claim_boundary": "Runtime fixture check manifest only.",
+    }
+    manifest["manifest_hash"] = canonical_hash(manifest)
+    return manifest
+
+
+def runtime_contract_with_checks(
+    checks: list[dict[str, object]],
+) -> tuple[dict[str, object], dict[str, object]]:
+    checks, content_impact_plan = _current_checks_and_plan(checks)
+    contract = runtime_contract()
+    contract["checks"] = checks
+    contract["content_impact_plan"] = content_impact_plan
+    contract["check_declarations_hash"] = canonical_hash({"checks": checks})
+    contract["contract_hash"] = canonical_hash(
+        {key: value for key, value in contract.items() if key != "contract_hash"}
+    )
+    return contract, runtime_check_manifest(contract, checks)
 
 
 def copied_contract() -> dict[str, object]:

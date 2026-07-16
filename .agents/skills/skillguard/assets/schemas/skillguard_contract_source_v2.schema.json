@@ -1,21 +1,643 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://skillguard.local/schemas/skillguard_contract_source_v2.schema.json",
-  "title": "SkillGuard Contract Binding Source V2",
-  "type": "object",
-  "required": ["schema_version", "skill_id", "model_id", "model_path", "confirmed", "step_bindings", "checks", "artifacts", "closure_profiles", "claim_boundary"],
-  "properties": {
-    "schema_version": {"const": "skillguard.contract_source.v2"},
-    "skill_id": {"type": "string", "minLength": 1},
-    "model_id": {"type": "string", "minLength": 1},
-    "model_path": {"type": "string", "minLength": 1},
-    "confirmed": {"const": true},
-    "step_bindings": {"type": "array", "items": {"type": "object", "required": ["step_id", "action", "check_ids", "output_artifact_ids"]}},
-    "checks": {"type": "array", "items": {"type": "object", "required": ["check_id", "kind", "evidence_class", "covers_obligation_ids"]}},
-    "artifacts": {"type": "array", "items": {"type": "object", "required": ["artifact_id", "kind", "producer_step_id", "validators"]}},
-    "closure_profiles": {"type": "array", "minItems": 4, "items": {"type": "object", "required": ["profile_id", "required_obligation_ids"]}},
-    "judgment_rubrics": {"type": "array", "items": {"type": "object"}},
-    "claim_boundary": {"type": "string", "minLength": 1}
+  "$defs": {
+    "applicability_rule": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_disposition": {
+          "const": "not_applicable"
+        },
+        "obligation_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "verifier_check_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "obligation_id",
+        "allowed_disposition",
+        "verifier_check_id"
+      ],
+      "type": "object"
+    },
+    "artifact_id_list": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "capability_contract": {
+      "additionalProperties": false,
+      "properties": {
+        "business_intent": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "capability_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "path_variants": {
+          "items": {
+            "$ref": "#/$defs/path_variant"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "capability_id",
+        "business_intent",
+        "path_variants"
+      ],
+      "type": "object"
+    },
+    "check": {
+      "additionalProperties": false,
+      "properties": {
+        "args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "check_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "command": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "coverage_rationale": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "coverage_scope": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "covers_obligation_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "cwd_token": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "depends_on_check_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "evidence_class": {
+          "enum": [
+            "hard",
+            "witnessed",
+            "judged"
+          ]
+        },
+        "evidence_domain_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "execution_owner_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "expected": {
+          "type": "object"
+        },
+        "input_selectors": {
+          "items": {
+            "$ref": "#/$defs/input_selector"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "command",
+            "model_assertion"
+          ]
+        },
+        "native_route_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "semantic_check_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "timeout_seconds": {
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "check_id",
+        "kind",
+        "evidence_class",
+        "covers_obligation_ids",
+        "timeout_seconds"
+      ],
+      "type": "object"
+    },
+    "closure_profile": {
+      "additionalProperties": false,
+      "properties": {
+        "profile_id": {
+          "const": "enforced"
+        },
+        "required_obligation_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "route_branch_requirements": {
+          "items": {
+            "$ref": "#/$defs/route_branch_requirement"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "profile_id",
+        "required_obligation_ids"
+      ],
+      "type": "object"
+    },
+    "content_impact_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "full_admission_reason_codes": {
+          "items": {
+            "enum": [
+              "explicit_final_gate",
+              "explicit_release_gate",
+              "impact_policy_or_compiler_changed",
+              "shared_validation_runtime_changed",
+              "all_owner_component_changed"
+            ]
+          },
+          "maxItems": 5,
+          "minItems": 5,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "owner_receipt_root_ref": {
+          "additionalProperties": false,
+          "properties": {
+            "path_token": {
+              "const": "owner_evidence_root"
+            },
+            "relative_path": {
+              "const": "check-executions"
+            }
+          },
+          "required": [
+            "path_token",
+            "relative_path"
+          ],
+          "type": "object"
+        },
+        "policy_id": {
+          "const": "skillguard.content_impact_policy.current"
+        },
+        "unknown_mapping_disposition": {
+          "const": "block"
+        }
+      },
+      "required": [
+        "policy_id",
+        "owner_receipt_root_ref",
+        "unknown_mapping_disposition",
+        "full_admission_reason_codes"
+      ],
+      "type": "object"
+    },
+    "content_role_override": {
+      "additionalProperties": false,
+      "properties": {
+        "install_disposition": {
+          "enum": [
+            "copy",
+            "source_only",
+            "generate",
+            "exclude"
+          ]
+        },
+        "path": {
+          "description": "Repository-relative maintained file or directory subtree. Directory selectors apply to every inventoried descendant and may not overlap another override.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "reason": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "runtime_source",
+            "contract_schema",
+            "prompt_router",
+            "fixture_reference",
+            "test_dev",
+            "documentation_model"
+          ]
+        }
+      },
+      "required": [
+        "path",
+        "role",
+        "install_disposition",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "id_list": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "input_selector": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "path"
+            },
+            "path": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "path"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "subtree"
+            },
+            "path": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "path"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "role"
+            },
+            "role": {
+              "enum": [
+                "runtime_source",
+                "contract_schema",
+                "prompt_router",
+                "fixture_reference",
+                "test_dev",
+                "documentation_model"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "role"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "install_disposition": {
+              "enum": [
+                "copy",
+                "source_only",
+                "generate",
+                "exclude"
+              ]
+            },
+            "kind": {
+              "const": "install_disposition"
+            }
+          },
+          "required": [
+            "kind",
+            "install_disposition"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "path_variant": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_ids": {
+          "$ref": "#/$defs/artifact_id_list"
+        },
+        "check_ids": {
+          "$ref": "#/$defs/id_list"
+        },
+        "function_ids": {
+          "$ref": "#/$defs/id_list"
+        },
+        "job_class_ids": {
+          "items": {
+            "enum": [
+              "positive",
+              "invalid_input",
+              "recovery_or_resume",
+              "out_of_scope",
+              "native_check",
+              "artifact_check",
+              "judged_quality"
+            ]
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "obligation_ids": {
+          "$ref": "#/$defs/id_list"
+        },
+        "route_ids": {
+          "$ref": "#/$defs/id_list"
+        },
+        "step_ids": {
+          "$ref": "#/$defs/id_list"
+        },
+        "variant_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "variant_id",
+        "job_class_ids",
+        "function_ids",
+        "route_ids",
+        "step_ids",
+        "obligation_ids",
+        "check_ids",
+        "artifact_ids"
+      ],
+      "type": "object"
+    },
+    "portfolio_target_edge": {
+      "additionalProperties": false,
+      "properties": {
+        "input_selectors": {
+          "items": {
+            "$ref": "#/$defs/input_selector"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "member_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "target_id": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_id",
+        "input_selectors"
+      ],
+      "type": "object"
+    },
+    "projection_consumer": {
+      "additionalProperties": false,
+      "properties": {
+        "consumer_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "input_selectors": {
+          "items": {
+            "$ref": "#/$defs/input_selector"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "kind": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "consumer_id",
+        "kind",
+        "input_selectors"
+      ],
+      "type": "object"
+    },
+    "route_branch_requirement": {
+      "additionalProperties": false,
+      "properties": {
+        "applicability_rules": {
+          "items": {
+            "$ref": "#/$defs/applicability_rule"
+          },
+          "type": "array"
+        },
+        "branch_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "native_route_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "required_obligation_ids": {
+          "$ref": "#/$defs/id_list"
+        }
+      },
+      "required": [
+        "native_route_id",
+        "branch_ids",
+        "required_obligation_ids",
+        "applicability_rules"
+      ],
+      "type": "object"
+    },
+    "wire_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    }
   },
-  "additionalProperties": true
+  "$id": "https://skillguard.local/schemas/skillguard_contract_source_v2.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "artifacts": {
+      "items": {
+        "required": [
+          "artifact_id",
+          "kind",
+          "producer_step_id",
+          "validators"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/check"
+      },
+      "type": "array"
+    },
+    "claim_boundary": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "closure_profiles": {
+      "items": {
+        "$ref": "#/$defs/closure_profile"
+      },
+      "minItems": 1,
+      "maxItems": 1,
+      "type": "array"
+    },
+    "confirmed": {
+      "const": true
+    },
+    "content_impact_policy": {
+      "$ref": "#/$defs/content_impact_policy"
+    },
+    "content_role_overrides": {
+      "items": {
+        "$ref": "#/$defs/content_role_override"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "depth_profile": {
+      "$ref": "skillguard_depth_profile_v2.schema.json"
+    },
+    "implementation_paths": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "judgment_rubrics": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "model_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "model_path": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "portfolio_capability_contracts": {
+      "items": {
+        "$ref": "#/$defs/capability_contract"
+      },
+      "type": "array"
+    },
+    "portfolio_target_edges": {
+      "items": {
+        "$ref": "#/$defs/portfolio_target_edge"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "projection_consumers": {
+      "items": {
+        "$ref": "#/$defs/projection_consumer"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "route_branch_closure_required": {
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "skillguard.contract_source.v2"
+    },
+    "skill_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "step_bindings": {
+      "items": {
+        "required": [
+          "step_id",
+          "action",
+          "check_ids",
+          "output_artifact_ids"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "skill_id",
+    "model_id",
+    "model_path",
+    "confirmed",
+    "content_impact_policy",
+    "step_bindings",
+    "checks",
+    "artifacts",
+    "closure_profiles",
+    "claim_boundary"
+  ],
+  "title": "SkillGuard Contract Binding Source V2",
+  "type": "object"
 }

@@ -16,6 +16,7 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -258,7 +259,7 @@ def checker_change_review_report_for(source_path: Path, **overrides: Any) -> dic
         status="pass",
         blockers=[],
         evidence_timestamp=checked_at,
-        refresh_action={"action": "review_only", "status": "not_applicable"},
+        owner_action={"action": "review_only", "status": "not_applicable"},
         content_seed={"source_path": source_relative, "decision": "pass"},
     )
     report["maintenance_record_schema_version"] = checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION
@@ -275,7 +276,7 @@ def valid_maintenance_record(**overrides: Any) -> dict[str, Any]:
         status="pass",
         blockers=[],
         evidence_timestamp=utc_timestamp(),
-        refresh_action={"action": "detect_only", "status": "not_applicable"},
+        owner_action={"action": "detect_only", "status": "not_applicable"},
         content_seed={"test": "maintenance-record"},
     )
     record.update(overrides)
@@ -330,6 +331,12 @@ class SkillGuardLocalExamplesTest(unittest.TestCase):
         }
 
     def write_minimal_readme_release_repo(self, root: Path, *, version: str, model_text: str) -> None:
+        skill_entrypoint = root / ".agents" / "skills" / "skillguard" / "SKILL.md"
+        skill_entrypoint.parent.mkdir(parents=True)
+        skill_entrypoint.write_text(
+            "---\nname: skillguard\ndescription: Fixture SkillGuard source identity.\n---\n",
+            encoding="utf-8",
+        )
         hero_dir = root / "assets" / "readme-hero"
         hero_dir.mkdir(parents=True)
         (hero_dir / "hero.png").write_bytes(b"0" * 12_000)
@@ -344,7 +351,7 @@ class SkillGuardLocalExamplesTest(unittest.TestCase):
         (hero_dir / "readme_model_evidence.md").write_text(model_text, encoding="utf-8")
         (root / "VERSION").write_text(f"{version}\n", encoding="utf-8")
         (root / "pyproject.toml").write_text(
-            f'[project]\nversion = "{version}"\n\n[tool.skillguard.repository]\nbaseline_version = "{version}"\n',
+            f'[project]\nname = "skillguard"\nversion = "{version}"\n\n[tool.skillguard.repository]\nbaseline_version = "{version}"\n',
             encoding="utf-8",
         )
         (root / "CHANGELOG.md").write_text(f"# Changelog\n\n## v{version} - 2026-06-28\n", encoding="utf-8")
@@ -418,9 +425,93 @@ Read `references/README.md` before closing.
             self.assertIn("references/missing-guide.md: referenced path is missing", failures)
             self.assertEqual(blockers, [])
 
+    def test_former_runtime_references_are_never_optional(self) -> None:
+        from tests._runtime_authority_consumer_fixture import make_current_skill
+
+        with tempfile.TemporaryDirectory(prefix="retired-ref-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            target = Path(tmp)
+            make_current_skill(target, target.name)
+            for reference in (
+                ".skillguard/work-contract.json",
+                ".skillguard/check_manifest.json",
+            ):
+                failures: list[str] = []
+                blockers: list[str] = []
+                entry = checker_engine.validate_reference(
+                    target,
+                    reference,
+                    failures,
+                    blockers,
+                    allow_project_boundary=True,
+                )
+                self.assertEqual("fail", entry.get("status"), entry)
+                self.assertTrue(entry.get("required"), entry)
+                self.assertIn("referenced path is missing", failures[0])
+                self.assertEqual([], blockers)
+
+    def test_current_check_contract_preserves_explicit_repository_root(self) -> None:
+        target = REPO_ROOT / ".agents" / "skills" / "skillguard"
+        report = run_skillguard(
+            "check-contract",
+            "--repository-root",
+            str(REPO_ROOT),
+            "--target",
+            rel(target),
+        )
+        self.assert_clean_pass(report)
+        self.assertEqual("current", report.get("authority_decision"))
+
+    def test_current_check_contract_preserves_standalone_member_paths(self) -> None:
+        from tests._runtime_authority_consumer_fixture import make_current_skill
+
+        with tempfile.TemporaryDirectory(prefix="nested-contract-", dir=REPO_ROOT) as tmp:
+            target_root = Path(tmp)
+            target = target_root / "skills" / "nested-current"
+            make_current_skill(target, "nested-current")
+            report = run_skillguard(
+                "check-contract",
+                "--repository-root",
+                str(target),
+                "--target",
+                ".",
+            )
+
+        self.assert_clean_pass(report)
+        self.assertEqual("current", report.get("authority_decision"))
+
+    def test_installed_check_contract_consumes_current_trio_without_source_only_model(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="installed-contract-", dir=REPO_ROOT) as tmp:
+            skills_root = Path(tmp) / ".codex" / "skills"
+            target = skills_root / "skillguard"
+            source = REPO_ROOT / ".agents" / "skills" / "skillguard"
+            target.joinpath(".skillguard").mkdir(parents=True)
+            shutil.copy2(source / "SKILL.md", target / "SKILL.md")
+            for name in (
+                "contract-source.json",
+                "compiled-contract.json",
+                "check-manifest.json",
+            ):
+                shutil.copy2(source / ".skillguard" / name, target / ".skillguard" / name)
+            report = run_skillguard(
+                "check-contract",
+                "--repository-root",
+                str(skills_root),
+                "--target",
+                "skillguard",
+            )
+
+        self.assert_clean_pass(report)
+        self.assertEqual("current", report.get("authority_decision"))
+        self.assertEqual("installed-current-authority", report.get("verification_scope"))
+        self.assertEqual(
+            "check-contract:installed-current-authority",
+            report["checks"][0]["check_id"],
+        )
+
     def test_source_layout_references_map_to_installed_target_layout(self) -> None:
         with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
-            target = Path(tmp)
+            target = Path(tmp) / ".codex" / "skills" / "installed-layout"
+            target.mkdir(parents=True)
             skill = target / "SKILL.md"
             skill.write_text("installed entrypoint\n", encoding="utf-8")
             reference = f".agents/skills/{target.name}/SKILL.md"
@@ -429,9 +520,9 @@ Read `references/README.md` before closing.
 
     def test_record_references_map_to_installed_target_layout(self) -> None:
         with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
-            target = Path(tmp)
+            target = Path(tmp) / ".codex" / "skills" / "installed-layout"
             control_root = target / ".skillguard"
-            control_root.mkdir()
+            control_root.mkdir(parents=True)
             skill = target / "SKILL.md"
             skill.write_text("installed entrypoint\n", encoding="utf-8")
             reference = f".agents/skills/{target.name}/SKILL.md"
@@ -442,6 +533,7 @@ Read `references/README.md` before closing.
         with tempfile.TemporaryDirectory(prefix="installed-layout-", dir=REPO_ROOT) as tmp:
             target = Path(tmp)
             target.mkdir(exist_ok=True)
+            (target / "SKILL.md").write_text("---\nname: fixture\ndescription: fixture\n---\n", encoding="utf-8")
             reference = f".agents/skills/{target.name}"
 
             self.assertTrue(checker_engine.contract_target_matches_target(reference, target))
@@ -465,7 +557,13 @@ Read `references/README.md` before closing.
             checker_engine.skill_root = original_skill
 
     def test_single_skill_example_command(self) -> None:
-        report = run_skillguard("check-skill", "--target", ".agents/skills/skillguard/fixtures/good_single_skill")
+        report = run_skillguard(
+            "check-skill",
+            "--repository-root",
+            str(REPO_ROOT),
+            "--target",
+            ".agents/skills/skillguard/fixtures/good_single_skill",
+        )
         self.assert_clean_pass(report)
         self.assertEqual(report.get("target_path"), ".agents/skills/skillguard/fixtures/good_single_skill")
 
@@ -494,11 +592,11 @@ Read `references/README.md` before closing.
             "--manifest",
             ".agents/skills/skillguard/fixtures/runtime_contract/fixture-manifest.json",
             "--fixture-id",
-            "good_native_integrated_contract",
+            "former-runtime-authority-blocked",
         )
         self.assert_clean_pass(selected_fixture)
         self.assertEqual(len(selected_fixture.get("fixture_results", [])), 1)
-        self.assertEqual(selected_fixture["fixture_results"][0].get("fixture_id"), "good_native_integrated_contract")
+        self.assertEqual(selected_fixture["fixture_results"][0].get("fixture_id"), "former-runtime-authority-blocked")
 
         missing_fixture = run_skillguard(
             "fixture-test",
@@ -520,7 +618,6 @@ Read `references/README.md` before closing.
         self.assertTrue(happy.get("deterministic_repeat_checked"))
         self.assertEqual(happy.get("generation_validation", {}).get("check_maintenance_record_decision"), "pass")
         self.assertEqual(happy.get("generation_validation", {}).get("detect_stale_evidence_decision"), "pass")
-        self.assertEqual(happy.get("generation_validation", {}).get("refresh_maintenance_decision"), "pass")
         self.assertEqual(generation_results["generate_skill_existing_user_file_blocks"].get("observed_decision"), "block")
 
         complex_generation = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json")
@@ -533,14 +630,13 @@ Read `references/README.md` before closing.
         self.assertTrue(complex_happy.get("deterministic_repeat_checked"))
         self.assertEqual(complex_happy.get("generation_validation", {}).get("check_maintenance_record_decision"), "pass")
         self.assertEqual(complex_happy.get("generation_validation", {}).get("detect_stale_evidence_decision"), "pass")
-        self.assertEqual(complex_happy.get("generation_validation", {}).get("refresh_maintenance_decision"), "pass")
         self.assertEqual(complex_happy.get("generation_validation", {}).get("public_boundary_problem_count"), 0)
         self.assertEqual(complex_results["generate_skill_complex_missing_description_blocks"].get("observed_decision"), "block")
         self.assertEqual(complex_results["generate_skill_complex_corrupted_output_fails"].get("observed_decision"), "fail")
 
         bad_static = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/bad_static/fixture-manifest.json")
         self.assert_clean_pass(bad_static)
-        self.assertEqual(bad_static.get("fixture_class_counts", {}).get("expected_fail"), 3)
+        self.assertEqual(bad_static.get("fixture_class_counts", {}).get("blocker_condition"), 3)
 
         bad_suite = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/bad_suite_stale/fixture-manifest.json")
         self.assert_clean_pass(bad_suite)
@@ -548,7 +644,7 @@ Read `references/README.md` before closing.
 
         deep_contract = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/deep_contract/fixture-manifest.json")
         self.assert_clean_pass(deep_contract)
-        self.assertEqual(deep_contract.get("fixture_class_counts", {}).get("expected_fail"), 4)
+        self.assertEqual(deep_contract.get("fixture_class_counts", {}).get("blocker_condition"), 3)
 
         bad_routing = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json")
         self.assert_clean_pass(bad_routing)
@@ -588,50 +684,22 @@ Read `references/README.md` before closing.
         self.assertEqual(global_router.get("fixture_class_counts", {}).get("blocker_condition"), 5)
         self.assertEqual(global_router_before, {path: sha256(path) for path in global_router_evidence})
 
-    def test_check_depth_rejects_incomplete_latest_run_record(self) -> None:
+    def test_check_depth_blocks_former_authority_before_reading_old_run(self) -> None:
         source = REPO_ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "deep_contract" / "bad_missing_run_record"
-        with tempfile.TemporaryDirectory(prefix="deep-incomplete-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
-            target = Path(tmp) / "bad_incomplete"
+        with tempfile.TemporaryDirectory(prefix="former-authority-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+            target = Path(tmp) / "former-authority"
             shutil.copytree(source, target)
-            contract_path = target / ".skillguard" / "work-contract.json"
-            contract = json.loads(contract_path.read_text(encoding="utf-8"))
-            contract["target_path"] = rel(target)
-            contract["contract_hash"] = checker_engine.work_contract_hash(contract)
-            write_json(contract_path, contract)
 
-            runs_dir = target / ".skillguard" / "runs"
-            runs_dir.mkdir()
-            write_json(
-                runs_dir / "run-incomplete.json",
-                {
-                    "schema_version": "skillguard.run_record.v1",
-                    "run_id": "run-incomplete",
-                    "target_skill": rel(target),
-                    "selected_route": "audit",
-                    "current_phase": "intake",
-                    "closure_decision": "not_requested",
-                    "contract_ref": {
-                        "contract_hash": "BAD_HASH",
-                        "contract_path": rel(contract_path),
-                        "contract_version": "bad-missing-run-1",
-                    },
-                    "phase_statuses": [{"phase_id": "intake", "status": "running"}],
-                    "commands_run": [],
-                    "evidence": [],
-                    "skipped_checks": [],
-                    "quality_failures": [],
-                    "blockers": [],
-                    "claim_boundary": "Incomplete run fixture.",
-                    "task_summary": "Incomplete run should not satisfy deep contract closure.",
-                },
+            report = run_skillguard(
+                "check-depth",
+                "--target",
+                rel(target),
+                expected_exit=1,
             )
 
-            report = run_skillguard("check-depth", "--target", rel(target), expected_exit=1)
-            self.assertEqual(report.get("decision"), "fail")
-            self.assertEqual(report.get("depth_classification"), "stale-run-evidence")
-            failures = "\n".join(report.get("failures", []))
-            self.assertIn("latest run record is not closed with accepted evidence", failures)
-            self.assertIn("latest run record phase intake is running, not checked", failures)
+            self.assertEqual("block", report.get("decision"))
+            self.assertEqual("blocked", report.get("authority_decision"))
+            self.assertIn("former_runtime_residual", report.get("blockers", []))
 
     def test_self_check_example_command(self) -> None:
         report = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
@@ -707,18 +775,24 @@ Read `references/README.md` before closing.
         self.assertIn("refresh-global-router", names)
         self.assertIn("audit-installed-skills", names)
         self.assertIn("detect-stale-evidence", names)
-        self.assertIn("refresh-maintenance", names)
+        self.assertNotIn("refresh-maintenance", names)
         self.assertIn("review-checker-change", names)
         self.assertIn("check-maintenance-record", names)
-        self.assertIn("compile-contract", names)
         self.assertIn("check-contract", names)
         self.assertIn("check-depth", names)
         self.assertIn("check-readme-release", names)
-        self.assertIn("select-route", names)
-        self.assertIn("start-run", names)
-        self.assertIn("advance-run", names)
-        self.assertIn("check-run", names)
-        self.assertIn("close-run", names)
+        for former_command in (
+            "compile-contract",
+            "select-route",
+            "start-run",
+            "advance-run",
+            "check-run",
+            "close-run",
+            "check-skill-contract",
+        ):
+            self.assertNotIn(former_command, names)
+        self.assertIn("capture-portfolio-production-revalidation", names)
+        self.assertIn("graduate-portfolio", names)
 
     def test_check_readme_release_current_repo_passes(self) -> None:
         report = run_skillguard("check-readme-release", "--repo", ".")
@@ -797,6 +871,12 @@ This LogicGuard-backed capability model is for `v0.1.4`.
     def test_check_readme_release_blocks_missing_chinese_mirror(self) -> None:
         with tempfile.TemporaryDirectory(prefix="skillguard-readme-release-", dir=REPO_ROOT) as tmp:
             tmp_root = Path(tmp)
+            skill_entrypoint = tmp_root / ".agents" / "skills" / "skillguard" / "SKILL.md"
+            skill_entrypoint.parent.mkdir(parents=True)
+            skill_entrypoint.write_text(
+                "---\nname: skillguard\ndescription: Fixture SkillGuard source identity.\n---\n",
+                encoding="utf-8",
+            )
             hero_dir = tmp_root / "assets" / "readme-hero"
             hero_dir.mkdir(parents=True)
             (hero_dir / "hero.png").write_bytes(b"0" * 12_000)
@@ -814,7 +894,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             )
             (tmp_root / "VERSION").write_text("0.1.4\n", encoding="utf-8")
             (tmp_root / "pyproject.toml").write_text(
-                '[project]\nversion = "0.1.4"\n\n[tool.skillguard.repository]\nbaseline_version = "0.1.4"\n',
+                '[project]\nname = "skillguard"\nversion = "0.1.4"\n\n[tool.skillguard.repository]\nbaseline_version = "0.1.4"\n',
                 encoding="utf-8",
             )
             (tmp_root / "CHANGELOG.md").write_text("# Changelog\n\n## v0.1.4 - 2026-06-28\n", encoding="utf-8")
@@ -850,192 +930,39 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             )
 
     def test_audit_installed_skills_separates_local_coverage_from_github_publication(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="skillguard-installed-local-only-") as tmp:
-            codex_home = Path(tmp)
-            skills_root = codex_home / "skills"
+        from tests._runtime_authority_consumer_fixture import make_current_skill
+
+        with tempfile.TemporaryDirectory(prefix="skillguard-local-audit-", dir=REPO_ROOT) as tmp:
+            skills_root = Path(tmp) / "skills"
             target = skills_root / "local-only-skill"
-            checks_dir = target / ".skillguard" / "checks"
-            checks_dir.mkdir(parents=True)
-            skill_text = "\n".join(
-                [
-                    "---",
-                    "name: local-only-skill",
-                    "description: Use for local installed audit publication boundary tests.",
-                    "---",
-                    "",
-                    "# Purpose",
-                    "Audit local installed skill coverage without claiming GitHub publication.",
-                    "",
-                    "## Use When",
-                    "- Use when a local installed skill must be audited.",
-                    "",
-                    "## Required Workflow",
-                    "- Read the target route and run the required check before closure.",
-                    "",
-                    "## Hard Gates",
-                    "- Do not claim GitHub publication from local installed coverage.",
-                    "",
-                ]
-            )
-            (target / "SKILL.md").write_text(skill_text, encoding="utf-8")
-            (checks_dir / "check_route.py").write_text("print('ok')\n", encoding="utf-8")
-            check_ids = ["check_route"]
-            deep_fields = checker_engine.default_deep_contract_fields(target, check_ids, skill_text=skill_text)
-            for row in deep_fields.get("coverage_matrix", []):
-                row["check_ids"] = check_ids
-                row["native_check_binding_ids"] = ["native-check-binding"]
-                row["evidence_ids"] = ["task_summary"]
-            for obligation in deep_fields.get("acceptance_obligations", []):
-                obligation["covered_by_checks"] = check_ids
-                obligation["native_check_binding_ids"] = ["native-check-binding"]
-            for skill_check in deep_fields.get("skill_specific_checks", []):
-                skill_check["check_manifest_ids"] = check_ids
-                skill_check["native_check_binding_ids"] = ["native-check-binding"]
-            for gap in deep_fields.get("test_gap_plan", []):
-                gap["planned_check_ids"] = check_ids
-            deep_fields["run_record_required"] = False
-            deep_fields["not_parallel_route_proof"] = {
-                "proof_id": "local_only.native.no_parallel_route",
-                "summary": "Local-only fixture binds SkillGuard checks to the target-owned native route.",
-                "native_route_binding_ids": ["native-audit-binding"],
-                "evidence_source": "local-only fixture contract",
-            }
-            contract = {
-                "schema_version": "skillguard.work_contract.v1",
-                "contract_version": "local-only-audit-1",
-                "skill_id": "local-only-skill",
-                "target_path": "skills/local-only-skill",
-                "integration_mode": "native-integrated",
-                "skillguard_role": "native_contract_executor",
-                "native_route_owner": "local-only.native",
-                "may_define_parallel_execution_route": False,
-                "may_define_skillguard_runtime_route": False,
-                "integration_claim_boundary": "Local-only audit fixture.",
-                "native_route_bindings": [
-                    {
-                        "binding_id": "native-audit-binding",
-                        "native_route_id": "native.audit",
-                        "source": "fixture native route",
-                        "required_before_closure": True,
-                    }
-                ],
-                "native_check_bindings": [
-                    {
-                        "binding_id": "native-check-binding",
-                        "native_check_id": "native.check",
-                        "evidence_source": "fixture native check",
-                        "required": True,
-                    }
-                ],
-                "phase_native_bindings": [
-                    {
-                        "phase_id": "intake",
-                        "native_route_binding_id": "native-audit-binding",
-                        "native_check_binding_ids": ["native-check-binding"],
-                        "evidence_source": "fixture native route/check evidence",
-                        "required": True,
-                    }
-                ],
-                "routes": [
-                    {
-                        "route_id": "audit",
-                        "route_source": "native_binding",
-                        "phase_order": ["intake"],
-                        "activation_keywords": ["audit"],
-                        "do_not_use_when": ["Task is outside the local-only audit route."],
-                        "summary": "Execute native audit route with SkillGuard gates.",
-                    }
-                ],
-                "phases": [
-                    {
-                        "phase_id": "intake",
-                        "summary": "Confirm native audit route.",
-                        "required_evidence": ["task_summary"],
-                        "required_checks": check_ids,
-                        "allowed_next": [],
-                    }
-                ],
-                "required_evidence": [
-                    {
-                        "evidence_id": "task_summary",
-                        "kind": "task_record",
-                        "phase_id": "intake",
-                        "source": ".skillguard/runs/",
-                        "required": True,
-                    }
-                ],
-                "check_scripts": [
-                    {
-                        "check_id": "check_route",
-                        "phase_id": "intake",
-                        "command": "python .skillguard/checks/check_route.py",
-                        "script_path": ".skillguard/checks/check_route.py",
-                        "required": True,
-                        "failure_class": "route",
-                    }
-                ],
-                "closure_rules": [
-                    {
-                        "rule_id": "accepted_requires_check",
-                        "required_checks": check_ids,
-                        "required_evidence": ["task_summary"],
-                        "allowed_decision": "accepted",
-                        "scope": "local-only fixture",
-                    }
-                ],
-                "quality_floors": [
-                    {
-                        "floor_id": "no_publication_overclaim",
-                        "required_checks": check_ids,
-                        "failure_effect": "block closure",
-                        "summary": "Local installed coverage must not imply GitHub publication.",
-                    }
-                ],
-                "forbidden_shortcuts": [
-                    {
-                        "shortcut_id": "publication_overclaim",
-                        "summary": "Do not claim GitHub publication from local installed coverage.",
-                    }
-                ],
-                "stale_bindings": [],
-                "claim_boundary": "Local-only audit fixture.",
-            }
-            contract.update(deep_fields)
-            contract["contract_hash"] = checker_engine.work_contract_hash(contract)
-            write_json(target / ".skillguard" / "work-contract.json", contract)
-            write_json(
-                target / ".skillguard" / "check_manifest.json",
-                {
-                    "schema_version": "skillguard.check_manifest.v1",
-                    "target_skill": "skills/local-only-skill",
-                    "contract_ref": "skills/local-only-skill/.skillguard/work-contract.json",
-                    "checks": [
-                        {
-                            "check_id": "check_route",
-                            "phase_id": "intake",
-                            "command": "python .skillguard/checks/check_route.py",
-                            "required": True,
-                            "failure_class": "route",
-                            "inputs": [".skillguard/work-contract.json"],
-                        }
-                    ],
-                    "output_schema": "skillguard.cli_result.v1",
-                    "freshness": {"watch": ["SKILL.md", ".skillguard/work-contract.json"]},
-                    "claim_boundary": "Local-only fixture check manifest.",
-                },
+            make_current_skill(target, "local-only-skill")
+
+            report = run_skillguard(
+                "audit-installed-skills",
+                "--root",
+                str(skills_root),
+                expected_exit=1,
             )
 
-            report = run_skillguard("audit-installed-skills", "--root", str(skills_root))
-
-            self.assert_clean_pass(report)
             rows = report.get("skill_results", [])
-            self.assertEqual(len(rows), 1, rows)
+            self.assertEqual(1, len(rows), rows)
             row = rows[0]
-            self.assertEqual(row.get("decision"), "pass")
-            self.assertEqual(row.get("depth_classification"), "deep-pass")
-            self.assertEqual(row.get("publication_status"), "not-a-git-repo")
+            self.assertEqual("current", row.get("authority_decision"))
+            self.assertEqual("not-a-git-repo", row.get("publication_status"))
             self.assertIs(row.get("github_publication_checked"), False)
-            self.assertIn("Local installed skill coverage only", row.get("claim_boundary", ""))
+            self.assertNotEqual("published", row.get("publication_status"))
+            self.assertFalse(
+                any(
+                    marker in failure
+                    for marker in (
+                        "flowguard_model_missing",
+                        "implementation_path_invalid",
+                        "stale_generated_contract",
+                    )
+                    for failure in row.get("failures", [])
+                ),
+                row.get("failures", []),
+            )
 
     def test_global_route_score_prefers_readme_skill_for_readme_task(self) -> None:
         task = "用 README 技能给 SkillGuard 写发布 README，中英双语，文生图 hero"
@@ -1091,175 +1018,65 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                     encoding="utf-8",
                 )
 
-            def write_native_contract(skill_dir: Path, *, valid: bool) -> None:
+            def compile_current_authority(skill_dir: Path) -> None:
                 control = skill_dir / ".skillguard"
-                checks = control / "checks"
-                checks.mkdir(parents=True, exist_ok=True)
-                checks.joinpath("check_route.py").write_text("print('native fixture check')\n", encoding="utf-8")
-                contract = {
-                    "schema_version": "skillguard.work_contract.v1",
-                    "contract_version": "native-router-fixture-1",
-                    "skill_id": skill_dir.name,
-                    "target_path": rel(skill_dir),
-                    "integration_mode": "native-integrated",
-                    "skillguard_role": "native_contract_executor",
-                    "native_route_owner": "native-router.fixture",
-                    "may_define_parallel_execution_route": False,
-                    "may_define_skillguard_runtime_route": False if valid else True,
-                    "integration_claim_boundary": "SkillGuard only records the native route handoff for this fixture.",
-                    "native_route_bindings": [
-                        {
-                            "binding_id": "native-audit-binding",
-                            "native_route_id": "native.audit",
-                            "source": "target native route registry",
-                            "required_before_closure": True,
-                        }
-                    ]
-                    if valid
-                    else [],
-                    "native_check_bindings": [
-                        {
-                            "binding_id": "native-check-binding",
-                            "native_check_id": "native.checks.current",
-                            "evidence_source": "target native check output",
-                            "required": True,
-                        }
-                    ]
-                    if valid
-                    else [],
-                    "phase_native_bindings": [
-                        {
-                            "phase_id": "intake",
-                            "native_route_binding_id": "native-audit-binding",
-                            "native_check_binding_ids": ["native-check-binding"],
-                            "evidence_source": "target native route/check phase evidence",
-                            "required": True,
-                        }
-                    ]
-                    if valid
-                    else [],
-                    "routes": [
-                        {
-                            "route_id": "audit",
-                            "route_source": "native_binding",
-                            "phase_order": ["intake"],
-                            "activation_keywords": ["audit", "native"],
-                            "do_not_use_when": ["Task is outside the native audit route."],
-                            "summary": "Execute the native audit route with SkillGuard contract gates.",
-                        }
-                    ],
-                    "phases": [
-                        {
-                            "phase_id": "intake",
-                            "summary": "Confirm target, native route binding, and closure scope.",
-                            "required_evidence": ["task_summary"],
-                            "required_checks": ["check_route"],
-                            "allowed_next": [],
-                        }
-                    ],
-                    "required_evidence": [
-                        {
-                            "evidence_id": "task_summary",
-                            "kind": "task_record",
-                            "phase_id": "intake",
-                            "source": ".skillguard/runs/",
-                            "required": True,
-                        }
-                    ],
-                    "check_scripts": [
-                        {
-                            "check_id": "check_route",
-                            "phase_id": "intake",
-                            "command": "python .skillguard/checks/check_route.py",
-                            "script_path": ".skillguard/checks/check_route.py",
-                            "required": True,
-                            "failure_class": "route",
-                        }
-                    ],
-                    "closure_rules": [
-                        {
-                            "rule_id": "accepted_requires_native_binding",
-                            "required_checks": ["check_route"],
-                            "required_evidence": ["task_summary"],
-                            "allowed_decision": "accepted",
-                            "scope": "declared native route scope only",
-                        }
-                    ],
-                    "quality_floors": [
-                        {
-                            "floor_id": "native_route_not_shadowed",
-                            "required_checks": ["check_route"],
-                            "failure_effect": "block closure",
-                            "summary": "Native route work must use the declared native route binding.",
-                        }
-                    ],
-                    "forbidden_shortcuts": [
-                        {
-                            "shortcut_id": "shadow_native_route",
-                            "summary": "Do not replace the target-owned native route with a duplicate SkillGuard-owned execution path.",
-                        }
-                    ],
-                    "stale_bindings": [
-                        {
-                            "binding_id": "target_skill_prompt",
-                            "path": "SKILL.md",
-                            "stales": ["route_selection", "closure_report"],
-                        }
-                    ],
-                    "claim_boundary": "This fixture contract covers only local native-route registry tests.",
-                }
-                deep_fields = checker_engine.default_deep_contract_fields(skill_dir, ["check_route"])
-                for row in deep_fields.get("coverage_matrix", []):
-                    row["check_ids"] = ["check_route"]
-                    row["evidence_ids"] = ["task_summary"]
-                for gap in deep_fields.get("test_gap_plan", []):
-                    gap["planned_check_ids"] = ["check_route"]
-                if valid:
-                    deep_fields["not_parallel_route_proof"] = {
-                        "proof_id": "fixture.native.no_parallel_route",
-                        "summary": "Fixture native contract binds SkillGuard checks to the target-owned native route.",
-                        "native_route_binding_ids": ["native-audit-binding"],
-                        "evidence_source": "fixture native route contract",
-                    }
-                    deep_fields["run_record_required"] = False
-                contract.update(deep_fields)
-                contract["contract_hash"] = checker_engine.work_contract_hash(contract)
-                write_json(control / "work-contract.json", contract)
+                control.mkdir(parents=True, exist_ok=True)
+                scripts = skill_dir / "scripts"
+                scripts.mkdir(parents=True, exist_ok=True)
+                scripts.joinpath("run_checks.py").write_text(
+                    "print('{\"decision\": \"pass\"}')\n",
+                    encoding="utf-8",
+                )
+                model_source, binding = checker_engine.generated_current_contract_sources(
+                    skill_dir.name
+                )
+                control.joinpath("flowguard_contract_model.py").write_text(
+                    model_source,
+                    encoding="utf-8",
+                )
+                write_json(control / "contract-source.json", binding)
+                result = checker_engine.compile_skill_contract(
+                    skill_dir,
+                    repository_root=skill_dir,
+                    write=True,
+                )
+                self.assertTrue(
+                    result.ok,
+                    [finding.to_dict() for finding in result.findings],
+                )
+
+            def write_former_contract_rejection(skill_dir: Path) -> None:
+                control = skill_dir / ".skillguard"
+                control.mkdir(parents=True, exist_ok=True)
+                write_json(
+                    control / "work-contract.json",
+                    {
+                        "schema_version": "skillguard.work_contract.v1",
+                        "skill_id": skill_dir.name,
+                    },
+                )
                 write_json(
                     control / "check_manifest.json",
                     {
                         "schema_version": "skillguard.check_manifest.v1",
                         "target_skill": rel(skill_dir),
-                        "contract_ref": f"{rel(skill_dir)}/.skillguard/work-contract.json",
-                        "checks": [
-                            {
-                                "check_id": "check_route",
-                                "phase_id": "intake",
-                                "command": "python .skillguard/checks/check_route.py",
-                                "required": True,
-                                "failure_class": "route",
-                                "inputs": [".skillguard/work-contract.json", ".skillguard/runs/"],
-                            }
-                        ],
-                        "output_schema": "skillguard.cli_result.v1",
-                        "freshness": {"watch": ["SKILL.md", ".skillguard/work-contract.json", ".skillguard/check_manifest.json"]},
-                        "claim_boundary": "Fixture check manifest for native-route registry tests only.",
+                        "checks": [],
                     },
                 )
 
             write_skill(extra_root / "fixture-missing-contract", "fixture-missing-contract", "Use for fixture missing contract global router tests.")
             write_skill(extra_root / "skillguard", "skillguard", "Use for fixture SkillGuard activation boundary audit tests.")
-            self.assert_clean_pass(run_skillguard("compile-contract", "--target", rel(extra_root / "skillguard"), "--write"))
+            compile_current_authority(extra_root / "skillguard")
             write_skill(
                 extra_root / "skillguard-global-router",
                 "skillguard-global-router",
                 "Use for fixture global router registry prompt refresh tests.",
             )
-            self.assert_clean_pass(run_skillguard("compile-contract", "--target", rel(extra_root / "skillguard-global-router"), "--write"))
-            write_skill(extra_root / "fixture-native-route", "fixture-native-route", "Use for fixture native route global router tests.")
-            write_native_contract(extra_root / "fixture-native-route", valid=True)
-            write_skill(extra_root / "fixture-native-shadow", "fixture-native-shadow", "Use for fixture native shadow global router tests.")
-            write_native_contract(extra_root / "fixture-native-shadow", valid=False)
+            compile_current_authority(extra_root / "skillguard-global-router")
+            write_skill(extra_root / "fixture-former-one", "fixture-former-one", "Exact former-authority rejection fixture.")
+            write_former_contract_rejection(extra_root / "fixture-former-one")
+            write_skill(extra_root / "fixture-former-two", "fixture-former-two", "Second exact former-authority rejection fixture.")
+            write_former_contract_rejection(extra_root / "fixture-former-two")
 
             refresh = run_skillguard(
                 "refresh-global-router",
@@ -1272,25 +1089,56 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             )
             self.assert_clean_pass(refresh)
             self.assertEqual(refresh.get("target_path"), rel(output_dir))
-            self.assertGreaterEqual(refresh.get("current_item_count", 0), 3)
+            self.assertEqual(2, refresh.get("current_item_count", 0), refresh)
             self.assertTrue((codex_home / "AGENTS.md").is_file())
             self.assertTrue(registry.is_file())
+
+            default_codex_home = workspace / "default_codex_home"
+            default_refresh = run_skillguard(
+                "refresh-global-router",
+                "--skill-root",
+                rel(extra_root),
+                "--codex-home",
+                rel(default_codex_home),
+            )
+            self.assert_clean_pass(default_refresh)
+            default_output_dir = (
+                default_codex_home / ".skillguard" / "global-router"
+            )
+            self.assertEqual(
+                default_refresh.get("target_path"), rel(default_output_dir)
+            )
+            self.assertTrue(
+                (default_output_dir / "global_registry.json").is_file()
+            )
 
             registry_check = run_skillguard("check-global-registry", "--registry", rel(registry))
             self.assert_clean_pass(registry_check)
             self.assertEqual(registry_check.get("registry_hash"), refresh.get("registry_hash"))
             registry_payload = json.loads(registry.read_text(encoding="utf-8"))
             entries = {item.get("skill_id"): item for item in registry_payload.get("items", [])}
-            self.assertEqual(entries["fixture-missing-contract"].get("status"), "missing_contract")
-            self.assertEqual(entries["fixture-native-shadow"].get("status"), "invalid_contract")
-            native_entrypoint = entries["fixture-native-route"].get("route_entrypoint", {})
-            self.assertEqual(entries["fixture-native-route"].get("status"), "current")
-            self.assertEqual(native_entrypoint.get("integration_mode"), "native-integrated")
-            self.assertEqual(native_entrypoint.get("route_confidence"), "native-bound")
-            self.assertEqual(native_entrypoint.get("native_route_owner"), "native-router.fixture")
-            self.assertTrue(native_entrypoint.get("native_route_bindings"))
-            self.assertTrue(native_entrypoint.get("native_check_bindings"))
-            self.assertTrue(native_entrypoint.get("phase_native_bindings"))
+            self.assertEqual(entries["fixture-missing-contract"].get("status"), "blocked")
+            unmanaged_entrypoint = entries["fixture-missing-contract"].get("route_entrypoint", {})
+            self.assertEqual(unmanaged_entrypoint.get("contract_authority"), "missing")
+            self.assertEqual(unmanaged_entrypoint.get("route_confidence"), "blocked")
+            self.assertIn(
+                "global route has no usable typed runtime authority",
+                checker_engine.global_candidate_handoff_blockers(unmanaged_entrypoint),
+            )
+            self.assertEqual(
+                entries["skillguard"].get("route_entrypoint", {}).get("authority_decision"),
+                "current",
+            )
+            self.assertEqual(
+                entries["skillguard-global-router"].get("route_entrypoint", {}).get("authority_decision"),
+                "current",
+            )
+            for skill_id in ("fixture-former-one", "fixture-former-two"):
+                self.assertNotEqual("current", entries[skill_id].get("status"))
+                self.assertEqual(
+                    "blocked",
+                    entries[skill_id].get("route_entrypoint", {}).get("authority_decision"),
+                )
 
             prompt_check = run_skillguard("check-global-prompt", "--registry", rel(registry), "--codex-home", rel(codex_home))
             self.assert_clean_pass(prompt_check)
@@ -1299,6 +1147,37 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertIn("do not make it a mandatory pre-execution gate for every skill invocation", managed_prompt)
             self.assertIn("Handoff order: select the target skill from the registry when selection help is needed", managed_prompt)
             self.assertNotIn("Before using a Codex skill", managed_prompt)
+
+            tampered_prompt_home = workspace / "tampered_prompt_home"
+            tampered_prompt_home.mkdir(parents=True)
+            typed_authority_rule = (
+                "- Handoff order: select the target skill from the registry when "
+                "selection help is needed and read its `SKILL.md`; a current route "
+                "uses `.skillguard/contract-source.json`, "
+                "`.skillguard/compiled-contract.json`, and the exact "
+                "`.skillguard/check-manifest.json`. Every non-current authority is "
+                "`blocked` and has no alternate success route."
+            )
+            tampered_prompt_home.joinpath("AGENTS.md").write_text(
+                managed_prompt.replace(typed_authority_rule, ""),
+                encoding="utf-8",
+            )
+            tampered_prompt = run_skillguard(
+                "check-global-prompt",
+                "--registry",
+                rel(registry),
+                "--codex-home",
+                rel(tampered_prompt_home),
+                expected_exit=1,
+            )
+            self.assertEqual(tampered_prompt.get("decision"), "fail")
+            self.assertTrue(
+                any(
+                    "exact canonical template projection" in item
+                    for item in tampered_prompt.get("failures", [])
+                ),
+                tampered_prompt,
+            )
 
             router_route = run_skillguard(
                 "resolve-global-skill",
@@ -1324,30 +1203,17 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assert_clean_pass(skillguard_route)
             self.assertEqual(skillguard_route.get("routing_decision", {}).get("skill_id"), "skillguard")
 
-            native_route = run_skillguard(
+            blocked_former_route = run_skillguard(
                 "resolve-global-skill",
                 "--registry",
                 rel(registry),
                 "--task",
-                "Use fixture-native-route audit work with native route handoff",
-            )
-            self.assert_clean_pass(native_route)
-            self.assertEqual(native_route.get("routing_decision", {}).get("skill_id"), "fixture-native-route")
-            self.assertEqual(native_route.get("routing_decision", {}).get("integration_mode"), "native-integrated")
-            self.assertTrue(native_route.get("routing_decision", {}).get("native_route_bindings"))
-            self.assertTrue(native_route.get("routing_decision", {}).get("phase_native_bindings"))
-
-            invalid_native_route = run_skillguard(
-                "resolve-global-skill",
-                "--registry",
-                rel(registry),
-                "--task",
-                "Use fixture-native-shadow audit work with native route handoff",
+                "Use fixture-former-one",
                 "--route-hint",
-                "fixture-native-shadow",
+                "fixture-former-one",
                 expected_exit=1,
             )
-            self.assertEqual(invalid_native_route.get("decision"), "block")
+            self.assertEqual(blocked_former_route.get("decision"), "block")
 
             missing_prompt_home = workspace / "missing_prompt_home"
             missing_prompt_home.mkdir(parents=True)
@@ -1405,237 +1271,84 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertEqual(blockers, [])
             self.assertEqual([skills_root.resolve(), plugin_root.resolve()], roots)
 
-    def test_runtime_contract_command_family_enforces_route_run_and_closure_gates(self) -> None:
-        source_target = REPO_ROOT / ".agents" / "skills" / "skillguard"
-        workspace = Path(tempfile.mkdtemp(prefix="skillguard-legacy-runtime-", dir=REPO_ROOT))
-        self.addCleanup(shutil.rmtree, workspace, True)
-        target = workspace / "skillguard"
-        target.mkdir()
-        shutil.copy2(source_target / "SKILL.md", target / "SKILL.md")
-        shutil.copytree(source_target / ".skillguard" / "checks", target / ".skillguard" / "checks")
-        contract = target / ".skillguard" / "work-contract.json"
-        manifest = target / ".skillguard" / "check_manifest.json"
-        compiled = run_skillguard("compile-contract", "--target", rel(target), "--dry-run")
-        self.assert_clean_pass(compiled)
-        self.assertEqual(compiled.get("compiled_contract", {}).get("integration_mode"), "skillguard-runtime")
-        self.assertFalse(compiled.get("compiled_contract", {}).get("may_define_parallel_execution_route"))
-        self.assertTrue(compiled.get("compiled_contract", {}).get("may_define_skillguard_runtime_route"))
-        write_json(contract, compiled["compiled_contract"])
-        write_json(manifest, compiled["compiled_check_manifest"])
-
-        fixture_root = source_target / "fixtures" / "runtime_contract"
-        run_root = target / "fixtures" / "runtime_contract" / "runs"
-        contract_root = target / "fixtures" / "runtime_contract" / "contracts"
-        run_root.mkdir(parents=True)
-        contract_root.mkdir(parents=True)
-
-        def migrated_run(name: str) -> Path:
-            payload = json.loads((fixture_root / "runs" / name).read_text(encoding="utf-8"))
-            payload["target_skill"] = rel(target)
-            payload["contract_ref"] = {
-                "contract_path": rel(contract),
-                "contract_version": compiled["compiled_contract"]["contract_version"],
-                "contract_hash": compiled["compiled_contract"]["contract_hash"],
-            }
-            path = run_root / name
-            write_json(path, payload)
-            return path
-
-        def migrated_contract(name: str) -> Path:
-            payload = json.loads((fixture_root / "contracts" / name).read_text(encoding="utf-8"))
-            payload["target_path"] = rel(target)
-            payload["contract_hash"] = checker_engine.work_contract_hash(payload)
-            path = contract_root / name
-            write_json(path, payload)
-            return path
-
-        good_run = migrated_run("good_run.json")
-        quality_run = migrated_run("quality_failure_run.json")
-        overclaim_run = migrated_run("overclaim_run.json")
-        hollow_contract = migrated_contract("hollow_contract.json")
-        ambiguous_contract = migrated_contract("ambiguous_routes_contract.json")
-        checked_only_contract = migrated_contract("checked_only_contract.json")
-        overclaim_payload = json.loads(overclaim_run.read_text(encoding="utf-8"))
-        checked_only_payload = json.loads(checked_only_contract.read_text(encoding="utf-8"))
-        overclaim_payload["contract_ref"] = {
-            "contract_path": rel(checked_only_contract),
-            "contract_version": checked_only_payload["contract_version"],
-            "contract_hash": checked_only_payload["contract_hash"],
-        }
-        write_json(overclaim_run, overclaim_payload)
-
-        for command, input_path in (
-            ("check-work-contract", contract),
-            ("check-run-record", good_run),
-            ("check-check-manifest", manifest),
-        ):
-            report = run_skillguard(command, "--input", rel(input_path))
-            self.assert_clean_pass(report)
-
-        check_contract = run_skillguard("check-contract", "--target", rel(target))
-        self.assert_clean_pass(check_contract)
-        hollow = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(hollow_contract), expected_exit=1)
-        self.assertEqual(hollow.get("decision"), "fail")
-
-        with tempfile.TemporaryDirectory(prefix="external-skill-root-", dir=REPO_ROOT.parent) as external_tmp:
-            external_root = Path(external_tmp)
-            external_skill = external_root / "skills" / "external-fixture"
-            external_checks = external_skill / ".skillguard" / "checks"
-            external_checks.mkdir(parents=True)
-            external_skill.joinpath("SKILL.md").write_text(
-                "---\nname: external-fixture\ndescription: External root check fixture.\n---\n",
+    def test_global_registry_hash_is_stable_between_installed_cli_and_test_mesh_contexts(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-global-router-context-", dir=REPO_ROOT) as tmp:
+            workspace = Path(tmp)
+            fake_home = workspace / "home"
+            skills_root = fake_home / ".codex" / "skills"
+            fixture_skill = skills_root / "fixture-skill"
+            fixture_skill.mkdir(parents=True)
+            fixture_skill.joinpath("SKILL.md").write_text(
+                "---\nname: fixture-skill\ndescription: Stable router fixture.\n---\n",
                 encoding="utf-8",
             )
-            for check_name in (
-                "check_route.py",
-                "check_phase_order.py",
-                "check_evidence.py",
-                "check_quality_floor.py",
-                "check_closure.py",
+
+            with patch.object(Path, "home", return_value=fake_home), patch(
+                "checker_engine.repository_root", return_value=fake_home
             ):
-                external_checks.joinpath(check_name).write_text("print('external route check')\n", encoding="utf-8")
-            external_contract = dict(compiled["compiled_contract"])
-            external_contract["skill_id"] = "external-fixture"
-            external_contract["target_path"] = "skills/external-fixture"
-            external_contract["contract_hash"] = checker_engine.work_contract_hash(external_contract)
-            write_json(external_skill / ".skillguard" / "work-contract.json", external_contract)
-            external_check = run_skillguard(
-                "check-contract",
-                "--target-root",
-                str(external_root),
-                "--target",
-                "skills/external-fixture",
+                installed_cli_view = checker_engine.build_global_registry_payload(
+                    [skills_root]
+                )
+            with patch.object(Path, "home", return_value=fake_home), patch(
+                "checker_engine.repository_root", return_value=REPO_ROOT
+            ):
+                test_mesh_view = checker_engine.build_global_registry_payload(
+                    [skills_root]
+                )
+
+            self.assertEqual(".codex/skills", installed_cli_view["scan_roots"][0]["path"])
+            self.assertEqual(installed_cli_view["scan_roots"], test_mesh_view["scan_roots"])
+            self.assertEqual(installed_cli_view["items"], test_mesh_view["items"])
+            self.assertEqual(
+                installed_cli_view["registry_hash"], test_mesh_view["registry_hash"]
             )
-            self.assert_clean_pass(external_check)
-            self.assertEqual(external_check.get("target_path"), "skills/external-fixture")
 
-        with tempfile.TemporaryDirectory(prefix="native-contract-", dir=REPO_ROOT) as tmp:
-            native_contract = dict(compiled["compiled_contract"])
-            native_contract.update(
-                {
-                    "integration_mode": "native-integrated",
-                    "native_route_owner": "native-router",
-                    "native_route_bindings": [
-                        {
-                            "binding_id": "native-router-selected-route",
-                            "native_route_id": "native-router.selected-route",
-                            "source": "native router decision record",
-                            "required_before_closure": True,
-                        }
-                    ],
-                    "native_check_bindings": [
-                        {
-                            "binding_id": "native-checks-current",
-                            "native_check_id": "native.checks.current",
-                            "evidence_source": "native validation report",
-                            "required": True,
-                        }
-                    ],
-                    "phase_native_bindings": [
-                        {
-                            "phase_id": "intake",
-                            "native_route_binding_id": "native-router-selected-route",
-                            "native_check_binding_ids": ["native-checks-current"],
-                            "evidence_source": "native route/check evidence for intake",
-                            "required": True,
-                        },
-                        {
-                            "phase_id": "inventory",
-                            "native_route_binding_id": "native-router-selected-route",
-                            "native_check_binding_ids": ["native-checks-current"],
-                            "evidence_source": "native route/check evidence for inventory",
-                            "required": True,
-                        },
-                        {
-                            "phase_id": "evidence",
-                            "native_route_binding_id": "native-router-selected-route",
-                            "native_check_binding_ids": ["native-checks-current"],
-                            "evidence_source": "native route/check evidence for evidence",
-                            "required": True,
-                        },
-                        {
-                            "phase_id": "checks",
-                            "native_route_binding_id": "native-router-selected-route",
-                            "native_check_binding_ids": ["native-checks-current"],
-                            "evidence_source": "native route/check evidence for checks",
-                            "required": True,
-                        },
-                        {
-                            "phase_id": "closure",
-                            "native_route_binding_id": "native-router-selected-route",
-                            "native_check_binding_ids": ["native-checks-current"],
-                            "evidence_source": "native route/check evidence for closure",
-                            "required": True,
-                        },
-                    ],
-                    "skillguard_role": "native_contract_executor",
-                    "run_record_required": False,
-                    "may_define_skillguard_runtime_route": False,
-                    "integration_claim_boundary": "SkillGuard executes contract gates through the target's native runtime route and checks.",
-                }
-            )
-            for route in native_contract["routes"]:
-                route["route_source"] = "native_binding"
-            native_contract["contract_hash"] = checker_engine.work_contract_hash(native_contract)
-            native_contract_path = Path(tmp) / "native_contract.json"
-            write_json(native_contract_path, native_contract)
-            self.assert_clean_pass(run_skillguard("check-contract", "--target", rel(target), "--contract", rel(native_contract_path)))
+    def test_self_contract_projects_as_current_native_route(self) -> None:
+        skill_dir = REPO_ROOT / ".agents" / "skills" / "skillguard"
+        projection, warnings = checker_engine.global_contract_projection(skill_dir)
 
-            parallel_contract = dict(native_contract)
-            parallel_contract["may_define_parallel_execution_route"] = True
-            parallel_contract["contract_hash"] = checker_engine.work_contract_hash(parallel_contract)
-            parallel_contract_path = Path(tmp) / "parallel_contract.json"
-            write_json(parallel_contract_path, parallel_contract)
-            parallel = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(parallel_contract_path), expected_exit=1)
-            self.assertEqual(parallel.get("decision"), "fail")
-            self.assertTrue(any("duplicate execution paths" in failure for failure in parallel.get("failures", [])))
+        self.assertEqual(warnings, [])
+        self.assertEqual(projection.get("contract_authority"), "current")
+        self.assertEqual(projection.get("integration_mode"), "native-integrated")
+        self.assertEqual(
+            projection.get("native_route_owner"),
+            "skillguard.executable_contract_runtime.v2",
+        )
+        self.assertTrue(projection.get("native_route_bindings"))
+        self.assertTrue(projection.get("native_check_bindings"))
+        self.assertFalse(projection.get("may_define_parallel_execution_route"))
+        self.assertFalse(projection.get("may_define_skillguard_runtime_route"))
 
-            missing_owner_contract = dict(native_contract)
-            missing_owner_contract["native_route_owner"] = ""
-            missing_owner_contract["contract_hash"] = checker_engine.work_contract_hash(missing_owner_contract)
-            missing_owner_contract_path = Path(tmp) / "missing_owner_contract.json"
-            write_json(missing_owner_contract_path, missing_owner_contract)
-            missing_owner = run_skillguard("check-contract", "--target", rel(target), "--contract", rel(missing_owner_contract_path), expected_exit=1)
-            self.assertEqual(missing_owner.get("decision"), "fail")
-            self.assertTrue(any("native_route_owner" in failure for failure in missing_owner.get("failures", [])))
 
-        selected = run_skillguard("select-route", "--target", rel(target), "--task", "Audit current runtime evidence before closure.")
-        self.assert_clean_pass(selected)
-        self.assertEqual(selected.get("routing_decision", {}).get("route_id"), "audit")
-        ambiguous = run_skillguard(
+    def test_current_command_surface_rejects_every_removed_live_entrypoint(self) -> None:
+        target = REPO_ROOT / ".agents" / "skills" / "skillguard"
+        command_report = run_skillguard("commands")
+        current_names = {row.get("name") for row in command_report.get("commands", [])}
+
+        for former_command in (
+            "compile-contract",
             "select-route",
-            "--target",
-            rel(target),
-            "--contract",
-            rel(ambiguous_contract),
-            "--task",
-            "Audit and review current runtime evidence before closure.",
-            expected_exit=1,
-        )
-        self.assertEqual(ambiguous.get("decision"), "block")
-        self.assertTrue(any("ambiguous" in blocker for blocker in ambiguous.get("blockers", [])))
-
-        started = run_skillguard(
             "start-run",
-            "--target",
-            rel(target),
-            "--route",
-            "audit",
-            "--task",
-            "Audit current runtime evidence before closure.",
-            "--dry-run",
-        )
-        self.assert_clean_pass(started)
-        self.assertEqual(started.get("run_record", {}).get("selected_route"), "audit")
-
-        complete = run_skillguard("check-run", "--run", rel(good_run), "--complete")
-        self.assert_clean_pass(complete)
-        quality = run_skillguard("check-run", "--run", rel(quality_run), "--complete", expected_exit=1)
-        self.assertEqual(quality.get("decision"), "fail")
-        self.assertTrue(any("quality_failures" in failure for failure in quality.get("failures", [])))
-        overclaim = run_skillguard("close-run", "--run", rel(overclaim_run), "--decision", "accepted", "--dry-run", expected_exit=1)
-        self.assertEqual(overclaim.get("decision"), "fail")
-        self.assertTrue(any("no closure rule allowing accepted" in failure for failure in overclaim.get("failures", [])))
+            "advance-run",
+            "check-run",
+            "close-run",
+            "check-skill-contract",
+            "refresh-maintenance",
+            "project-upgrade",
+        ):
+            with self.subTest(command=former_command):
+                self.assertNotIn(former_command, current_names)
+                rejected = run_skillguard(
+                    former_command,
+                    "--target",
+                    rel(target),
+                    expected_exit=2,
+                )
+                self.assertEqual("fail", rejected.get("decision"))
+                self.assertEqual(
+                    [f"unknown command: {former_command}"],
+                    rejected.get("failures"),
+                )
 
     def test_route_task_routes_ordinary_task_and_is_deterministic(self) -> None:
         task = "Create a draft skill scaffold from a Skill Blueprint"
@@ -1664,14 +1377,24 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             )
         )
 
-    def test_route_task_routes_refresh_maintenance_task(self) -> None:
-        report = run_skillguard("route-task", "--task", "Refresh stale maintenance evidence metadata")
-
-        self.assert_clean_pass(report)
-        route = report.get("routing_decision", {})
-        self.assertEqual(route.get("command_family"), "refresh-maintenance")
-        self.assertEqual(route.get("route_node_id"), "refresh-maintenance")
-        self.assertEqual(route.get("responsibility"), "maintainer")
+    def test_route_task_routes_exact_portfolio_production_phases(self) -> None:
+        cases = (
+            (
+                "Capture portfolio production revalidation for the completed member",
+                "capture-portfolio-production-revalidation",
+            ),
+            (
+                "Graduate portfolio after the assembled production receipts are current",
+                "graduate-portfolio",
+            ),
+        )
+        for task, expected in cases:
+            with self.subTest(expected=expected):
+                report = run_skillguard("route-task", "--task", task)
+                self.assert_clean_pass(report)
+                route = report.get("routing_decision", {})
+                self.assertEqual(expected, route.get("command_family"))
+                self.assertEqual(expected, route.get("route_node_id"))
 
     def test_route_task_honors_explicit_current_route_hint(self) -> None:
         report = run_skillguard("route-task", "--task", "Review suite records and member evidence.", "--route-hint", "check-suite")
@@ -1847,7 +1570,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 [(item.get("command"), item.get("artifact_path"), item.get("status")) for item in report.get("post_generation_checks", [])],
                 [
                     ("check-skill", rel(target), "pass"),
-                    ("check-contract", rel(target / ".skillguard" / "work-contract.json"), "pass"),
+                    ("check-contract", rel(target / ".skillguard" / "contract-source.json"), "pass"),
                 ],
             )
             registry = self.assert_validation_registry(report, "generate-skill", "pass")
@@ -1860,7 +1583,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertIn("post_generation_checks", registry.get("source_of_truth_for", []))
 
     def test_route_task_executes_generate_suite_from_explicit_route_hint(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="route-task-generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+        with tempfile.TemporaryDirectory(prefix="rgs-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             workspace = Path(tmp)
             target = workspace / "routed-review-suite"
             suite_root = target / ".skillguard" / "suite"
@@ -2107,7 +1830,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 self.assertTrue(blocker.get("artifact_id"))
                 self.assertTrue(blocker.get("expected_current_binding"))
                 self.assertTrue(blocker.get("observed_stale_binding"))
-                self.assertTrue(blocker.get("recommended_refresh_action"))
+                self.assertTrue(blocker.get("recommended_owner_action"))
 
     def test_detect_stale_evidence_keeps_blockers_public_safe_and_read_only(self) -> None:
         with tempfile.TemporaryDirectory(prefix="detect-stale-", dir=REPO_ROOT) as tmp:
@@ -2133,193 +1856,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             for blocker in report.get("stale_evidence_blockers", []):
                 self.assertNotIn("private_payload", json.dumps(blocker, sort_keys=True))
 
-    def test_refresh_maintenance_dry_run_plans_without_mutation(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="refresh-maintenance-", dir=REPO_ROOT) as tmp:
-            workspace = Path(tmp)
-            source_path = workspace / "source.txt"
-            source_path.write_text("original\n", encoding="utf-8")
-            evidence_path = workspace / "evidence.json"
-            write_json(evidence_path, freshness_record_for(source_path))
-            source_path.write_text("changed\n", encoding="utf-8")
-            before_hash = sha256(evidence_path)
-
-            report = run_skillguard("refresh-maintenance", "--input", rel(evidence_path))
-
-            self.assert_clean_pass(report)
-            self.assertEqual(sha256(evidence_path), before_hash)
-            planned = report.get("planned_refreshes", [])
-            self.assertTrue(planned)
-            self.assertTrue(any(item.get("blocker_code") == "stale_source_fingerprint" for item in planned))
-            refresh_state = report.get("maintenance_refresh_state", {})
-            self.assertEqual(refresh_state.get("state"), "stale_refresh_planned")
-            self.assertFalse(refresh_state.get("current_evidence_can_pass"))
-            self.assertGreater(refresh_state.get("refreshable_stale_count", 0), 0)
-            self.assertEqual(refresh_state.get("refresh_failed_count"), 0)
-            for item in planned:
-                self.assertTrue(item.get("artifact_id"))
-                self.assertTrue(item.get("stale_reason"))
-                self.assertTrue(item.get("expected_current_binding"))
-                self.assertTrue(item.get("refresh_action"))
-                self.assertEqual(item.get("mutation_status"), "planned_no_mutation")
-
-    def test_refresh_maintenance_execute_refreshes_stale_source_route_command_and_openspec_metadata(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="refresh-maintenance-", dir=REPO_ROOT) as tmp:
-            workspace = Path(tmp)
-            source_path = workspace / "self-check-source.txt"
-            source_path.write_text("original\n", encoding="utf-8")
-            evidence_path = workspace / "self-check-evidence.json"
-            current_openspec = checker_engine.current_openspec_changes_present()
-            write_json(
-                evidence_path,
-                freshness_record_for(
-                    source_path,
-                    command="self-check",
-                    route_version="3",
-                    route_registry_version="stale-registry.v0",
-                    command_names=["commands"],
-                    current_route_registry=[{"route_id": "skillguard.route.old.v0"}],
-                    openspec_status={"changes_directory_present": not current_openspec},
-                ),
-            )
-            source_path.write_text("changed\n", encoding="utf-8")
-
-            report = run_skillguard("refresh-maintenance", "--input", rel(evidence_path), "--execute")
-
-            self.assert_clean_pass(report)
-            codes = stale_blocker_codes(report)
-            self.assertIn("stale_command_or_self_check_record", codes)
-            self.assertIn("stale_route_version", codes)
-            self.assertIn("stale_route_registry_version", codes)
-            self.assertIn("stale_command_surface", codes)
-            self.assertIn("stale_route_registry", codes)
-            self.assertIn("stale_openspec_status", codes)
-            self.assertEqual(report.get("post_refresh_freshness", {}).get("remaining_stale_count"), 0)
-            refresh_state = report.get("maintenance_refresh_state", {})
-            self.assertEqual(refresh_state.get("state"), "current_after_refresh")
-            self.assertTrue(refresh_state.get("current_evidence_can_pass"))
-            self.assertGreater(refresh_state.get("completed_refresh_count", 0), 0)
-            refreshed = json.loads(evidence_path.read_text(encoding="utf-8"))
-            self.assertEqual(refreshed["files_inspected"][0]["sha256"], sha256(source_path))
-            self.assertEqual(refreshed.get("route_version"), checker_engine.DETECT_STALE_EXPECTED_ROUTE_VERSION)
-            self.assertEqual(refreshed.get("route_registry_version"), checker_engine.ROUTE_TASK_REGISTRY_VERSION)
-            self.assertIn("refresh-maintenance", refreshed.get("command_names", []))
-            self.assertTrue(
-                any(item.get("command_family") == "refresh-maintenance" for item in refreshed.get("current_route_registry", []))
-            )
-            self.assertEqual(refreshed.get("openspec_status", {}).get("changes_directory_present"), current_openspec)
-            self.assertIn("maintenance_refresh", refreshed)
-
-            post = run_skillguard("detect-stale-evidence", "--input", rel(evidence_path))
-            self.assert_clean_pass(post)
-
-    def test_refresh_maintenance_execute_refreshes_fixture_manifest_and_result_bindings(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="refresh-maintenance-", dir=REPO_ROOT) as tmp:
-            workspace = Path(tmp)
-            manifest_path = workspace / "fixture-manifest.json"
-            case_path = workspace / "case.fixture.json"
-            manifest_path.write_text('{"schema_version":"skillguard.fixture_manifest.v1","fixtures":[]}\n', encoding="utf-8")
-            case_path.write_text('{"fixture_id":"stale-case"}\n', encoding="utf-8")
-            fixture_output_path = workspace / "fixture-output.json"
-            write_json(
-                fixture_output_path,
-                {
-                    "schema_version": "skillguard.cli_result.v1",
-                    "command": "fixture-test",
-                    "decision": "pass",
-                    "checked_at": utc_timestamp(),
-                    "target_path": rel(manifest_path),
-                    "files_inspected": [{"path": rel(manifest_path), "sha256": sha256(manifest_path), "kind": "json"}],
-                    "fixture_results": [{"fixture_id": "stale-case", "fixture_path": rel(case_path), "sha256": sha256(case_path)}],
-                    "evidence": [],
-                    "failures": [],
-                    "blockers": [],
-                    "skipped_checks": [],
-                    "residual_risk": [],
-                    "claim_boundary": "Synthetic fixture output.",
-                },
-            )
-            manifest_path.write_text('{"schema_version":"skillguard.fixture_manifest.v1","fixtures":[1]}\n', encoding="utf-8")
-            case_path.write_text('{"fixture_id":"stale-case","changed":true}\n', encoding="utf-8")
-
-            report = run_skillguard("refresh-maintenance", "--input", rel(fixture_output_path), "--mode", "execute")
-
-            self.assert_clean_pass(report)
-            codes = stale_blocker_codes(report)
-            self.assertIn("stale_fixture_manifest", codes)
-            self.assertIn("stale_fixture_output", codes)
-            refreshed = json.loads(fixture_output_path.read_text(encoding="utf-8"))
-            self.assertEqual(refreshed["files_inspected"][0]["sha256"], sha256(manifest_path))
-            self.assertEqual(refreshed["fixture_results"][0]["sha256"], sha256(case_path))
-
-            post = run_skillguard("detect-stale-evidence", "--input", rel(fixture_output_path))
-            self.assert_clean_pass(post)
-
-    def test_refresh_maintenance_blocks_unrefreshable_and_keeps_blockers_public_safe(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="refresh-maintenance-", dir=REPO_ROOT) as tmp:
-            workspace = Path(tmp)
-            generated_path = workspace / "generated-output.json"
-            missing_generated = workspace / "missing-generated" / "SKILL.md"
-            write_json(
-                generated_path,
-                {
-                    "schema_version": "skillguard.cli_result.v1",
-                    "command": "generate-skill",
-                    "decision": "pass",
-                    "checked_at": utc_timestamp(),
-                    "all_scaffold_files": [rel(missing_generated)],
-                    "evidence": [],
-                    "failures": [],
-                    "blockers": [],
-                    "skipped_checks": [],
-                    "residual_risk": [],
-                    "claim_boundary": "Synthetic generated output.",
-                },
-            )
-            private_path = workspace / "private-probe.json"
-            write_json(
-                private_path,
-                {
-                    "schema_version": "skillguard.cli_result.v1",
-                    "command": "check-skill",
-                    "decision": "pass",
-                    "private_payload": "PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO",
-                },
-            )
-
-            report = run_skillguard(
-                "refresh-maintenance",
-                "--input",
-                rel(generated_path),
-                "--input",
-                rel(private_path),
-                "--execute",
-                expected_exit=1,
-            )
-
-            self.assertEqual(report.get("decision"), "block")
-            codes = stale_blocker_codes(report)
-            self.assertIn("stale_generated_artifact_path", codes)
-            self.assertIn("missing_evidence_metadata", codes)
-            self.assertFalse(missing_generated.exists())
-            output_text = json.dumps(report, sort_keys=True)
-            self.assertNotIn("PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO", output_text)
-            self.assertTrue(any(item.get("mutation_status") == "not_refreshable" for item in report.get("planned_refreshes", [])))
-            refresh_state = report.get("maintenance_refresh_state", {})
-            self.assertEqual(refresh_state.get("state"), "refresh_failed")
-            self.assertFalse(refresh_state.get("current_evidence_can_pass"))
-            self.assertGreater(refresh_state.get("refresh_failed_count", 0), 0)
-            self.assertIn("stale_evidence_blockers[].observed_stale_binding", refresh_state.get("recorded_source_status_fields", []))
-
-    def test_refresh_maintenance_blocks_invalid_target_and_conflicting_modes(self) -> None:
-        invalid_target = run_skillguard("refresh-maintenance", "--target", "..", expected_exit=1)
-        self.assertEqual(invalid_target.get("decision"), "block")
-        self.assertTrue(any("target path" in blocker for blocker in invalid_target.get("blockers", [])))
-
-        conflict = run_skillguard("refresh-maintenance", "--dry-run", "--execute", expected_exit=1)
-        self.assertEqual(conflict.get("decision"), "block")
-        self.assertTrue(any("only one mode selector" in blocker for blocker in conflict.get("blockers", [])))
-
-    def test_check_maintenance_record_passes_canonical_and_supported_legacy_record(self) -> None:
+    def test_check_maintenance_record_accepts_only_current_records(self) -> None:
         with tempfile.TemporaryDirectory(prefix="maintenance-record-", dir=REPO_ROOT) as tmp:
             workspace = Path(tmp)
             canonical_path = workspace / "canonical.json"
@@ -2328,15 +1865,15 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             canonical = run_skillguard("check-maintenance-record", "--input", rel(canonical_path))
 
             self.assert_clean_pass(canonical)
-            self.assertEqual(canonical.get("migration_status"), "canonical")
+            self.assertEqual(canonical.get("record_shape"), "current_direct")
             self.assertEqual(canonical.get("normalized_record", {}).get("schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
             self.assertEqual(canonical.get("maintenance_record", {}).get("schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
 
             source_path = workspace / "source.txt"
             source_path.write_text("current\n", encoding="utf-8")
-            legacy_path = workspace / "legacy-command-output.json"
+            former_path = workspace / "former-command-output.json"
             write_json(
-                legacy_path,
+                former_path,
                 freshness_record_for(
                     source_path,
                     route_version=checker_engine.DETECT_STALE_EXPECTED_ROUTE_VERSION,
@@ -2346,12 +1883,16 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 ),
             )
 
-            legacy = run_skillguard("check-maintenance-record", "--input", rel(legacy_path))
+            former = run_skillguard(
+                "check-maintenance-record",
+                "--input",
+                rel(former_path),
+                expected_exit=1,
+            )
 
-            self.assert_clean_pass(legacy)
-            self.assertEqual(legacy.get("migration_status"), "legacy_normalized")
-            self.assertEqual(legacy.get("normalized_record", {}).get("schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
-            self.assertEqual(legacy.get("normalized_record", {}).get("record_kind"), "target_check")
+            self.assertEqual(former.get("decision"), "block")
+            self.assertEqual(former.get("record_shape"), "blocked_non_current")
+            self.assertIn("non_current_maintenance_record", maintenance_blocker_codes(former))
 
     def test_check_maintenance_record_blocks_schema_route_command_alias_blocker_and_public_boundary_defects(self) -> None:
         with tempfile.TemporaryDirectory(prefix="maintenance-record-", dir=REPO_ROOT) as tmp:
@@ -2366,7 +1907,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             cases.append(("alias.json", alias, "unknown_legacy_alias"))
 
             bad_version = valid_maintenance_record(schema_version="skillguard.maintenance_record.v0")
-            cases.append(("bad-version.json", bad_version, "incompatible_schema_version"))
+            cases.append(("bad-version.json", bad_version, "non_current_maintenance_record"))
 
             malformed_blocker = valid_maintenance_record(blockers=["not-structured"])
             cases.append(("malformed-blocker.json", malformed_blocker, "malformed_blocker_row"))
@@ -2385,7 +1926,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 "schema_version": "skillguard.legacy_record.v0",
                 "private_payload": "PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO",
             }
-            cases.append(("unsupported-legacy.json", unsupported_legacy, "public_boundary_leakage"))
+            cases.append(("unsupported-former.json", unsupported_legacy, "non_current_maintenance_record"))
 
             for name, record, expected_code in cases:
                 path = workspace / name
@@ -2401,7 +1942,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                     self.assertEqual(blocker.get("expected_schema_version"), checker_engine.MAINTENANCE_RECORD_SCHEMA_VERSION)
                     self.assertTrue(blocker.get("recommended_repair_action"))
 
-    def test_maintenance_record_integration_with_stale_refresh_review_dispatch_and_self_check(self) -> None:
+    def test_maintenance_record_integration_with_stale_review_dispatch_and_self_check(self) -> None:
         with tempfile.TemporaryDirectory(prefix="maintenance-record-", dir=REPO_ROOT) as tmp:
             workspace = Path(tmp)
             source_path = workspace / "source.txt"
@@ -2416,13 +1957,6 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             write_json(stale_output, stale)
             stale_check = run_skillguard("check-maintenance-record", "--input", rel(stale_output))
             self.assert_clean_pass(stale_check)
-
-            refresh = run_skillguard("refresh-maintenance", "--input", rel(evidence_path))
-            self.assertEqual(refresh.get("maintenance_record", {}).get("record_kind"), "maintenance_refresh")
-            refresh_output = workspace / "refresh-output.json"
-            write_json(refresh_output, refresh)
-            refresh_check = run_skillguard("check-maintenance-record", "--input", rel(refresh_output))
-            self.assert_clean_pass(refresh_check)
 
             baseline_path = workspace / "baseline.json"
             write_json(baseline_path, checker_change_baseline())
@@ -2489,7 +2023,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             for path in (simple_path, complex_path, self_check_path, target_check_path):
                 maintenance = run_skillguard("check-maintenance-record", "--input", rel(path))
                 self.assert_clean_pass(maintenance)
-                self.assertEqual(maintenance.get("migration_status"), "canonical_nested")
+                self.assertEqual(maintenance.get("record_shape"), "current_nested")
 
             baseline_path = workspace / "checker-baseline.json"
             write_json(
@@ -2620,29 +2154,10 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 self.assertTrue(blocker.get("stale_reason"))
                 self.assertTrue(blocker.get("expected_current_binding"))
                 self.assertTrue(blocker.get("observed_stale_binding"))
-                self.assertTrue(blocker.get("recommended_refresh_action"))
-
-            refresh = run_skillguard(
-                "refresh-maintenance",
-                *[arg for path in stale_inputs for arg in ("--input", rel(path))],
-                expected_exit=1,
-            )
             for path, before_hash in before_hashes.items():
                 self.assertEqual(sha256(path), before_hash, path)
-            planned = refresh.get("planned_refreshes", [])
-            self.assertTrue(any(item.get("blocker_code") == "stale_fixture_manifest" for item in planned))
-            self.assertTrue(any(item.get("blocker_code") == "stale_route_version" for item in planned))
-            self.assertTrue(any(item.get("blocker_code") == "stale_command_surface" for item in planned))
-            self.assertTrue(any(item.get("blocker_code") == "stale_generated_artifact_hash" for item in planned))
-            self.assertTrue(any(item.get("mutation_status") == "planned_no_mutation" for item in planned))
-            self.assertTrue(any(item.get("mutation_status") == "not_refreshable" for item in planned))
-            self.assertEqual(refresh.get("post_refresh_freshness", {}).get("rerun_performed"), False)
-            refresh_state = refresh.get("maintenance_refresh_state", {})
-            self.assertEqual(refresh_state.get("state"), "missing_or_unrefreshable_blocker")
-            self.assertFalse(refresh_state.get("current_evidence_can_pass"))
-            self.assertGreater(refresh_state.get("unrefreshable_count", 0), 0)
 
-            output_text = json.dumps({"stale": stale, "refresh": refresh}, sort_keys=True)
+            output_text = json.dumps({"stale": stale}, sort_keys=True)
             self.assertNotIn("PRIVATE_ROUTE_BODY_TEXT_DO_NOT_ECHO", output_text)
             self.assertNotIn("sealed packet body text", output_text)
             self.assertNotIn("sibling role-only result text", output_text)
@@ -2679,11 +2194,11 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             additive = run_skillguard("review-checker-change", "--baseline", rel(additive_baseline_path))
 
             self.assert_clean_pass(additive)
-            compatible_classes = {item.get("change_class") for item in additive.get("compatible_changes", [])}
+            compatible_classes = {item.get("change_class") for item in additive.get("safe_additions", [])}
             self.assertIn("additive_command", compatible_classes)
             self.assertIn("additive_route", compatible_classes)
             self.assertTrue(
-                any(item.get("checker") == "review-checker-change" for item in additive.get("compatible_changes", []))
+                any(item.get("checker") == "review-checker-change" for item in additive.get("safe_additions", []))
             )
 
     def test_review_checker_change_blocks_removed_weakened_renamed_schema_and_fixture_changes(self) -> None:
@@ -2700,8 +2215,8 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             original_manifest_hash = sha256(manifest_path)
             command_surface = checker_engine.current_checker_command_surface()
             for item in command_surface:
-                if item["name"] == "refresh-maintenance":
-                    item["required_checks"] = item["required_checks"] + ["refresh-maintenance:must-not-ignore-failing-checks"]
+                if item["name"] == "check-skill":
+                    item["required_checks"] = item["required_checks"] + ["check-skill:must-not-ignore-failing-checks"]
                 if item["name"] == "commands":
                     item["output_schema"] = "skillguard.old_command_result.v0"
             command_surface.extend(
@@ -2896,7 +2411,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             route_registry = self.assert_validation_registry(routed, "generate-suite", "pass")
             self.assertIn("checker_change_suite_guard", route_registry.get("source_of_truth_for", []))
 
-    def test_checker_change_suite_guard_blocks_missing_stale_refresh_and_invalid_states(self) -> None:
+    def test_checker_change_suite_guard_blocks_missing_stale_and_invalid_states(self) -> None:
         with tempfile.TemporaryDirectory(prefix="checker-change-guard-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             workspace = Path(tmp)
 
@@ -2962,104 +2477,6 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertIn("stale_checker_change_review_evidence", checker_change_suite_guard_codes(stale))
             self.assertEqual(stale.get("checker_change_suite_guard", {}).get("state"), "stale_or_missing")
 
-            dry_refresh = run_skillguard("refresh-maintenance", "--input", rel(stale_review))
-            dry_refresh_path = workspace / "dry-refresh.json"
-            write_json(dry_refresh_path, dry_refresh)
-            planned = run_skillguard(
-                "generate-skill",
-                "--input",
-                rel(write_plan("planned-refresh-skill")),
-                "--checker-suite",
-                "generate-skill",
-                "--checker-suite-impact",
-                "checker_change",
-                "--checker-change-review",
-                rel(stale_review),
-                "--checker-change-refresh",
-                rel(dry_refresh_path),
-                expected_exit=1,
-            )
-            self.assertIn("checker_change_refresh_planned_only", checker_change_suite_guard_codes(planned))
-            self.assertEqual(planned.get("checker_change_suite_guard", {}).get("state"), "stale_refresh_planned")
-
-            execute_source = workspace / "execute-review-source.txt"
-            execute_source.write_text("before\n", encoding="utf-8")
-            execute_review = workspace / "execute-review.json"
-            write_json(execute_review, checker_change_review_report_for(execute_source))
-            execute_source.write_text("after\n", encoding="utf-8")
-            execute_refresh = run_skillguard("refresh-maintenance", "--input", rel(execute_review), "--execute")
-            execute_refresh_path = workspace / "execute-refresh.json"
-            write_json(execute_refresh_path, execute_refresh)
-            refreshed = run_skillguard(
-                "generate-skill",
-                "--input",
-                rel(write_plan("execute-refresh-skill")),
-                "--checker-suite",
-                "generate-skill",
-                "--checker-suite-impact",
-                "checker_change",
-                "--checker-change-review",
-                rel(execute_review),
-                "--checker-change-refresh",
-                rel(execute_refresh_path),
-            )
-            self.assert_clean_pass(refreshed)
-            self.assertEqual(refreshed.get("checker_change_suite_guard", {}).get("state"), "current_after_refresh")
-
-            missing_source = workspace / "missing-review-source.txt"
-            missing_source.write_text("before\n", encoding="utf-8")
-            failed_review = workspace / "failed-review.json"
-            write_json(failed_review, checker_change_review_report_for(missing_source))
-            missing_source.unlink()
-
-            failed_refresh = run_skillguard("refresh-maintenance", "--input", rel(failed_review), "--execute", expected_exit=1)
-            failed_refresh_path = workspace / "failed-refresh.json"
-            write_json(failed_refresh_path, failed_refresh)
-            failed = run_skillguard(
-                "generate-skill",
-                "--input",
-                rel(write_plan("failed-refresh-skill")),
-                "--checker-suite",
-                "generate-skill",
-                "--checker-suite-impact",
-                "checker_change",
-                "--checker-change-review",
-                rel(failed_review),
-                "--checker-change-refresh",
-                rel(failed_refresh_path),
-                expected_exit=1,
-            )
-            self.assertIn("checker_change_refresh_failed", checker_change_suite_guard_codes(failed))
-            self.assertEqual(failed.get("checker_change_suite_guard", {}).get("state"), "refresh_failed")
-
-            unrefreshable_source = workspace / "unrefreshable-review-source.txt"
-            unrefreshable_source.write_text("before\n", encoding="utf-8")
-            unrefreshable_review = workspace / "unrefreshable-review.json"
-            write_json(unrefreshable_review, checker_change_review_report_for(unrefreshable_source))
-            unrefreshable_source.unlink()
-            unrefreshable_refresh = run_skillguard("refresh-maintenance", "--input", rel(unrefreshable_review), expected_exit=1)
-            unrefreshable_refresh_path = workspace / "unrefreshable-refresh.json"
-            write_json(unrefreshable_refresh_path, unrefreshable_refresh)
-            unrefreshable = run_skillguard(
-                "generate-skill",
-                "--input",
-                rel(write_plan("unrefreshable-skill")),
-                "--checker-suite",
-                "generate-skill",
-                "--checker-suite-impact",
-                "checker_change",
-                "--checker-change-review",
-                rel(unrefreshable_review),
-                "--checker-change-refresh",
-                rel(unrefreshable_refresh_path),
-                expected_exit=1,
-            )
-            self.assertIn("checker_change_unrefreshable_evidence", checker_change_suite_guard_codes(unrefreshable))
-            self.assertEqual(
-                unrefreshable.get("checker_change_suite_guard", {}).get("state"),
-                "missing_or_unrefreshable_blocker",
-            )
-
     def test_generate_skill_creates_expected_scaffold_and_is_idempotent(self) -> None:
         with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             workspace = Path(tmp)
@@ -3088,22 +2505,10 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 "fixtures/fixture-manifest.json",
                 "tests/README.md",
                 "tests/test_smoke.py",
-                ".skillguard/work-contract.json",
-                ".skillguard/check_manifest.json",
-                ".skillguard/checks/check_route.py",
-                ".skillguard/checks/check_phase_order.py",
-                ".skillguard/checks/check_evidence.py",
-                ".skillguard/checks/check_quality_floor.py",
-                ".skillguard/checks/check_closure.py",
-                ".skillguard/skillguard_profile.json",
-                ".skillguard/skillguard_skill_contract.json",
-                ".skillguard/skillguard_evidence_rules.json",
-                ".skillguard/skillguard_closure_policy.json",
-                ".skillguard/skillguard_manifest.json",
-                ".skillguard/skillguard_progress_ledger.jsonl",
-                ".skillguard/evidence/initial_evidence_manifest.json",
-                ".skillguard/ai_judgments/initial_ai_judgment.json",
-                ".skillguard/reports/initial_workflow_report.json",
+                ".skillguard/flowguard_contract_model.py",
+                ".skillguard/contract-source.json",
+                ".skillguard/compiled-contract.json",
+                ".skillguard/check-manifest.json",
             }
             for relative in required_files:
                 self.assertTrue((target / relative).is_file(), relative)
@@ -3112,31 +2517,52 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                     self.assertIsNone(pattern.search(text), f"{relative}: {pattern.pattern}")
                 for pattern in UNSAFE_CLAIM_PATTERNS:
                     self.assertIsNone(pattern.search(text), f"{relative}: {pattern.pattern}")
+            generated_entrypoint = (target / "SKILL.md").read_text(encoding="utf-8")
+            current_template = (
+                SCRIPT_DIR.parent / "assets" / "templates" / "target_SKILL.md.template"
+            ).read_text(encoding="utf-8")
+            for text in (generated_entrypoint, current_template):
+                self.assertNotIn("v1-legacy", text)
+                self.assertNotIn(".skillguard/work-contract.json", text)
+                self.assertNotIn(".skillguard/check_manifest.json", text)
+                self.assertIn(".skillguard/contract-source.json", text)
+                self.assertIn(".skillguard/check-manifest.json", text)
+            self.assertEqual(
+                json.loads((target / ".skillguard" / "contract-source.json").read_text(encoding="utf-8"))[
+                    "schema_version"
+                ],
+                "skillguard.contract_source.v2",
+            )
+            self.assertEqual(
+                json.loads((target / ".skillguard" / "compiled-contract.json").read_text(encoding="utf-8"))[
+                    "schema_version"
+                ],
+                "skillguard.compiled_contract.v2",
+            )
             self.assertEqual(set(report.get("missing_after_write", [])), set())
             post_checks = report.get("post_generation_checks", [])
             self.assertEqual(
                 [(item.get("command"), item.get("artifact_path"), item.get("status")) for item in post_checks],
                 [
                     ("check-skill", rel(target), "pass"),
-                    ("check-contract", rel(target / ".skillguard" / "work-contract.json"), "pass"),
+                    ("check-contract", rel(target / ".skillguard" / "contract-source.json"), "pass"),
                 ],
             )
 
             maintenance = run_skillguard("check-maintenance-record", "--input", rel(report_path))
             self.assert_clean_pass(maintenance)
-            self.assertEqual(maintenance.get("migration_status"), "canonical_nested")
+            self.assertEqual(maintenance.get("record_shape"), "current_nested")
 
             stale = run_skillguard("detect-stale-evidence", "--input", rel(report_path))
             self.assert_clean_pass(stale)
             self.assertEqual(stale.get("stale_evidence_count"), 0)
 
-            refresh = run_skillguard("refresh-maintenance", "--input", rel(report_path))
-            self.assert_clean_pass(refresh)
-
             manifest_check = run_skillguard("check-fixture-manifest", "--input", rel(target / "fixtures" / "fixture-manifest.json"))
             self.assert_clean_pass(manifest_check)
 
-            check_report = run_skillguard("check-skill", "--target", rel(target))
+            check_report = run_skillguard(
+                "check-skill", "--repository-root", ".", "--target", rel(target)
+            )
             self.assert_clean_pass(check_report)
 
             rerun = run_skillguard("generate-skill", "--input", rel(plan_path))
@@ -3197,9 +2623,6 @@ This LogicGuard-backed capability model is for `v0.1.4`.
     def test_generate_skill_blocks_required_directory_file_conflicts_before_writing(self) -> None:
         required_directories = (
             ".skillguard",
-            ".skillguard/ai_judgments",
-            ".skillguard/evidence",
-            ".skillguard/reports",
             "assets/schemas",
             "assets/templates",
             "fixtures",
@@ -3253,7 +2676,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                         "scripts/run_checks.py",
                         "fixtures/fixture-manifest.json",
                         "tests/test_smoke.py",
-                        ".skillguard/skillguard_profile.json",
+                        ".skillguard/contract-source.json",
                     ):
                         self.assertFalse((target / Path(*generated_file.split("/"))).is_file(), generated_file)
 
@@ -3352,7 +2775,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             check = checker_engine.build_post_generation_check_result(
                 check_id="test:missing-generated-artifact",
                 command_name="check-skill",
-                argv=["--target", rel(missing_target)],
+                argv=["--repository-root", ".", "--target", rel(missing_target)],
                 artifact_path=rel(missing_target),
             )
 
@@ -3374,7 +2797,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertFalse((target / ".skillguard").exists())
 
     def test_generate_suite_creates_suite_child_records_and_is_idempotent(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+        with tempfile.TemporaryDirectory(prefix="gs-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             workspace = Path(tmp)
             target = workspace / "generated-review-suite"
             blueprint_path = workspace / "suite-blueprint.json"
@@ -3395,9 +2818,9 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 ".skillguard/suite/evidence/suite-beta_check_report.json",
                 ".skillguard/suite/reports/suite_generation_report.json",
                 "members/suite-alpha/SKILL.md",
-                "members/suite-alpha/.skillguard/skillguard_profile.json",
+                "members/suite-alpha/.skillguard/contract-source.json",
                 "members/suite-beta/SKILL.md",
-                "members/suite-beta/.skillguard/skillguard_profile.json",
+                "members/suite-beta/.skillguard/contract-source.json",
             }
             for relative in required_files:
                 path = target / Path(*relative.split("/"))
@@ -3433,7 +2856,13 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             )
             self.assert_clean_pass(suite_check)
             for child in ("suite-alpha", "suite-beta"):
-                child_check = run_skillguard("check-skill", "--target", rel(member_root / child))
+                child_check = run_skillguard(
+                    "check-skill",
+                    "--repository-root",
+                    ".",
+                    "--target",
+                    rel(member_root / child),
+                )
                 self.assert_clean_pass(child_check)
 
             rerun = run_skillguard("generate-suite", "--input", rel(blueprint_path))
@@ -3443,7 +2872,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertTrue(all(item.get("status") == "pass" for item in rerun.get("post_generation_checks", [])))
 
     def test_generate_suite_honors_declared_nested_member_path(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+        with tempfile.TemporaryDirectory(prefix="gs-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             workspace = Path(tmp)
             target = workspace / "generated-review-suite"
             member_root = target / "members"
@@ -3467,7 +2896,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 report.get("post_generation_checks", []),
             )
             self.assertTrue((nested_child / "SKILL.md").is_file())
-            self.assertTrue((nested_child / ".skillguard" / "skillguard_profile.json").is_file())
+            self.assertTrue((nested_child / ".skillguard" / "contract-source.json").is_file())
             self.assertFalse((member_root / "suite-alpha" / "SKILL.md").exists())
 
             suite_root = target / ".skillguard" / "suite"
@@ -3492,11 +2921,13 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 rel(member_root),
             )
             self.assert_clean_pass(suite_check)
-            child_check = run_skillguard("check-skill", "--target", rel(nested_child))
+            child_check = run_skillguard(
+                "check-skill", "--repository-root", ".", "--target", rel(nested_child)
+            )
             self.assert_clean_pass(child_check)
 
     def test_generate_suite_blocks_unowned_nested_member_path_without_writing(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+        with tempfile.TemporaryDirectory(prefix="gs-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             workspace = Path(tmp)
             target = workspace / "generated-review-suite"
             member_root = target / "members"
@@ -3528,7 +2959,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             )
 
     def test_generate_suite_fails_when_child_post_generation_check_fails(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+        with tempfile.TemporaryDirectory(prefix="gs-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             workspace = Path(tmp)
             target = workspace / "generated-review-suite"
             member_root = target / "members"
@@ -3559,7 +2990,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertNotEqual(report.get("decision"), "pass")
 
     def test_generate_suite_blocks_conflicts_and_unsafe_or_invalid_input(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+        with tempfile.TemporaryDirectory(prefix="gs-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             workspace = Path(tmp)
             target = workspace / "generated-review-suite"
             blueprint_path = workspace / "suite-blueprint.json"
@@ -3594,7 +3025,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
         conflict_paths = (".skillguard/suite", "members/suite-alpha/references")
         for conflict_relative in conflict_paths:
             with self.subTest(conflict_relative=conflict_relative):
-                with tempfile.TemporaryDirectory(prefix="generated-suite-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
+                with tempfile.TemporaryDirectory(prefix="gs-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
                     workspace = Path(tmp)
                     target = workspace / "generated-review-suite"
                     blueprint_path = workspace / "suite-blueprint.json"
@@ -3644,7 +3075,6 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             "generate-skill",
             "generate-suite",
             "detect-stale-evidence",
-            "refresh-maintenance",
             "review-checker-change",
             "check-maintenance-record",
             "standard-library",
@@ -3717,7 +3147,7 @@ def result_payload(result: unittest.TestResult, elapsed_seconds: float) -> dict[
         status=decision,
         blockers=failure_items,
         evidence_timestamp=payload["checked_at"],
-        refresh_action={"action": "not_applicable", "status": "test_result"},
+        owner_action={"action": "not_applicable", "status": "test_result"},
         content_seed={"test_count": result.testsRun, "failure_count": len(result.failures), "error_count": len(result.errors)},
     )
     return payload

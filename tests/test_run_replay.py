@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_contract  # noqa: F401
+from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.route_runtime import select_routes
 from skillguard_v2.run_store import RunStoreError, claim_run
 from skillguard_v2.step_runtime import (
@@ -29,6 +29,7 @@ class RunReplayTests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["src"], "request": "audit"},
             self.target,
             decision,
+            check_manifest=runtime_check_manifest(self.contract),
         )
         self.assertTrue(claim.ok, claim.to_dict())
         self.run_root = claim.run_root
@@ -90,6 +91,7 @@ class RunReplayTests(unittest.TestCase):
             {"function_ids": ["analyze"], "write_targets": ["src"], "request": "other"},
             other_target,
             decision,
+            check_manifest=runtime_check_manifest(self.contract),
         )
         record_loop_reentry(other.run_root, "route:analyze", "receipt:1")
         record_loop_reentry(other.run_root, "route:analyze", "receipt:2")

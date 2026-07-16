@@ -1,4 +1,4 @@
-"""Versioned adapter from real FlowGuard models to SkillGuard V2 exports."""
+"""Current adapter from real FlowGuard models to SkillGuard contract exports."""
 
 from __future__ import annotations
 
@@ -88,11 +88,22 @@ def load_flowguard_model(model_path: Path, repository_root: Path) -> FlowGuardMo
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module
     try:
-        spec.loader.exec_module(module)
+        # Contract compilation is a read of governed source authority. Execute
+        # the exact source bytes directly so the read cannot leave a mutable
+        # Python bytecode cache side effect inside the target control root.
+        code = compile(
+            resolved_model.read_bytes(),
+            str(resolved_model),
+            "exec",
+            dont_inherit=True,
+        )
+        exec(code, module.__dict__)
     except Exception as exc:
         raise FlowGuardAdapterError(
             (SchemaFinding("flowguard_model_execution_failed", "$.model_path", type(exc).__name__),)
         ) from exc
+    finally:
+        sys.modules.pop(module_name, None)
     if getattr(module, "FLOWGUARD_MODEL_MARKER", "") != "flowguard-executable-model":
         raise FlowGuardAdapterError(
             (SchemaFinding("flowguard_model_marker_missing", "$.FLOWGUARD_MODEL_MARKER", resolved_model.name),)

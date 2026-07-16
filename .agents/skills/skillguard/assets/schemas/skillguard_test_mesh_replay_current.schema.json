@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillguard_test_mesh_replay_current.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "mode", "execution_count", "aggregation_id", "findings", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": "skillguard.test_mesh_replay.current"},
+    "status": {"enum": ["passed", "blocked"]},
+    "mode": {"const": "read_only_replay"},
+    "execution_count": {"const": 0},
+    "aggregation_id": {"type": "string"},
+    "findings": {"type": "array", "items": {"type": "string"}},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

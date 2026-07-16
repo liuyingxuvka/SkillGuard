@@ -10,10 +10,11 @@ import json
 import re
 import shutil
 import os
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Mapping
 
 from skillguard_utils import (
     dump_json,
@@ -26,20 +27,127 @@ from skillguard_utils import (
     utc_timestamp,
     write_report,
 )
+from skillguard_v2.contract_schema import (
+    BINDING_SOURCE_SCHEMA,
+    MODEL_EXPORT_SCHEMA,
+    validate_binding_source,
+    validate_check_manifest as validate_v2_check_manifest,
+    validate_compiled_contract,
+)
+from skillguard_v2.contract_compiler import (
+    canonical_hash,
+    compile_skill_contract,
+)
+from skillguard_v2.content_projection import (
+    current_content_projection_from_files,
+    impact_file_hash,
+)
+from skillguard_v2 import global_router_projection as current_global_router
+from skillguard_v2 import global_router_discovery as current_global_discovery
+from skillguard_v2.global_router_transaction import (
+    GlobalRouterTransactionError,
+    apply_global_router_transaction,
+)
+from skillguard_v2.portfolio_cli import PORTFOLIO_COMMANDS
+from skillguard_v2.portable_content import (
+    RUNTIME,
+    classify_relative_path,
+    owned_runtime_parent_may_be_pruned,
+    portable_files,
+)
+from skillguard_v2.validation_execution_policy import (
+    VALIDATION_EXECUTION_POLICY_ID,
+    VALIDATION_EXECUTION_POLICY_LINES,
+)
+from skillguard_v2.runtime_authority import (
+    AUTHORITY_CURRENT,
+    resolve_runtime_authority,
+)
 
 
 CHECKER_VERSION = "skillguard.local_cli_dispatch.v1"
 SCHEMA_DIR = skill_root() / "assets" / "schemas"
 MARKER_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$")
-GLOBAL_REGISTRY_SCHEMA_VERSION = "skillguard.global_registry.v1"
-GLOBAL_PROMPT_PROJECTION_SCHEMA_VERSION = "skillguard.global_prompt_projection.v1"
-GLOBAL_PROMPT_BEGIN = "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->"
-GLOBAL_PROMPT_END = "<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->"
-GLOBAL_ROUTER_SKILL_ID = "skillguard-global-router"
+GLOBAL_REGISTRY_SCHEMA_VERSION = current_global_router.GLOBAL_REGISTRY_SCHEMA_VERSION
+GLOBAL_PROMPT_PROJECTION_SCHEMA_VERSION = (
+    current_global_router.GLOBAL_PROMPT_PROJECTION_SCHEMA_VERSION
+)
+GLOBAL_PROMPT_BEGIN = current_global_router.GLOBAL_PROMPT_BEGIN
+GLOBAL_PROMPT_END = current_global_router.GLOBAL_PROMPT_END
+GLOBAL_ROUTER_SKILL_ID = current_global_router.GLOBAL_ROUTER_SKILL_ID
 GLOBAL_ROUTE_STOPWORDS = {"and", "are", "for", "from", "into", "the", "this", "that", "with"}
 MARKER_STATUSES = ("checked", "needs-review", "blocked", "stale", "accepted")
 REFERENCE_SPAN_RE = re.compile(r"`([^`]+)`")
-FENCED_CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
+FENCED_CODE_BLOCK_RE = re.compile(
+    r"^[ \t]*(`{3,}|~{3,})[^\n]*\n.*?^[ \t]*\1[ \t]*(?:\r?\n|$)",
+    re.DOTALL | re.MULTILINE,
+)
+MARKDOWN_LINK_RE = re.compile(
+    r"!?\[[^\]\n]*\]\(\s*(?:<([^>\n]+)>|([^\s)]+))"
+    r"(?:\s+(?:\"[^\"]*\"|'[^']*'))?\s*\)"
+)
+MARKDOWN_LINK_DEFINITION_RE = re.compile(
+    r"^[ \t]{0,3}\[[^\]\n]+\]:\s*(?:<([^>\n]+)>|([^\s]+))",
+    re.MULTILINE,
+)
+DATABASE_URI_RE = re.compile(
+    r"(?:^|[=\s])(?:sqlite|postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|mssql|oracle|duckdb|jdbc):",
+    re.IGNORECASE,
+)
+SQL_EXPRESSION_RE = re.compile(
+    r"^(?:SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH|PRAGMA|ATTACH|VACUUM|REPLACE|UPSERT|MERGE|EXPLAIN)\b",
+    re.IGNORECASE,
+)
+INLINE_CLI_ARGUMENT_RE = re.compile(r"(?:^|\s)--?[A-Za-z0-9]")
+SHELL_OPERATOR_RE = re.compile(r"(?:&&|\|\||[|;<>])")
+COMMAND_LAUNCHER_RE = re.compile(
+    r"^(?:python(?:\d+(?:\.\d+)*)?|py|node|deno|bun|bash|sh|zsh|fish|pwsh|powershell|cmd(?:\.exe)?|"
+    r"git|docker|podman|make|ninja|cargo|go|java|dotnet|npm|npx|pnpm|yarn|pip|pipx|uv|pytest|"
+    r"sqlite3|psql|mysql|openspec|skillguard)\b",
+    re.IGNORECASE,
+)
+INLINE_COMMAND_CONTEXT_RE = re.compile(r"(?:\brun|\bexecute|\binvoke|\bcall)\s*$", re.IGNORECASE)
+INLINE_CLI_VALUE_BEFORE_RE = re.compile(
+    r"(?:`--?[A-Za-z0-9][^`]*`|--?[A-Za-z0-9][A-Za-z0-9_-]*)\s*(?:=|,|and|with)?\s*$",
+    re.IGNORECASE,
+)
+INLINE_CLI_VALUE_AFTER_RE = re.compile(
+    r"^\s*(?:(?:as|for|to)\s+(?:the\s+)?)?(?:`--?[A-Za-z0-9][^`]*`|--?[A-Za-z0-9][A-Za-z0-9_-]*|"
+    r"CLI\b|command\b|argument\b|option\b|flag\b)",
+    re.IGNORECASE,
+)
+DECLARED_REFERENCE_CONTEXT_RE = re.compile(
+    r"(?:\b(?:declared|required)\s+(?:local\s+)?(?:reference|script|schema|artifact|file|path)|"
+    r"\b(?:reference|script|schema|artifact|file|path)(?:\s+under\s+test)?\s*:)\s*$",
+    re.IGNORECASE,
+)
+DATABASE_CONTEXT_RE = re.compile(
+    r"\b(?:database|sqlite|postgres(?:ql)?|mysql|mariadb|mongodb|mssql|oracle|duckdb|jdbc)\b",
+    re.IGNORECASE,
+)
+DATABASE_RUNTIME_SEGMENT_RE = re.compile(
+    r"(?:^|[\\/])(?:runtime|data|var|state|cache|tmp|database|databases|db)(?:[\\/]|$)",
+    re.IGNORECASE,
+)
+DATABASE_FILE_SUFFIX_RE = re.compile(r"\.(?:db|sqlite3?|duckdb|mdb|accdb)(?:[?#].*)?$", re.IGNORECASE)
+PLAIN_LOCAL_FILENAME_RE = re.compile(r"^[A-Za-z0-9_.][A-Za-z0-9_. -]*\.[A-Za-z0-9_-]{1,32}$")
+TRANSIENT_SKILLGUARD_RUNTIME_PREFIXES = (
+    ".skillguard/runs",
+    ".skillguard/locks",
+    ".skillguard/bootstrap",
+    ".skillguard/test-results",
+)
+DECLARED_REFERENCE_PREFIXES = (
+    ".agents/",
+    ".skillguard/",
+    "references/",
+    "scripts/",
+    "assets/",
+    "schemas/",
+    "artifacts/",
+    "fixtures/",
+    "tests/",
+)
 HEADING_RE = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
 REQUIRED_SKILL_SECTIONS = (
     "Purpose",
@@ -63,14 +171,6 @@ OUTPUT_REQUIREMENT_TERMS = {
 }
 ROOT_REFERENCE_NAMES = {"README.md", "AGENTS.md", "LICENSE", "VERSION", "pyproject.toml"}
 OPTIONAL_TARGET_REFERENCES = {"fixtures/", "tests/", "examples/"}
-CONTROL_JSON_RECORDS = (
-    "skillguard_profile.json",
-    "skillguard_skill_contract.json",
-    "skillguard_evidence_rules.json",
-    "skillguard_closure_policy.json",
-    "skillguard_manifest.json",
-)
-CONTROL_RECORD_DIRS = ("ai_judgments", "evidence", "reports")
 COMMON_CONTROL_FIELDS = (
     "schema_version",
     "target_path",
@@ -176,26 +276,20 @@ SAFE_UNSAFE_CLAIM_CONTEXT = (
     "unless separate current evidence",
 )
 FIXTURE_TARGET_SCHEMAS = {
-    "check-skill-contract": "skillguard_skill_contract.schema.json",
     "check-suite-map": "skillguard_suite_map.schema.json",
     "check-suite-contract": "skillguard_suite_contract.schema.json",
     "check-fixture-manifest": "skillguard_fixture_manifest.schema.json",
-    "check-work-contract": "skillguard_work_contract.schema.json",
-    "check-run-record": "skillguard_run_record.schema.json",
-    "check-check-manifest": "skillguard_check_manifest.schema.json",
     "check-ai-judgment": "skillguard_ai_judgment.schema.json",
     "check-report": "skillguard_check_report.schema.json",
     "check-workflow-report": "skillguard_workflow_report.schema.json",
 }
 FIXTURE_TARGET_RUNTIME_COMMANDS = {
+    "check-runtime-authority",
     "check-contract",
     "check-depth",
     "check-readme-release",
-    "check-run",
     "check-skill",
     "check-suite",
-    "close-run",
-    "compile-contract",
     "build-global-registry",
     "check-global-prompt",
     "check-global-registry",
@@ -203,15 +297,19 @@ FIXTURE_TARGET_RUNTIME_COMMANDS = {
     "install-global-prompt",
     "refresh-global-router",
     "audit-installed-skills",
+    "audit-portfolio",
+    "mark-portfolio-impact",
+    "issue-portfolio-reuse-ticket",
+    "graduate-portfolio",
     "render-global-prompt",
     "resolve-global-skill",
     "route-task",
-    "select-route",
     "self-check",
-    "start-run",
     "scan-global-skills",
 }
 FIXTURE_EXPECTED_DECISIONS = {"pass", "fail", "block"}
+EXTERNAL_TARGET_BINDING_SCHEMA_NAME = "skillguard_external_target_binding_v1.schema.json"
+EXTERNAL_TARGET_BINDING_SCHEMA_VERSION = "skillguard.external_target_binding.v1"
 REVIEW_CHECKER_CHANGE_BASELINE_SCHEMA = "skillguard.checker_change_baseline.v1"
 REVIEW_CHECKER_CHANGE_RESULT_SCHEMA = "skillguard.review_checker_change_result.v1"
 MAINTENANCE_RECORD_SCHEMA_VERSION = "skillguard.maintenance_record.v1"
@@ -229,13 +327,12 @@ MAINTENANCE_RECORD_REQUIRED_FIELDS = (
     "evidence_timestamp",
     "status",
     "blockers",
-    "refresh_action",
+    "owner_action",
 )
 MAINTENANCE_RECORD_KINDS = {
     "checker_change_review",
     "command_surface",
     "fixture_evidence",
-    "maintenance_refresh",
     "route_task_metadata",
     "self_check",
     "stale_evidence_review",
@@ -339,10 +436,6 @@ GENERATE_SKILL_REQUIRED_BLUEPRINT_FIELDS = (
 )
 GENERATE_SKILL_REQUIRED_DIRECTORIES = (
     ".skillguard",
-    ".skillguard/ai_judgments",
-    ".skillguard/checks",
-    ".skillguard/evidence",
-    ".skillguard/reports",
     ".skillguard/runs",
     "assets/schemas",
     "assets/templates",
@@ -353,10 +446,6 @@ GENERATE_SKILL_REQUIRED_DIRECTORIES = (
 )
 GENERATE_SKILL_REQUIRED_DIRECTORY_ROLES = {
     ".skillguard": "SkillGuard control root",
-    ".skillguard/ai_judgments": "AI judgment record directory",
-    ".skillguard/checks": "runtime check script directory",
-    ".skillguard/evidence": "evidence record directory",
-    ".skillguard/reports": "workflow report directory",
     ".skillguard/runs": "runtime run-record directory",
     "assets": "generated asset parent directory",
     "assets/schemas": "schema directory",
@@ -378,22 +467,10 @@ GENERATE_SKILL_REQUIRED_FILES = (
     "fixtures/fixture-manifest.json",
     "tests/README.md",
     "tests/test_smoke.py",
-    ".skillguard/work-contract.json",
-    ".skillguard/check_manifest.json",
-    ".skillguard/checks/check_route.py",
-    ".skillguard/checks/check_phase_order.py",
-    ".skillguard/checks/check_evidence.py",
-    ".skillguard/checks/check_quality_floor.py",
-    ".skillguard/checks/check_closure.py",
-    ".skillguard/skillguard_profile.json",
-    ".skillguard/skillguard_skill_contract.json",
-    ".skillguard/skillguard_evidence_rules.json",
-    ".skillguard/skillguard_closure_policy.json",
-    ".skillguard/skillguard_manifest.json",
-    ".skillguard/skillguard_progress_ledger.jsonl",
-    ".skillguard/evidence/initial_evidence_manifest.json",
-    ".skillguard/ai_judgments/initial_ai_judgment.json",
-    ".skillguard/reports/initial_workflow_report.json",
+    ".skillguard/flowguard_contract_model.py",
+    ".skillguard/contract-source.json",
+    ".skillguard/compiled-contract.json",
+    ".skillguard/check-manifest.json",
 )
 GENERATE_SUITE_REQUIRED_BLUEPRINT_FIELDS = (
     "suite_name",
@@ -430,14 +507,10 @@ GENERATE_SUITE_REQUIRED_FILES = (
     ".skillguard/suite/evidence/suite_closure.json",
     ".skillguard/suite/reports/suite_generation_report.json",
 )
-ROUTE_TASK_REGISTRY_VERSION = "skillguard.route_registry.v1"
+ROUTE_TASK_REGISTRY_VERSION = "skillguard.route_registry.v3"
 ROUTE_TASK_PATH_FIELDS = {
     "blueprint",
     "blueprint_path",
-    "checker_change_refresh",
-    "checker_change_refresh_path",
-    "checker_change_refreshes",
-    "checker_change_refresh_paths",
     "checker_change_review",
     "checker_change_review_path",
     "checker_change_reviews",
@@ -493,12 +566,6 @@ ROUTE_TASK_CHECKER_CHANGE_REVIEW_FIELDS = (
     "checker_change_reviews",
     "checker_change_review_paths",
 )
-ROUTE_TASK_CHECKER_CHANGE_REFRESH_FIELDS = (
-    "checker_change_refresh",
-    "checker_change_refresh_path",
-    "checker_change_refreshes",
-    "checker_change_refresh_paths",
-)
 ROUTE_TASK_CHECKER_SUITE_FIELDS = (
     "checker_suite",
     "checker_suites",
@@ -550,32 +617,13 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
         "keywords": ("generate suite", "suite scaffold", "suite blueprint", "multi-skill suite", "child skill scaffold"),
     },
     {
-        "route_id": "skillguard.route.compile-contract.v1",
-        "route_node_id": "compile-contract",
-        "command_family": "compile-contract",
-        "responsibility": "contract-compiler",
-        "next_step": "Run compile-contract against the target skill before expecting runtime phase checks.",
-        "status": "current",
-        "hints": ("compile-contract", "work-contract", "runtime-contract", "contract-compiler"),
-        "keywords": (
-            "compile contract",
-            "work contract",
-            "runtime contract",
-            "build running script",
-            "create run script",
-            "create checks",
-            "contract compiler",
-            "skillguard contract",
-        ),
-    },
-    {
         "route_id": "skillguard.route.check-contract.v1",
         "route_node_id": "check-contract",
         "command_family": "check-contract",
         "responsibility": "checker",
         "next_step": "Run check-contract against the target skill work contract.",
         "status": "current",
-        "hints": ("check-contract", "work-contract-check", "contract-check"),
+        "hints": ("check-contract", "contract-check"),
         "keywords": (
             "check contract",
             "validate contract",
@@ -639,73 +687,167 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
         ),
     },
     {
-        "route_id": "skillguard.route.select-route.v1",
-        "route_node_id": "select-route",
-        "command_family": "select-route",
-        "responsibility": "runtime-router",
-        "next_step": "Run select-route before starting a SkillGuard-governed task run.",
+        "route_id": "skillguard.route.project-adopt.v1",
+        "route_node_id": "project-adopt",
+        "command_family": "project-adopt",
+        "responsibility": "project-adoption-installer",
+        "next_step": "Run project-adopt to install a marker-bounded SkillGuard maintenance block and hash-bound project manifest while preserving surrounding project instructions.",
         "status": "current",
-        "hints": ("select-route", "runtime-route", "choose-work-route"),
+        "hints": ("project-adopt", "skillguard-project-adoption", "managed-project-prompt"),
         "keywords": (
-            "select route",
-            "choose path",
-            "choose route",
-            "before using skill",
-            "runtime route",
-            "work path",
-            "path selection",
+            "adopt project",
+            "skillguard maintained repository",
+            "project prompt",
+            "managed agents block",
+            "portable skill maintenance",
         ),
     },
     {
-        "route_id": "skillguard.route.start-run.v1",
-        "route_node_id": "start-run",
-        "command_family": "start-run",
-        "responsibility": "runtime-ledger",
-        "next_step": "Run start-run after select-route has chosen the route.",
+        "route_id": "skillguard.route.project-audit.v1",
+        "route_node_id": "project-audit",
+        "command_family": "project-audit",
+        "responsibility": "project-adoption-checker",
+        "next_step": "Run project-audit before claiming that a repository carries current portable SkillGuard maintenance instructions.",
         "status": "current",
-        "hints": ("start-run", "run-record", "runtime-ledger"),
+        "hints": ("project-audit", "skillguard-project-audit", "managed-project-prompt-audit"),
         "keywords": (
-            "start run",
-            "run record",
-            "runtime ledger",
-            "begin skill work",
-            "record run",
-            "task run",
+            "audit project adoption",
+            "check skillguard project prompt",
+            "verify managed agents block",
+            "skillguard repository link",
+            "native route evidence",
         ),
     },
     {
-        "route_id": "skillguard.route.check-run.v1",
-        "route_node_id": "check-run",
-        "command_family": "check-run",
-        "responsibility": "runtime-checker",
-        "next_step": "Run check-run against the current run record before claiming progress or closure.",
+        "route_id": "skillguard.route.build-current-portfolio-registry.v1",
+        "route_node_id": "build-current-portfolio-registry",
+        "command_family": "build-current-portfolio-registry",
+        "responsibility": "portfolio-runtime",
+        "next_step": "Build revision one directly from the exact reviewed current scope without consuming prior registry authority.",
         "status": "current",
-        "hints": ("check-run", "run-check", "runtime-check"),
+        "hints": (
+            "build-current-portfolio-registry",
+            "direct-portfolio-registry-replacement",
+            "portfolio-scope-replacement",
+        ),
         "keywords": (
-            "check run",
-            "phase order",
-            "missing evidence",
-            "skipped phase",
-            "quality floor",
-            "runtime check",
-            "work is complete",
+            "build current portfolio registry",
+            "direct portfolio registry replacement",
+            "replace stale portfolio registry from scope",
+            "portfolio scope replacement",
         ),
     },
     {
-        "route_id": "skillguard.route.close-run.v1",
-        "route_node_id": "close-run",
-        "command_family": "close-run",
-        "responsibility": "closure",
-        "next_step": "Run close-run only after check-run supports the requested closure decision.",
+        "route_id": "skillguard.route.audit-portfolio.v1",
+        "route_node_id": "audit-portfolio",
+        "command_family": "audit-portfolio",
+        "responsibility": "portfolio-runtime",
+        "next_step": "Audit the private portfolio registry before impact propagation, reuse, or one-target graduation.",
         "status": "current",
-        "hints": ("close-run", "runtime-closure", "close-work-run"),
+        "hints": ("audit-portfolio", "portfolio-audit", "portfolio-currentness"),
         "keywords": (
-            "close run",
-            "accept run",
-            "runtime closure",
-            "closure gate",
-            "finish skill work",
-            "final claim",
+            "audit portfolio",
+            "portfolio registry",
+            "prior skill revalidation",
+            "portfolio currentness",
+            "skillguard current runtime identity",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.prepare-portfolio-run.v1",
+        "route_node_id": "prepare-portfolio-run",
+        "command_family": "prepare-portfolio-run",
+        "responsibility": "portfolio-runner",
+        "next_step": "Freeze one complete ordered portfolio plan and every exact job specification before any representative run is claimed.",
+        "status": "current",
+        "hints": (
+            "prepare-portfolio-run",
+            "portfolio-run-prepare",
+            "portfolio-preparation",
+        ),
+        "keywords": (
+            "prepare portfolio run",
+            "freeze portfolio plan",
+            "global portfolio job plan",
+            "job specs before claim",
+            "portfolio preparation",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.execute-portfolio-run.v1",
+        "route_node_id": "execute-portfolio-run",
+        "command_family": "execute-portfolio-run",
+        "responsibility": "portfolio-runner",
+        "next_step": "Execute every frozen representative job through ordinary claimed current SkillGuard runs under the preparation identity.",
+        "status": "current",
+        "hints": (
+            "execute-portfolio-run",
+            "portfolio-run-execute",
+            "portfolio-execution",
+        ),
+        "keywords": (
+            "execute portfolio run",
+            "run prepared portfolio jobs",
+            "claimed v2 portfolio jobs",
+            "portfolio execution",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.capture-portfolio-production-revalidation.v1",
+        "route_node_id": "capture-portfolio-production-revalidation",
+        "command_family": "capture-portfolio-production-revalidation",
+        "responsibility": "portfolio-production-recorder",
+        "next_step": "Capture one exact member scheduled-production declared-check depth, terminal, closure, and installed-runtime binding after execution and before assembly.",
+        "status": "current",
+        "hints": (
+            "capture-portfolio-production-revalidation",
+            "portfolio-production-capture",
+            "capture-production-binding",
+        ),
+        "keywords": (
+            "capture portfolio production revalidation",
+            "capture member production binding",
+            "scheduled production portfolio receipt",
+            "production evidence before assembly",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.assemble-portfolio-run.v1",
+        "route_node_id": "assemble-portfolio-run",
+        "command_family": "assemble-portfolio-run",
+        "responsibility": "portfolio-runner",
+        "next_step": "Replay the prepared executions and assemble a verifier-owned graduation candidate without writing the registry.",
+        "status": "current",
+        "hints": (
+            "assemble-portfolio-run",
+            "portfolio-run-assemble",
+            "portfolio-assembly",
+        ),
+        "keywords": (
+            "assemble portfolio run",
+            "assemble portfolio evidence",
+            "replay portfolio receipts",
+            "portfolio graduation dry run",
+            "portfolio assembly",
+        ),
+    },
+    {
+        "route_id": "skillguard.route.graduate-portfolio.v1",
+        "route_node_id": "graduate-portfolio",
+        "command_family": "graduate-portfolio",
+        "responsibility": "portfolio-graduation-verifier",
+        "next_step": "Graduate exactly one target only after assembly has supplied every current per-member scheduled-production binding and all prior active targets remain current.",
+        "status": "current",
+        "hints": (
+            "graduate-portfolio",
+            "portfolio-graduation",
+            "graduate-skill-portfolio",
+        ),
+        "keywords": (
+            "graduate portfolio",
+            "graduate skill portfolio",
+            "authorize portfolio graduation",
+            "update portfolio current status",
         ),
     },
     {
@@ -756,28 +898,6 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
         ),
     },
     {
-        "route_id": "skillguard.route.refresh-maintenance.v1",
-        "route_node_id": "refresh-maintenance",
-        "command_family": "refresh-maintenance",
-        "responsibility": "maintainer",
-        "next_step": "Run refresh-maintenance against stale evidence records, first in dry-run mode unless execution is explicitly requested.",
-        "status": "current",
-        "hints": ("refresh-maintenance", "maintenance-refresh", "refresh-evidence", "refresh-stale-evidence"),
-        "keywords": (
-            "refresh maintenance",
-            "refresh maintenance evidence",
-            "refresh stale evidence",
-            "refresh stale maintenance evidence",
-            "stale maintenance evidence",
-            "maintenance evidence",
-            "evidence metadata",
-            "maintenance refresh",
-            "update evidence fingerprints",
-            "refresh route metadata",
-            "refresh command surface",
-        ),
-    },
-    {
         "route_id": "skillguard.route.review-checker-change.v1",
         "route_node_id": "review-checker-change",
         "command_family": "review-checker-change",
@@ -800,7 +920,7 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
         "route_node_id": "check-maintenance-record",
         "command_family": "check-maintenance-record",
         "responsibility": "checker",
-        "next_step": "Run check-maintenance-record against a canonical or supported legacy maintenance record JSON artifact.",
+        "next_step": "Run check-maintenance-record against a current maintenance record JSON artifact.",
         "status": "current",
         "hints": ("check-maintenance-record", "maintenance-record", "record-schema", "maintenance-schema"),
         "keywords": (
@@ -809,7 +929,7 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
             "record schema",
             "canonical maintenance schema",
             "validate maintenance record",
-            "legacy maintenance record",
+            "rejected former maintenance record",
         ),
     },
     {
@@ -844,39 +964,15 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
     },
 )
 DETECT_STALE_EXPECTED_ROUTE_VERSION = "5"
-REFRESH_MAINTENANCE_REFRESHABLE_CODES = {
-    "stale_source_fingerprint",
-    "stale_command_or_self_check_record",
-    "stale_fixture_manifest",
-    "stale_fixture_output",
-    "stale_route_version",
-    "stale_route_registry_version",
-    "stale_command_surface",
-    "stale_route_registry",
-    "stale_openspec_status",
-}
-REFRESH_MAINTENANCE_SUPPORTED_TARGETS = (
-    "evidence summaries with repository-local path/sha256 bindings",
-    "fixture manifest bindings recorded by fixture-test outputs",
-    "fixture case result bindings recorded by fixture-test outputs",
-    "generated artifact status records that already point to present repository-local artifacts",
-    "command and self-check outputs with current command surface metadata",
-    "OpenSpec status metadata with changes-directory presence",
-    "route registry metadata and route-task maintenance records",
-)
 MAINTENANCE_MISSING_BLOCKER_CODES = {
     "invalid_evidence_path",
     "missing_evidence_artifact",
     "missing_evidence_metadata",
 }
-MAINTENANCE_REFRESH_STATES = {
+MAINTENANCE_FRESHNESS_STATES = {
     "fresh",
     "stale_or_missing",
-    "stale_refresh_planned",
-    "current_after_refresh",
     "missing",
-    "missing_or_unrefreshable_blocker",
-    "refresh_failed",
 }
 CHECKER_CHANGE_SUITE_GUARD_SCHEMA = "skillguard.checker_change_suite_guard.v1"
 CHECKER_CHANGE_SUITE_IMPACT_CLASSES = {
@@ -889,11 +985,7 @@ CHECKER_CHANGE_SUITE_GUARD_STATES = {
     "not_required",
     "fresh",
     "stale_or_missing",
-    "stale_refresh_planned",
-    "current_after_refresh",
     "missing",
-    "missing_or_unrefreshable_blocker",
-    "refresh_failed",
     "invalid_selection",
     "inconsistent_selection",
 }
@@ -963,6 +1055,113 @@ def resolve_target_argument(path_text: str | Path, root: Path | None = None) -> 
     if root is not None:
         return ensure_under_root(path_text, root)
     return resolve_skillguard_self_layout_path(path_text)
+
+
+def resolve_check_target_binding(
+    command: str,
+    target_text: str | Path,
+    repository_root_text: str | Path | None = None,
+) -> tuple[Path, Path, Path, dict[str, Any]]:
+    """Resolve one canonical repository/member pair without retry or inference.
+
+    The returned roots are ``(repository_root, member_root, report_root)``.
+    ``report_root`` preserves repository-relative labels for embedded self
+    checks while the binding projection remains the sole compilation and
+    reference authority.
+    """
+
+    configured_root = repository_root().resolve()
+    configured_skill = skill_root().resolve()
+    normalized_target = str(target_text).replace("\\", "/").strip()
+    explicit_repository = repository_root_text is not None
+
+    if explicit_repository:
+        canonical_root = Path(str(repository_root_text)).resolve()
+        if not canonical_root.is_dir():
+            raise SkillGuardCliError(
+                command,
+                f"--repository-root is missing or not a directory: {repository_root_text}",
+                "missing_file",
+            )
+        candidate = Path(target_text)
+        if not candidate.is_absolute():
+            candidate = canonical_root / candidate
+        member_root = candidate.resolve()
+        report_root = canonical_root
+        binding_mode = "explicit_repository"
+    elif normalized_target in {".", "./"}:
+        canonical_root = Path.cwd().resolve()
+        member_root = canonical_root
+        report_root = canonical_root
+        binding_mode = "standalone_dot"
+    else:
+        try:
+            member_root = resolve_target_argument(target_text)
+        except ValueError as exc:
+            raise SkillGuardCliError(
+                command,
+                "--repository-root is required for a non-self target; a standalone skill must be checked from its own directory with --target .",
+                "target_binding_invalid",
+            ) from exc
+        if member_root.resolve() == configured_skill:
+            canonical_root = configured_root
+            binding_mode = "skillguard_self"
+        else:
+            raise SkillGuardCliError(
+                command,
+                "--repository-root is required for a non-self target; a standalone skill must be checked from its own directory with --target .",
+                "target_binding_invalid",
+            )
+        report_root = configured_root
+
+    try:
+        member_root_path = member_root.resolve().relative_to(
+            canonical_root.resolve()
+        ).as_posix()
+    except ValueError as exc:
+        raise SkillGuardCliError(
+            command,
+            "--target must resolve inside the declared canonical --repository-root",
+            "target_binding_invalid",
+        ) from exc
+
+    binding = {
+        "schema_version": EXTERNAL_TARGET_BINDING_SCHEMA_VERSION,
+        "artifact_type": "skillguard_external_target_binding",
+        "binding_mode": binding_mode,
+        "repository_root_role": "canonical_repository_root",
+        "member_root_role": "target_skill_member_root",
+        "member_root_path": member_root_path or ".",
+        "repository_root_explicit": explicit_repository,
+        "repository_root_verified": canonical_root.is_dir(),
+        "member_root_verified": member_root.is_dir(),
+        "member_within_repository": True,
+        "fallback_used": False,
+        "claim_boundary": (
+            "This projection proves only the declared canonical repository/member path binding. "
+            "It stores no absolute local path and does not prove contract, static, execution, installation, or release success."
+        ),
+    }
+    schema = load_json(schema_path(EXTERNAL_TARGET_BINDING_SCHEMA_NAME))
+    schema_failures = validate_schema_subset(binding, schema)
+    if schema_failures:
+        raise SkillGuardCliError(
+            command,
+            "generated target binding does not satisfy the current binding schema: "
+            + "; ".join(schema_failures),
+            "target_binding_invalid",
+        )
+    return canonical_root, member_root, report_root, binding
+
+
+def is_installed_skill_projection(target: Path) -> bool:
+    """Return whether *target* is one direct member of a .codex/skills tree."""
+
+    resolved = target.resolve()
+    return (
+        resolved.parent.name == "skills"
+        and resolved.parent.parent.name == ".codex"
+    )
 
 
 def control_root_for(target: Path, root: Path | None = None) -> Path:
@@ -1168,7 +1367,7 @@ def validation_registry_structured_blockers(payload: dict[str, Any]) -> list[dic
                 or item.get("stale_reason")
                 or item.get("failure_reason")
                 or item.get("recommended_resolution")
-                or item.get("recommended_refresh_action")
+                or item.get("recommended_owner_action")
                 or item.get("recommended_repair_action")
                 or blocker_code
             )[:300]
@@ -1184,7 +1383,7 @@ def validation_registry_structured_blockers(payload: dict[str, Any]) -> list[dic
                 else [],
                 "recommended_resolution": str(
                     item.get("recommended_resolution")
-                    or item.get("recommended_refresh_action")
+                    or item.get("recommended_owner_action")
                     or item.get("recommended_repair_action")
                     or ""
                 )[:300],
@@ -1454,21 +1653,6 @@ def check_json_record(command: str, argv: list[str], schema_name: str) -> int:
     return write_and_exit(payload, args.output)
 
 
-WORK_CONTRACT_SCHEMA_NAME = "skillguard_work_contract.schema.json"
-RUN_RECORD_SCHEMA_NAME = "skillguard_run_record.schema.json"
-CHECK_MANIFEST_SCHEMA_NAME = "skillguard_check_manifest.schema.json"
-WORK_CONTRACT_FILENAME = "work-contract.json"
-CHECK_MANIFEST_FILENAME = "check_manifest.json"
-CHECK_TEMPLATE_BY_ID = {
-    "check_route": "check_route.py.template",
-    "check_phase_order": "check_phase_order.py.template",
-    "check_evidence": "check_evidence.py.template",
-    "check_quality_floor": "check_quality_floor.py.template",
-    "check_closure": "check_closure.py.template",
-}
-RUN_TERMINAL_STATUSES = {"checked", "needs-review", "blocked", "failed", "stale"}
-RUN_ACCEPTABLE_PREVIOUS_STATUSES = {"checked", "needs-review"}
-RUN_DEPTH_ACCEPTED_CLOSURE_DECISIONS = {"accepted", "closed_with_evidence"}
 
 
 def canonical_json_hash(value: Any, length: int | None = None) -> str:
@@ -1477,29 +1661,8 @@ def canonical_json_hash(value: Any, length: int | None = None) -> str:
     return digest[:length] if length is not None else digest
 
 
-def work_contract_hash(contract: dict[str, Any]) -> str:
-    seed = dict(contract)
-    seed["contract_hash"] = ""
-    return canonical_json_hash(seed)
 
 
-def runtime_contract_path(target: Path, explicit_contract: str | None = None, root: Path | None = None) -> Path:
-    if explicit_contract:
-        if root is not None:
-            return ensure_under_root(explicit_contract, root)
-        return resolve_skillguard_self_layout_path(explicit_contract)
-    return ensure_under_root(control_root_for(target, root) / WORK_CONTRACT_FILENAME, root)
-
-
-def runtime_check_manifest_path(target: Path, explicit_manifest: str | None = None) -> Path:
-    if explicit_manifest:
-        return resolve_skillguard_self_layout_path(explicit_manifest)
-    return ensure_under_root(control_root_for(target) / CHECK_MANIFEST_FILENAME)
-
-
-def runtime_run_path(target: Path, run_id: str) -> Path:
-    safe_id = re.sub(r"[^A-Za-z0-9_.-]+", "-", run_id).strip("-") or "run"
-    return ensure_under_root(control_root_for(target) / "runs" / f"{safe_id}.json")
 
 
 def require_skill_target(target: Path, command: str, root: Path | None = None) -> None:
@@ -1508,1235 +1671,22 @@ def require_skill_target(target: Path, command: str, root: Path | None = None) -
         raise SkillGuardCliError(command, f"target skill is missing SKILL.md: {public_relative_path(target, root)}", "missing_file")
 
 
-def contract_lookup(items: Any, key: str) -> dict[str, dict[str, Any]]:
-    if not isinstance(items, list):
-        return {}
-    result: dict[str, dict[str, Any]] = {}
-    for item in items:
-        if isinstance(item, dict) and isinstance(item.get(key), str):
-            result[item[key]] = item
-    return result
 
 
-def duplicate_ids(items: Any, key: str) -> list[str]:
-    if not isinstance(items, list):
-        return []
-    seen: set[str] = set()
-    duplicates: set[str] = set()
-    for item in items:
-        if not isinstance(item, dict) or not isinstance(item.get(key), str):
-            continue
-        value = item[key]
-        if value in seen:
-            duplicates.add(value)
-        seen.add(value)
-    return sorted(duplicates)
 
 
-def source_requirement(
-    requirement_id: str,
-    category: str,
-    summary: str,
-    source_path: str = "SKILL.md",
-    *,
-    required: bool = True,
-) -> dict[str, Any]:
-    return {
-        "requirement_id": requirement_id,
-        "category": category,
-        "summary": summary,
-        "source_path": source_path,
-        "required": required,
-    }
 
 
-GENERIC_SOURCE_REQUIREMENT_IDS = {
-    "target.entrypoint.acceptance",
-}
 
-TARGET_LOCK_LIST_FIELDS = (
-    "target_rule_inventory",
-    "route_inventory",
-    "workflow_stage_inventory",
-    "native_check_inventory",
-    "test_gap_plan",
-    "coverage_matrix",
-)
 
-TARGET_LOCK_STRONG_KEYWORDS = (
-    "must",
-    "required",
-    "shall",
-    "do not",
-    "never",
-    "cannot",
-    "block",
-    "fail",
-    "gate",
-    "check",
-    "test",
-    "verify",
-    "validate",
-    "evidence",
-    "closure",
-    "output",
-    "workflow",
-    "route",
-    "entrypoint",
-    "native",
-    "runtime",
-    "release",
-    "privacy",
-    "\u5fc5\u987b",
-    "\u7981\u6b62",
-    "\u4e0d\u8981",
-    "\u68c0\u67e5",
-    "\u9a8c\u8bc1",
-    "\u8bc1\u636e",
-    "\u8f93\u51fa",
-    "\u6d41\u7a0b",
-    "\u8def\u7ebf",
-)
 
 
-def normalize_requirement_text(value: str, *, max_length: int = 190) -> str:
-    text = re.sub(r"`([^`]+)`", r"\1", value)
-    text = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", text)
-    text = re.sub(r"^\s*(?:[-*+]|\d+[.)])\s+", "", text)
-    text = re.sub(r"\s+", " ", text).strip(" -:\t")
-    if len(text) > max_length:
-        text = text[: max_length - 1].rstrip() + "."
-    return text
 
 
-def requirement_slug(value: str, *, prefix: str = "rule", max_words: int = 8) -> str:
-    words = re.findall(r"[A-Za-z0-9]+", value.lower())[:max_words]
-    slug = "-".join(words)
-    if not slug:
-        slug = slugify_identifier(value)[:48]
-    return f"{prefix}.{slug or 'item'}"
 
 
-def markdown_frontmatter(skill_text: str) -> dict[str, str]:
-    if not skill_text.startswith("---"):
-        return {}
-    lines = skill_text.splitlines()
-    if not lines or lines[0].strip() != "---":
-        return {}
-    fields: dict[str, str] = {}
-    for line in lines[1:]:
-        if line.strip() == "---":
-            break
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        fields[key.strip().lower()] = clean_scalar(value.strip())
-    return fields
 
 
-def heading_category(heading: str, body_line: str = "") -> str:
-    haystack = f"{heading} {body_line}".lower()
-    if "do not use" in haystack or "forbidden" in haystack or "shortcut" in haystack:
-        return "non-use-boundary"
-    if "use when" in haystack or "activation" in haystack or "entrypoint" in haystack:
-        return "activation-boundary"
-    if "workflow" in haystack or "mode" in haystack or "route" in haystack or "path" in haystack:
-        return "workflow-route"
-    if "hard gate" in haystack or "gate" in haystack or "check" in haystack or "test" in haystack:
-        return "check-gate"
-    if "evidence" in haystack or "fresh" in haystack:
-        return "evidence"
-    if "output" in haystack or "report" in haystack:
-        return "output"
-    if "release" in haystack or "publish" in haystack or "version" in haystack:
-        return "release"
-    if "privacy" in haystack or "public" in haystack or "secret" in haystack:
-        return "public-boundary"
-    if "closure" in haystack or "complete" in haystack:
-        return "closure"
-    return "target-rule"
-
-
-def add_unique_requirement(
-    requirements: dict[str, dict[str, Any]],
-    requirement_id: str,
-    category: str,
-    summary: str,
-    source_path: str = "SKILL.md",
-) -> None:
-    if requirement_id in requirements:
-        return
-    requirements[requirement_id] = source_requirement(
-        requirement_id,
-        category,
-        normalize_requirement_text(summary),
-        source_path,
-    )
-
-
-def read_target_skill_text(target: Path | None, root: Path | None = None) -> str:
-    if target is None:
-        return ""
-    skill_path = target / "SKILL.md"
-    if not skill_path.is_file():
-        return ""
-    try:
-        return skill_path.read_text(encoding="utf-8")
-    except UnicodeDecodeError:
-        return skill_path.read_text(encoding="utf-8", errors="replace")
-
-
-def infer_source_requirements(target: Path | None, skill_text: str, root: Path | None = None) -> list[dict[str, Any]]:
-    lower = skill_text.lower()
-    target_name = target.name.lower() if target is not None else ""
-    requirements: dict[str, dict[str, Any]] = {}
-
-    def add(requirement_id: str, category: str, summary: str, source_path: str = "SKILL.md") -> None:
-        add_unique_requirement(requirements, requirement_id, category, summary, source_path)
-
-    if skill_text.strip():
-        add(
-            "target.entrypoint.acceptance",
-            "entrypoint",
-            "The target skill entrypoint and hard gates must be represented by the runtime contract.",
-        )
-
-    frontmatter = markdown_frontmatter(skill_text)
-    description = frontmatter.get("description", "")
-    if description:
-        add(
-            requirement_slug(description, prefix="target.description"),
-            "entrypoint-description",
-            f"The target skill description must be represented in the contract: {description}",
-            "SKILL.md frontmatter",
-        )
-
-    frontmatter_hint = lower[:1200]
-    readme_profile = "readme" in target_name or "write, rewrite, audit, or polish readme" in frontmatter_hint
-    if readme_profile:
-        if "bilingual" in lower or "chinese mirror" in lower or "english-first" in lower or "中文" in skill_text:
-            add(
-                "readme.bilingual_mirror",
-                "readme",
-                "README work must enforce the required English-first Chinese mirror contract when applicable.",
-            )
-        if "text-to-image" in lower or "concept hero image" in lower or "hero image" in lower:
-            add(
-                "readme.hero_provenance",
-                "readme",
-                "README hero work must enforce generated concept hero provenance and required hero evidence.",
-            )
-        if "logicguard" in lower or "capability model" in lower or "narrative model" in lower:
-            add(
-                "readme.model_evidence",
-                "readme",
-                "Non-trivial README work must enforce model-backed capability or narrative evidence.",
-            )
-        if "privacy" in lower or "release/version" in lower or "version consistency" in lower or "public/private" in lower:
-            add(
-                "readme.public_release_gates",
-                "readme",
-                "Release-facing README work must enforce public-boundary, privacy, link/render, and version consistency checks.",
-            )
-
-    if "runtime contract mode" in lower or "runtime contract" in lower:
-        add(
-            "skillguard.runtime_contract_mode",
-            "runtime-contract",
-            "Runtime contract work must enforce selected route, run record, phase evidence, checks, quality floors, and closure gates.",
-        )
-    if "global router mode" in lower or "global router" in lower:
-        add(
-            "skillguard.global_router_freshness",
-            "global-router",
-            "Global router work must enforce registry and managed prompt freshness before routing claims.",
-        )
-    if "native route" in lower or "native check" in lower or "parallel route" in lower:
-        add(
-            "skillguard.native_route_binding",
-            "native-binding",
-            "Native and hybrid contracts must bind the target skill's native route/check owner and must not create a parallel execution route.",
-        )
-    if "hard gates" in lower or "required workflow" in lower:
-        add(
-            "target.hard_gates",
-            "quality-gate",
-            "Declared hard gates and required workflow steps must be represented by checks and closure blockers.",
-        )
-    if "deep contract mode" in lower or "target-specific" in lower or "coverage matrix" in lower:
-        add(
-            "skillguard.deep_contract_mode",
-            "deep-contract",
-            "Deep contract work must extract target-specific rules and map them to checks, evidence, and closure blockers.",
-        )
-    if "runtime lock" in lower or "target-local" in lower or "work-contract.json" in lower:
-        add(
-            "skillguard.universal_target_lock",
-            "runtime-lock",
-            "Covered target skills must expose a target-local runtime lock before work starts and before closure.",
-        )
-
-    active_heading = ""
-    extracted_count = 0
-    for line_number, raw_line in enumerate(skill_text.splitlines(), start=1):
-        stripped = raw_line.strip()
-        if not stripped:
-            continue
-        heading_match = re.match(r"^(#{1,4})\s+(.+?)\s*$", stripped)
-        if heading_match:
-            active_heading = normalize_requirement_text(heading_match.group(2), max_length=90)
-            heading_lower = active_heading.lower()
-            if any(term in heading_lower for term in ("mode", "workflow", "route", "gate", "output", "evidence", "use when", "do not use")):
-                category = heading_category(active_heading)
-                add(
-                    requirement_slug(active_heading, prefix=f"target.{category}"),
-                    category,
-                    f"The target section '{active_heading}' must be represented by route, check, evidence, or closure coverage.",
-                    f"SKILL.md#L{line_number}",
-                )
-            continue
-        normalized = normalize_requirement_text(stripped)
-        if not normalized or len(normalized) < 20:
-            continue
-        is_structured_line = bool(re.match(r"^\s*(?:[-*+]|\d+[.)])\s+", raw_line))
-        line_lower = normalized.lower()
-        if not is_structured_line and not any(keyword in line_lower for keyword in TARGET_LOCK_STRONG_KEYWORDS):
-            continue
-        category = heading_category(active_heading, normalized)
-        if active_heading.lower() in {"purpose", "context"} and not any(keyword in line_lower for keyword in TARGET_LOCK_STRONG_KEYWORDS):
-            continue
-        add(
-            requirement_slug(normalized, prefix=f"target.{category}"),
-            category,
-            normalized,
-            f"SKILL.md#L{line_number}",
-        )
-        extracted_count += 1
-        if extracted_count >= 40:
-            break
-
-    if not requirements:
-        add(
-            "target.entrypoint.acceptance",
-            "entrypoint",
-            "The target skill entrypoint must be inventoried and represented before closure.",
-            "SKILL.md or supplied work contract",
-        )
-
-    return sorted(requirements.values(), key=lambda item: str(item["requirement_id"]))
-
-
-def infer_route_inventory(skill_text: str) -> list[dict[str, Any]]:
-    routes: dict[str, dict[str, Any]] = {}
-
-    def add(route_id: str, summary: str, source_path: str) -> None:
-        routes.setdefault(
-            route_id,
-            {
-                "route_id": route_id,
-                "summary": normalize_requirement_text(summary),
-                "source_path": source_path,
-                "required": True,
-                "native_binding_id": "",
-            },
-        )
-
-    frontmatter = markdown_frontmatter(skill_text)
-    if frontmatter.get("description"):
-        add("entrypoint", f"Entrypoint described by frontmatter: {frontmatter['description']}", "SKILL.md frontmatter")
-    for line_number, raw_line in enumerate(skill_text.splitlines(), start=1):
-        stripped = raw_line.strip()
-        heading_match = re.match(r"^(#{1,4})\s+(.+?)\s*$", stripped)
-        if not heading_match:
-            continue
-        heading = normalize_requirement_text(heading_match.group(2), max_length=80)
-        lower = heading.lower()
-        if not any(term in lower for term in ("mode", "workflow", "route", "path", "entrypoint", "use when")):
-            continue
-        add(slugify_identifier(heading).replace("-", "_")[:64], f"Target workflow or route section: {heading}", f"SKILL.md#L{line_number}")
-    if not routes:
-        add("entrypoint", "Default target entrypoint route from SKILL.md.", "SKILL.md")
-    return sorted(routes.values(), key=lambda item: str(item["route_id"]))
-
-
-def infer_workflow_stage_inventory(skill_text: str, route_id: str) -> list[dict[str, Any]]:
-    stages: dict[str, dict[str, Any]] = {}
-    in_workflow = False
-    for line_number, raw_line in enumerate(skill_text.splitlines(), start=1):
-        stripped = raw_line.strip()
-        heading_match = re.match(r"^(#{1,4})\s+(.+?)\s*$", stripped)
-        if heading_match:
-            heading = normalize_requirement_text(heading_match.group(2), max_length=80)
-            in_workflow = any(term in heading.lower() for term in ("workflow", "route", "mode", "steps", "process"))
-            if in_workflow:
-                stage_id = slugify_identifier(heading).replace("-", "_")[:64]
-                stages.setdefault(
-                    stage_id,
-                    {
-                        "stage_id": stage_id,
-                        "route_id": route_id,
-                        "summary": f"Target workflow section: {heading}",
-                        "source_path": f"SKILL.md#L{line_number}",
-                        "required": True,
-                    },
-                )
-            continue
-        if not in_workflow or not re.match(r"^\s*(?:[-*+]|\d+[.)])\s+", raw_line):
-            continue
-        summary = normalize_requirement_text(stripped)
-        if not summary:
-            continue
-        stage_id = slugify_identifier(summary).replace("-", "_")[:64]
-        stages.setdefault(
-            stage_id,
-            {
-                "stage_id": stage_id,
-                "route_id": route_id,
-                "summary": summary,
-                "source_path": f"SKILL.md#L{line_number}",
-                "required": True,
-            },
-        )
-        if len(stages) >= 16:
-            break
-    if not stages:
-        stages["entrypoint_intake"] = {
-            "stage_id": "entrypoint_intake",
-            "route_id": route_id,
-            "summary": "Read the target SKILL.md, select the target-local route, and expose required checks before work starts.",
-            "source_path": "SKILL.md",
-            "required": True,
-        }
-    return sorted(stages.values(), key=lambda item: str(item["stage_id"]))
-
-
-def infer_native_check_inventory(skill_text: str) -> list[dict[str, Any]]:
-    checks: dict[str, dict[str, Any]] = {}
-    for line_number, raw_line in enumerate(skill_text.splitlines(), start=1):
-        normalized = normalize_requirement_text(raw_line)
-        lower = normalized.lower()
-        if not normalized or not any(term in lower for term in ("check", "test", "verify", "validate", "run ", "pytest", "evidence", "gate", "script")):
-            continue
-        check_id = slugify_identifier(normalized).replace("-", "_")[:64]
-        checks.setdefault(
-            check_id,
-            {
-                "check_id": check_id,
-                "kind": "target_declared_check",
-                "summary": normalized,
-                "source_path": f"SKILL.md#L{line_number}",
-                "command": "",
-                "required": True,
-            },
-        )
-        if len(checks) >= 16:
-            break
-    if not checks:
-        checks["skillguard_check_manifest"] = {
-            "check_id": "skillguard_check_manifest",
-            "kind": "skillguard_added_check",
-            "summary": "No separate target-native check was declared; SkillGuard check manifest supplies the executable coverage.",
-            "source_path": "SKILL.md",
-            "command": "",
-            "required": True,
-        }
-    return sorted(checks.values(), key=lambda item: str(item["check_id"]))
-
-
-def default_target_lock_fields(
-    source_requirements: list[dict[str, Any]],
-    check_ids: list[str],
-    skill_text: str,
-) -> dict[str, Any]:
-    routes = infer_route_inventory(skill_text)
-    route_id = str(routes[0]["route_id"]) if routes else "entrypoint"
-    stages = infer_workflow_stage_inventory(skill_text, route_id)
-    stage_id = str(stages[0]["stage_id"]) if stages else "entrypoint_intake"
-    native_checks = infer_native_check_inventory(skill_text)
-    target_rules: list[dict[str, Any]] = []
-    test_gap_plan: list[dict[str, Any]] = []
-    coverage_matrix: list[dict[str, Any]] = []
-    evidence_ids = ["task_summary", "target_inventory", "direct_evidence", "check_output", "closure_report"]
-    for requirement in source_requirements:
-        requirement_id = str(requirement["requirement_id"])
-        rule_id = f"{requirement_id}.rule"
-        obligation_id = f"{requirement_id}.covered"
-        target_rules.append(
-            {
-                "rule_id": rule_id,
-                "requirement_id": requirement_id,
-                "category": str(requirement.get("category") or "target-rule"),
-                "summary": str(requirement.get("summary") or requirement_id),
-                "source_path": str(requirement.get("source_path") or "SKILL.md"),
-                "required": bool(requirement.get("required", True)),
-            }
-        )
-        test_gap_plan.append(
-            {
-                "gap_id": f"{requirement_id}.test-gap",
-                "requirement_ids": [requirement_id],
-                "summary": f"Runnable or native check coverage for {requirement_id}.",
-                "status": "complete",
-                "planned_check_ids": list(check_ids),
-            }
-        )
-        coverage_matrix.append(
-            {
-                "row_id": f"{requirement_id}.matrix",
-                "requirement_id": requirement_id,
-                "rule_id": rule_id,
-                "obligation_id": obligation_id,
-                "route_id": route_id,
-                "stage_id": stage_id,
-                "check_ids": list(check_ids),
-                "native_check_binding_ids": [],
-                "evidence_ids": evidence_ids,
-                "closure_blocker_id": f"{requirement_id}.blocker",
-                "source_path": str(requirement.get("source_path") or "SKILL.md"),
-                "required": bool(requirement.get("required", True)),
-            }
-        )
-    return {
-        "target_rule_inventory": target_rules,
-        "route_inventory": routes,
-        "workflow_stage_inventory": stages,
-        "native_check_inventory": native_checks,
-        "test_gap_plan": test_gap_plan,
-        "coverage_matrix": coverage_matrix,
-        "runtime_lock_policy": {
-            "policy_id": "target_local_runtime_lock",
-            "summary": "The covered skill keeps its own entrypoint and must expose route, stage, check, evidence, and closure blockers from this target-local contract.",
-            "applies_when": "Before and during non-trivial work that uses this covered target skill.",
-            "target_local_contract_required": True,
-            "route_selection_required": True,
-            "stage_sequence_required": True,
-            "checks_before_closure": True,
-            "evidence_before_closure": True,
-            "coverage_matrix_required": True,
-            "global_skillguard_pregate_required": False,
-        },
-    }
-
-
-def default_deep_contract_fields(target: Path, check_ids: list[str], skill_text: str | None = None) -> dict[str, Any]:
-    source_text = read_target_skill_text(target) if skill_text is None else skill_text
-    source_requirements = infer_source_requirements(target, source_text)
-    target_lock_fields = default_target_lock_fields(source_requirements, check_ids, source_text)
-    acceptance_obligations: list[dict[str, Any]] = []
-    skill_specific_checks: list[dict[str, Any]] = []
-    closure_blockers: list[dict[str, Any]] = []
-    for requirement in source_requirements:
-        requirement_id = str(requirement["requirement_id"])
-        obligation_id = f"{requirement_id}.covered"
-        covered_by_checks = list(check_ids)
-        acceptance_obligations.append(
-            {
-                "obligation_id": obligation_id,
-                "requirement_ids": [requirement_id],
-                "summary": f"Contract coverage for {requirement_id}.",
-                "required": bool(requirement.get("required", True)),
-                "covered_by_checks": covered_by_checks,
-                "native_check_binding_ids": [],
-            }
-        )
-        skill_specific_checks.append(
-            {
-                "check_id": f"{requirement_id}.check",
-                "obligation_ids": [obligation_id],
-                "check_manifest_ids": covered_by_checks,
-                "native_check_binding_ids": [],
-                "required": bool(requirement.get("required", True)),
-                "summary": f"Check-manifest coverage for {requirement_id}.",
-            }
-        )
-        closure_blockers.append(
-            {
-                "blocker_id": f"{requirement_id}.blocker",
-                "obligation_ids": [obligation_id],
-                "failure_class": "missing_target_specific_coverage",
-                "blocks_decisions": ["checked", "accepted"],
-                "summary": f"Block closure when {requirement_id} lacks runnable or native check evidence.",
-            }
-        )
-    return {
-        "source_requirements": source_requirements,
-        **target_lock_fields,
-        "acceptance_obligations": acceptance_obligations,
-        "skill_specific_checks": skill_specific_checks,
-        "closure_blockers": closure_blockers,
-        "run_record_required": True,
-        "not_parallel_route_proof": {
-            "proof_id": "skillguard.runtime.owner.no_parallel_native_route",
-            "summary": "This runtime-owner contract is valid only when no native route/check owner is present.",
-            "native_route_binding_ids": [],
-            "evidence_source": "SKILL.md and adjacent target materials inspected during contract compilation",
-        },
-        "cleanup_required": [],
-    }
-
-
-def build_default_work_contract(target: Path, skill_text: str | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
-    target_relative = public_relative_path(target)
-    skill_id = slugify_identifier(target.name)
-    base_check_ids = ["check_route", "check_phase_order", "check_evidence", "check_quality_floor", "check_closure"]
-    deep_fields = default_deep_contract_fields(target, base_check_ids, skill_text)
-    contract: dict[str, Any] = {
-        "schema_version": "skillguard.work_contract.v1",
-        "skill_id": skill_id,
-        "target_path": target_relative,
-        "contract_version": "1",
-        "contract_hash": "",
-        "integration_mode": "skillguard-runtime",
-        "native_route_owner": "",
-        "native_route_bindings": [],
-        "native_check_bindings": [],
-        "phase_native_bindings": [],
-        **deep_fields,
-        "skillguard_role": "runtime_owner",
-        "may_define_parallel_execution_route": False,
-        "may_define_skillguard_runtime_route": True,
-        "integration_claim_boundary": (
-            "No native route/check system is declared for this generated target, so SkillGuard owns this runtime contract "
-            "until a native system is added. If a native route/check system appears later, regenerate or edit this contract "
-            "as native-integrated or hybrid-extension; duplicate SkillGuard-owned execution paths are invalid."
-        ),
-        "routes": [
-            {
-                "route_id": "audit",
-                "route_source": "skillguard_runtime",
-                "summary": "Inspect the target skill and close only after required checks pass.",
-                "activation_keywords": ["audit", "review", "check", "inspect", "verify"],
-                "default_route": True,
-                "route_priority": 0,
-                "do_not_use_when": ["The task is outside this skill's activation boundary."],
-                "phase_order": ["intake", "inventory", "evidence", "checks", "closure"],
-            }
-        ],
-        "phases": [
-            {
-                "phase_id": "intake",
-                "summary": "Confirm target, requested outcome, route, and claim boundary.",
-                "required_evidence": ["task_summary"],
-                "required_checks": ["check_route"],
-                "allowed_next": ["inventory"],
-            },
-            {
-                "phase_id": "inventory",
-                "summary": "Inspect current target files and supported local materials.",
-                "required_evidence": ["target_inventory"],
-                "required_checks": ["check_phase_order"],
-                "allowed_next": ["evidence"],
-            },
-            {
-                "phase_id": "evidence",
-                "summary": "Collect current direct evidence for the declared scope.",
-                "required_evidence": ["direct_evidence"],
-                "required_checks": ["check_evidence"],
-                "allowed_next": ["checks"],
-            },
-            {
-                "phase_id": "checks",
-                "summary": "Run required checks and quality-floor gates.",
-                "required_evidence": ["check_output"],
-                "required_checks": ["check_quality_floor"],
-                "allowed_next": ["closure"],
-            },
-            {
-                "phase_id": "closure",
-                "summary": "Close only inside the evidence-backed claim boundary.",
-                "required_evidence": ["closure_report"],
-                "required_checks": ["check_closure"],
-                "allowed_next": [],
-            },
-        ],
-        "required_evidence": [
-            {
-                "evidence_id": "task_summary",
-                "phase_id": "intake",
-                "kind": "task_record",
-                "source": ".skillguard/runs/",
-                "required": True,
-            },
-            {
-                "evidence_id": "target_inventory",
-                "phase_id": "inventory",
-                "kind": "file_inventory",
-                "source": ".skillguard/runs/",
-                "required": True,
-            },
-            {
-                "evidence_id": "direct_evidence",
-                "phase_id": "evidence",
-                "kind": "direct_evidence",
-                "source": ".skillguard/runs/",
-                "required": True,
-            },
-            {
-                "evidence_id": "check_output",
-                "phase_id": "checks",
-                "kind": "command_output",
-                "source": ".skillguard/runs/",
-                "required": True,
-            },
-            {
-                "evidence_id": "closure_report",
-                "phase_id": "closure",
-                "kind": "closure_record",
-                "source": ".skillguard/runs/",
-                "required": True,
-            },
-        ],
-        "quality_floors": [
-            {
-                "floor_id": "no_prose_only_completion",
-                "summary": "Do not replace required command or file evidence with prose-only claims.",
-                "required_checks": ["check_evidence", "check_quality_floor"],
-                "failure_effect": "block checked or accepted closure",
-            }
-        ],
-        "forbidden_shortcuts": [
-            {
-                "shortcut_id": "skip_to_closure",
-                "summary": "Do not move directly from intake or planning to closure without current phase evidence and required checks.",
-            }
-        ],
-        "check_scripts": [
-            {
-                "check_id": "check_route",
-                "phase_id": "intake",
-                "script_path": ".skillguard/checks/check_route.py",
-                "command": "python .skillguard/checks/check_route.py",
-                "required": True,
-                "failure_class": "route",
-            },
-            {
-                "check_id": "check_phase_order",
-                "phase_id": "inventory",
-                "script_path": ".skillguard/checks/check_phase_order.py",
-                "command": "python .skillguard/checks/check_phase_order.py",
-                "required": True,
-                "failure_class": "phase_order",
-            },
-            {
-                "check_id": "check_evidence",
-                "phase_id": "evidence",
-                "script_path": ".skillguard/checks/check_evidence.py",
-                "command": "python .skillguard/checks/check_evidence.py",
-                "required": True,
-                "failure_class": "evidence",
-            },
-            {
-                "check_id": "check_quality_floor",
-                "phase_id": "checks",
-                "script_path": ".skillguard/checks/check_quality_floor.py",
-                "command": "python .skillguard/checks/check_quality_floor.py",
-                "required": True,
-                "failure_class": "quality_floor",
-            },
-            {
-                "check_id": "check_closure",
-                "phase_id": "closure",
-                "script_path": ".skillguard/checks/check_closure.py",
-                "command": "python .skillguard/checks/check_closure.py",
-                "required": True,
-                "failure_class": "closure",
-            },
-        ],
-        "closure_rules": [
-            {
-                "rule_id": "accepted_requires_all_required_checks",
-                "scope": "declared run scope only",
-                "allowed_decision": "accepted",
-                "required_checks": [
-                    "check_route",
-                    "check_phase_order",
-                    "check_evidence",
-                    "check_quality_floor",
-                    "check_closure",
-                ],
-                "required_evidence": [
-                    "task_summary",
-                    "target_inventory",
-                    "direct_evidence",
-                    "check_output",
-                    "closure_report",
-                ],
-            }
-        ],
-        "stale_bindings": [
-            {
-                "binding_id": "target_skill_prompt",
-                "path": "SKILL.md",
-                "stales": ["route_selection", "run_record", "closure_report"],
-            }
-        ],
-        "claim_boundary": (
-            "This work contract governs only the declared target skill and local run evidence. "
-            "It does not prove packaged CLI support, package publication, external services, "
-            "future AI correctness, or broader release readiness."
-        ),
-    }
-    contract["contract_hash"] = work_contract_hash(contract)
-    check_manifest = {
-        "schema_version": "skillguard.check_manifest.v1",
-        "target_skill": target_relative,
-        "contract_ref": public_relative_path(control_root_for(target) / WORK_CONTRACT_FILENAME),
-        "checks": [
-            {
-                "check_id": item["check_id"],
-                "phase_id": item["phase_id"],
-                "command": item["command"],
-                "required": item["required"],
-                "failure_class": item["failure_class"],
-                "inputs": [
-                    ".skillguard/work-contract.json",
-                    ".skillguard/runs/",
-                ],
-            }
-            for item in contract["check_scripts"]
-        ],
-        "output_schema": "skillguard.cli_result.v1",
-        "freshness": {
-            "watch": [
-                "SKILL.md",
-                ".skillguard/work-contract.json",
-                ".skillguard/check_manifest.json",
-                ".skillguard/checks/",
-                ".skillguard/runs/",
-            ]
-        },
-        "claim_boundary": (
-            "This check manifest lists local SkillGuard runtime checks for the declared target only. "
-            "It does not prove future executions or external service behavior."
-        ),
-    }
-    return contract, check_manifest
-
-
-def contract_semantic_failures(
-    contract: Any,
-    target: Path | None = None,
-    contract_path: Path | None = None,
-    root: Path | None = None,
-) -> list[str]:
-    failures: list[str] = []
-    schema = load_json(schema_path(WORK_CONTRACT_SCHEMA_NAME))
-    failures.extend(validate_schema_subset(contract, schema))
-    if not isinstance(contract, dict):
-        return failures
-
-    routes = contract.get("routes")
-    phases = contract.get("phases")
-    evidence = contract.get("required_evidence")
-    checks = contract.get("check_scripts")
-    closures = contract.get("closure_rules")
-    floors = contract.get("quality_floors")
-    shortcuts = contract.get("forbidden_shortcuts")
-    integration_mode = str(contract.get("integration_mode") or "")
-    skillguard_role = str(contract.get("skillguard_role") or "")
-    native_route_owner = str(contract.get("native_route_owner") or "").strip()
-    native_route_bindings = contract.get("native_route_bindings")
-    native_check_bindings = contract.get("native_check_bindings")
-    phase_native_bindings = contract.get("phase_native_bindings")
-    source_requirements = contract.get("source_requirements")
-    target_rule_inventory = contract.get("target_rule_inventory")
-    route_inventory = contract.get("route_inventory")
-    workflow_stage_inventory = contract.get("workflow_stage_inventory")
-    native_check_inventory = contract.get("native_check_inventory")
-    test_gap_plan = contract.get("test_gap_plan")
-    coverage_matrix = contract.get("coverage_matrix")
-    runtime_lock_policy = contract.get("runtime_lock_policy")
-    acceptance_obligations = contract.get("acceptance_obligations")
-    skill_specific_checks = contract.get("skill_specific_checks")
-    closure_blockers = contract.get("closure_blockers")
-    cleanup_required = contract.get("cleanup_required")
-    not_parallel_route_proof = contract.get("not_parallel_route_proof")
-    may_define_parallel_execution_route = contract.get("may_define_parallel_execution_route")
-    may_define_skillguard_runtime_route = contract.get("may_define_skillguard_runtime_route")
-    for field_name, value in (
-        ("routes", routes),
-        ("phases", phases),
-        ("required_evidence", evidence),
-        ("check_scripts", checks),
-        ("closure_rules", closures),
-        ("quality_floors", floors),
-        ("forbidden_shortcuts", shortcuts),
-        ("source_requirements", source_requirements),
-        ("target_rule_inventory", target_rule_inventory),
-        ("route_inventory", route_inventory),
-        ("workflow_stage_inventory", workflow_stage_inventory),
-        ("native_check_inventory", native_check_inventory),
-        ("test_gap_plan", test_gap_plan),
-        ("coverage_matrix", coverage_matrix),
-        ("acceptance_obligations", acceptance_obligations),
-        ("skill_specific_checks", skill_specific_checks),
-        ("closure_blockers", closure_blockers),
-    ):
-        if not isinstance(value, list) or not value:
-            failures.append(f"$.{field_name}: must be a non-empty list")
-    if not isinstance(runtime_lock_policy, dict) or not runtime_lock_policy.get("policy_id"):
-        failures.append("$.runtime_lock_policy: must be an object with policy_id")
-    elif runtime_lock_policy.get("coverage_matrix_required") is not True:
-        failures.append("$.runtime_lock_policy.coverage_matrix_required: must be true")
-    elif runtime_lock_policy.get("target_local_contract_required") is not True:
-        failures.append("$.runtime_lock_policy.target_local_contract_required: must be true")
-    elif runtime_lock_policy.get("checks_before_closure") is not True:
-        failures.append("$.runtime_lock_policy.checks_before_closure: must be true")
-    elif runtime_lock_policy.get("stage_sequence_required") is not True:
-        failures.append("$.runtime_lock_policy.stage_sequence_required: must be true")
-    elif runtime_lock_policy.get("global_skillguard_pregate_required") is not False:
-        failures.append("$.runtime_lock_policy.global_skillguard_pregate_required: must be false")
-    if not isinstance(cleanup_required, list):
-        failures.append("$.cleanup_required: must be a list")
-    if not isinstance(not_parallel_route_proof, dict) or not not_parallel_route_proof.get("proof_id"):
-        failures.append("$.not_parallel_route_proof: required to prove SkillGuard did not add a parallel execution route")
-
-    if may_define_parallel_execution_route is not False:
-        failures.append(
-            "$.may_define_parallel_execution_route: must be false; SkillGuard must execute through the native owner "
-            "or own the runtime contract directly; duplicate execution paths are invalid"
-        )
-    if skillguard_role in {"contract_adapter", "missing_gate_extension"}:
-        failures.append(
-            f"$.skillguard_role: legacy role {skillguard_role} is invalid; regenerate the contract with "
-            "native_contract_executor, hybrid_contract_executor, or runtime_owner"
-        )
-    if integration_mode in {"native-integrated", "hybrid-extension"}:
-        if not native_route_owner:
-            failures.append(f"$.native_route_owner: required when integration_mode is {integration_mode}")
-        expected_role = "native_contract_executor" if integration_mode == "native-integrated" else "hybrid_contract_executor"
-        if skillguard_role != expected_role:
-            failures.append(f"$.skillguard_role: expected {expected_role} when integration_mode is {integration_mode}")
-        if may_define_skillguard_runtime_route is not False:
-            failures.append(f"$.may_define_skillguard_runtime_route: must be false when integration_mode is {integration_mode}")
-        if contract.get("run_record_required") is not False:
-            failures.append(f"$.run_record_required: must be false when integration_mode is {integration_mode}")
-        if not isinstance(native_route_bindings, list) or not native_route_bindings:
-            failures.append(f"$.native_route_bindings: must bind at least one native route when integration_mode is {integration_mode}")
-        if not isinstance(native_check_bindings, list) or not native_check_bindings:
-            failures.append(f"$.native_check_bindings: must bind at least one native check when integration_mode is {integration_mode}")
-        if not isinstance(phase_native_bindings, list) or not phase_native_bindings:
-            failures.append(f"$.phase_native_bindings: must bind native route/check evidence for each route phase when integration_mode is {integration_mode}")
-    elif integration_mode == "skillguard-runtime":
-        if skillguard_role != "runtime_owner":
-            failures.append("$.skillguard_role: expected runtime_owner when integration_mode is skillguard-runtime")
-        if may_define_skillguard_runtime_route is not True:
-            failures.append("$.may_define_skillguard_runtime_route: must be true when SkillGuard is the runtime owner")
-        if contract.get("run_record_required") is not True:
-            failures.append("$.run_record_required: must be true when integration_mode is skillguard-runtime")
-        if isinstance(phase_native_bindings, list) and phase_native_bindings:
-            failures.append("$.phase_native_bindings: must be empty when integration_mode is skillguard-runtime")
-    elif integration_mode:
-        failures.append("$.integration_mode: unsupported integration mode")
-
-    expected_hash = work_contract_hash(contract)
-    if contract.get("contract_hash") != expected_hash:
-        failures.append("$.contract_hash: does not match current canonical work-contract content")
-
-    route_by_id = contract_lookup(routes, "route_id")
-    phase_by_id = contract_lookup(phases, "phase_id")
-    evidence_by_id = contract_lookup(evidence, "evidence_id")
-    check_by_id = contract_lookup(checks, "check_id")
-    native_route_binding_by_id = contract_lookup(native_route_bindings, "binding_id")
-    native_check_binding_by_id = contract_lookup(native_check_bindings, "binding_id")
-    phase_native_binding_by_phase = contract_lookup(phase_native_bindings, "phase_id")
-    source_requirement_by_id = contract_lookup(source_requirements, "requirement_id")
-    target_rule_by_id = contract_lookup(target_rule_inventory, "rule_id")
-    route_inventory_by_id = contract_lookup(route_inventory, "route_id")
-    workflow_stage_by_id = contract_lookup(workflow_stage_inventory, "stage_id")
-    native_check_inventory_by_id = contract_lookup(native_check_inventory, "check_id")
-    test_gap_by_id = contract_lookup(test_gap_plan, "gap_id")
-    coverage_row_by_id = contract_lookup(coverage_matrix, "row_id")
-    obligation_by_id = contract_lookup(acceptance_obligations, "obligation_id")
-    skill_specific_check_by_id = contract_lookup(skill_specific_checks, "check_id")
-    closure_blocker_by_id = contract_lookup(closure_blockers, "blocker_id")
-    for field_name, items, id_key in (
-        ("routes", routes, "route_id"),
-        ("phases", phases, "phase_id"),
-        ("required_evidence", evidence, "evidence_id"),
-        ("check_scripts", checks, "check_id"),
-        ("closure_rules", closures, "rule_id"),
-        ("quality_floors", floors, "floor_id"),
-        ("forbidden_shortcuts", shortcuts, "shortcut_id"),
-        ("source_requirements", source_requirements, "requirement_id"),
-        ("target_rule_inventory", target_rule_inventory, "rule_id"),
-        ("route_inventory", route_inventory, "route_id"),
-        ("workflow_stage_inventory", workflow_stage_inventory, "stage_id"),
-        ("native_check_inventory", native_check_inventory, "check_id"),
-        ("test_gap_plan", test_gap_plan, "gap_id"),
-        ("coverage_matrix", coverage_matrix, "row_id"),
-        ("acceptance_obligations", acceptance_obligations, "obligation_id"),
-        ("skill_specific_checks", skill_specific_checks, "check_id"),
-        ("closure_blockers", closure_blockers, "blocker_id"),
-    ):
-        for duplicate in duplicate_ids(items, id_key):
-            failures.append(f"$.{field_name}: duplicate {id_key} {duplicate}")
-    for duplicate in duplicate_ids(phase_native_bindings, "phase_id"):
-        failures.append(f"$.phase_native_bindings: duplicate phase_id {duplicate}")
-
-    route_phase_ids: set[str] = set()
-    for route_id, route in route_by_id.items():
-        order = route.get("phase_order")
-        if not isinstance(order, list) or not order:
-            failures.append(f"route {route_id}: phase_order must be non-empty")
-            continue
-        for phase_id in order:
-            if phase_id not in phase_by_id:
-                failures.append(f"route {route_id}: unknown phase_id {phase_id}")
-            else:
-                route_phase_ids.add(str(phase_id))
-        route_source = route.get("route_source")
-        if integration_mode == "native-integrated" and route_source != "native_binding":
-            failures.append(f"route {route_id}: route_source must be native_binding for native-integrated contracts")
-        if integration_mode == "hybrid-extension" and route_source not in {"native_binding", "hybrid_extension"}:
-            failures.append(f"route {route_id}: route_source must be native_binding or hybrid_extension for hybrid-extension contracts")
-        if integration_mode == "skillguard-runtime" and route_source != "skillguard_runtime":
-            failures.append(f"route {route_id}: route_source must be skillguard_runtime for skillguard-runtime contracts")
-
-    for binding in phase_native_bindings if isinstance(phase_native_bindings, list) else []:
-        if not isinstance(binding, dict):
-            continue
-        phase_id = str(binding.get("phase_id") or "")
-        route_binding_id = str(binding.get("native_route_binding_id") or "")
-        check_binding_ids = binding.get("native_check_binding_ids")
-        if phase_id and phase_id not in phase_by_id:
-            failures.append(f"phase_native_binding {phase_id}: unknown phase_id")
-        if route_binding_id and route_binding_id not in native_route_binding_by_id:
-            failures.append(f"phase_native_binding {phase_id or '<missing phase>'}: unknown native_route_binding_id {route_binding_id}")
-        if not isinstance(check_binding_ids, list) or not check_binding_ids:
-            failures.append(f"phase_native_binding {phase_id or '<missing phase>'}: native_check_binding_ids must be non-empty")
-        else:
-            for check_binding_id in check_binding_ids:
-                if check_binding_id not in native_check_binding_by_id:
-                    failures.append(
-                        f"phase_native_binding {phase_id or '<missing phase>'}: unknown native_check_binding_id {check_binding_id}"
-                    )
-    if integration_mode in {"native-integrated", "hybrid-extension"}:
-        for phase_id in sorted(route_phase_ids):
-            if phase_id not in phase_native_binding_by_phase:
-                failures.append(f"phase {phase_id}: missing phase_native_bindings entry for {integration_mode} route")
-
-    for phase_id, phase in phase_by_id.items():
-        for evidence_id in phase.get("required_evidence", []) if isinstance(phase.get("required_evidence"), list) else []:
-            if evidence_id not in evidence_by_id:
-                failures.append(f"phase {phase_id}: unknown required_evidence {evidence_id}")
-        for check_id in phase.get("required_checks", []) if isinstance(phase.get("required_checks"), list) else []:
-            if check_id not in check_by_id:
-                failures.append(f"phase {phase_id}: unknown required_check {check_id}")
-        for next_phase in phase.get("allowed_next", []) if isinstance(phase.get("allowed_next"), list) else []:
-            if next_phase not in phase_by_id:
-                failures.append(f"phase {phase_id}: unknown allowed_next phase {next_phase}")
-
-    for evidence_id, item in evidence_by_id.items():
-        phase_id = item.get("phase_id")
-        if phase_id not in phase_by_id:
-            failures.append(f"required_evidence {evidence_id}: unknown phase_id {phase_id}")
-
-    for check_id, item in check_by_id.items():
-        phase_id = item.get("phase_id")
-        if phase_id not in phase_by_id:
-            failures.append(f"check_script {check_id}: unknown phase_id {phase_id}")
-        script_path = item.get("script_path")
-        if target is not None and isinstance(script_path, str) and script_path:
-            resolved = ensure_under_root(target / script_path, root)
-            try:
-                resolved.relative_to(target.resolve())
-            except ValueError:
-                failures.append(f"check_script {check_id}: script_path must stay under target skill")
-            if not resolved.is_file():
-                failures.append(f"check_script {check_id}: script file is missing: {public_relative_path(resolved, root)}")
-
-    for rule in closures if isinstance(closures, list) else []:
-        if not isinstance(rule, dict):
-            continue
-        rule_id = str(rule.get("rule_id") or "closure_rule")
-        for check_id in rule.get("required_checks", []) if isinstance(rule.get("required_checks"), list) else []:
-            if check_id not in check_by_id:
-                failures.append(f"closure_rule {rule_id}: unknown required_check {check_id}")
-        for evidence_id in rule.get("required_evidence", []) if isinstance(rule.get("required_evidence"), list) else []:
-            if evidence_id not in evidence_by_id:
-                failures.append(f"closure_rule {rule_id}: unknown required_evidence {evidence_id}")
-
-    for floor in floors if isinstance(floors, list) else []:
-        if not isinstance(floor, dict):
-            continue
-        floor_id = str(floor.get("floor_id") or "quality_floor")
-        for check_id in floor.get("required_checks", []) if isinstance(floor.get("required_checks"), list) else []:
-            if check_id not in check_by_id:
-                failures.append(f"quality_floor {floor_id}: unknown required_check {check_id}")
-
-    for obligation_id, obligation in obligation_by_id.items():
-        for requirement_id in obligation.get("requirement_ids", []) if isinstance(obligation.get("requirement_ids"), list) else []:
-            if requirement_id not in source_requirement_by_id:
-                failures.append(f"acceptance_obligation {obligation_id}: unknown source requirement {requirement_id}")
-        covered_check_ids = obligation.get("covered_by_checks", [])
-        native_check_ids = obligation.get("native_check_binding_ids", [])
-        if not isinstance(covered_check_ids, list) or not isinstance(native_check_ids, list):
-            continue
-        if not covered_check_ids and not native_check_ids:
-            failures.append(f"acceptance_obligation {obligation_id}: must cite a check or native check binding")
-        for check_id in covered_check_ids:
-            if check_id not in check_by_id:
-                failures.append(f"acceptance_obligation {obligation_id}: unknown covered_by_check {check_id}")
-        for binding_id in native_check_ids:
-            if binding_id not in native_check_binding_by_id:
-                failures.append(f"acceptance_obligation {obligation_id}: unknown native_check_binding_id {binding_id}")
-
-    for requirement_id, requirement in source_requirement_by_id.items():
-        if requirement.get("required") is True and not any(
-            requirement_id in obligation.get("requirement_ids", [])
-            for obligation in obligation_by_id.values()
-            if isinstance(obligation.get("requirement_ids"), list)
-        ):
-            failures.append(f"source_requirement {requirement_id}: no acceptance obligation covers this requirement")
-        if requirement.get("required") is True and not any(
-            requirement_id == rule.get("requirement_id")
-            for rule in target_rule_by_id.values()
-        ):
-            failures.append(f"source_requirement {requirement_id}: no target_rule_inventory row covers this requirement")
-        if requirement.get("required") is True and not any(
-            requirement_id == row.get("requirement_id")
-            for row in coverage_row_by_id.values()
-        ):
-            failures.append(f"source_requirement {requirement_id}: no coverage_matrix row covers this requirement")
-
-    non_generic_source_ids = {
-        requirement_id
-        for requirement_id in source_requirement_by_id
-        if requirement_id not in GENERIC_SOURCE_REQUIREMENT_IDS
-    }
-    if not non_generic_source_ids:
-        failures.append("shallow-contract: source_requirements contains only generic target entrypoint coverage")
-
-    for rule_id, rule in target_rule_by_id.items():
-        requirement_id = str(rule.get("requirement_id") or "")
-        if requirement_id not in source_requirement_by_id:
-            failures.append(f"target_rule_inventory {rule_id}: unknown requirement_id {requirement_id}")
-
-    for stage_id, stage in workflow_stage_by_id.items():
-        route_id = str(stage.get("route_id") or "")
-        if route_id not in route_inventory_by_id:
-            failures.append(f"workflow_stage_inventory {stage_id}: unknown route_id {route_id}")
-
-    for gap_id, gap in test_gap_by_id.items():
-        status = str(gap.get("status") or "")
-        if status in {"required", "blocked"}:
-            failures.append(f"test_gap_plan {gap_id}: status {status} blocks deep coverage")
-        for requirement_id in gap.get("requirement_ids", []) if isinstance(gap.get("requirement_ids"), list) else []:
-            if requirement_id not in source_requirement_by_id:
-                failures.append(f"test_gap_plan {gap_id}: unknown requirement_id {requirement_id}")
-        for check_id in gap.get("planned_check_ids", []) if isinstance(gap.get("planned_check_ids"), list) else []:
-            if check_id not in check_by_id and check_id not in native_check_inventory_by_id:
-                failures.append(f"test_gap_plan {gap_id}: unknown planned_check_id {check_id}")
-
-    for row_id, row in coverage_row_by_id.items():
-        requirement_id = str(row.get("requirement_id") or "")
-        rule_id = str(row.get("rule_id") or "")
-        obligation_id = str(row.get("obligation_id") or "")
-        route_id = str(row.get("route_id") or "")
-        stage_id = str(row.get("stage_id") or "")
-        blocker_id = str(row.get("closure_blocker_id") or "")
-        if requirement_id not in source_requirement_by_id:
-            failures.append(f"coverage_matrix {row_id}: unknown requirement_id {requirement_id}")
-        if rule_id not in target_rule_by_id:
-            failures.append(f"coverage_matrix {row_id}: unknown rule_id {rule_id}")
-        if obligation_id not in obligation_by_id:
-            failures.append(f"coverage_matrix {row_id}: unknown obligation_id {obligation_id}")
-        if route_id not in route_inventory_by_id:
-            failures.append(f"coverage_matrix {row_id}: unknown route_id {route_id}")
-        if stage_id not in workflow_stage_by_id:
-            failures.append(f"coverage_matrix {row_id}: unknown stage_id {stage_id}")
-        if blocker_id not in closure_blocker_by_id:
-            failures.append(f"coverage_matrix {row_id}: unknown closure_blocker_id {blocker_id}")
-        check_ids = row.get("check_ids", [])
-        native_check_binding_ids = row.get("native_check_binding_ids", [])
-        if not isinstance(check_ids, list) or not isinstance(native_check_binding_ids, list):
-            failures.append(f"coverage_matrix {row_id}: check_ids and native_check_binding_ids must be lists")
-            continue
-        if row.get("required") is True and not check_ids and not native_check_binding_ids:
-            failures.append(f"coverage_matrix {row_id}: required row must cite check_ids or native_check_binding_ids")
-        for check_id in check_ids:
-            if check_id not in check_by_id:
-                failures.append(f"coverage_matrix {row_id}: unknown check_id {check_id}")
-        for binding_id in native_check_binding_ids:
-            if binding_id not in native_check_binding_by_id:
-                failures.append(f"coverage_matrix {row_id}: unknown native_check_binding_id {binding_id}")
-        for evidence_id in row.get("evidence_ids", []) if isinstance(row.get("evidence_ids"), list) else []:
-            if evidence_id not in evidence_by_id:
-                failures.append(f"coverage_matrix {row_id}: unknown evidence_id {evidence_id}")
-
-    for skill_check_id, skill_check in skill_specific_check_by_id.items():
-        for obligation_id in skill_check.get("obligation_ids", []) if isinstance(skill_check.get("obligation_ids"), list) else []:
-            if obligation_id not in obligation_by_id:
-                failures.append(f"skill_specific_check {skill_check_id}: unknown obligation {obligation_id}")
-        for check_id in skill_check.get("check_manifest_ids", []) if isinstance(skill_check.get("check_manifest_ids"), list) else []:
-            if check_id not in check_by_id:
-                failures.append(f"skill_specific_check {skill_check_id}: unknown check_manifest_id {check_id}")
-        for binding_id in skill_check.get("native_check_binding_ids", []) if isinstance(skill_check.get("native_check_binding_ids"), list) else []:
-            if binding_id not in native_check_binding_by_id:
-                failures.append(f"skill_specific_check {skill_check_id}: unknown native_check_binding_id {binding_id}")
-
-    for blocker_id, blocker in closure_blocker_by_id.items():
-        for obligation_id in blocker.get("obligation_ids", []) if isinstance(blocker.get("obligation_ids"), list) else []:
-            if obligation_id not in obligation_by_id:
-                failures.append(f"closure_blocker {blocker_id}: unknown obligation {obligation_id}")
-
-    if isinstance(not_parallel_route_proof, dict):
-        for binding_id in not_parallel_route_proof.get("native_route_binding_ids", []) if isinstance(not_parallel_route_proof.get("native_route_binding_ids"), list) else []:
-            if binding_id not in native_route_binding_by_id:
-                failures.append(f"not_parallel_route_proof: unknown native_route_binding_id {binding_id}")
-
-    if target is not None and not contract_target_matches_target(contract.get("target_path"), target, root):
-        failures.append("$.target_path: does not match the checked target directory")
-    if contract_path is not None and not contract_path.is_file():
-        failures.append(f"contract file is missing: {public_relative_path(contract_path, root)}")
-    return failures
-
-
-def load_work_contract_for_target(
-    target: Path,
-    contract_arg: str | None = None,
-    root: Path | None = None,
-) -> tuple[Path, dict[str, Any], list[str]]:
-    path = runtime_contract_path(target, contract_arg, root)
-    contract = load_json(path, root)
-    failures = contract_semantic_failures(contract, target, path, root)
-    return path, contract, failures
-
-
-def write_json_if_allowed(path: Path, payload: Any, *, force: bool = False) -> str:
-    if path.exists():
-        if not path.is_file():
-            raise SkillGuardCliError("compile-contract", f"path exists but is not a file: {public_relative_path(path)}", "validation_error")
-        existing = load_json(path)
-        if existing == payload:
-            return "existing-identical"
-        if not force:
-            raise SkillGuardCliError(
-                "compile-contract",
-                f"refusing to overwrite existing different file without --force: {public_relative_path(path)}",
-                "validation_error",
-            )
-    dump_json(payload, path)
-    return "written"
-
-
-def write_text_if_allowed(path: Path, content: str, *, force: bool = False) -> str:
-    path = ensure_under_root(path)
-    if path.exists():
-        if not path.is_file():
-            raise SkillGuardCliError("compile-contract", f"path exists but is not a file: {public_relative_path(path)}", "validation_error")
-        if path.read_text(encoding="utf-8") == content:
-            return "existing-identical"
-        if not force:
-            raise SkillGuardCliError(
-                "compile-contract",
-                f"refusing to overwrite existing different file without --force: {public_relative_path(path)}",
-                "validation_error",
-            )
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
-    return "written"
 
 
 def check_json_schema(argv: list[str]) -> int:
@@ -2788,584 +1738,291 @@ def check_json_schema(argv: list[str]) -> int:
     return write_and_exit(payload, args.output)
 
 
-def compile_contract(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py compile-contract", description="Compile a runnable SkillGuard work contract for a target skill.")
-    parser.add_argument("--target", required=True, help="Target skill directory under the repository root.")
-    parser.add_argument("--contract", help="Contract output path. Defaults to target/.skillguard/work-contract.json.")
-    parser.add_argument("--check-manifest", help="Check-manifest output path. Defaults to target/.skillguard/check_manifest.json.")
-    parser.add_argument("--write", action="store_true", help="Write the contract, manifest, and check script stubs.")
-    parser.add_argument("--dry-run", action="store_true", help="Preview generated files without writing them.")
-    parser.add_argument("--force", action="store_true", help="Overwrite generated contract files when their content differs.")
+def check_contract(argv: list[str]) -> int:
+    parser = JsonArgumentParser(prog="skillguard.py check-contract", description="Check the target's single current SkillGuard contract authority.")
+    parser.add_argument("--target", required=True, help="Target skill member directory. External members are resolved only inside --repository-root; standalone '.' binds the current directory.")
+    parser.add_argument("--repository-root", help="Canonical repository root for an external target member. Repository-relative contract paths resolve only from this root.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    target = resolve_target_argument(args.target)
-    require_skill_target(target, "compile-contract")
-    if args.write and args.dry_run:
-        raise SkillGuardCliError("compile-contract", "--write and --dry-run cannot be combined")
+    canonical_root, target, report_root, target_binding = resolve_check_target_binding(
+        "check-contract",
+        args.target,
+        args.repository_root,
+    )
+    require_skill_target(target, "check-contract", report_root)
+    from skillguard_v2.runtime_authority import (
+        AUTHORITY_BLOCKED,
+        AUTHORITY_CURRENT,
+        resolve_runtime_authority,
+    )
 
-    contract, check_manifest = build_default_work_contract(target)
-    contract_path = runtime_contract_path(target, args.contract)
-    manifest_path = runtime_check_manifest_path(target, args.check_manifest)
-    planned_files = [
-        public_relative_path(contract_path),
-        public_relative_path(manifest_path),
-        *[
-            public_relative_path(control_root_for(target) / "checks" / template_name.replace(".template", ""))
-            for template_name in CHECK_TEMPLATE_BY_ID.values()
-        ],
-    ]
-    payload = base_result("compile-contract", public_relative_path(target))
-    payload["compiled_contract"] = contract
-    payload["compiled_check_manifest"] = check_manifest
-    payload["planned_files"] = planned_files
-    write_status: list[dict[str, str]] = []
-    blockers: list[str] = []
-    failures = contract_semantic_failures(contract)
-    if args.write:
-        try:
-            control_root_for(target).mkdir(parents=True, exist_ok=True)
-            (control_root_for(target) / "checks").mkdir(parents=True, exist_ok=True)
-            (control_root_for(target) / "runs").mkdir(parents=True, exist_ok=True)
-            write_status.append(
+    authority = resolve_runtime_authority(target)
+    if authority.authority == AUTHORITY_BLOCKED:
+        payload = base_result("check-contract", public_relative_path(target, report_root))
+        payload["target_binding"] = target_binding
+        payload["contract_path"] = authority.compiled_contract_path
+        payload["authority_decision"] = authority.authority
+        payload["checks"] = []
+        payload["evidence"] = []
+        payload["files_inspected"] = []
+        payload["failures"] = [
+            f"{finding.code}: {finding.path}: {finding.message}"
+            for finding in authority.findings
+        ]
+        payload["blockers"] = list(authority.blockers)
+        payload["decision"] = "block"
+        payload["claim_boundary"] = authority.claim_boundary
+        return write_and_exit(payload, args.output)
+    if authority.authority == AUTHORITY_CURRENT:
+        if is_installed_skill_projection(target):
+            source_path = target / ".skillguard" / "contract-source.json"
+            compiled_path = target / ".skillguard" / "compiled-contract.json"
+            manifest_path = target / ".skillguard" / "check-manifest.json"
+            contract = load_json(compiled_path, canonical_root)
+            manifest = load_json(manifest_path, canonical_root)
+            payload = base_result("check-contract", public_relative_path(target, report_root))
+            payload["target_binding"] = target_binding
+            payload["contract_path"] = public_relative_path(compiled_path, report_root)
+            payload["contract_hash"] = str(contract.get("contract_hash") or "")
+            payload["manifest_hash"] = str(manifest.get("manifest_hash") or "")
+            payload["authority_decision"] = authority.authority
+            payload["verification_scope"] = "installed-current-authority"
+            payload["checks"] = [
                 {
-                    "path": public_relative_path(contract_path),
-                    "status": write_json_if_allowed(contract_path, contract, force=args.force),
+                    "check_id": "check-contract:installed-current-authority",
+                    "name": "Current installed contract trio authority",
+                    "required": True,
+                    "status": "pass",
+                    "summary": (
+                        "Validated the installed source, compiled contract, and exact manifest "
+                        "through the current runtime-authority owner without pretending that "
+                        "source-only model files are installed."
+                    ),
                 }
-            )
-            write_status.append(
+            ]
+            payload["evidence"] = [
                 {
-                    "path": public_relative_path(manifest_path),
-                    "status": write_json_if_allowed(manifest_path, check_manifest, force=args.force),
+                    "evidence_id": "installed-current-contract-trio",
+                    "kind": "installed_runtime_authority",
+                    "fresh": True,
+                    "summary": (
+                        f"Checked installed contract hash {contract.get('contract_hash', '')} "
+                        f"and manifest hash {manifest.get('manifest_hash', '')}."
+                    ),
+                    "source_path": public_relative_path(compiled_path, report_root),
                 }
+            ]
+            payload["files_inspected"] = [
+                checked_file(source_path, "json", report_root),
+                checked_file(compiled_path, "json", report_root),
+                checked_file(manifest_path, "json", report_root),
+            ]
+            payload["failures"] = []
+            payload["blockers"] = []
+            payload["decision"] = "pass"
+            payload["claim_boundary"] = (
+                "This installed check proves the current contract trio's structure, schema, "
+                "internal hashes, and absence of former runtime authority. Exact canonical-to-installed "
+                "content parity remains owned by the installation receipt; target checks have not run."
             )
-            for check_id, template_name in CHECK_TEMPLATE_BY_ID.items():
-                template_path = ensure_under_root(skill_root() / "assets" / "templates" / template_name)
-                script_path = ensure_under_root(control_root_for(target) / "checks" / template_name.replace(".template", ""))
-                write_status.append(
-                    {
-                        "path": public_relative_path(script_path),
-                        "status": write_text_if_allowed(script_path, template_path.read_text(encoding="utf-8"), force=args.force),
-                    }
-                )
-        except SkillGuardCliError as exc:
-            blockers.append(exc.message)
-    else:
-        payload["skipped_checks"] = [
+            return write_and_exit(payload, args.output)
+
+        from skillguard_v2.contract_compiler import compile_skill_contract
+
+        result = compile_skill_contract(
+            target,
+            repository_root=canonical_root,
+            write=False,
+        )
+        contract = result.compiled_contract if isinstance(result.compiled_contract, dict) else {}
+        failures = [
+            f"{finding.code}: {finding.path}: {finding.message}"
+            for finding in result.findings
+        ]
+        compiled_path = target / ".skillguard" / "compiled-contract.json"
+        manifest_path = target / ".skillguard" / "check-manifest.json"
+        payload = base_result("check-contract", public_relative_path(target, report_root))
+        payload["target_binding"] = target_binding
+        payload["contract_path"] = public_relative_path(compiled_path, report_root)
+        payload["contract_hash"] = str(contract.get("contract_hash") or "")
+        payload["authority_decision"] = authority.authority
+        payload["checks"] = [
             {
-                "check_id": "compile-contract:write",
-                "reason": "no --write flag was supplied",
-                "impact": "contract files were previewed but not created or refreshed",
+                "check_id": "check-contract:current-authority",
+                "name": "Current source, compiled contract, and exact manifest authority",
+                "required": True,
+                "status": "pass" if result.ok else "fail",
+                "summary": "Recompiled from the portable target root and checked deterministic generated parity.",
             }
         ]
-    payload["write_status"] = write_status
-    payload["checks"] = [
-        {
-            "check_id": "compile-contract:target",
-            "name": "Target skill exists",
-            "required": True,
-            "status": "pass",
-            "summary": "Confirmed target directory and SKILL.md before compiling the work contract.",
-        },
-        {
-            "check_id": "compile-contract:contract-shape",
-            "name": "Compiled contract structure",
-            "required": True,
-            "status": "pass" if not failures else "fail",
-            "summary": "Compiled routes, phases, required evidence, quality floors, check scripts, closure rules, stale bindings, and claim boundary.",
-        },
-        {
-            "check_id": "compile-contract:write",
-            "name": "Contract file writes",
-            "required": bool(args.write),
-            "status": "pass" if args.write and not blockers else "block" if blockers else "pass",
-            "summary": "Wrote generated files when --write was supplied; dry previews do not modify target files.",
-        },
-    ]
-    payload["evidence"] = [
-        {
-            "evidence_id": "compiled-contract",
-            "kind": "generated_contract",
-            "fresh": True,
-            "summary": f"Compiled work contract hash {contract['contract_hash']}.",
-            "source_path": public_relative_path(target / "SKILL.md"),
-        }
-    ]
-    payload["failures"] = failures
-    payload["blockers"] = blockers
-    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
-    return write_and_exit(payload, args.output)
-
-
-def check_contract(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py check-contract", description="Check a target SkillGuard work contract.")
-    parser.add_argument("--target", required=True, help="Target skill directory under the repository root.")
-    parser.add_argument("--target-root", help="Explicit root for read-only external target checks. Target and contract must stay under this root.")
-    parser.add_argument("--contract", help="Contract path. Defaults to target/.skillguard/work-contract.json.")
-    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
-    args = parser.parse_args(argv)
-    target_root = Path(args.target_root).resolve() if args.target_root else None
-    if target_root is not None and not target_root.is_dir():
-        raise SkillGuardCliError("check-contract", f"--target-root is missing or not a directory: {args.target_root}", "missing_file")
-    target = resolve_target_argument(args.target, target_root)
-    require_skill_target(target, "check-contract", target_root)
-    contract_path = runtime_contract_path(target, args.contract, target_root)
-    contract = load_json(contract_path, target_root)
-    failures = contract_semantic_failures(contract, target, contract_path, target_root)
-    payload = base_result("check-contract", public_relative_path(target, target_root))
-    payload["contract_path"] = public_relative_path(contract_path, target_root)
-    payload["contract_hash"] = contract.get("contract_hash") if isinstance(contract, dict) else ""
-    inspected_files = [checked_file(contract_path, "json", target_root)]
-    if isinstance(contract, dict):
-        for item in contract.get("check_scripts", []) if isinstance(contract.get("check_scripts"), list) else []:
-            if not isinstance(item, dict) or not isinstance(item.get("script_path"), str):
-                continue
-            script_path = ensure_under_root(target / item["script_path"], target_root)
-            if script_path.is_file():
-                inspected_files.append(checked_file(script_path, "python", target_root))
-    payload["checks"] = [
-        {
-            "check_id": "check-contract:schema",
-            "name": "Work-contract schema",
-            "required": True,
-            "status": "fail" if any(item.startswith("$") for item in failures) else "pass",
-            "summary": f"Checked {public_relative_path(contract_path, target_root)} against {WORK_CONTRACT_SCHEMA_NAME}.",
-        },
-        {
-            "check_id": "check-contract:semantic-links",
-            "name": "Route, phase, evidence, check, and closure links",
-            "required": True,
-            "status": "pass" if not failures else "fail",
-            "summary": "Validated route phase order, phase requirements, script paths, quality floors, closure rules, target binding, and canonical hash.",
-        },
-    ]
-    payload["evidence"] = [
-        {
-            "evidence_id": "work-contract-json",
-            "kind": "parser_output",
-            "fresh": True,
-            "summary": f"Loaded {public_relative_path(contract_path, target_root)}; sha256={file_sha256(contract_path)}.",
-            "source_path": public_relative_path(contract_path, target_root),
-        }
-    ]
-    payload["files_inspected"] = inspected_files
-    payload["failures"] = failures
-    payload["decision"] = "pass" if not failures else "fail"
-    return write_and_exit(payload, args.output)
-
-
-def resolve_depth_target(target_text: str, contract_text: str | None, root: Path | None = None) -> tuple[Path | None, Path, dict[str, Any], list[str]]:
-    raw_target = resolve_target_argument(target_text, root)
-    load_failures: list[str] = []
-    if raw_target.is_file():
-        contract_path = raw_target
-        contract = load_json(contract_path, root)
-        target_path_text = contract.get("target_path") if isinstance(contract, dict) else ""
-        target = resolve_target_argument(str(target_path_text), root) if isinstance(target_path_text, str) and target_path_text else None
-        return target if target is not None and target.is_dir() else None, contract_path, contract, load_failures
-    require_skill_target(raw_target, "check-depth", root)
-    contract_path = runtime_contract_path(raw_target, contract_text, root)
-    contract = load_json(contract_path, root)
-    return raw_target, contract_path, contract, load_failures
-
-
-def latest_run_record(target: Path | None, root: Path | None = None) -> Path | None:
-    if target is None:
-        return None
-    runs_dir = control_root_for(target, root) / "runs"
-    if not runs_dir.is_dir():
-        return None
-    runs: list[Path] = []
-    for path in runs_dir.glob("*.json"):
-        if not path.is_file():
-            continue
-        try:
-            candidate = load_json(path, root)
-        except ValueError:
-            continue
-        if (
-            isinstance(candidate, dict)
-            and candidate.get("schema_version") == "skillguard.run_record.v1"
-            and isinstance(candidate.get("contract_ref"), dict)
-        ):
-            runs.append(path)
-    if not runs:
-        return None
-    return max(runs, key=lambda path: path.stat().st_mtime)
-
-
-def completed_run_record_failures(run: dict[str, Any], run_path: Path, root: Path | None = None) -> list[str]:
-    failures: list[str] = []
-    closure_decision = str(run.get("closure_decision") or "")
-    if closure_decision not in RUN_DEPTH_ACCEPTED_CLOSURE_DECISIONS:
-        failures.append(
-            "stale-run-evidence: latest run record is not closed with accepted evidence "
-            f"(closure_decision={closure_decision or 'missing'})"
+        payload["evidence"] = [
+            {
+                "evidence_id": "current-compiled-contract",
+                "kind": "compiled_contract",
+                "fresh": bool(result.ok),
+                "summary": f"Checked current contract hash {contract.get('contract_hash', '')}.",
+                "source_path": public_relative_path(compiled_path, report_root),
+            }
+        ]
+        payload["files_inspected"] = [
+            checked_file(target / ".skillguard" / "contract-source.json", "json", report_root),
+            checked_file(compiled_path, "json", report_root),
+            checked_file(manifest_path, "json", report_root),
+        ]
+        payload["failures"] = failures
+        payload["blockers"] = []
+        payload["decision"] = "pass" if not failures else "fail"
+        payload["claim_boundary"] = (
+            "A current contract check proves source/compiled/manifest structure and parity only; it does not prove target execution depth."
         )
-    current_phase = str(run.get("current_phase") or "")
-    if current_phase != "closure":
-        failures.append(
-            "stale-run-evidence: latest run record is not positioned at closure "
-            f"(current_phase={current_phase or 'missing'})"
-        )
-
-    phase_statuses = run.get("phase_statuses", [])
-    if not isinstance(phase_statuses, list) or not phase_statuses:
-        failures.append("stale-run-evidence: latest run record has no phase_statuses")
-    else:
-        for item in phase_statuses:
-            if not isinstance(item, dict):
-                failures.append("stale-run-evidence: latest run record contains a malformed phase status")
-                continue
-            phase_id = str(item.get("phase_id") or "unknown")
-            status = str(item.get("status") or "")
-            if status != "checked":
-                failures.append(
-                    f"stale-run-evidence: latest run record phase {phase_id} is {status or 'missing'}, not checked"
-                )
-
-    closure_command_found = False
-    commands = run.get("commands_run", [])
-    for item in commands if isinstance(commands, list) else []:
-        if (
-            isinstance(item, dict)
-            and item.get("evidence_id") == "closure_report"
-            and item.get("decision") == "pass"
-        ):
-            closure_command_found = True
-            break
-    if not closure_command_found:
-        failures.append("stale-run-evidence: latest run record has no passing closure_report command")
-
-    if run.get("skipped_checks"):
-        failures.append("stale-run-evidence: latest run record contains skipped_checks")
-    if run.get("quality_failures"):
-        failures.append("stale-run-evidence: latest run record contains quality_failures")
-    if run.get("blockers"):
-        failures.append("stale-run-evidence: latest run record still contains blockers")
-
-    return failures
-
-
-def skillguard_runtime_run_required(contract: dict[str, Any]) -> bool:
-    integration_mode = str(contract.get("integration_mode") or "")
-    skillguard_role = str(contract.get("skillguard_role") or "")
-    return (
-        contract.get("run_record_required") is True
-        and (
-            integration_mode == "skillguard-runtime"
-            or skillguard_role == "runtime_owner"
-            or contract.get("may_define_skillguard_runtime_route") is True
-        )
+        return write_and_exit(payload, args.output)
+    raise SkillGuardCliError(
+        "check-contract",
+        f"unsupported runtime authority: {authority.authority}",
+        "runtime_authority_blocked",
     )
 
 
-def check_manifest_ids(target: Path | None, root: Path | None = None) -> set[str]:
-    if target is None:
-        return set()
-    manifest_path = control_root_for(target, root) / CHECK_MANIFEST_FILENAME
-    if not manifest_path.is_file():
-        return set()
-    manifest = load_json(manifest_path, root)
-    ids: set[str] = set()
-    checks = manifest.get("checks", []) if isinstance(manifest, dict) else []
-    for item in checks if isinstance(checks, list) else []:
-        if isinstance(item, dict) and isinstance(item.get("check_id"), str):
-            ids.add(item["check_id"])
-    return ids
 
 
-def classify_depth_failures(failures: list[str], blockers: list[str]) -> str:
-    haystack = "\n".join([*failures, *blockers]).lower()
-    if blockers:
-        return "blocked"
-    if "parallel" in haystack or "duplicate execution paths" in haystack:
-        return "parallel-route-risk"
-    if (
-        "missing-target-lock" in haystack
-        or "shallow-contract" in haystack
-        or "source_requirements" in haystack
-        or "target_rule_inventory" in haystack
-        or "coverage_matrix" in haystack
-        or "runtime_lock_policy" in haystack
-        or "acceptance_obligations" in haystack
-        or "skill_specific_checks" in haystack
-    ):
-        return "shallow-contract"
-    if "native" in haystack and ("binding" in haystack or "owner" in haystack):
-        return "missing-native-binding"
-    if "missing-run-record" in haystack or "stale-run-evidence" in haystack:
-        return "stale-run-evidence"
-    if "cleanup" in haystack:
-        return "cleanup-required"
-    if "must be a non-empty list" in haystack or "required property" in haystack:
-        return "hollow-contract"
-    return "shallow-contract" if failures else "deep-pass"
 
 
-def deep_contract_failures(
-    target: Path | None,
-    contract: dict[str, Any],
-    contract_path: Path,
-    root: Path | None = None,
-) -> tuple[list[str], list[dict[str, Any]], list[dict[str, Any]]]:
-    failures: list[str] = []
-    inferred = infer_source_requirements(target, read_target_skill_text(target, root), root)
-    inferred_ids = {str(item.get("requirement_id")) for item in inferred}
-    source_requirements = contract.get("source_requirements", []) if isinstance(contract, dict) else []
-    target_rule_inventory = contract.get("target_rule_inventory", []) if isinstance(contract, dict) else []
-    route_inventory = contract.get("route_inventory", []) if isinstance(contract, dict) else []
-    workflow_stage_inventory = contract.get("workflow_stage_inventory", []) if isinstance(contract, dict) else []
-    coverage_matrix = contract.get("coverage_matrix", []) if isinstance(contract, dict) else []
-    required_evidence = contract.get("required_evidence", []) if isinstance(contract, dict) else []
-    runtime_lock_policy = contract.get("runtime_lock_policy", {}) if isinstance(contract, dict) else {}
-    acceptance_obligations = contract.get("acceptance_obligations", []) if isinstance(contract, dict) else []
-    skill_specific_checks = contract.get("skill_specific_checks", []) if isinstance(contract, dict) else []
-    closure_blockers = contract.get("closure_blockers", []) if isinstance(contract, dict) else []
-    manifest_ids = check_manifest_ids(target, root)
-    contract_checks = contract.get("check_scripts", [])
-    if not isinstance(contract_checks, list):
-        contract_checks = []
-    contract_check_ids = {
-        str(item.get("check_id"))
-        for item in contract_checks
-        if isinstance(item, dict) and isinstance(item.get("check_id"), str)
-    }
-    available_check_ids = contract_check_ids | manifest_ids
-    source_ids = {
-        str(item.get("requirement_id"))
-        for item in source_requirements
-        if isinstance(source_requirements, list) and isinstance(item, dict) and isinstance(item.get("requirement_id"), str)
-    }
-    target_rule_ids_by_requirement = {
-        str(item.get("requirement_id")): str(item.get("rule_id"))
-        for item in target_rule_inventory
-        if isinstance(target_rule_inventory, list)
-        and isinstance(item, dict)
-        and isinstance(item.get("requirement_id"), str)
-        and isinstance(item.get("rule_id"), str)
-    }
-    coverage_rows_by_requirement: dict[str, list[dict[str, Any]]] = {}
-    if isinstance(coverage_matrix, list):
-        for item in coverage_matrix:
-            if isinstance(item, dict) and isinstance(item.get("requirement_id"), str):
-                coverage_rows_by_requirement.setdefault(str(item["requirement_id"]), []).append(item)
-    evidence_by_id = contract_lookup(required_evidence, "evidence_id")
-    obligation_by_id = contract_lookup(acceptance_obligations, "obligation_id")
-    skill_check_by_id = contract_lookup(skill_specific_checks, "check_id")
-    blocker_by_id = contract_lookup(closure_blockers, "blocker_id")
 
-    for field_name, value in (
-        ("target_rule_inventory", target_rule_inventory),
-        ("route_inventory", route_inventory),
-        ("workflow_stage_inventory", workflow_stage_inventory),
-        ("coverage_matrix", coverage_matrix),
-    ):
-        if not isinstance(value, list) or not value:
-            failures.append(f"missing-target-lock: {field_name} is required for deep target coverage")
-    if not isinstance(runtime_lock_policy, dict) or runtime_lock_policy.get("coverage_matrix_required") is not True:
-        failures.append("missing-target-lock: runtime_lock_policy must require the coverage matrix")
-    if not any(requirement_id not in GENERIC_SOURCE_REQUIREMENT_IDS for requirement_id in source_ids):
-        failures.append("shallow-contract: contract has only generic source requirements")
 
-    for requirement_id in sorted(inferred_ids):
-        if requirement_id not in source_ids:
-            failures.append(f"missing source_requirement for inferred target obligation: {requirement_id}")
-        if requirement_id not in target_rule_ids_by_requirement:
-            failures.append(f"missing target_rule_inventory row for inferred target obligation: {requirement_id}")
-        matching_obligations = [
-            obligation
-            for obligation in obligation_by_id.values()
-            if requirement_id in obligation.get("requirement_ids", [])
-        ]
-        if not matching_obligations:
-            failures.append(f"missing acceptance obligation for source requirement: {requirement_id}")
-            continue
-        matching_matrix_rows = coverage_rows_by_requirement.get(requirement_id, [])
-        if not matching_matrix_rows:
-            failures.append(f"missing coverage_matrix row for source requirement: {requirement_id}")
-        for obligation in matching_obligations:
-            obligation_id = str(obligation.get("obligation_id") or "")
-            check_refs = [
-                str(item)
-                for item in obligation.get("covered_by_checks", [])
-                if isinstance(obligation.get("covered_by_checks"), list)
-            ]
-            native_refs = [
-                str(item)
-                for item in obligation.get("native_check_binding_ids", [])
-                if isinstance(obligation.get("native_check_binding_ids"), list)
-            ]
-            if not check_refs and not native_refs:
-                failures.append(f"missing-obligation-check: {obligation_id} cites no check or native check binding")
-            for check_ref in check_refs:
-                if check_ref not in available_check_ids:
-                    failures.append(f"missing-obligation-check: {obligation_id} cites unavailable check {check_ref}")
-            if not any(obligation_id in skill_check.get("obligation_ids", []) for skill_check in skill_check_by_id.values()):
-                failures.append(f"missing skill_specific_checks coverage for obligation: {obligation_id}")
-            if not any(obligation_id in blocker.get("obligation_ids", []) for blocker in blocker_by_id.values()):
-                failures.append(f"missing closure_blocker for obligation: {obligation_id}")
-            for row in matching_matrix_rows:
-                row_id = str(row.get("row_id") or requirement_id)
-                matrix_obligation = str(row.get("obligation_id") or "")
-                if matrix_obligation != obligation_id:
-                    failures.append(
-                        f"coverage_matrix {row_id}: obligation_id {matrix_obligation or '<missing>'} does not cover {obligation_id}"
-                    )
-                    continue
-                row_check_refs = [
-                    str(item)
-                    for item in row.get("check_ids", [])
-                    if isinstance(row.get("check_ids"), list)
-                ]
-                row_native_refs = [
-                    str(item)
-                    for item in row.get("native_check_binding_ids", [])
-                    if isinstance(row.get("native_check_binding_ids"), list)
-                ]
-                if not row_check_refs and not row_native_refs:
-                    failures.append(f"coverage_matrix {row_id}: cites no check or native check binding")
-                for check_ref in row_check_refs:
-                    if check_ref not in available_check_ids:
-                        failures.append(f"coverage_matrix {row_id}: cites unavailable check {check_ref}")
-                evidence_refs = [
-                    str(item)
-                    for item in row.get("evidence_ids", [])
-                    if isinstance(row.get("evidence_ids"), list)
-                ]
-                if not evidence_refs:
-                    failures.append(f"coverage_matrix {row_id}: missing evidence_ids")
-                for evidence_ref in evidence_refs:
-                    if evidence_ref not in evidence_by_id:
-                        failures.append(f"coverage_matrix {row_id}: cites unavailable evidence {evidence_ref}")
-                if not row.get("closure_blocker_id"):
-                    failures.append(f"coverage_matrix {row_id}: missing closure_blocker_id")
 
-    latest_run = latest_run_record(target, root)
-    if skillguard_runtime_run_required(contract):
-        if latest_run is None:
-            failures.append("missing-run-record: run_record_required is true but no current run JSON exists")
-        else:
-            try:
-                run = load_json(latest_run, root)
-            except ValueError as exc:
-                failures.append(f"stale-run-evidence: latest run record could not be loaded: {exc}")
-            else:
-                run_hash = run.get("contract_ref", {}).get("contract_hash") if isinstance(run.get("contract_ref"), dict) else None
-                current_hash = contract.get("contract_hash")
-                if current_hash and run_hash != current_hash:
-                    failures.append(
-                        "stale-run-evidence: latest run record is not bound to the current work contract hash"
-                    )
-                failures.extend(completed_run_record_failures(run, latest_run, root))
-    elif latest_run is not None:
-        failures.append(
-            "cleanup-required: native or hybrid contract must not retain legacy SkillGuard run records; "
-            f"remove {public_relative_path(latest_run, root)} or convert the contract to skillguard-runtime"
-        )
 
-    cleanup_items = contract.get("cleanup_required", [])
-    if isinstance(cleanup_items, list):
-        for item in cleanup_items:
-            if isinstance(item, dict) and item.get("required") is True and item.get("status") != "complete":
-                failures.append(f"cleanup-required: {item.get('cleanup_id') or 'unknown cleanup'} is not complete")
 
-    evidence = [
-        {
-            "evidence_id": "deep-contract-work-contract",
-            "kind": "parser_output",
-            "fresh": True,
-            "summary": f"Loaded work contract {public_relative_path(contract_path, root)}; sha256={file_sha256(contract_path)}.",
-            "source_path": public_relative_path(contract_path, root),
-        }
-    ]
-    if target is not None and (target / "SKILL.md").is_file():
-        evidence.append(
-            {
-                "evidence_id": "deep-contract-skill-entrypoint",
-                "kind": "source_requirement_scan",
-                "fresh": True,
-                "summary": f"Inferred {len(inferred)} target source requirements from SKILL.md.",
-                "source_path": public_relative_path(target / "SKILL.md", root),
-            }
-        )
-    if latest_run is not None:
-        evidence.append(
-            {
-                "evidence_id": "deep-contract-latest-run",
-                "kind": "run_record",
-                "fresh": True,
-                "summary": f"Found latest run record {public_relative_path(latest_run, root)}.",
-                "source_path": public_relative_path(latest_run, root),
-            }
-        )
-    coverage_rows = [
-        {
-            "requirement_id": item.get("requirement_id"),
-            "contract_declared": item.get("requirement_id") in source_ids,
-            "target_rule_declared": item.get("requirement_id") in target_rule_ids_by_requirement,
-            "coverage_matrix_count": len(coverage_rows_by_requirement.get(str(item.get("requirement_id")), [])),
-            "obligation_count": len(
-                [
-                    obligation
-                    for obligation in obligation_by_id.values()
-                    if item.get("requirement_id") in obligation.get("requirement_ids", [])
-                ]
-            ),
-        }
-        for item in inferred
-    ]
-    return failures, evidence, coverage_rows
+
+
+
 
 
 def check_depth(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py check-depth", description="Check deep target-specific SkillGuard contract coverage.")
-    parser.add_argument("--target", required=True, help="Target skill directory or work-contract JSON file.")
+    parser = JsonArgumentParser(prog="skillguard.py check-depth", description="Check deep target-specific coverage under the single current authority.")
+    parser.add_argument("--target", required=True, help="Target skill directory.")
     parser.add_argument("--target-root", help="Explicit root for read-only external target checks.")
-    parser.add_argument("--contract", help="Contract path. Defaults to target/.skillguard/work-contract.json.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
     target_root = Path(args.target_root).resolve() if args.target_root else None
     if target_root is not None and not target_root.is_dir():
         raise SkillGuardCliError("check-depth", f"--target-root is missing or not a directory: {args.target_root}", "missing_file")
-    target, contract_path, contract, load_failures = resolve_depth_target(args.target, args.contract, target_root)
-    semantic_failures = contract_semantic_failures(contract, target, contract_path, target_root)
-    depth_failures: list[str] = []
-    depth_evidence: list[dict[str, Any]] = []
-    coverage_rows: list[dict[str, Any]] = []
-    if isinstance(contract, dict):
-        depth_failures, depth_evidence, coverage_rows = deep_contract_failures(target, contract, contract_path, target_root)
-    failures = [*load_failures, *semantic_failures, *depth_failures]
-    blockers: list[str] = []
-    classification = classify_depth_failures(failures, blockers)
-    payload = base_result("check-depth", public_relative_path(target, target_root) if target is not None else public_relative_path(contract_path, target_root))
-    payload["contract_path"] = public_relative_path(contract_path, target_root)
-    payload["depth_classification"] = classification
-    payload["coverage_rows"] = coverage_rows
-    payload["checks"] = [
-        {
-            "check_id": "check-depth:contract-shape",
-            "name": "Deep contract fields",
-            "required": True,
-            "status": "pass" if not semantic_failures else "fail",
-            "summary": "Validated deep contract fields, native binding rules, check references, closure blockers, and canonical hash.",
-        },
-        {
-            "check_id": "check-depth:target-obligations",
-            "name": "Target-specific obligation coverage",
-            "required": True,
-            "status": "pass" if not depth_failures else "fail",
-            "summary": "Compared inferred target skill obligations with contract obligations, runnable checks, run records, and closure blockers.",
-        },
-    ]
-    payload["evidence"] = depth_evidence
-    payload["failures"] = failures
-    payload["blockers"] = blockers
-    payload["decision"] = "pass" if classification == "deep-pass" else "fail"
-    payload["claim_boundary"] = (
-        "This depth check proves only that the current target contract maps inferred target obligations to declared checks, "
-        "native bindings, run evidence, and closure blockers. It does not prove AI judgment quality or future task behavior."
+    target_candidate = resolve_target_argument(args.target, target_root)
+    current_source = target_candidate / ".skillguard" / "contract-source.json"
+    if not target_candidate.is_dir():
+        raise SkillGuardCliError(
+            "check-depth",
+            "--target must be a current skill directory; former contract-file targets are not executable authority",
+            "runtime_authority_blocked",
+        )
+    authority = None
+    if target_candidate.is_dir():
+        from skillguard_v2.runtime_authority import (
+            AUTHORITY_BLOCKED,
+            AUTHORITY_CURRENT,
+            resolve_runtime_authority,
+        )
+
+        authority = resolve_runtime_authority(target_candidate)
+        if authority.authority == AUTHORITY_BLOCKED:
+            payload = base_result("check-depth", public_relative_path(target_candidate, target_root))
+            payload["contract_path"] = public_relative_path(current_source, target_root) if current_source.is_file() else ""
+            payload["authority_decision"] = authority.authority
+            payload["depth_classification"] = "blocked"
+            payload["coverage_rows"] = []
+            payload["checks"] = [
+                {
+                    "check_id": "check-depth:runtime-authority",
+                    "name": "Singular runtime authority",
+                    "required": True,
+                    "status": "block",
+                    "summary": "Runtime authority is incomplete, ambiguous, stale, or contains a retired residual.",
+                }
+            ]
+            payload["evidence"] = []
+            payload["failures"] = [
+                f"{finding.code}: {finding.path}: {finding.message}"
+                for finding in authority.findings
+            ]
+            payload["blockers"] = list(authority.blockers)
+            payload["decision"] = "block"
+            payload["claim_boundary"] = authority.claim_boundary
+            return write_and_exit(payload, args.output)
+    if (
+        target_candidate.is_dir()
+        and authority is not None
+        and authority.authority == AUTHORITY_CURRENT
+    ):
+        authority_root = target_root or repository_root().resolve()
+        contract = load_json(target_candidate / ".skillguard" / "compiled-contract.json", authority_root)
+        manifest = load_json(target_candidate / ".skillguard" / "check-manifest.json", authority_root)
+        depth_profile = contract.get("depth_profile") if isinstance(contract, dict) else None
+        failures: list[str] = []
+        if not isinstance(depth_profile, dict):
+            failures.append("depth_profile_missing: current contract does not declare universal execution-depth coverage")
+        coverage_rows = []
+        if isinstance(depth_profile, dict):
+            coverage_rows = [
+                {
+                    "dimension_id": row.get("dimension_id"),
+                    "required": bool(row.get("required", False)),
+                    "minimum_coverage": row.get("minimum_coverage"),
+                    "obligation_count": len(row.get("obligation_ids", []))
+                    if isinstance(row.get("obligation_ids"), list)
+                    else 0,
+                    "important_obligation_count": len(row.get("important_obligation_ids", []))
+                    if isinstance(row.get("important_obligation_ids"), list)
+                    else 0,
+                }
+                for row in depth_profile.get("dimensions", [])
+                if isinstance(row, dict)
+            ]
+        payload = base_result("check-depth", public_relative_path(target_candidate, target_root))
+        payload["contract_path"] = public_relative_path(current_source, target_root)
+        payload["authority_decision"] = authority.authority
+        payload["contract_hash"] = str(contract.get("contract_hash", ""))
+        payload["target_contract_hash"] = str(contract.get("contract_hash", ""))
+        payload["manifest_hash"] = str(manifest.get("manifest_hash", ""))
+        payload["contract_source_sha256"] = file_sha256(current_source)
+        payload["depth_classification"] = "contract-depth-pass" if not failures else "shallow-contract"
+        payload["coverage_rows"] = coverage_rows
+        payload["checks"] = [
+            {
+                "check_id": "check-depth:current-authority",
+                "name": "Current persisted contract authority",
+                "required": True,
+                "status": "pass",
+                "summary": "Consumed the validated current contract trio; compilation parity remains owned by its separate compile owner.",
+            },
+            {
+                "check_id": "check-depth:current-profile",
+                "name": "Universal execution-depth profile",
+                "required": True,
+                "status": "pass" if isinstance(depth_profile, dict) and not failures else "fail",
+                "summary": "Checked native-route authority, exact declared-check inventory, execution ownership, receipt reconciliation, and closure bindings.",
+            },
+        ]
+        payload["evidence"] = [
+            {
+                "evidence_id": "current-depth-contract-source",
+                "kind": "current_contract_authority",
+                "fresh": True,
+                "summary": f"Consumed current contract authority; contract_hash={contract.get('contract_hash', '')}.",
+                "source_path": public_relative_path(current_source, target_root),
+            }
+        ]
+        payload["failures"] = failures
+        payload["blockers"] = []
+        payload["decision"] = "pass" if not failures else "fail"
+        payload["claim_boundary"] = (
+            "A check-depth pass proves the sole current contract/profile depth and native-route bindings only. "
+            "It does not prove that target work ran deeply; that requires a current target execution-depth receipt consumed by closure."
+        )
+        return write_and_exit(payload, args.output)
+    raise SkillGuardCliError(
+        "check-depth",
+        f"unsupported runtime authority: {authority.authority if authority else 'blocked'}",
+        "runtime_authority_blocked",
     )
-    return write_and_exit(payload, args.output)
 
 
 README_RELEASE_HEADING_PAIRS = (
@@ -3374,7 +2031,7 @@ README_RELEASE_HEADING_PAIRS = (
     ("## Current Status", "## \u5f53\u524d\u72b6\u6001"),
     ("## Command Surface", "## \u547d\u4ee4\u9762"),
     ("## Runtime Contract Executor", "## \u8fd0\u884c\u5408\u540c\u6267\u884c\u5668"),
-    ("## Native-First Integration", "## \u539f\u751f\u8def\u7ebf\u4f18\u5148"),
+    ("## Native-Owned Integration", "## \u76ee\u6807\u539f\u751f\u8def\u7ebf"),
     ("## Typical Workflows", "## \u5e38\u89c1\u5de5\u4f5c\u6d41"),
     ("## README And Release Gates", "## README \u548c\u53d1\u5e03\u95e8\u7981"),
     ("## Validation", "## \u9a8c\u8bc1"),
@@ -3474,26 +2131,60 @@ def pyproject_version_value(text: str, key: str) -> str:
     return match.group(1) if match else ""
 
 
+def pyproject_project_name(text: str) -> str:
+    project_match = re.search(r"(?ms)^\[project\]\s*$\n(?P<body>.*?)(?=^\[|\Z)", text)
+    if project_match is None:
+        return ""
+    name_match = re.search(r'(?m)^name\s*=\s*"([^\"]+)"', project_match.group("body"))
+    return name_match.group(1).strip() if name_match else ""
+
+
 def check_readme_release(argv: list[str]) -> int:
     parser = JsonArgumentParser(
         prog="skillguard.py check-readme-release",
         description="Check SkillGuard README release gates for bilingual, hero, model, public-boundary, and version evidence.",
     )
-    parser.add_argument("--repo", default=".", help="Repository root to check. Defaults to the current SkillGuard repository.")
+    parser.add_argument("--repo", default=".", help="Repository root to check. Relative paths resolve from the caller's current working directory.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
 
-    repo = ensure_under_root(args.repo)
-    require_directory(repo, "check-readme-release")
-    readme_path = repo / "README.md"
-    version_path = repo / "VERSION"
-    pyproject_path = repo / "pyproject.toml"
-    changelog_path = repo / "CHANGELOG.md"
-    hero_dir = repo / "assets" / "readme-hero"
-    hero_path = hero_dir / "hero.png"
-    hero_prompt_path = hero_dir / "hero_prompt.md"
-    hero_design_path = hero_dir / "hero_design_note.md"
-    model_evidence_path = hero_dir / "readme_model_evidence.md"
+    repo_candidate = Path(args.repo)
+    if not repo_candidate.is_absolute():
+        repo_candidate = Path.cwd() / repo_candidate
+    repo = repo_candidate.resolve()
+    if repo == Path(repo.anchor).resolve():
+        raise ValueError("--repo must identify a repository directory, not a filesystem root")
+    require_directory(repo, "check-readme-release", root=repo)
+    member_paths: dict[str, Path] = {}
+    escaped_members: list[str] = []
+    for relative in (
+        "README.md",
+        "VERSION",
+        "pyproject.toml",
+        "CHANGELOG.md",
+        "assets/readme-hero/hero.png",
+        "assets/readme-hero/hero_prompt.md",
+        "assets/readme-hero/hero_design_note.md",
+        "assets/readme-hero/readme_model_evidence.md",
+        ".agents/skills/skillguard/SKILL.md",
+    ):
+        try:
+            member_paths[relative] = ensure_under_root(repo / relative, repo)
+        except ValueError:
+            escaped_members.append(relative)
+    readme_path = member_paths.get("README.md", repo / "__blocked_readme__")
+    version_path = member_paths.get("VERSION", repo / "__blocked_version__")
+    pyproject_path = member_paths.get("pyproject.toml", repo / "__blocked_pyproject__")
+    changelog_path = member_paths.get("CHANGELOG.md", repo / "__blocked_changelog__")
+    hero_path = member_paths.get("assets/readme-hero/hero.png", repo / "__blocked_hero__")
+    hero_prompt_path = member_paths.get("assets/readme-hero/hero_prompt.md", repo / "__blocked_hero_prompt__")
+    hero_design_path = member_paths.get("assets/readme-hero/hero_design_note.md", repo / "__blocked_hero_design__")
+    model_evidence_path = member_paths.get(
+        "assets/readme-hero/readme_model_evidence.md", repo / "__blocked_model_evidence__"
+    )
+    skill_entrypoint_path = member_paths.get(
+        ".agents/skills/skillguard/SKILL.md", repo / "__blocked_skill_entrypoint__"
+    )
     required_paths = [
         readme_path,
         version_path,
@@ -3505,7 +2196,7 @@ def check_readme_release(argv: list[str]) -> int:
         model_evidence_path,
     ]
 
-    payload = base_result("check-readme-release", public_relative_path(repo))
+    payload = base_result("check-readme-release", ".")
     payload["claim_boundary"] = (
         "This README release gate checks the current local README, version files, hero evidence, model evidence, "
         "command-surface wording, and public-safety scans. It does not prove package publication, GitHub release creation, "
@@ -3518,21 +2209,54 @@ def check_readme_release(argv: list[str]) -> int:
     unsafe_claim_findings: list[dict[str, Any]] = []
 
     before_failures, before_blockers = len(failures), len(blockers)
+    blockers.extend(f"target-member-path-escape:{relative}" for relative in escaped_members)
+    readme_identity_text = read_text_if_file(readme_path)
+    pyproject_identity_text = read_text_if_file(pyproject_path)
+    target_identity_ok = (
+        pyproject_project_name(pyproject_identity_text).casefold() == "skillguard"
+        and bool(re.search(r"(?m)^# SkillGuard\s*$", readme_identity_text))
+        and skill_entrypoint_path.is_file()
+    )
+    if not target_identity_ok:
+        blockers.append(
+            "wrong_target_profile: check-readme-release accepts only a SkillGuard source repository; "
+            "use the target repository's native release verifier or a declared target-local README contract"
+        )
+    append_check(
+        payload,
+        "check-readme-release:target-profile",
+        "SkillGuard target profile",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Confirmed the authorized target is a SkillGuard source repository before applying SkillGuard-specific README rules.",
+    )
+    if blockers:
+        payload["failures"] = failures
+        payload["blockers"] = blockers
+        payload["decision"] = "block"
+        return write_and_exit(payload, args.output)
+
+    before_failures, before_blockers = len(failures), len(blockers)
     for path in required_paths:
         if not path.is_file():
-            failures.append(f"required README release file missing: {public_relative_path(path)}")
+            failures.append(f"required README release file missing: {public_relative_path(path, repo)}")
         else:
             if path.suffix.lower() == ".png":
                 files_inspected.append(
                     {
-                        "path": public_relative_path(path),
+                        "path": public_relative_path(path, repo),
                         "kind": "image",
                         "sha256": file_sha256(path),
                         "byte_count": path.stat().st_size,
                     }
                 )
             else:
-                files_inspected.append(checked_file(path, "markdown" if path.suffix.lower() == ".md" else "file"))
+                files_inspected.append(
+                    checked_file(
+                        path,
+                        "markdown" if path.suffix.lower() == ".md" else "file",
+                        root=repo,
+                    )
+                )
     append_check(
         payload,
         "check-readme-release:required-files",
@@ -3595,7 +2319,7 @@ def check_readme_release(argv: list[str]) -> int:
     deterministic_pattern = re.compile(r"(?i)\b(?:deterministic\s+svg|deterministic\s+html|deterministic\s+canvas|pillow\s+composition|canvas\s+composition)\b")
     for path, text in ((hero_prompt_path, hero_prompt_text), (hero_design_path, hero_design_text)):
         if text and deterministic_pattern.search(text):
-            failures.append(f"invalid-hero-provenance: deterministic main hero provenance found in {public_relative_path(path)}")
+            failures.append(f"invalid-hero-provenance: deterministic main hero provenance found in {public_relative_path(path, repo)}")
     append_check(
         payload,
         "check-readme-release:hero-provenance",
@@ -3623,8 +2347,12 @@ def check_readme_release(argv: list[str]) -> int:
         failures.append("version-consistency: pyproject.toml project version does not match VERSION")
     if version_text and baseline_version != version_text:
         failures.append("version-consistency: pyproject.toml SkillGuard baseline_version does not match VERSION")
-    if version_text and f"Current release: `v{version_text}`" not in readme_text:
-        failures.append("version-consistency: README current release line does not match VERSION")
+    readme_version_markers = (
+        f"Current release: `v{version_text}`",
+        f"Current source version: `v{version_text}`",
+    )
+    if version_text and not any(marker in readme_text for marker in readme_version_markers):
+        failures.append("version-consistency: README source/release version line does not match VERSION")
     if version_text and f"## v{version_text} -" not in changelog_text:
         failures.append("version-consistency: CHANGELOG is missing the current version entry")
     append_check(
@@ -3632,7 +2360,7 @@ def check_readme_release(argv: list[str]) -> int:
         "check-readme-release:version-consistency",
         "Version consistency",
         check_status(failures, blockers, before_failures, before_blockers),
-        "Checked VERSION, pyproject.toml, README current release line, and CHANGELOG entry.",
+        "Checked VERSION, pyproject.toml, README source/release version line, and CHANGELOG entry.",
     )
 
     before_failures, before_blockers = len(failures), len(blockers)
@@ -3643,10 +2371,10 @@ def check_readme_release(argv: list[str]) -> int:
     for path in [readme_path, changelog_path, hero_prompt_path, hero_design_path, model_evidence_path]:
         if not path.is_file():
             continue
-        for finding in public_safety_findings(path):
+        for finding in public_safety_findings(path, root=repo):
             public_safety.append(finding)
             failures.append(f"{finding['path']}: public-safety scan found {finding['finding_id']} on line {finding['line']}")
-        unsafe_claim_findings.extend(scan_text_for_unsafe_claims(path, failures))
+        unsafe_claim_findings.extend(scan_text_for_unsafe_claims(path, failures, root=repo))
     append_check(
         payload,
         "check-readme-release:public-boundary",
@@ -3664,21 +2392,21 @@ def check_readme_release(argv: list[str]) -> int:
             "kind": "filesystem_check",
             "fresh": True,
             "summary": f"Inspected {len(files_inspected)} README release files.",
-            "source_path": public_relative_path(readme_path),
+            "source_path": public_relative_path(readme_path, repo),
         },
         {
             "evidence_id": "readme-release-version",
             "kind": "version_consistency",
             "fresh": True,
             "summary": f"VERSION={version_text or 'missing'}; pyproject.version={pyproject_version or 'missing'}; baseline_version={baseline_version or 'missing'}.",
-            "source_path": public_relative_path(version_path),
+            "source_path": public_relative_path(version_path, repo),
         },
         {
             "evidence_id": "readme-release-hero",
             "kind": "hero_provenance",
             "fresh": True,
             "summary": "Checked text-to-image hero prompt, design note, README hero block, and raster asset.",
-            "source_path": public_relative_path(hero_prompt_path),
+            "source_path": public_relative_path(hero_prompt_path, repo),
         },
     ]
     payload["failures"] = failures
@@ -3686,643 +2414,6 @@ def check_readme_release(argv: list[str]) -> int:
     payload["decision"] = "block" if blockers else "fail" if failures else "pass"
     return write_and_exit(payload, args.output)
 
-
-def route_score(route: dict[str, Any], task_text: str) -> tuple[int, list[str]]:
-    lowered = task_text.lower()
-    hits: list[str] = []
-    for keyword in route.get("activation_keywords", []) if isinstance(route.get("activation_keywords"), list) else []:
-        keyword_text = str(keyword).strip().lower()
-        if keyword_text and keyword_text in lowered:
-            hits.append(keyword_text)
-    return len(hits), hits
-
-
-def route_priority(route: dict[str, Any]) -> int:
-    value = route.get("route_priority")
-    if isinstance(value, int) and value >= 0:
-        return value
-    return 1000
-
-
-def choose_default_or_priority_route(
-    candidates: list[dict[str, Any]], route_by_id: dict[str, dict[str, Any]]
-) -> tuple[dict[str, Any] | None, str]:
-    default_candidates = [
-        item
-        for item in candidates
-        if isinstance(route_by_id.get(str(item.get("route_id"))), dict)
-        and route_by_id[str(item.get("route_id"))].get("default_route") is True
-    ]
-    if len(default_candidates) == 1:
-        return route_by_id.get(str(default_candidates[0].get("route_id"))), "default_route_tiebreak"
-    prioritized = sorted(
-        (
-            (route_priority(route_by_id[str(item.get("route_id"))]), str(item.get("route_id")))
-            for item in candidates
-            if str(item.get("route_id")) in route_by_id
-        ),
-        key=lambda item: (item[0], item[1]),
-    )
-    if prioritized and len([item for item in prioritized if item[0] == prioritized[0][0]]) == 1:
-        return route_by_id.get(prioritized[0][1]), "route_priority_tiebreak"
-    return None, ""
-
-
-def select_route(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py select-route", description="Select a work-contract route for a task.")
-    parser.add_argument("--target", required=True, help="Target skill directory under the repository root.")
-    parser.add_argument("--contract", help="Contract path. Defaults to target/.skillguard/work-contract.json.")
-    parser.add_argument("--task", required=True, help="Task text to route. The report stores only a hash and character count.")
-    parser.add_argument("--route-hint", help="Explicit route id to check and select.")
-    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
-    args = parser.parse_args(argv)
-    target = resolve_target_argument(args.target)
-    contract_path, contract, contract_failures = load_work_contract_for_target(target, args.contract)
-    routes = contract.get("routes", []) if isinstance(contract, dict) else []
-    route_by_id = contract_lookup(routes, "route_id")
-    blockers: list[str] = []
-    candidates: list[dict[str, Any]] = []
-    selected: dict[str, Any] | None = None
-    selection_basis = ""
-    if contract_failures:
-        blockers.append("contract must pass check-contract before route selection")
-    elif args.route_hint:
-        selected = route_by_id.get(args.route_hint)
-        if selected is None:
-            blockers.append(f"unsupported route hint: {args.route_hint}")
-        else:
-            selection_basis = "explicit_route_hint"
-    else:
-        for route in routes if isinstance(routes, list) else []:
-            if not isinstance(route, dict):
-                continue
-            score, hits = route_score(route, args.task)
-            candidates.append(
-                {
-                    "route_id": route.get("route_id"),
-                    "score": score,
-                    "activation_hits": hits,
-                    "default_route": route.get("default_route") is True,
-                    "route_priority": route_priority(route),
-                    "phase_order": route.get("phase_order", []),
-                }
-            )
-        best_score = max([int(item["score"]) for item in candidates], default=0)
-        best = [item for item in candidates if item["score"] == best_score and best_score > 0]
-        if len(best) == 1:
-            selected = route_by_id.get(str(best[0]["route_id"]))
-            selection_basis = "activation_keyword_score"
-        elif len(best) > 1:
-            selected, selection_basis = choose_default_or_priority_route(best, route_by_id)
-            if selected is None:
-                blockers.append("ambiguous route selection: multiple routes matched the task equally")
-        elif len(route_by_id) == 1:
-            selected = next(iter(route_by_id.values()))
-            selection_basis = "single_available_route"
-        else:
-            selected, selection_basis = choose_default_or_priority_route(candidates, route_by_id)
-            if selected is None:
-                blockers.append("no route matched the task; provide --route-hint or update route activation keywords")
-
-    payload = base_result("select-route", public_relative_path(target))
-    payload["task_fingerprint"] = canonical_json_hash({"task": args.task}, length=16)
-    payload["task_character_count"] = len(args.task)
-    payload["contract_path"] = public_relative_path(contract_path)
-    payload["candidate_routes"] = candidates
-    if selected is not None:
-        payload["routing_decision"] = {
-            "route_id": selected.get("route_id"),
-            "summary": selected.get("summary"),
-            "phase_order": selected.get("phase_order", []),
-            "selection_basis": selection_basis,
-        }
-    payload["checks"] = [
-        {
-            "check_id": "select-route:contract",
-            "name": "Contract is selectable",
-            "required": True,
-            "status": "pass" if not contract_failures else "block",
-            "summary": "Route selection uses only a structurally valid current work contract.",
-        },
-        {
-            "check_id": "select-route:decision",
-            "name": "Deterministic route decision",
-            "required": True,
-            "status": "pass" if selected is not None and not blockers else "block",
-            "summary": "Selected exactly one current route from an explicit route hint, activation keyword score, or the single declared route.",
-        },
-    ]
-    payload["evidence"] = [
-        {
-            "evidence_id": "work-contract-json",
-            "kind": "parser_output",
-            "fresh": True,
-            "summary": f"Loaded route definitions from {public_relative_path(contract_path)}.",
-            "source_path": public_relative_path(contract_path),
-        }
-    ]
-    payload["failures"] = contract_failures
-    payload["blockers"] = blockers
-    payload["decision"] = "block" if blockers else "fail" if contract_failures else "pass"
-    return write_and_exit(payload, args.output)
-
-
-def run_phase_status_map(run: dict[str, Any]) -> dict[str, str]:
-    statuses: dict[str, str] = {}
-    for item in run.get("phase_statuses", []) if isinstance(run.get("phase_statuses"), list) else []:
-        if isinstance(item, dict) and isinstance(item.get("phase_id"), str):
-            statuses[item["phase_id"]] = str(item.get("status") or "")
-    return statuses
-
-
-def run_evidence_map(run: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    return contract_lookup(run.get("evidence", []), "evidence_id")
-
-
-def successful_command_evidence_ids(run: dict[str, Any]) -> set[str]:
-    ids: set[str] = set()
-    for item in run.get("commands_run", []) if isinstance(run.get("commands_run"), list) else []:
-        if not isinstance(item, dict):
-            continue
-        if item.get("decision") == "pass" and isinstance(item.get("evidence_id"), str):
-            ids.add(item["evidence_id"])
-    return ids
-
-
-def route_phase_order(contract: dict[str, Any], route_id: str) -> list[str]:
-    route = contract_lookup(contract.get("routes", []), "route_id").get(route_id)
-    if not isinstance(route, dict):
-        return []
-    order = route.get("phase_order", [])
-    return [str(item) for item in order if isinstance(item, str)] if isinstance(order, list) else []
-
-
-def build_start_run_record(target: Path, task_text: str, route_id: str, contract_path: Path, contract: dict[str, Any]) -> dict[str, Any]:
-    order = route_phase_order(contract, route_id)
-    run_seed = {
-        "target": public_relative_path(target),
-        "route": route_id,
-        "task": task_text,
-        "contract_hash": contract.get("contract_hash"),
-    }
-    run_id = f"run-{canonical_json_hash(run_seed, length=16).lower()}"
-    run_file = runtime_run_path(target, run_id)
-    return {
-        "schema_version": "skillguard.run_record.v1",
-        "run_id": run_id,
-        "target_skill": public_relative_path(target),
-        "task_summary": task_text[:500],
-        "contract_ref": {
-            "contract_path": public_relative_path(contract_path),
-            "contract_version": str(contract.get("contract_version") or ""),
-            "contract_hash": str(contract.get("contract_hash") or ""),
-        },
-        "selected_route": route_id,
-        "current_phase": order[0] if order else "",
-        "phase_statuses": [
-            {"phase_id": phase_id, "status": "running" if index == 0 else "pending"}
-            for index, phase_id in enumerate(order)
-        ],
-        "evidence": [
-            {
-                "evidence_id": "task_summary",
-                "phase_id": order[0] if order else "intake",
-                "kind": "task_record",
-                "source_path": public_relative_path(run_file),
-                "fresh": True,
-            }
-        ],
-        "commands_run": [
-            {
-                "command": "start-run",
-                "decision": "pass",
-                "evidence_id": "task_summary",
-            }
-        ],
-        "skipped_checks": [],
-        "blockers": [],
-        "quality_failures": [],
-        "closure_decision": "not_requested",
-        "claim_boundary": (
-            "This run record covers only the declared target skill, selected route, phase evidence, "
-            "and local checks captured in this file."
-        ),
-    }
-
-
-def start_run(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py start-run", description="Create a SkillGuard run record from a selected route.")
-    parser.add_argument("--target", required=True, help="Target skill directory under the repository root.")
-    parser.add_argument("--contract", help="Contract path. Defaults to target/.skillguard/work-contract.json.")
-    parser.add_argument("--route", required=True, help="Selected route id from select-route.")
-    parser.add_argument("--task", required=True, help="Task summary for the run record.")
-    parser.add_argument("--run-output", help="Run record output path. Defaults to target/.skillguard/runs/<run_id>.json.")
-    parser.add_argument("--dry-run", action="store_true", help="Preview the run record without writing it.")
-    parser.add_argument("--force", action="store_true", help="Overwrite an existing different run record.")
-    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
-    args = parser.parse_args(argv)
-    target = resolve_target_argument(args.target)
-    contract_path, contract, contract_failures = load_work_contract_for_target(target, args.contract)
-    run_record = build_start_run_record(target, args.task, args.route, contract_path, contract)
-    run_path = ensure_under_root(args.run_output) if args.run_output else runtime_run_path(target, run_record["run_id"])
-    route_exists = args.route in contract_lookup(contract.get("routes", []), "route_id") if isinstance(contract, dict) else False
-    blockers: list[str] = []
-    if contract_failures:
-        blockers.append("contract must pass check-contract before starting a run")
-    if not route_exists:
-        blockers.append(f"selected route does not exist in contract: {args.route}")
-    write_status = "dry-run"
-    if not args.dry_run and not blockers:
-        try:
-            write_status = write_json_if_allowed(run_path, run_record, force=args.force)
-        except SkillGuardCliError as exc:
-            blockers.append(exc.message)
-
-    payload = base_result("start-run", public_relative_path(target))
-    payload["run_record"] = run_record
-    payload["run_path"] = public_relative_path(run_path)
-    payload["write_status"] = write_status
-    payload["checks"] = [
-        {
-            "check_id": "start-run:contract",
-            "name": "Current work contract",
-            "required": True,
-            "status": "pass" if not contract_failures else "block",
-            "summary": "Loaded and validated the contract before creating a run record.",
-        },
-        {
-            "check_id": "start-run:route",
-            "name": "Selected route exists",
-            "required": True,
-            "status": "pass" if route_exists else "block",
-            "summary": "Bound the run record to an explicit route id from the current contract.",
-        },
-        {
-            "check_id": "start-run:record",
-            "name": "Run record creation",
-            "required": True,
-            "status": "block" if blockers else "pass",
-            "summary": "Created or previewed a run record with first phase running and later phases pending.",
-        },
-    ]
-    payload["evidence"] = [
-        {
-            "evidence_id": "run-record",
-            "kind": "run_record",
-            "fresh": True,
-            "summary": f"Prepared run record {run_record['run_id']}.",
-            "source_path": public_relative_path(run_path),
-        }
-    ]
-    payload["failures"] = contract_failures
-    payload["blockers"] = blockers
-    payload["decision"] = "block" if blockers else "pass"
-    return write_and_exit(payload, args.output)
-
-
-def parse_runtime_evidence(value: str, phase_id: str) -> dict[str, Any]:
-    if "=" in value:
-        evidence_id, source_path = value.split("=", 1)
-    elif ":" in value:
-        evidence_id, source_path = value.split(":", 1)
-    else:
-        evidence_id, source_path = value, value
-    evidence_id = evidence_id.strip()
-    source_path = source_path.strip()
-    if not evidence_id or not source_path:
-        raise SkillGuardCliError("advance-run", "--evidence must include a non-empty evidence id and source path")
-    return {
-        "evidence_id": evidence_id,
-        "phase_id": phase_id,
-        "kind": "phase_evidence",
-        "source_path": source_path,
-        "fresh": True,
-    }
-
-
-def load_run_and_contract(run_arg: str) -> tuple[Path, dict[str, Any], Path, dict[str, Any]]:
-    run_path = resolve_skillguard_self_layout_path(run_arg)
-    run = load_json(run_path)
-    if not isinstance(run, dict):
-        raise SkillGuardCliError("check-run", "run record must be a JSON object", "validation_error")
-    contract_ref = run.get("contract_ref")
-    if not isinstance(contract_ref, dict) or not isinstance(contract_ref.get("contract_path"), str):
-        raise SkillGuardCliError("check-run", "run record is missing contract_ref.contract_path", "validation_error")
-    contract_path = resolve_skillguard_self_layout_path(contract_ref["contract_path"])
-    contract = load_json(contract_path)
-    if not isinstance(contract, dict):
-        raise SkillGuardCliError("check-run", "work contract must be a JSON object", "validation_error")
-    return run_path, run, contract_path, contract
-
-
-def advance_run(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py advance-run", description="Advance or mark one phase in a SkillGuard run record.")
-    parser.add_argument("--run", required=True, help="Run record JSON under the repository root.")
-    parser.add_argument("--phase", required=True, help="Phase id to mark.")
-    parser.add_argument("--status", default="checked", choices=["running", "checked", "needs-review", "blocked", "failed", "stale"])
-    parser.add_argument("--evidence", action="append", default=[], help="Evidence binding as evidence_id=source_path. May be repeated.")
-    parser.add_argument("--check", action="append", default=[], help="Record a passing required check id for this phase. May be repeated.")
-    parser.add_argument("--stale", action="store_true", help="Mark supplied evidence as stale.")
-    parser.add_argument("--dry-run", action="store_true", help="Preview the updated run record without writing it.")
-    parser.add_argument("--run-output", help="Optional alternate run record output path.")
-    parser.add_argument("--force", action="store_true", help="Overwrite an existing different alternate run record.")
-    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
-    args = parser.parse_args(argv)
-    run_path, run, contract_path, contract = load_run_and_contract(args.run)
-    order = route_phase_order(contract, str(run.get("selected_route") or ""))
-    statuses = run_phase_status_map(run)
-    blockers: list[str] = []
-    failures: list[str] = []
-    if args.phase not in order:
-        blockers.append(f"phase is not in selected route phase_order: {args.phase}")
-    else:
-        phase_index = order.index(args.phase)
-        for earlier in order[:phase_index]:
-            if statuses.get(earlier) not in RUN_ACCEPTABLE_PREVIOUS_STATUSES:
-                blockers.append(f"cannot mark {args.phase} before earlier phase {earlier} is checked or needs-review")
-        for item in run.get("phase_statuses", []) if isinstance(run.get("phase_statuses"), list) else []:
-            if isinstance(item, dict) and item.get("phase_id") == args.phase:
-                item["status"] = args.status
-        if args.status == "checked" and phase_index + 1 < len(order):
-            run["current_phase"] = order[phase_index + 1]
-        else:
-            run["current_phase"] = args.phase
-    for evidence_text in args.evidence:
-        evidence = parse_runtime_evidence(str(evidence_text), args.phase)
-        if args.stale:
-            evidence["fresh"] = False
-        existing = run_evidence_map(run)
-        if evidence["evidence_id"] in existing:
-            failures.append(f"duplicate evidence id in run record update: {evidence['evidence_id']}")
-        else:
-            run.setdefault("evidence", []).append(evidence)
-    run.setdefault("commands_run", []).append(
-        {
-            "command": f"advance-run:{args.phase}:{args.status}",
-            "decision": "pass" if not blockers and not failures else "block" if blockers else "fail",
-            "evidence_id": args.phase,
-        }
-    )
-    for check_id in args.check:
-        check_id_text = str(check_id).strip()
-        if not check_id_text:
-            continue
-        run.setdefault("commands_run", []).append(
-            {
-                "command": f"advance-run:{args.phase}:check:{check_id_text}",
-                "decision": "pass" if not blockers and not failures else "block" if blockers else "fail",
-                "evidence_id": check_id_text,
-            }
-        )
-    output_run_path = ensure_under_root(args.run_output) if args.run_output else run_path
-    write_status = "dry-run"
-    if not args.dry_run and not blockers:
-        try:
-            write_status = write_json_if_allowed(output_run_path, run, force=args.force or output_run_path == run_path)
-        except SkillGuardCliError as exc:
-            blockers.append(exc.message)
-
-    payload = base_result("advance-run", str(run.get("target_skill") or ""))
-    payload["run_path"] = public_relative_path(output_run_path)
-    payload["contract_path"] = public_relative_path(contract_path)
-    payload["updated_run_record"] = run
-    payload["write_status"] = write_status
-    payload["checks"] = [
-        {
-            "check_id": "advance-run:phase-order",
-            "name": "Phase order guard",
-            "required": True,
-            "status": "block" if blockers else "pass",
-            "summary": "Allowed phase updates only when earlier route phases are already checked or marked needs-review.",
-        },
-        {
-            "check_id": "advance-run:evidence",
-            "name": "Evidence binding update",
-            "required": False,
-            "status": "fail" if failures else "pass",
-            "summary": "Attached supplied evidence ids to the marked phase without duplicate evidence ids.",
-        },
-    ]
-    payload["evidence"] = [
-        {
-            "evidence_id": "run-record-update",
-            "kind": "run_record",
-            "fresh": True,
-            "summary": f"Updated run phase {args.phase} to {args.status}.",
-            "source_path": public_relative_path(output_run_path),
-        }
-    ]
-    payload["failures"] = failures
-    payload["blockers"] = blockers
-    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
-    return write_and_exit(payload, args.output)
-
-
-def evaluate_run_state(run: dict[str, Any], contract: dict[str, Any], contract_path: Path, *, require_complete: bool = False) -> tuple[list[str], list[str], list[dict[str, Any]]]:
-    failures: list[str] = []
-    blockers: list[str] = []
-    checks: list[dict[str, Any]] = []
-    failures.extend(validate_schema_subset(run, load_json(schema_path(RUN_RECORD_SCHEMA_NAME))))
-    contract_failures = contract_semantic_failures(contract, contract_path=contract_path)
-    failures.extend([f"contract: {item}" for item in contract_failures])
-    route_id = str(run.get("selected_route") or "")
-    order = route_phase_order(contract, route_id)
-    statuses = run_phase_status_map(run)
-    evidence_by_id = run_evidence_map(run)
-    command_evidence_ids = successful_command_evidence_ids(run)
-    phase_by_id = contract_lookup(contract.get("phases", []), "phase_id")
-    contract_hash = work_contract_hash(contract)
-    contract_ref = run.get("contract_ref") if isinstance(run.get("contract_ref"), dict) else {}
-
-    if not order:
-        blockers.append(f"selected route is missing or has no phase_order: {route_id}")
-    if contract_ref.get("contract_hash") != contract_hash:
-        blockers.append("run contract_ref.contract_hash is stale for the loaded work contract")
-    for phase_id in order:
-        if phase_id not in statuses:
-            failures.append(f"run is missing phase_statuses entry for {phase_id}")
-        if statuses.get(phase_id) == "skipped":
-            failures.append(f"phase {phase_id} is marked skipped")
-    current_phase = str(run.get("current_phase") or "")
-    if current_phase and current_phase not in order:
-        failures.append(f"current_phase is not in selected route phase_order: {current_phase}")
-
-    found_open_phase = False
-    for phase_id in order:
-        status = statuses.get(phase_id)
-        if found_open_phase and status in RUN_TERMINAL_STATUSES:
-            failures.append(f"phase {phase_id} is terminal after an earlier unfinished phase")
-        if status in {"pending", "running", ""}:
-            found_open_phase = True
-
-    for phase_id in order:
-        status = statuses.get(phase_id)
-        phase = phase_by_id.get(phase_id, {})
-        should_check_phase = status in RUN_TERMINAL_STATUSES or require_complete
-        if not should_check_phase:
-            continue
-        for evidence_id in phase.get("required_evidence", []) if isinstance(phase.get("required_evidence"), list) else []:
-            evidence = evidence_by_id.get(evidence_id)
-            if not evidence:
-                failures.append(f"phase {phase_id}: missing required evidence {evidence_id}")
-            elif evidence.get("fresh") is not True:
-                failures.append(f"phase {phase_id}: required evidence {evidence_id} is stale")
-        for check_id in phase.get("required_checks", []) if isinstance(phase.get("required_checks"), list) else []:
-            if check_id not in command_evidence_ids:
-                failures.append(f"phase {phase_id}: required check {check_id} has no passing command evidence")
-
-    if require_complete:
-        for phase_id in order:
-            if statuses.get(phase_id) != "checked":
-                failures.append(f"phase {phase_id}: accepted or checked closure requires status checked")
-    for item in run.get("skipped_checks", []) if isinstance(run.get("skipped_checks"), list) else []:
-        failures.append(f"skipped check recorded: {item}")
-    if run.get("quality_failures"):
-        failures.append("quality_failures must be empty before checked or accepted closure")
-    if run.get("blockers"):
-        blockers.append("run blockers must be resolved before checked or accepted closure")
-
-    checks.append(
-        {
-            "check_id": "check-run:schema-and-contract",
-            "name": "Run schema and contract binding",
-            "required": True,
-            "status": "block" if blockers else "fail" if contract_failures else "pass",
-            "summary": "Validated run-record schema and checked that contract_ref still matches the loaded work contract.",
-        }
-    )
-    checks.append(
-        {
-            "check_id": "check-run:phase-order",
-            "name": "Phase order and skipped-phase guard",
-            "required": True,
-            "status": "fail" if any("phase" in item for item in failures) else "pass",
-            "summary": "Checked selected route order, current phase, skipped phases, and terminal phases after unfinished work.",
-        }
-    )
-    checks.append(
-        {
-            "check_id": "check-run:evidence-and-quality",
-            "name": "Required evidence, checks, and quality floors",
-            "required": True,
-            "status": "fail" if failures else "pass",
-            "summary": "Checked required fresh evidence, passing command evidence, skipped checks, blockers, and quality failures.",
-        }
-    )
-    return failures, blockers, checks
-
-
-def check_run(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py check-run", description="Check a SkillGuard run record for route, phase, evidence, and quality compliance.")
-    parser.add_argument("--run", required=True, help="Run record JSON under the repository root.")
-    parser.add_argument("--complete", action="store_true", help="Require every route phase to be checked.")
-    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
-    args = parser.parse_args(argv)
-    run_path, run, contract_path, contract = load_run_and_contract(args.run)
-    failures, blockers, checks = evaluate_run_state(run, contract, contract_path, require_complete=args.complete)
-    payload = base_result("check-run", str(run.get("target_skill") or ""))
-    payload["run_path"] = public_relative_path(run_path)
-    payload["contract_path"] = public_relative_path(contract_path)
-    payload["run_id"] = run.get("run_id")
-    payload["selected_route"] = run.get("selected_route")
-    payload["current_phase"] = run.get("current_phase")
-    payload["phase_statuses"] = run.get("phase_statuses", [])
-    payload["checks"] = checks
-    payload["evidence"] = [
-        {
-            "evidence_id": "run-record-json",
-            "kind": "parser_output",
-            "fresh": True,
-            "summary": f"Loaded {public_relative_path(run_path)}; sha256={file_sha256(run_path)}.",
-            "source_path": public_relative_path(run_path),
-        },
-        {
-            "evidence_id": "work-contract-json",
-            "kind": "parser_output",
-            "fresh": True,
-            "summary": f"Loaded {public_relative_path(contract_path)}; sha256={file_sha256(contract_path)}.",
-            "source_path": public_relative_path(contract_path),
-        },
-    ]
-    payload["failures"] = failures
-    payload["blockers"] = blockers
-    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
-    return write_and_exit(payload, args.output)
-
-
-def close_run(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py close-run", description="Close a SkillGuard run only when required evidence and checks support the decision.")
-    parser.add_argument("--run", required=True, help="Run record JSON under the repository root.")
-    parser.add_argument("--decision", default="accepted", choices=["checked", "accepted", "needs-review", "blocked", "failed", "stale"])
-    parser.add_argument("--dry-run", action="store_true", help="Preview the closure decision without writing the run record.")
-    parser.add_argument("--run-output", help="Optional alternate run record output path.")
-    parser.add_argument("--force", action="store_true", help="Overwrite an existing different alternate run record.")
-    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
-    args = parser.parse_args(argv)
-    run_path, run, contract_path, contract = load_run_and_contract(args.run)
-    require_complete = args.decision in {"checked", "accepted"}
-    failures, blockers, checks = evaluate_run_state(run, contract, contract_path, require_complete=require_complete)
-    if args.decision == "accepted":
-        closures = contract.get("closure_rules", []) if isinstance(contract.get("closure_rules"), list) else []
-        if not any(isinstance(rule, dict) and rule.get("allowed_decision") == "accepted" for rule in closures):
-            failures.append("contract has no closure rule allowing accepted")
-    if not failures and not blockers:
-        run["closure_decision"] = args.decision
-        selected_route = str(run.get("selected_route") or "")
-        route = contract_lookup(contract.get("routes", []), "route_id").get(selected_route)
-        if isinstance(route, dict):
-            phase_order = route.get("phase_order", [])
-            if isinstance(phase_order, list) and phase_order:
-                run["current_phase"] = str(phase_order[-1])
-        run.setdefault("commands_run", []).append(
-            {
-                "command": f"close-run:{args.decision}",
-                "decision": "pass",
-                "evidence_id": "closure_report",
-            }
-        )
-    output_run_path = ensure_under_root(args.run_output) if args.run_output else run_path
-    write_status = "dry-run"
-    if not args.dry_run and not failures and not blockers:
-        try:
-            write_status = write_json_if_allowed(output_run_path, run, force=args.force or output_run_path == run_path)
-        except SkillGuardCliError as exc:
-            blockers.append(exc.message)
-
-    payload = base_result("close-run", str(run.get("target_skill") or ""))
-    payload["run_path"] = public_relative_path(output_run_path)
-    payload["contract_path"] = public_relative_path(contract_path)
-    payload["closure_decision"] = args.decision
-    payload["closure_report"] = {
-        "run_id": run.get("run_id"),
-        "selected_route": run.get("selected_route"),
-        "decision": args.decision if not failures and not blockers else "not_closed",
-        "write_status": write_status,
-        "claim_boundary": run.get("claim_boundary"),
-    }
-    payload["checks"] = [
-        *checks,
-        {
-            "check_id": "close-run:closure-gate",
-            "name": "Closure gate",
-            "required": True,
-            "status": "block" if blockers else "fail" if failures else "pass",
-            "summary": "Allowed closure only when required phases, evidence, checks, quality floors, blockers, and claim boundary support the requested decision.",
-        },
-    ]
-    payload["evidence"] = [
-        {
-            "evidence_id": "closure-report",
-            "kind": "closure_record",
-            "fresh": True,
-            "summary": f"Evaluated closure decision {args.decision} for run {run.get('run_id')}.",
-            "source_path": public_relative_path(output_run_path),
-        }
-    ]
-    payload["failures"] = failures
-    payload["blockers"] = blockers
-    payload["decision"] = "block" if blockers else "fail" if failures else "pass"
-    return write_and_exit(payload, args.output)
 
 
 def check_status(failures: list[str], blockers: list[str], failure_count: int, blocker_count: int) -> str:
@@ -4648,16 +2739,24 @@ def expand_global_path(path_text: str | Path) -> Path:
 
 def global_public_path(path_text: str | Path) -> str:
     path = expand_global_path(path_text)
+    # Global router identities must not depend on whether the checker is
+    # running from the source repository or from ~/.codex/skills/skillguard.
+    # Paths inside the managed Codex home therefore use one canonical token
+    # before any repository-relative projection is considered.
+    home = Path.home().resolve()
+    try:
+        home_relative = path.relative_to(home)
+        if home_relative.parts and home_relative.parts[0] == ".codex":
+            return home_relative.as_posix()
+    except ValueError:
+        home_relative = None
     repo = repository_root().resolve()
     try:
         return path.relative_to(repo).as_posix()
     except ValueError:
         pass
-    home = Path.home().resolve()
-    try:
-        return "~/" + path.relative_to(home).as_posix()
-    except ValueError:
-        pass
+    if home_relative is not None:
+        return "~/" + home_relative.as_posix()
     return f"<external:{hashlib.sha256(str(path).encode('utf-8')).hexdigest()[:12]}>/{path.name}"
 
 
@@ -4669,8 +2768,52 @@ def global_read_json(path_text: str | Path) -> Any:
 def global_write_json(path_text: str | Path, payload: Any) -> Path:
     path = expand_global_path(path_text)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json_block(payload), encoding="utf-8")
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    data = json_block(payload).encode("utf-8")
+    try:
+        temporary.write_bytes(data)
+        with temporary.open("r+b") as handle:
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
     return path
+
+
+def global_write_text_atomic(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary.write_text(text, encoding="utf-8")
+        with temporary.open("r+b") as handle:
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _reuse_unchanged_generated_json(
+    path: Path, candidate: dict[str, Any]
+) -> tuple[dict[str, Any], bool]:
+    """Reuse byte-stable generated evidence when only observation time differs."""
+
+    if not path.is_file():
+        return candidate, False
+    try:
+        existing = global_read_json(path)
+    except (OSError, ValueError, json.JSONDecodeError):
+        return candidate, False
+    if not current_global_router.reuse_unchanged_generated(existing, candidate):
+        return candidate, False
+    return existing, True
 
 
 def global_checked_file(path_text: str | Path, kind: str = "file") -> dict[str, Any]:
@@ -4746,43 +2889,6 @@ def parse_global_skill_frontmatter(text: str) -> dict[str, str]:
     return data
 
 
-def markdown_section_body(text: str, heading: str) -> str:
-    matches = list(HEADING_RE.finditer(text))
-    normalized = heading.strip().lower()
-    for index, match in enumerate(matches):
-        if match.group(1).strip().lower() != normalized:
-            continue
-        start = match.end()
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        return text[start:end].strip()
-    return ""
-
-
-def markdown_section_items(text: str, heading: str, limit: int = 8) -> list[str]:
-    body = markdown_section_body(text, heading)
-    items: list[str] = []
-    for raw_line in body.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        if line.startswith(("- ", "* ")):
-            line = line[2:].strip()
-        elif line[0:2].isdigit() and ". " in line[:5]:
-            line = line.split(". ", 1)[1].strip()
-        if line.startswith("#"):
-            continue
-        items.append(single_line(line))
-        if len(items) >= limit:
-            break
-    return items
-
-
-def skill_route_terms(skill_id: str, skill_name: str, description: str, use_when: list[str]) -> list[str]:
-    seed = " ".join([skill_id, skill_name, description, *use_when]).lower()
-    terms = sorted({token for token in re.findall(r"[a-z0-9][a-z0-9_.:-]{1,}", seed) if len(token) > 2})
-    return terms[:40]
-
-
 def global_contract_semantic_root(skill_dir: Path) -> Path:
     resolved = skill_dir.resolve()
     repo = repository_root().resolve()
@@ -4796,163 +2902,45 @@ def global_contract_semantic_root(skill_dir: Path) -> Path:
     return resolved
 
 
+# The exact current discovery module is the sole registry builder. Old authority
+# shapes are rejected by that module and have no discovery or prompt fallback.
 def global_contract_projection(skill_dir: Path) -> tuple[dict[str, Any], list[str]]:
-    warnings: list[str] = []
-    contract_path = skill_dir / ".skillguard" / WORK_CONTRACT_FILENAME
-    manifest_path = skill_dir / ".skillguard" / CHECK_MANIFEST_FILENAME
-    semantic_root = global_contract_semantic_root(skill_dir)
-    projection: dict[str, Any] = {
-        "integration_mode": "missing",
-        "route_confidence": "derived",
-        "contract_path": "",
-        "contract_sha256": "",
-        "contract_hash": "",
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "route_ids": [],
-        "default_route_id": "",
-        "native_route_owner": "",
-        "native_route_bindings": [],
-        "native_check_bindings": [],
-        "phase_native_bindings": [],
-        "may_define_parallel_execution_route": False,
-        "may_define_skillguard_runtime_route": False,
-        "route_doc_paths": [global_public_path(skill_dir / "SKILL.md")],
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-    }
-    if contract_path.is_file():
-        projection["contract_path"] = global_public_path(contract_path)
-        projection["contract_sha256"] = file_sha256(contract_path)
-        projection["route_doc_paths"].append(global_public_path(contract_path))
-        try:
-            contract = global_read_json(contract_path)
-        except (ValueError, json.JSONDecodeError) as exc:
-            warnings.append(f"work-contract JSON could not be loaded: {exc}")
-            contract = {}
-        if isinstance(contract, dict):
-            semantic_failures = contract_semantic_failures(contract, target=skill_dir, contract_path=contract_path, root=semantic_root)
-            warnings.extend(f"work-contract semantic failure: {item}" for item in semantic_failures[:8])
-            routes = contract.get("routes", [])
-            route_items = [item for item in routes if isinstance(item, dict)]
-            projection["integration_mode"] = str(contract.get("integration_mode") or "skillguard-runtime")
-            projection["route_confidence"] = (
-                "native-bound" if projection["integration_mode"] in {"native-integrated", "hybrid-extension"} else "explicit"
-            )
-            projection["contract_hash"] = str(contract.get("contract_hash") or "")
-            projection["may_define_parallel_execution_route"] = bool(contract.get("may_define_parallel_execution_route"))
-            projection["may_define_skillguard_runtime_route"] = bool(contract.get("may_define_skillguard_runtime_route"))
-            projection["route_ids"] = [str(item.get("route_id")) for item in route_items if item.get("route_id")]
-            default_routes = [str(item.get("route_id")) for item in route_items if item.get("default_route") is True and item.get("route_id")]
-            projection["default_route_id"] = default_routes[0] if default_routes else (projection["route_ids"][0] if projection["route_ids"] else "")
-            projection["native_route_owner"] = str(contract.get("native_route_owner") or "")
-            native_route_bindings = contract.get("native_route_bindings")
-            native_check_bindings = contract.get("native_check_bindings")
-            phase_native_bindings = contract.get("phase_native_bindings")
-            projection["native_route_bindings"] = native_route_bindings if isinstance(native_route_bindings, list) else []
-            projection["native_check_bindings"] = native_check_bindings if isinstance(native_check_bindings, list) else []
-            projection["phase_native_bindings"] = phase_native_bindings if isinstance(phase_native_bindings, list) else []
-            if projection["integration_mode"] in {"native-integrated", "hybrid-extension"}:
-                projection["handoff_rule"] = (
-                    "Use this registry only to select the skill, then hand off to the target skill's native route/check bindings through its work contract."
-                )
-            else:
-                projection["handoff_rule"] = "Use select-route/start-run/check-run/close-run against the target work contract before claiming closure."
-    if manifest_path.is_file():
-        projection["check_manifest_path"] = global_public_path(manifest_path)
-        projection["check_manifest_sha256"] = file_sha256(manifest_path)
-        projection["route_doc_paths"].append(global_public_path(manifest_path))
-    return projection, warnings
+    return current_global_discovery.contract_projection(
+        skill_dir,
+        repository_root=repository_root(),
+        codex_home=(Path.home() / ".codex").resolve(),
+    )
 
 
-def discover_global_skill_items(skill_roots: list[Path]) -> tuple[list[dict[str, Any]], list[str]]:
-    items: list[dict[str, Any]] = []
-    warnings: list[str] = []
-    seen_skill_files: set[Path] = set()
-    for root in skill_roots:
-        for skill_file in sorted(root.rglob("SKILL.md")):
-            skill_file = skill_file.resolve()
-            if skill_file in seen_skill_files:
-                continue
-            seen_skill_files.add(skill_file)
-            skill_dir = skill_file.parent
-            try:
-                text = skill_file.read_text(encoding="utf-8")
-            except UnicodeDecodeError as exc:
-                warnings.append(f"{global_public_path(skill_file)} could not be read as UTF-8: {exc}")
-                continue
-            frontmatter = parse_global_skill_frontmatter(text)
-            declared_name = frontmatter.get("name") or skill_dir.name
-            description = frontmatter.get("description") or single_line(markdown_section_body(text, "Purpose"), "")
-            use_when = markdown_section_items(text, "Use When")
-            do_not_use_when = markdown_section_items(text, "Do Not Use When")
-            contract, contract_warnings = global_contract_projection(skill_dir)
-            warnings.extend(f"{global_public_path(skill_dir)}: {item}" for item in contract_warnings)
-            has_contract = bool(contract.get("contract_path"))
-            has_manifest = bool(contract.get("check_manifest_path"))
-            status = "current" if has_contract and has_manifest and not contract_warnings else "missing_contract"
-            if contract_warnings:
-                status = "invalid_contract"
-            skill_id = slugify_identifier(str(declared_name or skill_dir.name))
-            if skill_dir.name == GLOBAL_ROUTER_SKILL_ID:
-                skill_id = GLOBAL_ROUTER_SKILL_ID
-            elif skill_dir.name == "skillguard":
-                skill_id = "skillguard"
-            items.append(
-                {
-                    "skill_id": skill_id,
-                    "skill_name": str(declared_name),
-                    "description": single_line(description, "No description declared."),
-                    "skill_path": global_public_path(skill_dir),
-                    "skill_file": global_public_path(skill_file),
-                    "skill_sha256": file_sha256(skill_file),
-                    "status": status,
-                    "use_when": use_when,
-                    "do_not_use_when": do_not_use_when,
-                    "route_entrypoint": contract,
-                    "route_terms": skill_route_terms(skill_id, str(declared_name), description, use_when),
-                    "claim_boundary": (
-                        "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, "
-                        "suite automation, package publication, code-contract validation, release readiness, or future AI behavior."
-                    ),
-                }
-            )
-    return sorted(items, key=lambda item: (item["skill_path"], item["skill_id"])), warnings
-
-
-def global_registry_hash(payload: dict[str, Any]) -> str:
-    stable_payload = json.loads(json.dumps(payload, sort_keys=True, ensure_ascii=True))
-    stable_payload.pop("generated_at", None)
-    stable_payload.pop("registry_hash", None)
-    stable = json.dumps(stable_payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
-    return hashlib.sha256(stable.encode("utf-8")).hexdigest().upper()
+def discover_global_skill_items(
+    skill_roots: list[Path],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    return current_global_discovery.discover_skill_items(
+        skill_roots,
+        repository_root=repository_root(),
+        codex_home=(Path.home() / ".codex").resolve(),
+    )
 
 
 def build_global_registry_payload(skill_roots: list[Path]) -> dict[str, Any]:
-    items, warnings = discover_global_skill_items(skill_roots)
-    payload: dict[str, Any] = {
-        "schema_version": GLOBAL_REGISTRY_SCHEMA_VERSION,
-        "generated_at": utc_timestamp(),
-        "router_skill_id": GLOBAL_ROUTER_SKILL_ID,
-        "scan_roots": [
-            {
-                "path": global_public_path(root),
-                "exists": root.is_dir(),
-                "skill_file_count": sum(1 for _ in root.rglob("SKILL.md")) if root.is_dir() else 0,
-            }
-            for root in skill_roots
-        ],
-        "item_count": len(items),
-        "current_item_count": sum(1 for item in items if item.get("status") == "current"),
-        "items": items,
-        "warnings": warnings,
-        "claim_boundary": (
-            "This global registry is a generated index over the scanned local SKILL.md files and their SkillGuard route documents. "
-            "It selects a skill route but does not replace the selected skill's SKILL.md, work contract, check manifest, runtime checks, "
-            "tests, package publication, release readiness, external service validation, or future AI behavior evidence."
-        ),
-    }
-    payload["registry_hash"] = global_registry_hash(payload)
-    return payload
+    return current_global_discovery.build_registry_payload(
+        skill_roots,
+        repository_root=repository_root(),
+        codex_home=(Path.home() / ".codex").resolve(),
+        generated_at=utc_timestamp(),
+    )
+
+
+def global_registry_hash(payload: dict[str, Any]) -> str:
+    return current_global_router.registry_hash(payload)
+
+
+def global_diagnostic_inventory_hash(payload: dict[str, Any]) -> str:
+    return current_global_router.diagnostic_inventory_hash(payload)
+
+
+def global_registry_integrity_failures(payload: object) -> list[str]:
+    return current_global_router.registry_integrity_failures(payload)
 
 
 def registry_roots_for_check(registry: dict[str, Any], supplied_roots: list[str], codex_home: str | None = None) -> tuple[list[Path], list[str]]:
@@ -4974,225 +2962,172 @@ def registry_roots_for_check(registry: dict[str, Any], supplied_roots: list[str]
     return roots, blockers
 
 
-def task_tokens(text: str) -> set[str]:
-    lowered = text.lower()
-    return {
-        token
-        for token in re.findall(r"[a-z0-9][a-z0-9_.:-]{1,}", lowered)
-        if len(token) > 2 and token not in GLOBAL_ROUTE_STOPWORDS
-    }
+def global_registry_current_route_failures(
+    registry: dict[str, Any],
+    *,
+    codex_home: str | None = None,
+) -> tuple[list[str], list[str]]:
+    """Rebuild only the current route projection for a supplied registry.
+
+    Diagnostic-only skill changes remain outside this decision; they may make
+    the registry artifact's diagnostic inventory stale, but they do not make
+    an unchanged current route or managed prompt stale.
+    """
+
+    roots, blockers = registry_roots_for_check(registry, [], codex_home)
+    if blockers:
+        return [], blockers
+    current = build_global_registry_payload(roots)
+    failures = []
+    if current.get("registry_hash") != registry.get("registry_hash"):
+        failures.append("registry current route projection is stale")
+    return failures, []
 
 
-def global_skill_route_score(item: dict[str, Any], task: str, route_hint: str = "") -> tuple[int, list[str]]:
-    task_lower = task.lower()
-    hint_lower = route_hint.lower().strip()
-    skill_id = str(item.get("skill_id") or "").lower()
-    skill_name = str(item.get("skill_name") or "").lower()
-    terms = {str(term).lower() for term in item.get("route_terms", []) if isinstance(term, str)}
-    tokens = task_tokens(task)
-    score = 0
-    reasons: list[str] = []
-    if hint_lower and hint_lower in {skill_id, skill_name}:
-        score += 1000
-        reasons.append("explicit-route-hint")
-    if skill_id and skill_id in task_lower:
-        score += 40
-        reasons.append("skill-id-substring")
-    if skill_name and skill_name in task_lower:
-        score += 30
-        reasons.append("skill-name-substring")
-    exact = sorted(tokens & terms)
-    if exact:
-        score += len(exact) * 4
-        reasons.append(f"term-overlap:{','.join(exact[:6])}")
-    readme_task = any(
-        marker in task_lower
-        for marker in (
-            "readme",
-            "github readme",
-            "hero",
-            "bilingual",
-            "chinese mirror",
-            "\u4e2d\u82f1\u53cc\u8bed",
-            "\u4e2d\u6587\u955c\u50cf",
-            "\u6587\u751f\u56fe",
-            "\u9996\u5c4f",
-        )
-    )
-    if skill_id == "readme-showcase-writer" and readme_task:
-        score += 180
-        reasons.append("readme-showcase-task-bias")
-    if (
-        skill_id == "skillguard"
-        and not readme_task
-        and "skillguard" in task_lower
-        and any(token in tokens for token in {"audit", "check", "review", "activation", "boundary", "skill"})
-    ):
-        score += 45
-        reasons.append("skillguard-boundary-audit-bias")
-    if skill_id == GLOBAL_ROUTER_SKILL_ID and any(token in tokens for token in {"global", "router", "registry", "prompt"}):
-        score += 120
-        reasons.append("global-router-task-bias")
-    return score, reasons
-
-
-def global_route_candidates(registry: dict[str, Any], task: str, route_hint: str = "") -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for item in registry.get("items", []) if isinstance(registry.get("items"), list) else []:
-        if not isinstance(item, dict) or item.get("status") != "current":
-            continue
-        score, reasons = global_skill_route_score(item, task, route_hint)
-        if score <= 0:
-            continue
-        entrypoint = item.get("route_entrypoint") if isinstance(item.get("route_entrypoint"), dict) else {}
-        rows.append(
-            {
-                "skill_id": item.get("skill_id"),
-                "skill_name": item.get("skill_name"),
-                "skill_path": item.get("skill_path"),
-                "score": score,
-                "selection_reasons": reasons,
-                "route_ids": entrypoint.get("route_ids", []),
-                "default_route_id": entrypoint.get("default_route_id", ""),
-                "integration_mode": entrypoint.get("integration_mode", ""),
-                "route_confidence": entrypoint.get("route_confidence", ""),
-                "native_route_owner": entrypoint.get("native_route_owner", ""),
-                "native_route_bindings": entrypoint.get("native_route_bindings", []),
-                "native_check_bindings": entrypoint.get("native_check_bindings", []),
-                "phase_native_bindings": entrypoint.get("phase_native_bindings", []),
-                "may_define_parallel_execution_route": entrypoint.get("may_define_parallel_execution_route", False),
-                "may_define_skillguard_runtime_route": entrypoint.get("may_define_skillguard_runtime_route", False),
-                "route_doc_paths": entrypoint.get("route_doc_paths", []),
-                "handoff_rule": entrypoint.get("handoff_rule", ""),
-            }
-        )
-    return sorted(rows, key=lambda item: (-int(item["score"]), str(item["skill_id"])))
-
-
-def global_candidate_handoff_blockers(candidate: dict[str, Any]) -> list[str]:
-    mode = str(candidate.get("integration_mode") or "")
-    if mode not in {"native-integrated", "hybrid-extension"}:
-        return []
-    blockers: list[str] = []
-    if not str(candidate.get("native_route_owner") or "").strip():
-        blockers.append("native or hybrid global route is missing native_route_owner")
-    if not isinstance(candidate.get("native_route_bindings"), list) or not candidate.get("native_route_bindings"):
-        blockers.append("native or hybrid global route is missing native_route_bindings")
-    if not isinstance(candidate.get("native_check_bindings"), list) or not candidate.get("native_check_bindings"):
-        blockers.append("native or hybrid global route is missing native_check_bindings")
-    if not isinstance(candidate.get("phase_native_bindings"), list) or not candidate.get("phase_native_bindings"):
-        blockers.append("native or hybrid global route is missing phase_native_bindings")
-    if candidate.get("may_define_parallel_execution_route") is True:
-        blockers.append("native or hybrid global route cannot define a parallel execution route")
-    if candidate.get("may_define_skillguard_runtime_route") is True:
-        blockers.append("native or hybrid global route cannot be selected through a SkillGuard-owned runtime route")
-    return blockers
+task_tokens = current_global_router.task_tokens
+global_skill_route_score = current_global_router.skill_route_score
+global_route_candidates = current_global_router.route_candidates
+global_candidate_handoff_blockers = (
+    current_global_router.candidate_handoff_blockers
+)
 
 
 def render_global_prompt_block(registry: dict[str, Any], registry_path: str = "") -> str:
-    route_rows = [
-        item
-        for item in registry.get("items", [])
-        if isinstance(item, dict) and item.get("status") == "current"
-    ]
-    lines = [
-        GLOBAL_PROMPT_BEGIN,
-        "## SkillGuard Global Router",
-        "",
-        "- Use the SkillGuard global router registry only for skill-selection, skill-maintenance, prompt/process, or SkillGuard-family routing claims when it is present; do not make it a mandatory pre-execution gate for every skill invocation.",
-        "- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a global skill-routing claim.",
-        "- Handoff order: select the target skill from the registry when selection help is needed, read the selected `SKILL.md`, then use that skill's own `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, or native route bindings.",
-        "- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.",
-        f"- router_skill_id: {GLOBAL_ROUTER_SKILL_ID}",
-        f"- registry_hash: {registry.get('registry_hash', '')}",
-        f"- registry_path: {registry_path or '<not-written>'}",
-        "",
-        "### Current Route Index",
-    ]
-    for item in route_rows[:120]:
-        entrypoint = item.get("route_entrypoint") if isinstance(item.get("route_entrypoint"), dict) else {}
-        default_route = str(entrypoint.get("default_route_id") or "")
-        mode = str(entrypoint.get("integration_mode") or "")
-        lines.append(
-            f"- `{item.get('skill_id')}` -> {item.get('skill_file')} "
-            f"(default_route={default_route or 'none'}, integration={mode or 'unknown'})"
-        )
-    if len(route_rows) > 120:
-        lines.append(f"- ... {len(route_rows) - 120} additional current route(s) are in the registry JSON.")
-    lines.extend(
-        [
-            "",
-            "Claim boundary: this block is a routing projection only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence.",
-            GLOBAL_PROMPT_END,
-            "",
-        ]
+    template_path = (
+        skill_root()
+        / "assets"
+        / "templates"
+        / "global_skillguard_prompt_block.md.template"
     )
-    return "\n".join(lines)
+    return current_global_router.render_prompt_block(
+        registry,
+        registry_path=registry_path,
+        template=template_path.read_text(encoding="utf-8"),
+        policy_id=VALIDATION_EXECUTION_POLICY_ID,
+        policy_lines=VALIDATION_EXECUTION_POLICY_LINES,
+    )
 
 
 def build_global_prompt_projection(registry: dict[str, Any], registry_path: str = "") -> dict[str, Any]:
     block = render_global_prompt_block(registry, registry_path)
-    route_index = [
-        {
-            "skill_id": item.get("skill_id"),
-            "skill_file": item.get("skill_file"),
-            "status": item.get("status"),
-            "default_route_id": (item.get("route_entrypoint") or {}).get("default_route_id")
-            if isinstance(item.get("route_entrypoint"), dict)
-            else "",
-        }
-        for item in registry.get("items", [])
-        if isinstance(item, dict)
+    manifest_path = skill_root() / ".skillguard" / "check-manifest.json"
+    compiled_path = skill_root() / ".skillguard" / "compiled-contract.json"
+    manifest = global_read_json(manifest_path)
+    compiled = global_read_json(compiled_path)
+    if not isinstance(manifest, dict) or not isinstance(
+        manifest.get("content_impact_plan"), dict
+    ):
+        raise ValueError("global_prompt_content_impact_plan_missing")
+    if not isinstance(compiled, dict):
+        raise ValueError("global_prompt_compiled_contract_missing")
+    schema_findings = [
+        *validate_v2_check_manifest(manifest),
+        *validate_compiled_contract(compiled),
     ]
-    return {
-        "schema_version": GLOBAL_PROMPT_PROJECTION_SCHEMA_VERSION,
-        "generated_at": utc_timestamp(),
-        "router_skill_id": GLOBAL_ROUTER_SKILL_ID,
-        "registry_hash": str(registry.get("registry_hash") or ""),
-        "registry_path": registry_path,
-        "managed_block_markers": {"begin": GLOBAL_PROMPT_BEGIN, "end": GLOBAL_PROMPT_END},
-        "managed_block": block,
-        "route_index": route_index,
-        "claim_boundary": (
-            "This prompt projection installs a managed routing block only. It does not prove target skill execution, tests, "
-            "fixture coverage, suite automation, package publication, release readiness, code-contract validation, or future AI behavior."
-        ),
+    if schema_findings:
+        raise ValueError("global_prompt_contract_authority_invalid")
+    unsigned_contract = dict(compiled)
+    stored_contract_hash = unsigned_contract.pop("contract_hash", None)
+    unsigned_manifest = dict(manifest)
+    stored_manifest_hash = unsigned_manifest.pop("manifest_hash", None)
+    if (
+        stored_contract_hash != canonical_hash(unsigned_contract)
+        or stored_manifest_hash != canonical_hash(unsigned_manifest)
+        or manifest.get("contract_hash") != stored_contract_hash
+        or manifest.get("check_declarations_hash")
+        != compiled.get("check_declarations_hash")
+        or manifest.get("content_impact_plan")
+        != compiled.get("content_impact_plan")
+    ):
+        raise ValueError("global_prompt_contract_authority_hash_invalid")
+    authority = resolve_runtime_authority(skill_root())
+    if not authority.ok or authority.authority != AUTHORITY_CURRENT:
+        raise ValueError("global_prompt_runtime_authority_not_current")
+    skill_id = str(manifest.get("skill_id", "")).strip()
+    if not skill_id:
+        raise ValueError("global_prompt_content_impact_skill_id_missing")
+    content_projection = current_content_projection_from_files(
+        manifest["content_impact_plan"],
+        "projection:global-router",
+        repository_root=repository_root(),
+        member_roots={
+            f".agents/skills/{skill_id}/": skill_root(),
+            f".codex/skills/{skill_id}/": skill_root(),
+        },
+    )
+    plan = manifest["content_impact_plan"]
+    component_index = {
+        str(row.get("component_id", "")): row
+        for row in plan.get("components", [])
+        if isinstance(row, dict)
     }
+    declared_paths = {
+        str(path).replace("\\", "/")
+        for component_id in content_projection["input_component_ids"]
+        for path in component_index.get(component_id, {}).get("member_paths", [])
+    }
+    suffix = "/scripts/skillguard_v2/global_router_projection.py"
+    prefixes = {
+        path[: -len(suffix)]
+        for path in declared_paths
+        if path.endswith(suffix)
+    }
+    if len(prefixes) != 1:
+        raise ValueError("global_prompt_router_member_prefix_invalid")
+    skill_prefix = next(iter(prefixes))
+    expected_paths = {
+        f"{skill_prefix}/{relative.as_posix()}"
+        for relative, _candidate in portable_files(skill_root())
+        if current_global_router.is_global_router_projection_path(
+            f"{skill_prefix}/{relative.as_posix()}", skill_prefix
+        )
+    }
+    if declared_paths != expected_paths:
+        raise ValueError("global_prompt_router_member_inventory_stale")
+    template_path = (
+        skill_root()
+        / "assets"
+        / "templates"
+        / "global_skillguard_prompt_block.md.template"
+    )
+    return current_global_router.build_prompt_projection(
+        registry,
+        registry_path=registry_path,
+        managed_block=block,
+        template_content_hash=impact_file_hash(template_path),
+        content_projection=content_projection,
+        generated_at=utc_timestamp(),
+    )
+
+
+def build_global_prompt_projection_or_block(
+    registry: dict[str, Any],
+    registry_path: str,
+    blockers: list[str],
+) -> dict[str, Any]:
+    try:
+        return build_global_prompt_projection(registry, registry_path)
+    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+        blockers.append(f"global prompt projection is unavailable: {exc}")
+        return {}
 
 
 def replace_managed_global_prompt_block(existing: str, block: str) -> tuple[str, str]:
-    begin = existing.find(GLOBAL_PROMPT_BEGIN)
-    end = existing.find(GLOBAL_PROMPT_END)
-    if begin == -1 and end == -1:
-        prefix = existing.rstrip()
-        separator = "\n\n" if prefix else ""
-        return prefix + separator + block.rstrip() + "\n", "inserted"
-    if begin == -1 or end == -1 or end < begin:
-        raise ValueError("existing AGENTS.md has an incomplete SkillGuard global router managed block")
-    end += len(GLOBAL_PROMPT_END)
-    updated = existing[:begin].rstrip() + "\n\n" + block.rstrip() + "\n" + existing[end:].lstrip("\n")
-    return updated, "replaced"
+    return current_global_router.replace_managed_block(existing, block)
 
 
-def check_global_prompt_text(text: str, registry_hash: str) -> tuple[list[str], list[str]]:
-    failures: list[str] = []
-    blockers: list[str] = []
-    begin_count = text.count(GLOBAL_PROMPT_BEGIN)
-    end_count = text.count(GLOBAL_PROMPT_END)
-    if begin_count != 1 or end_count != 1:
-        blockers.append("SkillGuard global router managed block must appear exactly once")
-        return failures, blockers
-    begin = text.find(GLOBAL_PROMPT_BEGIN)
-    end = text.find(GLOBAL_PROMPT_END)
-    if end < begin:
-        blockers.append("SkillGuard global router managed block markers are out of order")
-        return failures, blockers
-    block = text[begin:end]
-    if f"registry_hash: {registry_hash}" not in block:
-        failures.append("SkillGuard global router managed block is stale for the supplied registry hash")
-    if GLOBAL_ROUTER_SKILL_ID not in block:
-        failures.append("SkillGuard global router managed block does not name the router skill")
-    return failures, blockers
+def check_global_prompt_text(
+    text: str,
+    registry_hash: str,
+    expected_block: str | None = None,
+) -> tuple[list[str], list[str]]:
+    return current_global_router.check_prompt_text(
+        text,
+        registry_hash,
+        expected_block=expected_block,
+        policy_id=VALIDATION_EXECUTION_POLICY_ID,
+        policy_lines=VALIDATION_EXECUTION_POLICY_LINES,
+    )
 
 
 def extract_skill_blueprint(data: Any) -> tuple[dict[str, Any], list[str]]:
@@ -5346,6 +3281,12 @@ def preflight_output_tree_ownership(
 
     for item in sorted(target.rglob("*")):
         relative = item.relative_to(target).as_posix()
+        path_decision = classify_relative_path(relative)
+        if path_decision.classification == RUNTIME and not path_decision.boundary_blocking:
+            # Preserve but ignore generated caches, current runs, receipts, and
+            # other non-authoritative runtime output.  They must not make an
+            # otherwise identical scaffold appear user-modified.
+            continue
         if item.is_file():
             existing_files.add(relative)
             if relative not in expected_files:
@@ -5468,6 +3409,200 @@ def generated_common_record(
     return record
 
 
+def generated_current_contract_sources(skill_id: str) -> tuple[str, dict[str, Any]]:
+    """Build one small current contract owner for a new generated skill.
+
+    The generated skill remains a draft.  This model and binding establish the
+    current contract path and exact owner inputs; they do not manufacture
+    execution-depth or release evidence.
+    """
+
+    model_id = f"{skill_id}.generated_current_authority.current"
+    owner_id = f"owner:{skill_id}"
+    function_id = "function:maintain-generated-skill"
+    route_id = "route:maintain-generated-skill"
+    action_step_id = "step:run-generated-current-check"
+    success_step_id = "terminal:current"
+    blocked_step_id = "terminal:blocked"
+    obligation_id = "obligation:generated-current-check"
+    invariant_id = "invariant:generated-current-check"
+    check_id = "check:generated-current"
+    model: dict[str, Any] = {
+        "schema_version": MODEL_EXPORT_SCHEMA,
+        "flowguard_schema_version": "1.0",
+        "model_id": model_id,
+        "parent_model_id": "skillguard.generated_skill.current",
+        "functions": [
+            {
+                "function_id": function_id,
+                "business_intent": "maintain the generated skill under one current SkillGuard contract",
+                "owner_id": owner_id,
+                "route_ids": [route_id],
+            }
+        ],
+        "routes": [
+            {
+                "route_id": route_id,
+                "function_id": function_id,
+                "owner_id": owner_id,
+                "step_ids": [action_step_id, success_step_id, blocked_step_id],
+                "success_terminal_step_id": success_step_id,
+                "blocked_terminal_step_id": blocked_step_id,
+                "handoffs": [],
+            }
+        ],
+        "steps": [
+            {
+                "step_id": action_step_id,
+                "route_id": route_id,
+                "owner_id": owner_id,
+                "action_kind": "native",
+                "terminal_kind": "",
+                "prerequisite_step_ids": [],
+            },
+            {
+                "step_id": success_step_id,
+                "route_id": route_id,
+                "owner_id": owner_id,
+                "action_kind": "terminal",
+                "terminal_kind": "success",
+                "prerequisite_step_ids": [action_step_id],
+            },
+            {
+                "step_id": blocked_step_id,
+                "route_id": route_id,
+                "owner_id": owner_id,
+                "action_kind": "terminal",
+                "terminal_kind": "blocked",
+                "prerequisite_step_ids": [],
+            },
+        ],
+        "obligations": [
+            {
+                "obligation_id": obligation_id,
+                "invariant_id": invariant_id,
+                "owner_step_ids": [action_step_id],
+                "required": True,
+            }
+        ],
+        "invariant_ids": [invariant_id],
+        "claim_boundary": (
+            "This portable model establishes the generated skill's current contract owner only; "
+            "it does not prove target execution depth, semantic quality, installation, or release."
+        ),
+    }
+    model_source = (
+        '"""Portable FlowGuard export for the generated current contract scaffold."""\n\n'
+        "FLOWGUARD_MODEL_MARKER = 'flowguard-executable-model'\n"
+        f"EXPORT = {model!r}\n\n"
+        "def export_contract_model():\n"
+        "    return EXPORT\n"
+    )
+    binding = {
+        "schema_version": BINDING_SOURCE_SCHEMA,
+        "skill_id": skill_id,
+        "model_id": model_id,
+        "model_path": ".skillguard/flowguard_contract_model.py",
+        "confirmed": True,
+        "integration_mode": "native-integrated",
+        "native_route_owner": owner_id,
+        "may_define_parallel_execution_route": False,
+        "may_define_skillguard_runtime_route": False,
+        "native_route_bindings": [
+            {
+                "binding_id": f"native:{skill_id}:generated-current",
+                "native_route_id": route_id,
+                "required_before_closure": True,
+                "source": "SKILL.md",
+            }
+        ],
+        "native_check_bindings": [
+            {
+                "binding_id": f"native-check:{skill_id}:generated-current",
+                "native_check_id": check_id,
+                "required": True,
+                "evidence_source": "scripts/run_checks.py",
+            }
+        ],
+        "implementation_paths": ["SKILL.md", "scripts/run_checks.py"],
+        "step_bindings": [
+            {
+                "step_id": action_step_id,
+                "action": {
+                    "kind": "native",
+                    "summary": "run the generated target-owned current check",
+                },
+                "check_ids": [check_id],
+                "output_artifact_ids": [],
+            }
+        ],
+        "checks": [
+            {
+                "check_id": check_id,
+                "semantic_check_id": f"semantic:{skill_id}:generated-current",
+                "kind": "command",
+                "command": "python",
+                "args": ["scripts/run_checks.py"],
+                "cwd_token": "repository_root",
+                "input_selectors": [
+                    {"kind": "path", "path": "SKILL.md"},
+                    {"kind": "path", "path": "scripts/run_checks.py"},
+                ],
+                "expected": {"exit_code": 0},
+                "timeout_seconds": 30,
+                "evidence_class": "hard",
+                "evidence_domain_id": "generated_skill_current",
+                "execution_owner_id": owner_id,
+                "covers_obligation_ids": [obligation_id],
+            }
+        ],
+        "artifacts": [],
+        "closure_profiles": [
+            {
+                "profile_id": "enforced",
+                "required_obligation_ids": [obligation_id],
+            }
+        ],
+        "judgment_rubrics": [],
+        "claim_boundary": (
+            "This generated binding proves only deterministic current contract structure. "
+            "It does not prove target execution, semantic acceptance, installation, or release."
+        ),
+    }
+    return model_source, binding
+
+
+def compile_generated_current_contract(files: dict[str, str]) -> None:
+    """Compile the generated current trio in an isolated portable root."""
+
+    with tempfile.TemporaryDirectory(prefix="skillguard-generated-current-") as temp_dir:
+        staged_root = Path(temp_dir)
+        for relative, content in files.items():
+            path = staged_root / Path(relative)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(content.encode("utf-8"))
+        result = compile_skill_contract(
+            staged_root,
+            repository_root=staged_root,
+            write=True,
+        )
+        if not result.ok:
+            details = "; ".join(
+                f"{finding.code}@{finding.path}:{finding.message}"
+                for finding in result.findings
+            )
+            raise SkillGuardCliError(
+                "generate-skill",
+                f"generated current contract did not compile: {details or result.status}",
+                "generated_current_contract_blocked",
+            )
+        for relative in (
+            ".skillguard/compiled-contract.json",
+            ".skillguard/check-manifest.json",
+        ):
+            files[relative] = (staged_root / relative).read_text(encoding="utf-8")
+
+
 def build_generate_skill_scaffold(blueprint: dict[str, Any], target: Path, input_relative: str) -> dict[str, str]:
     skill = blueprint.get("skill") if isinstance(blueprint.get("skill"), dict) else {}
     target_relative = public_relative_path(target)
@@ -5494,12 +3629,6 @@ def build_generate_skill_scaffold(blueprint: dict[str, Any], target: Path, input
     output_terms = ["evidence", "failures", "blockers", "skipped_checks", "residual_risk", "claim_boundary"]
     generated_at = "generated-scaffold-draft"
     claim_boundary = common_claim_boundary("generated scaffold")
-    runtime_check_templates = {
-        f".skillguard/checks/{template_name.replace('.template', '')}": (
-            ensure_under_root(skill_root() / "assets" / "templates" / template_name).read_text(encoding="utf-8")
-        )
-        for template_name in CHECK_TEMPLATE_BY_ID.values()
-    }
     blueprint_trace = {
         "blueprint_id": blueprint.get("blueprint_id"),
         "source_input": input_relative,
@@ -5537,10 +3666,12 @@ This generated entrypoint is a scaffold for `{target_relative}`. It is not accep
 - Use `assets/templates/check_report.template.json` for report-drafting notes.
 - Use `scripts/run_checks.py` only as a local placeholder script.
 - Use `fixtures/fixture-manifest.json` and `tests/test_smoke.py` as draft scaffolding inputs.
-- Use `.skillguard/work-contract.json` to choose the run route, required phases, evidence, checks, and closure rule.
-- Use `.skillguard/check_manifest.json` and `.skillguard/checks/` for local runtime-check bindings.
-- Use `.skillguard/runs/` for task run records created before work begins.
-- Use `.skillguard/skillguard_manifest.json` for generated SkillGuard record inventory.
+- Use `.skillguard/flowguard_contract_model.py` and `.skillguard/contract-source.json` as the maintained current contract inputs.
+- Treat `.skillguard/compiled-contract.json` and `.skillguard/check-manifest.json` as deterministic compiler outputs; do not hand-edit them.
+- Use the exact owner check declared in `.skillguard/check-manifest.json`. Reuse only a current immutable success receipt whose declared inputs still match.
+- Changes to reports, receipts, logs, timestamps, or status records do not invalidate their producer. Only a changed declared maintained input makes the affected owner stale.
+- There is no legacy contract, route, run, or fallback success path. A missing or stale current trio is blocked.
+- Use `.skillguard/runs/` only for current run evidence and receipts; runtime outputs are not source authority.
 
 ## Entrypoint Acceptance Map
 
@@ -5573,7 +3704,7 @@ Every result must include these fields: {", ".join(output_terms)}.
 Generated at `{generated_at}` from `{input_relative}` by the local `generate-skill` command. {claim_boundary}
 """
 
-    runtime_contract, runtime_check_manifest = build_default_work_contract(target, skill_md)
+    model_source, current_binding = generated_current_contract_sources(name)
 
     readme = f"""# {name}
 
@@ -5597,14 +3728,14 @@ Status: draft scaffold only. The generated files do not prove activation, semant
 
 ## Next Action
 
-Inspect the generated files, run current checks for the declared scope, and update the `.skillguard` records only with fresh evidence.
+Inspect the generated files, run the declared current owner checks, and recompile only from `.skillguard/contract-source.json` when maintained source changes.
 """
 
     fixture_manifest = {
         "schema_version": "skillguard.fixture_manifest.v1",
         "fixture_version": "draft",
         "checker_version": CHECKER_VERSION,
-        "compatibility": {
+        "current_status": {
             "status": "needs-review",
             "notes": ["Generated fixture manifest is a placeholder and has not been executed."],
         },
@@ -5624,155 +3755,6 @@ Inspect the generated files, run current checks for the declared scope, and upda
         "residual_risk": ["Fixture adequacy needs reviewer judgment before acceptance."],
         "claim_boundary": common_claim_boundary("fixture manifest"),
     }
-
-    common_skipped = [
-        {
-            "reason": "generate-skill creates scaffolding only and does not perform target acceptance.",
-            "impact": "Generated records remain draft until current checks and review run.",
-        }
-    ]
-    profile = generated_common_record(
-        schema_version="skillguard.profile.v1",
-        target_relative=target_relative,
-        target_type="skill",
-        status="draft",
-        skipped_checks=common_skipped,
-        extra={
-            "skill_name": name,
-            "summary": purpose,
-            "blueprint_trace": blueprint_trace,
-            "applicability": {
-                "use_when": use_when,
-                "do_not_use_when": do_not_use_when,
-                "required_inputs": ["current target files", "deterministic evidence", "reviewer judgment"],
-            },
-            "standards": ["references/02-single-skill-standard.md"],
-            "compatibility": {"supported_targets": ["skill"], "known_limits": ["Generated scaffold only."], "external_dependencies": []},
-        },
-    )
-    skill_contract = generated_common_record(
-        schema_version="skillguard.skill_contract.v1",
-        target_relative=target_relative,
-        target_type="skill_contract",
-        status="draft",
-        skipped_checks=common_skipped,
-        extra={
-            "name": name,
-            "description": description,
-            "blueprint_trace": blueprint_trace,
-            "frontmatter": {"parse_status": "parsed", "name_present": True, "description_present": True, "public_safe": True},
-            "sections": {
-                "purpose": True,
-                "use_when": True,
-                "do_not_use_when": True,
-                "required_workflow": True,
-                "hard_gates": True,
-                "output_requirements": True,
-                "maintenance": True,
-            },
-            "activation_boundary": use_when,
-            "do_not_use_boundary": do_not_use_when,
-            "required_workflow": workflow_steps,
-            "hard_gates": [{"gate": gate, "required": True, "status": "not_checked"} for gate in hard_gates],
-            "output_requirements": output_terms,
-        },
-    )
-    evidence_rules = generated_common_record(
-        schema_version="skillguard.evidence_rules.v1",
-        target_relative=target_relative,
-        target_type="evidence_rules",
-        status="draft",
-        skipped_checks=common_skipped,
-        extra={
-            "freshness_policy": "Recollect evidence after any generated file, checker, fixture, test, or acceptance criterion changes.",
-            "direct_evidence_required": True,
-            "report_only_evidence_allowed": False,
-            "blueprint_trace": blueprint_trace,
-        },
-    )
-    closure_policy = generated_common_record(
-        schema_version="skillguard.closure_policy.v1",
-        target_relative=target_relative,
-        target_type="closure_policy",
-        status="draft",
-        skipped_checks=common_skipped,
-        extra={
-            "closure_states": ["open", "blocked", "closed_with_evidence", "not_run"],
-            "hard_gates": [
-                "current direct evidence",
-                "visible skipped checks",
-                "no unresolved blockers",
-                "bounded claim boundary",
-            ],
-        },
-    )
-    manifest = generated_common_record(
-        schema_version="skillguard.manifest.v1",
-        target_relative=target_relative,
-        target_type="manifest",
-        status="draft",
-        skipped_checks=common_skipped,
-        extra={
-            "generated_files": list(GENERATE_SKILL_REQUIRED_FILES),
-            "generated_directories": list(GENERATE_SKILL_REQUIRED_DIRECTORIES),
-            "blueprint_trace": blueprint_trace,
-        },
-    )
-    evidence_manifest = generated_common_record(
-        schema_version="skillguard.evidence_manifest.v1",
-        target_relative=target_relative,
-        target_type="evidence_manifest",
-        status="initial_record",
-        skipped_checks=common_skipped,
-        extra={
-            "captured_at": generated_at,
-            "evidence_items": [
-                {
-                    "evidence_id": "generate-skill-command-output",
-                    "kind": "command_output",
-                    "summary": "Generated scaffold files from a Skill Blueprint.",
-                    "freshness": "Fresh only for the command invocation that created this scaffold.",
-                }
-            ],
-        },
-    )
-    ai_judgment = generated_common_record(
-        schema_version="skillguard.ai_judgment.v1",
-        target_relative=target_relative,
-        target_type="ai_judgment",
-        status="not_run",
-        skipped_checks=common_skipped,
-        extra={
-            "decision": "not_run",
-            "input_evidence": ["generate-skill-command-output"],
-            "confidence": {"level": "not_assessed", "reason": "No semantic review has run."},
-            "uncertainty": ["Generated scaffold requires human or AI review before acceptance."],
-            "human_review": {"required": True, "status": "pending"},
-        },
-    )
-    workflow_report = generated_common_record(
-        schema_version="skillguard.workflow_report.v1",
-        target_relative=target_relative,
-        target_type="workflow_report",
-        status="draft",
-        skipped_checks=common_skipped,
-        extra={
-            "workflow_mode": "create",
-            "entry_condition": "Generated from Skill Blueprint.",
-            "decision": "block",
-            "hard_gates": [{"gate": "target-review", "status": "not_checked", "required": True}],
-            "outputs": list(GENERATE_SKILL_REQUIRED_FILES),
-            "next_action": "Run current target checks and reviewer judgment before closure.",
-        },
-    )
-    ledger_record = generated_common_record(
-        schema_version="skillguard.progress.v1",
-        target_relative=target_relative,
-        target_type="progress",
-        status="initial_record_created",
-        skipped_checks=common_skipped,
-        extra={"event_id": "generate-skill-initial-scaffold", "event_time": generated_at},
-    )
 
     files: dict[str, str] = {
         "SKILL.md": skill_md,
@@ -5833,19 +3815,10 @@ Inspect the generated files, run current checks for the declared scope, and upda
             "def test_skill_md_exists():\n"
             "    assert (Path(__file__).resolve().parents[1] / 'SKILL.md').is_file()\n"
         ),
-        ".skillguard/work-contract.json": json_block(runtime_contract),
-        ".skillguard/check_manifest.json": json_block(runtime_check_manifest),
-        **runtime_check_templates,
-        ".skillguard/skillguard_profile.json": json_block(profile),
-        ".skillguard/skillguard_skill_contract.json": json_block(skill_contract),
-        ".skillguard/skillguard_evidence_rules.json": json_block(evidence_rules),
-        ".skillguard/skillguard_closure_policy.json": json_block(closure_policy),
-        ".skillguard/skillguard_manifest.json": json_block(manifest),
-        ".skillguard/skillguard_progress_ledger.jsonl": json.dumps(ledger_record, sort_keys=True, ensure_ascii=False) + "\n",
-        ".skillguard/evidence/initial_evidence_manifest.json": json_block(evidence_manifest),
-        ".skillguard/ai_judgments/initial_ai_judgment.json": json_block(ai_judgment),
-        ".skillguard/reports/initial_workflow_report.json": json_block(workflow_report),
+        ".skillguard/flowguard_contract_model.py": model_source,
+        ".skillguard/contract-source.json": json_block(current_binding),
     }
+    compile_generated_current_contract(files)
     return files
 
 
@@ -5938,7 +3911,10 @@ def write_generate_skill_scaffold(target: Path, files: dict[str, str]) -> tuple[
         path = scaffold_path(target, relative)
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists():
-            path.write_text(content, encoding="utf-8")
+            # Generated authority uses canonical LF bytes on every platform.
+            # Windows text-mode newline translation must not make a freshly
+            # compiled contract stale immediately after installation.
+            path.write_bytes(content.encode("utf-8"))
             created_files.append(public_relative_path(path))
     return created_dirs, created_files
 
@@ -6193,7 +4169,7 @@ def suite_child_check_report(member: dict[str, str]) -> dict[str, Any]:
         "target_type": "skill",
         "status": "pass",
         "checker_version": CHECKER_VERSION,
-        "compatibility": {
+        "current_identity": {
             "checker_version": CHECKER_VERSION,
             "fixture_version": "generated-suite-draft",
             "notes": "Generated child entrypoint presence evidence only.",
@@ -6330,9 +4306,9 @@ Run current child skill checks and suite checks before making any suite acceptan
         "maintenance_ownership": [
             "Regenerate or review suite records after child skill, checker, evidence, or suite contract changes."
         ],
-        "compatibility": {
-            "version_boundary": f"{suite_name}.generated-suite-draft with {CHECKER_VERSION}",
-            "known_incompatibilities": [],
+        "current_identity": {
+            "schema_boundary": f"{suite_name}.generated-suite-draft with {CHECKER_VERSION}",
+            "rejected_noncurrent_shapes": [],
         },
         "evidence": ["evidence/source_blueprint_trace.json", "evidence/suite_closure.json"],
         "blockers": [],
@@ -6371,10 +4347,10 @@ Run current child skill checks and suite checks before making any suite acceptan
             "Direct child check reports are required for checked child status.",
             "Progress ledgers, runtime ids, and chat text cannot satisfy suite closure.",
         ],
-        "compatibility": {
+        "current_identity": {
             "suite_version": "generated-suite-draft",
             "checker_version": CHECKER_VERSION,
-            "compatibility_notes": [
+            "current_notes": [
                 "The generated suite uses current suite map and suite contract schema shapes.",
                 "The generated suite intentionally avoids broad release, package, automation, and future-AI claims.",
             ],
@@ -6448,7 +4424,7 @@ Run current child skill checks and suite checks before making any suite acceptan
         "target_type": "suite",
         "status": "pass",
         "checker_version": CHECKER_VERSION,
-        "compatibility": {
+        "current_identity": {
             "checker_version": CHECKER_VERSION,
             "fixture_version": "generated-suite-draft",
             "notes": "Generated suite scaffold presence evidence only.",
@@ -6751,15 +4727,25 @@ def run_generate_skill_post_generation_checks(target_relative: str) -> list[dict
         build_post_generation_check_result(
             check_id="generate-skill:post-check-skill",
             command_name="check-skill",
-            argv=["--target", target_relative],
+            argv=[
+                "--repository-root",
+                ".",
+                "--target",
+                target_relative,
+            ],
             artifact_path=target_relative,
         ),
         build_post_generation_check_result(
             check_id="generate-skill:post-check-contract",
             command_name="check-contract",
-            argv=["--target", target_relative],
-            artifact_path=f"{target_relative}/.skillguard/{WORK_CONTRACT_FILENAME}",
-            expected_report_target=target_relative,
+            argv=[
+                "--repository-root",
+                target_relative,
+                "--target",
+                ".",
+            ],
+            artifact_path=f"{target_relative}/.skillguard/contract-source.json",
+            expected_report_target=".",
         ),
     ]
 
@@ -6794,7 +4780,12 @@ def run_generate_suite_post_generation_checks(
             build_post_generation_check_result(
                 check_id=f"generate-suite:post-check-child:{member['name']}",
                 command_name="check-skill",
-                argv=["--target", member["path"]],
+                argv=[
+                    "--repository-root",
+                    ".",
+                    "--target",
+                    member["path"],
+                ],
                 artifact_path=member["path"],
             )
         )
@@ -6835,13 +4826,143 @@ def parse_skill_frontmatter(text: str) -> tuple[dict[str, str], list[str]]:
     return frontmatter, failures
 
 
-def looks_like_reference_span(reference_text: str) -> bool:
+def inline_reference_context(text: str, start: int) -> str:
+    line_start = max(text.rfind("\n", 0, start), text.rfind("\r", 0, start)) + 1
+    return text[line_start:start][-240:]
+
+
+def inline_reference_after_context(text: str, end: int) -> str:
+    line_ends = [position for position in (text.find("\n", end), text.find("\r", end)) if position >= 0]
+    line_end = min(line_ends) if line_ends else len(text)
+    return text[end:line_end][:240]
+
+
+def has_declared_reference_context(context_before: str) -> bool:
+    return bool(DECLARED_REFERENCE_CONTEXT_RE.search(context_before))
+
+
+def looks_like_path_atom(value: str) -> bool:
+    candidate = value.strip("'\"()[]{}.,")
+    return bool(
+        candidate in ROOT_REFERENCE_NAMES
+        or candidate == "SKILL.md"
+        or candidate.startswith(".")
+        or "/" in candidate
+        or "\\" in candidate
+        or candidate.endswith((".md", ".json", ".toml", ".py", ".txt"))
+    )
+
+
+def looks_like_inline_command(
+    reference_text: str,
+    context_before: str,
+    context_after: str,
+    *,
+    declared_context: bool,
+) -> bool:
+    if INLINE_CLI_ARGUMENT_RE.search(reference_text) or SHELL_OPERATOR_RE.search(reference_text):
+        return True
+    if COMMAND_LAUNCHER_RE.match(reference_text):
+        return True
+    if not declared_context and (
+        INLINE_CLI_VALUE_BEFORE_RE.search(context_before)
+        or INLINE_CLI_VALUE_AFTER_RE.search(context_after)
+    ):
+        return True
+    parts = reference_text.split()
+    if len(parts) <= 1 or declared_context:
+        return False
+    if INLINE_COMMAND_CONTEXT_RE.search(context_before):
+        return True
+    return not looks_like_path_atom(parts[0]) and any(looks_like_path_atom(part) for part in parts[1:])
+
+
+def looks_like_database_runtime_path(
+    reference_text: str,
+    context_before: str,
+    context_after: str,
+    *,
+    declared_context: bool,
+) -> bool:
+    normalized = reference_text.replace("\\", "/")
+    if declared_context or normalized.startswith(DECLARED_REFERENCE_PREFIXES):
+        return False
+    runtime_scoped = bool(DATABASE_RUNTIME_SEGMENT_RE.search(reference_text))
+    database_hint = bool(
+        DATABASE_FILE_SUFFIX_RE.search(reference_text)
+        or DATABASE_CONTEXT_RE.search(context_before)
+        or DATABASE_CONTEXT_RE.search(context_after)
+        or DATABASE_CONTEXT_RE.search(reference_text)
+    )
+    return runtime_scoped and database_hint
+
+
+def looks_like_transient_skillguard_runtime_output(
+    reference_text: str,
+    *,
+    declared_context: bool,
+) -> bool:
+    """Distinguish generated SkillGuard runtime locations from maintained inputs."""
+
+    if declared_context:
+        return False
+    normalized = reference_text.replace("\\", "/").strip().rstrip("/")
+    return classify_relative_path(normalized).classification == RUNTIME
+
+
+def normalized_markdown_link_destination(match: re.Match[str]) -> str:
+    destination = (match.group(1) or match.group(2) or "").strip()
+    if not destination or destination.startswith(("#", "//")):
+        return ""
+    windows_absolute = bool(re.match(r"^[A-Za-z]:[\\/]", destination))
+    if not windows_absolute and re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", destination):
+        return ""
+    destination = destination.split("#", 1)[0].split("?", 1)[0].strip()
+    return destination
+
+
+def looks_like_reference_span(
+    reference_text: str,
+    *,
+    context_before: str = "",
+    context_after: str = "",
+    source_kind: str = "inline-code",
+) -> bool:
     reference_text = reference_text.strip()
-    if "\n" in reference_text or "\r" in reference_text:
+    if not reference_text or "\n" in reference_text or "\r" in reference_text:
+        return False
+    if source_kind == "markdown-link":
+        return True
+    declared_context = has_declared_reference_context(context_before)
+    if DATABASE_URI_RE.search(reference_text) or SQL_EXPRESSION_RE.match(reference_text):
+        return False
+    if looks_like_inline_command(
+        reference_text,
+        context_before,
+        context_after,
+        declared_context=declared_context,
+    ):
+        return False
+    if looks_like_database_runtime_path(
+        reference_text,
+        context_before,
+        context_after,
+        declared_context=declared_context,
+    ):
+        return False
+    if looks_like_transient_skillguard_runtime_output(
+        reference_text,
+        declared_context=declared_context,
+    ):
         return False
     if reference_text.startswith("/") and not reference_text.startswith(("/home/", "/Users/", "/tmp/", "/var/", "/etc/", "/opt/", "/mnt/")):
         return False
     if reference_text in ROOT_REFERENCE_NAMES or reference_text == "SKILL.md":
+        return True
+    if declared_context and (
+        looks_like_path_atom(reference_text)
+        or PLAIN_LOCAL_FILENAME_RE.fullmatch(reference_text)
+    ):
         return True
     if reference_text.endswith((".md", ".json", ".toml", ".py", ".txt")):
         return True
@@ -6851,10 +4972,35 @@ def looks_like_reference_span(reference_text: str) -> bool:
 def extract_reference_tokens(text: str) -> list[str]:
     references: list[str] = []
     seen: set[str] = set()
-    reference_source = FENCED_CODE_BLOCK_RE.sub("", text)
+    candidates: list[tuple[int, str]] = []
+    reference_source = FENCED_CODE_BLOCK_RE.sub(
+        lambda match: "\n" * match.group(0).count("\n"),
+        text,
+    )
+    link_ranges: list[tuple[int, int]] = []
+    for match in MARKDOWN_LINK_RE.finditer(reference_source):
+        link_ranges.append((match.start(), match.end()))
+        destination = normalized_markdown_link_destination(match)
+        if destination and looks_like_reference_span(destination, source_kind="markdown-link"):
+            candidates.append((match.start(), destination))
+    for match in MARKDOWN_LINK_DEFINITION_RE.finditer(reference_source):
+        destination = normalized_markdown_link_destination(match)
+        if destination and looks_like_reference_span(destination, source_kind="markdown-link"):
+            candidates.append((match.start(), destination))
     for match in REFERENCE_SPAN_RE.finditer(reference_source):
+        if any(match.start() >= start and match.end() <= end for start, end in link_ranges):
+            continue
         reference_text = match.group(1).strip()
-        if reference_text and looks_like_reference_span(reference_text) and reference_text not in seen:
+        context_before = inline_reference_context(reference_source, match.start())
+        context_after = inline_reference_after_context(reference_source, match.end())
+        if reference_text and looks_like_reference_span(
+            reference_text,
+            context_before=context_before,
+            context_after=context_after,
+        ):
+            candidates.append((match.start(), reference_text))
+    for _, reference_text in sorted(candidates, key=lambda item: item[0]):
+        if reference_text not in seen:
             seen.add(reference_text)
             references.append(reference_text)
     return references
@@ -6869,20 +5015,33 @@ def is_optional_reference(reference: str) -> bool:
     return normalized in OPTIONAL_TARGET_REFERENCES
 
 
-def resolve_declared_reference(target: Path, reference: str) -> Path:
-    repo = repository_root()
+def source_layout_projection_allowed(target: Path) -> bool:
+    """Return whether source-layout references deterministically project to *target*."""
+
+    resolved_target = target.resolve()
+    return (
+        resolved_target == skill_root().resolve()
+        or is_installed_skill_projection(resolved_target)
+    )
+
+
+def resolve_declared_reference(
+    target: Path,
+    reference: str,
+    root: Path | None = None,
+) -> Path:
+    repo = (root or repository_root()).resolve()
+    project_source_layout = source_layout_projection_allowed(target)
     normalized = reference.replace("\\", "/")
     if normalized == "SKILL.md":
         return target / "SKILL.md"
     source_layout_prefix = f".agents/skills/{target.name}/"
     if normalized == f".agents/skills/{target.name}":
-        source_candidate = repo / normalized
-        return source_candidate if source_candidate.exists() else target
+        return target if project_source_layout else repo / normalized
     if normalized.startswith(source_layout_prefix):
-        source_candidate = repo / normalized
-        if source_candidate.exists():
-            return source_candidate
-        return target / normalized[len(source_layout_prefix):]
+        if project_source_layout:
+            return target / normalized[len(source_layout_prefix):]
+        return repo / normalized
     if normalized in ROOT_REFERENCE_NAMES or normalized.startswith(".agents/"):
         return repo / normalized
     return target / normalized
@@ -6895,6 +5054,7 @@ def validate_reference(
     blockers: list[str],
     *,
     allow_project_boundary: bool,
+    root: Path | None = None,
 ) -> dict[str, Any]:
     label = reference_label(reference)
     entry: dict[str, Any] = {
@@ -6909,9 +5069,13 @@ def validate_reference(
         entry["reason"] = "absolute reference"
         return entry
 
-    candidate = resolve_declared_reference(target, reference) if allow_project_boundary else target / reference
+    candidate = (
+        resolve_declared_reference(target, reference, root)
+        if allow_project_boundary
+        else target / reference
+    )
     resolved = candidate.resolve()
-    repo = repository_root().resolve()
+    repo = (root or repository_root()).resolve()
     try:
         resolved.relative_to(repo)
     except ValueError:
@@ -6927,10 +5091,10 @@ def validate_reference(
             blockers.append(f"{label}: reference escapes target skill boundary")
             entry["status"] = "block"
             entry["reason"] = "target escape"
-            entry["resolved_path"] = public_relative_path(resolved)
+            entry["resolved_path"] = public_relative_path(resolved, repo)
             return entry
 
-    entry["resolved_path"] = public_relative_path(resolved)
+    entry["resolved_path"] = public_relative_path(resolved, repo)
     entry["kind"] = "directory" if resolved.is_dir() else "file" if resolved.is_file() else "missing"
     entry["exists"] = resolved.exists()
     if not resolved.exists() and not is_optional_reference(reference):
@@ -6990,13 +5154,11 @@ def resolve_record_reference(target: Path, control_root: Path, value: str) -> Pa
         return target / normalized
     source_layout_prefix = f".agents/skills/{target.name}/"
     if normalized == f".agents/skills/{target.name}":
-        source_candidate = repository_root() / normalized
-        return source_candidate if source_candidate.exists() else target
+        return target if source_layout_projection_allowed(target) else repository_root() / normalized
     if normalized.startswith(source_layout_prefix):
-        source_candidate = repository_root() / normalized
-        if source_candidate.exists():
-            return source_candidate
-        return target / normalized[len(source_layout_prefix):]
+        if source_layout_projection_allowed(target):
+            return target / normalized[len(source_layout_prefix):]
+        return repository_root() / normalized
     if normalized.startswith(".agents/") or normalized in ROOT_REFERENCE_NAMES:
         return repository_root() / normalized
     return control_root / normalized
@@ -7120,52 +5282,6 @@ def validate_ai_judgment_record(record: Any, label: str, failures: list[str]) ->
         failures.append(f"{label}: human_review.required must be true for AI judgment records")
 
 
-def validate_closure_policy_record(record: Any, label: str, failures: list[str]) -> None:
-    if not isinstance(record, dict):
-        return
-    closure_states = record.get("closure_states")
-    if not isinstance(closure_states, list):
-        failures.append(f"{label}: closure_states must be an array")
-        return
-    required_states = {"open", "blocked", "closed_with_evidence", "not_run"}
-    missing_states = sorted(required_states - set(closure_states))
-    for state in missing_states:
-        failures.append(f"{label}: closure_states missing {state!r}")
-    if not isinstance(record.get("hard_gates"), list) or not record.get("hard_gates"):
-        failures.append(f"{label}: hard_gates must be a non-empty array")
-
-
-def inspect_control_json_file(
-    path: Path,
-    target: Path,
-    control_root: Path,
-    failures: list[str],
-    blockers: list[str],
-    inspected_files: list[dict[str, Any]],
-    reference_entries: list[dict[str, Any]],
-) -> dict[str, Any] | None:
-    label = public_relative_path(path)
-    try:
-        record = load_json(path)
-    except ValueError as exc:
-        failures.append(f"{label}: invalid JSON: {exc}")
-        return None
-    inspected_files.append(
-        {
-            "path": label,
-            "kind": "json",
-            "sha256": file_sha256(path),
-            "line_count": line_count(path),
-        }
-    )
-    reference_entries.extend(validate_common_record(record, label, target, control_root, failures, blockers))
-    if path.name == "skillguard_closure_policy.json":
-        validate_closure_policy_record(record, label, failures)
-    if path.parent.name == "ai_judgments" or record.get("target_type") == "ai_judgment":
-        validate_ai_judgment_record(record, label, failures)
-    return record if isinstance(record, dict) else None
-
-
 def find_suite_record(suite_root: Path, explicit_path: str | None, record_kind: str) -> Path | None:
     if explicit_path:
         return resolve_skillguard_self_layout_path(explicit_path)
@@ -7207,7 +5323,11 @@ def resolve_repository_reference(path_text: str, base_dir: Path | None = None) -
     return candidate
 
 
-def public_safety_findings(path: Path) -> list[dict[str, Any]]:
+def public_safety_findings(
+    path: Path,
+    *,
+    root: Path | None = None,
+) -> list[dict[str, Any]]:
     if not path.is_file():
         return []
     text = path.read_text(encoding="utf-8")
@@ -7217,7 +5337,7 @@ def public_safety_findings(path: Path) -> list[dict[str, Any]]:
             findings.append(
                 {
                     "finding_id": finding_id,
-                    "path": public_relative_path(path),
+                    "path": public_relative_path(path, root),
                     "line": text[: match.start()].count("\n") + 1,
                 }
             )
@@ -7720,7 +5840,12 @@ def validate_child_closure(
     return closure_findings
 
 
-def scan_text_for_unsafe_claims(path: Path, failures: list[str]) -> list[dict[str, Any]]:
+def scan_text_for_unsafe_claims(
+    path: Path,
+    failures: list[str],
+    *,
+    root: Path | None = None,
+) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
     if not path.is_file():
         return findings
@@ -7732,12 +5857,14 @@ def scan_text_for_unsafe_claims(path: Path, failures: list[str]) -> list[dict[st
             safe_context = any(marker in window for marker in SAFE_UNSAFE_CLAIM_CONTEXT)
             finding = {
                 "claim_id": claim_id,
-                "path": public_relative_path(path),
+                "path": public_relative_path(path, root),
                 "line": text[: match.start()].count("\n") + 1,
                 "safe_context": safe_context,
             }
             if not safe_context:
-                failures.append(f"{public_relative_path(path)} line {finding['line']}: unsafe claim phrase {claim_id}")
+                failures.append(
+                    f"{public_relative_path(path, root)} line {finding['line']}: unsafe claim phrase {claim_id}"
+                )
                 finding["decision"] = "fail"
             else:
                 finding["decision"] = "pass"
@@ -7762,7 +5889,8 @@ def check_skill(argv: list[str]) -> int:
         prog="skillguard.py check-skill",
         description="Check one target skill directory for static SkillGuard contract and control-record readiness.",
     )
-    parser.add_argument("--target", default=".agents/skills/skillguard", help="Target skill directory under the repository root.")
+    parser.add_argument("--target", default=".agents/skills/skillguard", help="Target skill member directory. External members are resolved only inside --repository-root; standalone '.' binds the current directory.")
+    parser.add_argument("--repository-root", help="Canonical repository root for an external target member. Repository-relative references resolve only from this root.")
     parser.add_argument(
         "--reference",
         action="append",
@@ -7772,28 +5900,30 @@ def check_skill(argv: list[str]) -> int:
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
 
-    target = resolve_target_argument(args.target)
-    target_relative = public_relative_path(target)
+    canonical_root, target, report_root, target_binding = resolve_check_target_binding(
+        "check-skill",
+        args.target,
+        args.repository_root,
+    )
+    target_relative = public_relative_path(target, report_root)
     payload = base_result("check-skill", target_relative)
+    payload["target_binding"] = target_binding
     payload["claim_boundary"] = (
-        "This static single-skill check covers SKILL.md metadata and sections, declared local references, target "
-        ".skillguard control records, progress JSONL parsing, AI-judgment structure, evidence references, and conservative "
-        "no-claim wording from files inspected during this invocation. It does not prove runtime checker execution, fixture "
+        "This static single-skill check covers SKILL.md metadata and sections, declared local references, the exact "
+        "current contract-source/compiled-contract/check-manifest authority, former-surface absence, and conservative "
+        "no-claim wording from functional files inspected during this invocation. It does not prove target check execution, fixture "
         "coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, "
         "or future AI behavior."
     )
     payload["residual_risk"] = [
         "This command is a static local check; semantic adequacy still needs reviewer judgment where the target contract requires it.",
-        "Progress ledger entries are parsed and reported as historical records only, not as current closure evidence for this invocation.",
+        "Reports, receipts, progress logs, and other runtime outputs are deliberately outside this static owner identity.",
     ]
 
     failures: list[str] = []
     blockers: list[str] = []
     inspected_files: list[dict[str, Any]] = []
     declared_reference_entries: list[dict[str, Any]] = []
-    control_reference_entries: list[dict[str, Any]] = []
-    control_records: list[dict[str, Any]] = []
-    progress_entries: list[dict[str, Any]] = []
     unsafe_claim_findings: list[dict[str, Any]] = []
 
     before_failures, before_blockers = len(failures), len(blockers)
@@ -7822,8 +5952,8 @@ def check_skill(argv: list[str]) -> int:
     else:
         skill_text = skill_md.read_text(encoding="utf-8")
         inspected_files.append(
-            {
-                "path": public_relative_path(skill_md),
+                {
+                    "path": public_relative_path(skill_md, report_root),
                 "kind": "markdown",
                 "sha256": file_sha256(skill_md),
                 "line_count": line_count(skill_md),
@@ -7881,7 +6011,9 @@ def check_skill(argv: list[str]) -> int:
         )
 
         before_failures, before_blockers = len(failures), len(blockers)
-        unsafe_claim_findings.extend(scan_text_for_unsafe_claims(skill_md, failures))
+        unsafe_claim_findings.extend(
+            scan_text_for_unsafe_claims(skill_md, failures, root=report_root)
+        )
         append_check(
             payload,
             "check-skill:unsafe-claims",
@@ -7894,11 +6026,25 @@ def check_skill(argv: list[str]) -> int:
         declared_references = extract_reference_tokens(skill_text)
         for reference in declared_references:
             declared_reference_entries.append(
-                validate_reference(target, reference, failures, blockers, allow_project_boundary=True)
+                validate_reference(
+                    target,
+                    reference,
+                    failures,
+                    blockers,
+                    allow_project_boundary=True,
+                    root=canonical_root,
+                )
             )
         for reference in args.reference:
             declared_reference_entries.append(
-                validate_reference(target, reference, failures, blockers, allow_project_boundary=False)
+                validate_reference(
+                    target,
+                    reference,
+                    failures,
+                    blockers,
+                    allow_project_boundary=False,
+                    root=canonical_root,
+                )
             )
         append_check(
             payload,
@@ -7908,134 +6054,44 @@ def check_skill(argv: list[str]) -> int:
             "Resolved SKILL.md declared references and any extra --reference values with explicit repository/target boundaries.",
         )
 
-    control_root = target / ".skillguard"
+    authority = resolve_runtime_authority(target)
+    authority_files = [
+        target / ".skillguard" / "contract-source.json",
+        target / ".skillguard" / "compiled-contract.json",
+        target / ".skillguard" / "check-manifest.json",
+    ]
     before_failures, before_blockers = len(failures), len(blockers)
-    if not control_root.is_dir():
-        failures.append(f"target control root missing: {public_relative_path(control_root)}")
-    append_check(
-        payload,
-        "check-skill:control-root",
-        "Target .skillguard root",
-        check_status(failures, blockers, before_failures, before_blockers),
-        "Checked that the target .skillguard control root is present.",
-    )
-
-    if control_root.is_dir():
-        before_failures, before_blockers = len(failures), len(blockers)
-        for file_name in CONTROL_JSON_RECORDS:
-            path = control_root / file_name
-            if not path.is_file():
-                failures.append(f"required control record missing: {public_relative_path(path)}")
-                continue
-            record = inspect_control_json_file(
-                path,
-                target,
-                control_root,
-                failures,
-                blockers,
-                inspected_files,
-                control_reference_entries,
-            )
-            if record is not None:
-                control_records.append(
-                    {
-                        "path": public_relative_path(path),
-                        "schema_version": record.get("schema_version"),
-                        "target_type": record.get("target_type"),
-                        "status": record.get("status"),
-                    }
-                )
-        for directory_name in CONTROL_RECORD_DIRS:
-            directory = control_root / directory_name
-            if not directory.is_dir():
-                failures.append(f"required control directory missing: {public_relative_path(directory)}")
-                continue
-            json_files = sorted(directory.glob("*.json"))
-            if not json_files:
-                failures.append(f"required control directory has no JSON records: {public_relative_path(directory)}")
-                continue
-            for path in json_files:
-                record = inspect_control_json_file(
-                    path,
-                    target,
-                    control_root,
-                    failures,
-                    blockers,
-                    inspected_files,
-                    control_reference_entries,
-                )
-                if record is not None:
-                    control_records.append(
-                        {
-                            "path": public_relative_path(path),
-                            "schema_version": record.get("schema_version"),
-                            "target_type": record.get("target_type"),
-                            "status": record.get("status"),
-                        }
-                    )
-        append_check(
-            payload,
-            "check-skill:control-json-records",
-            "Control JSON records",
-            check_status(failures, blockers, before_failures, before_blockers),
-            "Parsed required root records and present ai_judgments/evidence/reports records, then checked common fields and references.",
-        )
-
-        before_failures, before_blockers = len(failures), len(blockers)
-        ledger_path = control_root / "skillguard_progress_ledger.jsonl"
-        if not ledger_path.is_file():
-            failures.append(f"required progress ledger missing: {public_relative_path(ledger_path)}")
-        else:
-            try:
-                ledger_records = load_jsonl(ledger_path)
-            except ValueError as exc:
-                failures.append(f"progress ledger invalid JSONL: {exc}")
-                ledger_records = []
+    for path in authority_files:
+        if path.is_file():
             inspected_files.append(
                 {
-                    "path": public_relative_path(ledger_path),
-                    "kind": "jsonl",
-                    "sha256": file_sha256(ledger_path),
-                    "line_count": line_count(ledger_path),
+                    "path": public_relative_path(path, report_root),
+                    "kind": "json",
+                    "sha256": file_sha256(path),
+                    "line_count": line_count(path),
                 }
             )
-            for index, record in enumerate(ledger_records, 1):
-                line_label = f"{public_relative_path(ledger_path)} line {index}"
-                if not isinstance(record, dict):
-                    failures.append(f"{line_label}: ledger line must be a JSON object")
-                    continue
-                for field in ("event_id", "event_time"):
-                    if not record.get(field):
-                        failures.append(f"{line_label}: missing {field}")
-                control_reference_entries.extend(
-                    validate_common_record(record, line_label, target, control_root, failures, blockers)
-                )
-                progress_entries.append(
-                    {
-                        "line": index,
-                        "event_id": record.get("event_id"),
-                        "status": record.get("status"),
-                        "event_time": record.get("event_time"),
-                    }
-                )
-        append_check(
-            payload,
-            "check-skill:progress-ledger",
-            "Progress ledger JSONL",
-            check_status(failures, blockers, before_failures, before_blockers),
-            "Parsed progress ledger line by line and reported ledger entries as historical progress, not current closure evidence.",
+    if not authority.ok or authority.authority != AUTHORITY_CURRENT:
+        blockers.extend(
+            f"{finding.code}: {finding.path}: {finding.message}"
+            for finding in authority.findings
         )
+    append_check(
+        payload,
+        "check-skill:current-runtime-authority",
+        "Current runtime authority",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Validated the sole current contract source, compiled contract, and exact check manifest with no former-runtime residual.",
+    )
 
+    payload["runtime_authority"] = {
+        "authority": authority.authority,
+        "ok": authority.ok,
+        "blockers": list(authority.blockers),
+    }
     payload["files_inspected"] = inspected_files
     payload["declared_references"] = declared_reference_entries
-    payload["control_records"] = control_records
-    payload["control_reference_checks"] = control_reference_entries
-    payload["progress_ledger_entries"] = progress_entries
     payload["unsafe_claim_findings"] = unsafe_claim_findings
-    payload["current_closure_evidence"] = {
-        "uses_progress_ledger_as_current_closure_evidence": False,
-        "summary": "Ledger entries are parsed for structure and context only; this command bases its decision on fresh inspection in this invocation.",
-    }
     payload["evidence"] = [
         {
             "evidence_id": "skill-entrypoint-static-read",
@@ -8045,18 +6101,11 @@ def check_skill(argv: list[str]) -> int:
             "source_path": f"{target_relative}/SKILL.md",
         },
         {
-            "evidence_id": "control-record-parse",
-            "kind": "parser_output",
-            "fresh": True,
-            "summary": f"Parsed {len(control_records)} target .skillguard JSON records with Python json helpers.",
-            "source_path": f"{target_relative}/.skillguard",
-        },
-        {
-            "evidence_id": "progress-ledger-jsonl-parse",
-            "kind": "parser_output",
-            "fresh": True,
-            "summary": f"Parsed {len(progress_entries)} progress ledger entries line by line without treating them as current closure evidence.",
-            "source_path": f"{target_relative}/.skillguard/skillguard_progress_ledger.jsonl",
+            "evidence_id": "current-runtime-authority",
+            "kind": "runtime_authority_resolution",
+            "fresh": authority.ok and authority.authority == AUTHORITY_CURRENT,
+            "summary": "Resolved exactly one current contract trio and rejected any former runtime surface.",
+            "source_path": f"{target_relative}/.skillguard/contract-source.json",
         },
     ]
     payload["failures"] = failures
@@ -8069,8 +6118,8 @@ def check_skill(argv: list[str]) -> int:
         route_node_id="check-skill",
         checker_name="check-skill",
         blockers=blockers + failures,
-        refresh_action={"action": "not_applicable", "status": "target_check"},
-        content_seed={"files_inspected": len(inspected_files), "control_records": len(control_records)},
+        owner_action={"action": "not_applicable", "status": "target_check"},
+        content_seed={"files_inspected": len(inspected_files), "runtime_authority": authority.authority},
     )
     return write_and_exit(payload, args.output)
 
@@ -8322,7 +6371,7 @@ def check_suite(argv: list[str]) -> int:
         route_node_id="check-suite",
         checker_name="check-suite",
         blockers=blockers + failures,
-        refresh_action={"action": "not_applicable", "status": "target_check"},
+        owner_action={"action": "not_applicable", "status": "target_check"},
         content_seed={"files_inspected": len(inspected_files), "suite_records": len(records)},
     )
     return write_and_exit(payload, args.output)
@@ -8388,9 +6437,9 @@ def inventory(argv: list[str]) -> int:
         "referenced_paths": [item[0] for item in expected],
         "declared_commands": list(COMMANDS),
         "maintained_records": [
-            ".agents/skills/skillguard/.skillguard/skillguard_profile.json",
-            ".agents/skills/skillguard/.skillguard/skillguard_skill_contract.json",
-            ".agents/skills/skillguard/.skillguard/skillguard_manifest.json",
+            ".agents/skills/skillguard/.skillguard/contract-source.json",
+            ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+            ".agents/skills/skillguard/.skillguard/check-manifest.json",
         ],
         "evidence": [
             {
@@ -8704,7 +6753,6 @@ def generate_skill(argv: list[str]) -> int:
             command_name="generate-skill",
             target_path=target_relative or input_relative,
             review_paths=args.checker_change_review,
-            refresh_paths=args.checker_change_refresh,
             selected_suites=args.checker_suite,
             suite_impact_class=args.checker_suite_impact,
             required=args.checker_suite_required,
@@ -8724,7 +6772,7 @@ def generate_skill(argv: list[str]) -> int:
             route_node_id="generate-skill",
             checker_name="generate-skill",
             blockers=blockers,
-            refresh_action={"action": "generate_skill", "status": "blocked"},
+            owner_action={"action": "generate_skill", "status": "blocked"},
             content_seed={
                 "input_path": input_relative,
                 "target_path": target_relative,
@@ -8842,7 +6890,7 @@ def generate_skill(argv: list[str]) -> int:
         route_node_id="generate-skill",
         checker_name="generate-skill",
         blockers=payload["blockers"] + payload["failures"],
-        refresh_action={"action": "generate_skill", "status": payload["decision"]},
+        owner_action={"action": "generate_skill", "status": payload["decision"]},
         content_seed={
             "input_path": input_relative,
             "target_path": target_relative,
@@ -9013,7 +7061,6 @@ def generate_suite(argv: list[str]) -> int:
             command_name="generate-suite",
             target_path=target_relative or input_relative,
             review_paths=args.checker_change_review,
-            refresh_paths=args.checker_change_refresh,
             selected_suites=args.checker_suite,
             suite_impact_class=args.checker_suite_impact,
             required=args.checker_suite_required,
@@ -9829,8 +7876,6 @@ def route_task_checker_change_guard_argv(config: dict[str, Any]) -> list[str]:
     argv: list[str] = []
     for path in route_task_config_string_values(config, ROUTE_TASK_CHECKER_CHANGE_REVIEW_FIELDS):
         argv.extend(["--checker-change-review", path])
-    for path in route_task_config_string_values(config, ROUTE_TASK_CHECKER_CHANGE_REFRESH_FIELDS):
-        argv.extend(["--checker-change-refresh", path])
     for suite in route_task_config_string_values(config, ROUTE_TASK_CHECKER_SUITE_FIELDS):
         argv.extend(["--checker-suite", suite])
     for field in ("checker_suite_impact", "suite_impact_class", "checker_change_impact"):
@@ -9850,7 +7895,6 @@ def route_task_checker_change_guard_from_config(
     target_path: str,
 ) -> dict[str, Any]:
     review_paths = route_task_config_string_values(config, ROUTE_TASK_CHECKER_CHANGE_REVIEW_FIELDS)
-    refresh_paths = route_task_config_string_values(config, ROUTE_TASK_CHECKER_CHANGE_REFRESH_FIELDS)
     selected_suites = route_task_config_string_values(config, ROUTE_TASK_CHECKER_SUITE_FIELDS)
     suite_impact_class = ""
     for field in ("checker_suite_impact", "suite_impact_class", "checker_change_impact"):
@@ -9863,7 +7907,6 @@ def route_task_checker_change_guard_from_config(
         command_name=command_name,
         target_path=target_path,
         review_paths=review_paths,
-        refresh_paths=refresh_paths,
         selected_suites=selected_suites,
         suite_impact_class=suite_impact_class,
         required=required,
@@ -10098,7 +8141,7 @@ def route_task(argv: list[str]) -> int:
         route_node_id="route-task",
         checker_name="route-task",
         blockers=routing_conflict_blockers,
-        refresh_action={"action": "not_applicable", "status": "route_only"},
+        owner_action={"action": "not_applicable", "status": "route_only"},
         content_seed={"route_hint_present": bool(route_hint), "selected_route": payload.get("routing_decision", {})},
     )
     return write_and_exit(payload, args.output)
@@ -10129,7 +8172,7 @@ def add_stale_evidence_blocker(
     expected_current_binding: dict[str, Any],
     observed_stale_binding: dict[str, Any],
     stale_reason: str,
-    recommended_refresh_action: str,
+    recommended_owner_action: str,
 ) -> None:
     stale_blockers.append(
         {
@@ -10141,7 +8184,7 @@ def add_stale_evidence_blocker(
             "expected_current_binding": expected_current_binding,
             "observed_stale_binding": observed_stale_binding,
             "stale_reason": stale_reason,
-            "recommended_refresh_action": recommended_refresh_action,
+            "recommended_owner_action": recommended_owner_action,
         }
     )
 
@@ -10175,7 +8218,6 @@ def maintenance_record_kind_for_command(command: str) -> str:
         "route-task": "route_task_metadata",
         "fixture-test": "fixture_evidence",
         "detect-stale-evidence": "stale_evidence_review",
-        "refresh-maintenance": "maintenance_refresh",
         "review-checker-change": "checker_change_review",
         "self-check": "self_check",
         "check-skill": "target_check",
@@ -10215,7 +8257,7 @@ def normalize_maintenance_blocker_row(item: Any, artifact_id: str, index: int = 
         or item.get("stale_reason")
         or item.get("failure_reason")
         or item.get("recommended_resolution")
-        or item.get("recommended_refresh_action")
+        or item.get("recommended_owner_action")
         or item.get("recommended_repair_action")
         or str(item.get("blocker_code") or "blocker")
     )
@@ -10226,7 +8268,7 @@ def normalize_maintenance_blocker_row(item: Any, artifact_id: str, index: int = 
         "message": str(message)[:240],
         "recommended_repair_action": str(
             item.get("recommended_repair_action")
-            or item.get("recommended_refresh_action")
+            or item.get("recommended_owner_action")
             or item.get("recommended_resolution")
             or "Repair the owning maintenance artifact and regenerate current evidence."
         )[:300],
@@ -10247,7 +8289,7 @@ def build_maintenance_record(
     status: str,
     blockers: list[Any] | None = None,
     evidence_timestamp: str | None = None,
-    refresh_action: dict[str, Any] | None = None,
+    owner_action: dict[str, Any] | None = None,
     content_seed: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     blocker_rows = [
@@ -10278,7 +8320,7 @@ def build_maintenance_record(
         "evidence_timestamp": timestamp,
         "status": status,
         "blockers": blocker_rows,
-        "refresh_action": refresh_action or {"action": "not_applicable", "status": "not_applicable"},
+        "owner_action": owner_action or {"action": "not_applicable", "status": "not_applicable"},
     }
 
 
@@ -10290,7 +8332,7 @@ def attach_maintenance_record(
     route_node_id: str,
     checker_name: str,
     blockers: list[Any] | None = None,
-    refresh_action: dict[str, Any] | None = None,
+    owner_action: dict[str, Any] | None = None,
     content_seed: dict[str, Any] | None = None,
 ) -> None:
     record = build_maintenance_record(
@@ -10301,7 +8343,7 @@ def attach_maintenance_record(
         status=str(payload.get("decision") or ""),
         blockers=blockers,
         evidence_timestamp=str(payload.get("checked_at") or utc_timestamp()),
-        refresh_action=refresh_action,
+        owner_action=owner_action,
         content_seed=content_seed,
     )
     payload["maintenance_record_schema_version"] = MAINTENANCE_RECORD_SCHEMA_VERSION
@@ -10372,7 +8414,7 @@ def validate_maintenance_record(
                 artifact_id=artifact_id,
                 field_path="$.schema_version",
                 observed_shape=schema_version or "missing",
-                recommended_repair_action="Migrate the record to the current canonical maintenance record schema version.",
+                recommended_repair_action="Rewrite the record directly in the current canonical maintenance record shape.",
             )
         )
     record_kind = str(record.get("record_kind") or "")
@@ -10510,7 +8552,7 @@ def validate_maintenance_record(
                 artifact_id=artifact_id,
                 field_path=alias["field_path"],
                 observed_shape=alias["alias"],
-                recommended_repair_action="Remove stale legacy aliases and migrate through the canonical maintenance record writer.",
+                recommended_repair_action="Remove former aliases and rewrite the record in the sole current shape.",
             )
         )
     for finding in maintenance_record_public_boundary_findings(record):
@@ -10523,76 +8565,34 @@ def validate_maintenance_record(
                 recommended_repair_action="Remove sealed, private, credential-like, or local-machine content from public maintenance fields.",
             )
         )
-    refresh_action = record.get("refresh_action")
-    if not isinstance(refresh_action, dict):
+    owner_action = record.get("owner_action")
+    if not isinstance(owner_action, dict):
         blockers.append(
             maintenance_record_blocker(
-                blocker_code="malformed_refresh_action",
+                blocker_code="malformed_owner_action",
                 artifact_id=artifact_id,
-                field_path="$.refresh_action",
-                observed_shape=type(refresh_action).__name__,
-                recommended_repair_action="Regenerate refresh_action as a structured object.",
+                field_path="$.owner_action",
+                observed_shape=type(owner_action).__name__,
+                recommended_repair_action="Regenerate owner_action as a structured object.",
             )
         )
     return blockers
 
 
-def normalized_legacy_maintenance_record(data: dict[str, Any], artifact_id: str) -> tuple[dict[str, Any] | None, list[dict[str, Any]], str]:
+def extract_current_maintenance_record(data: dict[str, Any], artifact_id: str) -> tuple[dict[str, Any] | None, list[dict[str, Any]], str]:
     if isinstance(data.get("maintenance_record"), dict):
-        return data["maintenance_record"], [], "canonical_nested"
+        return data["maintenance_record"], [], "current_nested"
     if data.get("schema_version") == MAINTENANCE_RECORD_SCHEMA_VERSION:
-        return data, [], "canonical"
-    if "record_id" in data or "record_kind" in data or "command_surface" in data:
-        return data, [], "canonical"
-    if "private_payload" in data:
-        return None, [
-            maintenance_record_blocker(
-                blocker_code="public_boundary_leakage",
-                artifact_id=artifact_id,
-                field_path="$.private_payload",
-                observed_shape="private_payload",
-                recommended_repair_action="Regenerate the record without private or sealed payload fields.",
-            )
-        ], "unsupported_legacy"
-    command = str(data.get("command") or "")
-    if not command:
-        return None, [
-            maintenance_record_blocker(
-                blocker_code="unsupported_legacy_maintenance_record",
-                artifact_id=artifact_id,
-                field_path="$",
-                observed_shape={"keys": sorted(str(key) for key in data.keys())[:12]},
-                recommended_repair_action="Use a canonical maintenance record or a supported SkillGuard command output.",
-            )
-        ], "unsupported_legacy"
-    raw_blockers: list[Any] = []
-    for field_name in ("stale_evidence_blockers", "checker_change_blockers", "routing_conflict_blockers", "blockers"):
-        value = data.get(field_name)
-        if isinstance(value, list):
-            raw_blockers.extend(value)
-    refresh_action = {
-        "action": "legacy_normalized",
-        "status": "normalized",
-        "source_command": command,
-    }
-    if command == "refresh-maintenance":
-        refresh_action = {
-            "action": "refresh_maintenance",
-            "status": str(data.get("mode") or ""),
-            "planned_refresh_count": int(data.get("planned_refresh_count") or 0),
-        }
-    normalized = build_maintenance_record(
-        record_kind=maintenance_record_kind_for_command(command),
-        artifact_id=artifact_id,
-        route_node_id=command,
-        checker_name=command if command in COMMANDS else "commands",
-        status=str(data.get("decision") or data.get("status") or ""),
-        blockers=raw_blockers,
-        evidence_timestamp=str(data.get("checked_at") or data.get("generated_at") or utc_timestamp()),
-        refresh_action=refresh_action,
-        content_seed={"legacy_schema_version": data.get("schema_version"), "command": command},
-    )
-    return normalized, [], "legacy_normalized"
+        return data, [], "current_direct"
+    return None, [
+        maintenance_record_blocker(
+            blocker_code="non_current_maintenance_record",
+            artifact_id=artifact_id,
+            field_path="$.schema_version",
+            observed_shape=data.get("schema_version"),
+            recommended_repair_action="Rewrite the artifact directly as a current maintenance record before validation.",
+        )
+    ], "blocked_non_current"
 
 
 def stale_hash_code_for(record: dict[str, Any], binding_kind: str) -> str:
@@ -10637,7 +8637,7 @@ def compare_recorded_hash_binding(
             expected_current_binding={"required_fields": ["path", "sha256"], "record": public_relative_path(record_path)},
             observed_stale_binding={"path": label, "missing_fields": missing_fields},
             stale_reason="evidence binding is missing metadata required for a current hash comparison.",
-            recommended_refresh_action="Regenerate the evidence artifact with repository-relative path and sha256 metadata.",
+            recommended_owner_action="Regenerate the evidence artifact with repository-relative path and sha256 metadata.",
         )
         return False
     try:
@@ -10652,7 +8652,7 @@ def compare_recorded_hash_binding(
             expected_current_binding={"path_boundary": "repository-relative path under the repository root"},
             observed_stale_binding={"path": label, "sha256": recorded_hash},
             stale_reason="recorded evidence path is outside the repository boundary or cannot be resolved safely.",
-            recommended_refresh_action="Regenerate the evidence artifact with repository-local paths only.",
+            recommended_owner_action="Regenerate the evidence artifact with repository-local paths only.",
         )
         return False
 
@@ -10667,7 +8667,7 @@ def compare_recorded_hash_binding(
             expected_current_binding={"path": relative, "exists": True, "kind": "file"},
             observed_stale_binding={"path": relative, "exists": resolved.exists(), "sha256": recorded_hash},
             stale_reason="recorded evidence path no longer points to a current file.",
-            recommended_refresh_action="Restore the referenced artifact or regenerate the evidence record from current files.",
+            recommended_owner_action="Restore the referenced artifact or regenerate the evidence record from current files.",
         )
         return True
 
@@ -10682,7 +8682,7 @@ def compare_recorded_hash_binding(
             expected_current_binding={"path": relative, "sha256": current_sha},
             observed_stale_binding={"path": relative, "sha256": recorded_hash},
             stale_reason="recorded sha256 differs from the current file sha256.",
-            recommended_refresh_action="Rerun the command or fixture that produced this evidence against current files.",
+            recommended_owner_action="Rerun the command or fixture that produced this evidence against current files.",
         )
     return True
 
@@ -10709,7 +8709,7 @@ def check_recorded_hash_entries(
             expected_current_binding={field_name: "list of path/sha256 bindings"},
             observed_stale_binding={field_name: type(entries).__name__},
             stale_reason="evidence metadata field has an unsupported shape.",
-            recommended_refresh_action="Regenerate the evidence artifact with a list-shaped metadata field.",
+            recommended_owner_action="Regenerate the evidence artifact with a list-shaped metadata field.",
         )
         return 0
 
@@ -10725,7 +8725,7 @@ def check_recorded_hash_entries(
                 expected_current_binding={"entry": "object with path and sha256"},
                 observed_stale_binding={"entry_type": type(entry).__name__},
                 stale_reason="evidence metadata entry is not an object.",
-                recommended_refresh_action="Regenerate the evidence artifact with structured path/hash entries.",
+                recommended_owner_action="Regenerate the evidence artifact with structured path/hash entries.",
             )
             continue
         path_text = entry.get("resolved_path") or entry.get("path") or entry.get("source_path")
@@ -10764,7 +8764,7 @@ def check_fixture_result_hashes(
             expected_current_binding={"fixture_results": "list of fixture case result bindings"},
             observed_stale_binding={"fixture_results": type(results).__name__},
             stale_reason="fixture output metadata has an unsupported shape.",
-            recommended_refresh_action="Rerun fixture-test to regenerate structured fixture results.",
+            recommended_owner_action="Rerun fixture-test to regenerate structured fixture results.",
         )
         return 0
     checked = 0
@@ -10807,7 +8807,7 @@ def check_fixture_manifest_binding(
             expected_current_binding={"target_path": "repository-relative fixture manifest path"},
             observed_stale_binding={"target_path": str(target_path or "")},
             stale_reason="fixture-test output does not identify the fixture manifest it claims to cover.",
-            recommended_refresh_action="Rerun fixture-test with a current explicit fixture manifest.",
+            recommended_owner_action="Rerun fixture-test with a current explicit fixture manifest.",
         )
         return 0
     manifest_entries = [
@@ -10825,7 +8825,7 @@ def check_fixture_manifest_binding(
             expected_current_binding={"path": target_path, "sha256": "current fixture manifest hash"},
             observed_stale_binding={"path": target_path, "sha256": ""},
             stale_reason="fixture-test output is missing hash metadata for its target manifest.",
-            recommended_refresh_action="Rerun fixture-test so the target manifest hash is recorded.",
+            recommended_owner_action="Rerun fixture-test so the target manifest hash is recorded.",
         )
         return 0
     entry = manifest_entries[0]
@@ -10872,7 +8872,7 @@ def check_generated_artifact_paths(
                 expected_current_binding={field_name: "list of repository-relative generated artifact paths"},
                 observed_stale_binding={field_name: type(values).__name__},
                 stale_reason="generated artifact metadata has an unsupported shape.",
-                recommended_refresh_action="Regenerate the scaffold command output with structured path lists.",
+                recommended_owner_action="Regenerate the scaffold command output with structured path lists.",
             )
             continue
         for index, value in enumerate(values):
@@ -10890,7 +8890,7 @@ def check_generated_artifact_paths(
                     expected_current_binding={"path_boundary": "repository-relative path under the repository root"},
                     observed_stale_binding={"path": public_binding_path_label(value)},
                     stale_reason="generated artifact path is outside the repository boundary.",
-                    recommended_refresh_action="Regenerate the scaffold command output with repository-local generated artifact paths.",
+                    recommended_owner_action="Regenerate the scaffold command output with repository-local generated artifact paths.",
                 )
                 continue
             relative = public_relative_path(path)
@@ -10905,7 +8905,7 @@ def check_generated_artifact_paths(
                     expected_current_binding={"path": relative, "exists": True},
                     observed_stale_binding={"path": relative, "exists": False},
                     stale_reason="generated artifact path recorded by evidence output is no longer present.",
-                    recommended_refresh_action="Restore the generated artifact or rerun the generator/check that owns this evidence.",
+                    recommended_owner_action="Restore the generated artifact or rerun the generator/check that owns this evidence.",
                 )
     for index, check in enumerate(record.get("post_generation_checks", []) if isinstance(record.get("post_generation_checks"), list) else []):
         if not isinstance(check, dict):
@@ -10928,7 +8928,7 @@ def check_generated_artifact_paths(
                 expected_current_binding={"path": public_relative_path(path), "exists": True},
                 observed_stale_binding={"path": public_relative_path(path), "exists": False},
                 stale_reason="post-generation check artifact path is no longer present.",
-                recommended_refresh_action="Restore the generated artifact or rerun the generator/check that owns this evidence.",
+                recommended_owner_action="Restore the generated artifact or rerun the generator/check that owns this evidence.",
             )
     checked += check_recorded_hash_entries(
         record=record,
@@ -10968,7 +8968,7 @@ def check_route_and_command_metadata(
                 expected_current_binding={"route_version": expected_route_version},
                 observed_stale_binding={"route_version": str(route_version)},
                 stale_reason="recorded route version differs from the current expected route version.",
-                recommended_refresh_action="Regenerate the evidence against the current route version before using it for acceptance.",
+                recommended_owner_action="Regenerate the evidence against the current route version before using it for acceptance.",
             )
 
     registry_version = record.get("route_registry_version")
@@ -10984,7 +8984,7 @@ def check_route_and_command_metadata(
                 expected_current_binding={"route_registry_version": expected_route_registry_version},
                 observed_stale_binding={"route_registry_version": str(registry_version)},
                 stale_reason="recorded route registry version differs from the current route-task registry version.",
-                recommended_refresh_action="Rerun route-task or fixture-test outputs that captured the older route registry.",
+                recommended_owner_action="Rerun route-task or fixture-test outputs that captured the older route registry.",
             )
 
     command_names = record.get("command_names")
@@ -11006,7 +9006,7 @@ def check_route_and_command_metadata(
                     "extra_commands": sorted(set(observed_names) - set(current_names)),
                 },
                 stale_reason="recorded command surface differs from the current SkillGuard dispatch table.",
-                recommended_refresh_action="Rerun self-check or commands after command dispatch changes.",
+                recommended_owner_action="Rerun self-check or commands after command dispatch changes.",
             )
 
     recorded_registry = record.get("current_route_registry")
@@ -11029,7 +9029,7 @@ def check_route_and_command_metadata(
                     ]
                 },
                 stale_reason="recorded route registry entries differ from current route-task registry entries.",
-                recommended_refresh_action="Rerun route-task or fixture-test outputs that captured the older route registry.",
+                recommended_owner_action="Rerun route-task or fixture-test outputs that captured the older route registry.",
             )
     return checked
 
@@ -11053,7 +9053,7 @@ def check_openspec_status_metadata(
             expected_current_binding={"openspec_status": "object with changes_directory_present metadata"},
             observed_stale_binding={"openspec_status": type(status).__name__},
             stale_reason="OpenSpec status metadata has an unsupported shape.",
-            recommended_refresh_action="Regenerate the evidence with structured OpenSpec status metadata.",
+            recommended_owner_action="Regenerate the evidence with structured OpenSpec status metadata.",
         )
         return 0
     checked = 1
@@ -11071,7 +9071,7 @@ def check_openspec_status_metadata(
             expected_current_binding={"changes_directory_present": current_changes_present},
             observed_stale_binding={"changes_directory_present": ""},
             stale_reason="OpenSpec status metadata cannot be compared without the recorded changes-directory state.",
-            recommended_refresh_action="Regenerate the evidence with current OpenSpec list/validate status metadata.",
+            recommended_owner_action="Regenerate the evidence with current OpenSpec list/validate status metadata.",
         )
     elif bool(observed) != current_changes_present:
         add_stale_evidence_blocker(
@@ -11083,7 +9083,7 @@ def check_openspec_status_metadata(
             expected_current_binding={"changes_directory_present": current_changes_present},
             observed_stale_binding={"changes_directory_present": bool(observed)},
             stale_reason="recorded OpenSpec changes-directory status differs from the current repository state.",
-            recommended_refresh_action="Rerun OpenSpec status/validation and regenerate the evidence record.",
+            recommended_owner_action="Rerun OpenSpec status/validation and regenerate the evidence record.",
         )
     return checked
 
@@ -11118,7 +9118,7 @@ def check_nested_maintenance_record_metadata(
                 "field_path": blocker.get("field_path"),
             },
             stale_reason="nested maintenance_record does not match the canonical public maintenance record schema or current route/command bindings.",
-            recommended_refresh_action=str(blocker.get("recommended_repair_action") or "Regenerate the maintenance record with current canonical metadata."),
+            recommended_owner_action=str(blocker.get("recommended_repair_action") or "Regenerate the maintenance record with current canonical metadata."),
         )
     return 1
 
@@ -11213,27 +9213,21 @@ def inspect_stale_evidence_record(
             },
             observed_stale_binding={"metadata_bindings_checked": 0},
             stale_reason="record has no comparable freshness metadata, so it cannot support a current evidence claim.",
-            recommended_refresh_action="Regenerate the evidence with source fingerprints, route/command metadata, fixture bindings, or generated artifact paths.",
+            recommended_owner_action="Regenerate the evidence with source fingerprints, route/command metadata, fixture bindings, or generated artifact paths.",
         )
     return stale_blockers, checked
 
 
 def freshness_blocker_counts(stale_blockers: list[dict[str, Any]]) -> dict[str, int]:
     missing_count = 0
-    unrefreshable_count = 0
-    refreshable_count = 0
     for blocker in stale_blockers:
         code = str(blocker.get("blocker_code") or "")
         if code in MAINTENANCE_MISSING_BLOCKER_CODES:
             missing_count += 1
-        if refresh_blocker_is_refreshable(blocker):
-            refreshable_count += 1
-        else:
-            unrefreshable_count += 1
     return {
         "missing_count": missing_count,
-        "refreshable_count": refreshable_count,
-        "unrefreshable_count": unrefreshable_count,
+        "stale_count": len(stale_blockers) - missing_count,
+        "owner_rerun_required_count": len(stale_blockers),
     }
 
 
@@ -11251,21 +9245,20 @@ def maintenance_freshness_summary(
     return {
         "schema_version": "skillguard.maintenance_freshness_state.v1",
         "state": state,
-        "states_supported": sorted(MAINTENANCE_REFRESH_STATES),
+        "states_supported": sorted(MAINTENANCE_FRESHNESS_STATES),
         "current_evidence_can_pass": state == "fresh",
         "input_artifact_count": len(inspected_artifacts),
         "freshness_bindings_checked": freshness_bindings_checked,
-        "stale_count": len(stale_blockers) - counts["missing_count"],
+        "stale_count": counts["stale_count"],
         "missing_count": counts["missing_count"],
-        "refreshable_stale_count": counts["refreshable_count"],
-        "unrefreshable_count": counts["unrefreshable_count"],
+        "owner_rerun_required_count": counts["owner_rerun_required_count"],
         "recorded_source_status_fields": [
             "inspected_artifacts[].path",
             "inspected_artifacts[].sha256",
             "freshness_bindings_checked",
             "stale_evidence_blockers[].expected_current_binding",
             "stale_evidence_blockers[].observed_stale_binding",
-            "stale_evidence_blockers[].recommended_refresh_action",
+            "stale_evidence_blockers[].recommended_owner_action",
         ],
         "stale_or_missing_blocker_codes": sorted({str(item.get("blocker_code") or "") for item in stale_blockers}),
     }
@@ -11328,7 +9321,7 @@ def detect_stale_evidence(argv: list[str]) -> int:
                 expected_current_binding={"path_boundary": "repository-relative path under the repository root"},
                 observed_stale_binding={"path": public_binding_path_label(input_value)},
                 stale_reason="input evidence artifact path is outside the repository boundary.",
-                recommended_refresh_action="Supply repository-local evidence artifact paths only.",
+                recommended_owner_action="Supply repository-local evidence artifact paths only.",
             )
             continue
         input_paths.append(input_path)
@@ -11345,7 +9338,7 @@ def detect_stale_evidence(argv: list[str]) -> int:
                 expected_current_binding={"path": input_relative, "exists": True, "kind": "file"},
                 observed_stale_binding={"path": input_relative, "exists": input_path.exists()},
                 stale_reason="input evidence artifact is missing or not a file.",
-                recommended_refresh_action="Restore the evidence artifact or rerun the command that should produce it.",
+                recommended_owner_action="Restore the evidence artifact or rerun the command that should produce it.",
             )
             continue
         inspected_artifacts.append(checked_file(input_path, "json"))
@@ -11361,7 +9354,7 @@ def detect_stale_evidence(argv: list[str]) -> int:
                 expected_current_binding={"json_parse": "valid JSON object"},
                 observed_stale_binding={"json_parse": "failed"},
                 stale_reason="input evidence artifact is not parseable JSON.",
-                recommended_refresh_action="Regenerate the evidence artifact as valid JSON.",
+                recommended_owner_action="Regenerate the evidence artifact as valid JSON.",
             )
             continue
         if not isinstance(record, dict):
@@ -11374,7 +9367,7 @@ def detect_stale_evidence(argv: list[str]) -> int:
                 expected_current_binding={"json_root": "object"},
                 observed_stale_binding={"json_root": type(record).__name__},
                 stale_reason="input evidence artifact root is not a JSON object.",
-                recommended_refresh_action="Regenerate the evidence artifact as a structured JSON object.",
+                recommended_owner_action="Regenerate the evidence artifact as a structured JSON object.",
             )
             continue
         record_blockers, record_checked = inspect_stale_evidence_record(
@@ -11460,623 +9453,8 @@ def detect_stale_evidence(argv: list[str]) -> int:
         route_node_id="detect-stale-evidence",
         checker_name="detect-stale-evidence",
         blockers=stale_evidence_blockers,
-        refresh_action={"action": "detect_only", "status": "not_applicable", "stale_evidence_count": len(stale_evidence_blockers)},
+        owner_action={"action": "detect_only", "status": "not_applicable", "stale_evidence_count": len(stale_evidence_blockers)},
         content_seed={"inspected_artifacts": [item.get("path") for item in inspected_artifacts], "checked_bindings": checked_bindings},
-    )
-    return write_and_exit(payload, args.output)
-
-
-def refresh_action_for_blocker(blocker: dict[str, Any]) -> str:
-    code = str(blocker.get("blocker_code") or "")
-    binding_kind = str(blocker.get("binding_kind") or "")
-    if code in {"stale_source_fingerprint", "stale_command_or_self_check_record"}:
-        return "Update recorded repository-local file sha256 and line_count metadata for the stale evidence binding."
-    if code == "stale_fixture_manifest":
-        return "Update the fixture-test output's recorded fixture manifest sha256 and line_count metadata."
-    if code == "stale_fixture_output":
-        return "Update the fixture-test output's recorded fixture case sha256 and line_count metadata."
-    if code == "stale_route_version":
-        return "Update route_version to the current expected route version."
-    if code == "stale_route_registry_version":
-        return "Update route_registry_version to the current route-task registry version."
-    if code == "stale_command_surface":
-        return "Update command_names to the current SkillGuard dispatch table."
-    if code == "stale_route_registry":
-        return "Update current_route_registry to the current public route-task registry projection."
-    if code == "stale_openspec_status":
-        return "Update OpenSpec status metadata to the current repository changes-directory presence."
-    if code in {"stale_generated_artifact_path", "stale_generated_artifact_hash"} or binding_kind in {
-        "generated_artifact_path",
-        "post_generation_artifact",
-        "generated_artifact_hash",
-    }:
-        return "Not refreshable by metadata rewrite; restore or regenerate the owning generated artifact first."
-    if code == "missing_evidence_metadata":
-        return "Not refreshable because the artifact does not identify enough comparable metadata to update safely."
-    if binding_kind == "maintenance_record":
-        return "Not refreshable by metadata rewrite; regenerate the owning command output with the canonical maintenance record writer."
-    if code == "invalid_evidence_path":
-        return "Not refreshable because the recorded path is outside the repository-local maintenance boundary."
-    if code == "missing_evidence_artifact":
-        return "Not refreshable because the referenced artifact is missing; restore or regenerate the owning artifact first."
-    return "Not refreshable by refresh-maintenance; rerun the owning checker or provide current metadata."
-
-
-def refresh_blocker_is_refreshable(blocker: dict[str, Any]) -> bool:
-    code = str(blocker.get("blocker_code") or "")
-    binding_kind = str(blocker.get("binding_kind") or "")
-    if code not in REFRESH_MAINTENANCE_REFRESHABLE_CODES:
-        return False
-    return binding_kind in {
-        "source_fingerprint",
-        "evidence_reference",
-        "report_input",
-        "fixture_manifest",
-        "fixture_case",
-        "route_version",
-        "route_registry_version",
-        "command_surface",
-        "route_registry",
-        "openspec_status",
-    }
-
-
-def refresh_plan_item(blocker: dict[str, Any], *, dry_run: bool) -> dict[str, Any]:
-    refreshable = refresh_blocker_is_refreshable(blocker)
-    return {
-        "artifact_id": str(blocker.get("artifact_id") or ""),
-        "blocker_code": str(blocker.get("blocker_code") or ""),
-        "binding_kind": str(blocker.get("binding_kind") or ""),
-        "binding_id": str(blocker.get("binding_id") or ""),
-        "stale_reason": str(blocker.get("stale_reason") or ""),
-        "expected_current_binding": blocker.get("expected_current_binding") or {},
-        "refresh_action": refresh_action_for_blocker(blocker),
-        "refreshable": refreshable,
-        "mutation_status": "planned_no_mutation" if dry_run and refreshable else "pending_execute" if refreshable else "not_refreshable",
-    }
-
-
-def maintenance_refresh_summary(
-    *,
-    mode: str,
-    input_requested: bool,
-    inspected_artifacts: list[dict[str, Any]],
-    stale_blockers: list[dict[str, Any]],
-    planned_refreshes: list[dict[str, Any]],
-    completed_refresh_actions: list[dict[str, Any]],
-    remaining_stale_blockers: list[dict[str, Any]],
-    freshness_bindings_checked: int,
-) -> dict[str, Any]:
-    counts = freshness_blocker_counts(stale_blockers)
-    failed_actions = [
-        action
-        for artifact_action in completed_refresh_actions
-        for action in artifact_action.get("actions", [])
-        if isinstance(action, dict) and action.get("mutation_status") == "blocked"
-    ]
-    unrefreshable_plans = [item for item in planned_refreshes if not item.get("refreshable")]
-
-    if not input_requested or any(item.get("binding_kind") == "input_artifact" for item in stale_blockers):
-        state = "missing"
-    elif mode == "execute" and (failed_actions or remaining_stale_blockers or unrefreshable_plans):
-        state = "refresh_failed"
-    elif mode == "execute" and completed_refresh_actions and not remaining_stale_blockers:
-        state = "current_after_refresh"
-    elif stale_blockers and mode == "dry-run" and counts["refreshable_count"] > 0 and not unrefreshable_plans:
-        state = "stale_refresh_planned"
-    elif stale_blockers:
-        state = "missing_or_unrefreshable_blocker"
-    else:
-        state = "fresh"
-
-    return {
-        "schema_version": "skillguard.maintenance_refresh_state.v1",
-        "state": state,
-        "states_supported": sorted(MAINTENANCE_REFRESH_STATES),
-        "mode": mode,
-        "current_evidence_can_pass": state in {"fresh", "current_after_refresh"},
-        "input_artifact_count": len(inspected_artifacts),
-        "freshness_bindings_checked": freshness_bindings_checked,
-        "stale_count": len(stale_blockers) - counts["missing_count"],
-        "missing_count": counts["missing_count"],
-        "refreshable_stale_count": counts["refreshable_count"],
-        "unrefreshable_count": counts["unrefreshable_count"],
-        "planned_refresh_count": len([item for item in planned_refreshes if item.get("refreshable")]),
-        "completed_refresh_count": len(completed_refresh_actions),
-        "refresh_failed_count": len(failed_actions) + len(remaining_stale_blockers) + len(unrefreshable_plans),
-        "remaining_stale_count": len(remaining_stale_blockers),
-        "failed_refresh_actions": failed_actions,
-        "recorded_source_status_fields": [
-            "stale_evidence_blockers[].expected_current_binding",
-            "stale_evidence_blockers[].observed_stale_binding",
-            "planned_refreshes[].mutation_status",
-            "completed_refresh_actions[].actions[].mutation_status",
-            "remaining_stale_blockers[]",
-            "post_refresh_freshness.remaining_stale_count",
-        ],
-        "stale_or_missing_blocker_codes": sorted({str(item.get("blocker_code") or "") for item in stale_blockers}),
-    }
-
-
-def metadata_kind_for(path: Path) -> str:
-    return "json" if path.suffix.lower() == ".json" else "markdown" if path.suffix.lower() == ".md" else "file"
-
-
-def update_file_binding_metadata(entry: dict[str, Any], path_keys: tuple[str, ...]) -> dict[str, Any]:
-    path_text = ""
-    for key in path_keys:
-        value = entry.get(key)
-        if isinstance(value, str) and value.strip():
-            path_text = value
-            break
-    if not path_text:
-        return {
-            "mutation_status": "blocked",
-            "failure_reason": "binding does not contain a repository-relative path field",
-        }
-    try:
-        path = resolve_repository_reference(path_text)
-    except ValueError:
-        return {
-            "mutation_status": "blocked",
-            "target_path": public_binding_path_label(path_text),
-            "failure_reason": "binding path is outside the repository boundary",
-        }
-    relative = public_relative_path(path)
-    if not path.is_file():
-        return {
-            "mutation_status": "blocked",
-            "target_path": relative,
-            "failure_reason": "binding path does not point to a current file",
-        }
-    before_sha = normalized_recorded_sha256(entry.get("sha256"))
-    after_sha = file_sha256(path)
-    entry["sha256"] = after_sha
-    entry["line_count"] = line_count(path)
-    entry.setdefault("kind", metadata_kind_for(path))
-    return {
-        "mutation_status": "refreshed" if before_sha != after_sha else "already_current",
-        "target_path": relative,
-        "before_sha256": before_sha,
-        "after_sha256": after_sha,
-    }
-
-
-def update_list_file_bindings(
-    *,
-    record: dict[str, Any],
-    field_name: str,
-    path_keys: tuple[str, ...],
-    filter_path: str | None = None,
-) -> list[dict[str, Any]]:
-    values = record.get(field_name)
-    if not isinstance(values, list):
-        return []
-    updates: list[dict[str, Any]] = []
-    for index, entry in enumerate(values):
-        if not isinstance(entry, dict):
-            continue
-        if filter_path is not None:
-            entry_paths = {str(entry.get(key) or "") for key in path_keys}
-            if filter_path not in entry_paths:
-                continue
-        update = update_file_binding_metadata(entry, path_keys)
-        update["field"] = f"{field_name}[{index}]"
-        updates.append(update)
-    return updates
-
-
-def apply_refresh_to_record(
-    *,
-    record: dict[str, Any],
-    blocker: dict[str, Any],
-    expected_route_version: str,
-    expected_route_registry_version: str,
-) -> dict[str, Any]:
-    code = str(blocker.get("blocker_code") or "")
-    binding_kind = str(blocker.get("binding_kind") or "")
-    if not refresh_blocker_is_refreshable(blocker):
-        return {
-            "artifact_id": str(blocker.get("artifact_id") or ""),
-            "blocker_code": code,
-            "binding_kind": binding_kind,
-            "binding_id": str(blocker.get("binding_id") or ""),
-            "mutation_status": "blocked",
-            "failure_reason": refresh_action_for_blocker(blocker),
-        }
-
-    updates: list[dict[str, Any]] = []
-    if binding_kind == "source_fingerprint":
-        updates = update_list_file_bindings(record=record, field_name="files_inspected", path_keys=("resolved_path", "path", "source_path"))
-    elif binding_kind == "evidence_reference":
-        updates = update_list_file_bindings(record=record, field_name="evidence_references", path_keys=("resolved_path", "path", "source_path"))
-    elif binding_kind == "report_input":
-        updates = update_list_file_bindings(record=record, field_name="reports_inspected", path_keys=("resolved_path", "path", "source_path"))
-    elif binding_kind == "fixture_manifest":
-        target_path = record.get("target_path") if isinstance(record.get("target_path"), str) else None
-        updates = update_list_file_bindings(
-            record=record,
-            field_name="files_inspected",
-            path_keys=("resolved_path", "path", "source_path"),
-            filter_path=target_path,
-        )
-    elif binding_kind == "fixture_case":
-        updates = update_list_file_bindings(record=record, field_name="fixture_results", path_keys=("fixture_path", "path", "resolved_path"))
-    elif binding_kind == "route_version":
-        before = str(record.get("route_version") or "")
-        record["route_version"] = expected_route_version
-        updates = [{"field": "route_version", "before": before, "after": expected_route_version, "mutation_status": "refreshed" if before != expected_route_version else "already_current"}]
-    elif binding_kind == "route_registry_version":
-        before = str(record.get("route_registry_version") or "")
-        record["route_registry_version"] = expected_route_registry_version
-        updates = [
-            {
-                "field": "route_registry_version",
-                "before": before,
-                "after": expected_route_registry_version,
-                "mutation_status": "refreshed" if before != expected_route_registry_version else "already_current",
-            }
-        ]
-    elif binding_kind == "command_surface":
-        before = record.get("command_names")
-        current_names = list(COMMANDS)
-        record["command_names"] = current_names
-        updates = [{"field": "command_names", "before_count": len(before) if isinstance(before, list) else 0, "after_count": len(current_names), "mutation_status": "refreshed"}]
-    elif binding_kind == "route_registry":
-        before = record.get("current_route_registry")
-        current_registry = [public_route_entry(entry) for entry in current_route_entries()]
-        record["current_route_registry"] = current_registry
-        updates = [
-            {
-                "field": "current_route_registry",
-                "before_count": len(before) if isinstance(before, list) else 0,
-                "after_count": len(current_registry),
-                "mutation_status": "refreshed",
-            }
-        ]
-    elif binding_kind == "openspec_status":
-        field_name = "openspec_status" if isinstance(record.get("openspec_status"), dict) else "openspec" if isinstance(record.get("openspec"), dict) else ""
-        if not field_name:
-            updates = []
-        else:
-            status = record[field_name]
-            before = status.get("changes_directory_present")
-            if before is None:
-                before = status.get("changes_directory_found")
-            status["changes_directory_present"] = current_openspec_changes_present()
-            status.pop("changes_directory_found", None)
-            updates = [
-                {
-                    "field": f"{field_name}.changes_directory_present",
-                    "before": before,
-                    "after": status["changes_directory_present"],
-                    "mutation_status": "refreshed" if bool(before) != status["changes_directory_present"] else "already_current",
-                }
-            ]
-
-    failed_updates = [item for item in updates if item.get("mutation_status") == "blocked"]
-    if not updates:
-        status = "blocked"
-        failure_reason = "no refreshable metadata binding was found for this stale blocker"
-    elif failed_updates:
-        status = "blocked"
-        failure_reason = "; ".join(str(item.get("failure_reason") or "refresh failed") for item in failed_updates)
-    else:
-        status = "refreshed" if any(item.get("mutation_status") == "refreshed" for item in updates) else "already_current"
-        failure_reason = ""
-
-    return {
-        "artifact_id": str(blocker.get("artifact_id") or ""),
-        "blocker_code": code,
-        "binding_kind": binding_kind,
-        "binding_id": str(blocker.get("binding_id") or ""),
-        "mutation_status": status,
-        "refresh_action": refresh_action_for_blocker(blocker),
-        "updates": updates,
-        **({"failure_reason": failure_reason} if failure_reason else {}),
-    }
-
-
-def refresh_maintenance(argv: list[str]) -> int:
-    parser = JsonArgumentParser(
-        prog="skillguard.py refresh-maintenance",
-        description="Plan or execute public-safe maintenance refreshes for explicitly supplied stale SkillGuard evidence artifacts.",
-    )
-    parser.add_argument("--input", action="append", default=[], help="Evidence-bearing JSON artifact under the repository root. Repeatable.")
-    parser.add_argument("--target", default=".agents/skills/skillguard", help="Target skill root used for claim boundary and reporting.")
-    parser.add_argument("--mode", choices=("dry-run", "execute"), default="dry-run", help="Use dry-run to report planned refreshes or execute to rewrite supported metadata.")
-    parser.add_argument("--dry-run", action="store_true", help="Force dry-run mode.")
-    parser.add_argument("--execute", action="store_true", help="Execute supported metadata refreshes.")
-    parser.add_argument("--expected-route-version", default=DETECT_STALE_EXPECTED_ROUTE_VERSION, help="Current FlowPilot route version expected in evidence metadata.")
-    parser.add_argument(
-        "--expected-route-registry-version",
-        default=ROUTE_TASK_REGISTRY_VERSION,
-        help="Current route-task registry version expected in evidence metadata.",
-    )
-    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
-    args = parser.parse_args(argv)
-
-    payload = base_result("refresh-maintenance")
-    payload["supported_refresh_targets"] = list(REFRESH_MAINTENANCE_SUPPORTED_TARGETS)
-    payload["expected_route_version"] = str(args.expected_route_version)
-    payload["expected_route_registry_version"] = str(args.expected_route_registry_version)
-    payload["claim_boundary"] = (
-        "This refresh-maintenance result covers only the explicitly supplied evidence-bearing JSON artifacts and the public "
-        "repository-local metadata bindings that detect-stale-evidence already classified as stale or unverifiable. It does not "
-        "read sealed FlowPilot packet bodies, sibling role result text, private transcripts, external services, release readiness, "
-        "package publication, suite automation, code-contract validation, or future AI behavior."
-    )
-
-    if args.dry_run and args.execute:
-        payload["decision"] = "block"
-        payload["blockers"] = ["refresh-maintenance accepts only one mode selector: use --dry-run or --execute, not both"]
-        return write_and_exit(payload, args.output)
-    mode = "execute" if args.execute else "dry-run" if args.dry_run else args.mode
-    dry_run = mode == "dry-run"
-    payload["mode"] = mode
-
-    try:
-        target = resolve_target_argument(args.target)
-        target_relative = public_relative_path(target)
-    except ValueError:
-        payload["decision"] = "block"
-        payload["blockers"] = ["target path must stay under the repository root"]
-        return write_and_exit(payload, args.output)
-    payload["target_path"] = target_relative
-
-    blockers: list[str] = []
-    stale_evidence_blockers: list[dict[str, Any]] = []
-    planned_refreshes: list[dict[str, Any]] = []
-    completed_refresh_actions: list[dict[str, Any]] = []
-    remaining_stale_blockers: list[dict[str, Any]] = []
-    inspected_artifacts: list[dict[str, Any]] = []
-    checked_bindings = 0
-
-    if not args.input:
-        blockers.append("refresh-maintenance requires at least one --input evidence JSON artifact under the repository root")
-
-    input_paths: list[Path] = []
-    for input_value in args.input:
-        try:
-            input_path = ensure_under_root(input_value)
-        except ValueError:
-            input_blockers: list[dict[str, Any]] = []
-            add_stale_evidence_blocker(
-                input_blockers,
-                artifact_id="<input>",
-                blocker_code="invalid_evidence_path",
-                binding_kind="input_artifact",
-                binding_id="--input",
-                expected_current_binding={"path_boundary": "repository-relative path under the repository root"},
-                observed_stale_binding={"path": public_binding_path_label(input_value)},
-                stale_reason="input evidence artifact path is outside the repository boundary.",
-                recommended_refresh_action="Supply repository-local evidence artifact paths only.",
-            )
-            stale_evidence_blockers.extend(input_blockers)
-            continue
-        input_paths.append(input_path)
-
-    for input_path in input_paths:
-        input_relative = public_relative_path(input_path)
-        if not input_path.is_file():
-            add_stale_evidence_blocker(
-                stale_evidence_blockers,
-                artifact_id=input_relative,
-                blocker_code="missing_evidence_artifact",
-                binding_kind="input_artifact",
-                binding_id="--input",
-                expected_current_binding={"path": input_relative, "exists": True, "kind": "file"},
-                observed_stale_binding={"path": input_relative, "exists": input_path.exists()},
-                stale_reason="input evidence artifact is missing or not a file.",
-                recommended_refresh_action="Restore the evidence artifact or rerun the command that should produce it.",
-            )
-            continue
-        artifact_before_sha = file_sha256(input_path)
-        inspected_artifacts.append(checked_file(input_path, "json"))
-        try:
-            record = load_json(input_path)
-        except ValueError:
-            add_stale_evidence_blocker(
-                stale_evidence_blockers,
-                artifact_id=input_relative,
-                blocker_code="missing_evidence_metadata",
-                binding_kind="input_artifact",
-                binding_id="json",
-                expected_current_binding={"json_parse": "valid JSON object"},
-                observed_stale_binding={"json_parse": "failed"},
-                stale_reason="input evidence artifact is not parseable JSON.",
-                recommended_refresh_action="Regenerate the evidence artifact as valid JSON.",
-            )
-            continue
-        if not isinstance(record, dict):
-            add_stale_evidence_blocker(
-                stale_evidence_blockers,
-                artifact_id=input_relative,
-                blocker_code="missing_evidence_metadata",
-                binding_kind="input_artifact",
-                binding_id="json",
-                expected_current_binding={"json_root": "object"},
-                observed_stale_binding={"json_root": type(record).__name__},
-                stale_reason="input evidence artifact root is not a JSON object.",
-                recommended_refresh_action="Regenerate the evidence artifact as a structured JSON object.",
-            )
-            continue
-
-        record_blockers, record_checked = inspect_stale_evidence_record(
-            record=record,
-            record_path=input_path,
-            expected_route_version=str(args.expected_route_version),
-            expected_route_registry_version=str(args.expected_route_registry_version),
-        )
-        checked_bindings += record_checked
-        stale_evidence_blockers.extend(record_blockers)
-        planned_refreshes.extend(refresh_plan_item(blocker, dry_run=dry_run) for blocker in record_blockers)
-
-        if dry_run or not record_blockers:
-            continue
-
-        refreshable_blockers = [blocker for blocker in record_blockers if refresh_blocker_is_refreshable(blocker)]
-        artifact_actions: list[dict[str, Any]] = []
-        for blocker in refreshable_blockers:
-            artifact_actions.append(
-                apply_refresh_to_record(
-                    record=record,
-                    blocker=blocker,
-                    expected_route_version=str(args.expected_route_version),
-                    expected_route_registry_version=str(args.expected_route_registry_version),
-                )
-            )
-        changed_actions = [action for action in artifact_actions if action.get("mutation_status") in {"refreshed", "already_current"}]
-        if changed_actions:
-            record["maintenance_refresh"] = {
-                "command": "refresh-maintenance",
-                "refreshed_at": utc_timestamp(),
-                "artifact_path": input_relative,
-                "refreshed_blocker_codes": sorted({str(action.get("blocker_code") or "") for action in changed_actions}),
-            }
-            dump_json(record, input_path)
-
-        artifact_after_sha = file_sha256(input_path)
-        post_blockers, post_checked = inspect_stale_evidence_record(
-            record=load_json(input_path),
-            record_path=input_path,
-            expected_route_version=str(args.expected_route_version),
-            expected_route_registry_version=str(args.expected_route_registry_version),
-        )
-        checked_bindings += post_checked
-        remaining_stale_blockers.extend(post_blockers)
-        completed_refresh_actions.append(
-            {
-                "artifact_id": input_relative,
-                "artifact_before_sha256": artifact_before_sha,
-                "artifact_after_sha256": artifact_after_sha,
-                "artifact_mutated": artifact_before_sha != artifact_after_sha,
-                "actions": artifact_actions,
-                "post_refresh_stale_count": len(post_blockers),
-            }
-        )
-
-    input_artifact_blockers = [item for item in stale_evidence_blockers if item.get("binding_kind") == "input_artifact"]
-    blockers.extend(f"{item['artifact_id']}: {item['blocker_code']} at {item['binding_id']}" for item in input_artifact_blockers)
-    unrefreshable_plans = [item for item in planned_refreshes if not item.get("refreshable")]
-    if unrefreshable_plans:
-        blockers.extend(f"{item['artifact_id']}: {item['blocker_code']} at {item['binding_id']} is not refreshable by metadata rewrite" for item in unrefreshable_plans)
-    if remaining_stale_blockers:
-        blockers.extend(f"{item['artifact_id']}: {item['blocker_code']} at {item['binding_id']} remains stale after refresh" for item in remaining_stale_blockers)
-    if mode == "execute":
-        failed_actions = [
-            action
-            for artifact_action in completed_refresh_actions
-            for action in artifact_action.get("actions", [])
-            if action.get("mutation_status") == "blocked"
-        ]
-        blockers.extend(
-            f"{action['artifact_id']}: {action['blocker_code']} at {action['binding_id']} refresh failed: {action.get('failure_reason', 'unknown failure')}"
-            for action in failed_actions
-        )
-
-    payload["inspected_artifacts"] = inspected_artifacts
-    payload["stale_evidence_blockers"] = stale_evidence_blockers
-    payload["planned_refreshes"] = planned_refreshes
-    payload["completed_refresh_actions"] = completed_refresh_actions
-    payload["remaining_stale_blockers"] = remaining_stale_blockers
-    payload["stale_evidence_count"] = len(stale_evidence_blockers)
-    payload["planned_refresh_count"] = len([item for item in planned_refreshes if item.get("refreshable")])
-    payload["freshness_bindings_checked"] = checked_bindings
-    payload["post_refresh_freshness"] = {
-        "mode": mode,
-        "remaining_stale_count": len(remaining_stale_blockers),
-        "rerun_performed": mode == "execute",
-    }
-    payload["maintenance_refresh_state"] = maintenance_refresh_summary(
-        mode=mode,
-        input_requested=bool(args.input),
-        inspected_artifacts=inspected_artifacts,
-        stale_blockers=stale_evidence_blockers,
-        planned_refreshes=planned_refreshes,
-        completed_refresh_actions=completed_refresh_actions,
-        remaining_stale_blockers=remaining_stale_blockers,
-        freshness_bindings_checked=checked_bindings,
-    )
-    payload["checks"] = [
-        {
-            "check_id": "refresh-maintenance:input-artifacts",
-            "name": "Evidence artifact inputs",
-            "required": True,
-            "status": "block" if not args.input or any(item.get("binding_kind") == "input_artifact" for item in stale_evidence_blockers) else "pass",
-            "summary": f"Loaded {len(inspected_artifacts)} evidence JSON artifact(s) supplied by --input.",
-        },
-        {
-            "check_id": "refresh-maintenance:refresh-plan",
-            "name": "Refresh plan",
-            "required": True,
-            "status": "block" if unrefreshable_plans else "pass",
-            "summary": f"Classified {len(planned_refreshes)} stale or unverifiable binding(s); {payload['planned_refresh_count']} are refreshable by approved metadata rewrite.",
-        },
-        {
-            "check_id": "refresh-maintenance:mutation-boundary",
-            "name": "Mutation boundary",
-            "required": True,
-            "status": "pass" if dry_run else "block" if blockers else "pass",
-            "summary": (
-                "Dry-run mode made no evidence-artifact changes."
-                if dry_run
-                else "Execute mode rewrote only supported metadata fields in explicitly supplied evidence artifacts."
-            ),
-        },
-        {
-            "check_id": "refresh-maintenance:post-refresh-freshness",
-            "name": "Post-refresh freshness",
-            "required": mode == "execute",
-            "status": "pass" if dry_run or not remaining_stale_blockers else "block",
-            "summary": (
-                "Post-refresh freshness rerun is skipped in dry-run mode."
-                if dry_run
-                else f"Reran detect-stale-evidence-equivalent checks; {len(remaining_stale_blockers)} stale binding(s) remain."
-            ),
-        },
-    ]
-    payload["evidence"] = [
-        {
-            "evidence_id": "refresh-maintenance-input-artifacts",
-            "kind": "parser_output",
-            "fresh": True,
-            "summary": f"Parsed {len(inspected_artifacts)} evidence artifact(s); checked {checked_bindings} freshness binding(s).",
-            "source_path": target_relative,
-        },
-        {
-            "evidence_id": "refresh-maintenance-current-metadata",
-            "kind": "command_table_check",
-            "fresh": True,
-            "summary": f"Used current route version {args.expected_route_version}, route registry {args.expected_route_registry_version}, and {len(COMMANDS)} dispatch command(s).",
-            "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
-        },
-    ]
-    payload["skipped_checks"] = [
-        "refresh-maintenance does not rerun target commands, regenerate missing artifacts, repair missing metadata, inspect sealed FlowPilot bodies, or make closure decisions.",
-        "Dry-run mode reports the planned refresh set only; execute mode is required for supported metadata rewrites.",
-    ]
-    payload["residual_risk"] = [
-        "Metadata refresh can rebind explicit path/hash and route metadata, but semantic adequacy still requires the owning checker output.",
-        "Missing artifacts, invalid paths, unsupported shapes, and generated artifacts that no longer exist stay blocked until their owning workflow restores them.",
-    ]
-    payload["blockers"] = blockers
-    payload["decision"] = "block" if blockers else "pass"
-    attach_maintenance_record(
-        payload,
-        record_kind="maintenance_refresh",
-        artifact_id=target_relative,
-        route_node_id="refresh-maintenance",
-        checker_name="refresh-maintenance",
-        blockers=stale_evidence_blockers,
-        refresh_action={
-            "action": "refresh_maintenance",
-            "status": mode,
-            "planned_refresh_count": payload["planned_refresh_count"],
-            "completed_refresh_count": len(completed_refresh_actions),
-            "remaining_stale_count": len(remaining_stale_blockers),
-        },
-        content_seed={"mode": mode, "inspected_artifacts": [item.get("path") for item in inspected_artifacts]},
     )
     return write_and_exit(payload, args.output)
 
@@ -12086,7 +9464,7 @@ def check_maintenance_record(argv: list[str]) -> int:
         prog="skillguard.py check-maintenance-record",
         description="Validate or normalize one public SkillGuard maintenance record against the canonical schema.",
     )
-    parser.add_argument("--input", required=True, help="Maintenance record or supported legacy command-output JSON under the repository root.")
+    parser.add_argument("--input", required=True, help="Current maintenance record JSON under the repository root.")
     parser.add_argument("--target", default=".agents/skills/skillguard", help="Target skill root used for claim boundary and reporting.")
     parser.add_argument("--expected-route-version", default=DETECT_STALE_EXPECTED_ROUTE_VERSION, help="Current route version expected in the maintenance record.")
     parser.add_argument(
@@ -12109,8 +9487,8 @@ def check_maintenance_record(argv: list[str]) -> int:
     payload = base_result("check-maintenance-record", target_relative)
     payload["schema_version"] = MAINTENANCE_RECORD_RESULT_SCHEMA
     payload["claim_boundary"] = (
-        "This check-maintenance-record result validates only public maintenance record fields and supported legacy SkillGuard "
-        "command-output shapes. It does not expose sealed FlowPilot packet bodies, private task text, sibling role result text, "
+        "This check-maintenance-record result validates only the sole current public maintenance record shape. "
+        "It does not expose sealed FlowPilot packet bodies, private task text, sibling role result text, "
         "release readiness, package publication, suite automation, code-contract validation, or future AI behavior."
     )
     payload["expected_schema_version"] = MAINTENANCE_RECORD_SCHEMA_VERSION
@@ -12120,7 +9498,7 @@ def check_maintenance_record(argv: list[str]) -> int:
     maintenance_record_blockers: list[dict[str, Any]] = []
     input_relative = ""
     normalized_record: dict[str, Any] | None = None
-    migration_status = "not_attempted"
+    record_shape = "unread"
 
     try:
         input_path = ensure_under_root(args.input)
@@ -12129,9 +9507,9 @@ def check_maintenance_record(argv: list[str]) -> int:
         data = load_json(input_path)
         if not isinstance(data, dict):
             raise ValueError("input JSON root must be an object")
-        normalized_record, migration_blockers, migration_status = normalized_legacy_maintenance_record(data, input_relative)
-        maintenance_record_blockers.extend(migration_blockers)
-        if normalized_record is not None and not migration_blockers:
+        normalized_record, shape_blockers, record_shape = extract_current_maintenance_record(data, input_relative)
+        maintenance_record_blockers.extend(shape_blockers)
+        if normalized_record is not None and not shape_blockers:
             maintenance_record_blockers.extend(
                 validate_maintenance_record(
                     normalized_record,
@@ -12153,7 +9531,7 @@ def check_maintenance_record(argv: list[str]) -> int:
 
     blockers.extend(f"{item['artifact_id']}: {item['blocker_code']} at {item['field_path']}" for item in maintenance_record_blockers)
     payload["input_path"] = input_relative or maintenance_record_path_label(args.input)
-    payload["migration_status"] = migration_status
+    payload["record_shape"] = record_shape
     payload["normalized_record"] = normalized_record if normalized_record is not None and not maintenance_record_blockers else {}
     payload["maintenance_record_blockers"] = maintenance_record_blockers
     payload["checks"] = [
@@ -12169,14 +9547,7 @@ def check_maintenance_record(argv: list[str]) -> int:
             "name": "Canonical maintenance record schema",
             "required": True,
             "status": "block" if maintenance_record_blockers else "pass",
-            "summary": "Checked required fields, schema version, blocker rows, route metadata, command bindings, legacy aliases, and public-boundary safety.",
-        },
-        {
-            "check_id": "check-maintenance-record:migration",
-            "name": "Supported legacy normalization",
-            "required": False,
-            "status": "block" if migration_status == "unsupported_legacy" else "pass",
-            "summary": f"Migration status: {migration_status}.",
+            "summary": "Checked current required fields, exact schema version, blocker rows, route metadata, command bindings, forbidden former aliases, and public-boundary safety.",
         },
     ]
     payload["evidence"] = [
@@ -12196,10 +9567,10 @@ def check_maintenance_record(argv: list[str]) -> int:
         },
     ]
     payload["skipped_checks"] = [
-        "check-maintenance-record does not rewrite legacy artifacts, refresh stale evidence, inspect sealed FlowPilot bodies, or make closure decisions."
+        "check-maintenance-record is read-only; it does not rewrite non-current artifacts, refresh stale evidence, inspect sealed FlowPilot bodies, or make closure decisions."
     ]
     payload["residual_risk"] = [
-        "Supported legacy normalization is a public metadata projection only; semantic adequacy still requires the owning command or reviewer evidence."
+        "A current record shape does not by itself prove semantic adequacy; the owning command or reviewer evidence is still required."
     ]
     payload["blockers"] = blockers
     payload["decision"] = "block" if blockers else "pass"
@@ -12210,8 +9581,8 @@ def check_maintenance_record(argv: list[str]) -> int:
         route_node_id="check-maintenance-record",
         checker_name="check-maintenance-record",
         blockers=maintenance_record_blockers,
-        refresh_action={"action": "validate_or_normalize", "status": migration_status},
-        content_seed={"input_path": input_relative, "migration_status": migration_status},
+        owner_action={"action": "validate_current", "status": record_shape},
+        content_seed={"input_path": input_relative, "record_shape": record_shape},
     )
     return write_and_exit(payload, args.output)
 
@@ -12258,12 +9629,11 @@ def checker_change_guard_add_blocker(blockers: list[dict[str, Any]], **kwargs: A
 def checker_change_suite_guard_enabled(
     *,
     review_paths: list[str],
-    refresh_paths: list[str],
     selected_suites: list[str],
     suite_impact_class: str,
     required: bool,
 ) -> bool:
-    return bool(required or review_paths or refresh_paths or selected_suites or suite_impact_class not in {"", "none"})
+    return bool(required or review_paths or selected_suites or suite_impact_class not in {"", "none"})
 
 
 def checker_change_review_evidence_summary(
@@ -12397,162 +9767,9 @@ def checker_change_review_evidence_summary(
     return summary
 
 
-def checker_change_refresh_evidence_summary(
-    *,
-    path_text: str,
-    suite_impact_class: str,
-    selected_suites: list[str],
-    blockers: list[dict[str, Any]],
-) -> dict[str, Any]:
-    summary: dict[str, Any] = {"path": public_binding_path_label(path_text), "kind": "refresh_maintenance"}
-    try:
-        evidence_path = ensure_under_root(path_text)
-    except ValueError:
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="invalid_checker_change_refresh_evidence",
-            message="checker-change refresh evidence path must stay under the repository root.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state="invalid_path",
-            recommended_resolution="Supply repository-local refresh-maintenance evidence.",
-        )
-        summary["state"] = "invalid_path"
-        return summary
-
-    summary["path"] = public_relative_path(evidence_path)
-    if not evidence_path.is_file():
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="missing_checker_change_refresh_evidence",
-            message="checker-change refresh evidence is missing.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state="missing",
-            recommended_resolution="Run refresh-maintenance or omit the refresh evidence until it exists.",
-        )
-        summary["state"] = "missing"
-        return summary
-
-    summary["sha256"] = file_sha256(evidence_path)
-    try:
-        record = load_json(evidence_path)
-    except ValueError as exc:
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="missing_checker_change_refresh_evidence",
-            message="checker-change refresh evidence is not parseable JSON.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state="parse_failed",
-            recommended_resolution=f"Regenerate the refresh-maintenance output as parseable JSON: {exc}",
-        )
-        summary["state"] = "parse_failed"
-        return summary
-
-    if not isinstance(record, dict):
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="missing_checker_change_refresh_evidence",
-            message="checker-change refresh evidence root is not a JSON object.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state=type(record).__name__,
-            recommended_resolution="Regenerate refresh-maintenance output as a structured JSON object.",
-        )
-        summary["state"] = "malformed"
-        return summary
-
-    refresh_state = record.get("maintenance_refresh_state")
-    state = str(refresh_state.get("state") or "") if isinstance(refresh_state, dict) else ""
-    current_evidence_can_pass = bool(refresh_state.get("current_evidence_can_pass")) if isinstance(refresh_state, dict) else False
-    summary.update(
-        {
-            "command": str(record.get("command") or ""),
-            "decision": str(record.get("decision") or ""),
-            "state": state or "missing",
-            "current_evidence_can_pass": current_evidence_can_pass,
-            "refresh_failed_count": refresh_state.get("refresh_failed_count", 0) if isinstance(refresh_state, dict) else 0,
-            "remaining_stale_count": refresh_state.get("remaining_stale_count", 0) if isinstance(refresh_state, dict) else 0,
-        }
-    )
-    if record.get("command") != "refresh-maintenance" or state not in MAINTENANCE_REFRESH_STATES:
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="invalid_checker_change_refresh_evidence",
-            message="checker-change suite guard refresh input must be a current refresh-maintenance output.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state=summary["state"],
-            recommended_resolution="Provide refresh-maintenance output that reports a supported maintenance_refresh_state.",
-        )
-    elif state == "stale_refresh_planned":
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="checker_change_refresh_planned_only",
-            message="checker-change refresh was only planned in dry-run mode and cannot support a downstream pass claim.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state=state,
-            recommended_resolution="Execute the refresh or regenerate current checker-change evidence before passing the suite guard.",
-        )
-    elif state == "refresh_failed":
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="checker_change_refresh_failed",
-            message="checker-change refresh evidence reports a failed refresh state.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state=state,
-            recommended_resolution="Repair the failed refresh action and rerun refresh-maintenance successfully.",
-        )
-    elif state == "missing_or_unrefreshable_blocker":
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="checker_change_unrefreshable_evidence",
-            message="checker-change refresh evidence reports missing or unrefreshable evidence.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state=state,
-            recommended_resolution="Restore or regenerate the missing/unrefreshable evidence before accepting the selected suite impact.",
-        )
-    elif state == "missing":
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="missing_checker_change_refresh_evidence",
-            message="checker-change refresh evidence reports missing input evidence.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state=state,
-            recommended_resolution="Supply the missing evidence artifact and rerun refresh-maintenance.",
-        )
-    elif state not in {"fresh", "current_after_refresh"} or not current_evidence_can_pass:
-        checker_change_guard_add_blocker(
-            blockers,
-            blocker_code="stale_checker_change_review_evidence",
-            message="checker-change refresh evidence does not establish current evidence.",
-            suite_impact_class=suite_impact_class,
-            selected_suites=selected_suites,
-            evidence_path=summary["path"],
-            evidence_state=state,
-            recommended_resolution="Refresh or regenerate checker-change evidence until current_evidence_can_pass is true.",
-        )
-    return summary
-
-
 def checker_change_suite_guard_state(
     blockers: list[dict[str, Any]],
     review_evidence: list[dict[str, Any]],
-    refresh_evidence: list[dict[str, Any]],
 ) -> str:
     codes = {str(item.get("blocker_code") or "") for item in blockers}
     if "invalid_checker_suite_selection" in codes:
@@ -12563,19 +9780,11 @@ def checker_change_suite_guard_state(
         return "missing"
     if any(code.startswith("missing_checker_change") or code == "empty_checker_suite_selection" for code in codes):
         return "missing"
-    if "checker_change_refresh_failed" in codes:
-        return "refresh_failed"
-    if "checker_change_unrefreshable_evidence" in codes:
-        return "missing_or_unrefreshable_blocker"
-    if "checker_change_refresh_planned_only" in codes:
-        return "stale_refresh_planned"
     if "checker_change_review_not_passed" in codes:
         return "stale_or_missing"
     if "stale_checker_change_review_evidence" in codes:
         return "stale_or_missing"
-    if any(item.get("state") == "current_after_refresh" for item in refresh_evidence):
-        return "current_after_refresh"
-    if review_evidence or refresh_evidence:
+    if review_evidence:
         return "fresh"
     return "not_required"
 
@@ -12585,7 +9794,6 @@ def build_checker_change_suite_guard(
     command_name: str,
     target_path: str,
     review_paths: list[str],
-    refresh_paths: list[str],
     selected_suites: list[str],
     suite_impact_class: str,
     required: bool,
@@ -12593,13 +9801,11 @@ def build_checker_change_suite_guard(
     expected_route_registry_version: str = ROUTE_TASK_REGISTRY_VERSION,
 ) -> dict[str, Any]:
     review_paths = checker_change_suite_guard_values(review_paths)
-    refresh_paths = checker_change_suite_guard_values(refresh_paths)
     selected_suites = checker_change_suite_guard_values(selected_suites)
-    suite_impact_class = (suite_impact_class or "").strip() or ("checker_change" if required or review_paths or refresh_paths or selected_suites else "none")
+    suite_impact_class = (suite_impact_class or "").strip() or ("checker_change" if required or review_paths or selected_suites else "none")
     blockers: list[dict[str, Any]] = []
     guard_applies = checker_change_suite_guard_enabled(
         review_paths=review_paths,
-        refresh_paths=refresh_paths,
         selected_suites=selected_suites,
         suite_impact_class=suite_impact_class,
         required=required,
@@ -12647,7 +9853,6 @@ def build_checker_change_suite_guard(
         )
 
     review_evidence: list[dict[str, Any]] = []
-    refresh_evidence: list[dict[str, Any]] = []
     if guard_applies and suite_impact_class != "none" and not review_paths:
         checker_change_guard_add_blocker(
             blockers,
@@ -12669,17 +9874,7 @@ def build_checker_change_suite_guard(
                 blockers=blockers,
             )
         )
-    for path_text in refresh_paths:
-        refresh_evidence.append(
-            checker_change_refresh_evidence_summary(
-                path_text=path_text,
-                suite_impact_class=suite_impact_class,
-                selected_suites=selected_suites,
-                blockers=blockers,
-            )
-        )
-
-    state = checker_change_suite_guard_state(blockers, review_evidence, refresh_evidence)
+    state = checker_change_suite_guard_state(blockers, review_evidence)
     return {
         "schema_version": CHECKER_CHANGE_SUITE_GUARD_SCHEMA,
         "command": command_name,
@@ -12689,9 +9884,8 @@ def build_checker_change_suite_guard(
         "selected_suites": selected_suites,
         "states_supported": sorted(CHECKER_CHANGE_SUITE_GUARD_STATES),
         "state": state,
-        "current_evidence_can_pass": state in {"not_required", "fresh", "current_after_refresh"} and not blockers,
+        "current_evidence_can_pass": state in {"not_required", "fresh"} and not blockers,
         "review_evidence": review_evidence,
-        "refresh_evidence": refresh_evidence,
         "blockers": blockers,
     }
 
@@ -12727,20 +9921,6 @@ def checker_change_suite_guard_evidence_rows(guard: dict[str, Any]) -> list[dict
                 "reported_decision": str(item.get("decision") or ""),
             }
         )
-    for index, item in enumerate(guard.get("refresh_evidence", [])):
-        if not isinstance(item, dict):
-            continue
-        rows.append(
-            {
-                "evidence_id": f"checker-change-refresh:{index + 1}",
-                "kind": "refresh_maintenance",
-                "fresh": item.get("current_evidence_can_pass") is True,
-                "summary": f"refresh-maintenance evidence state={item.get('state')}.",
-                "source_path": str(item.get("path") or ""),
-                "status": str(item.get("state") or ""),
-                "reported_decision": str(item.get("decision") or ""),
-            }
-        )
     return rows
 
 
@@ -12757,8 +9937,8 @@ def attach_checker_change_suite_guard(payload: dict[str, Any], blockers: list[st
             "required": True,
             "status": "pass" if guard.get("current_evidence_can_pass") else "block",
             "summary": (
-                "Evaluated checker-change review evidence, selected checker/suite surfaces, refresh state, "
-                "and downstream pass eligibility."
+                "Evaluated current checker-change review evidence, selected checker/suite surfaces, "
+                "and downstream pass eligibility without metadata renewal."
             ),
         }
     )
@@ -12769,7 +9949,6 @@ def attach_checker_change_suite_guard(payload: dict[str, Any], blockers: list[st
 
 def add_checker_change_suite_guard_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--checker-change-review", action="append", default=[], help="Current review-checker-change JSON output required for checker/suite-impact work. Repeatable.")
-    parser.add_argument("--checker-change-refresh", action="append", default=[], help="Optional refresh-maintenance JSON output for checker-change evidence state. Repeatable.")
     parser.add_argument("--checker-suite", action="append", default=[], help="Changed checker or suite surface selected for guard evaluation. Repeatable.")
     parser.add_argument("--checker-suite-impact", default="", help="Checker/suite impact class: checker_change, suite_change, checker_and_suite_change, or none.")
     parser.add_argument("--checker-suite-required", action="store_true", help="Require checker-change suite guard evidence even when no guard path was supplied.")
@@ -12785,12 +9964,6 @@ def checker_command_required_checks(command_name: str) -> list[str]:
             "detect-stale-evidence:freshness-bindings",
             "detect-stale-evidence:no-mutation",
         ],
-        "refresh-maintenance": [
-            "refresh-maintenance:input-artifacts",
-            "refresh-maintenance:refresh-plan",
-            "refresh-maintenance:mutation-boundary",
-            "refresh-maintenance:post-refresh-freshness",
-        ],
         "review-checker-change": [
             "review-checker-change:baseline-metadata",
             "review-checker-change:command-bindings",
@@ -12802,7 +9975,7 @@ def checker_command_required_checks(command_name: str) -> list[str]:
         "check-maintenance-record": [
             "check-maintenance-record:input-json",
             "check-maintenance-record:schema",
-            "check-maintenance-record:migration",
+            "check-maintenance-record:current-shape",
         ],
         "self-check": [
             "self-check:required-files",
@@ -12816,6 +9989,8 @@ def checker_command_required_checks(command_name: str) -> list[str]:
 
 
 def checker_command_output_schema(command_name: str) -> str:
+    if command_name == "build-current-portfolio-registry":
+        return "skillguard.portfolio_registry.v2"
     if command_name == "review-checker-change":
         return REVIEW_CHECKER_CHANGE_RESULT_SCHEMA
     if command_name == "check-maintenance-record":
@@ -13037,7 +10212,7 @@ def compare_checker_command_surface(
     blockers: list[str],
     structured_blockers: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    compatible_changes: list[dict[str, Any]] = []
+    safe_additions: list[dict[str, Any]] = []
     baseline_by_name = {item["name"]: item for item in baseline_commands}
     current_by_name = {item["name"]: item for item in current_commands}
     current_by_dispatch: dict[str, list[dict[str, Any]]] = {}
@@ -13122,19 +10297,19 @@ def compare_checker_command_surface(
                 new_binding={"output_schema": current_schema},
                 impact_class="output_schema_changed",
                 affected_evidence_kinds=["checker_output", "stale_evidence", "fixture_output"],
-                required_revalidation="Regenerate or migrate consumers and evidence records that parse the checker output schema.",
-                repair_action="Publish schema migration evidence before treating old checker outputs as compatible.",
+                required_revalidation="Regenerate consumers and evidence records directly from the current checker output schema.",
+                repair_action="Replace non-current checker outputs; do not admit them through a compatibility path.",
             )
 
     for name in sorted(set(current_by_name) - set(baseline_by_name)):
-        compatible_changes.append(
+        safe_additions.append(
             {
                 "change_class": "additive_command",
                 "checker": name,
-                "compatibility_reason": "Current command is present in dispatch but absent from the baseline; no baseline checker was removed or weakened.",
+                "addition_reason": "Current command is present in dispatch but absent from the baseline; no baseline checker was removed or weakened.",
             }
         )
-    return compatible_changes
+    return safe_additions
 
 
 def compare_checker_route_registry(
@@ -13143,7 +10318,7 @@ def compare_checker_route_registry(
     blockers: list[str],
     structured_blockers: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    compatible_changes: list[dict[str, Any]] = []
+    safe_additions: list[dict[str, Any]] = []
     baseline_by_id = {item["route_id"]: item for item in baseline_routes}
     current_by_id = {item["route_id"]: item for item in current_routes}
     for route_id, baseline in baseline_by_id.items():
@@ -13159,7 +10334,7 @@ def compare_checker_route_registry(
                 impact_class="deleted",
                 affected_evidence_kinds=["routing", "command_surface"],
                 required_revalidation="Rerun route-task and all route-bound checker evidence before accepting the change.",
-                repair_action="Restore the route binding or migrate the baseline with fresh route-task evidence.",
+                repair_action="Restore the route binding or replace the baseline with fresh current route-task evidence.",
             )
             continue
         changed_fields = [
@@ -13181,15 +10356,15 @@ def compare_checker_route_registry(
                 repair_action="Document and refresh route metadata after the behavior change is validated.",
             )
     for route_id in sorted(set(current_by_id) - set(baseline_by_id)):
-        compatible_changes.append(
+        safe_additions.append(
             {
                 "change_class": "additive_route",
                 "route_id": route_id,
                 "checker": current_by_id[route_id].get("command_family"),
-                "compatibility_reason": "Current route is additive relative to the baseline and did not remove a recorded route binding.",
+                "addition_reason": "Current route is additive relative to the baseline and did not remove a recorded route binding.",
             }
         )
-    return compatible_changes
+    return safe_additions
 
 
 def review_checker_change(argv: list[str]) -> int:
@@ -13289,7 +10464,7 @@ def review_checker_change(argv: list[str]) -> int:
     baseline_fixtures: list[dict[str, Any]] = []
     baseline_evidence: list[dict[str, Any]] = []
     metadata_problems: list[str] = []
-    compatible_changes: list[dict[str, Any]] = []
+    safe_additions: list[dict[str, Any]] = []
 
     if baseline:
         for field, expected in (
@@ -13340,8 +10515,8 @@ def review_checker_change(argv: list[str]) -> int:
             )
 
     if baseline and not metadata_problems:
-        compatible_changes.extend(compare_checker_command_surface(baseline_commands, current_commands, blockers, structured_blockers))
-        compatible_changes.extend(compare_checker_route_registry(baseline_routes, current_routes, blockers, structured_blockers))
+        safe_additions.extend(compare_checker_command_surface(baseline_commands, current_commands, blockers, structured_blockers))
+        safe_additions.extend(compare_checker_route_registry(baseline_routes, current_routes, blockers, structured_blockers))
 
     fixture_reviews: list[dict[str, Any]] = []
     fixture_paths: dict[str, Path] = {}
@@ -13546,8 +10721,8 @@ def review_checker_change(argv: list[str]) -> int:
                 new_binding={"path": relative, "stale_count": len(record_blockers)},
                 impact_class="stale_evidence",
                 affected_evidence_kinds=sorted({str(item.get("binding_kind") or "evidence") for item in record_blockers}),
-                required_revalidation="Refresh or regenerate stale evidence before using it to accept checker changes.",
-                repair_action="Run detect-stale-evidence and the owning checker or refresh-maintenance workflow as appropriate.",
+                required_revalidation="Regenerate stale evidence with its declared owner before using it to accept checker changes.",
+                repair_action="Run detect-stale-evidence, then rerun only the exact owning check on current functional inputs.",
             )
         evidence_reviews.append(
             {
@@ -13627,7 +10802,7 @@ def review_checker_change(argv: list[str]) -> int:
         "public_safety_checks": [finding_id for finding_id, _pattern in PUBLIC_SAFETY_PATTERNS],
         "openspec_status": {"changes_directory_present": current_openspec_changes_present()},
     }
-    payload["compatible_changes"] = compatible_changes
+    payload["safe_additions"] = safe_additions
     payload["checker_change_blockers"] = structured_blockers
     payload["fixture_reviews"] = fixture_reviews
     payload["evidence_freshness_reviews"] = evidence_reviews
@@ -13717,7 +10892,7 @@ def review_checker_change(argv: list[str]) -> int:
     ]
     payload["residual_risk"] = [
         "This command checks explicit checker-change bindings and supplied evidence artifacts; semantic adequacy of a checker change still requires responsible reviewer judgment.",
-        "Additive command or route changes are compatible only within this baseline comparison and still require their own direct evidence before supporting broader claims.",
+        "Additive command or route rows are only baseline-diff observations and still require their own direct evidence before supporting broader claims.",
     ]
     payload["blockers"] = blockers
     payload["decision"] = "block" if blockers else "pass"
@@ -13728,7 +10903,7 @@ def review_checker_change(argv: list[str]) -> int:
         route_node_id="review-checker-change",
         checker_name="review-checker-change",
         blockers=structured_blockers,
-        refresh_action={"action": "review_only", "status": "not_applicable", "compatible_change_count": len(compatible_changes)},
+        owner_action={"action": "review_only", "status": "not_applicable", "safe_addition_count": len(safe_additions)},
         content_seed={"baseline_path": baseline_relative, "evidence_count": len(evidence_reviews), "fixture_count": len(fixture_reviews)},
     )
     return write_and_exit(payload, args.output)
@@ -13757,14 +10932,10 @@ def commands(argv: list[str]) -> int:
         route_node_id="commands",
         checker_name="commands",
         blockers=[],
-        refresh_action={"action": "not_applicable", "status": "command_surface"},
+        owner_action={"action": "not_applicable", "status": "command_surface"},
         content_seed={"command_count": len(COMMANDS)},
     )
     return write_and_exit(payload, args.output)
-
-
-def check_skill_contract(argv: list[str]) -> int:
-    return check_json_record("check-skill-contract", argv, "skillguard_skill_contract.schema.json")
 
 
 def check_suite_map(argv: list[str]) -> int:
@@ -13777,18 +10948,6 @@ def check_suite_contract(argv: list[str]) -> int:
 
 def check_fixture_manifest(argv: list[str]) -> int:
     return check_json_record("check-fixture-manifest", argv, "skillguard_fixture_manifest.schema.json")
-
-
-def check_work_contract(argv: list[str]) -> int:
-    return check_json_record("check-work-contract", argv, WORK_CONTRACT_SCHEMA_NAME)
-
-
-def check_run_record(argv: list[str]) -> int:
-    return check_json_record("check-run-record", argv, RUN_RECORD_SCHEMA_NAME)
-
-
-def check_check_manifest(argv: list[str]) -> int:
-    return check_json_record("check-check-manifest", argv, CHECK_MANIFEST_SCHEMA_NAME)
 
 
 def check_ai_judgment(argv: list[str]) -> int:
@@ -13911,6 +11070,68 @@ def installed_skill_publication_status(skill_dir: Path, scan_root: Path) -> dict
     }
 
 
+def check_runtime_authority(argv: list[str]) -> int:
+    parser = JsonArgumentParser(
+        prog="skillguard.py check-runtime-authority",
+        description="Resolve one target's current or blocked runtime authority.",
+    )
+    parser.add_argument("--target", required=True, help="Target skill directory.")
+    parser.add_argument("--target-root", help="Explicit root for a portable external target check.")
+    parser.add_argument(
+        "--require-authority",
+        choices=["current"],
+        help="Optionally require the exact current authority decision.",
+    )
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    target_root = Path(args.target_root).resolve() if args.target_root else None
+    if target_root is not None and not target_root.is_dir():
+        raise SkillGuardCliError(
+            "check-runtime-authority",
+            f"--target-root is missing or not a directory: {args.target_root}",
+            "missing_file",
+        )
+    target = resolve_target_argument(args.target, target_root)
+    from skillguard_v2.runtime_authority import resolve_runtime_authority
+
+    authority = resolve_runtime_authority(target)
+    required_mismatch = bool(
+        args.require_authority and authority.authority != args.require_authority
+    )
+    payload = base_result(
+        "check-runtime-authority",
+        public_relative_path(target, target_root),
+    )
+    authority_payload = authority.to_dict()
+    authority_payload["skill_root"] = public_relative_path(target, target_root)
+    payload.update(authority_payload)
+    payload["required_authority"] = args.require_authority or ""
+    payload["failures"] = [
+        f"required authority {args.require_authority}, observed {authority.authority}"
+    ] if required_mismatch else []
+    payload["blockers"] = list(authority.blockers)
+    payload["decision"] = (
+        "pass" if authority.ok and not required_mismatch else "block" if authority.blockers else "fail"
+    )
+    payload["checks"] = [
+        {
+            "check_id": "check-runtime-authority:singular",
+            "name": "Singular runtime authority",
+            "required": True,
+            "status": "pass" if authority.ok else "block",
+            "summary": f"Resolved authority={authority.authority}.",
+        },
+        {
+            "check_id": "check-runtime-authority:required",
+            "name": "Required authority match",
+            "required": bool(args.require_authority),
+            "status": "pass" if not required_mismatch else "fail",
+            "summary": "Checked the optional exact authority requirement.",
+        },
+    ]
+    return write_and_exit(payload, args.output)
+
+
 def audit_installed_skills(argv: list[str]) -> int:
     parser = JsonArgumentParser(
         prog="skillguard.py audit-installed-skills",
@@ -13945,8 +11166,7 @@ def audit_installed_skills(argv: list[str]) -> int:
                 continue
             frontmatter = parse_global_skill_frontmatter(skill_text)
             skill_id = slugify_identifier(frontmatter.get("name") or skill_dir.name)
-            semantic_root = global_contract_semantic_root(skill_dir)
-            contract_path = skill_dir / ".skillguard" / WORK_CONTRACT_FILENAME
+            contract_path = skill_dir / ".skillguard" / "compiled-contract.json"
             row: dict[str, Any] = {
                 "skill_id": skill_id,
                 "skill_path": global_public_path(skill_dir),
@@ -13963,55 +11183,72 @@ def audit_installed_skills(argv: list[str]) -> int:
                 "failures": [],
             }
             row.update(installed_skill_publication_status(skill_dir, root))
-            if not contract_path.is_file():
-                row["depth_classification"] = "hollow-contract"
-                row["failures"] = ["missing work contract"]
-                row["failure_count"] = 1
-                failures.append(f"{skill_id}: missing work contract")
-                rows.append(row)
-                continue
-            try:
-                contract = load_json(contract_path, semantic_root)
-            except ValueError as exc:
-                row["depth_classification"] = "blocked"
-                row["failures"] = [f"work contract could not be loaded: {exc}"]
-                row["failure_count"] = 1
-                failures.append(f"{skill_id}: work contract could not be loaded")
-                rows.append(row)
-                continue
-            semantic_failures = contract_semantic_failures(contract, skill_dir, contract_path, semantic_root)
-            depth_failures: list[str] = []
-            coverage_rows: list[dict[str, Any]] = []
-            if isinstance(contract, dict):
-                depth_failures, _depth_evidence, coverage_rows = deep_contract_failures(skill_dir, contract, contract_path, semantic_root)
-            combined_failures = [*semantic_failures, *depth_failures]
-            classification = classify_depth_failures(combined_failures, [])
-            row["decision"] = "pass" if classification == "deep-pass" else "fail"
-            row["depth_classification"] = classification
-            row["integration_mode"] = str(contract.get("integration_mode") or "") if isinstance(contract, dict) else ""
-            row["contract_hash"] = str(contract.get("contract_hash") or "") if isinstance(contract, dict) else ""
-            source_requirements = contract.get("source_requirements", []) if isinstance(contract, dict) else []
-            target_rules = contract.get("target_rule_inventory", []) if isinstance(contract, dict) else []
-            coverage_matrix = contract.get("coverage_matrix", []) if isinstance(contract, dict) else []
-            source_requirement_ids = {
-                str(item.get("requirement_id"))
-                for item in source_requirements
-                if isinstance(source_requirements, list) and isinstance(item, dict) and item.get("requirement_id")
-            }
-            row["source_requirement_count"] = len(source_requirement_ids)
-            row["target_specific_requirement_count"] = len(
-                [item for item in source_requirement_ids if item not in GENERIC_SOURCE_REQUIREMENT_IDS]
+            from skillguard_v2.runtime_authority import (
+                AUTHORITY_BLOCKED,
+                AUTHORITY_CURRENT,
+                resolve_runtime_authority,
             )
-            row["target_rule_count"] = len(target_rules) if isinstance(target_rules, list) else 0
-            row["coverage_matrix_count"] = len(coverage_matrix) if isinstance(coverage_matrix, list) else 0
-            row["coverage_row_count"] = len(coverage_rows)
-            row["target_lock_status"] = "complete" if classification == "deep-pass" else "incomplete"
-            row["failure_count"] = len(combined_failures)
-            row["failures"] = combined_failures[:8]
-            rows.append(row)
-            if row["decision"] != "pass":
-                failures.append(f"{skill_id}: {classification}")
 
+            authority = resolve_runtime_authority(skill_dir)
+            row["authority_decision"] = authority.authority
+            row["authority_blockers"] = list(authority.blockers)
+            if authority.authority == AUTHORITY_CURRENT and authority.ok:
+                installed_contract = global_read_json(contract_path)
+                contract = (
+                    dict(installed_contract)
+                    if isinstance(installed_contract, Mapping)
+                    else {}
+                )
+                depth_profile = contract.get("depth_profile") if isinstance(contract, dict) else None
+                combined_failures: list[str] = []
+                if not isinstance(depth_profile, dict):
+                    combined_failures.append(
+                        "depth_profile_missing: current contract does not declare universal execution-depth coverage"
+                    )
+                dimensions = (
+                    [item for item in depth_profile.get("dimensions", []) if isinstance(item, dict)]
+                    if isinstance(depth_profile, dict)
+                    else []
+                )
+                obligation_ids = {
+                    str(item)
+                    for dimension in dimensions
+                    for item in dimension.get("obligation_ids", [])
+                    if isinstance(dimension.get("obligation_ids"), list) and str(item)
+                }
+                row["decision"] = "pass" if not combined_failures else "fail"
+                row["depth_classification"] = "deep-pass" if not combined_failures else "shallow-contract"
+                row["integration_mode"] = str(depth_profile.get("integration_mode") or "") if isinstance(depth_profile, dict) else ""
+                row["contract_path"] = global_public_path(skill_dir / ".skillguard" / "compiled-contract.json")
+                row["contract_hash"] = str(contract.get("contract_hash") or "")
+                row["source_requirement_count"] = len(obligation_ids)
+                row["target_specific_requirement_count"] = len(obligation_ids)
+                row["target_rule_count"] = len(contract.get("obligations", [])) if isinstance(contract.get("obligations"), list) else 0
+                row["coverage_matrix_count"] = len(dimensions)
+                row["coverage_row_count"] = len(dimensions)
+                row["target_lock_status"] = "complete" if not combined_failures else "incomplete"
+                row["failure_count"] = len(combined_failures)
+                row["failures"] = combined_failures[:8]
+                rows.append(row)
+                if row["decision"] != "pass":
+                    failures.append(f"{skill_id}: {row['depth_classification']}")
+                continue
+            if authority.authority == AUTHORITY_BLOCKED:
+                row["depth_classification"] = "blocked"
+                row["failures"] = [
+                    f"{finding.code}: {finding.path}: {finding.message}"
+                    for finding in authority.findings[:8]
+                ]
+                row["failure_count"] = len(authority.findings)
+                failures.append(f"{skill_id}: blocked")
+                rows.append(row)
+                continue
+            row["depth_classification"] = "blocked"
+            row["failures"] = [f"unsupported authority decision: {authority.authority}"]
+            row["failure_count"] = 1
+            failures.append(f"{skill_id}: blocked")
+            rows.append(row)
+            continue
     classification_counts: dict[str, int] = {}
     for row in rows:
         classification = str(row.get("depth_classification") or "unknown")
@@ -14029,7 +11266,9 @@ def audit_installed_skills(argv: list[str]) -> int:
     payload["decision"] = "block" if blockers else "fail" if failures else "pass"
     payload["claim_boundary"] = (
         "This installed-skill audit checks current local SKILL.md files outside fixture, backup, and system roots, "
-        "then validates adjacent SkillGuard work contracts with deep contract logic. It does not execute target skill work, "
+        "requires the single current installed authority, then validates the persisted deep contract surface "
+        "without recompiling source-only repository inputs. "
+        "It does not execute target skill work, "
         "prove GitHub publication, prove package publication, prove external services, or guarantee future AI behavior."
     )
     append_check(
@@ -14076,8 +11315,12 @@ def build_global_registry(argv: list[str]) -> int:
         "warnings": [],
         "claim_boundary": "No registry was built because no scan roots were available.",
     }
+    registry["diagnostic_inventory_hash"] = global_diagnostic_inventory_hash(
+        registry
+    )
     registry["registry_hash"] = global_registry_hash(registry)
     schema_failures = validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json")))
+    schema_failures.extend(global_registry_integrity_failures(registry))
     write_path = None
     if args.registry_output and not root_blockers and not schema_failures:
         write_path = global_write_json(args.registry_output, registry)
@@ -14134,6 +11377,7 @@ def check_global_registry(argv: list[str]) -> int:
         blockers.append(f"registry JSON could not be loaded: {exc}")
     if isinstance(registry, dict) and registry:
         failures.extend(validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json"))))
+        failures.extend(global_registry_integrity_failures(registry))
     elif not blockers:
         blockers.append("registry JSON root must be an object")
 
@@ -14144,6 +11388,12 @@ def check_global_registry(argv: list[str]) -> int:
         current_registry = build_global_registry_payload(roots)
         if current_registry.get("registry_hash") != registry.get("registry_hash"):
             failures.append("registry hash is stale against current skill root scan")
+        if current_registry.get("diagnostic_inventory_hash") != registry.get(
+            "diagnostic_inventory_hash"
+        ):
+            failures.append(
+                "registry diagnostic inventory is stale against current skill root scan"
+            )
     payload = base_result("check-global-registry", global_public_path(registry_path))
     payload["registry_hash"] = registry.get("registry_hash", "") if isinstance(registry, dict) else ""
     payload["current_registry_hash"] = current_registry.get("registry_hash", "")
@@ -14205,6 +11455,15 @@ def resolve_global_skill(argv: list[str]) -> int:
         registry = build_global_registry_payload(roots) if roots else {}
     if isinstance(registry, dict) and registry:
         failures.extend(validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json"))))
+        failures.extend(global_registry_integrity_failures(registry))
+        if args.registry:
+            current_failures, current_blockers = (
+                global_registry_current_route_failures(
+                    registry, codex_home=args.codex_home
+                )
+            )
+            failures.extend(current_failures)
+            blockers.extend(current_blockers)
     candidates = global_route_candidates(registry if isinstance(registry, dict) else {}, args.task, args.route_hint or "") if not blockers else []
     selected: dict[str, Any] = {}
     if not blockers and not failures:
@@ -14268,7 +11527,12 @@ def resolve_global_skill(argv: list[str]) -> int:
     return write_and_exit(payload, args.output)
 
 
-def load_registry_for_prompt_command(command: str, registry_path_text: str) -> tuple[dict[str, Any], list[str], list[str], str]:
+def load_registry_for_prompt_command(
+    command: str,
+    registry_path_text: str,
+    *,
+    codex_home: str | None = None,
+) -> tuple[dict[str, Any], list[str], list[str], str]:
     failures: list[str] = []
     blockers: list[str] = []
     registry_path = expand_global_path(registry_path_text)
@@ -14283,6 +11547,12 @@ def load_registry_for_prompt_command(command: str, registry_path_text: str) -> t
         blockers.append(f"{command}: registry JSON root must be an object")
         return {}, failures, blockers, registry_path_label
     failures.extend(validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json"))))
+    failures.extend(global_registry_integrity_failures(registry))
+    current_failures, current_blockers = global_registry_current_route_failures(
+        registry, codex_home=codex_home
+    )
+    failures.extend(current_failures)
+    blockers.extend(current_blockers)
     return registry, failures, blockers, registry_path_label
 
 
@@ -14293,9 +11563,21 @@ def render_global_prompt(argv: list[str]) -> int:
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
     registry, failures, blockers, registry_label = load_registry_for_prompt_command("render-global-prompt", args.registry)
-    projection = build_global_prompt_projection(registry, registry_label) if registry else {}
+    projection = (
+        build_global_prompt_projection_or_block(
+            registry, registry_label, blockers
+        )
+        if registry
+        else {}
+    )
     projection_failures = validate_schema_subset(projection, load_json(schema_path("skillguard_global_prompt_projection.schema.json"))) if projection else []
     failures.extend(projection_failures)
+    if projection:
+        failures.extend(
+            current_global_router.prompt_projection_integrity_failures(
+                projection
+            )
+        )
     projection_path = ""
     if args.projection_output and not failures and not blockers:
         projection_path = global_public_path(global_write_json(args.projection_output, projection))
@@ -14332,10 +11614,18 @@ def install_global_prompt(argv: list[str]) -> int:
     parser.add_argument("--dry-run", action="store_true", help="Render and check without writing AGENTS.md.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    registry, failures, blockers, registry_label = load_registry_for_prompt_command("install-global-prompt", args.registry)
+    registry, failures, blockers, registry_label = load_registry_for_prompt_command(
+        "install-global-prompt", args.registry, codex_home=args.codex_home
+    )
     codex_home = expand_global_path(args.codex_home) if args.codex_home else Path.home() / ".codex"
     agents_file = expand_global_path(args.agents_file) if args.agents_file else (codex_home / "AGENTS.md").resolve()
-    projection = build_global_prompt_projection(registry, registry_label) if registry else {}
+    projection = (
+        build_global_prompt_projection_or_block(
+            registry, registry_label, blockers
+        )
+        if registry
+        else {}
+    )
     existing = agents_file.read_text(encoding="utf-8") if agents_file.is_file() else ""
     install_status = "not-written"
     updated = existing
@@ -14344,13 +11634,21 @@ def install_global_prompt(argv: list[str]) -> int:
             updated, install_status = replace_managed_global_prompt_block(existing, str(projection.get("managed_block") or ""))
         except ValueError as exc:
             blockers.append(str(exc))
-        if not blockers and not args.dry_run:
-            agents_file.parent.mkdir(parents=True, exist_ok=True)
-            agents_file.write_text(updated, encoding="utf-8")
-    if not blockers and not failures and projection:
-        prompt_failures, prompt_blockers = check_global_prompt_text(updated, str(registry.get("registry_hash") or ""))
-        failures.extend(prompt_failures)
-        blockers.extend(prompt_blockers)
+        if not blockers:
+            prompt_failures, prompt_blockers = check_global_prompt_text(
+                updated,
+                str(registry.get("registry_hash") or ""),
+                str(projection.get("managed_block") or ""),
+            )
+            failures.extend(prompt_failures)
+            blockers.extend(prompt_blockers)
+        if not blockers and not failures and not args.dry_run:
+            if updated != existing:
+                global_write_text_atomic(agents_file, updated)
+            else:
+                install_status = "unchanged"
+        elif not blockers and not failures and args.dry_run and updated == existing:
+            install_status = "unchanged"
     payload = base_result("install-global-prompt", global_public_path(agents_file))
     payload["registry_hash"] = registry.get("registry_hash", "") if registry else ""
     payload["agents_file"] = global_public_path(agents_file)
@@ -14384,7 +11682,9 @@ def check_global_prompt(argv: list[str]) -> int:
     parser.add_argument("--codex-home", help="Codex home directory used when --agents-file is omitted.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
-    registry, failures, blockers, registry_label = load_registry_for_prompt_command("check-global-prompt", args.registry)
+    registry, failures, blockers, registry_label = load_registry_for_prompt_command(
+        "check-global-prompt", args.registry, codex_home=args.codex_home
+    )
     codex_home = expand_global_path(args.codex_home) if args.codex_home else Path.home() / ".codex"
     agents_file = expand_global_path(args.agents_file) if args.agents_file else (codex_home / "AGENTS.md").resolve()
     if not agents_file.is_file():
@@ -14393,9 +11693,18 @@ def check_global_prompt(argv: list[str]) -> int:
     else:
         text = agents_file.read_text(encoding="utf-8")
     if registry and text:
-        prompt_failures, prompt_blockers = check_global_prompt_text(text, str(registry.get("registry_hash") or ""))
-        failures.extend(prompt_failures)
-        blockers.extend(prompt_blockers)
+        try:
+            projection = build_global_prompt_projection(registry, registry_label)
+        except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+            blockers.append(f"global prompt projection is unavailable: {exc}")
+        else:
+            prompt_failures, prompt_blockers = check_global_prompt_text(
+                text,
+                str(registry.get("registry_hash") or ""),
+                str(projection.get("managed_block") or ""),
+            )
+            failures.extend(prompt_failures)
+            blockers.extend(prompt_blockers)
     payload = base_result("check-global-prompt", global_public_path(agents_file))
     payload["registry_hash"] = registry.get("registry_hash", "") if registry else ""
     payload["registry_path"] = registry_label
@@ -14425,42 +11734,82 @@ def check_global_prompt(argv: list[str]) -> int:
 def refresh_global_router(argv: list[str]) -> int:
     parser = JsonArgumentParser(prog="skillguard.py refresh-global-router", description="Scan skills, rebuild registry, render prompt projection, install AGENTS.md, and verify freshness.")
     parse_global_roots_args(parser)
-    parser.add_argument("--output-dir", default=".skillguard/global-router", help="Directory for registry/projection artifacts.")
+    parser.add_argument("--output-dir", help="Directory for registry/projection artifacts. Defaults to --codex-home/.skillguard/global-router.")
     parser.add_argument("--agents-file", help="AGENTS.md file to update. Defaults to --codex-home/AGENTS.md.")
     parser.add_argument("--dry-run", action="store_true", help="Build artifacts and check projected content without writing AGENTS.md.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
     roots, root_blockers = global_skill_roots_from_args(args.skill_root, args.codex_home)
-    output_dir = expand_global_path(args.output_dir)
+    codex_home = expand_global_path(args.codex_home) if args.codex_home else Path.home() / ".codex"
+    output_dir = (
+        expand_global_path(args.output_dir)
+        if args.output_dir
+        else (codex_home / ".skillguard" / "global-router").resolve()
+    )
     registry_path = output_dir / "global_registry.json"
     projection_path = output_dir / "global_prompt_projection.json"
     failures: list[str] = []
     blockers: list[str] = list(root_blockers)
     registry = build_global_registry_payload(roots) if roots else {}
+    registry_unchanged = False
+    if registry:
+        registry, registry_unchanged = _reuse_unchanged_generated_json(
+            registry_path, registry
+        )
     if registry:
         failures.extend(validate_schema_subset(registry, load_json(schema_path("skillguard_global_registry.schema.json"))))
-    projection = build_global_prompt_projection(registry, global_public_path(registry_path)) if registry else {}
+        failures.extend(global_registry_integrity_failures(registry))
+    projection = (
+        build_global_prompt_projection_or_block(
+            registry, global_public_path(registry_path), blockers
+        )
+        if registry
+        else {}
+    )
+    projection_unchanged = False
+    if projection:
+        projection, projection_unchanged = _reuse_unchanged_generated_json(
+            projection_path, projection
+        )
     if projection:
         failures.extend(validate_schema_subset(projection, load_json(schema_path("skillguard_global_prompt_projection.schema.json"))))
-    codex_home = expand_global_path(args.codex_home) if args.codex_home else Path.home() / ".codex"
+        failures.extend(
+            current_global_router.prompt_projection_integrity_failures(
+                projection
+            )
+        )
     agents_file = expand_global_path(args.agents_file) if args.agents_file else (codex_home / "AGENTS.md").resolve()
     install_status = "not-written"
     if not blockers and not failures and registry and projection:
-        global_write_json(registry_path, registry)
-        global_write_json(projection_path, projection)
         existing = agents_file.read_text(encoding="utf-8") if agents_file.is_file() else ""
         try:
             updated, install_status = replace_managed_global_prompt_block(existing, str(projection.get("managed_block") or ""))
         except ValueError as exc:
             blockers.append(str(exc))
             updated = existing
-        if not blockers and not args.dry_run:
-            agents_file.parent.mkdir(parents=True, exist_ok=True)
-            agents_file.write_text(updated, encoding="utf-8")
         if not blockers:
-            prompt_failures, prompt_blockers = check_global_prompt_text(updated, str(registry.get("registry_hash") or ""))
+            prompt_failures, prompt_blockers = check_global_prompt_text(
+                updated,
+                str(registry.get("registry_hash") or ""),
+                str(projection.get("managed_block") or ""),
+            )
             failures.extend(prompt_failures)
             blockers.extend(prompt_blockers)
+        if not blockers and not failures and not args.dry_run:
+            try:
+                transaction = apply_global_router_transaction(
+                    {
+                        registry_path: json_block(registry).encode("utf-8"),
+                        projection_path: json_block(projection).encode("utf-8"),
+                        agents_file: updated.encode("utf-8"),
+                    }
+                )
+            except GlobalRouterTransactionError as exc:
+                blockers.append(str(exc))
+            else:
+                install_status = str(transaction["status"])
+        elif not blockers and not failures and args.dry_run:
+            install_status = "unchanged" if updated == existing else install_status
     payload = base_result("refresh-global-router", global_public_path(output_dir))
     payload["skill_roots"] = [global_public_path(root) for root in roots]
     payload["registry_path"] = global_public_path(registry_path)
@@ -14592,20 +11941,42 @@ def run_fixture_handler(handler: Callable[[list[str]], int], argv: list[str]) ->
 MUTATING_RUNTIME_FIXTURE_COMMANDS = {
     "build-global-registry",
     "install-global-prompt",
+    "mark-portfolio-impact",
+    "issue-portfolio-reuse-ticket",
+    "graduate-portfolio",
     "refresh-global-router",
     "render-global-prompt",
 }
 
 
+def bounded_fixture_workspace_name(parent: Path, fixture_id: str) -> str:
+    """Keep marker paths below the legacy Windows path ceiling."""
+
+    slug = slugify_identifier(fixture_id)
+    marker_name = ".skillguard_fixture_workspace_marker"
+    maximum_path_length = 240
+    available = min(16, maximum_path_length - len(str(parent.resolve())) - len(marker_name) - 2)
+    if len(slug) <= available:
+        return slug
+    return hashlib.sha256(fixture_id.encode("utf-8")).hexdigest()[: max(8, available)]
+
+
 def reset_owned_fixture_workspace(fixture_path: Path, fixture_id: str) -> Path:
-    fixture_root = fixture_path.parent.parent
-    workspace = (fixture_root / "workspace" / slugify_identifier(fixture_id)).resolve()
+    parent = repository_root().resolve() / ".agents" / "skills" / ".sgf"
+    workspace = (parent / bounded_fixture_workspace_name(parent, fixture_id)).resolve()
     workspace.relative_to(repository_root().resolve())
     marker = workspace / ".skillguard_fixture_workspace_marker"
     if workspace.exists():
         if not marker.is_file():
             raise ValueError(f"fixture workspace exists without SkillGuard ownership marker: {public_relative_path(workspace)}")
-        shutil.rmtree(workspace)
+        for attempt in range(20):
+            try:
+                shutil.rmtree(workspace)
+                break
+            except PermissionError:
+                if attempt == 19:
+                    raise
+                time.sleep(0.05)
     workspace.mkdir(parents=True, exist_ok=True)
     marker.write_text("owned by SkillGuard fixture-test; safe to remove\n", encoding="utf-8")
     return workspace
@@ -14615,12 +11986,19 @@ def cleanup_owned_fixture_workspace(workspace: Path) -> bool:
     marker = workspace / ".skillguard_fixture_workspace_marker"
     if workspace.exists() and marker.is_file():
         parent = workspace.parent
-        shutil.rmtree(workspace)
+        for attempt in range(20):
+            try:
+                shutil.rmtree(workspace)
+                break
+            except PermissionError:
+                if attempt == 19:
+                    raise
+                time.sleep(0.05)
         for _ in range(10):
             if not workspace.exists():
                 break
             time.sleep(0.05)
-        if parent.name in {"workspace", ".runtime_workspaces"} and parent.exists():
+        if owned_runtime_parent_may_be_pruned(repository_root().resolve(), parent) and parent.exists():
             for _ in range(10):
                 if any(parent.iterdir()):
                     break
@@ -14635,8 +12013,8 @@ def cleanup_owned_fixture_workspace(workspace: Path) -> bool:
 
 
 def reset_owned_runtime_fixture_workspace(fixture_path: Path, fixture_id: str) -> Path:
-    fixture_root = fixture_path.parent.parent
-    workspace = (fixture_root / ".runtime_workspaces" / slugify_identifier(fixture_id)).resolve()
+    parent = repository_root().resolve() / ".sg-runtime"
+    workspace = (parent / bounded_fixture_workspace_name(parent, fixture_id)).resolve()
     workspace.relative_to(repository_root().resolve())
     marker = workspace / ".skillguard_fixture_workspace_marker"
     if workspace.exists():
@@ -14771,27 +12149,7 @@ def generate_skill_stable_projection(report: dict[str, Any]) -> dict[str, Any]:
 
 
 def generation_fixture_default_required_files() -> list[str]:
-    return [
-        "SKILL.md",
-        "README.md",
-        "references/README.md",
-        "assets/schemas/skillguard_generated_record.schema.json",
-        "assets/templates/check_report.template.json",
-        "scripts/README.md",
-        "scripts/run_checks.py",
-        "fixtures/README.md",
-        "fixtures/fixture-manifest.json",
-        "tests/README.md",
-        "tests/test_smoke.py",
-        ".skillguard/work-contract.json",
-        ".skillguard/check_manifest.json",
-        ".skillguard/checks/check_route.py",
-        ".skillguard/checks/check_phase_order.py",
-        ".skillguard/checks/check_evidence.py",
-        ".skillguard/checks/check_quality_floor.py",
-        ".skillguard/checks/check_closure.py",
-        ".skillguard/skillguard_manifest.json",
-    ]
+    return list(GENERATE_SKILL_REQUIRED_FILES)
 
 
 def generated_tree_public_boundary_problems(target: Path) -> list[str]:
@@ -14940,16 +12298,6 @@ def validate_generation_fixture_surfaces(
         summary["detect_stale_evidence_count"] = stale_report.get("stale_evidence_count")
         if stale_report.get("decision") != "pass":
             problems.append("detect-stale-evidence did not pass for current generated evidence")
-
-    if expected.get("refresh_maintenance_dry_run", True) and generate_report.get("decision") == "pass":
-        exit_code, refresh_report = run_fixture_handler(
-            refresh_maintenance,
-            ["--input", public_relative_path(generate_report_path)],
-        )
-        summary["refresh_maintenance_decision"] = refresh_report.get("decision")
-        summary["refresh_maintenance_exit_code"] = exit_code
-        if refresh_report.get("decision") != "pass":
-            problems.append("refresh-maintenance dry-run did not pass for current generated evidence")
 
     output_text = json.dumps({"plan": plan_report, "generate": generate_report}, sort_keys=True, ensure_ascii=False)
     for forbidden in fixture_string_list(expected.get("forbidden_output_substrings")):
@@ -15128,53 +12476,14 @@ def build_runtime_fixture_argv(fixture_path: Path, case_data: dict[str, Any], ta
     if target_command == "route-task":
         return build_route_task_fixture_argv(fixture_path, case_data)
 
-    if target_command in {"compile-contract", "check-contract", "check-depth", "select-route", "start-run"}:
+    if target_command in {"check-runtime-authority", "check-contract", "check-depth"}:
         target_path_text = case_data.get("target_path") or case_data.get("skill_path")
         if not isinstance(target_path_text, str) or not target_path_text:
             raise ValueError(f"{target_command} fixture must provide target_path")
         argv = ["--target", fixture_path_argument(fixture_path, target_path_text)]
         contract_path_text = case_data.get("contract_path") or case_data.get("contract")
         if isinstance(contract_path_text, str) and contract_path_text:
-            argv.extend(["--contract", fixture_path_argument(fixture_path, contract_path_text)])
-        if target_command == "compile-contract":
-            if case_data.get("write") is True:
-                argv.append("--write")
-            else:
-                argv.append("--dry-run")
-        if target_command in {"select-route", "start-run"}:
-            task_text = case_data.get("task")
-            if not isinstance(task_text, str) or not task_text:
-                raise ValueError(f"{target_command} fixture must provide task")
-            argv.extend(["--task", task_text])
-        if target_command == "select-route":
-            route_hint = case_data.get("route_hint")
-            if isinstance(route_hint, str) and route_hint:
-                argv.extend(["--route-hint", route_hint])
-        if target_command == "start-run":
-            route_id = case_data.get("route") or case_data.get("route_id")
-            if not isinstance(route_id, str) or not route_id:
-                raise ValueError("start-run fixture must provide route")
-            argv.extend(["--route", route_id])
-            if case_data.get("dry_run") is True:
-                argv.append("--dry-run")
-        for item in case_data.get("extra_arguments", []) if isinstance(case_data.get("extra_arguments"), list) else []:
-            if isinstance(item, (str, int, float)):
-                argv.append(str(item))
-        return argv
-
-    if target_command in {"check-run", "close-run"}:
-        run_path_text = case_data.get("run_path") or case_data.get("run")
-        if not isinstance(run_path_text, str) or not run_path_text:
-            raise ValueError(f"{target_command} fixture must provide run_path")
-        argv = ["--run", fixture_path_argument(fixture_path, run_path_text)]
-        if target_command == "check-run" and case_data.get("complete") is True:
-            argv.append("--complete")
-        if target_command == "close-run":
-            decision = case_data.get("decision")
-            if isinstance(decision, str) and decision:
-                argv.extend(["--decision", decision])
-            if case_data.get("dry_run") is not False:
-                argv.append("--dry-run")
+            raise ValueError(f"{target_command} fixture cannot declare a former contract path")
         for item in case_data.get("extra_arguments", []) if isinstance(case_data.get("extra_arguments"), list) else []:
             if isinstance(item, (str, int, float)):
                 argv.append(str(item))
@@ -15184,7 +12493,12 @@ def build_runtime_fixture_argv(fixture_path: Path, case_data: dict[str, Any], ta
         target_path_text = case_data.get("target_path") or case_data.get("skill_path")
         if not isinstance(target_path_text, str) or not target_path_text:
             raise ValueError("check-skill fixture must provide target_path")
-        argv = ["--target", fixture_path_argument(fixture_path, target_path_text)]
+        argv = [
+            "--repository-root",
+            ".",
+            "--target",
+            fixture_path_argument(fixture_path, target_path_text),
+        ]
         for reference in fixture_string_list(case_data.get("references") or case_data.get("reference")):
             argv.extend(["--reference", reference])
         return argv
@@ -15239,7 +12553,7 @@ def route_task_stable_projection(report: dict[str, Any]) -> dict[str, Any]:
 
 
 def public_fixture_command_arguments(target_command: str, argv: list[str]) -> list[str]:
-    if target_command not in {"route-task", "select-route", "start-run", "resolve-global-skill"}:
+    if target_command not in {"route-task", "resolve-global-skill"}:
         return argv
     public_args: list[str] = []
     redact_next = False
@@ -15451,24 +12765,24 @@ def evaluate_runtime_fixture_case(
         "build-global-registry": build_global_registry,
         "check-global-prompt": check_global_prompt,
         "check-global-registry": check_global_registry,
+        "check-runtime-authority": check_runtime_authority,
         "check-contract": check_contract,
         "check-depth": check_depth,
         "check-readme-release": check_readme_release,
         "audit-installed-skills": audit_installed_skills,
-        "check-run": check_run,
         "check-skill": check_skill,
         "check-suite": check_suite,
-        "close-run": close_run,
-        "compile-contract": compile_contract,
         "install-global-prompt": install_global_prompt,
+        "audit-portfolio": PORTFOLIO_COMMANDS["audit-portfolio"],
+        "mark-portfolio-impact": PORTFOLIO_COMMANDS["mark-portfolio-impact"],
+        "issue-portfolio-reuse-ticket": PORTFOLIO_COMMANDS["issue-portfolio-reuse-ticket"],
+        "graduate-portfolio": PORTFOLIO_COMMANDS["graduate-portfolio"],
         "refresh-global-router": refresh_global_router,
         "render-global-prompt": render_global_prompt,
         "resolve-global-skill": resolve_global_skill,
         "route-task": route_task,
         "scan-global-skills": scan_global_skills,
-        "select-route": select_route,
         "self-check": self_check,
-        "start-run": start_run,
     }
     handler = handler_map[target_command]
 
@@ -15786,7 +13100,7 @@ def fixture_test(argv: list[str]) -> int:
         route_node_id="fixture-test",
         checker_name="fixture-test",
         blockers=blockers + failures,
-        refresh_action={"action": "fixture_test", "status": payload["decision"], "fixture_result_count": len(fixture_results)},
+        owner_action={"action": "fixture_test", "status": payload["decision"], "fixture_result_count": len(fixture_results)},
         content_seed={
             "target_path": payload.get("target_path"),
             "fixture_ids": [item.get("fixture_id") for item in fixture_results if isinstance(item, dict)],
@@ -16024,9 +13338,10 @@ def self_check(argv: list[str]) -> int:
         ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json",
         ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
         ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
-        ".agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json",
-        ".agents/skills/skillguard/.skillguard/skillguard_closure_policy.json",
-        ".agents/skills/skillguard/.skillguard/skillguard_manifest.json",
+        ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
+        ".agents/skills/skillguard/.skillguard/contract-source.json",
+        ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+        ".agents/skills/skillguard/.skillguard/check-manifest.json",
         "references/06-evidence-freshness-and-closure-boundaries.md",
         "references/08-checker-change-fixture-policy.md",
         "references/09-skillguard-self-check.md",
@@ -16046,14 +13361,10 @@ def self_check(argv: list[str]) -> int:
         "assets/templates/skillguard_fixture_manifest.template.json",
         "assets/templates/skillguard_closure.template.json",
         "assets/templates/global_skillguard_prompt_block.md.template",
-        "fixtures/checker_change/current-baseline.json",
-        "fixtures/bad_routing/fixture-manifest.json",
-        "fixtures/global_router/fixture-manifest.json",
-        "fixtures/simple_generation/fixture-manifest.json",
-        "fixtures/complex_generation/fixture-manifest.json",
-        ".skillguard/skillguard_evidence_rules.json",
-        ".skillguard/skillguard_closure_policy.json",
-        ".skillguard/skillguard_manifest.json",
+        ".skillguard/flowguard_contract_model.py",
+        ".skillguard/contract-source.json",
+        ".skillguard/compiled-contract.json",
+        ".skillguard/check-manifest.json",
     ]
     if policy_root_supplied and not source_layout:
         installed_required_paths.extend(sorted(policy_relative_paths))
@@ -16072,14 +13383,18 @@ def self_check(argv: list[str]) -> int:
             ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json",
             ".agents/skills/skillguard/fixtures/simple_generation/fixture-manifest.json",
             ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json",
-            ".agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json",
-            ".agents/skills/skillguard/.skillguard/skillguard_closure_policy.json",
-            ".agents/skills/skillguard/.skillguard/skillguard_manifest.json",
+            ".agents/skills/skillguard/.skillguard/contract-source.json",
+            ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+            ".agents/skills/skillguard/.skillguard/check-manifest.json",
         ]
         if source_layout:
             return source_json_paths
         prefix = ".agents/skills/skillguard/"
-        return [path[len(prefix):] for path in source_json_paths]
+        return [
+            path[len(prefix):]
+            for path in source_json_paths
+            if not path.startswith(prefix + "fixtures/")
+        ]
 
     target_relative = public_relative_path(target)
     payload = base_result("self-check", target_relative)
@@ -16185,7 +13500,7 @@ def self_check(argv: list[str]) -> int:
     if ref08_available and ref09_available:
         ref08 = ref08_path.read_text(encoding="utf-8").lower()
         ref09 = ref09_path.read_text(encoding="utf-8").lower()
-        for term in ("positive fixtures", "negative fixtures", "stale fixture", "absent fixture", "compatibility", "public-safety"):
+        for term in ("positive fixtures", "negative fixtures", "stale fixture", "absent fixture", "current identity", "public-safety"):
             if term not in ref08:
                 failures.append(f"checker-change fixture policy missing term {term!r}")
         for term in ("required inputs", "deterministic checks", "public-safety checks", "closure boundaries", "pass, fail, and block"):
@@ -16290,10 +13605,16 @@ def self_check(argv: list[str]) -> int:
         route_node_id="self-check",
         checker_name="self-check",
         blockers=blockers + failures,
-        refresh_action={"action": "not_applicable", "status": "self_check"},
+        owner_action={"action": "not_applicable", "status": "self_check"},
         content_seed={"files_inspected": len(inspected_files), "command_count": len(command_names), "layout": layout},
     )
     return write_and_exit(payload, args.output)
+
+
+from skillguard_v2.project_adoption import (  # noqa: E402
+    project_adopt_command,
+    project_audit_command,
+)
 
 
 CommandHandler = Callable[[list[str]], int]
@@ -16314,34 +13635,38 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "install-global-prompt": "Install or replace the managed SkillGuard router block in AGENTS.md.",
     "check-global-prompt": "Check the managed global SkillGuard router block is present and current.",
     "refresh-global-router": "Scan skills, refresh registry/projection artifacts, install AGENTS.md, and verify freshness.",
+    "check-runtime-authority": "Resolve one target's current-or-blocked runtime authority.",
     "audit-installed-skills": "Audit installed user skills for deep SkillGuard contract coverage.",
+    "project-adopt": "Adopt a skill repository with a portable managed SkillGuard project prompt and manifest.",
+    "project-audit": "Audit the repository-local SkillGuard project prompt, manifest, routes, and repository link.",
+    "build-current-portfolio-registry": "Directly replace portfolio authority from one reviewed hash-valid current scope without reading or migrating a prior registry.",
+    "audit-portfolio": "Audit private portfolio structure, current Guard runtime identity, child evidence currentness, and prior-skill visibility.",
+    "mark-portfolio-impact": "Invalidate current portfolio evidence after a declared Guard change without silently preserving old green status.",
+    "verify-portfolio-impact-receipt": "Replay an immutable model-miss impact receipt against the exact current portfolio registry and required target set.",
+    "capture-installation-receipt": "Capture canonical, transactional-install, active-tree, parity, and installed-runtime identities into one immutable installation receipt.",
+    "verify-installation-receipt": "Replay an immutable installation receipt against the current canonical and installed SkillGuard trees.",
+    "issue-portfolio-reuse-ticket": "Issue proof-bound reuse only for an unchanged target identity outside a non-broad Guard change.",
+    "prepare-portfolio-run": "Atomically freeze one complete portfolio job plan and every job specification before any representative run is claimed.",
+    "execute-portfolio-run": "Execute every prepared representative job through ordinary claimed current runs under one preparation identity.",
+    "capture-portfolio-production-revalidation": "Capture one target member's exact scheduled-production declared-check depth, terminal, closure, and current installed-runtime binding.",
+    "assemble-portfolio-run": "Replay prepared execution evidence and assemble a verifier-owned graduation candidate without mutating the portfolio registry.",
+    "graduate-portfolio": "Graduate one target only when its full evidence and every prior active portfolio entry are current.",
     "check-json-schema": "Check one JSON file against an explicit local schema file.",
-    "compile-contract": "Compile or write a runnable SkillGuard work contract for a target skill.",
     "check-contract": "Check a target work contract for schema, hash, references, scripts, and closure-rule readiness.",
     "check-depth": "Check target-specific deep contract coverage against source requirements, checks, run records, and closure blockers.",
     "check-readme-release": "Check README release gates for bilingual mirror, hero provenance, current-version model artifacts, public boundary, and version consistency.",
-    "select-route": "Select exactly one work-contract route for a task before skill execution begins.",
-    "start-run": "Create a run record bound to a selected route and current work contract.",
-    "advance-run": "Advance or mark a run phase while preserving route phase order.",
-    "check-run": "Check a run record for route, phase, evidence, check, quality, stale, and blocker compliance.",
-    "close-run": "Close a run only when the requested decision is backed by current required evidence and checks.",
     "init-target": "Create missing target .skillguard directories without rewriting existing files.",
     "init-suite": "Create missing suite-level .skillguard directories without rewriting existing files.",
     "mark": "Create, update, or report an already-present marker record for one target or suite scope.",
     "check-skill": "Check one target skill directory for static SkillGuard contract and control-record readiness.",
     "check-suite": "Check suite records, member relations, child closure evidence, stale evidence, and unsafe claims.",
-    "check-skill-contract": "Check one skill contract JSON record.",
     "check-suite-map": "Check one suite map JSON record.",
     "check-suite-contract": "Check one suite contract JSON record.",
     "check-fixture-manifest": "Check one fixture manifest JSON record.",
-    "check-work-contract": "Check one runtime work-contract JSON record.",
-    "check-run-record": "Check one runtime run-record JSON record.",
-    "check-check-manifest": "Check one runtime check-manifest JSON record.",
     "fixture-test": "Run explicit fixture cases and compare expected pass, fail, block, and invalid-input outcomes.",
     "detect-stale-evidence": "Detect stale or unverifiable evidence records before they support current claims.",
-    "refresh-maintenance": "Plan or execute approved metadata refreshes for stale evidence records.",
     "review-checker-change": "Review checker-change bindings against an approved baseline without mutating evidence.",
-    "check-maintenance-record": "Validate or normalize one canonical public maintenance record.",
+    "check-maintenance-record": "Validate one current public maintenance record without converting any other shape.",
     "check-ai-judgment": "Check one AI judgment JSON record.",
     "check-report": "Check one deterministic check-report JSON record.",
     "check-workflow-report": "Check one workflow-report JSON record.",
@@ -16366,32 +13691,25 @@ COMMANDS: dict[str, CommandHandler] = {
     "install-global-prompt": install_global_prompt,
     "check-global-prompt": check_global_prompt,
     "refresh-global-router": refresh_global_router,
+    "check-runtime-authority": check_runtime_authority,
     "audit-installed-skills": audit_installed_skills,
+    "project-adopt": project_adopt_command,
+    "project-audit": project_audit_command,
+    **PORTFOLIO_COMMANDS,
     "check-json-schema": check_json_schema,
-    "compile-contract": compile_contract,
     "check-contract": check_contract,
     "check-depth": check_depth,
     "check-readme-release": check_readme_release,
-    "select-route": select_route,
-    "start-run": start_run,
-    "advance-run": advance_run,
-    "check-run": check_run,
-    "close-run": close_run,
     "init-target": init_target,
     "init-suite": init_suite,
     "mark": mark,
     "check-skill": check_skill,
     "check-suite": check_suite,
-    "check-skill-contract": check_skill_contract,
     "check-suite-map": check_suite_map,
     "check-suite-contract": check_suite_contract,
     "check-fixture-manifest": check_fixture_manifest,
-    "check-work-contract": check_work_contract,
-    "check-run-record": check_run_record,
-    "check-check-manifest": check_check_manifest,
     "fixture-test": fixture_test,
     "detect-stale-evidence": detect_stale_evidence,
-    "refresh-maintenance": refresh_maintenance,
     "review-checker-change": review_checker_change,
     "check-maintenance-record": check_maintenance_record,
     "check-ai-judgment": check_ai_judgment,

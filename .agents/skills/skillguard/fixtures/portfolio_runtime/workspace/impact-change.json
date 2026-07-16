@@ -1,0 +1,17 @@
+{
+  "schema_version": "skillguard.guard_change.v1",
+  "change_id": "change:fixture:broad",
+  "guard_before": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  },
+  "guard_after": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  },
+  "affected_feature_tags": ["portfolio"],
+  "broad_semantic_change": true,
+  "reason": "Synthetic broad portfolio fixture change."
+}

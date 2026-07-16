@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_obligation_applicability_receipt_v1.schema.json",
+  "title": "SkillGuard Verifier-owned Obligation Applicability Receipt V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "receipt_id", "target_skill_id", "target_contract_hash", "native_owner_id", "native_route_id", "branch_id", "run_id", "obligation_id", "disposition", "reason_code", "native_terminal_receipt_id", "native_terminal_receipt_hash", "verifier_check_id", "verifier_id", "verifier_version", "evidence_witness_consumed", "created_at", "receipt_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.obligation_applicability_receipt.v1"},
+    "receipt_id": {"type": "string", "pattern": "^applicability-[a-f0-9]{24}$"},
+    "target_skill_id": {"type": "string", "minLength": 1},
+    "target_contract_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "native_owner_id": {"type": "string", "minLength": 1},
+    "native_route_id": {"type": "string", "minLength": 1},
+    "branch_id": {"enum": ["no-update", "waiting-for-user", "ui-running"]},
+    "run_id": {"type": "string", "minLength": 1},
+    "obligation_id": {"type": "string", "minLength": 1},
+    "disposition": {"const": "not_applicable"},
+    "reason_code": {"const": "verified_branch_not_prepared_update"},
+    "native_terminal_receipt_id": {"type": "string", "minLength": 1},
+    "native_terminal_receipt_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "verifier_check_id": {"type": "string", "minLength": 1},
+    "verifier_id": {"const": "skillguard.route_branch_applicability_verifier"},
+    "verifier_version": {"const": "1"},
+    "evidence_witness_consumed": {"const": false},
+    "created_at": {"type": "string", "minLength": 1},
+    "receipt_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}
+  }
+}

@@ -1,0 +1,1345 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "artifact:skill-scan",
+      "kind": "json",
+      "path_template": "global_router/skill_scan.json",
+      "producer_step_id": "step:scan-global-skills:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "decision",
+        "skill_items",
+        "blockers",
+        "failures",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:global-registry",
+      "kind": "json",
+      "path_template": "global_router/global_registry.json",
+      "producer_step_id": "step:build-global-registry:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "router_skill_id",
+        "registry_hash",
+        "scan_roots",
+        "items",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:registry-check-report",
+      "kind": "json",
+      "path_template": "global_router/registry_check.json",
+      "producer_step_id": "step:check-global-registry:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "decision",
+        "registry_hash",
+        "blockers",
+        "failures",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:prompt-projection",
+      "kind": "json",
+      "path_template": "global_router/global_prompt_projection.json",
+      "producer_step_id": "step:render-global-prompt:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "router_skill_id",
+        "registry_hash",
+        "managed_block",
+        "managed_block_markers",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:installed-agents-prompt",
+      "kind": "document",
+      "path_template": "codex_home/AGENTS.md",
+      "producer_step_id": "step:install-global-prompt:execute",
+      "required": true,
+      "validators": [
+        "exists",
+        "document_structure"
+      ]
+    },
+    {
+      "artifact_id": "artifact:prompt-check-report",
+      "kind": "json",
+      "path_template": "global_router/prompt_check.json",
+      "producer_step_id": "step:check-global-prompt:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "decision",
+        "registry_hash",
+        "blockers",
+        "failures",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:route-resolution",
+      "kind": "json",
+      "path_template": "global_router/route_resolution.json",
+      "producer_step_id": "step:resolve-global-skill:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "decision",
+        "routing_decision",
+        "blockers",
+        "failures",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:refresh-scan",
+      "kind": "json",
+      "path_template": "global_router/skill_scan.json",
+      "producer_step_id": "step:refresh-global-router:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "decision",
+        "skill_items",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:refresh-registry",
+      "kind": "json",
+      "path_template": "global_router/global_registry.json",
+      "producer_step_id": "step:refresh-global-router:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "router_skill_id",
+        "registry_hash",
+        "items",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:refresh-projection",
+      "kind": "json",
+      "path_template": "global_router/global_prompt_projection.json",
+      "producer_step_id": "step:refresh-global-router:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "router_skill_id",
+        "registry_hash",
+        "managed_block",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    },
+    {
+      "artifact_id": "artifact:refresh-agents-prompt",
+      "kind": "document",
+      "path_template": "codex_home/AGENTS.md",
+      "producer_step_id": "step:refresh-global-router:execute",
+      "required": true,
+      "validators": [
+        "exists",
+        "document_structure"
+      ]
+    },
+    {
+      "artifact_id": "artifact:refresh-report",
+      "kind": "json",
+      "path_template": "global_router/refresh_report.json",
+      "producer_step_id": "step:refresh-global-router:execute",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "decision",
+        "registry_hash",
+        "blockers",
+        "failures",
+        "claim_boundary"
+      ],
+      "validators": [
+        "exists",
+        "json"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "check_id": "check:router:flowguard-model",
+      "covers_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:claim-boundary",
+        "obligation:portable-root",
+        "obligation:negative-boundaries"
+      ],
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router-model",
+      "execution_owner_id": "owner:router:flowguard-model",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/scripts/skillguard_global_router_contract_model.py"
+        }
+      ],
+      "kind": "model_assertion",
+      "timeout_seconds": 60
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+        "--mode",
+        "command-surface",
+        "--repository-root",
+        "{{repository_root}}",
+        "--target-root",
+        "{{target_root}}"
+      ],
+      "check_id": "check:router:command-surface",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:command-surface",
+        "obligation:native-regression"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router-functional",
+      "execution_owner_id": "owner:router:command-surface",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
+        }
+      ],
+      "kind": "command",
+      "timeout_seconds": 60
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+        "--mode",
+        "scan",
+        "--repository-root",
+        "{{repository_root}}",
+        "--target-root",
+        "{{target_root}}"
+      ],
+      "check_id": "check:router:scan-work-package",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:scan-global-skills"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:router:command-surface"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router-functional",
+      "execution_owner_id": "owner:router:scan-work-package",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
+        }
+      ],
+      "kind": "native",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+        "--mode",
+        "registry",
+        "--repository-root",
+        "{{repository_root}}",
+        "--target-root",
+        "{{target_root}}"
+      ],
+      "check_id": "check:router:registry-work-package",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:build-global-registry",
+        "obligation:check-global-registry"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:router:command-surface"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router-functional",
+      "execution_owner_id": "owner:router:registry-work-package",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
+        }
+      ],
+      "kind": "native",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+        "--mode",
+        "projection",
+        "--repository-root",
+        "{{repository_root}}",
+        "--target-root",
+        "{{target_root}}"
+      ],
+      "check_id": "check:router:projection-work-package",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:render-global-prompt"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:router:command-surface"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router-functional",
+      "execution_owner_id": "owner:router:projection-work-package",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
+        }
+      ],
+      "kind": "native",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+        "--mode",
+        "prompt",
+        "--repository-root",
+        "{{repository_root}}",
+        "--target-root",
+        "{{target_root}}"
+      ],
+      "check_id": "check:router:prompt-work-package",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:install-global-prompt",
+        "obligation:check-global-prompt"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:router:command-surface"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router-functional",
+      "execution_owner_id": "owner:router:prompt-work-package",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
+        }
+      ],
+      "kind": "native",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+        "--mode",
+        "resolve",
+        "--repository-root",
+        "{{repository_root}}",
+        "--target-root",
+        "{{target_root}}"
+      ],
+      "check_id": "check:router:resolve-work-package",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:resolve-global-skill"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:router:command-surface"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router-functional",
+      "execution_owner_id": "owner:router:resolve-work-package",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
+        }
+      ],
+      "kind": "native",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+        "--mode",
+        "refresh",
+        "--repository-root",
+        "{{repository_root}}",
+        "--target-root",
+        "{{target_root}}"
+      ],
+      "check_id": "check:router:refresh-work-package",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:refresh-global-router"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:router:command-surface"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router-functional",
+      "execution_owner_id": "owner:router:refresh-work-package",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
+        }
+      ],
+      "kind": "native",
+      "timeout_seconds": 180
+    }
+  ],
+  "claim_boundary": "This contract supervises the eight public global-router command paths through the existing SkillGuard CLI, current artifacts, native checks, a current-authority handoff smoke route, and explicit blocked states. It does not create a second router, execute the selected target skill, prove a live user-level installation without its current work package, prove repository publication, or guarantee future AI behavior.",
+  "closure_profiles": [
+    {
+      "profile_id": "enforced",
+      "required_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:claim-boundary",
+        "obligation:command-surface",
+        "obligation:native-regression",
+        "obligation:negative-boundaries"
+      ]
+    }
+  ],
+  "confirmed": true,
+  "content_impact_policy": {
+    "full_admission_reason_codes": [
+      "explicit_final_gate",
+      "explicit_release_gate",
+      "impact_policy_or_compiler_changed",
+      "shared_validation_runtime_changed",
+      "all_owner_component_changed"
+    ],
+    "owner_receipt_root_ref": {
+      "path_token": "owner_evidence_root",
+      "relative_path": "check-executions"
+    },
+    "policy_id": "skillguard.content_impact_policy.current",
+    "unknown_mapping_disposition": "block"
+  },
+  "depth_profile": {
+    "claim_boundary": "Exact target-declared global-router checks only; no selected target skill execution or future AI behavior claim.",
+    "enforcement_level": "enforced",
+    "integration_mode": "native-integrated",
+    "native_check_ids": [
+      "check:router:command-surface",
+      "check:router:flowguard-model"
+    ],
+    "native_owner_id": "skillguard.global_router_cli",
+    "native_route_ids": [
+      "route:scan-global-skills",
+      "route:build-global-registry",
+      "route:check-global-registry",
+      "route:render-global-prompt",
+      "route:install-global-prompt",
+      "route:check-global-prompt",
+      "route:resolve-global-skill",
+      "route:refresh-global-router",
+      "route:shared-supervision"
+    ],
+    "profile_id": "skillguard-global-router-declared-check-supervision-current",
+    "provider_runtime": {
+      "provider_id": "skillguard-local-provider",
+      "readiness_check_ids": [
+        "check:router:command-surface"
+      ],
+      "required_capability_ids": [
+        "declared-check-inventory.v1",
+        "declared-check-receipt-reconciliation.v1",
+        "installation-receipt-binding.v1",
+        "installation-currentness-replay.v1",
+        "provider-runtime-enrollment.v1",
+        "single-flight-check-execution.v1"
+      ],
+      "required_enrollment_status": "enrolled",
+      "required_runtime_contract_id": "skillguard-declared-check-supervision-current"
+    },
+    "required_closure_profiles": [
+      "enforced"
+    ],
+    "schema_version": "skillguard.depth_profile.v2",
+    "skillguard_adds_domain_route": false,
+    "target_skill_id": "skillguard-global-router"
+  },
+  "implementation_paths": [
+    ".agents/skills/skillguard-global-router/SKILL.md",
+    ".agents/skills/skillguard-global-router/scripts",
+    ".agents/skills/skillguard-global-router/references",
+    ".agents/skills/skillguard-global-router/fixtures"
+  ],
+  "integration_mode": "native-integrated",
+  "judgment_rubrics": [],
+  "may_define_parallel_execution_route": false,
+  "model_id": "skillguard.global_router.executable_contract.v2",
+  "model_path": ".agents/skills/skillguard-global-router/scripts/skillguard_global_router_contract_model.py",
+  "native_check_bindings": [
+    {
+      "binding_id": "native-check:contract-adapter",
+      "evidence_source": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+      "native_check_id": "skillguard.global_router_contract_check.v1",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:global-router-fixtures",
+      "evidence_source": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py plus fixtures/execution-depth/representative-positive.json and intentionally-shallow.json",
+      "native_check_id": "skillguard.global_router.fixture_test",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:flowguard-model",
+      "evidence_source": ".agents/skills/skillguard-global-router/scripts/skillguard_global_router_contract_model.py",
+      "native_check_id": "skillguard.global_router.flowguard_model",
+      "required": true
+    }
+  ],
+  "native_route_bindings": [
+    {
+      "binding_id": "native:scan-global-skills",
+      "native_route_id": "scan-global-skills",
+      "required_before_closure": true,
+      "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:build-global-registry",
+      "native_route_id": "build-global-registry",
+      "required_before_closure": true,
+      "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:check-global-registry",
+      "native_route_id": "check-global-registry",
+      "required_before_closure": true,
+      "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:render-global-prompt",
+      "native_route_id": "render-global-prompt",
+      "required_before_closure": true,
+      "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:install-global-prompt",
+      "native_route_id": "install-global-prompt",
+      "required_before_closure": true,
+      "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:check-global-prompt",
+      "native_route_id": "check-global-prompt",
+      "required_before_closure": true,
+      "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:resolve-global-skill",
+      "native_route_id": "resolve-global-skill",
+      "required_before_closure": true,
+      "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:refresh-global-router",
+      "native_route_id": "refresh-global-router",
+      "required_before_closure": true,
+      "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+    }
+  ],
+  "native_route_owner": "skillguard.global_router_cli",
+  "portfolio_capability_contracts": [
+    {
+      "business_intent": "scan explicit installed or repository-local skill roots",
+      "capability_id": "scan-global-skills",
+      "path_variants": [
+        {
+          "artifact_ids": [],
+          "check_ids": [
+            "check:router:scan-work-package"
+          ],
+          "function_ids": [
+            "function:scan-global-skills"
+          ],
+          "job_class_ids": [
+            "positive",
+            "invalid_input",
+            "recovery_or_resume",
+            "out_of_scope",
+            "native_check",
+            "judged_quality"
+          ],
+          "obligation_ids": [
+            "obligation:scan-global-skills"
+          ],
+          "route_ids": [
+            "route:scan-global-skills"
+          ],
+          "step_ids": [
+            "step:scan-global-skills:verify"
+          ],
+          "variant_id": "non-artifact"
+        },
+        {
+          "artifact_ids": [
+            "artifact:skill-scan"
+          ],
+          "check_ids": [
+            "check:router:command-surface",
+            "check:router:scan-work-package"
+          ],
+          "function_ids": [
+            "function:scan-global-skills"
+          ],
+          "job_class_ids": [
+            "artifact_check"
+          ],
+          "obligation_ids": [
+            "obligation:command-surface",
+            "obligation:scan-global-skills"
+          ],
+          "route_ids": [
+            "route:scan-global-skills"
+          ],
+          "step_ids": [
+            "step:scan-global-skills:execute",
+            "step:scan-global-skills:verify"
+          ],
+          "variant_id": "artifact"
+        }
+      ]
+    },
+    {
+      "business_intent": "build the global SkillGuard registry from a current skill scan",
+      "capability_id": "build-global-registry",
+      "path_variants": [
+        {
+          "artifact_ids": [],
+          "check_ids": [
+            "check:router:registry-work-package"
+          ],
+          "function_ids": [
+            "function:build-global-registry"
+          ],
+          "job_class_ids": [
+            "positive",
+            "invalid_input",
+            "recovery_or_resume",
+            "out_of_scope",
+            "native_check",
+            "judged_quality"
+          ],
+          "obligation_ids": [
+            "obligation:build-global-registry"
+          ],
+          "route_ids": [
+            "route:build-global-registry"
+          ],
+          "step_ids": [
+            "step:build-global-registry:verify"
+          ],
+          "variant_id": "non-artifact"
+        },
+        {
+          "artifact_ids": [
+            "artifact:global-registry"
+          ],
+          "check_ids": [
+            "check:router:command-surface",
+            "check:router:registry-work-package"
+          ],
+          "function_ids": [
+            "function:build-global-registry"
+          ],
+          "job_class_ids": [
+            "artifact_check"
+          ],
+          "obligation_ids": [
+            "obligation:command-surface",
+            "obligation:build-global-registry"
+          ],
+          "route_ids": [
+            "route:build-global-registry"
+          ],
+          "step_ids": [
+            "step:build-global-registry:execute",
+            "step:build-global-registry:verify"
+          ],
+          "variant_id": "artifact"
+        }
+      ]
+    },
+    {
+      "business_intent": "check global registry schema identity and freshness against its scan roots",
+      "capability_id": "check-global-registry",
+      "path_variants": [
+        {
+          "artifact_ids": [],
+          "check_ids": [
+            "check:router:registry-work-package"
+          ],
+          "function_ids": [
+            "function:check-global-registry"
+          ],
+          "job_class_ids": [
+            "positive",
+            "invalid_input",
+            "recovery_or_resume",
+            "out_of_scope",
+            "native_check",
+            "judged_quality"
+          ],
+          "obligation_ids": [
+            "obligation:check-global-registry"
+          ],
+          "route_ids": [
+            "route:check-global-registry"
+          ],
+          "step_ids": [
+            "step:check-global-registry:verify"
+          ],
+          "variant_id": "non-artifact"
+        },
+        {
+          "artifact_ids": [
+            "artifact:registry-check-report"
+          ],
+          "check_ids": [
+            "check:router:command-surface",
+            "check:router:registry-work-package"
+          ],
+          "function_ids": [
+            "function:check-global-registry"
+          ],
+          "job_class_ids": [
+            "artifact_check"
+          ],
+          "obligation_ids": [
+            "obligation:command-surface",
+            "obligation:check-global-registry"
+          ],
+          "route_ids": [
+            "route:check-global-registry"
+          ],
+          "step_ids": [
+            "step:check-global-registry:execute",
+            "step:check-global-registry:verify"
+          ],
+          "variant_id": "artifact"
+        }
+      ]
+    },
+    {
+      "business_intent": "render the managed AGENTS prompt projection from the current registry",
+      "capability_id": "render-global-prompt",
+      "path_variants": [
+        {
+          "artifact_ids": [],
+          "check_ids": [
+            "check:router:projection-work-package"
+          ],
+          "function_ids": [
+            "function:render-global-prompt"
+          ],
+          "job_class_ids": [
+            "positive",
+            "invalid_input",
+            "recovery_or_resume",
+            "out_of_scope",
+            "native_check",
+            "judged_quality"
+          ],
+          "obligation_ids": [
+            "obligation:render-global-prompt"
+          ],
+          "route_ids": [
+            "route:render-global-prompt"
+          ],
+          "step_ids": [
+            "step:render-global-prompt:verify"
+          ],
+          "variant_id": "non-artifact"
+        },
+        {
+          "artifact_ids": [
+            "artifact:prompt-projection"
+          ],
+          "check_ids": [
+            "check:router:command-surface",
+            "check:router:projection-work-package"
+          ],
+          "function_ids": [
+            "function:render-global-prompt"
+          ],
+          "job_class_ids": [
+            "artifact_check"
+          ],
+          "obligation_ids": [
+            "obligation:command-surface",
+            "obligation:render-global-prompt"
+          ],
+          "route_ids": [
+            "route:render-global-prompt"
+          ],
+          "step_ids": [
+            "step:render-global-prompt:execute",
+            "step:render-global-prompt:verify"
+          ],
+          "variant_id": "artifact"
+        }
+      ]
+    },
+    {
+      "business_intent": "install or replace only the managed SkillGuard block while preserving unrelated AGENTS content",
+      "capability_id": "install-global-prompt",
+      "path_variants": [
+        {
+          "artifact_ids": [],
+          "check_ids": [
+            "check:router:prompt-work-package"
+          ],
+          "function_ids": [
+            "function:install-global-prompt"
+          ],
+          "job_class_ids": [
+            "positive",
+            "invalid_input",
+            "recovery_or_resume",
+            "out_of_scope",
+            "native_check",
+            "judged_quality"
+          ],
+          "obligation_ids": [
+            "obligation:install-global-prompt"
+          ],
+          "route_ids": [
+            "route:install-global-prompt"
+          ],
+          "step_ids": [
+            "step:install-global-prompt:verify"
+          ],
+          "variant_id": "non-artifact"
+        },
+        {
+          "artifact_ids": [
+            "artifact:installed-agents-prompt"
+          ],
+          "check_ids": [
+            "check:router:command-surface",
+            "check:router:prompt-work-package"
+          ],
+          "function_ids": [
+            "function:install-global-prompt"
+          ],
+          "job_class_ids": [
+            "artifact_check"
+          ],
+          "obligation_ids": [
+            "obligation:command-surface",
+            "obligation:install-global-prompt"
+          ],
+          "route_ids": [
+            "route:install-global-prompt"
+          ],
+          "step_ids": [
+            "step:install-global-prompt:execute",
+            "step:install-global-prompt:verify"
+          ],
+          "variant_id": "artifact"
+        }
+      ]
+    },
+    {
+      "business_intent": "check managed AGENTS block uniqueness markers and current registry hash",
+      "capability_id": "check-global-prompt",
+      "path_variants": [
+        {
+          "artifact_ids": [],
+          "check_ids": [
+            "check:router:prompt-work-package"
+          ],
+          "function_ids": [
+            "function:check-global-prompt"
+          ],
+          "job_class_ids": [
+            "positive",
+            "invalid_input",
+            "recovery_or_resume",
+            "out_of_scope",
+            "native_check",
+            "judged_quality"
+          ],
+          "obligation_ids": [
+            "obligation:check-global-prompt"
+          ],
+          "route_ids": [
+            "route:check-global-prompt"
+          ],
+          "step_ids": [
+            "step:check-global-prompt:verify"
+          ],
+          "variant_id": "non-artifact"
+        },
+        {
+          "artifact_ids": [
+            "artifact:prompt-check-report"
+          ],
+          "check_ids": [
+            "check:router:command-surface",
+            "check:router:prompt-work-package"
+          ],
+          "function_ids": [
+            "function:check-global-prompt"
+          ],
+          "job_class_ids": [
+            "artifact_check"
+          ],
+          "obligation_ids": [
+            "obligation:command-surface",
+            "obligation:check-global-prompt"
+          ],
+          "route_ids": [
+            "route:check-global-prompt"
+          ],
+          "step_ids": [
+            "step:check-global-prompt:execute",
+            "step:check-global-prompt:verify"
+          ],
+          "variant_id": "artifact"
+        }
+      ]
+    },
+    {
+      "business_intent": "resolve one task to exactly one current skill and hand off to its own route documents",
+      "capability_id": "resolve-global-skill",
+      "path_variants": [
+        {
+          "artifact_ids": [],
+          "check_ids": [
+            "check:router:resolve-work-package"
+          ],
+          "function_ids": [
+            "function:resolve-global-skill"
+          ],
+          "job_class_ids": [
+            "positive",
+            "invalid_input",
+            "recovery_or_resume",
+            "out_of_scope",
+            "native_check",
+            "judged_quality"
+          ],
+          "obligation_ids": [
+            "obligation:resolve-global-skill"
+          ],
+          "route_ids": [
+            "route:resolve-global-skill"
+          ],
+          "step_ids": [
+            "step:resolve-global-skill:verify"
+          ],
+          "variant_id": "non-artifact"
+        },
+        {
+          "artifact_ids": [
+            "artifact:route-resolution"
+          ],
+          "check_ids": [
+            "check:router:command-surface",
+            "check:router:resolve-work-package"
+          ],
+          "function_ids": [
+            "function:resolve-global-skill"
+          ],
+          "job_class_ids": [
+            "artifact_check"
+          ],
+          "obligation_ids": [
+            "obligation:command-surface",
+            "obligation:resolve-global-skill"
+          ],
+          "route_ids": [
+            "route:resolve-global-skill"
+          ],
+          "step_ids": [
+            "step:resolve-global-skill:execute",
+            "step:resolve-global-skill:verify"
+          ],
+          "variant_id": "artifact"
+        }
+      ]
+    },
+    {
+      "business_intent": "refresh scan registry prompt installation freshness checks and a smoke handoff end to end",
+      "capability_id": "refresh-global-router",
+      "path_variants": [
+        {
+          "artifact_ids": [],
+          "check_ids": [
+            "check:router:refresh-work-package"
+          ],
+          "function_ids": [
+            "function:refresh-global-router"
+          ],
+          "job_class_ids": [
+            "positive",
+            "invalid_input",
+            "recovery_or_resume",
+            "out_of_scope",
+            "native_check",
+            "judged_quality"
+          ],
+          "obligation_ids": [
+            "obligation:refresh-global-router"
+          ],
+          "route_ids": [
+            "route:refresh-global-router"
+          ],
+          "step_ids": [
+            "step:refresh-global-router:verify"
+          ],
+          "variant_id": "non-artifact"
+        },
+        {
+          "artifact_ids": [
+            "artifact:refresh-scan",
+            "artifact:refresh-registry",
+            "artifact:refresh-projection",
+            "artifact:refresh-agents-prompt",
+            "artifact:refresh-report"
+          ],
+          "check_ids": [
+            "check:router:command-surface",
+            "check:router:refresh-work-package"
+          ],
+          "function_ids": [
+            "function:refresh-global-router"
+          ],
+          "job_class_ids": [
+            "artifact_check"
+          ],
+          "obligation_ids": [
+            "obligation:command-surface",
+            "obligation:refresh-global-router"
+          ],
+          "route_ids": [
+            "route:refresh-global-router"
+          ],
+          "step_ids": [
+            "step:refresh-global-router:execute",
+            "step:refresh-global-router:verify"
+          ],
+          "variant_id": "artifact"
+        }
+      ]
+    }
+  ],
+  "schema_version": "skillguard.contract_source.v2",
+  "skill_id": "skillguard-global-router",
+  "step_bindings": [
+    {
+      "action": {
+        "evidence_class": "witnessed",
+        "kind": "tool_action",
+        "summary": "Run scan-global-skills over every explicitly intended root and write global_router/skill_scan.json."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [
+        "artifact:skill-scan"
+      ],
+      "step_id": "step:scan-global-skills:execute"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Reject missing roots, an empty scan, failed scan output, or hidden blockers."
+      },
+      "check_ids": [
+        "check:router:scan-work-package"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:scan-global-skills:verify"
+    },
+    {
+      "action": {
+        "evidence_class": "witnessed",
+        "kind": "tool_action",
+        "summary": "Run build-global-registry from the current scan and write global_router/global_registry.json."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [
+        "artifact:global-registry"
+      ],
+      "step_id": "step:build-global-registry:execute"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Run the native freshness check and require the router entry to hand off to the exact current generated files."
+      },
+      "check_ids": [
+        "check:router:registry-work-package"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:build-global-registry:verify"
+    },
+    {
+      "action": {
+        "evidence_class": "witnessed",
+        "kind": "tool_action",
+        "summary": "Run check-global-registry and preserve its current hash-bound JSON report."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [
+        "artifact:registry-check-report"
+      ],
+      "step_id": "step:check-global-registry:execute"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Re-run the native registry checker and reject a stale hash or non-current router handoff."
+      },
+      "check_ids": [
+        "check:router:registry-work-package"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:check-global-registry:verify"
+    },
+    {
+      "action": {
+        "evidence_class": "witnessed",
+        "kind": "tool_action",
+        "summary": "Run render-global-prompt and write global_router/global_prompt_projection.json."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [
+        "artifact:prompt-projection"
+      ],
+      "step_id": "step:render-global-prompt:execute"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Require the projection registry hash, router id, and managed markers to match."
+      },
+      "check_ids": [
+        "check:router:projection-work-package"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:render-global-prompt:verify"
+    },
+    {
+      "action": {
+        "evidence_class": "witnessed",
+        "kind": "tool_action",
+        "summary": "Run install-global-prompt and change only the managed block in codex_home/AGENTS.md."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [
+        "artifact:installed-agents-prompt"
+      ],
+      "step_id": "step:install-global-prompt:execute"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Run the native prompt checker and require exactly one current managed block."
+      },
+      "check_ids": [
+        "check:router:prompt-work-package"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:install-global-prompt:verify"
+    },
+    {
+      "action": {
+        "evidence_class": "witnessed",
+        "kind": "tool_action",
+        "summary": "Run check-global-prompt and preserve its registry-hash-bound report."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [
+        "artifact:prompt-check-report"
+      ],
+      "step_id": "step:check-global-prompt:execute"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Re-run the native prompt checker and reject missing, duplicate, corrupt, or stale markers."
+      },
+      "check_ids": [
+        "check:router:prompt-work-package"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:check-global-prompt:verify"
+    },
+    {
+      "action": {
+        "evidence_class": "witnessed",
+        "kind": "tool_action",
+        "summary": "Run resolve-global-skill for the supplied task and preserve the one-skill routing decision."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [
+        "artifact:route-resolution"
+      ],
+      "step_id": "step:resolve-global-skill:execute"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Smoke-resolve this router and require its current contract and check manifest in the handoff."
+      },
+      "check_ids": [
+        "check:router:resolve-work-package"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:resolve-global-skill:verify"
+    },
+    {
+      "action": {
+        "evidence_class": "witnessed",
+        "kind": "tool_action",
+        "summary": "Run refresh-global-router through scan, registry, projection, managed-block installation, freshness checks, and smoke handoff."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [
+        "artifact:refresh-scan",
+        "artifact:refresh-registry",
+        "artifact:refresh-projection",
+        "artifact:refresh-agents-prompt",
+        "artifact:refresh-report"
+      ],
+      "step_id": "step:refresh-global-router:execute"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Re-run scan, registry, prompt, and current-authority handoff checks over the completed work package."
+      },
+      "check_ids": [
+        "check:router:refresh-work-package"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:refresh-global-router:verify"
+    },
+    {
+      "action": {
+        "kind": "flowguard_model",
+        "summary": "Validate the portable self-contained FlowGuard export without a source-layout parent dependency."
+      },
+      "check_ids": [
+        "check:router:flowguard-model"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:shared:validate-model"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Run the global-router positive and negative fixture family through the native SkillGuard checker."
+      },
+      "check_ids": [
+        "check:router:command-surface"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:shared:run-native-regressions"
+    }
+  ]
+}

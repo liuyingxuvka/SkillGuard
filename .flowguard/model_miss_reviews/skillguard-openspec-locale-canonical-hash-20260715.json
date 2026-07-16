@@ -1,0 +1,50 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-openspec-locale-canonical-hash-20260715",
+  "status": "repair_validated_current_sourceguard",
+  "observed_failure": {
+    "surface": "SourceGuard parent receipt consumed by OpenSpec with SKILL.md files in the frozen source manifest",
+    "prior_local_claim": "SkillGuard's portable receipt hashes match OpenSpec canonical receipt identities exactly",
+    "observed_result": "the earlier uppercase-path repair still let the Windows process locale order dot and underscore differently from OpenSpec localeCompare, so larger TraceGuard and WorldGuard manifests produced invalid identities despite exact file/hash equality",
+    "failure_code": "openspec_portable_manifest_locale_order_mismatch"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.openspec-projection.canonical-hash-parity",
+    "owner": "SkillGuard OpenSpec portable receipt projection",
+    "miss_type": "refinement_mismatch",
+    "error_signature": "Portable source manifest identity, source fingerprint, or policy is invalid",
+    "affected_feature_tags": [
+      "openspec",
+      "portable-receipt",
+      "canonical-hash",
+      "locale-collation",
+      "skill-entrypoint"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the first repair delegated ordering to the machine's active Windows collation; that matched the uppercase fixture but not Node localeCompare punctuation order, especially underscore before dot",
+    "would_have_failed_if": "the compatibility regression had included competing paths such as test_semantic_rollout_runner.py and test_semantic_rollout.py or contract_model.py and contract-source.json",
+    "new_model_item": "portable OpenSpec projection must use an explicit consumer-compatible ASCII primary/case collation and fail closed for source paths outside that proven alphabet",
+    "owner_code_contract": "test_mesh._portable_receipt_hash -> OpenSpec receipt canonicalHash refinement"
+  },
+  "generalized_repair": {
+    "rule": "Use an explicit Node-compatible ASCII collation table for OpenSpec-only canonicalization, compare case only after the primary sequence, and reject non-ASCII source paths instead of guessing.",
+    "observed_regression": "both the uppercase SKILL.md fixture and the dot-versus-underscore punctuation fixture match fixed OpenSpec canonical digests",
+    "same_class_regression": "real TraceGuard and WorldGuard source manifests now pass OpenSpec portable receipt verification with all watched file hashes intact",
+    "negative_boundary": "the repair does not change family evidence, omit watched files, relax freshness, execute receipt owners, or introduce a second receipt format"
+  },
+  "required_revalidation": [
+    "portable canonical-hash regression with uppercase skill paths",
+    "focused TestMesh and installation-binding tests",
+    "current SkillGuard contract compilation and transactional reinstall",
+    "real SourceGuard OpenSpec full receipt-only verification"
+  ],
+  "revalidation_evidence": {
+    "focused_regression": "25 passed in the focused TestMesh module, including uppercase paths, punctuation ordering, non-ASCII fail-closed behavior, and Windows long-path projection",
+    "current_contract_hash": "CFCF513F27A7E6237D5ECFEFBD4E3B2B3D9F181B6F112CC2735F4CB6D84E85AE",
+    "installation": "transaction install-7fbec342af724ef4948dc9cc68760926; current-parity receipt installation-3c1db6c646e5d02980e105e2 / 4BD625E894967E0D0408E77B059EF9E24D6D880D94DE91151A281697C900D2F5",
+    "real_sourceguard_verification": "TraceGuard and WorldGuard OpenSpec full verification both passed with executed=0, aggregated=1, using receipts sha256:49fdd465a803b72a192e587e06d5fa7034c6d7159f0f850bb89b6e6dde28f33a and sha256:cd557c491dca53dfc2954613a7b22cb4858aea50553cb5c3be7f79a40c11f29d"
+  },
+  "claim_boundary": "The current source, transactional installed projection, two fixed digest regressions, and two real OpenSpec consumers agree on the portable identity. This closes the machine-locale mismatch for proven ASCII paths without changing ordinary SkillGuard hashes."
+}

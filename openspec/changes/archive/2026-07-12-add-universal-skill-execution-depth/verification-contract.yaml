@@ -1,0 +1,96 @@
+contract_version: 1
+change: add-universal-skill-execution-depth
+obligations:
+  - id: req.depth.profile-and-native-route
+    source: "specs/universal-execution-depth/spec.md#Requirement: Native route preservation"
+    claim: "Profiles are target-neutral and preserve native, hybrid, and SkillGuard-owned route boundaries without a parallel domain executor."
+    required: true
+    evidence: [check.depth.focused, check.flowguard.depth-model]
+  - id: req.depth.current-receipt-and-status
+    source: "specs/universal-execution-depth/spec.md#Requirement: Current target execution receipt"
+    claim: "Current receipts are immutable, freshness-bound, uniquely contributive, and emit honest depth states."
+    required: true
+    evidence: [check.depth.focused, check.skillguard.full]
+  - id: req.depth.calibration-and-closure
+    source: "specs/universal-execution-depth/spec.md#Requirement: Calibration before enforcement"
+    claim: "Positive and shallow calibration gates enforcement and closure consumes current execution depth."
+    required: true
+    evidence: [check.depth.focused, check.skillguard.full]
+  - id: req.depth.source-install-parity
+    source: "specs/universal-execution-depth/spec.md#Requirement: Canonical source and installed parity"
+    claim: "V2 is source-authoritative, passes self checks, and whole-tree installation/parity is validated."
+    required: true
+    evidence: [check.v2.compile, check.skillguard.self, check.skillguard.full]
+  - id: req.depth.project-adoption
+    source: "specs/universal-execution-depth/spec.md#Requirement: Portable SkillGuard project adoption"
+    claim: "Adopted repositories receive a safe, portable, current SkillGuard managed prompt block and project record."
+    required: true
+    evidence: [check.project-adoption, check.skillguard.full]
+checks:
+  - id: check.depth.focused
+    kind: command
+    command: python
+    args: [tests/test_skillguard_execution_depth.py]
+    required: true
+    covers: [req.depth.profile-and-native-route, req.depth.current-receipt-and-status, req.depth.calibration-and-closure]
+    expected: {exit_code: 0}
+  - id: check.flowguard.depth-model
+    kind: command
+    command: python
+    args: [.flowguard/execution_depth/run_checks.py]
+    required: true
+    covers: [req.depth.profile-and-native-route, req.depth.current-receipt-and-status]
+    expected: {exit_code: 0}
+  - id: check.v2.compile
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard_v2_compile.py, --check, .agents/skills/skillguard]
+    required: true
+    covers: [req.depth.source-install-parity]
+    expected: {exit_code: 0}
+  - id: check.skillguard.self
+    kind: command
+    command: python
+    args: [.agents/skills/skillguard/scripts/skillguard.py, self-check, --target, .agents/skills/skillguard]
+    required: true
+    covers: [req.depth.source-install-parity]
+    expected: {exit_code: 0}
+  - id: check.skillguard.full
+    kind: command
+    command: python
+    args: [tests/test_skillguard_local.py]
+    required: true
+    covers: [req.depth.current-receipt-and-status, req.depth.calibration-and-closure, req.depth.source-install-parity, req.depth.project-adoption]
+    expected: {exit_code: 0}
+  - id: check.project-adoption
+    kind: command
+    command: python
+    args: [tests/test_skillguard_project_adoption.py]
+    required: true
+    covers: [req.depth.project-adoption]
+    expected: {exit_code: 0}
+  - id: check.openspec.strict
+    kind: command
+    command: openspec
+    args: [validate, add-universal-skill-execution-depth, --strict]
+    required: true
+    covers: [req.depth.profile-and-native-route, req.depth.current-receipt-and-status, req.depth.calibration-and-closure, req.depth.source-install-parity, req.depth.project-adoption]
+    expected: {exit_code: 0}
+  - id: check.flowguard.audit
+    kind: command
+    command: python
+    args: [-m, flowguard, project-audit, --root, .]
+    required: true
+    covers: [req.depth.source-install-parity]
+    expected: {exit_code: 0}
+freshness:
+  watch:
+    - openspec/changes/add-universal-skill-execution-depth/**/*.md
+    - openspec/changes/add-universal-skill-execution-depth/verification-contract.yaml
+    - .agents/skills/skillguard/SKILL.md
+    - .agents/skills/skillguard/scripts/**/*.py
+    - .agents/skills/skillguard/assets/schemas/*.json
+    - .agents/skills/skillguard/fixtures/**/*
+    - .agents/skills/skillguard/.skillguard/*.json
+    - tests/**/*.py
+    - .flowguard/**/*.py

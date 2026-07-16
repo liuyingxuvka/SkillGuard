@@ -2,44 +2,36 @@
   "schema_version": "skillguard.fixture_manifest.v1",
   "fixture_version": "deep-contract-v1",
   "checker_version": "skillguard.local_cli_dispatch.v1",
-  "compatibility": {
-    "status": "compatible",
+  "current_status": {
+    "status": "current",
     "notes": [
-      "Exercises SkillGuard deep target-specific contract coverage and known shallow-contract failure classes."
+      "Former-format deep-contract examples are exact rejection fixtures only; current semantic depth is tested through the current contract suite."
     ]
   },
   "fixtures": [
     {
       "fixture_id": "deep-readme-missing-bilingual-fail",
       "fixture_type": "negative",
-      "target_rule": "A README skill contract that omits the bilingual mirror obligation fails deep coverage.",
-      "expected_decision": "fail",
+      "target_rule": "A former-format README skill contract is blocked before deep-coverage evaluation.",
+      "expected_decision": "block",
       "status": "checked",
       "path": "cases/readme-missing-bilingual-fail.json"
     },
     {
       "fixture_id": "deep-missing-run-record-fail",
       "fixture_type": "negative",
-      "target_rule": "A contract that requires a run record fails when no current run record exists.",
-      "expected_decision": "fail",
+      "target_rule": "A former-format contract is blocked rather than interpreted to recover a run path.",
+      "expected_decision": "block",
       "status": "checked",
       "path": "cases/missing-run-record-fail.json"
     },
     {
       "fixture_id": "deep-missing-target-lock-fail",
       "fixture_type": "negative",
-      "target_rule": "An ordinary covered skill contract that omits the target-local rule, route, stage, check, evidence, and closure matrix fails deep coverage.",
-      "expected_decision": "fail",
+      "target_rule": "A former-format shallow contract is blocked before semantic evaluation.",
+      "expected_decision": "block",
       "status": "checked",
       "path": "cases/missing-target-lock-fail.json"
-    },
-    {
-      "fixture_id": "deep-parallel-native-route-fail",
-      "fixture_type": "negative",
-      "target_rule": "A native contract that permits a parallel SkillGuard execution route fails deep coverage.",
-      "expected_decision": "fail",
-      "status": "checked",
-      "path": "cases/parallel-native-route-fail.json"
     }
   ],
   "evidence": [
@@ -48,8 +40,7 @@
     ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record/SKILL.md",
     ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_run_record/.skillguard/work-contract.json",
     ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_target_lock/SKILL.md",
-    ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_target_lock/.skillguard/work-contract.json",
-    ".agents/skills/skillguard/fixtures/runtime_contract/contracts/native_parallel_route_contract.json"
+    ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_target_lock/.skillguard/work-contract.json"
   ],
   "skipped_checks": [],
   "residual_risk": [

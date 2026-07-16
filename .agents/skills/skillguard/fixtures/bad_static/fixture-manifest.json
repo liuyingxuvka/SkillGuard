@@ -2,61 +2,60 @@
   "schema_version": "skillguard.fixture_manifest.v1",
   "fixture_version": "bad-static-fixtures.v1",
   "checker_version": "skillguard.local_cli_dispatch.v1",
-  "compatibility": {
-    "status": "compatible",
+  "current_status": {
+    "status": "current",
     "notes": [
-      "Static bad fixtures use expected_decision=fail because the current checker surface treats these defects as fail-class static-analysis findings.",
-      "Each case isolates one intended static defect and uses check-skill as the fixture command target."
+      "These deliberately incomplete targets use expected_decision=block because current SkillGuard authority is mandatory.",
+      "Each case also preserves its intended static finding so the report explains both the local defect and the missing current authority."
     ]
   },
   "fixtures": [
     {
       "fixture_id": "bad_static_missing_description",
       "fixture_type": "negative",
-      "target_rule": "Missing SKILL.md frontmatter description must fail static single-skill analysis.",
-      "expected_decision": "fail",
+      "target_rule": "An ungoverned target with a missing SKILL.md frontmatter description must block current single-skill analysis.",
+      "expected_decision": "block",
       "status": "checked",
       "path": "cases/missing_description.fixture.json",
       "known_limitations": [
-        "This fixture covers only the missing-description fail branch."
+        "This fixture covers the missing-description finding inside the mandatory-current-authority block branch."
       ]
     },
     {
       "fixture_id": "bad_static_missing_reference",
       "fixture_type": "negative",
-      "target_rule": "Missing declared SKILL.md reference must fail static single-skill analysis.",
-      "expected_decision": "fail",
+      "target_rule": "An ungoverned target with a missing declared SKILL.md reference must block current single-skill analysis.",
+      "expected_decision": "block",
       "status": "checked",
       "path": "cases/missing_reference.fixture.json",
       "known_limitations": [
-        "This fixture covers only the missing-reference fail branch."
+        "This fixture covers the missing-reference finding inside the mandatory-current-authority block branch."
       ]
     },
     {
       "fixture_id": "bad_static_unsafe_broad_claim",
       "fixture_type": "negative",
-      "target_rule": "Unsupported broad claim text must fail static single-skill analysis.",
-      "expected_decision": "fail",
+      "target_rule": "An ungoverned target with unsupported broad claim text must block current single-skill analysis.",
+      "expected_decision": "block",
       "status": "checked",
       "path": "cases/unsafe_broad_claim.fixture.json",
       "known_limitations": [
-        "This fixture covers only the unsupported broad-claim fail branch."
+        "This fixture covers the unsupported broad-claim finding inside the mandatory-current-authority block branch."
       ]
     }
   ],
   "evidence": [
     "bad_static_missing_description/SKILL.md",
     "bad_static_missing_reference/SKILL.md",
-    "bad_static_unsafe_broad_claim/SKILL.md",
-    "../evidence_outputs/fixture_test_bad_static_current.json"
+    "bad_static_unsafe_broad_claim/SKILL.md"
   ],
   "skipped_checks": [
-    "These fixtures intentionally do not cover boundary, invalid-fixture, or expected-block cases.",
+    "These fixtures intentionally do not cover a current-authority target with only a static fail-class finding.",
     "These fixtures do not replace the passing good_single_skill or good_suite fixtures."
   ],
   "residual_risk": [
     "The fixtures are local negative examples and do not prove broad checker behavior.",
-    "Future checker status-vocabulary changes may require refreshing expected_decision values."
+    "A separate current-authority fixture is required if isolated fail-class static analysis needs coverage."
   ],
   "claim_boundary": "This static bad-fixture manifest covers only the listed negative fixture cases and current local files. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence."
 }

@@ -3,17 +3,61 @@
   "$id": "https://skillguard.local/schemas/skillguard_check_manifest_v2.schema.json",
   "title": "SkillGuard Check Manifest V2",
   "type": "object",
-  "required": ["schema_version", "compiler_version", "skill_id", "model_id", "contract_hash", "checks", "source_fingerprints", "claim_boundary", "manifest_hash"],
+  "required": ["schema_version", "compiler_version", "skill_id", "model_id", "contract_hash", "check_declarations_hash", "checks", "source_fingerprints", "content_impact_plan", "claim_boundary", "manifest_hash"],
   "properties": {
     "schema_version": {"const": "skillguard.check_manifest.v2"},
     "compiler_version": {"type": "string", "minLength": 1},
     "skill_id": {"type": "string", "minLength": 1},
     "model_id": {"type": "string", "minLength": 1},
     "contract_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
-    "checks": {"type": "array", "minItems": 1},
+    "check_declarations_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "checks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/compiled_check"}},
     "source_fingerprints": {"type": "object"},
+    "content_impact_plan": {"$ref": "#/$defs/content_impact_plan"},
     "claim_boundary": {"type": "string", "minLength": 1},
     "manifest_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}
+  },
+  "$defs": {
+    "wire_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "compiled_check": {
+      "type": "object",
+      "required": ["check_id", "semantic_check_id", "kind", "evidence_class", "covers_obligation_ids", "execution_owner_id", "input_selectors", "depends_on_check_ids", "evidence_domain_id", "owner_declaration_hash", "input_component_ids", "owner_input_projection_hash", "projection_declaration_hash"],
+      "properties": {
+        "check_id": {"type": "string", "minLength": 1},
+        "semantic_check_id": {"type": "string", "minLength": 1},
+        "execution_owner_id": {"type": "string", "minLength": 1},
+        "input_selectors": {"type": "array", "minItems": 1},
+        "depends_on_check_ids": {"type": "array", "uniqueItems": true},
+        "evidence_domain_id": {"type": "string", "minLength": 1},
+        "owner_declaration_hash": {"$ref": "#/$defs/wire_hash"},
+        "input_component_ids": {"type": "array", "minItems": 1, "uniqueItems": true},
+        "owner_input_projection_hash": {"$ref": "#/$defs/wire_hash"},
+        "projection_declaration_hash": {"$ref": "#/$defs/wire_hash"}
+      }
+    },
+    "content_impact_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "member_root_path", "policy_id", "owner_receipt_root_ref", "unknown_mapping_disposition", "full_admission_reason_codes", "inventory", "inventory_hash", "components", "owners", "check_projections", "projection_consumers", "portfolio_target_edges", "all_owner_component_ids", "health", "impact_graph_hash"],
+      "properties": {
+        "schema_version": {"const": "skillguard.content_impact_plan.current"},
+        "member_root_path": {"type": "string", "minLength": 1},
+        "policy_id": {"const": "skillguard.content_impact_policy.current"},
+        "owner_receipt_root_ref": {"type": "object", "additionalProperties": false, "required": ["path_token", "relative_path"], "properties": {"path_token": {"const": "owner_evidence_root"}, "relative_path": {"const": "check-executions"}}},
+        "unknown_mapping_disposition": {"const": "block"},
+        "full_admission_reason_codes": {"type": "array", "minItems": 5, "maxItems": 5, "uniqueItems": true},
+        "inventory": {"type": "array", "minItems": 1},
+        "inventory_hash": {"$ref": "#/$defs/wire_hash"},
+        "components": {"type": "array", "minItems": 1},
+        "owners": {"type": "array", "minItems": 1},
+        "check_projections": {"type": "array", "minItems": 1},
+        "projection_consumers": {"type": "array", "minItems": 1},
+        "portfolio_target_edges": {"type": "array", "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["target_id", "input_component_ids", "member_ids"], "properties": {"target_id": {"type": "string", "minLength": 1}, "input_component_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "member_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}}}},
+        "all_owner_component_ids": {"type": "array", "uniqueItems": true},
+        "health": {"type": "object", "additionalProperties": false, "required": ["unmapped_paths", "ambiguous_role_paths", "duplicate_owner_ids", "owner_cycles", "invalid_dependency_edges", "dependency_parse_errors"], "properties": {"unmapped_paths": {"type": "array", "maxItems": 0}, "ambiguous_role_paths": {"type": "array", "maxItems": 0}, "duplicate_owner_ids": {"type": "array", "maxItems": 0}, "owner_cycles": {"type": "array", "maxItems": 0}, "invalid_dependency_edges": {"type": "array", "maxItems": 0}, "dependency_parse_errors": {"type": "array", "maxItems": 0}}},
+        "impact_graph_hash": {"$ref": "#/$defs/wire_hash"}
+      }
+    }
   },
   "additionalProperties": false
 }

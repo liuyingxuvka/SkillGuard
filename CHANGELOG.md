@@ -1,5 +1,40 @@
 # Changelog
 
+## v0.3.0 - 2026-07-15
+
+- **BREAKING:** Collapsed SkillGuard to one fixed target-neutral workflow: freeze the target's exact declared checks, resolve one owner and valid dependency graph per check, admit only current immutable terminal results for the same request, and close only after exact reconciliation.
+- **BREAKING:** Removed universal purpose contracts, protected-failure declarations, semantic-obligation universes, target-native findings, and mandatory positive/shallow calibration from SkillGuard. A target may declare such tests itself, but SkillGuard never invents or interprets them.
+- **BREAKING:** Removed selectable closure levels. The sole current closure is `enforced`; non-enforced, duplicate, missing, or weakened closure projections fail closed.
+- **BREAKING:** Collapsed integration to the fixed `native-integrated` marker and simplified project adoption input to `PATH|NATIVE_OWNER`. The target always owns its domain route and checks; SkillGuard never supplies a target-domain executor.
+- Added the executable `.flowguard/declared_check_supervision` child model with one-check and multi-check positive paths plus 19 exact known-bad rejections.
+- Added generic ordinary-skill, omitted-check, retired-field, singleton-closure, singleton-integration, receipt-freshness, installation, and project-adoption regressions.
+
+### Superseded source-development notes
+
+The behavior below records an earlier source-development state and was
+superseded before the v0.3.0 release by the fixed-supervision behavior above.
+
+- Added target-neutral execution-depth profiles that compile target-owned dimensions, important obligations, coverage floors, native routes/checks, closure profiles, and explicit integration modes without copying target-domain logic into SkillGuard.
+- Added immutable target execution-depth receipts bound to actual current native check receipts; caller-authored pass, ownership, route, evidence-id, or freshness fields cannot establish closure authority.
+- Added honest depth statuses, unique evidence-contribution accounting, two-key positive/shallow calibration, Guard and non-Guard vertical slices, and replay invalidation when contracts, profiles, inputs, runtime, or later receipts change.
+- Hardened enforced evidence around exact target/contract/profile/native-owner/route/check/run/obligation identity, immutable semantic ranges, and non-interchangeable `fixture_calibration`, `capability_validation`, and `scheduled_production` domains.
+- Replaced generic calibration authorization with a target-native evaluator pair: the positive case covers every important obligation and required capability, while a distinct shallow case omits exactly one important obligation and must be blocked for that exact omission.
+- Added branch-conditional highest-quality closure for legitimate `no-update`, `waiting-for-user`, and `ui-running` terminals; targets must project both top-level `route_branch_closure_required: true` and conditional obligations, verifier-owned applicability receipts may mark finalize `not_applicable` without fabricating a finalize witness, and `prepared-update` keeps finalize active. Conditional targets cannot opt out by omitting their branch contract.
+- Added profile-bound target-native terminal receipts: prepared updates may close a bounded routine authorization as `non_terminal_authorization`, but that receipt cannot be promoted into final completion; the later composed authorize-plus-finalize run requires its own `highest_quality` `terminal_completion` receipt, while no-op completion remains highest-quality only.
+- Added two-stage `stage_depth`/`close` supervision so targets build terminal receipts from the exact issued depth id/hash; resuming the same run does not rerun completed checks and idempotently reuses the same depth receipt.
+- Added scheduled-production installation currentness replay across depth issuance, terminal resolution, and closure using a portable active-installation receipt root, plus a target-owned terminal receipt builder/writer.
+- Extended functional/release closure so enforced targets require a current `EXECUTION_DEPTH_PASS`; contract presence, boundary-only checks, bounded partial work, missing providers, not-run work, and stale evidence remain visible non-pass states.
+- Added `project-adopt`, `project-audit`, and `project-upgrade` to install and verify a marker-bounded repository `AGENTS.md` block plus `.skillguard/project.json`, including the canonical SkillGuard repository URL, managed paths, native-route evidence, surrounding-content preservation, and corruption/staleness blockers.
+- Added a first-class project-adoption FlowGuard route, schemas, fixtures, non-Guard repository slice, depth-calibration portfolio records, and focused regression coverage.
+- Added proof-bound TestMesh source-parent reuse and closure receipts so one expensive parent execution can be replayed by later verification layers instead of rerun or replaced by a bare child result.
+- Added content-addressed single-flight check execution with separate semantic check, execution, and execution-key identities; only terminal successes are reusable, failed attempts never satisfy reuse, source changes invalidate reuse, and runtime outputs do not alter source authority.
+- Added a fail-closed, read-only full-parent TestMesh receipt consumer that rejects missing, partial, stale, tampered, or identity-incomplete proof without invoking the mesh executor or OpenSpec resume behavior.
+- Added one managed validation-execution ownership policy: multi-skill validation freezes exact checks, obligations/domains, order, receipt roots, and one owner per check; consumers reuse exact current owner receipts without command duplication or evidence-output self-refresh; resume remains execution, full requires frozen source/toolchain plus one explicit owner, interrupted launchers require confirmed zero descendants, and Scheduled Task/background/unattended mutable-worktree retry is forbidden.
+- Added immutable installation-verification and portfolio-impact receipts that bind current installed parity and exact revalidation-required target sets without overclaiming release or target revalidation.
+- Preserved the native-route rule: complete target routes remain `native-integrated`, partial routes remain `hybrid-extension`, and `skillguard-runtime` requires reviewed native-route-absence evidence.
+
+This source version does not by itself claim a Git tag, GitHub Release, remote CI pass, target-domain correctness, or future AI behavior guarantee.
+
 ## v0.2.0 - 2026-07-10
 
 - Added the FlowGuard-backed executable-contract V2 compiler: a target model and confirmed binding source now deterministically produce a compiled contract and exact check manifest.

@@ -1,0 +1,45 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-v2-subtree-role-override-20260714",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "Storyline Design current SkillGuard contract compilation",
+    "prior_local_claim": "the installation projection excludes source-only tests, fixtures, models, and notes",
+    "observed_result": "the complete examples regression subtree was inventoried, but ordinary example files defaulted to runtime_source/copy because reviewed overrides could select only exact files; the same classifier also missed fixtures/ when the skill root was the repository root",
+    "failure_code": "fixture_subtree_entered_installation_projection"
+  },
+  "classification": {
+    "owner": "SkillGuard V2 content-impact compiler",
+    "miss_type": "reviewed_subtree_override_model_gap",
+    "affected_feature_tags": [
+      "compiler",
+      "content-impact",
+      "installation",
+      "external-target"
+    ]
+  },
+  "generalized_repair": {
+    "rule": "A reviewed content-role override may select one maintained file or one maintained directory subtree; every inventoried descendant inherits the declared role and installation disposition, while overlapping selectors block without precedence or fallback.",
+    "regression": "test_directory_role_override_covers_future_fixture_descendants_without_install_staleness, test_overlapping_content_role_overrides_block_without_precedence_fallback, and test_repository_root_fixture_directory_is_source_only",
+    "openspec_scenario": "A reviewed source-only fixture subtree keeps future descendants out of installation and overlapping overrides block.",
+    "negative_boundary": "SkillGuard does not infer that every examples directory is a fixture; target owners must review and declare ambiguous subtrees explicitly."
+  },
+  "required_revalidation": [
+    "validation-composition FlowGuard checks",
+    "focused contract compiler regression",
+    "deterministic current contract compilation",
+    "affected Storyline Design contract recompilation",
+    "one portfolio-level final full validation after all governed sources freeze"
+  ],
+  "revalidation_evidence": {
+    "compiler_and_target_installation_tests": "57 cases: 56 passed and one explicit Windows directory-symlink permission skip",
+    "self_installation_regression": "15/15 passed",
+    "flowguard_validation_composition": "--check all passed",
+    "openspec": "compose-validation-evidence strict validation passed",
+    "storyline_contract_sha256": "4D5DB2E4F67591E8B182071D4060144EC6EB5D1DA75EDA0912BC09D4D4FAA1CD",
+    "storyline_manifest_sha256": "91FEF1B3759A0C33821B67D4BF3BC785997937ED87CF918145385F7D15BC185E",
+    "storyline_source_only_examples": "114/114 examples inventoried as source_only",
+    "storyline_formal_supervisor": "run-e432eba6435c1b0e1795 passed"
+  },
+  "claim_boundary": "The repair and focused evidence cover directory-scoped reviewed classification and installation projection only. They do not prove the final SkillGuard full parent, unrelated targets, publication, or future AI behavior."
+}

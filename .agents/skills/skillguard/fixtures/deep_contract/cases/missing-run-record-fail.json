@@ -1,6 +1,6 @@
 {
   "fixture_id": "deep-missing-run-record-fail",
   "target_command": "check-depth",
-  "expected_decision": "fail",
+  "expected_decision": "block",
   "target_path": "../bad_missing_run_record"
 }

@@ -1,0 +1,47 @@
+{
+  "template_notice": "Draft only. Replace every REPLACE_* value with the target skill's own current route and declared checks. SkillGuard does not assign target-domain meaning or require a particular check pattern.",
+  "required_native_check_declarations": [
+    {
+      "check_id": "check:REPLACE_TARGET_DECLARED_CHECK",
+      "execution_owner_id": "owner:REPLACE_TARGET_NATIVE_OWNER",
+      "evidence_domain_id": "target:REPLACE_NATIVE_EVIDENCE_DOMAIN",
+      "depends_on_check_ids": [],
+      "required": true
+    }
+  ],
+  "depth_profile": {
+    "schema_version": "skillguard.depth_profile.v2",
+    "profile_id": "profile:REPLACE_TARGET_DECLARED_CHECK_SUPERVISION",
+    "target_skill_id": "REPLACE_TARGET_SKILL_ID",
+    "integration_mode": "native-integrated",
+    "native_owner_id": "owner:REPLACE_TARGET_NATIVE_OWNER",
+    "native_route_ids": [
+      "route:REPLACE_EXISTING_NATIVE_ROUTE"
+    ],
+    "native_check_ids": [
+      "check:REPLACE_TARGET_DECLARED_CHECK"
+    ],
+    "skillguard_adds_domain_route": false,
+    "enforcement_level": "enforced",
+    "required_closure_profiles": [
+      "enforced"
+    ],
+    "provider_runtime": {
+      "provider_id": "skillguard-local-provider",
+      "required_runtime_contract_id": "skillguard-declared-check-supervision-current",
+      "required_capability_ids": [
+        "declared-check-inventory.v1",
+        "declared-check-receipt-reconciliation.v1",
+        "installation-receipt-binding.v1",
+        "installation-currentness-replay.v1",
+        "provider-runtime-enrollment.v1",
+        "single-flight-check-execution.v1"
+      ],
+      "required_enrollment_status": "enrolled",
+      "readiness_check_ids": [
+        "check:REPLACE_TARGET_DECLARED_CHECK"
+      ]
+    },
+    "claim_boundary": "Only exact current receipts for the target skill's declared checks are supervised."
+  }
+}

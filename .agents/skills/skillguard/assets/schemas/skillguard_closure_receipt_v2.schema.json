@@ -3,14 +3,63 @@
   "$id": "https://skillguard.local/schemas/skillguard_closure_receipt_v2.schema.json",
   "title": "SkillGuard Closure Receipt V2",
   "type": "object",
-  "required": ["schema_version", "closure_receipt_id", "run_id", "profile", "status", "consumed_receipt_ids", "safe_claim"],
+  "required": ["schema_version", "closure_receipt_id", "run_id", "profile", "status", "consumed_receipt_ids", "root_role_bindings_hash", "native_terminal_result", "applicability_results", "safe_claim"],
   "properties": {
     "schema_version": {"const": "skillguard.closure_receipt.v2"},
     "closure_receipt_id": {"type": "string", "minLength": 1},
     "run_id": {"type": "string", "minLength": 1},
-    "profile": {"enum": ["routine", "functional", "release", "highest_quality"]},
+    "profile": {"const": "enforced"},
     "status": {"type": "string", "minLength": 1},
     "consumed_receipt_ids": {"type": "array", "items": {"type": "string"}},
+    "root_role_bindings_hash": {"type": "string", "pattern": "^$|^[A-F0-9]{64}$"},
+    "native_terminal_result": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["not_applicable", "verified"]},
+        "native_terminal_receipt_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path_token", "relative_path"],
+          "properties": {
+            "path_token": {"const": "run_root"},
+            "relative_path": {"type": "string", "minLength": 1}
+          }
+        },
+        "native_terminal_receipt_id": {"type": "string"},
+        "native_terminal_receipt_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+        "native_terminal_artifact_sha256": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+        "native_route_id": {"type": "string"},
+        "branch_id": {"type": "string"},
+        "terminal_kind": {"type": "string"},
+        "closure_profile": {"const": "enforced"},
+        "closure_disposition": {"const": "terminal_completion"},
+        "evidence_domain": {"type": "string"},
+        "depth_receipt_id": {"type": "string"},
+        "branch_required_obligation_ids": {"type": "array", "items": {"type": "string"}},
+        "not_applicable_obligation_ids": {"type": "array", "items": {"type": "string"}},
+        "applicability_receipt_ids": {"type": "array", "items": {"type": "string"}},
+        "applicability_receipt_hashes": {"type": "array", "items": {"type": "string", "pattern": "^[A-F0-9]{64}$"}}
+      },
+      "additionalProperties": false
+    },
+    "applicability_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["obligation_id", "status", "disposition", "receipt_id", "receipt_hash", "verifier_id", "evidence_witness_consumed"],
+        "properties": {
+          "obligation_id": {"type": "string", "minLength": 1},
+          "status": {"enum": ["not_applicable", "blocked"]},
+          "disposition": {"const": "not_applicable"},
+          "receipt_id": {"type": "string", "minLength": 1},
+          "receipt_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+          "verifier_id": {"const": "skillguard.route_branch_applicability_verifier"},
+          "evidence_witness_consumed": {"const": false}
+        }
+      }
+    },
     "safe_claim": {"type": "string"}
   },
   "additionalProperties": true

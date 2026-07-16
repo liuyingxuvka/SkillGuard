@@ -1,75 +1,146 @@
 {
   "claim_boundary": "This prompt projection installs a managed routing block only. It does not prove target skill execution, tests, fixture coverage, suite automation, package publication, release readiness, code-contract validation, or future AI behavior.",
-  "generated_at": "2026-06-27T09:03:29Z",
-  "managed_block": "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->\n## SkillGuard Global Router\n\n- Use the SkillGuard global router registry only for skill-selection, skill-maintenance, prompt/process, or SkillGuard-family routing claims when it is present; do not make it a mandatory pre-execution gate for every skill invocation.\n- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a global skill-routing claim.\n- Handoff order: select the target skill from the registry when selection help is needed, read the selected `SKILL.md`, then use that skill's own `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, or native route bindings.\n- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.\n- router_skill_id: skillguard-global-router\n- registry_hash: 56B5C919BEB3957A36A8BB8E01E5FECC2F2C19438E4651E772D93877A3A3F8E0\n- registry_path: .agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json\n\n### Current Route Index\n- `skillguard` -> .agents/skills/skillguard/SKILL.md (default_route=audit, integration=skillguard-runtime)\n- `skillguard-global-router` -> .agents/skills/skillguard-global-router/SKILL.md (default_route=audit, integration=skillguard-runtime)\n\nClaim boundary: this block is a routing projection only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence.\n<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->\n",
+  "content_projection": {
+    "consumer_id": "projection:global-router",
+    "consumer_projection_hash": "sha256:7b618bb972c01e06d8f37a280bbfbc43a40ba14f6a59df460821217bb6be026a",
+    "impact_plan_schema_version": "skillguard.content_impact_plan.current",
+    "impact_policy_id": "skillguard.content_impact_policy.current",
+    "input_component_ids": [
+      "component:prompt_router:6bc4e808931dd5dc",
+      "component:prompt_router:7d34e0f607d9047e",
+      "component:prompt_router:fc4e66c2f748ac9f"
+    ],
+    "input_projection_hash": "sha256:f8fb4eac04760c5a47b4c2c53a92d3938f04391fb37b06323ef91489367cdb23",
+    "kind": "global_router",
+    "projection_declaration_hash": "sha256:2a362a99bb54b2318c3ccec11d2a64858f65348264cd9e8942c7b756971b4fc3"
+  },
+  "generated_at": "2026-07-15T22:19:57Z",
+  "managed_block": "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->\n## SkillGuard Global Router\n\n- Use the SkillGuard global router registry only for skill-selection, skill-maintenance, prompt/process, or SkillGuard-family routing claims when it is present; do not make it a mandatory pre-execution gate for every skill invocation.\n- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a global skill-routing claim.\n- Handoff order: select the target skill from the registry when selection help is needed and read its `SKILL.md`; a current route uses `.skillguard/contract-source.json`, `.skillguard/compiled-contract.json`, and the exact `.skillguard/check-manifest.json`. Every non-current authority is `blocked` and has no alternate success route.\n- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.\n\n### Generic Declared-Check Supervision\n- Freeze the target skill's exact declared-check inventory and require one current immutable terminal-success receipt for every declared check under its exact owner and request identity. Do not classify targets, infer domain semantics, or require any particular check pattern.\n- SkillGuard validates current identities, inventory equality, execution ownership, dependencies, receipt freshness, provider readiness, and fixed `enforced` closure consumption. The target skill remains the sole authority for domain meaning, fixtures, oracles, native findings, and claim boundaries.\n- A target may declare one check or several checks. SkillGuard supervises both through the same fixed workflow and never invents a purpose contract, counterexample pair, family category, domain route, or quality mode.\n\n### Validation Execution Ownership\n- policy_id: `skillguard.validation_execution_ownership.current`\n- Creating, updating, directly rewriting a non-current target, installing/synchronizing, or releasing a maintained skill requires SkillGuard maintenance supervision; no migration or compatibility route exists.\n- Covered skill maintenance uses direct current replacement. Do not add a compatibility reader, fallback, migration or upgrade command, converter, alias, renewal path, dual manifest, or parallel authority. An ordinary software historical reader is allowed only when an explicit requirement names the old document/data/interface and FlowGuard records its bounded owner and claim boundary.\n- Ordinary use of an already-installed skill for its domain work does not start SkillGuard maintenance or validation.\n- SkillGuard supervises the frozen owner plan, receipts, affected-only revalidation, installation projection, and closure; the target skill retains its domain actions, judgment, and native-check authority.\n- Before multi-skill validation starts, freeze one task-level validation plan in the existing verification contract or TestMesh: list every exact check, covered obligation and evidence domain, dependency/order, persistent receipt root, and exactly one primary execution owner; missing, duplicate, or cyclic ownership blocks execution.\n- Before executing a listed check, resolve its exact owner receipt from the frozen execution identity and inputs. Reuse only a current immutable terminal-success receipt; consumer skills verify and project that receipt and must not carry or rerun the owner's command.\n- Compile the complete maintained inventory into exact content components before validation. A change invalidates only owners and projections that explicitly consume its changed component; an unmapped or ambiguous file blocks instead of falling back to run-all.\n- Treat maintained test, code, contract, configuration, toolchain, and policy changes as freshness inputs only through those exact component edges. Reports, receipts, progress logs, checkboxes, and other runtime outputs are evidence outputs and must not refresh source authority or trigger their own validation.\n- Installation consumes only the frozen `projection:installation`; source-only tests, fixtures, models, and notes do not make an installation stale. A read-only installation currentness check never launches smoke or another validation owner.\n- Treat `--resume` as an execution command that may run missing owners; it is never a read-only receipt audit, and a receipt consumer must not invoke it.\n- Start exactly one final full validation only after source, toolchain, and impact-plan identities are frozen, under one explicit execution owner; later consumers project its immutable parent receipt and never launch another equivalent full run.\n- After any launcher timeout, cancellation, or interruption, confirm the entire descendant process tree count is zero before accepting evidence or starting another owner; `cleanup-unconfirmed` results are invalid and non-reusable.\n- Never use a Windows Scheduled Task, background resume, or unattended retry script to run full validation or resume a mutable worktree.\n- router_skill_id: skillguard-global-router\n- registry_hash: sha256:9c1ab488fed574e5a58325e2850fdd91950b1c37607d3ab463ff639d7bedb37b\n- registry_path: .agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json\n\n### Current Route Index\n- `flowguard-agent-workflow-rehearsal` -> .agents/skills/flowguard-agent-workflow-rehearsal/SKILL.md (default_route=route:agent_workflow_rehearsal, integration=native-integrated)\n- `flowguard-architecture-reduction` -> .agents/skills/flowguard-architecture-reduction/SKILL.md (default_route=route:architecture_reduction, integration=native-integrated)\n- `flowguard-behavior-commitment-ledger` -> .agents/skills/flowguard-behavior-commitment-ledger/SKILL.md (default_route=route:behavior_commitment_ledger, integration=native-integrated)\n- `flowguard-code-structure-recommendation` -> .agents/skills/flowguard-code-structure-recommendation/SKILL.md (default_route=route:code_structure_recommendation, integration=native-integrated)\n- `flowguard-contract-exhaustion-mesh` -> .agents/skills/flowguard-contract-exhaustion-mesh/SKILL.md (default_route=route:contract_exhaustion_mesh, integration=native-integrated)\n- `flowguard-development-process-flow` -> .agents/skills/flowguard-development-process-flow/SKILL.md (default_route=route:development_process_flow, integration=native-integrated)\n- `flowguard-existing-model-preflight` -> .agents/skills/flowguard-existing-model-preflight/SKILL.md (default_route=route:existing_model_preflight, integration=native-integrated)\n- `flowguard-field-lifecycle-mesh` -> .agents/skills/flowguard-field-lifecycle-mesh/SKILL.md (default_route=route:field_lifecycle_mesh, integration=native-integrated)\n- `flowguard-model-mesh` -> .agents/skills/flowguard-model-mesh/SKILL.md (default_route=route:model_mesh_maintenance, integration=native-integrated)\n- `flowguard-model-miss-review` -> .agents/skills/flowguard-model-miss-review/SKILL.md (default_route=route:model_miss_review, integration=native-integrated)\n- `flowguard-model-test-alignment` -> .agents/skills/flowguard-model-test-alignment/SKILL.md (default_route=route:model_test_alignment, integration=native-integrated)\n- `flowguard-model-topology-hazard-review` -> .agents/skills/flowguard-model-topology-hazard-review/SKILL.md (default_route=route:model_topology_hazard_review, integration=native-integrated)\n- `flowguard-plan-detailing-compiler` -> .agents/skills/flowguard-plan-detailing-compiler/SKILL.md (default_route=route:plan_detailing_compiler, integration=native-integrated)\n- `flowguard-structure-mesh` -> .agents/skills/flowguard-structure-mesh/SKILL.md (default_route=route:structure_mesh_maintenance, integration=native-integrated)\n- `flowguard-test-mesh` -> .agents/skills/flowguard-test-mesh/SKILL.md (default_route=route:test_mesh_maintenance, integration=native-integrated)\n- `flowguard-ui-flow-structure` -> .agents/skills/flowguard-ui-flow-structure/SKILL.md (default_route=route:ui_flow_structure, integration=native-integrated)\n- `model-first-function-flow` -> .agents/skills/model-first-function-flow/SKILL.md (default_route=route:model_first_function_flow, integration=native-integrated)\n- `skillguard` -> .agents/skills/skillguard/SKILL.md (default_route=route:static-audit, integration=native-integrated)\n- `skillguard-global-router` -> .agents/skills/skillguard-global-router/SKILL.md (default_route=route:scan-global-skills, integration=native-integrated)\n\nClaim boundary: this block is a routing projection only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence.\n<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->\n",
+  "managed_block_content_hash": "sha256:e98442bec4a235e2413b8cb76405bf3fc6379c55a36252c04fe65113eae8f8c8",
   "managed_block_markers": {
     "begin": "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->",
     "end": "<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->"
   },
-  "registry_hash": "56B5C919BEB3957A36A8BB8E01E5FECC2F2C19438E4651E772D93877A3A3F8E0",
+  "projection_identity_hash": "sha256:6b72e2e76ee699d694becbb34df872c84533c52015bbdafecca10a99bd838383",
+  "registry_hash": "sha256:9c1ab488fed574e5a58325e2850fdd91950b1c37607d3ab463ff639d7bedb37b",
   "registry_path": ".agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json",
   "route_index": [
     {
-      "default_route_id": "audit",
+      "default_route_id": "route:agent_workflow_rehearsal",
+      "skill_file": ".agents/skills/flowguard-agent-workflow-rehearsal/SKILL.md",
+      "skill_id": "flowguard-agent-workflow-rehearsal",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:architecture_reduction",
+      "skill_file": ".agents/skills/flowguard-architecture-reduction/SKILL.md",
+      "skill_id": "flowguard-architecture-reduction",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:behavior_commitment_ledger",
+      "skill_file": ".agents/skills/flowguard-behavior-commitment-ledger/SKILL.md",
+      "skill_id": "flowguard-behavior-commitment-ledger",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:code_structure_recommendation",
+      "skill_file": ".agents/skills/flowguard-code-structure-recommendation/SKILL.md",
+      "skill_id": "flowguard-code-structure-recommendation",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:contract_exhaustion_mesh",
+      "skill_file": ".agents/skills/flowguard-contract-exhaustion-mesh/SKILL.md",
+      "skill_id": "flowguard-contract-exhaustion-mesh",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:development_process_flow",
+      "skill_file": ".agents/skills/flowguard-development-process-flow/SKILL.md",
+      "skill_id": "flowguard-development-process-flow",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:existing_model_preflight",
+      "skill_file": ".agents/skills/flowguard-existing-model-preflight/SKILL.md",
+      "skill_id": "flowguard-existing-model-preflight",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:field_lifecycle_mesh",
+      "skill_file": ".agents/skills/flowguard-field-lifecycle-mesh/SKILL.md",
+      "skill_id": "flowguard-field-lifecycle-mesh",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:model_mesh_maintenance",
+      "skill_file": ".agents/skills/flowguard-model-mesh/SKILL.md",
+      "skill_id": "flowguard-model-mesh",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:model_miss_review",
+      "skill_file": ".agents/skills/flowguard-model-miss-review/SKILL.md",
+      "skill_id": "flowguard-model-miss-review",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:model_test_alignment",
+      "skill_file": ".agents/skills/flowguard-model-test-alignment/SKILL.md",
+      "skill_id": "flowguard-model-test-alignment",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:model_topology_hazard_review",
+      "skill_file": ".agents/skills/flowguard-model-topology-hazard-review/SKILL.md",
+      "skill_id": "flowguard-model-topology-hazard-review",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:plan_detailing_compiler",
+      "skill_file": ".agents/skills/flowguard-plan-detailing-compiler/SKILL.md",
+      "skill_id": "flowguard-plan-detailing-compiler",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:structure_mesh_maintenance",
+      "skill_file": ".agents/skills/flowguard-structure-mesh/SKILL.md",
+      "skill_id": "flowguard-structure-mesh",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:test_mesh_maintenance",
+      "skill_file": ".agents/skills/flowguard-test-mesh/SKILL.md",
+      "skill_id": "flowguard-test-mesh",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:ui_flow_structure",
+      "skill_file": ".agents/skills/flowguard-ui-flow-structure/SKILL.md",
+      "skill_id": "flowguard-ui-flow-structure",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:model_first_function_flow",
+      "skill_file": ".agents/skills/model-first-function-flow/SKILL.md",
+      "skill_id": "model-first-function-flow",
+      "status": "current"
+    },
+    {
+      "default_route_id": "route:static-audit",
       "skill_file": ".agents/skills/skillguard/SKILL.md",
       "skill_id": "skillguard",
       "status": "current"
     },
     {
-      "default_route_id": "audit",
+      "default_route_id": "route:scan-global-skills",
       "skill_file": ".agents/skills/skillguard-global-router/SKILL.md",
       "skill_id": "skillguard-global-router",
       "status": "current"
-    },
-    {
-      "default_route_id": "",
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
-      "skill_id": "bad-static-missing-description",
-      "status": "missing_contract"
-    },
-    {
-      "default_route_id": "",
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference/SKILL.md",
-      "skill_id": "bad-static-missing-reference",
-      "status": "missing_contract"
-    },
-    {
-      "default_route_id": "",
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim/SKILL.md",
-      "skill_id": "bad-static-unsafe-broad-claim",
-      "status": "missing_contract"
-    },
-    {
-      "default_route_id": "",
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member/SKILL.md",
-      "skill_id": "child-without-closure-member",
-      "status": "missing_contract"
-    },
-    {
-      "default_route_id": "",
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member/SKILL.md",
-      "skill_id": "router-member",
-      "status": "missing_contract"
-    },
-    {
-      "default_route_id": "",
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member/SKILL.md",
-      "skill_id": "stale-member",
-      "status": "missing_contract"
-    },
-    {
-      "default_route_id": "",
-      "skill_file": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
-      "skill_id": "good-single-skill",
-      "status": "missing_contract"
-    },
-    {
-      "default_route_id": "",
-      "skill_file": ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member/SKILL.md",
-      "skill_id": "good-suite-member",
-      "status": "missing_contract"
     }
   ],
   "router_skill_id": "skillguard-global-router",
-  "schema_version": "skillguard.global_prompt_projection.v1"
+  "schema_version": "skillguard.global_prompt_projection.current",
+  "template_content_hash": "sha256:e8340d7ad1dc048a7fa540fdcbc39b4a32f8f975cd8b74f75be749b38c264749"
 }

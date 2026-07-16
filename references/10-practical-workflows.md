@@ -55,6 +55,10 @@ Fail criteria: the route jumps from intake to acceptance without current evidenc
 
 Block criteria: the target, scope, or required evidence cannot be determined.
 
+## External Target Binding
+
+For `check-contract` and `check-skill`, an external target has exactly two declared path roles: one canonical `--repository-root` and one `--target` member contained inside it. Repository-relative models, checks, implementation paths, and references resolve only from the canonical root. If the member escapes, the repository is missing, or binding fails, stop visibly; do not retry from the member directory, SkillGuard repository, or current working directory. The former `check-contract --target-root` spelling is removed rather than preserved as an alias. A standalone skill is the one bounded exception: from its own directory, `--target .` binds that directory as both repository and member and projects `member_root_path` as `.`.
+
 ## Create Workflow
 
 Create workflow prepares a new skill or maintained target.
@@ -176,7 +180,7 @@ Required evidence:
 - included-skill inventory;
 - child status evidence;
 - routing and dependency declarations;
-- compatibility and version boundaries;
+- current-authority identity and former-surface absence;
 - shared evidence rules;
 - suite-level validation evidence;
 - child skipped checks and blockers.
@@ -194,7 +198,7 @@ Expected output:
 - suite decision;
 - child decisions;
 - dependency and routing findings;
-- compatibility findings;
+- current-authority and former-surface findings;
 - skipped checks;
 - blockers;
 - residual risk;

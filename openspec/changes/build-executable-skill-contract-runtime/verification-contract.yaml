@@ -91,6 +91,16 @@ obligations:
     claim: Parent graduation consumes current full receipts or proof-bound reuse tickets for every graduate.
     required: true
     evidence: [check.portfolio-graduation]
+  - id: req.portfolio.superseded-lifecycle
+    source: "specs/portfolio-skill-calibration-loop/spec.md#Requirement: Superseded skills leave the active portfolio authority"
+    claim: A superseded target is retired, names one distinct active replacement, and has no installation or router authority.
+    required: true
+    evidence: [check.portfolio-scope-lifecycle]
+  - id: req.portfolio.direct-registry-replacement
+    source: "specs/portfolio-skill-calibration-loop/spec.md#Requirement: Current portfolio registry is a direct scope replacement"
+    claim: The current registry is revision one from the exact reviewed scope and current Guard, with no prior-registry or old-green authority and no live-writer overwrite path.
+    required: true
+    evidence: [check.portfolio-scope-lifecycle]
 checks:
   - id: check.flowguard-model
     kind: command
@@ -210,4 +220,11 @@ checks:
     args: [.agents/skills/skillguard/scripts/skillguard.py, audit-portfolio, .skillguard/portfolio-registry.json, --require-current-graduates]
     required: true
     covers: [req.portfolio.revalidation, req.portfolio.parent]
+    expected: {exit_code: 0}
+  - id: check.portfolio-scope-lifecycle
+    kind: command
+    command: python
+    args: [-m, pytest, tests/test_portfolio_scope_lifecycle.py, -q]
+    required: true
+    covers: [req.portfolio.superseded-lifecycle, req.portfolio.direct-registry-replacement]
     expected: {exit_code: 0}

@@ -1,0 +1,55 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-external-runtime-storage-path-budget-20260715",
+  "status": "repair_validated_current_targets",
+  "observed_failure": {
+    "surface": "installed SkillGuard supervising a deeply nested PhysicsGuard skill for the first time",
+    "prior_local_claim": "the installed generic supervisor can create and own persistent check receipts for an external maintained skill",
+    "observed_result": "the implicit owner-evidence and run-state roots were placed below already deep skill roots; the first target produced a 280-character lock path and a later target exceeded the diagnostics temporary-file budget",
+    "failure_code": "external_runtime_storage_path_budget_exceeded"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.external-runtime-storage-authority",
+    "owner": "SkillGuard claimed-run CLI to run-state and owner-evidence authority binding",
+    "miss_type": "boundary_missing",
+    "error_signature": "No such file or directory: owner-evidence/check-executions/locks/<execution-key>.lock",
+    "affected_feature_tags": [
+      "external-target",
+      "owner-receipts",
+      "run-state",
+      "single-flight-lock",
+      "windows-path-budget"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the supervisor API already accepted explicit persistent owner-evidence and run-state authorities, but the public CLI did not expose either binding and therefore forced deep target-local defaults",
+    "would_have_failed_if": "the external-target model had included the exact installed CLI plus a Windows path-budget case and an initially absent repository-level evidence root",
+    "new_model_item": "bind one repository-level short owner-evidence root and one per-target repository-level short run-state root through the public CLI while preserving the existing single defaults when omitted",
+    "owner_code_contract": "skillguard_supervise.main -> supervise_contract_run(run_state_root, owner_evidence_root) -> claim_run and execution_single_flight_lock"
+  },
+  "generalized_repair": {
+    "rule": "External targets may bind one repository-level persistent owner-receipt authority and one short per-target run-state authority; the bindings change storage location only and cannot change checks, dependencies, execution ownership, evidence truth, or closure.",
+    "observed_regression": "the exact installed CLI supervises every deeply nested PhysicsGuard skill using the shared PhysicsGuard receipt root and per-skill short run-state roots",
+    "same_class_regression": "the CLI forwards both exact requested authorities, the runtime creates previously absent trees, and omitted bindings retain the sole existing defaults",
+    "negative_boundary": "this does not add a supervision mode, alternate receipt format, receipt fallback, or second authority for the same run"
+  },
+  "required_revalidation": [
+    "CLI run-state and owner-evidence binding regressions",
+    "first-use single-flight execution under the short repository authority",
+    "SkillGuard contract compilation and self-host closure",
+    "transactional SkillGuard reinstall and installed parity",
+    "real installed supervision of the PhysicsGuard skill suite"
+  ],
+  "revalidation_evidence": {
+    "cli_regressions": "58 passed plus 21 subtests; explicit run-state and owner-evidence roots are forwarded and omitted roots preserve the existing defaults",
+    "observed_first_use": "physicsguard-ai-debugging executed 7 owner checks through the short work/oe authority and closed",
+    "same_class_run_state": "physicsguard-candidate-model-blueprint closed from path-budgeted work/r/02 after the long per-skill directory reproduced the diagnostic path failure",
+    "final_contract_hash": "B466F5C2CC55185B73441F6E8FD54F18A484FBFBA3677D9CA6B5B6A90750495D",
+    "final_install_transaction": "install-80a74a79ebd1477c8e22dbd2035d4142",
+    "final_installation_receipt": "installation-86580971c064363e187ed3b3 / 26D8D828D0C62567E850A283CE91239F16D6BBB76CC4CE4C2A08084ECEB1EBF8",
+    "final_self_host": "closure-9681dfeb459dfa9fcf1fbd1f / 6AD0F763F98D5C29BA2BECE4D7621CA154F13BE35F6C2EE55E0C79313027A7C0",
+    "installed_suite_replay": "10/10 PhysicsGuard skills passed with shared work/oe and short work/r/00..09 run-state roots"
+  },
+  "claim_boundary": "The storage-binding repair is validated for the current Windows workspace and the 10 named PhysicsGuard targets. It does not prove arbitrary longer roots, unrelated targets, publication, or future AI behavior."
+}

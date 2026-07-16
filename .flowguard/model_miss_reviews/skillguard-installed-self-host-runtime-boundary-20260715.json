@@ -1,0 +1,57 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-installed-self-host-runtime-boundary-20260715",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "installed SkillGuard self-host after its installation receipt was captured",
+    "prior_local_claim": "the installed SkillGuard could self-host after installation currentness was established",
+    "observed_result": "self-host first called the canonical-source runtime boundary directly; after that call site was fixed, closure's execution-depth receipt replay independently called the same canonical-only boundary and rejected the active installation's exact .sg-runtime/installation receipt subtree",
+    "failure_code": "active_installation_receipt_misclassified_by_self_host"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.current-installed-self-host",
+    "owner": "SkillGuard self-host and execution-depth closure runtime fingerprint selection",
+    "miss_type": "affected_sibling_consumer_not_updated",
+    "error_signature": "skillguard portable boundary blocked: runtime:.sg-runtime",
+    "affected_feature_tags": [
+      "installed-runtime",
+      "self-host",
+      "runtime-fingerprint",
+      "installation-receipt"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the installed-supervisor repair introduced the location-derived execution boundary, but self-host and its downstream execution-depth closure replay remained sibling consumers of the canonical-only fingerprint",
+    "would_have_failed_if": "the affected-sibling review had enumerated every direct and downstream runtime fingerprint consumer and replayed installed self-host through final closure after receipt capture",
+    "new_model_item": "every executing runtime consumer, including supervisor and self-host, must derive the boundary from its exact execution location; canonical identity comparison remains explicit only in installation verification",
+    "owner_code_contract": "guard_execution_runtime_fingerprint -> self-host fingerprints, claimed run, shared execution-depth runtime identity, depth receipt, and closure replay"
+  },
+  "generalized_repair": {
+    "rule": "Self-host and every downstream runtime receipt consumer use one non-selectable, location-derived execution boundary; an explicitly bound current runtime identity may be replayed but callers cannot select a looser boundary.",
+    "observed_regression": "installed SkillGuard self-host passes with only its exact installation verification subtree present",
+    "same_class_regression": "source or staged self-host with .sg-runtime remains blocked, and active installation with unexpected runtime siblings remains blocked",
+    "negative_boundary": "the repair does not ignore arbitrary runtime output, remove installation receipts, add a caller-selectable mode, or weaken canonical installation parity"
+  },
+  "required_revalidation": [
+    "self-host execution-boundary unit regression",
+    "execution-depth issue/replay runtime-boundary regression",
+    "portable boundary observed and same-class regressions",
+    "SkillGuard affected tests and FlowGuard checks",
+    "SkillGuard full regression",
+    "contract recompilation",
+    "transactional reinstall and installation receipt replay",
+    "installed SkillGuard self-host closure"
+  ],
+  "revalidation_evidence": {
+    "focused_tests": "30 passed plus 14 subtests for execution depth, self-host, closure, and portable runtime boundaries",
+    "flowguard": "validation composition 19/19 positive gates and 7/7 known-bad gates; current-runtime authority model passed",
+    "contract_hash": "6E0069CCB9041D6802A676EB707F6D66369F2330DDE3FC75557DBAE8A4FA74E4",
+    "manifest_hash": "4EF2C51B6573963814003358D6F5105CCEB119D402DD686B46B0D317D2F4C610",
+    "install_transaction": "install-0af5811e7a7b4f2cb6af4b3a3758cd90",
+    "installation_receipt": "installation-7265db0247774903bf9d7c79 / 1D3FFBF51CF7BF60279B89E0E5FACD75734EA0BE8476838B5FDEA1BF1339D01C",
+    "installed_self_host": "closure-eb3f69575e9fdf8fcd6b586e / FCBCF24978B357D9DCFE4118047919B4E3BD25FBFE1B258ACA52EEE1BCF3B5FF",
+    "full_test_mesh": "aggregation sha256:283cf0014bf133864f11aa1b2ed0fe9ef4bfc83b0ab7622d3db3d62dc80485b7; execution_count 0; installation and global-prompt bindings current"
+  },
+  "claim_boundary": "The repair is validated for current SkillGuard source-to-install parity and installed self-host closure. It does not prove external target skills, publication, release, or future AI behavior."
+}

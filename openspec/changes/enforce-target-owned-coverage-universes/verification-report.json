@@ -1,0 +1,223 @@
+{
+  "version": 1,
+  "change": "enforce-target-owned-coverage-universes",
+  "status": "pass",
+  "generatedAt": "2026-07-12T15:00:52.565Z",
+  "contractPath": "openspec/changes/enforce-target-owned-coverage-universes/verification-contract.yaml",
+  "reportPath": "openspec/changes/enforce-target-owned-coverage-universes/verification-report.json",
+  "contractHash": "40f3dd5bdd15a2e71bf661d0fe59c17bb3ca00b359dc1c221f2a870d18edd192",
+  "sourceHashes": {
+    ".agents/skills/skillguard/.skillguard/check-manifest.json": "13ef63ee75b12668a76f8e711a81bdc9ddfe82ef504d016efee1324d96f249ad",
+    ".agents/skills/skillguard/.skillguard/check_manifest.json": "b3fce1b5a3d1fd88c13cb0c1bdfb6f17cab6d90628ac4a3c394991c42e11e58b",
+    ".agents/skills/skillguard/.skillguard/compiled-contract.json": "b6b405a4ad706cdc7a3091e0d7334362150624d4c0c1acb097e03b5a841e1eef",
+    ".agents/skills/skillguard/.skillguard/contract-source.json": "25c0fabd5c38c2c250f7e0969700aadedc51f60aba5eeb313d759b72c88e2554",
+    ".agents/skills/skillguard/.skillguard/skillguard_closure_policy.json": "5d929ac078531e2234108e5091fef32d5ae0ffe8e9b53daf1120a9b12fe3803f",
+    ".agents/skills/skillguard/.skillguard/skillguard_evidence_rules.json": "68a1335a5316787647cf38d3b44f78a8d9cbb82f96c434e45231e53e8d9a273f",
+    ".agents/skills/skillguard/.skillguard/skillguard_manifest.json": "3c8a00f7f83f230e57467c78c0d4104df2a9445d0e47530f164b27b2b514db6d",
+    ".agents/skills/skillguard/.skillguard/skillguard_profile.json": "70ebb9759391e538198952d2d83f30824590cb3d51ca6b8008060697dfb0ebf7",
+    ".agents/skills/skillguard/.skillguard/skillguard_skill_contract.json": "07ae9b88488c87b9af7c01bbd26cf4e44216e975fea143505b58b119947567e6",
+    ".agents/skills/skillguard/.skillguard/work-contract.json": "4186f3f3ce1ac43d4bdab8db4ea36080f68b4257034d87c1e3370d9f6e7fd628",
+    ".agents/skills/skillguard/SKILL.md": "e419b394996327722bb69816b6e20b066903aa4ed742f8548873cfbf464607ce",
+    ".agents/skills/skillguard/assets/schemas/skillguard_check_execution_result_v1.schema.json": "2e8b5d526ca6289afc8ba2da09401ea50c1dac8822710b141047735158aec996",
+    ".agents/skills/skillguard/assets/schemas/skillguard_depth_calibration_record_v1.schema.json": "e4e34c700ac1a6123ddcc8904e29b783d1104c9f56f23aa7735ab078a5dfac42",
+    ".agents/skills/skillguard/assets/schemas/skillguard_depth_profile_v1.schema.json": "fb3241298034c2ca2850ed93a8082b17b84acbe19cea13e148f8aa4e20739083",
+    ".agents/skills/skillguard/assets/schemas/skillguard_native_depth_calibration_evidence_v1.schema.json": "0f0593ceb49ab5cbb95f36c7214769cde18b7116a8119c87aaef590b70fd015e",
+    ".agents/skills/skillguard/assets/schemas/skillguard_native_depth_calibration_observation_v1.schema.json": "5ede8e8700f177923e1443020d0ed7d958067ed6491396682d34292fd7447f00",
+    ".agents/skills/skillguard/assets/schemas/skillguard_target_execution_receipt_v1.schema.json": "dd88dd559cc6185b952750bda072328d9430891cd8ffc73e2a29681b5e7cd3e6",
+    ".agents/skills/skillguard/references/skillguard-execution-depth.md": "04776004609144ba560445535184475f43f0c26482dee92d112971c6362a47fb",
+    ".agents/skills/skillguard/scripts/skillguard_v2/__init__.py": "2791f3c803f3df7b203e9da46b33fc864edb0c743fabfa7328ece415980fc9a1",
+    ".agents/skills/skillguard/scripts/skillguard_v2/artifact_validators.py": "09fb108d8fb23b7f8e6ba85a7f24bb687fd5071e01a18bb97c025cd15156ef1a",
+    ".agents/skills/skillguard/scripts/skillguard_v2/calibration_evidence_protocol.py": "8872da41057670f0a9ae45046ffa5887fe86f5594f8863f6b5ce4a6802ac761b",
+    ".agents/skills/skillguard/scripts/skillguard_v2/capability_contract.py": "8f9ee1b9b1cfcde2452a3c2344e8d480dd196e90ccb519edd7bcf791fd929573",
+    ".agents/skills/skillguard/scripts/skillguard_v2/check_runner.py": "fdad5cd63e6034a47ae129387efe745d18f88786709272d2fcaca9d2bb98e26d",
+    ".agents/skills/skillguard/scripts/skillguard_v2/closure.py": "476835480d37d216f14844cdff6933f5a0320eb796524b4d6bc85c1c1aeb7e88",
+    ".agents/skills/skillguard/scripts/skillguard_v2/contract_compiler.py": "4735984c91de5535316a66804a34302225aff9c69503ae3804012e7466601f0a",
+    ".agents/skills/skillguard/scripts/skillguard_v2/contract_schema.py": "9b1a08980ece5bb5bd1c2af58072b698ff14b5285fe60f78740f3fbb36be0507",
+    ".agents/skills/skillguard/scripts/skillguard_v2/depth_evidence_protocol.py": "761029ce9688451c001a223fc2951e997e9f5b88b5708d5f05825adb7b388598",
+    ".agents/skills/skillguard/scripts/skillguard_v2/depth_policy.py": "63a3a54991a361d360a0dba8720660a9a34d7c77c4b29ac50add8d5432520f79",
+    ".agents/skills/skillguard/scripts/skillguard_v2/dynamic_depth.py": "0ecc29dfef5f12b5fc319dda546cf06d125bb1da82d4156fc5133689c75192eb",
+    ".agents/skills/skillguard/scripts/skillguard_v2/evidence_policy.py": "0b7d351b3c5f599abb0ffa62d17a3d5a212da19d247641f9be93245676e832fd",
+    ".agents/skills/skillguard/scripts/skillguard_v2/execution_depth.py": "03a543edcbc2323d1c468a2dbc75b76ba86970b1e037b2ba63044a88c88b5745",
+    ".agents/skills/skillguard/scripts/skillguard_v2/execution_records.py": "dd12f319c0f4ee02d3aa5e98d27b8c7d0d0d0012e102c1d88e3500ca6aa06736",
+    ".agents/skills/skillguard/scripts/skillguard_v2/field_lifecycle.py": "a2bfcab8c31fc624353997c2f3e43a824b90b6174f031f2196668e488c75e8f4",
+    ".agents/skills/skillguard/scripts/skillguard_v2/flowguard_adapter.py": "3ad962ad2dfcbad427c1be09569bc0c1d157de52de1d66a17d01242e5fa09ce0",
+    ".agents/skills/skillguard/scripts/skillguard_v2/installation.py": "131ce4a0b3b42f97157e11fca71a0ab16c5712c49c0245e11fab165c344157aa",
+    ".agents/skills/skillguard/scripts/skillguard_v2/installed_parity.py": "1b9894775b87a2e7daff9f8e8ddb370542514ea749e38fcce87a279bf16509bb",
+    ".agents/skills/skillguard/scripts/skillguard_v2/portfolio.py": "8a70148dff2f5a544df1b2601965604dedda9f84343cb95ef951332221499ea3",
+    ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_cli.py": "132f4b52f8faeddb74002cc43c67002fa590f0760786691b831afbcec43af95d",
+    ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_records.py": "9c68e9b305cb86280c2e56b0ba5eedb26cd995ac21dd262a51fe56b5b9a8bfce",
+    ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_runner.py": "2d1941a51d200cd133e622ec96d0b8d3cb69d6432a05cce1d163cff4e213007e",
+    ".agents/skills/skillguard/scripts/skillguard_v2/privacy.py": "289275efdf493556f52f4111d3e8efaad3526b0cf4e502d09251c1c6b0603823",
+    ".agents/skills/skillguard/scripts/skillguard_v2/project_adoption.py": "8619c9a1bf882c593b007197e3ee8f19f1d6cc1bc5c367af514ecce0bbb630fe",
+    ".agents/skills/skillguard/scripts/skillguard_v2/provenance.py": "4fdfa6c9bfd3d4889fe73dd7f89f2fd6935dd9edbb2e8dfa22b6e5202ec2f4bd",
+    ".agents/skills/skillguard/scripts/skillguard_v2/receipts.py": "fb8ec8580f4ad4e2ade66991bb0f254cc6039156f71f17bd05d79e70a0af05e6",
+    ".agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py": "3ba756e030a4b8f462e8dc210911c26116bccdbbbc32a33ca65022470005c05b",
+    ".agents/skills/skillguard/scripts/skillguard_v2/run_store.py": "2707ac7d7769da1daa349929b102a7edf92d59d6b62498875421cf8c115d4813",
+    ".agents/skills/skillguard/scripts/skillguard_v2/runtime_fingerprint.py": "cecd4b111458b6acf372ba20474382df586fda384ca68fc6d41c6c86c91aa5c9",
+    ".agents/skills/skillguard/scripts/skillguard_v2/self_host.py": "783635c79ea3d49f43ac2cc00782bf27deb1bc49a16d3dac6c1f16ed70e1f06a",
+    ".agents/skills/skillguard/scripts/skillguard_v2/step_runtime.py": "06ec22472a6550d9e821e3303b5701733b39ec9e12376dc98fee0ab5145276c9",
+    ".agents/skills/skillguard/scripts/skillguard_v2/supervisor.py": "8f33974642aa47d81de084658227af11822070e46182c1cc366917f3411483e1",
+    ".agents/skills/skillguard/scripts/skillguard_v2/target_inputs.py": "ff90e0681baf90830b241b8cb36bdfef7d924500828b55b38668134b3f67981e",
+    ".agents/skills/skillguard/scripts/skillguard_v2/test_mesh.py": "b4e69ad513697db3a2929f4c86f111e4983a0288e0afed2b0c260cd66363d1de",
+    ".flowguard/development_process_flow/skillguard_executable_contract_model.py": "c1b43860638cfdd9df5215e810ff34d2201819e9b46d50052625062ad0379063",
+    ".flowguard/execution_depth/development_process.py": "fc724c5a9d9762953b646c692263a40d214100c1c8805100a5df85c0237f74a8",
+    ".flowguard/execution_depth/field_lifecycle_model.py": "7a52d3599cb478f35ecb30022553a0f7e37990bc96e97f12d980f2e46a50bb73",
+    ".flowguard/execution_depth/model_miss_review.md": "d29ae4b8d3669f01d9bf20c115027b25300b10f2a09305ea6791383c56c353f0",
+    ".flowguard/execution_depth/model_test_alignment.md": "07a53456f0dffea68b5e10ba956248cb95ea20c1171e6ed95d81b3e5eefb2594",
+    ".flowguard/execution_depth/run_checks.py": "d1dc4dab087c91c75fb10658efcf9b418dc4052a9a200a9b66eca2e962fabfcf",
+    ".flowguard/existing_model_preflight/execution_depth_preflight.py": "e3203b8ba789fc9c960d0e91c17528ecc47ae29617104a3483d9e43383adf55c",
+    "README.md": "580d77b3b309eeebabc82ab154b11a09510ea6f77f9b2a689cf29ca37de7cc3c",
+    "openspec/changes/enforce-target-owned-coverage-universes/design.md": "c8b428502acecbaed8c1dda6a84804ef0053fbae68feab13f1db2bf17f3def4c",
+    "openspec/changes/enforce-target-owned-coverage-universes/proposal.md": "adf002338cd55af8db5a12fe52c0966418ad70797bf7f43a9191959f3911988c",
+    "openspec/changes/enforce-target-owned-coverage-universes/specs/universal-execution-depth/spec.md": "659dde003256046811152da2f4d82c9561faef6e7ca67de14f46ac5369b617fc",
+    "openspec/changes/enforce-target-owned-coverage-universes/tasks.md": "d0f74d85df0ce56469ef37a891bbdf7f191d6059dc3f6498944b819ec49852ec",
+    "openspec/changes/enforce-target-owned-coverage-universes/verification-contract.yaml": "40f3dd5bdd15a2e71bf661d0fe59c17bb3ca00b359dc1c221f2a870d18edd192",
+    "openspec/specs/universal-execution-depth/spec.md": "5f4495167e94f26fdd191054b35a770081b4e2c2d88e388413e266a6e5b30b2f",
+    "tests/test_depth_portfolio_calibration.py": "48ab22dea7d7ea45e04ed72b41e378730d242ed5c80480fe0254855a38f063ee",
+    "tests/test_execution_depth.py": "5613bb24af88f3c4ae0be0f44908272bbed8120f3fcb06c7c463ed67493b073a",
+    "tests/test_execution_depth_coverage_universes.py": "a1a7f7cdb06ad29467704ffc8838a05bdc7edb30d85d6ebad4c45d55892d165d",
+    "tests/test_execution_depth_dynamic_floor.py": "c375fe2a2b082ff9d29ff27c5bf4a4cf7b86b6f0373b05750a015600ef9c0328",
+    "tests/test_skillguard_execution_depth.py": "0c6dad933961198eac663dd86ff9615f272354c3014b61e3e98471b0bd08e7f9"
+  },
+  "issues": [],
+  "checks": [
+    {
+      "id": "check.depth.focused-runtime",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.depth.nonempty-target-owned-profile",
+        "req.depth.current-receipt",
+        "req.depth.immutable-uniqueness",
+        "req.depth.bound-calibration",
+        "req.depth.coverage-adequacy",
+        "req.depth.provider-readiness",
+        "req.depth.dual-root-replay",
+        "req.depth.dynamic-floor-anti-shrink"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_execution_depth.py",
+        "tests/test_execution_depth_coverage_universes.py",
+        "tests/test_execution_depth_dynamic_floor.py",
+        "tests/test_depth_portfolio_calibration.py",
+        "tests/test_skillguard_execution_depth.py",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 63746,
+      "stdout": "............................................           [100%]\r\n44 passed, 18 subtests passed in 58.74s\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.depth.compiler-parity",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.depth.nonempty-target-owned-profile",
+        "req.depth.bound-calibration"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard_v2_compile.py",
+        ".agents/skills/skillguard",
+        "--repository-root",
+        ".",
+        "--check"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 5243,
+      "stdout": "{\r\n  \"artifact_type\": \"skillguard_v2_compile_report\",\r\n  \"claim_boundary\": \"Compilation proves deterministic model/binding parity and exact check mapping. It does not execute target work or prove current runtime, functional, release, or publication closure.\",\r\n  \"contract_hash\": \"AED095C0F6E7C9A5645D52DC03D54766BE51F2677F378033C207A4066B7622AF\",\r\n  \"findings\": [],\r\n  \"manifest_hash\": \"C7454870FADEE888FC40340A3F757C816C6FA41B4CD468BE554D0986891DED37\",\r\n  \"ok\": true,\r\n  \"status\": \"pass\",\r\n  \"written_files\": []\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.depth.existing-model-preflight",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.depth.native-route-preserved"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        ".flowguard/existing_model_preflight/execution_depth_preflight.py"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 4594,
+      "stdout": "=== flowguard existing model preflight review ===\r\nstatus: OK\r\npreflight: skillguard-universal-execution-depth-preflight\r\ndecision: full_existing_model_preflight_can_continue\r\nfindings: 0\r\n",
+      "stderr": ""
+    },
+    {
+      "id": "check.depth.flowguard-model",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.depth.current-receipt",
+        "req.depth.coverage-adequacy",
+        "req.depth.provider-readiness",
+        "req.depth.dual-root-replay",
+        "req.depth.dynamic-floor-anti-shrink"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        ".flowguard/execution_depth/run_checks.py"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 5211,
+      "stdout": "=== flowguard field lifecycle mesh ===\r\nmesh_id: skillguard-universal-execution-depth-fields\r\nstatus: pass\r\ndecision: field_lifecycle_full\r\nconfidence: full\r\nsummary: All discovered fields are accounted and behavior-bearing fields are projected.\r\nprojections: 57\r\n=== flowguard development process flow review ===\r\nstatus: OK\r\nprocess: skillguard-universal-execution-depth-rollout\r\nscope: routine\r\ndecision: development_process_flow_green_can_continue\r\nfindings: 0\r\n=== parent:scenarios ===\r\n=== flowguard scenario review ===\r\n\r\ntotal: 41\r\npassed: 1\r\nexpected violations observed: 40\r\nunexpected violations: 0\r\nmissing expected violations: 0\r\nneeds human review: 0\r\nknown limitations: 0\r\noracle mismatches: 0\r\nstatus: OK\r\n\r\nScenario: good_run_passes\r\nExpected: good run\r\nObserved: OK\r\nStatus: PASS\r\nOutcome: scenario matched the expected ok behavior\r\nEvidence:\r\n  - traces=1\r\n  - final_states=1\r\n  - violations=0\r\n  - dead_branches=0\r\n  - exceptions=0\r\n  - observed labels: good_contract_run\r\n\r\nScenario: missing_model_blocks\r\nExpected: model missing\r\nObserved: VIOLATION; model_and_binding_are_authoritative\r\nStatus: EXPECTED_VIOLATION_OBSERVED\r\nOutcome: scenario intentionally expected a violation and FlowGuard observed it\r\nEvidence:\r\n  - traces=1\r\n  - final_states=1\r\n  - violations=1\r\n  - dead_branches=0\r\n  - exceptions=0\r\n  - violation_names=model_and_binding_are_authoritative\r\n  - observed labels: missing_model\r\nCounterexample:\r\nexternal_inputs: (ExecutableContractCase(case_name='missing_model', model_current=False, binding_current=True, route_owner_unique=True, route_typed=True, packet_fields_consumed=True, guard_runtime_changed=False, guard_compatible_run_claimed=True, run_claimed=True, writer_lock_owned=True, failed_or_dead_writer_lock_recoverable=True, required_steps_passed=True, caller_authored_pass=False, illegal_required_skip=False, artifacts_current=True, checks_current=True, resume_from_events=True, progress_changed=True, reentry_count=0, max_reentries=3, parent_receipts_current=True, failure_visible=True, v1_alternate_success=False, closure_requested=True, closure_profile_monotonic=True, safe_claim_scoped=True, graduated_children_current=True, depth_profile_present=True, depth_profile_target_neutral=True, native_route_preserved=True, parallel_domain_executor=False, unique_evidence_contribution=True, execution_depth_status='EXECUTION_DEPTH_PASS', depth_receipt_current=True, depth_receipt_consumed=True, enforcement_level='enforced', positive_calibration_passed=True, shallow_calibration_passed=True, calibration_actual_observation_bound=True, calibration_input_manifest_complete=True, calibration_native_receipt_content_addressed=True, coverage_denominator_nonempty=True, coverage_universe_adequate=True, per_object_depth_adequate=True, object_class_binding_unambiguous=True, critical_scope_preserved=True, object_scope_reconciled=True, child_universe_current=True, native_dynamic_floor_current=True, effective_floor_strictly_monotonic=True, provider_runtime_current=True, root_role_binding_current=True, repository_root_supplied=True, target_root_supplied=True, depth_observation_mapping_present=True, depth_observation_mapping_current=True, depth_observation_derivation_bound=True, project_adoption_current=True),)\r\n1. EvaluateExecutableContract [missing_model]: ExecutableContractCase(case_name='missing_model', model_current=False, binding_current=True, route_owner_unique=True, route_typed=True, packet_fields_consumed=True, guard_runtime_changed=False, guard_compatible_run_claimed=True, run_claimed=True, writer_lock_owned=True, failed_or_dead_writer_lock_recoverable=True, required_steps_passed=True, caller_authored_pass=False, illegal_required_skip=False, artifacts_current=True, checks_current=True, resume_from_events=True, progress_changed=True, reentry_count=0, max_reentries=3, parent_receipts_current=True, failure_visible=True, v1_alternate_success=False, closure_requested=True, closure_profile_monotonic=True, safe_claim_scoped=True, graduated\n...[truncated]",
+      "stderr": ""
+    },
+    {
+      "id": "check.depth.executable-contract-model",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.depth.native-route-preserved"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        "-m",
+        "unittest",
+        "tests.test_executable_contract_model"
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 5003,
+      "stdout": "=== scenarios ===\r\n=== flowguard scenario review ===\r\n\r\ntotal: 41\r\npassed: 1\r\nexpected violations observed: 40\r\nunexpected violations: 0\r\nmissing expected violations: 0\r\nneeds human review: 0\r\nknown limitations: 0\r\noracle mismatches: 0\r\nstatus: OK\r\n\r\nScenario: good_run_passes\r\nExpected: good run\r\nObserved: OK\r\nStatus: PASS\r\nOutcome: scenario matched the expected ok behavior\r\nEvidence:\r\n  - traces=1\r\n  - final_states=1\r\n  - violations=0\r\n  - dead_branches=0\r\n  - exceptions=0\r\n  - observed labels: good_contract_run\r\n\r\nScenario: missing_model_blocks\r\nExpected: model missing\r\nObserved: VIOLATION; model_and_binding_are_authoritative\r\nStatus: EXPECTED_VIOLATION_OBSERVED\r\nOutcome: scenario intentionally expected a violation and FlowGuard observed it\r\nEvidence:\r\n  - traces=1\r\n  - final_states=1\r\n  - violations=1\r\n  - dead_branches=0\r\n  - exceptions=0\r\n  - violation_names=model_and_binding_are_authoritative\r\n  - observed labels: missing_model\r\nCounterexample:\r\nexternal_inputs: (ExecutableContractCase(case_name='missing_model', model_current=False, binding_current=True, route_owner_unique=True, route_typed=True, packet_fields_consumed=True, guard_runtime_changed=False, guard_compatible_run_claimed=True, run_claimed=True, writer_lock_owned=True, failed_or_dead_writer_lock_recoverable=True, required_steps_passed=True, caller_authored_pass=False, illegal_required_skip=False, artifacts_current=True, checks_current=True, resume_from_events=True, progress_changed=True, reentry_count=0, max_reentries=3, parent_receipts_current=True, failure_visible=True, v1_alternate_success=False, closure_requested=True, closure_profile_monotonic=True, safe_claim_scoped=True, graduated_children_current=True, depth_profile_present=True, depth_profile_target_neutral=True, native_route_preserved=True, parallel_domain_executor=False, unique_evidence_contribution=True, execution_depth_status='EXECUTION_DEPTH_PASS', depth_receipt_current=True, depth_receipt_consumed=True, enforcement_level='enforced', positive_calibration_passed=True, shallow_calibration_passed=True, calibration_actual_observation_bound=True, calibration_input_manifest_complete=True, calibration_native_receipt_content_addressed=True, coverage_denominator_nonempty=True, coverage_universe_adequate=True, per_object_depth_adequate=True, object_class_binding_unambiguous=True, critical_scope_preserved=True, object_scope_reconciled=True, child_universe_current=True, native_dynamic_floor_current=True, effective_floor_strictly_monotonic=True, provider_runtime_current=True, root_role_binding_current=True, repository_root_supplied=True, target_root_supplied=True, depth_observation_mapping_present=True, depth_observation_mapping_current=True, depth_observation_derivation_bound=True, project_adoption_current=True),)\r\n1. EvaluateExecutableContract [missing_model]: ExecutableContractCase(case_name='missing_model', model_current=False, binding_current=True, route_owner_unique=True, route_typed=True, packet_fields_consumed=True, guard_runtime_changed=False, guard_compatible_run_claimed=True, run_claimed=True, writer_lock_owned=True, failed_or_dead_writer_lock_recoverable=True, required_steps_passed=True, caller_authored_pass=False, illegal_required_skip=False, artifacts_current=True, checks_current=True, resume_from_events=True, progress_changed=True, reentry_count=0, max_reentries=3, parent_receipts_current=True, failure_visible=True, v1_alternate_success=False, closure_requested=True, closure_profile_monotonic=True, safe_claim_scoped=True, graduated_children_current=True, depth_profile_present=True, depth_profile_target_neutral=True, native_route_preserved=True, parallel_domain_executor=False, unique_evidence_contribution=True, execution_depth_status='EXECUTION_DEPTH_PASS', depth_receipt_current=True, depth_receipt_consumed=True, enforcement_level='enforced', positive_calibration_passed=True, shallow_calibration_passed=True, calibration_actual_observation_bound=True, calibration_input_manifest_complete=True, cali\n...[truncated]",
+      "stderr": ".........\r\n----------------------------------------------------------------------\r\nRan 9 tests in 3.176s\r\n\r\nOK\r\n"
+    },
+    {
+      "id": "check.depth.project-audit",
+      "kind": "command",
+      "required": true,
+      "covers": [
+        "req.depth.project-adoption-current"
+      ],
+      "status": "passed",
+      "command": "python",
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard.py",
+        "project-audit",
+        "--root",
+        "."
+      ],
+      "expectedExitCode": 0,
+      "exitCode": 0,
+      "durationMs": 4635,
+      "stdout": "{\r\n  \"claim_boundary\": \"A pass proves current portable project-maintenance instructions and manifest integrity only; it does not prove target skill execution depth or release readiness.\",\r\n  \"findings\": [],\r\n  \"manifest_path\": \".skillguard/project.json\",\r\n  \"ok\": true,\r\n  \"project_id\": \"SkillGuard\",\r\n  \"project_prompt_path\": \"AGENTS.md\",\r\n  \"schema_version\": \"skillguard.project_audit_result.v1\",\r\n  \"skillguard_repository\": \"https://github.com/liuyingxuvka/SkillGuard\",\r\n  \"status\": \"pass\"\r\n}\r\n",
+      "stderr": ""
+    }
+  ]
+}

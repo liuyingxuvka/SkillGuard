@@ -50,7 +50,7 @@
     "checker_version": {
       "type": "string"
     },
-    "compatibility": {
+    "current_identity": {
       "type": "object",
       "required": [
         "checker_version",

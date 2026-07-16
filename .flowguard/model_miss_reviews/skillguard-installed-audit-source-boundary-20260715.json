@@ -1,0 +1,49 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-installed-audit-source-boundary-20260715",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "SkillGuard audit-installed-skills over the newly installed Guard-family targets",
+    "prior_local_claim": "installation consumes only projection:installation and its persisted current authority",
+    "observed_result": "the audit recompiled each installed projection as if it were a complete source repository and reported source-only model or implementation paths as missing",
+    "failure_code": "installed_projection_recompiled_as_source"
+  },
+  "classification": {
+    "behavior_plane": "installation_projection",
+    "commitment_id": "skillguard.validation_execution_ownership.installation_projection",
+    "owner": "SkillGuard installed-skill audit",
+    "miss_type": "evidence_domain_conflation",
+    "error_signature": "current installed authority is followed by compile_skill_contract(skill_dir, repository_root=skill_dir)",
+    "affected_feature_tags": [
+      "skillguard",
+      "installed-audit",
+      "runtime-authority",
+      "installation-projection"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the aggregate audit resolved the installed authority correctly but then crossed back into the canonical-source compiler",
+    "would_have_failed_if": "an installed-audit regression asserted that a current projection never emits source-only missing-model, invalid-implementation-path, or stale-generated-contract findings",
+    "new_model_item": "installed audit must read the persisted current authority and may inspect its declared depth surface without recompiling source-only inputs",
+    "owner_code_contract": "resolve_runtime_authority -> read current compiled-contract -> classify declared depth surface"
+  },
+  "generalized_repair": {
+    "rule": "After current installed authority passes, inspect the persisted compiled contract directly; source compilation remains owned by source maintenance checks.",
+    "negative_boundary": "do not accept non-current authority, invent missing target semantics, rerun native target checks, or add any compatibility route"
+  },
+  "required_revalidation": [
+    "focused installed-audit regression",
+    "validation-composition FlowGuard counterexample",
+    "strict compose-validation-evidence OpenSpec validation",
+    "transactional SkillGuard reinstall",
+    "real installed audit over the exact twenty Guard-family target roots"
+  ],
+  "revalidation_evidence": {
+    "focused_regression": "The installed-audit unit regression passed and asserted the absence of flowguard_model_missing, implementation_path_invalid, and stale_generated_contract findings.",
+    "flowguard_model": "The validation-composition model passed 19/19 positive gates and 7/7 grouped known-bad gates, including bad-installed-projection-recompiled-as-source.",
+    "openspec": "compose-validation-evidence strict validation passed.",
+    "installation": "Transaction install-f7f2866fb8a14c7cb27623e8f0426b8e passed stage parity, active parity, current authority, self-check, and runtime import.",
+    "real_target_audit": "The installed SkillGuard audited the exact twenty frozen Guard-family target roots: 20/20 deep-pass, zero failures, zero source-recompile false positives, and 20/20 installed contract hashes matched the frozen base plan plus amendment."
+  },
+  "claim_boundary": "The repair is validated for the current source and installed SkillGuard, its focused regression, the validation-composition model, strict OpenSpec validation, and the exact twenty installed Guard-family targets. It does not prove target-domain behavior, the pending final parent closure, release, publication, or future AI behavior."
+}

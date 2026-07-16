@@ -239,27 +239,6 @@ Interpretation:
 - Missing freshness metadata is treated as unverifiable evidence rather than accepted current evidence.
 - `detect-stale-evidence` reads evidence and referenced artifacts only. It does not refresh records, rerun fixtures, invoke generators, inspect sealed FlowPilot bodies, or make closure decisions.
 
-## Maintenance Refresh
-
-Plan a refresh for an explicit evidence output before rewriting any metadata:
-
-```powershell
-python .agents/skills/skillguard/scripts/skillguard.py refresh-maintenance --input .agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_bad_routing_current.json
-```
-
-Execute only supported metadata refreshes after reviewing the dry-run plan:
-
-```powershell
-python .agents/skills/skillguard/scripts/skillguard.py refresh-maintenance --input .agents/skills/skillguard/fixtures/evidence_outputs/fixture_test_bad_routing_current.json --execute
-```
-
-Interpretation:
-
-- `decision: pass` in dry-run mode means the command loaded the explicit evidence artifacts and reported any approved refresh actions without rewriting those artifacts.
-- `decision: pass` in execute mode means supported stale metadata was refreshed and the post-refresh freshness check found no remaining stale bindings in the supplied artifacts.
-- `decision: block` means at least one target is unrefreshable by metadata rewrite, such as missing metadata, invalid paths, or a missing generated artifact that must be restored by its owning workflow.
-- `refresh-maintenance` does not rerun target commands, regenerate missing artifacts, inspect sealed FlowPilot bodies, expose sibling role text, or make closure decisions.
-
 ## Checker-Change Review
 
 Review a checker change against an approved repository-local baseline before accepting current evidence:
@@ -276,7 +255,7 @@ Interpretation:
 
 ## Maintenance Record Schema
 
-Validate a canonical maintenance record or supported legacy SkillGuard command output:
+Validate one current canonical maintenance record:
 
 ```powershell
 python .agents/skills/skillguard/scripts/skillguard.py check-maintenance-record --input .agents/skills/skillguard/fixtures/evidence_outputs/review_checker_change_current.json
@@ -284,9 +263,9 @@ python .agents/skills/skillguard/scripts/skillguard.py check-maintenance-record 
 
 Interpretation:
 
-- `decision: pass` means the command found a canonical `maintenance_record` or normalized a supported legacy SkillGuard command output into the canonical public schema.
-- `decision: block` means the record is missing required public fields, uses an incompatible schema version, contains stale legacy aliases, has malformed blocker rows, mismatches current route or command bindings, or includes private/sealed text in public maintenance fields.
-- `check-maintenance-record` does not rewrite legacy artifacts, refresh stale evidence, inspect sealed FlowPilot bodies, expose sibling role text, or make closure decisions.
+- `decision: pass` means the command found exactly the current canonical `maintenance_record` shape.
+- `decision: block` means the record is missing required public fields, uses any non-current schema or alias, has malformed blocker rows, mismatches current route or command bindings, or includes private/sealed text in public maintenance fields.
+- `check-maintenance-record` is read-only. It does not convert non-current artifacts, refresh stale evidence, inspect sealed FlowPilot bodies, expose sibling role text, or make closure decisions.
 
 ## Skill Blueprint Preview
 

@@ -1,9 +1,0 @@
-{
-  "fixture_id": "runtime-check-suite-parent-hides-child-failure-fail",
-  "target_command": "check-suite",
-  "expected_decision": "fail",
-  "suite_root": "../../bad_suite_stale/bad_suite_child_without_closure/suite",
-  "suite_map": "../../bad_suite_stale/bad_suite_child_without_closure/suite/suite-map.json",
-  "suite_contract": "../../bad_suite_stale/bad_suite_child_without_closure/suite/suite-contract.json",
-  "member_root": ".agents/skills"
-}

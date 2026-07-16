@@ -1,0 +1,125 @@
+{
+  "$id": "https://skillguard.local/schemas/skillguard_native_terminal_receipt_v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "branch_id": {
+      "const": "prepared-update"
+    },
+    "closure_disposition": {
+      "enum": [
+        "non_terminal_authorization",
+        "non_terminal_validation",
+        "terminal_completion"
+      ]
+    },
+    "closure_profile": {
+      "const": "enforced"
+    },
+    "created_at": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "depth_profile_hash": {
+      "$ref": "skillguard_native_noop_receipt_v1.schema.json#/$defs/sha256"
+    },
+    "depth_receipt_hash": {
+      "$ref": "skillguard_native_noop_receipt_v1.schema.json#/$defs/sha256"
+    },
+    "depth_receipt_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence_domain": {
+      "const": "scheduled_production"
+    },
+    "native_check_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "native_owner_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "native_receipt_artifact_ref": {
+      "$ref": "skillguard_native_noop_receipt_v1.schema.json#/$defs/portable_ref"
+    },
+    "native_receipt_hash": {
+      "$ref": "skillguard_native_noop_receipt_v1.schema.json#/$defs/sha256"
+    },
+    "native_route_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "observed_state_fingerprint": {
+      "$ref": "skillguard_native_noop_receipt_v1.schema.json#/$defs/sha256"
+    },
+    "reason_code": {
+      "const": "prepared-update"
+    },
+    "receipt_hash": {
+      "$ref": "skillguard_native_noop_receipt_v1.schema.json#/$defs/sha256"
+    },
+    "receipt_id": {
+      "pattern": "^native-terminal-[a-f0-9]{24}$",
+      "type": "string"
+    },
+    "run_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "scheduled_production_identity": {
+      "$ref": "skillguard_native_noop_receipt_v1.schema.json#/$defs/scheduled_identity"
+    },
+    "schema_version": {
+      "const": "skillguard.native_terminal_receipt.v1"
+    },
+    "target_contract_hash": {
+      "$ref": "skillguard_native_noop_receipt_v1.schema.json#/$defs/sha256"
+    },
+    "target_obligation_ids": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "target_skill_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "terminal_kind": {
+      "const": "prepared_update"
+    }
+  },
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "target_skill_id",
+    "target_contract_hash",
+    "depth_profile_hash",
+    "native_owner_id",
+    "native_route_id",
+    "native_check_id",
+    "run_id",
+    "branch_id",
+    "terminal_kind",
+    "closure_profile",
+    "closure_disposition",
+    "reason_code",
+    "observed_state_fingerprint",
+    "target_obligation_ids",
+    "evidence_domain",
+    "scheduled_production_identity",
+    "depth_receipt_id",
+    "depth_receipt_hash",
+    "native_receipt_artifact_ref",
+    "native_receipt_hash",
+    "created_at",
+    "receipt_hash"
+  ],
+  "title": "SkillGuard Prepared Native Terminal Receipt V1",
+  "type": "object"
+}

@@ -1,6 +1,6 @@
 {
   "fixture_id": "deep-missing-target-lock-fail",
   "target_command": "check-depth",
-  "expected_decision": "fail",
+  "expected_decision": "block",
   "target_path": "../bad_missing_target_lock"
 }

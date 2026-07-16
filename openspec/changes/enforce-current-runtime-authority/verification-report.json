@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "schema_version": 2,
+  "report_protocol_version": 3,
+  "change": "enforce-current-runtime-authority",
+  "status": "pass",
+  "generated_at": "2026-07-14T01:36:03.802Z",
+  "contract_path": "openspec/changes/enforce-current-runtime-authority/verification-contract.yaml",
+  "report_path": "openspec/changes/enforce-current-runtime-authority/verification-report.json",
+  "contract_hash": "sha256:df56c7299762fe239dac655398e883d850e6a102d91a5e9895451c3a69149689",
+  "source_hashes": {
+    "openspec/changes/enforce-current-runtime-authority/design.md": "sha256:ef833df04de177f877b9628e1caeff99c19ebb85f582dcc4b593e2cb50307eb4",
+    "openspec/changes/enforce-current-runtime-authority/proposal.md": "sha256:a4e3875833f83156c9a1fa9a09cdd72fdcfeeab77cb1e0178932c4a3018bba0f",
+    "openspec/changes/enforce-current-runtime-authority/specs/current-runtime-authority/spec.md": "sha256:01dd9991a7d4f83baacf04471e221cd0ca68abc8bdf8bbb6382657f39df94503",
+    "openspec/changes/enforce-current-runtime-authority/specs/universal-execution-depth/spec.md": "sha256:cb7781c5f13acbe775f8f52dba44aba3717f9b65d3509cf61d1bb8d602a1d06c",
+    "openspec/changes/enforce-current-runtime-authority/tasks.md": "sha256:43caa50535ab2d6ff26243856d21a448d4876db401917eed6fd5395bb2e7e19f",
+    "openspec/changes/enforce-current-runtime-authority/verification-contract.yaml": "sha256:df56c7299762fe239dac655398e883d850e6a102d91a5e9895451c3a69149689"
+  },
+  "source_hash_policy": {
+    "version": 2,
+    "algorithm": "sha256",
+    "task_checkbox_normalization": "markdown-checkbox-state-v1",
+    "output_classifier_version": "verification-generated-output-v2"
+  },
+  "issues": [],
+  "checks": [
+    {
+      "id": "check.current-authority.final-parent",
+      "kind": "receipt",
+      "required": true,
+      "covers": [
+        "req.current-authority.single-path",
+        "req.current-authority.no-retirement-surface",
+        "req.current-authority.fields",
+        "req.current-authority.commands",
+        "req.current-authority.residual",
+        "req.current-authority.consumers",
+        "req.current-authority.direct-replacement",
+        "req.current-authority.maintenance-current-only",
+        "req.current-authority.functional-inputs",
+        "req.current-authority.covered-skill-current-only",
+        "req.current-authority.boundary",
+        "req.depth.current-only"
+      ],
+      "status": "passed",
+      "args": [],
+      "semantic_check_id": "semantic.current-authority.skillguard-final-parent",
+      "execution_id": "check.current-authority.final-parent",
+      "execution_owner": "skillguard:execution.skillguard.test-mesh-parent.current",
+      "consumer": "openspec-current-authority-verifier",
+      "input_hashes": {},
+      "snapshot_policy": "frozen",
+      "validation_scope": "full",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      },
+      "attempt": 1,
+      "accounting": "aggregated",
+      "message": "Verified external skillguard receipt sha256:5b10d920d99f900c12ba44da930fb4f6bcb9a8ad3386a68a6628ae088edf3a84 without executing its owner.",
+      "started_at": "2026-07-14T01:36:03.413Z",
+      "completed_at": "2026-07-14T01:36:03.413Z",
+      "execution_key": "sha256:3cea226f4ae67381fac9be12216f3a3230e631b6853fa498e273e5cea45fd6cc",
+      "depends_on_receipt_ids": [
+        "sha256:5b10d920d99f900c12ba44da930fb4f6bcb9a8ad3386a68a6628ae088edf3a84"
+      ],
+      "toolchain_identity": "sha256:8d0ad5a0ccf79d6c830a2d41790b284398083e807e2bcb0b39c46cfde3b3d6a5",
+      "snapshot_manifest_id": "sha256:4dc9b52613bc85f433cea05391719d33ee82b54d755838f635d2c079d6ef4bd0",
+      "receipt_id": "sha256:7e055a9284f9f72ebc6e039be56d546376c70ac15d00ebb8150be2355423e415",
+      "result_hash": "sha256:3425f73ce856b0ce8cc95a15ba8453e3b1e1fe1f0a263daa861ef4d5b1642343",
+      "stdout_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "receipt_sidecar_path": "openspec/changes/enforce-current-runtime-authority/verification-receipts/7e055a9284f9f72ebc6e039be56d546376c70ac15d00ebb8150be2355423e415.json"
+    }
+  ],
+  "run": {
+    "id": "3c36f3fc-4cd0-4e7d-9256-4e2c5e640aa9",
+    "protocol_version": 3,
+    "state": "completed",
+    "attempt": 1,
+    "started_at": "2026-07-14T01:35:56.291Z",
+    "updated_at": "2026-07-14T01:36:03.802Z",
+    "completed_at": "2026-07-14T01:36:03.802Z",
+    "plan_hash": "sha256:1e8e3d310f6e24933203b125f8473de9148cadfaa9343f08926bb12eca26b1da",
+    "validation_mode": "full",
+    "selection": {
+      "mode": "all",
+      "check_ids": [
+        "check.current-authority.final-parent"
+      ]
+    },
+    "resumed_from_run_id": null,
+    "cancellation": null,
+    "snapshot_manifest_id": "sha256:4dc9b52613bc85f433cea05391719d33ee82b54d755838f635d2c079d6ef4bd0",
+    "toolchain_isolation": "content-identity-guarded"
+  },
+  "accounting": {
+    "executed": 0,
+    "reused": 0,
+    "aggregated": 1,
+    "not_run": 0,
+    "stale": 0,
+    "executed_check_ids": [],
+    "reused_check_ids": [],
+    "aggregated_check_ids": [
+      "check.current-authority.final-parent"
+    ],
+    "not_run_check_ids": [],
+    "stale_check_ids": []
+  },
+  "receipts": [
+    {
+      "id": "sha256:7e055a9284f9f72ebc6e039be56d546376c70ac15d00ebb8150be2355423e415",
+      "check_id": "check.current-authority.final-parent",
+      "kind": "projection",
+      "execution_key": "sha256:3cea226f4ae67381fac9be12216f3a3230e631b6853fa498e273e5cea45fd6cc",
+      "result_hash": "sha256:3425f73ce856b0ce8cc95a15ba8453e3b1e1fe1f0a263daa861ef4d5b1642343",
+      "content_path": "openspec/changes/enforce-current-runtime-authority/verification-receipts/7e055a9284f9f72ebc6e039be56d546376c70ac15d00ebb8150be2355423e415.json",
+      "execution": {
+        "semantic_check_id": "semantic.current-authority.skillguard-final-parent",
+        "execution_id": "check.current-authority.final-parent",
+        "owner_check_id": "skillguard:execution.skillguard.test-mesh-parent.current",
+        "consumer": "openspec-current-authority-verifier"
+      },
+      "result": {
+        "status": "passed",
+        "stdout_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "termination": null
+      },
+      "dependencies": [
+        "sha256:5b10d920d99f900c12ba44da930fb4f6bcb9a8ad3386a68a6628ae088edf3a84"
+      ],
+      "snapshot": {
+        "policy": "frozen",
+        "manifest_id": "sha256:4dc9b52613bc85f433cea05391719d33ee82b54d755838f635d2c079d6ef4bd0",
+        "input_hashes": {}
+      },
+      "toolchain_identity": "sha256:8d0ad5a0ccf79d6c830a2d41790b284398083e807e2bcb0b39c46cfde3b3d6a5",
+      "source_hash_policy": {
+        "version": 2,
+        "algorithm": "sha256",
+        "task_checkbox_normalization": "markdown-checkbox-state-v1",
+        "output_classifier_version": "verification-generated-output-v2"
+      }
+    }
+  ]
+}

@@ -1,8 +1,0 @@
-{
-  "fixture_id": "runtime-close-run-overclaim-fail",
-  "target_command": "close-run",
-  "expected_decision": "fail",
-  "run_path": "../runs/overclaim_run.json",
-  "decision": "accepted",
-  "dry_run": true
-}

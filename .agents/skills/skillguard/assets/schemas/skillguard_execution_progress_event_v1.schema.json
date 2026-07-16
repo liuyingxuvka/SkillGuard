@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_execution_progress_event_v1.schema.json",
+  "title": "SkillGuard Execution Progress Event V1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "event_id",
+    "sequence",
+    "previous_event_hash",
+    "event_hash",
+    "event_type",
+    "scope",
+    "completed_count",
+    "total_count",
+    "elapsed_ms",
+    "started_at",
+    "deadline_at",
+    "status",
+    "emitted_at",
+    "authority",
+    "event_log_ref"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.execution_progress_event.v1"},
+    "artifact_type": {"const": "skillguard_execution_progress_event"},
+    "event_id": {"type": "string", "pattern": "^progress-[0-9]{6}-[0-9a-f]{12}$"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "previous_event_hash": {"type": "string", "pattern": "^(?:|[0-9A-F]{64})$"},
+    "event_hash": {"$ref": "#/$defs/hash"},
+    "event_type": {"enum": ["start", "progress", "heartbeat", "end"]},
+    "event": {
+      "enum": [
+        "suite_start",
+        "suite_progress",
+        "suite_heartbeat",
+        "suite_end",
+        "profile_start",
+        "profile_progress",
+        "profile_heartbeat",
+        "profile_end"
+      ]
+    },
+    "scope": {
+      "enum": [
+        "manifest_bound_check",
+        "test_mesh_suite",
+        "test_mesh_profile"
+      ]
+    },
+    "current_step_id": {"type": "string"},
+    "current_check_id": {"type": "string"},
+    "profile_id": {"type": "string"},
+    "suite_id": {"type": "string"},
+    "completed_count": {"type": "integer", "minimum": 0},
+    "total_count": {"type": "integer", "minimum": 0},
+    "elapsed_seconds": {"type": "number", "minimum": 0},
+    "elapsed_ms": {"type": "integer", "minimum": 0},
+    "started_at": {"$ref": "#/$defs/timestamp"},
+    "deadline_at": {"$ref": "#/$defs/timestamp"},
+    "status": {
+      "enum": [
+        "running",
+        "passed",
+        "failed",
+        "blocked",
+        "not_run",
+        "cancelled",
+        "timed_out"
+      ]
+    },
+    "emitted_at": {"$ref": "#/$defs/timestamp"},
+    "authority": {"enum": ["liveness_only", "execution_status_only"]},
+    "event_log_ref": {"$ref": "#/$defs/pathLocator"},
+    "observed_output_bytes": {"type": "integer", "minimum": 0},
+    "stdout_total_bytes": {"type": "integer", "minimum": 0},
+    "stderr_total_bytes": {"type": "integer", "minimum": 0},
+    "progress_delta_bytes": {"type": "integer", "minimum": 0},
+    "last_progress_at": {"$ref": "#/$defs/timestamp"},
+    "no_progress_ms": {"type": "integer", "minimum": 0},
+    "process_started": {"type": "boolean"},
+    "launch_error_kind": {"type": "string"},
+    "terminal_kind": {
+      "enum": ["success", "failure", "blocked", "not_run", "cancelled", "timeout"]
+    },
+    "exit_code": {"type": ["integer", "null"]},
+    "signal": {"type": ["integer", "string", "null"]},
+    "termination_scope": {"enum": ["process_tree"]},
+    "termination_attempted": {"type": "boolean"},
+    "termination_succeeded": {"type": "boolean"},
+    "receipt_write_status": {
+      "enum": ["not_required", "durable_immutable", "failed"]
+    },
+    "timeout_source": {"enum": ["profile_override", "default_policy"]},
+    "resolved_timeout_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "resolved_timeout_ms": {"type": "integer", "minimum": 1},
+    "timeout_resolution_hash": {"$ref": "#/$defs/hash"},
+    "profile_timeout_budget_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "profile_timeout_budget_ms": {"type": "integer", "minimum": 1},
+    "profile_timeout_budget_hash": {"$ref": "#/$defs/hash"},
+    "timeout_authority_fingerprint": {"$ref": "#/$defs/hash"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["scope"],
+        "properties": {"scope": {"const": "test_mesh_suite"}}
+      },
+      "then": {
+        "required": [
+          "profile_id",
+          "suite_id",
+          "timeout_source",
+          "resolved_timeout_seconds",
+          "resolved_timeout_ms",
+          "timeout_resolution_hash",
+          "profile_timeout_budget_hash",
+          "timeout_authority_fingerprint"
+        ]
+      }
+    },
+    {
+      "if": {
+        "required": ["scope"],
+        "properties": {"scope": {"const": "test_mesh_profile"}}
+      },
+      "then": {
+        "required": [
+          "profile_id",
+          "profile_timeout_budget_seconds",
+          "profile_timeout_budget_ms",
+          "profile_timeout_budget_hash"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9A-F]{64}$"},
+    "timestamp": {"type": "string", "minLength": 20},
+    "pathLocator": {
+      "type": "object",
+      "required": ["path_token", "relative_path"],
+      "properties": {
+        "path_token": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "relative_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!/)(?![A-Za-z]:)(?!\\\\)(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

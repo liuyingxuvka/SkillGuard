@@ -1,6 +1,6 @@
 {
   "fixture_id": "bad_static_unsafe_broad_claim",
   "target_command": "check-skill",
-  "expected_decision": "fail",
+  "expected_decision": "block",
   "target_path": "../bad_static_unsafe_broad_claim"
 }

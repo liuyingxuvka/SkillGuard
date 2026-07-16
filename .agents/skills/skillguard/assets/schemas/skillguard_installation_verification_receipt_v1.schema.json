@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyingxuvka/SkillGuard/schemas/skillguard_installation_verification_receipt_v1.schema.json",
+  "title": "SkillGuard installation verification receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "transaction_id", "install_head_hash", "activation_receipt_hash", "stage_verification_hash", "post_activation_smoke_hash", "post_activation_member_comparisons_hash", "rollback_disposition", "canonical_source_identity", "installed_source_identity", "canonical_runtime_fingerprint", "installed_runtime_fingerprint", "current_installed_smoke_hash", "current_installed_smoke_command_fingerprint", "current_installed_smoke_environment_fingerprint", "claim_boundary", "receipt_id", "receipt_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.installation_verification_receipt.v1"},
+    "status": {"const": "current_installed_parity"},
+    "transaction_id": {"type": "string", "pattern": "^install-[a-f0-9]{32}$"},
+    "install_head_hash": {"$ref": "#/$defs/hash"},
+    "activation_receipt_hash": {"$ref": "#/$defs/hash"},
+    "stage_verification_hash": {"$ref": "#/$defs/hash"},
+    "post_activation_smoke_hash": {"$ref": "#/$defs/hash"},
+    "post_activation_member_comparisons_hash": {"$ref": "#/$defs/hash"},
+    "rollback_disposition": {"const": "not_required"},
+    "canonical_source_identity": {"type": "object"},
+    "installed_source_identity": {"type": "object"},
+    "canonical_runtime_fingerprint": {"type": "object"},
+    "installed_runtime_fingerprint": {"type": "object"},
+    "current_installed_smoke_hash": {"$ref": "#/$defs/hash"},
+    "current_installed_smoke_command_fingerprint": {"$ref": "#/$defs/hash"},
+    "current_installed_smoke_environment_fingerprint": {"$ref": "#/$defs/hash"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "receipt_id": {"type": "string", "pattern": "^installation-[a-f0-9]{24}$"},
+    "receipt_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {"hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}}
+}

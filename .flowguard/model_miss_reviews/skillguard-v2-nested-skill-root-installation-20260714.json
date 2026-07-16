@@ -1,0 +1,48 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-v2-nested-skill-root-installation-20260714",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "Storyline Design current installation-projection replay",
+    "prior_local_claim": "the exact projection:installation identity can be replayed for every current maintained skill root",
+    "observed_result": "Storyline compiled 62 installable files under skills/storyline-design, but the replay mapper stripped only .agents/skills/storyline-design and searched for a duplicated skills/storyline-design subtree beneath the canonical skill root",
+    "failure_code": "current_nested_skill_root_projection_not_resolved"
+  },
+  "classification": {
+    "owner": "SkillGuard V2 installation projection mapper",
+    "miss_type": "current_repository_layout_model_gap",
+    "affected_feature_tags": [
+      "installation",
+      "content-impact",
+      "external-target",
+      "path-containment"
+    ]
+  },
+  "generalized_repair": {
+    "rule": "Compile and hash one exact repository-relative member_root_path, strip only that declared root during replay, and block every projected path outside it before copy or activation.",
+    "regression": "test_current_nested_skill_repository_layout_replays_installation_projection and test_current_skill_root_layout_rejects_a_different_skill_id",
+    "openspec_scenario": "A public repository nested skills root replays member-relative paths while a different skill id blocks.",
+    "negative_boundary": "The repair does not search parent directories, infer layouts from skill ids, accept absolute paths, or add a legacy compatibility route."
+  },
+  "required_revalidation": [
+    "validation-composition FlowGuard checks",
+    "focused contract compiler regression",
+    "strict OpenSpec validation",
+    "deterministic current SkillGuard contract compilation",
+    "transactional affected SkillGuard installation",
+    "Storyline installation identity replay and formal supervisor rerun",
+    "one portfolio-level final full validation after all governed sources freeze"
+  ],
+  "revalidation_evidence": {
+    "nested_root_regressions": "current nested root, repository-root projection, and outside-root rejection passed",
+    "compiler_and_target_installation_tests": "57 cases: 56 passed and one explicit Windows directory-symlink permission skip",
+    "flowguard_validation_composition": "--check all passed",
+    "openspec": "compose-validation-evidence strict validation passed",
+    "storyline_member_root_path": "skills/storyline-design",
+    "storyline_installation_members": 64,
+    "storyline_installation_identity": "sha256:cf93a262f4f8a840605a35c81e279fd41cb3a4b8a614b84a8cd3b5752c6d6e9a",
+    "storyline_target_install_receipt_sha256": "54B3BF4BD0ED4B76BBEA40DFB5864640DC6D59B79462C96907D9F15B3CACC9DB",
+    "storyline_installed_parity": "6/6 passed; source-only examples absent"
+  },
+  "claim_boundary": "The repair covers exact current skill-root path projection and wrong-skill containment. It does not prove a generic target activation transaction, the final full parent, publication, or future AI behavior."
+}

@@ -23,7 +23,7 @@
     "required_workflow": [
       "Inspect generated entrypoint, README, references, assets, fixtures, tests, and .skillguard records before making claims.",
       "Run check-skill and check-maintenance-record against current generated evidence.",
-      "Run detect-stale-evidence and refresh-maintenance dry-run when generated evidence is reused.",
+      "Run detect-stale-evidence read-only when generated evidence is reused; if stale, rerun only the exact declared owner.",
       "Report skipped checks, residual risk, and claim boundaries before closure."
     ],
     "hard_gates": [
@@ -55,15 +55,10 @@
       "fixtures/fixture-manifest.json",
       "tests/README.md",
       "tests/test_smoke.py",
-      ".skillguard/skillguard_profile.json",
-      ".skillguard/skillguard_skill_contract.json",
-      ".skillguard/skillguard_evidence_rules.json",
-      ".skillguard/skillguard_closure_policy.json",
-      ".skillguard/skillguard_manifest.json",
-      ".skillguard/skillguard_progress_ledger.jsonl",
-      ".skillguard/evidence/initial_evidence_manifest.json",
-      ".skillguard/ai_judgments/initial_ai_judgment.json",
-      ".skillguard/reports/initial_workflow_report.json"
+      ".skillguard/flowguard_contract_model.py",
+      ".skillguard/contract-source.json",
+      ".skillguard/compiled-contract.json",
+      ".skillguard/check-manifest.json"
     ],
     "generated_file_contains": {
       "SKILL.md": [
@@ -73,7 +68,7 @@
         "Do not treat generated scaffold files as acceptance evidence.",
         "assets/templates/check_report.template.json",
         "fixtures/fixture-manifest.json",
-        ".skillguard/skillguard_manifest.json"
+        ".skillguard/contract-source.json"
       ],
       "README.md": [
         "generated SkillGuard skill scaffold",
@@ -88,17 +83,16 @@
         "skillguard.check_report.v1",
         "replace this template with current evidence before closure"
       ],
-      ".skillguard/skillguard_manifest.json": [
-        "skillguard.manifest.v1",
-        "generated_files",
-        "blueprint_trace"
+      ".skillguard/contract-source.json": [
+        "skillguard.contract_source.v2",
+        "step_bindings",
+        "input_selectors"
       ]
     },
     "validate_generated_manifest": true,
     "post_generation_checks_pass": true,
     "check_maintenance_record": true,
     "detect_stale_evidence": true,
-    "refresh_maintenance_dry_run": true,
     "public_boundary_scan": true,
     "forbidden_output_substrings": [
       "FORBIDDEN_PUBLIC_BOUNDARY_PROBE"

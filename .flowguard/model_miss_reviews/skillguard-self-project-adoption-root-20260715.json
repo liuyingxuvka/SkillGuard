@@ -1,0 +1,51 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-self-project-adoption-root-20260715",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "SkillGuard current self-host project-adoption route",
+    "prior_local_claim": "self-host validates the repository-root current project-adoption manifest and managed AGENTS block",
+    "observed_result": "the compiled artifact path pointed inside the skill directory, where no manifest exists, and the declared audit owner ran only unit tests instead of auditing the current repository state",
+    "failure_code": "self_host_project_adoption_artifact_root_mismatch"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.project-adoption.current-root-and-audit",
+    "owner": "SkillGuard self-host contract and project-adoption route",
+    "miss_type": "contract_incomplete",
+    "error_signature": "Self-host reaches project adoption with a non-canonical manifest path or without replaying project-audit.",
+    "affected_feature_tags": [
+      "self-host",
+      "project-adoption",
+      "artifact-root",
+      "current-authority",
+      "portable-maintenance"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the self-contract test asserted generated contract and manifest paths but omitted the project-adoption artifact path and exact audit command",
+    "would_have_failed_if": "the regression had compared the project-adoption artifact path with the repository-root protocol and required the self-host audit owner to invoke project-audit on the current root",
+    "new_model_item": "a portable project-adoption claim is licensed only by the canonical repository-root manifest plus a current project-audit replay",
+    "owner_code_contract": "contract-source project-adoption artifact -> self-host artifact validation -> project-audit current-state replay"
+  },
+  "generalized_repair": {
+    "rule": "Bind governed project artifacts to their declared ownership root and require the terminal verifier to execute the real current-state audit rather than a test-only proxy.",
+    "observed_regression": "the self-host contract now resolves the repository-root .skillguard/project.json artifact and the current project-audit owner passes against the live manifest and AGENTS block",
+    "same_class_regression": "the focused self-contract regression pins both the canonical artifact path and the exact project-audit command",
+    "negative_boundary": "do not add an alternate manifest path, compatibility reader, fallback audit, or installation retry"
+  },
+  "required_revalidation": [
+    "focused self-host contract regression",
+    "project-adoption unit tests and current project-audit",
+    "deterministic SkillGuard contract compilation",
+    "single current-authority self-host"
+  ],
+  "revalidation_evidence": {
+    "focused_regressions": "8 tests and 2 subtests passed across the self-contract assertion and project-adoption suite",
+    "project_audit": "current repository-root manifest, managed AGENTS block, skillguard, and skillguard-global-router all passed",
+    "model_and_contract": "FlowGuard self-contract model and TestMesh passed; deterministic contract check returned contract 1B6229A5B87896ED003E8E90F94F601FF08FA45AA8AF8325E1B3E3309B321689 and manifest B66D37941D884041B63CDAE5918FE4E37CCF87A6B1431DA895120E4B933CFEEC",
+    "installation": "staged verification passed and committed global installation transaction install-9f924484715b4f96bc821c5220d3eab7 with the previous generation retained as rollback backup",
+    "self_host": "run-c7d27abbdc3a4df2f4d1 passed enforced closure closure-343c65572e024e6b462ce507 with current replay verification"
+  },
+  "claim_boundary": "The repair is validated for the current canonical SkillGuard source, repository project-adoption state, staged and active two-member installation, and replay-verified self-host closure. It does not prove GitHub publication, unrelated target skills, or future AI behavior."
+}

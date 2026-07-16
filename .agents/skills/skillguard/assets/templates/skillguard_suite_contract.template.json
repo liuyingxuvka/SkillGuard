@@ -32,11 +32,11 @@
   "shared_evidence_rules": [
     "{{shared_evidence_rule}}"
   ],
-  "compatibility": {
+  "current_identity": {
     "suite_version": "{{suite_version}}",
     "checker_version": "{{checker_version}}",
-    "compatibility_notes": [
-      "{{compatibility_note}}"
+    "current_notes": [
+      "{{current_identity_note}}"
     ]
   },
   "validation_layers": [

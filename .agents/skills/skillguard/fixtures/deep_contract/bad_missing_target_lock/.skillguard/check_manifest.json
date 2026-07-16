@@ -1,6 +1,6 @@
 {
   "schema_version": "skillguard.check_manifest.v1",
-  "target_skill": ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_target_lock",
+  "target_skill": "missing-target-lock-fixture",
   "contract_ref": ".agents/skills/skillguard/fixtures/deep_contract/bad_missing_target_lock/.skillguard/work-contract.json",
   "checks": [
     {

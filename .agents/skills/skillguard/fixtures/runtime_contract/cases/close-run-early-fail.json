@@ -1,7 +1,0 @@
-{
-  "fixture_id": "runtime-close-run-early-fail",
-  "target_command": "close-run",
-  "expected_decision": "fail",
-  "run_path": "../runs/early_run.json",
-  "decision": "accepted"
-}

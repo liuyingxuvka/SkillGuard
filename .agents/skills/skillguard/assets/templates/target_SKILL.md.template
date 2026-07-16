@@ -38,21 +38,21 @@ Use this skill when:
 
 ## SkillGuard Runtime Rules
 
-For non-trivial work with this skill, use the local SkillGuard runtime contract before claiming closure:
+This generated scaffold starts on the single current contract path. Contract presence is not execution-depth or release evidence. Before claiming closure:
 
-1. Identify whether this skill already has a native route/check system. If it does, bind that system in `.skillguard/work-contract.json`; SkillGuard may execute the contract around that native system, but must not create a second SkillGuard execution route.
-2. Select the native route decision or SkillGuard-owned route from `.skillguard/work-contract.json` before starting target work, depending on the declared integration mode.
-3. Create or update a run record under `.skillguard/runs/`.
-4. Follow the declared phases in order.
-5. Attach current evidence for every required phase.
-6. Run required native checks and SkillGuard checks from `.skillguard/check_manifest.json`.
-7. Block instead of closing when a route is ambiguous, a native binding is missing, a phase is skipped, required evidence is missing or stale, a quality floor fails, or closure wording exceeds the evidence.
+1. Preserve this skill's target-owned native route/check system and bind that owner in `.skillguard/contract-source.json`; do not add a second domain executor.
+2. Maintain `.skillguard/flowguard_contract_model.py` and `.skillguard/contract-source.json` as source inputs. Generate `.skillguard/compiled-contract.json` and `.skillguard/check-manifest.json` deterministically; never hand-edit generated authority.
+3. Freeze one exact validation-owner plan before multi-skill testing. Every check declares one owner, exact maintained inputs, covered obligations, dependencies, and a persistent receipt root.
+4. Reuse an immutable terminal-success receipt only when its complete execution identity and declared inputs still match. Missing or stale owner evidence blocks; a consumer must not rerun the owner command.
+5. Invalidate only affected receipts. Reports, receipts, logs, timestamps, progress, and status records are outputs and do not retrigger their producer.
+6. Use only the fixed `enforced` closure. Run a full parent only after source and toolchain freeze, under one owner.
+7. Block when the current trio is missing or stale, ownership is ambiguous, evidence is incomplete, cleanup is unconfirmed, or closure wording exceeds the evidence. There is no legacy or migration fallback success route.
 
 AI or human judgment may explain semantic risk, but it must not replace required runnable checks.
 
 ## Global Router Onboarding
 
-After this skill is added, moved, renamed, or its `SKILL.md`, `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, or native route binding changes, refresh the SkillGuard global router before claiming default global routing is current:
+After this skill is created, directly replaced with the current shape, installed, moved, renamed, or its `SKILL.md`, current contract trio, or native route binding changes, refresh the SkillGuard global router before claiming default global routing is current. Ordinary use of an unchanged installed skill does not require a SkillGuard rerun:
 
 1. Run `refresh-global-router` against the relevant installed or repository-local skill roots.
 2. Check the generated global registry with `check-global-registry`.
@@ -85,7 +85,7 @@ Record the following fields when this skill produces a check, review, or closure
 - `checks`
 - `fixture_version`
 - `checker_version`
-- `compatibility`
+- `current_identity`
 
 ## Output Contract
 

@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyingxuvka/SkillGuard/schemas/skillguard_portfolio_production_revalidation_binding_v1.schema.json",
+  "title": "SkillGuard portfolio production revalidation binding v1",
+  "description": "One member's exact scheduled-production declared-check depth receipt, terminal-completion native receipt, enforced closure, and current installed runtime binding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "member_skill_id", "member_skill_path",
+    "source_fingerprint", "member_contract_hash", "member_manifest_hash",
+    "run_root_token", "target_root_token", "run_id", "target_skill_id",
+    "depth_profile_hash", "native_owner_id", "native_route_id", "native_check_id",
+    "evidence_domain", "depth_receipt", "enforced_closure", "native_terminal",
+    "installation_identity", "captured_at",
+    "claim_boundary", "binding_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_production_revalidation_binding.v1"},
+    "member_skill_id": {"$ref": "#/$defs/non_empty_string"},
+    "member_skill_path": {"oneOf": [{"const": "."}, {"$ref": "#/$defs/path_token"}]},
+    "source_fingerprint": {"$ref": "#/$defs/hash"},
+    "member_contract_hash": {"$ref": "#/$defs/hash"},
+    "member_manifest_hash": {"$ref": "#/$defs/hash"},
+    "run_root_token": {"$ref": "#/$defs/path_token"},
+    "target_root_token": {"$ref": "#/$defs/path_token"},
+    "run_id": {"$ref": "#/$defs/non_empty_string"},
+    "target_skill_id": {"$ref": "#/$defs/non_empty_string"},
+    "depth_profile_hash": {"$ref": "#/$defs/hash"},
+    "native_owner_id": {"$ref": "#/$defs/non_empty_string"},
+    "native_route_id": {"$ref": "#/$defs/non_empty_string"},
+    "native_check_id": {"$ref": "#/$defs/non_empty_string"},
+    "evidence_domain": {"const": "scheduled_production"},
+    "depth_receipt": {"$ref": "#/$defs/depth_receipt"},
+    "enforced_closure": {"$ref": "#/$defs/closure_receipt"},
+    "native_terminal": {"$ref": "#/$defs/native_terminal"},
+    "installation_identity": {"$ref": "#/$defs/installation_identity"},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "claim_boundary": {"$ref": "#/$defs/non_empty_string"},
+    "binding_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "non_empty_string": {"type": "string", "minLength": 1},
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "record_ref": {"type": "string", "pattern": "^record:[A-Za-z0-9._/-]+@[A-F0-9]{64}$"},
+    "path_token": {"type": "string", "pattern": "^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$", "not": {"pattern": "(^|/)\\.\\.?($|/)"}},
+    "depth_receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "receipt_id", "receipt_hash", "status", "evidence_domain"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/record_ref"},
+        "receipt_id": {"$ref": "#/$defs/non_empty_string"},
+        "receipt_hash": {"$ref": "#/$defs/hash"},
+        "status": {"const": "EXECUTION_DEPTH_PASS"},
+        "evidence_domain": {"const": "scheduled_production"}
+      }
+    },
+    "closure_receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "receipt_id", "receipt_hash", "profile", "status", "consumed_receipt_ids"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/record_ref"},
+        "receipt_id": {"$ref": "#/$defs/non_empty_string"},
+        "receipt_hash": {"$ref": "#/$defs/hash"},
+        "profile": {"const": "enforced"},
+        "status": {"const": "closed"},
+        "consumed_receipt_ids": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/non_empty_string"}}
+      }
+    },
+    "native_terminal": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "receipt_id", "receipt_hash", "closure_profile", "closure_disposition", "evidence_domain", "conditional", "native_route_id", "branch_id"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/record_ref"},
+        "receipt_id": {"$ref": "#/$defs/non_empty_string"},
+        "receipt_hash": {"$ref": "#/$defs/hash"},
+        "closure_profile": {"const": "enforced"},
+        "closure_disposition": {"const": "terminal_completion"},
+        "evidence_domain": {"const": "scheduled_production"},
+        "conditional": {"type": "boolean"},
+        "native_route_id": {"$ref": "#/$defs/non_empty_string"},
+        "branch_id": {"type": "string"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"conditional": {"const": true}}},
+          "then": {"properties": {"branch_id": {"$ref": "#/$defs/non_empty_string"}}}
+        }
+      ]
+    },
+    "installation_identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scheduler_or_trigger_id", "scheduled_execution_id", "installation_receipt_id", "installation_receipt_hash", "installation_receipt_root_ref", "installed_runtime_fingerprint", "transaction_id", "stage_verification_hash", "post_activation_smoke_hash", "post_activation_member_comparisons_hash", "current_installed_smoke_hash", "current_installed_smoke_command_fingerprint", "current_installed_smoke_environment_fingerprint", "rollback_disposition"],
+      "properties": {
+        "scheduler_or_trigger_id": {"$ref": "#/$defs/non_empty_string"},
+        "scheduled_execution_id": {"$ref": "#/$defs/non_empty_string"},
+        "installation_receipt_id": {"$ref": "#/$defs/non_empty_string"},
+        "installation_receipt_hash": {"$ref": "#/$defs/hash"},
+        "installation_receipt_root_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path_token", "relative_path"],
+          "properties": {
+            "path_token": {"const": "active_skill_root"},
+            "relative_path": {"$ref": "#/$defs/path_token"}
+          }
+        },
+        "installed_runtime_fingerprint": {"$ref": "#/$defs/hash"},
+        "transaction_id": {"type": "string", "pattern": "^install-[a-f0-9]{32}$"},
+        "stage_verification_hash": {"$ref": "#/$defs/hash"},
+        "post_activation_smoke_hash": {"$ref": "#/$defs/hash"},
+        "post_activation_member_comparisons_hash": {"$ref": "#/$defs/hash"},
+        "current_installed_smoke_hash": {"$ref": "#/$defs/hash"},
+        "current_installed_smoke_command_fingerprint": {"$ref": "#/$defs/hash"},
+        "current_installed_smoke_environment_fingerprint": {"$ref": "#/$defs/hash"},
+        "rollback_disposition": {"const": "not_required"}
+      }
+    }
+  }
+}

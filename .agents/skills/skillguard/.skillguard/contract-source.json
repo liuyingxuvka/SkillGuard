@@ -23,6 +23,36 @@
         "json",
         "manifest_hash"
       ]
+    },
+    {
+      "artifact_id": "artifact:self-project-adoption-manifest",
+      "kind": "json",
+      "path_template": ".skillguard/project.json",
+      "producer_step_id": "step:install-project-adoption",
+      "required": true,
+      "required_keys": [
+        "schema_version",
+        "skillguard_repository",
+        "managed_skills",
+        "managed_block_hash",
+        "manifest_hash"
+      ],
+      "validators": [
+        "exists",
+        "json",
+        "manifest_hash"
+      ]
+    },
+    {
+      "artifact_id": "artifact:self-project-prompt",
+      "kind": "document",
+      "path_template": "AGENTS.md",
+      "producer_step_id": "step:install-project-adoption",
+      "required": true,
+      "validators": [
+        "exists",
+        "nonempty"
+      ]
     }
   ],
   "checks": [
@@ -31,7 +61,16 @@
       "covers_obligation_ids": [
         "obligation:static-audit"
       ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:static-audit",
+      "execution_owner_id": "owner:self:inventory-static-surface",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -48,10 +87,37 @@
         "obligation:static-audit"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:inventory-static-surface"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:static-audit",
+      "execution_owner_id": "owner:self:run-native-static-checks",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/SKILL.md"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/contract-source.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/compiled-contract.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/check-manifest.json"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -60,16 +126,36 @@
       "covers_obligation_ids": [
         "obligation:static-audit"
       ],
+      "depends_on_check_ids": [
+        "check:self:run-native-static-checks"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:static-audit",
+      "execution_owner_id": "owner:self:issue-static-audit-receipt",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
     {
-      "check_id": "check:self:load-target-depth-boundary",
+      "check_id": "check:self:freeze-declared-check-inventory",
       "covers_obligation_ids": [
         "obligation:deep-audit"
       ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:execution-depth",
+      "execution_owner_id": "owner:self:freeze-declared-check-inventory",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -80,31 +166,143 @@
         "--target",
         ".agents/skills/skillguard"
       ],
-      "check_id": "check:self:run-native-depth-checks",
+      "check_id": "check:self:run-declared-checks",
       "command": "python",
       "covers_obligation_ids": [
         "obligation:deep-audit"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:compile-generated-contract",
+        "check:self:freeze-declared-check-inventory"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:execution-depth",
+      "execution_owner_id": "owner:self:run-declared-checks",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/contract-source.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/compiled-contract.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/check-manifest.json"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
     {
-      "check_id": "check:self:verify-target-specific-coverage",
+      "check_id": "check:self:reconcile-declared-check-results",
       "covers_obligation_ids": [
-        "obligation:deep-audit"
+        "obligation:deep-audit",
+        "obligation:depth-native-authority"
+      ],
+      "depends_on_check_ids": [
+        "check:self:run-declared-checks"
       ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:execution-depth",
+      "execution_owner_id": "owner:self:reconcile-declared-check-results",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
     {
       "args": [
-        ".flowguard/development_process_flow/skillguard_executable_contract_model.py"
+        "-m",
+        "pytest",
+        "tests/test_skillguard_generic_supervision.py",
+        "tests/test_skillguard_retired_guard_fields.py",
+        "tests/test_native_depth_evidence_identity.py",
+        "-q"
+      ],
+      "check_id": "check:self:declared-check-runtime",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:depth-native-authority",
+        "obligation:execution-depth-closure",
+        "obligation:unique-depth-evidence"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:run-declared-checks"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:execution-depth",
+      "execution_owner_id": "owner:self:declared-check-runtime",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_skillguard_generic_supervision.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_skillguard_retired_guard_fields.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_native_depth_evidence_identity.py"
+        }
+      ],
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".flowguard/declared_check_supervision/run_checks.py",
+        "--json"
+      ],
+      "check_id": "check:self:declared-check-supervision-model",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:depth-native-authority"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:run-declared-checks"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:execution-depth",
+      "execution_owner_id": "owner:self:declared-check-supervision-model",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".flowguard/declared_check_supervision/model.py"
+        },
+        {
+          "kind": "path",
+          "path": ".flowguard/declared_check_supervision/run_checks.py"
+        }
+      ],
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
       ],
       "check_id": "check:self:load-model-export",
       "command": "python",
@@ -112,10 +310,50 @@
         "obligation:model-authority"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "execution_owner_id": "owner:self:load-model-export",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".flowguard/validation_composition/run_checks.py",
+        "--json"
+      ],
+      "check_id": "check:self:validation-composition-model",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:model-authority"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "execution_owner_id": "owner:self:validation-composition-model",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".flowguard/validation_composition/model.py"
+        },
+        {
+          "kind": "path",
+          "path": ".flowguard/validation_composition/run_checks.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -124,13 +362,25 @@
       "covers_obligation_ids": [
         "obligation:model-authority"
       ],
+      "depends_on_check_ids": [
+        "check:self:load-model-export",
+        "check:self:validation-composition-model"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "execution_owner_id": "owner:self:validate-binding",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
     {
       "args": [
-        ".agents/skills/skillguard/scripts/skillguard_v2_compile.py",
+        ".agents/skills/skillguard/scripts/skillguard_compile.py",
         ".agents/skills/skillguard",
         "--repository-root",
         "."
@@ -141,10 +391,45 @@
         "obligation:model-authority"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:validate-binding"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "execution_owner_id": "owner:self:compile-generated-contract",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/contract-source.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/assets/schemas/skillguard_check_manifest_v2.schema.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/assets/schemas/skillguard_compiled_contract_v2.schema.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/assets/schemas/skillguard_contract_source_v2.schema.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/contract_compiler.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/contract_schema.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -161,22 +446,33 @@
         "obligation:model-authority"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:compile-generated-contract"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "execution_owner_id": "owner:self:verify-generated-parity",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_contract_compiler_v2.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
     {
       "args": [
-        ".agents/skills/skillguard/scripts/skillguard_test_mesh.py",
-        "--profile",
-        "fast",
-        "--repository-root",
-        ".",
-        "--progress-interval-seconds",
-        "5"
+        "-m",
+        "pytest",
+        "tests/test_test_mesh_current.py",
+        "tests/test_test_mesh_installation_binding.py",
+        "tests/test_test_mesh_schemas.py",
+        "tests/test_test_mesh_legacy_rejection.py",
+        "-q"
       ],
       "check_id": "check:self:test-mesh-fast",
       "command": "python",
@@ -184,19 +480,67 @@
         "obligation:model-authority"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:compile-generated-contract"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "execution_owner_id": "owner:self:test-mesh-fast",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_test_mesh.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/test_mesh.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/test-mesh.json"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_test_mesh_current.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_test_mesh_installation_binding.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_test_mesh_legacy_rejection.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_test_mesh_schemas.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_validation_execution_policy_projection.py"
+        }
+      ],
       "kind": "command",
-      "timeout_seconds": 180
+      "timeout_seconds": 900
     },
     {
       "check_id": "check:self:select-function-route",
       "covers_obligation_ids": [
         "obligation:route-ownership"
       ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:select-function-route",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -215,10 +559,19 @@
         "obligation:packet-consumption"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:packet-consumption",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_contract_compiler_v2.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -227,7 +580,20 @@
       "covers_obligation_ids": [
         "obligation:claimed-run"
       ],
+      "depends_on_check_ids": [
+        "check:self:obligation:no-former-authority-success",
+        "check:self:packet-consumption",
+        "check:self:select-function-route"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:claim-run",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -246,10 +612,23 @@
         "obligation:guard-run-identity"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:obligation:no-former-authority-success",
+        "check:self:packet-consumption",
+        "check:self:select-function-route"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:guard-run-identity",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_claimed_run_runtime.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -268,10 +647,23 @@
         "obligation:failed-lock-recovery"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:obligation:no-former-authority-success",
+        "check:self:packet-consumption",
+        "check:self:select-function-route"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:failed-lock-recovery",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_claimed_run_runtime.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -280,7 +672,20 @@
       "covers_obligation_ids": [
         "obligation:durable-resume"
       ],
+      "depends_on_check_ids": [
+        "check:self:claim-run",
+        "check:self:failed-lock-recovery",
+        "check:self:guard-run-identity"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:next-ready-step",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -289,7 +694,18 @@
       "covers_obligation_ids": [
         "obligation:durable-resume"
       ],
+      "depends_on_check_ids": [
+        "check:self:next-ready-step"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:record-step-event",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -300,6 +716,7 @@
         "tests/test_evidence_receipts.py",
         "tests/test_artifact_validators.py",
         "tests/test_check_runner_v2.py",
+        "tests/test_check_execution_single_flight.py",
         "-q"
       ],
       "check_id": "check:self:validate-step-evidence",
@@ -308,10 +725,31 @@
         "obligation:verifier-pass"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:validate-step-evidence",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_artifact_validators.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_check_execution_single_flight.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_check_runner_v2.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_evidence_receipts.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -320,7 +758,18 @@
       "covers_obligation_ids": [
         "obligation:model-authority"
       ],
+      "depends_on_check_ids": [
+        "check:self:validate-step-evidence"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:issue-step-receipt",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -330,18 +779,37 @@
         "pytest",
         "tests/test_closure_profiles_v2.py",
         "tests/test_false_closure_v2.py",
+        "tests/test_conditional_noop_closure_v2.py",
         "-q"
       ],
       "check_id": "check:self:check-run-closure",
       "command": "python",
       "covers_obligation_ids": [
-        "obligation:artifact-freshness"
+        "obligation:artifact-freshness",
+        "obligation:execution-depth-closure"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:check-run-closure",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_closure_profiles_v2.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_conditional_noop_closure_v2.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_false_closure_v2.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -350,7 +818,18 @@
       "covers_obligation_ids": [
         "obligation:exact-closure"
       ],
+      "depends_on_check_ids": [
+        "check:self:check-run-closure"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:issue-closure-receipt",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -359,7 +838,16 @@
       "covers_obligation_ids": [
         "obligation:portfolio-freshness"
       ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:portfolio-impact",
+      "execution_owner_id": "owner:self:scan-graduate-freshness",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -368,7 +856,18 @@
       "covers_obligation_ids": [
         "obligation:model-authority"
       ],
+      "depends_on_check_ids": [
+        "check:self:scan-graduate-freshness"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:portfolio-impact",
+      "execution_owner_id": "owner:self:revalidate-affected-graduates",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -377,16 +876,141 @@
       "covers_obligation_ids": [
         "obligation:portfolio-freshness"
       ],
+      "depends_on_check_ids": [
+        "check:self:revalidate-affected-graduates"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:portfolio-impact",
+      "execution_owner_id": "owner:self:issue-portfolio-receipt",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:inspect-project-adoption",
+      "covers_obligation_ids": [
+        "obligation:project-adoption"
+      ],
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:project-adoption",
+      "execution_owner_id": "owner:self:inspect-project-adoption",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:render-managed-project-prompt",
+      "covers_obligation_ids": [
+        "obligation:project-adoption"
+      ],
+      "depends_on_check_ids": [
+        "check:self:inspect-project-adoption"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:project-adoption",
+      "execution_owner_id": "owner:self:render-managed-project-prompt",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "check_id": "check:self:install-project-adoption",
+      "covers_obligation_ids": [
+        "obligation:project-adoption"
+      ],
+      "depends_on_check_ids": [
+        "check:self:render-managed-project-prompt"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:project-adoption",
+      "execution_owner_id": "owner:self:install-project-adoption",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
+      "kind": "model_assertion",
+      "timeout_seconds": 30
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/scripts/skillguard.py",
+        "project-audit",
+        "--root",
+        "."
+      ],
+      "check_id": "check:self:audit-project-adoption",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:project-adoption"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:install-project-adoption"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:project-adoption",
+      "execution_owner_id": "owner:self:audit-project-adoption",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/project_adoption.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/assets/schemas/skillguard_project_adoption_v1.schema.json"
+        },
+        {
+          "kind": "path",
+          "path": ".skillguard/project.json"
+        },
+        {
+          "kind": "path",
+          "path": "AGENTS.md"
+        }
+      ],
+      "kind": "command",
+      "timeout_seconds": 180
     },
     {
       "check_id": "check:self:refresh-global-router",
       "covers_obligation_ids": [
         "obligation:global-router-handoff"
       ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router",
+      "execution_owner_id": "owner:self:refresh-global-router",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -395,7 +1019,18 @@
       "covers_obligation_ids": [
         "obligation:global-router-handoff"
       ],
+      "depends_on_check_ids": [
+        "check:self:refresh-global-router"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router",
+      "execution_owner_id": "owner:self:check-global-registry-and-prompt",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -404,7 +1039,18 @@
       "covers_obligation_ids": [
         "obligation:global-router-handoff"
       ],
+      "depends_on_check_ids": [
+        "check:self:check-global-registry-and-prompt"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:global-router",
+      "execution_owner_id": "owner:self:verify-target-handoff",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -413,7 +1059,16 @@
       "covers_obligation_ids": [
         "obligation:provenance"
       ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:installation-and-release",
+      "execution_owner_id": "owner:self:resolve-canonical-source",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -422,7 +1077,18 @@
       "covers_obligation_ids": [
         "obligation:provenance"
       ],
+      "depends_on_check_ids": [
+        "check:self:resolve-canonical-source"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:installation-and-release",
+      "execution_owner_id": "owner:self:compare-installed-and-repository",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -443,10 +1109,29 @@
         "obligation:provenance"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:resolve-canonical-source"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:installation-and-release",
+      "execution_owner_id": "owner:self:installed-provenance",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "install_disposition": "copy",
+          "kind": "install_disposition"
+        },
+        {
+          "install_disposition": "generate",
+          "kind": "install_disposition"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_provenance.py"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -455,7 +1140,19 @@
       "covers_obligation_ids": [
         "obligation:provenance"
       ],
+      "depends_on_check_ids": [
+        "check:self:compare-installed-and-repository",
+        "check:self:installed-provenance"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:installation-and-release",
+      "execution_owner_id": "owner:self:verify-release-provenance",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
@@ -464,6 +1161,7 @@
         "-m",
         "pytest",
         "tests/test_installation.py",
+        "tests/test_installation_verification_receipt.py",
         "-q"
       ],
       "check_id": "check:self:installation-safety",
@@ -472,12 +1170,28 @@
         "obligation:provenance"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:compare-installed-and-repository",
+        "check:self:installed-provenance"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:installation-and-release",
+      "execution_owner_id": "owner:self:installation-safety",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": "tests/test_installation.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_installation_verification_receipt.py"
+        }
+      ],
       "kind": "command",
-      "timeout_seconds": 180
+      "timeout_seconds": 900
     },
     {
       "args": [
@@ -491,10 +1205,34 @@
         "obligation:provenance"
       ],
       "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:compare-installed-and-repository",
+        "check:self:installed-provenance"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:installation-and-release",
+      "execution_owner_id": "owner:self:public-export-privacy",
       "expected": {
         "exit_code": 0
       },
+      "input_selectors": [
+        {
+          "install_disposition": "copy",
+          "kind": "install_disposition"
+        },
+        {
+          "install_disposition": "generate",
+          "kind": "install_disposition"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_privacy.py"
+        },
+        {
+          "kind": "path",
+          "path": ".gitignore"
+        }
+      ],
       "kind": "command",
       "timeout_seconds": 180
     },
@@ -503,52 +1241,44 @@
       "covers_obligation_ids": [
         "obligation:loop-liveness"
       ],
+      "depends_on_check_ids": [
+        "check:self:next-ready-step"
+      ],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:obligation:loop-liveness",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
     },
     {
-      "check_id": "check:self:obligation:no-v1-success",
+      "check_id": "check:self:obligation:no-former-authority-success",
       "covers_obligation_ids": [
-        "obligation:no-v1-success"
+        "obligation:no-former-authority-success"
       ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:runtime-and-closure",
+      "execution_owner_id": "owner:self:obligation:no-former-authority-success",
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        }
+      ],
       "kind": "model_assertion",
       "timeout_seconds": 30
-    },
-    {
-      "args": [
-        "-m",
-        "pytest",
-        "tests/test_v1_lifecycle.py",
-        "-q"
-      ],
-      "check_id": "check:self:v1-field-lifecycle",
-      "command": "python",
-      "covers_obligation_ids": [
-        "obligation:no-v1-success"
-      ],
-      "cwd_token": "repository_root",
-      "evidence_class": "hard",
-      "expected": {
-        "exit_code": 0
-      },
-      "kind": "command",
-      "timeout_seconds": 180
     }
   ],
-  "claim_boundary": "This binding covers SkillGuard self-maintenance routes and current local checks. Publication, clean installation, and GitHub release require separate release-profile evidence.",
+  "claim_boundary": "This binding covers SkillGuard self-maintenance through one enforced declared-check workflow. Publication, installation, and release claims still require their own listed checks inside that same workflow.",
   "closure_profiles": [
     {
-      "profile_id": "routine",
-      "required_obligation_ids": [
-        "obligation:model-authority",
-        "obligation:static-audit",
-        "obligation:route-ownership"
-      ]
-    },
-    {
-      "profile_id": "functional",
+      "profile_id": "enforced",
       "required_obligation_ids": [
         "obligation:model-authority",
         "obligation:static-audit",
@@ -560,41 +1290,11 @@
         "obligation:durable-resume",
         "obligation:loop-liveness",
         "obligation:exact-closure",
-        "obligation:no-v1-success"
-      ]
-    },
-    {
-      "profile_id": "release",
-      "required_obligation_ids": [
-        "obligation:model-authority",
-        "obligation:static-audit",
-        "obligation:route-ownership",
-        "obligation:deep-audit",
-        "obligation:claimed-run",
-        "obligation:verifier-pass",
-        "obligation:artifact-freshness",
-        "obligation:durable-resume",
-        "obligation:loop-liveness",
-        "obligation:exact-closure",
-        "obligation:no-v1-success",
-        "obligation:global-router-handoff",
-        "obligation:provenance"
-      ]
-    },
-    {
-      "profile_id": "highest_quality",
-      "required_obligation_ids": [
-        "obligation:model-authority",
-        "obligation:static-audit",
-        "obligation:route-ownership",
-        "obligation:deep-audit",
-        "obligation:claimed-run",
-        "obligation:verifier-pass",
-        "obligation:artifact-freshness",
-        "obligation:durable-resume",
-        "obligation:loop-liveness",
-        "obligation:exact-closure",
-        "obligation:no-v1-success",
+        "obligation:no-former-authority-success",
+        "obligation:depth-native-authority",
+        "obligation:execution-depth-closure",
+        "obligation:unique-depth-evidence",
+        "obligation:project-adoption",
         "obligation:global-router-handoff",
         "obligation:provenance",
         "obligation:portfolio-freshness"
@@ -602,41 +1302,318 @@
     }
   ],
   "confirmed": true,
+  "content_impact_policy": {
+    "full_admission_reason_codes": [
+      "explicit_final_gate",
+      "explicit_release_gate",
+      "impact_policy_or_compiler_changed",
+      "shared_validation_runtime_changed",
+      "all_owner_component_changed"
+    ],
+    "owner_receipt_root_ref": {
+      "path_token": "owner_evidence_root",
+      "relative_path": "check-executions"
+    },
+    "policy_id": "skillguard.content_impact_policy.current",
+    "unknown_mapping_disposition": "block"
+  },
+  "content_role_overrides": [],
+  "default_route_id": "route:static-audit",
+  "depth_profile": {
+    "claim_boundary": "SkillGuard freezes and reconciles the target skill's own declared checks. The target skill alone owns domain purpose, failure classes, oracles, fixtures, and depth meaning.",
+    "enforcement_level": "enforced",
+    "integration_mode": "native-integrated",
+    "native_check_ids": [
+      "check:self:audit-project-adoption",
+      "check:self:check-run-closure",
+      "check:self:compile-generated-contract",
+      "check:self:declared-check-runtime",
+      "check:self:freeze-declared-check-inventory",
+      "check:self:inspect-project-adoption",
+      "check:self:install-project-adoption",
+      "check:self:load-model-export",
+      "check:self:reconcile-declared-check-results",
+      "check:self:render-managed-project-prompt",
+      "check:self:run-declared-checks",
+      "check:self:validate-binding",
+      "check:self:validation-composition-model"
+    ],
+    "native_owner_id": "skillguard",
+    "native_route_ids": [
+      "route:deep-audit",
+      "route:verify-evidence",
+      "route:derive-closure",
+      "route:portfolio-graduation",
+      "route:project-adoption"
+    ],
+    "profile_id": "skillguard-declared-check-supervision-current",
+    "provider_runtime": {
+      "provider_id": "skillguard-local-provider",
+      "readiness_check_ids": [
+        "check:self:declared-check-runtime"
+      ],
+      "required_capability_ids": [
+        "declared-check-inventory.v1",
+        "declared-check-receipt-reconciliation.v1",
+        "provider-runtime-enrollment.v1",
+        "single-flight-check-execution.v1",
+        "installation-receipt-binding.v1",
+        "installation-currentness-replay.v1"
+      ],
+      "required_enrollment_status": "enrolled",
+      "required_runtime_contract_id": "skillguard-declared-check-supervision-current"
+    },
+    "required_closure_profiles": [
+      "enforced"
+    ],
+    "schema_version": "skillguard.depth_profile.v2",
+    "skillguard_adds_domain_route": false,
+    "target_skill_id": "skillguard"
+  },
   "implementation_paths": [
+    ".agents/skills/skillguard/SKILL.md",
+    ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
     ".agents/skills/skillguard/scripts/skillguard_v2",
-    ".agents/skills/skillguard/scripts/skillguard_v2_compile.py",
-    ".agents/skills/skillguard/scripts/skillguard_v2_self_host.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/portfolio.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_records.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_runner.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_cli.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/installation_receipt.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/validation_execution_policy.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/test_mesh.py",
+    ".agents/skills/skillguard/scripts/skillguard_compile.py",
+    ".agents/skills/skillguard/scripts/skillguard_supervise.py",
+    ".agents/skills/skillguard/scripts/skillguard_self_host.py",
     ".agents/skills/skillguard/scripts/skillguard_test_mesh.py",
+    ".agents/skills/skillguard/scripts/skillguard_verification_contract_review.py",
     ".agents/skills/skillguard/scripts/skillguard_provenance.py",
     ".agents/skills/skillguard/scripts/skillguard_privacy.py",
     ".agents/skills/skillguard/scripts/skillguard_install.py",
     ".agents/skills/skillguard/scripts/skillguard.py",
+    ".agents/skills/skillguard/scripts/checker_engine.py",
     ".agents/skills/skillguard/test-mesh.json",
     ".agents/skills/skillguard/public-export-policy.json",
-    ".github/workflows/ci.yml",
-    ".gitattributes",
-    ".gitignore",
-    "assets/readme-hero/hero.png",
-    "assets/readme-hero/visual-privacy-review.json",
-    ".agents/skills/skillguard/assets/schemas/skillguard_work_contract.schema.json",
-    ".agents/skills/skillguard/assets/schemas/skillguard_run_record.schema.json",
-    ".agents/skills/skillguard/assets/schemas/skillguard_check_manifest.schema.json",
-    ".agents/skills/skillguard/references/skillguard-v1-field-lifecycle.md"
+    ".agents/skills/skillguard/references/skillguard-execution-depth.md",
+    ".agents/skills/skillguard/references/skillguard-supervisor.md",
+    ".agents/skills/skillguard/references/skillguard-execution-records.md",
+    ".agents/skills/skillguard/assets/schemas/skillguard_depth_profile_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_native_terminal_receipt_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_native_noop_receipt_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_obligation_applicability_receipt_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_closure_receipt_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_guard_change_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_check_execution_result_sidecar_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_check_execution_termination_sidecar_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_check_execution_receipt_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_check_execution_head_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_target_execution_receipt_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_test_mesh_manifest_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_test_mesh_execution_plan_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_test_mesh_aggregation_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_test_mesh_replay_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_installation_verification_receipt_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_installation_verification_head_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_registry_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_scope_manifest_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_preparation_receipt_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_execution_result_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_assembly_result_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_job_plan_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_job_spec_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_job_evidence_record_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_capability_stage_receipt_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_installed_content_parity_current.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_production_revalidation_binding_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_graduation_evidence_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_graduation_receipt_v2.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_impact_receipt_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_portfolio_impact_head_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_project_adoption_v1.schema.json",
+    ".agents/skills/skillguard/fixtures/depth_profiles",
+    ".agents/skills/skillguard/fixtures/generic_project",
+    ".agents/skills/skillguard/assets/templates/skillguard_v2_depth_profile.fragment.template.json",
+    ".agents/skills/skillguard/references/skillguard-portfolio.md",
+    ".flowguard/declared_check_supervision",
+    ".flowguard/validation_composition",
+    "tests/test_portfolio_production_revalidation.py",
+    "tests/test_installation_verification_receipt.py",
+    "tests/test_test_mesh_installation_binding.py",
+    "tests/test_test_mesh_schemas.py",
+    "tests/test_test_mesh_legacy_rejection.py",
+    "tests/test_conditional_noop_closure_v2.py",
+    "tests/test_contract_compiler_v2.py",
+    "tests/test_validation_execution_policy_projection.py"
   ],
-  "judgment_rubrics": [
+  "integration_mode": "native-integrated",
+  "judgment_rubrics": [],
+  "may_define_parallel_execution_route": false,
+  "may_define_skillguard_runtime_route": false,
+  "model_id": "skillguard.executable_contract_runtime.v2",
+  "model_path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
+  "native_check_bindings": [
     {
-      "claim_boundary": "Self-review supports functional-depth judgment only and is not hard release proof.",
-      "criteria": [
-        "native static and deep checks are current",
-        "V2 false-pass and replay fixtures are green",
-        "safe claim remains narrower than release publication"
-      ],
-      "rubric_id": "rubric:self-host-functional-depth",
-      "version": "1"
+      "binding_id": "native-check:static-audit",
+      "evidence_source": ".agents/skills/skillguard/scripts/skillguard.py",
+      "native_check_id": "check:self:run-native-static-checks",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:execution-depth",
+      "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/execution_depth.py",
+      "native_check_id": "check:self:declared-check-runtime",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:test-mesh",
+      "evidence_source": ".agents/skills/skillguard/scripts/skillguard_test_mesh.py",
+      "native_check_id": "check:self:test-mesh-fast",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:project-adoption",
+      "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/project_adoption.py",
+      "native_check_id": "check:self:audit-project-adoption",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:global-router-handoff",
+      "evidence_source": ".agents/skills/skillguard/scripts/skillguard.py",
+      "native_check_id": "check:self:verify-target-handoff",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:provenance",
+      "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/provenance.py",
+      "native_check_id": "check:self:verify-release-provenance",
+      "required": true
     }
   ],
-  "model_id": "skillguard.executable_contract_runtime.v2",
-  "model_path": ".flowguard/development_process_flow/skillguard_executable_contract_model.py",
+  "native_route_bindings": [
+    {
+      "binding_id": "native:static-audit",
+      "native_route_id": "route:static-audit",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:deep-audit",
+      "native_route_id": "route:deep-audit",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard_v2/execution_depth.py"
+    },
+    {
+      "binding_id": "native:compile-contract",
+      "native_route_id": "route:compile-contract",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard_compile.py"
+    },
+    {
+      "binding_id": "native:supervise-run",
+      "native_route_id": "route:supervise-run",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard_v2/supervisor.py"
+    },
+    {
+      "binding_id": "native:verify-evidence",
+      "native_route_id": "route:verify-evidence",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard_v2/receipts.py"
+    },
+    {
+      "binding_id": "native:derive-closure",
+      "native_route_id": "route:derive-closure",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard_v2/closure.py"
+    },
+    {
+      "binding_id": "native:portfolio-graduation",
+      "native_route_id": "route:portfolio-graduation",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard_v2/portfolio.py"
+    },
+    {
+      "binding_id": "native:project-adoption",
+      "native_route_id": "route:project-adoption",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard_v2/project_adoption.py"
+    },
+    {
+      "binding_id": "native:global-router-handoff",
+      "native_route_id": "route:global-router-handoff",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard.py"
+    },
+    {
+      "binding_id": "native:provenance-audit",
+      "native_route_id": "route:provenance-audit",
+      "required_before_closure": true,
+      "source": ".agents/skills/skillguard/scripts/skillguard_v2/provenance.py"
+    }
+  ],
+  "native_route_owner": "skillguard.executable_contract_runtime.v2",
+  "portfolio_target_edges": [
+    {
+      "input_selectors": [
+        {
+          "kind": "role",
+          "role": "runtime_source"
+        }
+      ],
+      "target_id": "logicguard-suite"
+    },
+    {
+      "input_selectors": [
+        {
+          "kind": "role",
+          "role": "runtime_source"
+        }
+      ],
+      "target_id": "sourceguard"
+    },
+    {
+      "input_selectors": [
+        {
+          "kind": "role",
+          "role": "runtime_source"
+        }
+      ],
+      "target_id": "traceguard-suite"
+    },
+    {
+      "input_selectors": [
+        {
+          "kind": "role",
+          "role": "runtime_source"
+        }
+      ],
+      "target_id": "worldguard"
+    },
+    {
+      "input_selectors": [
+        {
+          "kind": "role",
+          "role": "runtime_source"
+        }
+      ],
+      "target_id": "physicsguard-suite"
+    },
+    {
+      "input_selectors": [
+        {
+          "kind": "role",
+          "role": "runtime_source"
+        }
+      ],
+      "member_ids": [
+        "kb-sleep-maintenance",
+        "kb-dream-pass",
+        "kb-organization-contribute",
+        "kb-organization-maintenance",
+        "khaos-brain-update"
+      ],
+      "target_id": "khaos-brain-suite"
+    }
+  ],
   "release_eligible": true,
   "schema_version": "skillguard.contract_source.v2",
   "skill_id": "skillguard",
@@ -677,13 +1654,13 @@
     {
       "action": {
         "kind": "inventory",
-        "summary": "Execute and verify the self-host step step:load-target-depth-boundary."
+        "summary": "Execute and verify the self-host step step:freeze-declared-check-inventory."
       },
       "check_ids": [
-        "check:self:load-target-depth-boundary"
+        "check:self:freeze-declared-check-inventory"
       ],
       "output_artifact_ids": [],
-      "step_id": "step:load-target-depth-boundary"
+      "step_id": "step:freeze-declared-check-inventory"
     },
     {
       "action": {
@@ -691,22 +1668,23 @@
         "summary": "Run the existing deep-contract check through its native owner."
       },
       "check_ids": [
-        "check:self:run-native-depth-checks"
+        "check:self:run-declared-checks"
       ],
       "output_artifact_ids": [],
-      "step_id": "step:run-native-depth-checks"
+      "step_id": "step:run-declared-checks"
     },
     {
       "action": {
-        "kind": "judged",
-        "rubric_id": "rubric:self-host-functional-depth",
-        "summary": "Execute and verify the self-host step step:verify-target-specific-coverage."
+        "kind": "native",
+        "summary": "Reconcile every declared check and exact current result before enforced closure."
       },
       "check_ids": [
-        "check:self:verify-target-specific-coverage"
+        "check:self:reconcile-declared-check-results",
+        "check:self:declared-check-runtime",
+        "check:self:declared-check-supervision-model"
       ],
       "output_artifact_ids": [],
-      "step_id": "step:verify-target-specific-coverage"
+      "step_id": "step:reconcile-declared-check-results"
     },
     {
       "action": {
@@ -714,7 +1692,8 @@
         "summary": "Execute the authoritative FlowGuard model and governance reviews."
       },
       "check_ids": [
-        "check:self:load-model-export"
+        "check:self:load-model-export",
+        "check:self:validation-composition-model"
       ],
       "output_artifact_ids": [],
       "step_id": "step:load-model-export"
@@ -733,7 +1712,7 @@
     {
       "action": {
         "kind": "compiler",
-        "summary": "Compile SkillGuard's own deterministic V2 contract and manifest through the real compiler facade."
+        "summary": "Compile SkillGuard's own deterministic current contract and manifest through the real compiler facade."
       },
       "check_ids": [
         "check:self:compile-generated-contract"
@@ -764,8 +1743,7 @@
       "check_ids": [
         "check:self:select-function-route",
         "check:self:packet-consumption",
-        "check:self:obligation:no-v1-success",
-        "check:self:v1-field-lifecycle"
+        "check:self:obligation:no-former-authority-success"
       ],
       "output_artifact_ids": [],
       "step_id": "step:select-function-route"
@@ -882,6 +1860,53 @@
       ],
       "output_artifact_ids": [],
       "step_id": "step:issue-portfolio-receipt"
+    },
+    {
+      "action": {
+        "kind": "inventory",
+        "summary": "Inspect AGENTS.md, existing project adoption, target native routes, and duplicate-boundary risk."
+      },
+      "check_ids": [
+        "check:self:inspect-project-adoption"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:inspect-project-adoption"
+    },
+    {
+      "action": {
+        "kind": "renderer",
+        "summary": "Render the marker-bounded portable SkillGuard project maintenance prompt."
+      },
+      "check_ids": [
+        "check:self:render-managed-project-prompt"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:render-managed-project-prompt"
+    },
+    {
+      "action": {
+        "kind": "state_write",
+        "summary": "Install or upgrade the managed AGENTS.md block and project manifest without changing surrounding instructions."
+      },
+      "check_ids": [
+        "check:self:install-project-adoption"
+      ],
+      "output_artifact_ids": [
+        "artifact:self-project-adoption-manifest",
+        "artifact:self-project-prompt"
+      ],
+      "step_id": "step:install-project-adoption"
+    },
+    {
+      "action": {
+        "kind": "verifier",
+        "summary": "Audit project prompt uniqueness, repository link, manifest integrity, native-route disposition, and currentness."
+      },
+      "check_ids": [
+        "check:self:audit-project-adoption"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:audit-project-adoption"
     },
     {
       "action": {

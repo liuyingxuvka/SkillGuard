@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyingxuvka/SkillGuard/schemas/skillguard_portfolio_capability_stage_receipt_v1.schema.json",
+  "title": "SkillGuard portfolio capability-stage receipt v1",
+  "description": "Source-only capability validation. This type cannot authorize scheduled production, current portfolio status, reuse, installation closure, or graduation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "receipt_id", "status", "authority_domain", "guard_runtime",
+    "source_fingerprint", "contract_hash", "command_set", "command_fingerprint",
+    "environment", "environment_fingerprint", "coverage_fingerprint",
+    "production_revalidation_bindings", "production_revalidation_fingerprint",
+    "result_bundle", "result_hash", "completed_at", "claim_boundary", "receipt_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_capability_stage_receipt.v1"},
+    "receipt_id": {"type": "string", "pattern": "^portfolio-capability-[a-f0-9]{24}$"},
+    "status": {"const": "capability_validated"},
+    "authority_domain": {"const": "capability_validation"},
+    "guard_runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime_id", "file_count", "source_hash"],
+      "properties": {
+        "runtime_id": {"const": "skillguard-v2"},
+        "file_count": {"type": "integer", "minimum": 1},
+        "source_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "source_fingerprint": {"$ref": "#/$defs/hash"},
+    "contract_hash": {"$ref": "#/$defs/hash"},
+    "command_set": {"type": "object", "minProperties": 1},
+    "command_fingerprint": {"$ref": "#/$defs/hash"},
+    "environment": {"type": "object", "minProperties": 1},
+    "environment_fingerprint": {"$ref": "#/$defs/hash"},
+    "coverage_fingerprint": {"$ref": "#/$defs/hash"},
+    "production_revalidation_bindings": {"type": "array", "maxItems": 0},
+    "production_revalidation_fingerprint": {"const": ""},
+    "result_bundle": {"type": "object", "minProperties": 1},
+    "result_hash": {"$ref": "#/$defs/hash"},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "receipt_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}
+  }
+}

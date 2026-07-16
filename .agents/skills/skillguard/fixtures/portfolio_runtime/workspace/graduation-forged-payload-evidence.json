@@ -1,0 +1,50 @@
+{
+  "schema_version": "skillguard.portfolio_graduation_evidence.v1",
+  "skill_id": "fixture-skill",
+  "version": "1.0.0",
+  "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+  "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+  "guard_runtime": {
+    "runtime_id": "skillguard-v2",
+    "file_count": 1,
+    "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+  },
+  "representative_jobs": [
+    {
+      "job_id": "job:primary",
+      "job_class_ids": ["artifact_check", "invalid_input", "native_check", "out_of_scope", "positive", "recovery_or_resume"],
+      "covered_capability_ids": ["capability:primary"],
+      "evidence_refs": ["record:evidence/graduation-forged-payload.json@F7844692EEA6DC1908F8576A0A2C4A65CFB4AF0AD7061851CD3CB8F46E562AC3"]
+    }
+  ],
+  "full_run_receipt": {
+    "receipt_id": "receipt:fixture-skill:forged-payload",
+    "status": "current",
+    "guard_runtime": {
+      "runtime_id": "skillguard-v2",
+      "file_count": 1,
+      "source_hash": "6C95235CB3425C83F1672CA27DEBC1EF0C784C837DBC5D05998D7E82B7923A4C"
+    },
+    "source_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+    "contract_hash": "2222222222222222222222222222222222222222222222222222222222222222",
+    "command_set": {"jobs": [{"job_id": "job:primary", "commands": ["fixture:portfolio-forged"]}]},
+    "command_fingerprint": "2FE207109FD6573426B863D2667BE8ECD7B51EC2C3FA9825983DE5D829970BFB",
+    "environment": {"fixture": "portfolio-runtime", "platform": "portable"},
+    "environment_fingerprint": "A15803D5BBD708D0BEF876436B5AB54E83E1242A061622C0421E30C7991434A9",
+    "coverage_fingerprint": "C4D00978E7007F0AC31D4EA1AEEDF68A372867D657F0D38FBBE3EE6FD6E9CDA9",
+    "result_bundle": {
+      "representative_job_results": [
+        {
+          "job_id": "job:primary",
+          "job_class_ids": ["artifact_check", "invalid_input", "native_check", "out_of_scope", "positive", "recovery_or_resume"],
+          "covered_capability_ids": ["capability:primary"],
+          "evidence_refs": ["record:evidence/graduation-forged-payload.json@F7844692EEA6DC1908F8576A0A2C4A65CFB4AF0AD7061851CD3CB8F46E562AC3"],
+          "status": "passed"
+        }
+      ]
+    },
+    "result_hash": "7F54AF89091E4B50EDCB7A3F52246E356632D40E22E5B53982A649950CC58A75",
+    "completed_at": "2026-07-10T00:00:00Z"
+  },
+  "failure_classification": null
+}

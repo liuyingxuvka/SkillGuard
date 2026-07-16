@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit SkillGuard canonical/install/repository/release provenance without mutation."""
+"""Audit SkillGuard suite canonical/install/repository/release provenance without mutation."""
 
 from __future__ import annotations
 
@@ -12,10 +12,22 @@ from skillguard_v2.provenance import audit_release_provenance, github_release_sn
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description=(
+            "Audit the skillguard and sibling skillguard-global-router members "
+            "as one provenance unit."
+        )
+    )
     parser.add_argument("--repository-root", default=".")
-    parser.add_argument("--canonical-skill-root", default=".agents/skills/skillguard")
-    parser.add_argument("--installed-skill-root")
+    parser.add_argument(
+        "--canonical-skill-root",
+        default=".agents/skills/skillguard",
+        help="Canonical main member; the sibling global-router root is inferred beside it.",
+    )
+    parser.add_argument(
+        "--installed-skill-root",
+        help="Installed main member; the sibling global-router root is inferred beside it.",
+    )
     parser.add_argument("--expected-origin", required=True)
     parser.add_argument("--github-repository", required=True)
     parser.add_argument("--development", action="store_true", help="Report dirty/release drift without requiring release closure.")

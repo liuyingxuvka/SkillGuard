@@ -25,15 +25,10 @@
       "reason": "{{fixture_update_reason}}"
     }
   ],
-  "compatibility": {
-    "compatible_schema_versions": [
-      "{{schema_version}}"
-    ],
-    "compatible_fixture_versions": [
-      "{{fixture_version}}"
-    ],
-    "migration_required": false,
-    "migration_notes": "{{migration_notes}}"
+  "current_identity": {
+    "schema_version": "{{schema_version}}",
+    "fixture_version": "{{fixture_version}}",
+    "noncurrent_shapes_rejected": true
   },
   "checks": [
     {

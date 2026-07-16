@@ -30,9 +30,9 @@
   "maintenance_ownership": [
     "Fixture maintainers refresh this suite map when child closure rules change."
   ],
-  "compatibility": {
-    "version_boundary": "bad-suite-stale-fixtures.v1 with skillguard.local_cli_dispatch.v1",
-    "known_incompatibilities": []
+  "current_identity": {
+    "schema_boundary": "bad-suite-stale-fixtures.v1 with skillguard.local_cli_dispatch.v1",
+    "rejected_noncurrent_shapes": []
   },
   "blockers": [],
   "residual_risk": [

@@ -406,3 +406,312 @@
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: SkillGuard
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-11T23:38:20+00:00
+- Ended: 2026-07-11T23:38:20+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- python scripts/verify_skill_suite_markers.py --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## v1-runtime-authority-retirement - Formal V1 authority retirement and renewal
+
+- Project: SkillGuard
+- Trigger: the user explicitly requested formal migration and deletion instead of a generic old-version compatibility layer.
+- Status: completed implementation; final activation remains gated by current TestMesh and OpenSpec verification.
+- FlowGuard model: `.flowguard/development_process_flow/v1_runtime_retirement_model.py`
+- Authority inventory: 7 `v2-only`, 15 `v1-legacy`, 0 blocked, 0 mixed.
+- Renewal: SkillGuard completion chain sequence 5; V1 was not restored.
+
+### Executable Findings
+
+- The FlowGuard review has 7 legal scenarios and 23 expected violations, with zero missed violations, oracle mismatches, or known limitations.
+- Every declared positive calibration for the seven retired targets passed and every declared intentionally shallow calibration was blocked.
+- The isolated installation stage reached exact parity for 494 SkillGuard files and 34 Global Router files and passed installed smoke checks.
+- Regression failures exposed stale direct V1 test consumers and an over-broad transient filter; both were repaired without weakening the retired-target blocker.
+
+### Claim Boundary
+
+This evidence covers runtime-authority retirement, post-retirement renewal, named execution-depth calibrations, and staged installation. It does not prove target-domain correctness, future AI behavior, publication, release readiness, or arbitrary project-level simulation accuracy. Git commit, push, tag, release, and publication were not performed.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: SkillGuard
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-12T12:24:08+00:00
+- Ended: 2026-07-12T12:24:08+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- python scripts/verify_skill_suite_markers.py --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-adopt - FlowGuard project adopt record update
+
+- Project: SkillGuard
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-13T20:29:12+00:00
+- Ended: 2026-07-13T20:29:12+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## purpose-blockability-skillguard-first - SkillGuard-first purpose and blockability upgrade
+
+- Project: SkillGuard
+- Trigger reason: upgrade SkillGuard before every other Guard so later upgrades inherit one enforceable model-purpose contract
+- Status: partial; the SkillGuard phase is current, while FlowGuard adoption is deliberately deferred to the final FlowGuard phase
+- Started: 2026-07-14T19:26:25Z
+- Ended: 2026-07-14T19:26:59Z
+
+### Model and check paths
+
+- `.flowguard/native_depth_identity/native_depth_identity_model.py`
+- `.flowguard/native_depth_identity/field_lifecycle_model.py`
+- `.flowguard/native_depth_identity/contract_exhaustion_model.py`
+- `.flowguard/native_depth_identity/model_test_alignment.py`
+- `.flowguard/native_depth_identity/run_checks.py`
+- `.flowguard/development_process_flow/skillguard_global_router_model.py`
+- `.agents/skills/skillguard/.skillguard/compiled-contract.json`
+- `.agents/skills/skillguard/.skillguard/check-manifest.json`
+
+### Commands and results
+
+- PASS: SkillGuard compile currentness; contract `C0D1B605...`, manifest `4334FB4A...`.
+- PASS: global-router compile currentness.
+- PASS: purpose/semantic native-depth model, 26/26 positive gates, 6/6 known-bad gates, 158 known-bad cases.
+- PASS: global-router development-process model.
+- PASS: SkillGuard project audit; SkillGuard and global-router runtime authorities are current.
+- BLOCKED/DEFERRED: FlowGuard project audit; project rules and FlowGuard satellite compiled contracts remain non-current until the user-mandated final FlowGuard phase.
+
+### Findings
+
+- A maintained model must declare what it protects, stable named failure claims, an independent external universe, a complete semantic-obligation universe, and one exact target-native good/bad sensitivity pair.
+- Prose-only purpose, candidate-derived denominators, workflow-only evidence, uncovered semantic obligations, wrong native findings, and calibration-universe drift are named blockers.
+- SkillGuard is ready to govern the next Guard upgrades, but this is not the final installed or release claim.
+
+### Friction points and skipped work
+
+- The first combined hardened-install test run timed out; the related process tree was confirmed empty before an exact 8-case rerun passed.
+- FlowGuard AGENTS regeneration and satellite compilation were intentionally skipped to preserve the required FlowGuard-last order.
+- Global prompt installation, final full TestMesh, OpenSpec final verification, release, commit, push, tag, and publication have not run.
+
+### Next actions
+
+- Upgrade PhysicsGuard and LogicGuard.
+- Upgrade SourceGuard, TraceGuard, and WorldGuard.
+- Upgrade FlowGuard and its satellite contracts last, then rerun the blocked FlowGuard project audit.
+- Freeze source identities, run one final full validation owner, and perform transactional installation/projection parity.
+
+
+## flowguard-project-adopt - FlowGuard project adopt record update
+
+- Project: SkillGuard
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-14T01:56:11+00:00
+- Ended: 2026-07-14T01:56:11+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - blocked
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- suite_inventory_unresolved: Canonical FlowGuard skill-suite validation is unresolved.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-adopt - FlowGuard project adopt record update
+
+- Project: SkillGuard
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-15T09:55:19+00:00
+- Ended: 2026-07-15T09:55:19+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - blocked
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- suite_inventory_unresolved: Canonical FlowGuard skill-suite validation is unresolved.
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- python scripts/verify_skill_suite_markers.py --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: SkillGuard
+- Trigger reason: target project requires current semantic adoption and version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-07-15T21:39:50+00:00
+- Ended: 2026-07-15T21:39:50+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- OK (0.000s): `managed adoption rule-set preflight` - generated block contains every required stable rule
+- OK (0.000s): `canonical FlowGuard skill-suite validation` - pass
+- OK (0.000s): `post-write project adoption audit` - semantic and version parity after write
+
+### Findings
+- adoption_record_written: FlowGuard project AGENTS block and manifest were written or refreshed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- python -m flowguard project-audit --root . --json
+- python scripts/verify_skill_suite_markers.py --root . --json
+- Rerun affected FlowGuard model checks and focused tests before broad confidence.

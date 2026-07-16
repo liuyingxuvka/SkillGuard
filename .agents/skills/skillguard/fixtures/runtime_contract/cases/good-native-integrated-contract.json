@@ -1,7 +1,0 @@
-{
-  "fixture_id": "good_native_integrated_contract",
-  "target_command": "check-contract",
-  "expected_decision": "pass",
-  "target_path": ".agents/skills/skillguard",
-  "contract_path": "../contracts/native_integrated_contract.json"
-}

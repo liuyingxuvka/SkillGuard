@@ -1,0 +1,172 @@
+{
+  "schema_version": "skillguard.reference_path_classification_fixture.v1",
+  "ignored_inline_examples": [
+    {
+      "id": "fenced-shell-command",
+      "text": "```bash\npython scripts/load_data.py --database runtime/data/app.db\n```",
+      "expected": []
+    },
+    {
+      "id": "tilde-fenced-shell-command",
+      "text": "~~~powershell\npython scripts/load_data.py --database runtime/data/app.db\n~~~",
+      "expected": []
+    },
+    {
+      "id": "inline-shell-command",
+      "text": "Run `python scripts/load_data.py --database runtime/data/app.db` to initialize the database.",
+      "expected": []
+    },
+    {
+      "id": "generic-inline-command",
+      "text": "Run `mytool config/runtime.json` for this example.",
+      "expected": []
+    },
+    {
+      "id": "standalone-cli-arguments",
+      "text": "Pass `--database runtime/data/app.db --schema config/schema.json` to the CLI.",
+      "expected": []
+    },
+    {
+      "id": "split-cli-argument-value",
+      "text": "Pass `--output` and `runtime/output/result.json` to the CLI.",
+      "expected": []
+    },
+    {
+      "id": "value-before-inline-cli-flag",
+      "text": "Use `runtime/output/result.json` as the `--output` argument.",
+      "expected": []
+    },
+    {
+      "id": "database-uris",
+      "text": "Connect with `sqlite:///runtime/data/app.db` or `postgresql://user@host/example`.",
+      "expected": []
+    },
+    {
+      "id": "database-runtime-path",
+      "text": "The database writes to `runtime/data/app.sqlite` during execution.",
+      "expected": []
+    },
+    {
+      "id": "database-data-directory",
+      "text": "The database runtime directory is `data/production`.",
+      "expected": []
+    },
+    {
+      "id": "database-context-after-path",
+      "text": "The runtime directory is `data/production`, used by the database.",
+      "expected": []
+    },
+    {
+      "id": "skillguard-transient-run-directory",
+      "text": "Use `.skillguard/runs/` for run records created during execution.",
+      "expected": []
+    },
+    {
+      "id": "skillguard-transient-test-result",
+      "text": "The runtime writes `.skillguard/test-results/latest.json` after the check finishes.",
+      "expected": []
+    },
+    {
+      "id": "skillguard-transient-lock-directory",
+      "text": "Active claims may create `.skillguard/locks/` while work is running.",
+      "expected": []
+    },
+    {
+      "id": "absolute-database-runtime-path",
+      "text": "PostgreSQL stores runtime data at `/var/lib/postgresql/app.db`.",
+      "expected": []
+    },
+    {
+      "id": "sql-expression",
+      "text": "The diagnostic query is `SELECT payload FROM runtime/events WHERE id = 1`.",
+      "expected": []
+    },
+    {
+      "id": "external-and-anchor-links",
+      "text": "See [upstream](https://example.com/guide) and [this section](#local-section).",
+      "expected": []
+    }
+  ],
+  "declared_local_references": [
+    {
+      "id": "inline-reference",
+      "text": "Read `references/missing-guide.md` before work.",
+      "expected": ["references/missing-guide.md"]
+    },
+    {
+      "id": "markdown-link",
+      "text": "Read [the guide](references/missing-guide.md) before work.",
+      "expected": ["references/missing-guide.md"]
+    },
+    {
+      "id": "markdown-link-anchor",
+      "text": "Read [the guide](references/missing-guide.md#setup) before work.",
+      "expected": ["references/missing-guide.md"]
+    },
+    {
+      "id": "markdown-reference-style-link",
+      "text": "Read [the guide][guide].\n\n[guide]: references/missing-guide.md#setup",
+      "expected": ["references/missing-guide.md"]
+    },
+    {
+      "id": "markdown-image-artifact",
+      "text": "Review ![the diagram](artifacts/missing-diagram.png).",
+      "expected": ["artifacts/missing-diagram.png"]
+    },
+    {
+      "id": "declared-script",
+      "text": "Required script: `scripts/missing-check.py`.",
+      "expected": ["scripts/missing-check.py"]
+    },
+    {
+      "id": "invoked-bare-script-reference",
+      "text": "Run `scripts/missing-check.py` directly.",
+      "expected": ["scripts/missing-check.py"]
+    },
+    {
+      "id": "declared-schema",
+      "text": "Schema: `assets/schemas/missing.schema.json`.",
+      "expected": ["assets/schemas/missing.schema.json"]
+    },
+    {
+      "id": "declared-artifact",
+      "text": "Artifact path: `artifacts/missing-report.json`.",
+      "expected": ["artifacts/missing-report.json"]
+    },
+    {
+      "id": "non-database-runtime-artifact",
+      "text": "Artifact path: `runtime/data/missing-report.json`.",
+      "expected": ["runtime/data/missing-report.json"]
+    },
+    {
+      "id": "explicit-database-artifact",
+      "text": "Required artifact: `runtime/data/missing-fixture.db`.",
+      "expected": ["runtime/data/missing-fixture.db"]
+    },
+    {
+      "id": "explicit-transient-runtime-artifact",
+      "text": "Required artifact: `.skillguard/runs/missing-fixture.json`.",
+      "expected": [".skillguard/runs/missing-fixture.json"]
+    },
+    {
+      "id": "linked-transient-runtime-artifact",
+      "text": "Inspect [the required run fixture](.skillguard/runs/missing-fixture.json).",
+      "expected": [".skillguard/runs/missing-fixture.json"]
+    },
+    {
+      "id": "markdown-linked-database-artifact",
+      "text": "Inspect [the database fixture](runtime/data/missing-fixture.db).",
+      "expected": ["runtime/data/missing-fixture.db"]
+    },
+    {
+      "id": "declared-unknown-extension",
+      "text": "Required artifact: `missing.output`.",
+      "expected": ["missing.output"]
+    },
+    {
+      "id": "boundary-escape-link",
+      "text": "Read [the outside guide](../missing-guide.md).",
+      "expected": ["../missing-guide.md"]
+    }
+  ]
+}

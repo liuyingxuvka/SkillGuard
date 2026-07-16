@@ -1,0 +1,174 @@
+contract_version: 1
+change: compose-validation-evidence
+obligations:
+  - id: req.composition.ordered-ownership
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Ordered validation ownership"
+    claim: Cheap blockers precede expensive owners, ownership is unique, and not-run work remains visible.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.complete-inputs
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Complete content-addressed child inputs"
+    claim: Every maintained input is inventoried without making the whole inventory an owner execution input.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.proof-bound-reuse
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Proof-bound TestMesh child reuse"
+    claim: Only an immutable current owner receipt with exact inputs and dependencies is reusable.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.reuse-fails-closed
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Reuse fails closed"
+    claim: Failed, skipped, partial, stale, foreign, tampered, truncated, and cleanup-unconfirmed evidence cannot pass reuse.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.parent-reattachment
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Parent reattachment preserves claim boundaries"
+    claim: Parent aggregation binds immutable child receipts and never rewrites or re-executes them.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.domain-separation
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Evidence domains remain distinct"
+    claim: Source, stage, active installation, synchronized target, global prompt, and OpenSpec report evidence remain distinct.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.report-collision
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Verification outputs cannot become freshness inputs"
+    claim: Reports, receipts, sidecars, logs, locks, progress, and task checkbox state cannot invalidate owner inputs.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.replay
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Current proof replay"
+    claim: Replay recomputes exact owner, dependency, aggregation, installation, and projection identities.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.single-flight
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Exact single-flight check execution"
+    claim: One semantic execution key has one terminal success across runs while attempts remain distinct.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.read-only-parent-consumer
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Full-parent receipt consumers are read-only"
+    claim: OpenSpec consumes one current parent receipt without execute, resume, repair, backfill, or owner fallback.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.execution-ownership
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Validation execution ownership is explicit and frozen"
+    claim: The frozen plan assigns one owner per execution and permits full only after source and toolchain fixpoint under one owner.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.component-impact
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Component-scoped impact graph is authoritative"
+    claim: One compiler-generated graph maps every maintained component to its exact validation, installation, Portfolio, and router consumers.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.owner-projection
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Owner execution identity uses only exact behavioral inputs"
+    claim: Owner execution identity excludes run, step, parent, whole-contract, whole-manifest, and whole-inventory metadata.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.frozen-plan
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Affected validation plan is deterministic and frozen"
+    claim: Plan-only derives reuse, execution, aggregation, install, router, Portfolio, and full-admission decisions before side effects.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.persistent-receipts
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Owner receipts are persistent and independently replayable"
+    claim: Cross-run owner receipts bind complete stdout, stderr, result, and termination sidecars in a persistent content-addressed root.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.full-admission
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Full validation requires a derived admission reason"
+    claim: Full has an explicit allowlisted graph-derived reason; uncertainty, installation, fixture, or parent changes do not qualify.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.shared-projections
+    source: "specs/composable-validation-evidence/spec.md#Requirement: Installation Portfolio and router consume the same impact graph"
+    claim: Installation, parity, smoke, Portfolio, router, and managed prompt consume the same frozen impact plan.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.composition.current-only
+    source: "specs/composable-validation-evidence/spec.md#Requirement: One current daily validation protocol"
+    claim: One current runtime path is accepted and retired shapes remain rejection fixtures only.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.portable.shared-policy
+    source: "specs/portable-artifact-boundary/spec.md#Requirement: Shared portable-artifact policy"
+    claim: All portability consumers use one versioned classification authority or declared projection.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.portable.runtime-excluded
+    source: "specs/portable-artifact-boundary/spec.md#Requirement: Runtime workspaces are never portable"
+    claim: Runtime roots and evidence outputs cannot enter maintained source, installation, synchronization, or parity.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.portable.static-fixtures
+    source: "specs/portable-artifact-boundary/spec.md#Requirement: Static fixture evidence remains portable"
+    claim: Maintained fixture samples remain portable while live controls remain excluded.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.portable.deterministic
+    source: "specs/portable-artifact-boundary/spec.md#Requirement: Portable inventory is deterministic"
+    claim: Equivalent bytes, context, policy, and roots produce the same sorted inventory and hash.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.portable.semantic-components
+    source: "specs/portable-artifact-boundary/spec.md#Requirement: Maintained content is classified into semantic components"
+    claim: Every maintained file has one role, one installation disposition, and an exact consumer set before validation.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.portable.cleanup
+    source: "specs/portable-artifact-boundary/spec.md#Requirement: Runtime cleanup is scoped and provable"
+    claim: Cleanup stays inside an authorized root and is followed by boundary and parity proof.
+    required: true
+    evidence: [check.composition.final-parent]
+  - id: req.depth.canonical-parity
+    source: "specs/universal-execution-depth/spec.md#Requirement: Canonical source and installed parity"
+    claim: Component-planned installation remains atomic and complete, while parity and smoke do not broaden validation scope.
+    required: true
+    evidence: [check.composition.final-parent]
+checks:
+  - id: check.composition.final-parent
+    kind: receipt
+    semantic_check_id: semantic.composition.skillguard-current-final-parent
+    consumer: openspec-final-verifier
+    receipt_ref:
+      provider_id: skillguard
+      work_package_id: compose-validation-evidence
+      adapter: portable-receipt.v1
+      ref_path: <SKILLGUARD_EVIDENCE>/portable/compose-validation-evidence/ref.json
+    required: true
+    covers:
+      - req.composition.ordered-ownership
+      - req.composition.complete-inputs
+      - req.composition.proof-bound-reuse
+      - req.composition.reuse-fails-closed
+      - req.composition.parent-reattachment
+      - req.composition.domain-separation
+      - req.composition.report-collision
+      - req.composition.replay
+      - req.composition.single-flight
+      - req.composition.read-only-parent-consumer
+      - req.composition.execution-ownership
+      - req.composition.component-impact
+      - req.composition.owner-projection
+      - req.composition.frozen-plan
+      - req.composition.persistent-receipts
+      - req.composition.full-admission
+      - req.composition.shared-projections
+      - req.composition.current-only
+      - req.portable.shared-policy
+      - req.portable.runtime-excluded
+      - req.portable.static-fixtures
+      - req.portable.deterministic
+      - req.portable.semantic-components
+      - req.portable.cleanup
+      - req.depth.canonical-parity
+freshness:
+  watch:
+    - openspec/changes/compose-validation-evidence/proposal.md
+    - openspec/changes/compose-validation-evidence/design.md
+    - openspec/changes/compose-validation-evidence/tasks.md
+    - openspec/changes/compose-validation-evidence/specs/**/*.md
+    - openspec/changes/compose-validation-evidence/verification-contract.yaml
+evidence_roots:
+  SKILLGUARD_EVIDENCE: work/verification/final-skillguard

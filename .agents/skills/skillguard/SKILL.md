@@ -25,8 +25,11 @@ Start from the current layout instead of assuming generated files exist. SkillGu
 - Use the repository README, pyproject metadata, VERSION file, and AGENTS file for the public repository contract, metadata, version, and contributor boundaries only when the source repository layout is present.
 - Use the repository references directory for the maintained SkillGuard standards only when the source repository layout is present.
 - Use `assets/schemas/` and `assets/templates/` for local schema and template checks.
-- Use `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` when a task needs legacy runtime contract routing, phase gates, or closure rules; for V2, use `.skillguard/contract-source.json` plus the target's declared FlowGuard model as the two authority inputs and treat `.skillguard/compiled-contract.json` and `.skillguard/check-manifest.json` as deterministic generated outputs, never as hand-edited authority.
-- Use `.skillguard/checks/` for local runtime check script stubs and `.skillguard/runs/` for run records created before non-trivial skill work begins.
+- Resolve runtime authority before consuming a contract. Authority is exactly `current` or `blocked`: `current` requires `.skillguard/contract-source.json`, `.skillguard/compiled-contract.json`, the exact `.skillguard/check-manifest.json`, and no former-runtime residual. There is no compatibility, conversion, retirement, renewal, or fallback authority.
+- Every covered skill upgrade uses direct current replacement. Former shapes are exact rejection fixtures only; do not add a compatibility reader, fallback, migration or upgrade command, converter, alias, renewal path, dual manifest, or parallel authority. If an ordinary software product truly must read an old document, stored-data format, protocol, or public interface, require an explicit requirement and a bounded FlowGuard-owned reader model; that exception never becomes a skill-runtime path.
+- Use `.skillguard/runs/` only for current immutable execution records. Former flat run records and former per-check stub directories may exist only inside exact rejection fixtures; they are never maintenance inputs.
+- Use the current depth profile in `.skillguard/contract-source.json` plus immutable target execution receipts when maintained targets must prove that every target-declared check actually completed rather than merely proving contract presence. Stable schema identifiers may retain a version suffix, but they do not create a second route. Follow `references/skillguard-execution-depth.md`.
+- Use repository-root `.skillguard/project.json` and the marker-bounded SkillGuard block in AGENTS.md for portable project adoption. Follow `references/skillguard-project-adoption.md`; use `project-adopt` to write the sole current shape from explicit inputs and `project-audit` for read-only checking.
 - Use other `.skillguard/` material under the skill directory when the task asks for maintained SkillGuard records, evidence, reports, or self-check material.
 - Use the `skillguard-global-router` skill and the `scan-global-skills`, `build-global-registry`, `check-global-registry`, `resolve-global-skill`, `render-global-prompt`, `install-global-prompt`, `check-global-prompt`, and `refresh-global-router` commands when the task is about user-level skill routing, global prompt projection, managed user-level AGENTS prompt blocks, or new-skill onboarding defaults.
 - Treat local `scripts/` and `fixtures/` under this skill as evidence only after direct inspection in the current task finds those paths and their current content. Treat repository tests and examples as source-repository evidence only when that layout is present and the paths exist.
@@ -58,6 +61,8 @@ Use this skill when the user asks to:
 - Check README-facing release gates such as bilingual mirror coverage, text-to-image hero provenance, README model evidence, version consistency, command-surface wording, and public-boundary safety.
 - Compare parent status against child evidence so a suite or release summary does not hide stale, failed, missing, or skipped checks.
 - Produce a status report that needs current evidence, blockers, skipped checks, residual risk, and claim boundaries.
+- Ensure that every check declared by a maintained skill was actually completed for the current request instead of merely loading the skill or running generic boundary checks.
+- Adopt, audit, or directly rewrite a repository's sole current SkillGuard maintenance state so future AIs and other computers can locate the canonical SkillGuard repository.
 
 ## Do Not Use When
 
@@ -103,99 +108,152 @@ Do not use this skill to certify AI correctness, guarantee Codex activation, or 
 
    A missing required file, stale required evidence, privacy exposure, malformed metadata, or unvalidated release claim must be reported as a failure or blocker. Do not downgrade it to a warning just to complete the task.
 
-## Runtime Contract Mode
+9. For a maintained project, verify both portable project adoption and one current target execution receipt covering every declared check before making a completion or release claim.
 
-Use Runtime Contract Mode when the task is about making a target skill's actual work path enforceable, not merely reviewing repository files.
+## Current Runtime Contract
 
-In this mode SkillGuard should help the target skill:
+Use the current runtime contract when the task is about making a target skill's actual work path enforceable, not merely reviewing repository files.
 
-- compile or maintain a `.skillguard/work-contract.json` that records the integration mode before any runtime claim: `native-integrated` when the target skill already has its own route/check system, `hybrid-extension` when SkillGuard is filling missing gates around a partial native system, and `skillguard-runtime` only when no native runtime system exists;
+SkillGuard must:
+
+- compile or maintain a confirmed current `.skillguard/contract-source.json` whose fixed integration marker is `native-integrated`; the target always owns its domain route and declared checks, while SkillGuard only supervises them;
 - bind native routes and native checks directly when the target skill already owns routing, validation, controller, or closure behavior; do not create a second SkillGuard execution router beside the native system;
-- require the native route decision or SkillGuard-owned route decision before non-trivial skill work starts, depending on the declared integration mode;
-- claim a V2 target-local run for every non-trivial supervised task, including native-integrated and hybrid-extension targets, while preserving the target skill as the only owner of its domain action;
-- use the V2 run only for route selection, prerequisites, native action/check binding, immutable evidence, freshness, and closure supervision; never use it as a second target-domain executor;
+- require the target-native route decision before non-trivial skill work starts;
+- claim one current target-local evidence run for every non-trivial supervised task while preserving the target skill as the only owner of its domain action;
+- use that run only for route selection, prerequisites, native action/check binding, immutable evidence, exact-input freshness, and closure supervision; never use it as a second target-domain executor;
 - advance phases only when required evidence and checks are present for earlier phases;
 - run route, phase-order, evidence, quality-floor, freshness, suite-child, and closure checks before closure;
 - block missing contracts, hollow contracts, ambiguous routes, skipped phases, stale evidence, prose-only evidence, quality downgrades, and closure overclaims.
 
-For native-integrated and hybrid-extension targets, SkillGuard is the contract supervisor attached to the original skill system. It may retain a V2 evidence run, but every domain action and native check must bind back to the original router, controller, simulator, checker, or release flow. A second implementation of the target workflow is invalid. Legacy V1 run records do not gain success authority from this V2 evidence boundary.
+SkillGuard is the contract supervisor attached to the original skill system. It may retain a current evidence run, but every domain action and native check must bind back to the original router, controller, simulator, checker, or release flow. A second implementation of the target workflow is invalid. Historical run records never gain current success authority.
 
 AI or human judgment may be recorded after deterministic evidence is clear, but it cannot replace required runnable checks or make skipped work pass.
 
-## Executable Contract V2
+## Current Executable Contract
 
-For V2 maintenance and self-hosting:
+For current maintenance and self-hosting:
 
-- compile with `scripts/skillguard_v2_compile.py`; `--check` is read-only and fails on missing or stale generated files;
-- execute any confirmed target contract with `scripts/skillguard_v2_supervise.py` and follow `references/skillguard-v2-supervisor.md`; pass the skill root, packet path, target root, and repository root as command arguments. The packet supplies the request, per-step witnessed or judged evidence, optional-skip proof, and closure profiles, while the supervisor performs route selection, the target-local claim, native checks, artifact validation, immutable receipts, closure, and replay;
+- compile with `scripts/skillguard_compile.py`; `--check` is read-only and fails on missing or stale generated files;
+- execute any confirmed target contract with `scripts/skillguard_supervise.py` and follow `references/skillguard-supervisor.md`; pass the skill root, packet path, target root, and repository root as command arguments. The packet supplies the request, per-step witnessed or judged evidence, optional-skip proof, and the sole `enforced` closure, while the supervisor performs route selection, the target-local claim, native checks, artifact validation, immutable receipts, closure, and replay;
+- keep `repository_root` and `target_root` distinct when the target skill uses both: the repository root owns maintained skill and contract inputs, while the target root owns current task data and artifacts; bind both through portable content identities rather than local absolute paths;
+- freeze the exact `native_check_ids` declared by the target skill before execution. Every declared check must have exactly one execution owner, explicit dependencies, and one current terminal receipt for the same request; missing, duplicate, stale, non-terminal, skipped, failed, timed-out, cancelled, or cleanup-unconfirmed results block;
+- do not classify target skills or infer check meaning from names. SkillGuard must not branch on a target family, invent a purpose contract, require a good/bad pair, or interpret a target oracle. A target that declares one check is supervised by the same fixed workflow as a target that declares several checks;
+- keep target-domain rules inside the target skill. If a target skill requires particular fixtures, counterexamples, or domain oracles, it declares those as its own checks and SkillGuard supervises their exact receipts without reimplementing their semantics;
+- keep `capability_validation` and `scheduled_production` non-interchangeable. Source-only checks cannot close scheduled production; scheduled production additionally requires trigger/execution, installation-receipt, and installed-runtime identity;
 - use the function and route ids in the compiled contract instead of inferring workflow from headings;
-- claim the run before target work and resume only by replaying its contract snapshot and hash-chained events;
+- claim the run before target work and resume only by replaying its contract snapshot and hash-chained events. For route-conditional scheduled production, use the explicit two-stage supervisor: `supervision_mode: stage_depth` with `profiles: []` executes checks and returns status `staged` plus one exact depth receipt; the target then builds/writes its native terminal receipt with `build_target_native_terminal_receipt(...)` and `write_target_native_terminal_receipt(...)`; `supervision_mode: close` resumes the same request/run, reuses the same depth receipt id/hash, consumes the portable terminal ref, and closes without rerunning completed checks;
 - treat AI “complete” as evidence submission only; a native check, artifact validator, witnessed action verifier, or versioned judgment rubric must issue the authoritative receipt;
 - enforce the primary evidence class declared by each action: a hard model/check receipt cannot stand in for a `judged` step, and a model/check receipt cannot stand in for a `witness` step;
-- require immutable stored check/artifact records before hard evidence can pass;
+- require immutable stored check/artifact records before hard evidence can pass. Keep `semantic_check_id`, per-attempt `execution_id`, and exact `execution_key` distinct; only an immutable terminal success may be reused, while failed attempts never populate the canonical success slot and source/input changes fail stale;
+- before multi-skill validation, freeze one owner plan in the existing verification contract or TestMesh: list every exact check, covered obligation/evidence domain, dependency order, persistent receipt root, and exactly one primary execution owner. Consumers resolve and verify the exact current owner receipt and never carry or rerun its command. Missing, duplicate, cyclic, stale, or identity-incomplete ownership blocks before execution; maintained inputs invalidate only affected receipts, while reports, receipts, progress logs, and runtime outputs stay outside source authority and cannot retrigger their producer;
 - include declared implementation source in the contract fingerprint while excluding only transient runtime material such as `.skillguard`, `__pycache__`, test/tool caches, bytecode, and `node_modules`; a real source change must still stale the generated contract and prior closure;
-- include the SkillGuard V2 runtime fingerprint in external receipts so a Guard behavior change makes affected prior evidence stale;
-- follow `references/skillguard-v1-field-lifecycle.md`: once `.skillguard/contract-source.json` exists, V1 runtime-authority commands must block and V1 artifacts remain migration inputs or read-only diagnostics, never fallback closure proof;
-- close with monotonic routine, functional, release, or highest-quality profiles and preserve missing, failed, blocked, skipped, stale, uncertain, and not-run gaps;
-- use `scripts/skillguard_v2_self_host.py` and `references/skillguard-v2-self-host.md` for the frozen-old/new-verifier bootstrap.
-- run `scripts/skillguard_test_mesh.py` against `test-mesh.json` with the fast, focused, or full profile; progress events prove liveness only, while parent confidence requires final child result artifacts, current source fingerprints, exit status, visible skips/timeouts, and no cancellation.
-- run `scripts/skillguard_provenance.py` before installed sync and release claims; keep the canonical local source, installed copy, Git origin, version/tag, and GitHub Release identities distinct, and block any installed downgrade or partial-file sync.
+- keep declared-reference checks semantic: local Markdown links/images/reference definitions and explicitly declared script, schema, artifact, or guide paths remain references, while fenced examples, inline shell commands, CLI argument values, database URIs/SQL, undeclared database runtime locations, and inline transient `.skillguard/runs`, locks, bootstrap, or test-results output locations are runtime text rather than required local files;
+- include the current SkillGuard runtime fingerprint in external receipts so a Guard behavior change makes only affected prior evidence stale;
+- reject former runtime files, commands, lifecycle fields, receipts, schemas, conversion scripts, and history directories. They may appear only in exact negative fixtures. Ordinary maintenance must write the current trio directly, delete the named former surfaces, and validate the resulting current shape; no product code reads or converts the old payload;
+- close only with the fixed `enforced` closure and preserve missing, failed, blocked, skipped, stale, uncertain, and not-run gaps;
+- use `scripts/skillguard_self_host.py` and `references/skillguard-self-host.md` for the single current-authority self-host run.
+- use `scripts/skillguard_test_mesh.py --profile <fast|focused|full> --mode plan_only` with exact run, skill, target, and persistent owner-evidence roots to create the immutable affected-owner plan. Plan-only launches no child process. Pass that exact file to `--mode owner_execution_only --frozen-plan <plan>`; the public runner validates the frozen identities and dependency order, verifies planned reuse read-only, and resolves only `will_execute_owner_ids` through the existing single-flight owner authority. A repeated invocation may reuse newly current receipts but cannot replan, broaden, or repeat a process. Then pass the same unchanged plan to `--mode aggregation_only --frozen-plan <plan>`; aggregation only references exact immutable owner receipts and never reissues them. Downstream verification uses `--replay-aggregation-ref <ref>` and is structurally read-only. A full aggregation additionally requires the exact current installation receipt and global-prompt binding. When the maintained target is outside the canonical SkillGuard repository, bind that one current source authority explicitly with `--canonical-skillguard-root`; this is a location binding, not an operating mode or alternate authority;
+- treat every process timeout as an owner-execution boundary rather than a TestMesh retry signal: the launcher must confirm zero descendants, publish no success receipt when cleanup is unconfirmed, and return control to the frozen plan without broadening its affected set;
+- bind every registered ordinary long self-host check to its exact measured command, all accepted measurement samples, and a hash-bound pre-run timeout record; the current installation-safety command measured 352.834 seconds in isolation and 563.984 seconds inside complete self-host, uses the maximum with a 600-second ceiling plus 120 seconds of runtime-variance grace, declares 900 seconds, and must block before run claim when the check is missing, duplicated, retargeted, or declares 720 seconds or less;
+- derive the self-host report claim boundary from the exact replay-verified `enforced` closure; a missing, duplicate, or mismatched closure projection fails closed;
+- keep the self-host CLI terminal narrow: ordinary `Exception` failures emit one path-safe six-field JSON terminal without traceback and return nonzero, while `KeyboardInterrupt` and `SystemExit` are not caught;
+- emit `progress` only for a positive stdout/stderr byte delta, keep `heartbeat` liveness-only, validate the sequence/hash chain, and require final child artifacts, current source fingerprints, exit status, visible skips/timeouts, and no cancellation for parent confidence;
+- on timeout, terminate the process tree and retain a durable immutable owner-bound receipt with millisecond timing, full-stream hashes, total and captured byte counts, termination facts, and retry/resume guidance; a timeout receipt is failed-boundary evidence, never a pass;
+- run `scripts/skillguard_provenance.py` before installed sync and release claims; `--development` may retain a structured unavailable GitHub snapshot without blocking solely because `gh` is missing, but release mode must fail closed with `github_release_unavailable`; keep the canonical local source, installed copy, Git origin, version/tag, and GitHub Release identities distinct, and block any installed downgrade or partial-file sync;
+- treat SkillGuard and `skillguard-global-router` as one runtime-integrity cohort: the fingerprint must include the sibling router skill, current source/compiled contract, manifest, scripts, and references, and must fail closed when any required surface is missing or unreadable.
+- use `content_role_overrides` only for reviewed ambiguous content: a path may name one maintained file or one maintained directory subtree, a directory applies to every inventoried descendant including future files, and overlapping overrides block instead of selecting by order or specificity. Do not replace automatic classification with a per-file inventory.
 - run `scripts/skillguard_privacy.py` over tracked and unignored release candidates; reject secrets, machine-specific paths, runtime state, private file types, and images without a current hash-bound visual review.
-- run `scripts/skillguard_install.py` for whole-tree staged installation; require source-manifest parity and installed-layout smoke checks before activation, preserve the previous active copy as a backup, and automatically restore it if post-activation validation fails. Partial file copying is not an acceptable installation or upgrade path.
+- run `scripts/skillguard_install.py` for exact-component staged installation; require installation-projection parity plus clean-layout command, self-check, public `check-skill`, runtime import, and current-authority smoke before activation; the smoke must reject former-runtime residuals before transient paths are ignored. Source-only tests, fixtures, models, notes, reports, receipts, logs, and timestamps are outside installation freshness unless the frozen installation projection explicitly owns them. On Windows, preflight portable file/directory destination lengths before creating either staged member and use a shorter isolated stage root when blocked; if copying fails, remove every newly created suite-member root or report cleanup blockers; preserve the previous active copy as a backup and automatically restore it if post-activation validation fails. Partial file copying is not an acceptable installation or upgrade path. After activation, capture and verify the installation receipt under active `.sg-runtime/installation`, then construct scheduled identities only through `build_scheduled_production_identity(...)`. Every depth issuance and terminal closure replays its `installation_receipt_root_ref`, receipt id/hash, and installed runtime fingerprint against the current active installation; hash-shaped fields alone are not parity evidence.
+- run `scripts/skillguard_target_install.py` for one maintained non-SkillGuard target. Supply the canonical repository root, exact skill root, isolated stage root, and CODEX_HOME. The compiler-owned `member_root_path` must resolve the skill root exactly; stage and active trees contain only `projection:installation`; each skill uses its own target transaction, HEAD, receipt, backup, rollback, and recovery namespace while sharing the global installation mutex. This route never discovers or executes target commands. Native target checks remain separate frozen execution owners and run only after activation when their current contract requires them. See `references/skillguard-target-installation.md`.
 
-## Deep Contract Mode
+## Portfolio Validation Workflow
 
-Use Deep Contract Mode when the question is not only "does a contract file exist?" but "does this contract actually cover what the target skill promises to do?"
+Use the portfolio validation workflow after SkillGuard self-hosting when maintained targets are optimized one at a time. Follow `references/skillguard-portfolio.md`.
 
-In this mode SkillGuard must compare the target `SKILL.md`, adjacent native route/check materials, `.skillguard/work-contract.json`, `.skillguard/check_manifest.json`, and current `.skillguard/runs/` records only for `skillguard-runtime` contracts. The `check-contract` command checks the contract structure; the `check-depth` command checks whether the contract is deep enough to be useful.
+- Keep the portfolio registry private and outside public target repositories when it contains local source locations, private repository metadata, or unpublished evidence.
+- Treat `--target-repository-root` as the canonical local source, `--workspace-root` as the private working root, and `--installed-target-root` as a non-authoritative installed copy. Canonical and installed roots must be separate and non-nested; the installed role is available only when it exists as a directory.
+- Persist the three-role projection with path tokens and opaque identity hashes only. Send resolved path diagnostics to private stderr with home redaction; never put user-home absolute paths into portable portfolio output.
+- When a reviewed current scope replaces stale registry authority, run `build-current-portfolio-registry` from that exact hash-valid scope. It creates revision one directly, reads no prior registry, carries no old green receipt or reuse ticket, keeps active targets pending or revalidation-required, and preserves exclusions and complete supersession tuples. A file output acquires the same sole portfolio-registry writer lock before construction and commit, so a live impact, reuse, graduation, or replacement writer blocks it without overwrite. It is not a migration, compatibility, or fallback path.
+- Run `audit-portfolio` before target work and before the next target graduates. Pending or revalidation-required skills remain visible; excluded private/system skills and supporting repositories use explicit non-active lifecycle records.
+- When a reviewed scope marks a target as superseded, require the complete target-neutral tuple: `retirement_disposition: superseded`, one distinct active `superseded_by_skill_id`, `installation_disposition: absent`, and `router_authority: blocked`. Scope and registry validation block partial tuples, missing/inactive replacements, and self-reference. Before claiming zero installation or router authority, separately confirm the old skill is absent from the installed root and current router registry.
+- After any SkillGuard behavior change, run `mark-portfolio-impact` with the old/new Guard identities, compiler-derived changed component ids, affected feature tags, broad-change flag, reason, and an immutable `--receipt-root`. Invalidate only the exact target/member edges reached from those changed functional components. Unrelated targets remain current and need neither execution nor a reuse ticket. Reports, receipts, logs, timestamps, generated status, and install bookkeeping have no portfolio edge unless the frozen policy explicitly classifies them as functional input. The impact receipt proves invalidation only; it neither revalidates a target nor permits reuse of an affected receipt.
+- Use `issue-portfolio-reuse-ticket` only for a non-broad, non-intersecting Guard change when source, contract, command, environment, and coverage fingerprints are all unchanged.
+- For a suite, require `member_capability_inventory` to give every target capability exactly one member owner. Every declared member path must appear, and jobs from one member must not claim another member's capabilities.
+- Use the production `prepare-portfolio-run`, `execute-portfolio-run`, `capture-portfolio-production-revalidation`, `assemble-portfolio-run`, and `graduate-portfolio` commands instead of test helpers. Keep all five as current typed `route-task` entries so the route-first handoff selects the exact phase rather than a generic audit. `prepare` atomically freezes exactly one complete ordered target-level plan, every job spec, the active Guard, target identity, and—when supplied—the content-exact installed-member parity receipt before the earliest claim. `execute` resumes the same preparation and sends every frozen job through ordinary claimed current runs in isolated working copies. `capture` records each member's exact scheduled-production depth, terminal, declared-check depth, closure, scheduler/execution, and current installed-runtime identities; source-only validation is non-authoritative and cannot be promoted into scheduled-production evidence. `assemble` rejects a missing job or current production receipt, re-scans the installed root for a prepared suite so post-prepare member drift cannot pass, shares one sealed installation context across all members, later-currentness checks, and the graduation dry-run, and does not write the registry or publish anything. Source-only capability self-checks are typed non-authoritative evidence and cannot graduate a target. `audit-portfolio`, `assemble-portfolio-run`, and `graduate-portfolio` require explicit target repository-root mappings for every prior active entry whose currentness they consume; stored green state is never enough.
+- Every capability must equal one target-authored semantic variant through its real member contract function/route, step, obligation, exact frozen-manifest check, and artifact path. The actual selected functions/routes, required steps, frozen checks, receipts, and closure consumption must be replayed; a related-looking green check or plan-only declaration is not coverage.
+- For `invalid_input` and `out_of_scope`, require verifier-owned typed terminal and ordered mutation-observation records bound to the same preparation and run. The before scan must precede the claim, the class-specific terminal must follow execution, the after scan must follow the terminal, and the two maintainable-source fingerprints must match. Request labels, stdout, copied hashes, or missing output are not rejection proof.
+- For installation, compare the exact compiler-owned install projection of each affected canonical member with its installed member. The final suite completeness scan is a cheap read-only file gate after declared-check receipts are frozen; its report is an output and cannot invalidate or rerun native tests. A current primary member cannot hide an affected router-member mismatch, but an unrelated source-only test/model/note/report change must not make another member's install projection stale.
+- Run `graduate-portfolio` only after receipt-bound representative real jobs cover every target and member capability plus the required positive, invalid-input, recovery/resume, out-of-scope, native-check, and artifact-check classes. SkillGuard derives outcomes from current runtime facts; target stdout is diagnostic only. Every `record:<workspace-relative-path>@<sha256>` evidence ref must resolve to a current identity-bound record, and command, environment, result, evidence-file, and evidence-payload hashes must be recomputed. It must block on any unresolved ref, plan/spec/check-path mismatch, payload mismatch, coverage/class gap, or prior active entry without current full evidence or a history-verifiable reuse ticket.
+- Treat direct replacement, impact, reuse, and graduation as single-writer registry mutations. A live registry writer blocks a second writer; an abandoned local writer lock is recoverable without accepting concurrent lost updates.
+- Classify target failures as `target_implementation_gap`, `target_contract_binding_gap`, `skillguard_model_miss`, `skillguard_runtime_or_validator_gap`, or `environment_or_external_blocker`; an unresolved classification blocks graduation.
+- If a target exposes a SkillGuard miss, add the observed regression and generalized bad family first, repair SkillGuard, rerun self-host and affected prior targets, then retry the current target.
 
-Deep Contract Mode is a universal target-lock process for every covered skill, including SkillGuard itself. Do not reserve deep extraction for README, UI, release, FlowPilot, FlowGuard, or other familiar categories. Those categories are examples, not exceptions.
+## Declared-Check Execution Depth
 
-When covering a target skill, SkillGuard must:
+Use declared-check execution depth when SkillGuard must answer whether a target skill's own required checks were actually completed for the current claim. Read `references/skillguard-execution-depth.md` before adding or changing a `depth_profile`.
 
-1. Read the target skill's own entrypoint and adjacent native route/check records.
-2. Inventory the target's entrypoints, routes, workflow stages, source rules, native checks, added SkillGuard checks, evidence requirements, test gaps, and closure blockers.
-3. Write those items into the target-local work contract as `target_rule_inventory`, `route_inventory`, `workflow_stage_inventory`, `native_check_inventory`, `test_gap_plan`, `coverage_matrix`, and `runtime_lock_policy`.
-4. Bind every required source rule to an obligation, route, stage, check or native-check binding, evidence id, and closure blocker.
-5. Preserve the target skill's original entrypoint and native route owner when they exist. Do not make the global SkillGuard router a mandatory pre-execution gate for ordinary use of that skill.
-6. Require the target-local runtime lock to be visible when the covered skill is used for non-trivial work, so the AI can see the selected route, required stages, checks, evidence, and closure blockers before claiming completion.
-7. Run `check-depth` before claiming that SkillGuard coverage is complete. A contract with only generic phases, generic source requirements, or profile-only coverage is shallow and must fail.
+There is one fixed workflow and no optional mode:
 
-Deep Contract Mode must verify:
+1. The target skill declares its native owner, route ids, and exact required check ids.
+2. SkillGuard freezes that inventory and its dependency graph for the request.
+3. Each declared check executes once under its frozen owner or reuses one exact current immutable success receipt.
+4. SkillGuard reconciles the inventory and receipts by check id, owner id, request fingerprint, terminal disposition, freshness, and receipt identity.
+5. Closure may consume the depth receipt only when every declared check passed and no unresolved check remains.
 
-- source requirements from the target skill are listed in `source_requirements`;
-- target-local rules, routes, stages, checks, evidence, and blockers are represented in `target_rule_inventory`, `route_inventory`, `workflow_stage_inventory`, `native_check_inventory`, `test_gap_plan`, `coverage_matrix`, and `runtime_lock_policy`;
-- every required source requirement has an `acceptance_obligation`;
-- every required obligation is covered by SkillGuard check-manifest checks, native check bindings, or both;
-- skill-specific checks exist for target-specific obligations such as README bilingual/hero gates, native route binding, hard gates, release gates, or global-router freshness;
-- closure blockers prevent accepted or checked status when target-specific evidence is missing;
-- `run_record_required` is true only for `skillguard-runtime` targets, and their latest run record is accepted, positioned at closure, and bound to the current contract hash;
-- native-integrated and hybrid-extension targets set `run_record_required` to false, include `not_parallel_route_proof` and native binding IDs, and retain no legacy SkillGuard run records;
-- cleanup requirements are explicit when old shallow-upgrade traces, stale reports, or obsolete route files still need removal.
+`CONTRACT_DEPTH_PASS` proves only that the target's declared inventory is structurally complete and bound to current owners. `EXECUTION_DEPTH_PASS` proves that every check in that frozen inventory has one current terminal-success receipt for the same request and runtime, and that the receipt was consumed by the requested closure. Contract depth never implies execution depth. Missing, failed, skipped, stale, timed-out, cancelled, cleanup-unconfirmed, or not-run checks remain visible blockers.
 
-Treat `deep-pass` as the normal acceptance label for maintained target skills. Treat `shallow-contract`, `hollow-contract`, `parallel-route-risk`, `stale-run-evidence`, `missing-native-binding`, `cleanup-required`, and `blocked` as failure or repair labels, not as acceptable release status.
+SkillGuard does not know what a target check means. It does not classify targets, detect a family name, assign a model purpose, invent a counterexample, or mandate a particular number or pattern of checks. The target skill retains full ownership of its domain actions, depth standard, fixtures, oracles, and claim boundary. When a target owns several checks, SkillGuard requires all of them only because the target declared them; when a target owns one check, SkillGuard does not force it to invent another.
 
-`deep-pass` is a semantic target-lock claim, not a field-presence claim. A contract does not pass merely because the required JSON lists exist. It must show target-specific rows extracted from the target skill's own rules, routes, workflow stages, native checks, expected artifacts, evidence, tests, and closure blockers. Generic rows such as "entrypoint checked", stale version evidence, compact model summaries, or old run records are shallow and must fail until replaced with current target-specific evidence.
+Branch-conditional targets must still project their own conditional obligations and route/branch requirements. Native terminal closure binds the exact current declared-check receipt and any verifier-owned applicability receipt. An intermediate authorization remains non-terminal and cannot substitute for the fixed `enforced` terminal completion.
+
+Finally, compare the active provider runtime with the profile's required runtime contract, capabilities, enrollment status, and readiness checks. A profile attached to an old runtime is an explicit non-pass state, never an execution-depth pass.
+
+## Project Adoption Workflow
+
+Use the project adoption workflow when a repository contains one or more SkillGuard-maintained skills and future agents or machines need a portable maintenance handoff. Read `references/skillguard-project-adoption.md` before changing adoption behavior.
+
+- Run `project-adopt` once to create repository-root `.skillguard/project.json` and install the managed AGENTS.md block while preserving surrounding project instructions.
+- Run `project-audit` before non-trivial maintenance closure and after transfer, installation, current route changes, prompt changes, or SkillGuard source changes.
+- When adoption is non-current, rerun `project-adopt` only with the complete explicit current managed-skill list. It directly replaces the managed block and manifest; it must not reuse, convert, or renew old rows.
+- Require exactly one begin marker and one end marker, the canonical [SkillGuard repository URL](https://github.com/liuyingxuvka/SkillGuard), a current manifest/block hash pair, existing managed skill entrypoints, the fixed `native-integrated` marker, and an explicit native owner record.
+- Treat a missing, malformed, duplicated, tampered, or stale managed block or manifest as blocked. The project prompt is routing and maintenance evidence only; it does not replace a target execution-depth receipt, native tests, installation parity, or release proof.
+
+## Target Contract Integrity
+
+Use target contract integrity checks when the question is not only "does a contract file exist?" but "does the current contract faithfully preserve the checks the target skill chose for itself?"
+
+SkillGuard compares the target `SKILL.md`, adjacent native route/check materials, and the current source/compiled/manifest trio selected by `check-runtime-authority`. Any non-current target is blocked until ordinary maintenance replaces it directly. Current run directories provide execution evidence only and never become contract authority.
+
+The integrity check is deliberately target-neutral:
+
+1. Read the target skill's entrypoint and native route/check records.
+2. Freeze the exact target-declared check inventory, owners, dependencies, evidence domains, and closure bindings.
+3. Confirm every declared check appears exactly once in the compiled contract and check manifest.
+4. Confirm no undeclared SkillGuard-owned domain route, semantic oracle, fixture pattern, target category, or quality mode has been added.
+5. Run `check-contract` for structural currentness and `check-depth` for exact declared-check coverage.
+6. Block on missing, duplicate, ownerless, cyclic, stale, non-terminal, skipped, failed, or not-run declared checks.
+
+The target skill decides what its checks mean and how many it needs. SkillGuard neither requires a paired example nor weakens a target that declares several domain checks. A contract passes this boundary only when it preserves the target's own inventory exactly and the current execution receipt accounts for every member.
 
 For release-facing README work, run `check-readme-release` in addition to the general SkillGuard checks. This gate is the executable bridge to the README Showcase Writer contract: English-first Chinese mirror, text-to-image hero evidence, README model evidence, version consistency, command-surface wording, and public/private boundary checks.
 
 README model evidence must be current to the release being checked and must include the README Showcase Writer's internal artifacts: repository fact ledger, capability claim matrix, narrative structure plan, and gap ledger. A compact "root claim/mechanism/evidence/boundary" note is useful context, but it is not enough to support highest-standard README coverage.
 
-## Global Router Mode
+## Global Router Workflow
 
-Use Global Router Mode when the task is about making SkillGuard routing available at the user level across installed or repository-local skills.
+Use the global router workflow when the task is about making SkillGuard routing available at the user level across installed or repository-local skills.
 
-In this mode SkillGuard should:
+SkillGuard should:
 
-- scan explicit skill roots for `SKILL.md` files and adjacent `.skillguard/work-contract.json` and `.skillguard/check_manifest.json` route documents;
+- scan explicit skill roots for `SKILL.md` files and resolve each adjacent SkillGuard authority as exactly `current` or `blocked`; a blocked skill may remain visible in diagnostics but has no executable default route;
 - build a global registry artifact as the route-selection source of truth;
 - render a managed user-level AGENTS prompt block from that registry;
 - install or replace only the managed SkillGuard global router block while preserving unrelated user prompt content;
 - check the installed block against the current registry hash before claiming global prompt freshness;
-- resolve the user's task to exactly one current skill, then hand off to that skill's own `SKILL.md`, work contract, check manifest, or native route bindings;
+- resolve the user's task to exactly one current skill, then hand off to that skill's own `SKILL.md` and current source/compiled/manifest trio; never recover a route from historical migration material;
 - refresh the global registry and managed prompt block whenever a skill is added or a skill's entrypoint, contract, check manifest, or native route binding changes.
 
-Global Router Mode is a routing and prompt-projection layer only. It does not execute the selected skill, prove target skill tests, prove package publication, or certify future AI behavior.
+The global router is a routing and prompt-projection layer only. It does not execute the selected skill, prove target skill tests, prove package publication, or certify future AI behavior.
 
 ## Hard Gates
 
@@ -212,9 +270,14 @@ These gates are mandatory for SkillGuard work. If a gate cannot be checked, mark
 - Release, package, command, fixture, schema, git, and publication claims must be directly validated before they are described as complete.
 - Failures and blockers must remain visible in the final report.
 - Runtime contract work must not close unless the selected route, run record, required phases, required evidence, required checks, quality floors, and closure boundary are all current for the declared scope.
-- Deep contract work must not close on `check-contract` alone. It must run `check-depth` when the task claims that a target skill's obligations, native routes, checks, run records, or cleanup boundary are deeply covered.
+- Target contract integrity work must not close on `check-contract` alone. It must run `check-depth` when the task claims that a target skill's declared checks are completely covered.
+- Declared-check supervision must not close on `CONTRACT_DEPTH_PASS`, profile presence, generic boundary checks, or caller-authored observations. It requires a current immutable target execution receipt bound to actual target-owned native check receipts and consumed by the fixed `enforced` closure.
+- Enforced execution depth must freeze the target's complete declared-check inventory and require one exact current terminal-success receipt per check under one owner. SkillGuard must not classify targets or invent target-domain semantics.
+- Capability-validation evidence cannot authorize scheduled production; scheduled production must bind the exact installation/runtime execution identity.
+- A conditional obligation must not escape the fixed `enforced` closure by omitting its branch contract. Require top-level `route_branch_closure_required: true`, the `conditional: true` obligation projection, exact route/branch requirements, a current native terminal and declared-check receipt, and verifier-owned `not_applicable` evidence for legitimate no-op obligations. An intermediate authorization is non-terminal and cannot substitute for terminal completion.
+- A SkillGuard-maintained repository must not claim maintenance closure when `project-audit` reports a missing, stale, duplicated, tampered, or incomplete project prompt/manifest.
 - README release work must not close on prose review alone. It must run `check-readme-release` when the task claims README bilingual, hero, model, version, command-surface, or public-boundary readiness.
-- Runtime contract work for a target with an existing native route/check system must bind that native system and must not add a parallel SkillGuard execution route. Native or hybrid contracts must include `phase_native_bindings` so each SkillGuard phase names the native route binding and native check binding that prove the phase.
+- Runtime contract work must bind the target's native route/check system and must not add a parallel SkillGuard execution route. Each SkillGuard phase must name the native route binding and native check binding that prove the phase.
 - Global router work must not claim current user-level routing unless the registry and managed user-level AGENTS prompt block were refreshed or checked against the current registry hash.
 
 Hard gates are not suggestions. Vague confidence, intent, partial inspection, or a prior successful run is not enough to pass a hard gate.
@@ -241,9 +304,12 @@ When SkillGuard changes, keep the public contract synchronized across the mainta
 - Update the repository README when public usage, status meanings, command names, non-guarantees, or repository structure change.
 - Keep version metadata synchronized when release metadata changes.
 - Keep validation commands and examples aligned with the scripts, fixtures, schemas, and tests that actually exist.
-- Keep `check-depth` aligned with the work-contract schema, generated templates, fixtures, and installed-skill upgrade behavior.
+- Keep `check-runtime-authority`, `check-contract`, and `check-depth` aligned with the single current source/compiled/manifest authority, exact former-surface rejection fixtures, generated templates, and installed-skill behavior.
+- Keep the declared-check depth profile, inventory freezing, receipt reconciliation, conditional branch/no-op closure, target receipt, compiler, supervisor, closure, fixtures, and schemas synchronized.
+- Keep TestMesh parent closure/replay semantics, installation verification receipts, and portfolio-impact receipts synchronized with their current commands and claim boundaries.
+- Keep `project-adopt`, `project-audit`, the repository-root manifest, managed AGENTS.md block, canonical repository URL, and project-adoption fixtures synchronized.
 - Keep `check-readme-release` aligned with README Showcase Writer requirements and public release evidence.
-- Refresh the global registry and managed prompt block when a skill is added or when `SKILL.md`, work-contract, check-manifest, native route binding, or router command behavior changes.
+- Refresh the global registry and managed prompt block when a skill is added or when the router projection reports that `SKILL.md`, current authority, native route binding, or router command behavior changed. Evidence outputs and ordinary unchanged skill use do not trigger a refresh.
 - Preserve privacy boundaries in public files. Do not copy private workspace instructions, local machine paths, private task text, or internal coordination details into maintained artifacts.
 - Re-run the relevant deterministic checks after edits and record any judgment-based review separately from parser or command results.
-- Treat stale evidence as stale. If a maintained file changes, refresh the evidence that depends on it before claiming acceptance.
+- Treat stale evidence as stale. If an exact maintained component changes, rerun only its affected owner or consume a new owner receipt before claiming acceptance; never edit timestamps or evidence metadata to manufacture freshness.

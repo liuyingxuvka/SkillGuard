@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyingxuvka/SkillGuard/schemas/skillguard_project_adoption_v1.schema.json",
+  "title": "SkillGuard project adoption v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "project_id",
+    "skillguard_repository",
+    "skillguard_version",
+    "project_prompt_path",
+    "managed_skills",
+    "maintenance_default",
+    "managed_block_hash",
+    "manifest_hash",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.project_adoption.v1"},
+    "project_id": {"type": "string", "minLength": 1},
+    "skillguard_repository": {"const": "https://github.com/liuyingxuvka/SkillGuard"},
+    "skillguard_version": {"type": "string", "minLength": 1},
+    "project_prompt_path": {"const": "AGENTS.md"},
+    "managed_skills": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["skill_path", "skill_id", "integration_mode", "native_owner_id", "native_route_status", "native_route_evidence_path"],
+        "properties": {
+          "skill_path": {"type": "string", "minLength": 1},
+          "skill_id": {"type": "string", "minLength": 1},
+          "integration_mode": {"const": "native-integrated"},
+          "native_owner_id": {"type": "string", "minLength": 1},
+          "native_route_status": {"enum": ["present", "partial", "absent-reviewed"]},
+          "native_route_evidence_path": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "maintenance_default": {"const": "skillguard-required-for-nontrivial-skill-work"},
+    "managed_block_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "manifest_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

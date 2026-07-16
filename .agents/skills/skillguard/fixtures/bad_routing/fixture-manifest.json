@@ -2,8 +2,8 @@
   "schema_version": "skillguard.fixture_manifest.v1",
   "fixture_version": "bad-routing-fixtures.v1",
   "checker_version": "skillguard.local_cli_dispatch.v1",
-  "compatibility": {
-    "status": "compatible",
+  "current_status": {
+    "status": "current",
     "notes": [
       "Routing negative fixtures target the current route-task command and current public route registry.",
       "Each case checks an expected block decision plus structured routing_conflict_blockers and no route selected."

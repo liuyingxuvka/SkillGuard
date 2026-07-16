@@ -1,53 +1,1635 @@
 {
-  "claim_boundary": "This global registry is a generated index over the scanned local SKILL.md files and their SkillGuard route documents. It selects a skill route but does not replace the selected skill's SKILL.md, work contract, check manifest, runtime checks, tests, package publication, release readiness, external service validation, or future AI behavior evidence.",
-  "current_item_count": 2,
-  "generated_at": "2026-06-27T09:03:28Z",
-  "item_count": 10,
+  "claim_boundary": "This registry selects current skill routes only. It does not replace target contracts, execute checks, or prove future AI behavior.",
+  "current_item_count": 19,
+  "diagnostic_inventory_hash": "sha256:c5a7f35bcd0e36a04738fd8438184fe778fd127394925b7e4aabbc9c00faa3a8",
+  "generated_at": "2026-07-15T22:19:56Z",
+  "item_count": 19,
   "items": [
     {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Use when maintaining, reviewing, or releasing Codex skill repositories and skill-like workflows that need inventory, activation-boundary checks, hard validation gates, and evidence-backed status reporting.",
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use only when explicitly requested or delegated by flowguard-development-process-flow's agent_workflow mode to rehearse a multi-skill, tool, plugin, or external-action workflow from a fresh inventory; generic workflow planning enters flowguard-development-process-flow first.",
       "do_not_use_when": [
-        "Do not use this skill for unrelated coding tasks that do not involve a skill, skill repository, skill-like workflow, or skill-release boundary.",
-        "Do not use this skill for generic README writing, ordinary package publication, broad repository cleanup, dependency upgrades, application feature work, or release notes unless the work is specifically about a Codex skill or its maintenance evidence.",
-        "Do not use this skill merely because a repository contains Markdown, Python, tests, or a release process. The task must involve skill maintenance, skill activation, skill validation, or skill-publication claims.",
-        "Do not use this skill to certify AI correctness, guarantee Codex activation, or bypass human review. SkillGuard can require evidence and structure judgment records, but it cannot prove that future model behavior will always be correct."
+        "Do not use as a generic router, execute the workflow, or replace route-native validation; return unclear routing to `model-first-function-flow`."
       ],
       "route_entrypoint": {
-        "check_manifest_path": ".agents/skills/skillguard/.skillguard/check_manifest.json",
-        "check_manifest_sha256": "B3FCE1B5A3D1FD88C13CB0C1BDFB6F17CAB6D90628AC4A3C394991C42E11E58B",
-        "contract_hash": "D18C5FA5C09325D639AD10BC3871FCFD103358699FBCFE9BB622F08A9B2AC60E",
-        "contract_path": ".agents/skills/skillguard/.skillguard/work-contract.json",
-        "contract_sha256": "634D8365FBDB77E42B119487E6467CB1304D13784FC7787513A06D5FD50A62FD",
-        "default_route_id": "audit",
-        "handoff_rule": "Use select-route/start-run/check-run/close-run against the target work contract before claiming closure.",
-        "integration_mode": "skillguard-runtime",
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:c1c0178ee70fccdb3622c1d6b013f43c2ff67af69747d125fccd66b04cb9c8c5",
+        "check_manifest_hash": "sha256:dd3df710d72a091126d553bc18610a8e3fec3d7eecb84639a56f7b0145e81fdf",
+        "check_manifest_path": ".agents/skills/flowguard-agent-workflow-rehearsal/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:7d1898070fd05aa0cb698fb30fe1bc4f89cb648a9a975fa2f394d00a6963b5b1",
+        "contract_authority": "current",
+        "contract_hash": "sha256:2ac39ef53e4cd75d1b5f96efe9d507cf88ee63be7e39e7440d6f3cbc047f20e4",
+        "contract_path": ".agents/skills/flowguard-agent-workflow-rehearsal/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:ecd2bdc4cd797b5cb3ef2b0efa75e938b377d8e3965aff377e6842050b103d06",
+        "contract_source_path": ".agents/skills/flowguard-agent-workflow-rehearsal/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:9ef45345895aace1a0d207a5840e3e48e1764e4539a29804d8011b4adc2f7e30",
+        "default_route_id": "route:agent_workflow_rehearsal",
+        "function_ids": [
+          "function:agent_workflow_rehearsal"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
         "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": true,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.agent_workflow_rehearsal.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-agent-workflow-rehearsal:native-authority",
+            "owner_id": "development_process_flow"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "development_process_flow",
+            "route_id": "route:agent_workflow_rehearsal"
+          }
+        ],
+        "native_route_owner": "development_process_flow",
         "phase_native_bindings": [],
-        "route_confidence": "explicit",
+        "route_confidence": "native-bound",
         "route_doc_paths": [
-          ".agents/skills/skillguard/SKILL.md",
-          ".agents/skills/skillguard/.skillguard/work-contract.json",
-          ".agents/skills/skillguard/.skillguard/check_manifest.json"
+          ".agents/skills/flowguard-agent-workflow-rehearsal/SKILL.md",
+          ".agents/skills/flowguard-agent-workflow-rehearsal/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-agent-workflow-rehearsal/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-agent-workflow-rehearsal/.skillguard/check-manifest.json"
         ],
         "route_ids": [
-          "audit"
+          "route:agent_workflow_rehearsal"
+        ]
+      },
+      "route_terms": [
+        "actions",
+        "agent_workflow",
+        "change",
+        "confidence.",
+        "continue",
+        "delegated",
+        "external",
+        "flowguard-agent-workflow-rehearsal",
+        "for",
+        "gates",
+        "planning",
+        "plugins",
+        "rework",
+        "selected",
+        "skills",
+        "skipped",
+        "tools",
+        "use",
+        "where"
+      ],
+      "skill_file": ".agents/skills/flowguard-agent-workflow-rehearsal/SKILL.md",
+      "skill_id": "flowguard-agent-workflow-rehearsal",
+      "skill_name": "flowguard-agent-workflow-rehearsal",
+      "skill_path": ".agents/skills/flowguard-agent-workflow-rehearsal",
+      "skill_sha256": "sha256:59a3f98d656ca11fe9c4448a369e020841848d5a0fd58942b1ebfab752fe1073",
+      "status": "current",
+      "use_when": [
+        "Use for delegated `agent_workflow` planning where selected/skipped skills, plugins, tools, external actions, or continue/rework gates change confidence."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when an existing FlowGuard model and code map should drive behavior-preserving architecture contraction, including merging duplicate handlers or modules, collapsing adapters, removing dead branches, or preparing a StructureMesh refactor.",
+      "do_not_use_when": [
+        "Do not use for greenfield module planning, direct refactoring, or behavior change; return unclear models to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:e2da99991a89d14ec4c24f607e89be5c34c2bc005fd3cdb235e4d28ca251d5fd",
+        "check_manifest_hash": "sha256:83390453aae968b9648d36d9b6a566ea5a90298d6be2714eaee37207ad121b03",
+        "check_manifest_path": ".agents/skills/flowguard-architecture-reduction/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:a80b0365c9c8fe05ccf9cee14d69895205b5962877806d6691505602d33e5b46",
+        "contract_authority": "current",
+        "contract_hash": "sha256:17a4ca6e2ecb97159093e2f47d57a5d9829aa4f25b6e9e15ffb68383684b282d",
+        "contract_path": ".agents/skills/flowguard-architecture-reduction/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:03c6b6f4554ce1a14cf42e4e73f271389ef5b1b587538407ba323993065a333e",
+        "contract_source_path": ".agents/skills/flowguard-architecture-reduction/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:d06b58e0ceb17e350501e2cf8691655616ceaeb6375522d165c7e97da4a9c525",
+        "default_route_id": "route:architecture_reduction",
+        "function_ids": [
+          "function:architecture_reduction"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.architecture_reduction.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-architecture-reduction:native-authority",
+            "owner_id": "architecture_reduction"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "architecture_reduction",
+            "route_id": "route:architecture_reduction"
+          }
+        ],
+        "native_route_owner": "architecture_reduction",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-architecture-reduction/SKILL.md",
+          ".agents/skills/flowguard-architecture-reduction/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-architecture-reduction/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-architecture-reduction/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:architecture_reduction"
+        ]
+      },
+      "route_terms": [
+        "adapters",
+        "branches",
+        "collapse",
+        "decisions",
+        "duplicate",
+        "fields",
+        "flowguard-architecture-reduction",
+        "for",
+        "handlers",
+        "keep-facade",
+        "manual-review",
+        "merge",
+        "modules",
+        "over",
+        "remove",
+        "use",
+        "validations."
+      ],
+      "skill_file": ".agents/skills/flowguard-architecture-reduction/SKILL.md",
+      "skill_id": "flowguard-architecture-reduction",
+      "skill_name": "flowguard-architecture-reduction",
+      "skill_path": ".agents/skills/flowguard-architecture-reduction",
+      "skill_sha256": "sha256:7e74ae053f10eb99e110273c9433d8abe63b487a3719cc7221f447902b9256ae",
+      "status": "current",
+      "use_when": [
+        "Use for merge, collapse, remove, keep-facade, or manual-review decisions over duplicate handlers, modules, adapters, branches, fields, or validations."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use for external behavior registration, bidirectional source coverage, exactly one primary owner model, change-mode accounting, internal Primary Path Authority handoff, or broad done/release/archive/publish confidence.",
+      "do_not_use_when": [
+        "Do not inventory helper internals or replace sibling evidence owners; return ordinary modeling to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:cecc4a2f1d60f13594bbbd638e217c329f8fd6c9f3e86e757cef8a3334b6c5b6",
+        "check_manifest_hash": "sha256:6eedccde25e5bd6442ce04b7c96580f481a965a9c3f8d20ebd74d2c1b4bfc563",
+        "check_manifest_path": ".agents/skills/flowguard-behavior-commitment-ledger/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:d13af396ab83a910e6695292f24283db1f666686d2235a9bd94ac317f8895a6c",
+        "contract_authority": "current",
+        "contract_hash": "sha256:a5e211ee7199e4c29b9bea5b7d150fb4c247cc46d6ea579e250d2c3e83b27bc7",
+        "contract_path": ".agents/skills/flowguard-behavior-commitment-ledger/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:af4f278a414bc678be7e3f62f3486af9388aa9a0bcdff7dd0dad640a5d30468b",
+        "contract_source_path": ".agents/skills/flowguard-behavior-commitment-ledger/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:ce84a71e532c099cb3317d718dcb3ce8121d0ac8cba0877da336359121212a04",
+        "default_route_id": "route:behavior_commitment_ledger",
+        "function_ids": [
+          "function:behavior_commitment_ledger"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.behavior_commitment_ledger.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-behavior-commitment-ledger:native-authority",
+            "owner_id": "behavior_commitment_ledger"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "behavior_commitment_ledger",
+            "route_id": "route:behavior_commitment_ledger"
+          }
+        ],
+        "native_route_owner": "behavior_commitment_ledger",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-behavior-commitment-ledger/SKILL.md",
+          ".agents/skills/flowguard-behavior-commitment-ledger/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-behavior-commitment-ledger/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-behavior-commitment-ledger/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:behavior_commitment_ledger"
+        ]
+      },
+      "route_terms": [
+        "add",
+        "backfill",
+        "bootstrap",
+        "change",
+        "check.",
+        "flowguard-behavior-commitment-ledger",
+        "for",
+        "gap",
+        "ledger",
+        "miss",
+        "modes:",
+        "remove",
+        "replace",
+        "six",
+        "the",
+        "use"
+      ],
+      "skill_file": ".agents/skills/flowguard-behavior-commitment-ledger/SKILL.md",
+      "skill_id": "flowguard-behavior-commitment-ledger",
+      "skill_name": "flowguard-behavior-commitment-ledger",
+      "skill_path": ".agents/skills/flowguard-behavior-commitment-ledger",
+      "skill_sha256": "sha256:ce058e2bb178f0d22e447e1601f0d6c097009913ae5f3275915ee1cdab7f6377",
+      "status": "current",
+      "use_when": [
+        "Use for the six ledger modes: bootstrap, add, change, remove/replace, gap backfill, or miss check."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when a FlowGuard model should drive pre-code module and function boundaries, FunctionBlock ownership, field/state/side-effect owners, facade design, adapter boundaries, or validation structure before production edits.",
+      "do_not_use_when": [
+        "Do not perform existing-code refactors, invent behavior, or replace parity/alignment evidence; return missing models to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:965e353db0095658e4f17bbb7a82ec0bb9905df63061c9b8308a243af9dc5028",
+        "check_manifest_hash": "sha256:c5a41623e5f282a68581caf14b5127890861a0683f31eac003a47714a79ee7bd",
+        "check_manifest_path": ".agents/skills/flowguard-code-structure-recommendation/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:462fd6ac747b0a3bac1a08b8b675c9d517d1e88d58e3f2658ba356c3ada7a8d3",
+        "contract_authority": "current",
+        "contract_hash": "sha256:0ad3b2b30e184aa7244a7c544afcd4df3491dd4eed3a93dfce8c56d10e011139",
+        "contract_path": ".agents/skills/flowguard-code-structure-recommendation/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:69cefb62bff664e9fcfc48f82d7d568d330ed39424997ac71e8d579da0404283",
+        "contract_source_path": ".agents/skills/flowguard-code-structure-recommendation/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:649ad0d9f411e5c84619716b536bd31b2cdf3b24a5516f5f6105290aeb38b7df",
+        "default_route_id": "route:code_structure_recommendation",
+        "function_ids": [
+          "function:code_structure_recommendation"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.code_structure_recommendation.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-code-structure-recommendation:native-authority",
+            "owner_id": "code_structure_recommendation"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "code_structure_recommendation",
+            "route_id": "route:code_structure_recommendation"
+          }
+        ],
+        "native_route_owner": "code_structure_recommendation",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-code-structure-recommendation/SKILL.md",
+          ".agents/skills/flowguard-code-structure-recommendation/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-code-structure-recommendation/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-code-structure-recommendation/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:code_structure_recommendation"
+        ]
+      },
+      "route_terms": [
+        "adapter",
+        "before",
+        "boundary",
+        "code",
+        "facade",
+        "field",
+        "flowguard-code-structure-recommendation",
+        "function",
+        "module",
+        "ownership",
+        "reader",
+        "split",
+        "unclear.",
+        "use",
+        "validation",
+        "when",
+        "writer"
+      ],
+      "skill_file": ".agents/skills/flowguard-code-structure-recommendation/SKILL.md",
+      "skill_id": "flowguard-code-structure-recommendation",
+      "skill_name": "flowguard-code-structure-recommendation",
+      "skill_path": ".agents/skills/flowguard-code-structure-recommendation",
+      "skill_sha256": "sha256:f0724a8fa5c03966bda31a60c9d958738b3edc6d224eeb1b7c2718a5244a1d09",
+      "status": "current",
+      "use_when": [
+        "Use before code when module split, function ownership, facade, adapter, field reader/writer, or validation boundary is unclear."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use to generate canonical bad cases, Cartesian combinations, oracles, coverage shards, and receipts from a declared finite boundary, family seed, payload, transition, model mesh, coverage universe, or observed-problem backfeed.",
+      "do_not_use_when": [
+        "Do not invent a boundary from prose, run tests, replace sibling routes, or claim all bugs are covered; return unclear ownership to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:d2b6f5a991be26bdb3ff018540904811e336faaf1c30c57cacd977fa56358696",
+        "check_manifest_hash": "sha256:1410df75c67bb6dde980a8ebbd3637355b0efd227cfd1842eff061fc151b6d43",
+        "check_manifest_path": ".agents/skills/flowguard-contract-exhaustion-mesh/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:d23a4649b985ecf431c6db8dcaf62520ea5675f88295f4abb7db0fbd07dcc8be",
+        "contract_authority": "current",
+        "contract_hash": "sha256:e3c1b02c180cd177ee24424ae8f4fe572cf08aa636221717bb1757346f3b3bca",
+        "contract_path": ".agents/skills/flowguard-contract-exhaustion-mesh/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:339874fc58cde646ed5d1289a6770dd6f45a8b15ff5fce784d5725bbacefbc88",
+        "contract_source_path": ".agents/skills/flowguard-contract-exhaustion-mesh/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:968c0ea13a86c84bf7f036eac00c38ede6226cbf7956e150493f20e50c105ff6",
+        "default_route_id": "route:contract_exhaustion_mesh",
+        "function_ids": [
+          "function:contract_exhaustion_mesh"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.contract_exhaustion_mesh.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-contract-exhaustion-mesh:native-authority",
+            "owner_id": "contract_exhaustion_mesh"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "contract_exhaustion_mesh",
+            "route_id": "route:contract_exhaustion_mesh"
+          }
+        ],
+        "native_route_owner": "contract_exhaustion_mesh",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-contract-exhaustion-mesh/SKILL.md",
+          ".agents/skills/flowguard-contract-exhaustion-mesh/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-contract-exhaustion-mesh/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-contract-exhaustion-mesh/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:contract_exhaustion_mesh"
+        ]
+      },
+      "route_terms": [
+        "bcl",
+        "candidate",
+        "cartesian",
+        "child",
+        "closure",
+        "coverage.",
+        "delegation",
+        "expected",
+        "facade",
+        "flowguard-contract-exhaustion-mesh",
+        "for",
+        "inventory",
+        "member",
+        "model-scoped",
+        "no-delta",
+        "parent",
+        "payload",
+        "ppa",
+        "product-language",
+        "same-class",
+        "state-closure",
+        "transition",
+        "use"
+      ],
+      "skill_file": ".agents/skills/flowguard-contract-exhaustion-mesh/SKILL.md",
+      "skill_id": "flowguard-contract-exhaustion-mesh",
+      "skill_name": "flowguard-contract-exhaustion-mesh",
+      "skill_path": ".agents/skills/flowguard-contract-exhaustion-mesh",
+      "skill_sha256": "sha256:80cf44417e7123b8931ed379f959f7e353ef7e6f64b39011f21f9040c2442a94",
+      "status": "current",
+      "use_when": [
+        "Use for same-class, payload, transition, state-closure, PPA, BCL, product-language, expected member/candidate inventory, facade delegation, parent/child closure, no-delta, or model-scoped Cartesian coverage."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use for staged development, multi-skill work, freshness, sync, release, or final process claims.",
+      "do_not_use_when": [
+        "Do not replace specialists; return unclear routing to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:37f8e9996b385793df0610be25b7ecf4581fa1ec9b6cfab73e686505c8f7115a",
+        "check_manifest_hash": "sha256:b920cac728fc6d58ac0b01877cc806a11e20a3c3e9d4e8f162a93e0d00f6b814",
+        "check_manifest_path": ".agents/skills/flowguard-development-process-flow/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:f9070449da1ebb0e6a377bdfbe858b1b7af885059b392b2c7099c22e75cb42da",
+        "contract_authority": "current",
+        "contract_hash": "sha256:f17235b70a4bebbd8af68537f8312768b5d25e3f97e49caa6ac0104a7b746c75",
+        "contract_path": ".agents/skills/flowguard-development-process-flow/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:afb0f66b1938bb5ebe6904a3f3ac59d8672db0e528f718a4c9db66eafd021d4e",
+        "contract_source_path": ".agents/skills/flowguard-development-process-flow/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:d3e48189c678044d1bf6fe843619478465ea739da260e4cfccd459c7be49e3e4",
+        "default_route_id": "route:development_process_flow",
+        "function_ids": [
+          "function:development_process_flow"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.development_process_flow.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-development-process-flow:native-authority",
+            "owner_id": "development_process_flow"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "development_process_flow",
+            "route_id": "route:development_process_flow"
+          }
+        ],
+        "native_route_owner": "development_process_flow",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-development-process-flow/SKILL.md",
+          ".agents/skills/flowguard-development-process-flow/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-development-process-flow/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-development-process-flow/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:development_process_flow"
+        ]
+      },
+      "route_terms": [
+        "artifact",
+        "background",
+        "broad",
+        "checks",
+        "claims.",
+        "flowguard-development-process-flow",
+        "for",
+        "multiple",
+        "payload",
+        "plans",
+        "release",
+        "rough",
+        "schemas",
+        "skills",
+        "staged",
+        "sync",
+        "use",
+        "versions",
+        "work"
+      ],
+      "skill_file": ".agents/skills/flowguard-development-process-flow/SKILL.md",
+      "skill_id": "flowguard-development-process-flow",
+      "skill_name": "flowguard-development-process-flow",
+      "skill_path": ".agents/skills/flowguard-development-process-flow",
+      "skill_sha256": "sha256:ab17d4bd6ae9d5aaa365065fcc0174d08e783d5323d5f4fad398ab7f61fe1152",
+      "status": "current",
+      "use_when": [
+        "Use for rough plans, staged work, multiple skills, background checks, artifact versions, payload schemas, sync, release, or broad claims."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use before non-trivial discussion, proposal, feature, bug, refactor, UI, test, prompt, skill, workflow, or process work in an existing modeled system to identify current ownership and duplicate-boundary risk.",
+      "do_not_use_when": [
+        "Do not implement, split, or replace native validation; skip trivial/no-context work and return unclear scope to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:770dbce2e2eeae15b1d09674a8437814d1c33665cc8c0daf5e45a873d61423a1",
+        "check_manifest_hash": "sha256:9c0d039640f1c70dacf69f389187e53819902a08b514de58b442b26616c3346e",
+        "check_manifest_path": ".agents/skills/flowguard-existing-model-preflight/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:466819b9a8c5a1852c9a13496387affe2db5b1fa0413eb3e81f8cefb290089e7",
+        "contract_authority": "current",
+        "contract_hash": "sha256:35ac6f039b22823ba1e9864e5c3b54cb9ab6a2ead2bada24e29a0736acf916fa",
+        "contract_path": ".agents/skills/flowguard-existing-model-preflight/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:4baf72b9509060efaf898a0d83ad93177ef3e4f5232bc5651671d78affad417d",
+        "contract_source_path": ".agents/skills/flowguard-existing-model-preflight/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:731d261b6e54b1d54595cff9ab7d54b7f2b54eae1c38a734c55caa8a223489f4",
+        "default_route_id": "route:existing_model_preflight",
+        "function_ids": [
+          "function:existing_model_preflight"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.existing_model_preflight.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-existing-model-preflight:native-authority",
+            "owner_id": "existing_model_preflight"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "existing_model_preflight",
+            "route_id": "route:existing_model_preflight"
+          }
+        ],
+        "native_route_owner": "existing_model_preflight",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-existing-model-preflight/SKILL.md",
+          ".agents/skills/flowguard-existing-model-preflight/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-existing-model-preflight/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-existing-model-preflight/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:existing_model_preflight"
+        ]
+      },
+      "route_terms": [
+        "before",
+        "change.",
+        "commitments",
+        "evidence",
+        "fields",
+        "flowguard-existing-model-preflight",
+        "implementation",
+        "may",
+        "mesh",
+        "models",
+        "non-trivial",
+        "own",
+        "proposals",
+        "similar",
+        "the",
+        "use",
+        "where"
+      ],
+      "skill_file": ".agents/skills/flowguard-existing-model-preflight/SKILL.md",
+      "skill_id": "flowguard-existing-model-preflight",
+      "skill_name": "flowguard-existing-model-preflight",
+      "skill_path": ".agents/skills/flowguard-existing-model-preflight",
+      "skill_sha256": "sha256:edc29a2cb912e57bf2309941e42fcb09b461e1950c755d68894916800e166379",
+      "status": "current",
+      "use_when": [
+        "Use before non-trivial proposals/implementation where commitments, fields, similar models, or mesh evidence may own the change."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when a change adds, removes, renames, migrates, replaces, externalizes, preserves, or audits fields, schema keys, config flags, prompt fields, payload columns, persisted attributes, defaults, aliases, or fallbacks.",
+      "do_not_use_when": [
+        "Do not put every field in the high-level model, treat inventory as behavior proof, or replace alignment/testing; return missing behavior models to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:35a38d9a3dab852fe03b120b4c52beaf30012cb784c21b1b950cec052b369e6e",
+        "check_manifest_hash": "sha256:09578293ce878544291f31442b1ed6a93d9d4afa024b63a018ddbac3cf2f2fa2",
+        "check_manifest_path": ".agents/skills/flowguard-field-lifecycle-mesh/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:05b6a2e47b2b999b1a84e74dc8e477e4ffbfeacdad6bb46c9dbb7fed71a7b203",
+        "contract_authority": "current",
+        "contract_hash": "sha256:3d5020b3ff7b914db38af0849e5bcc747f320dcb073e8ba53852f373b76aad95",
+        "contract_path": ".agents/skills/flowguard-field-lifecycle-mesh/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:f392b6d518e1abe273d4e31e055f7041d528f5ecc2f421d6ccda297e26700aef",
+        "contract_source_path": ".agents/skills/flowguard-field-lifecycle-mesh/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:733dffd7546bf49da8ddf97fd83371db7b134944f3c15e4682186a515e0c5d1e",
+        "default_route_id": "route:field_lifecycle_mesh",
+        "function_ids": [
+          "function:field_lifecycle_mesh"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.field_lifecycle_mesh.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-field-lifecycle-mesh:native-authority",
+            "owner_id": "field_lifecycle_mesh"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "field_lifecycle_mesh",
+            "route_id": "route:field_lifecycle_mesh"
+          }
+        ],
+        "native_route_owner": "field_lifecycle_mesh",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-field-lifecycle-mesh/SKILL.md",
+          ".agents/skills/flowguard-field-lifecycle-mesh/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-field-lifecycle-mesh/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-field-lifecycle-mesh/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:field_lifecycle_mesh"
+        ]
+      },
+      "route_terms": [
+        "aliases",
+        "config",
+        "defaults",
+        "fallbacks",
+        "field-rooted",
+        "fields",
+        "flowguard-field-lifecycle-mesh",
+        "for",
+        "migrations",
+        "misses.",
+        "model",
+        "payload",
+        "persisted",
+        "prompt",
+        "runtime",
+        "schema",
+        "use"
+      ],
+      "skill_file": ".agents/skills/flowguard-field-lifecycle-mesh/SKILL.md",
+      "skill_id": "flowguard-field-lifecycle-mesh",
+      "skill_name": "flowguard-field-lifecycle-mesh",
+      "skill_path": ".agents/skills/flowguard-field-lifecycle-mesh",
+      "skill_sha256": "sha256:3753463f063bd413bdcd18d0cbc5e34b2c64117f447839f1172517a5f35678d0",
+      "status": "current",
+      "use_when": [
+        "Use for schema/payload/config/prompt/persisted/UI/runtime fields, migrations, aliases, defaults, fallbacks, or field-rooted model misses."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when a FlowGuard project has three or more local models, an oversized model, stale child evidence, parent/child partitioning, target split derivation, child reattachment, affected siblings, or whole-flow mesh closure risk.",
+      "do_not_use_when": [
+        "Do not split tests or code, trust child-local green as parent proof, or use for ordinary single-model work; return that work to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:3a24e9bc1303ff710c219609883ba61d5c892f0d64dcea24d3fb5f56f7f16f27",
+        "check_manifest_hash": "sha256:338097fd19092c78e4c8444e680cd19e86242262038a2b79b7aab90d9a527961",
+        "check_manifest_path": ".agents/skills/flowguard-model-mesh/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:9fe54a7077872d690a6640c5bf6ac4537e7b64e9b77604ec94c64dbd1ae86bf1",
+        "contract_authority": "current",
+        "contract_hash": "sha256:23e5a3d8e2cf17077a4594566e3cd607c99fbe349ca9a240d1f18847871220aa",
+        "contract_path": ".agents/skills/flowguard-model-mesh/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:7ed62d18557581fb58dab3096b15709cf4f1af3ce481c6af63ac688968cadb0f",
+        "contract_source_path": ".agents/skills/flowguard-model-mesh/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:20f439839b5e26548ee6cc5c7e6183c25b884b4a25d4cdeb240ede6f1f0930d8",
+        "default_route_id": "route:model_mesh_maintenance",
+        "function_ids": [
+          "function:model_mesh_maintenance"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.model_mesh_maintenance.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-model-mesh:native-authority",
+            "owner_id": "model_mesh_maintenance"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "model_mesh_maintenance",
+            "route_id": "route:model_mesh_maintenance"
+          }
+        ],
+        "native_route_owner": "model_mesh_maintenance",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-model-mesh/SKILL.md",
+          ".agents/skills/flowguard-model-mesh/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-model-mesh/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-model-mesh/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:model_mesh_maintenance"
+        ]
+      },
+      "route_terms": [
+        "affected",
+        "boundaries",
+        "changed",
+        "child",
+        "claims.",
+        "coverage",
+        "evidence",
+        "flowguard-model-mesh",
+        "for",
+        "groups",
+        "incomplete",
+        "model",
+        "models",
+        "oversized",
+        "parent",
+        "receipts",
+        "siblings",
+        "stale",
+        "use",
+        "whole-flow"
+      ],
+      "skill_file": ".agents/skills/flowguard-model-mesh/SKILL.md",
+      "skill_id": "flowguard-model-mesh",
+      "skill_name": "flowguard-model-mesh",
+      "skill_path": ".agents/skills/flowguard-model-mesh",
+      "skill_sha256": "sha256:390fe17dfa2727bac76ef1f6c1d8875b90cd7d85185bac68030de8d5a2af9918",
+      "status": "current",
+      "use_when": [
+        "Use for 3+ models, oversized/incomplete model groups, changed child boundaries, stale child evidence, coverage receipts, affected siblings, or parent whole-flow claims."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when post-FlowGuard runtime, test, replay, log, manual, production, or UI evidence exposes a missed behavior class, or a repair needs generalized closure.",
+      "do_not_use_when": [
+        "Do not patch only the observed instance, invent a new feature commitment, or use without concrete failure evidence; return ordinary unclear modeling to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:11a2daaf3ad242373cd931a479adcbc114efcd27c96d53d72b1f8477c9b0b756",
+        "check_manifest_hash": "sha256:00b6143a035a9957d4b4c08144e0174960af31372d01748a2917a721a8ea96da",
+        "check_manifest_path": ".agents/skills/flowguard-model-miss-review/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:a155b706b2f48e35ad62badc455f9e7f5507928477b04715499f943dc009e0f5",
+        "contract_authority": "current",
+        "contract_hash": "sha256:a50ee89efff61246a3885b07237da90ee05be9a6493cc1015ff997e2a6a8827c",
+        "contract_path": ".agents/skills/flowguard-model-miss-review/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:9a03f9c4220eab93bbf63a49f43573d95ccb185470e469f99f1fa7ec89fcca9b",
+        "contract_source_path": ".agents/skills/flowguard-model-miss-review/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:26dcb1cfad4eb315e16e85ade27ba3d36b9b41c3dd02a3e77edd39c07ac4fc97",
+        "default_route_id": "route:model_miss_review",
+        "function_ids": [
+          "function:model_miss_review"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.model_miss_review.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-model-miss-review:native-authority",
+            "owner_id": "model_miss_review"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "model_miss_review",
+            "route_id": "route:model_miss_review"
+          }
+        ],
+        "native_route_owner": "model_miss_review",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-model-miss-review/SKILL.md",
+          ".agents/skills/flowguard-model-miss-review/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-model-miss-review/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-model-miss-review/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:model_miss_review"
+        ]
+      },
+      "route_terms": [
+        "after",
+        "and",
+        "backpropagation",
+        "boundary_missing",
+        "bug-class",
+        "evidence.",
+        "failure",
+        "flowguard-green",
+        "flowguard-model-miss-review",
+        "for",
+        "log",
+        "manual",
+        "needing",
+        "repair",
+        "replay",
+        "root-cause",
+        "runtime",
+        "test",
+        "use"
+      ],
+      "skill_file": ".agents/skills/flowguard-model-miss-review/SKILL.md",
+      "skill_id": "flowguard-model-miss-review",
+      "skill_name": "flowguard-model-miss-review",
+      "skill_path": ".agents/skills/flowguard-model-miss-review",
+      "skill_sha256": "sha256:97c5d78bbb77fa3c378a49649691e1b348cd87a27ab655b00b6d7e2a86b85f47",
+      "status": "current",
+      "use_when": [
+        "Use after a FlowGuard-green runtime/test/replay/log/manual/UI failure or for a repair needing `boundary_missing`, root-cause backpropagation, and bug-class evidence."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when model obligations, owner external CodeContracts, source audits, transition cells, boundary observations, payload cases, closure targets, or ordinary test evidence need direct current comparison.",
+      "do_not_use_when": [
+        "Do not split tests/code/models or use TestMesh as a parallel semantic owner; return undefined obligations to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:10aeab6c901483a96bab75e2f3b2f2110fb474ee676e566d8d31d2cdf04892fd",
+        "check_manifest_hash": "sha256:24b90714d7cd0fe37ce8b634676824f6f3b5d97ec78a9064252716f8e9b66793",
+        "check_manifest_path": ".agents/skills/flowguard-model-test-alignment/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:9acd7ec3af5c6582f397b362370709d9dc7231442990a3eb36fdb2fd2561125d",
+        "contract_authority": "current",
+        "contract_hash": "sha256:a71126c4d4264330d09e71903c7d6ec3d8b67f2a508713b4df778bc03064e5ff",
+        "contract_path": ".agents/skills/flowguard-model-test-alignment/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:f46bbb2bc05e9771dc799040daca7359ae5329f9faab22d59188290d9a2f9145",
+        "contract_source_path": ".agents/skills/flowguard-model-test-alignment/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:e2e7496d1fffaca31fdbe5d403d0ef6c4a9d12d21a6738c43b73b22f50195888",
+        "default_route_id": "route:model_test_alignment",
+        "function_ids": [
+          "function:model_test_alignment"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.model_test_alignment.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-model-test-alignment:native-authority",
+            "owner_id": "model_test_alignment"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "model_test_alignment",
+            "route_id": "route:model_test_alignment"
+          }
+        ],
+        "native_route_owner": "model_test_alignment",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-model-test-alignment/SKILL.md",
+          ".agents/skills/flowguard-model-test-alignment/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-model-test-alignment/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-model-test-alignment/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:model_test_alignment"
+        ]
+      },
+      "route_terms": [
+        "boundaries",
+        "cells",
+        "code",
+        "coverage",
+        "evidence.",
+        "field",
+        "flowguard-model-test-alignment",
+        "for",
+        "model-code-test",
+        "payload",
+        "projections",
+        "targets",
+        "use"
+      ],
+      "skill_file": ".agents/skills/flowguard-model-test-alignment/SKILL.md",
+      "skill_id": "flowguard-model-test-alignment",
+      "skill_name": "flowguard-model-test-alignment",
+      "skill_path": ".agents/skills/flowguard-model-test-alignment",
+      "skill_sha256": "sha256:95935aecf7797a352cad6bf5853022278c8efe7796662d49d8899773e0d3742d",
+      "status": "current",
+      "use_when": [
+        "Use for model-code-test coverage, cells, field projections, code boundaries, targets, or payload evidence."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when a locally green FlowGuard model needs topology-grounded future-use hazard review for broad claims, business paths, old/new disposition, side effects, terminals, loops, external boundaries, or parent/child compression.",
+      "do_not_use_when": [
+        "Do not use for generic risk lists, unmodeled systems, or as a replacement for maturation, alignment, Risk Evidence Ledger, or Architecture Reduction; return unclear topology to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:5319428f4cb8ebb2b71b287a3fdc9c92a668368da92aa8581be079a02cc3b309",
+        "check_manifest_hash": "sha256:22743ff8ff55c8e27861131c9d4a7092ea524b7966d2f5e6fff66baa345d3c5e",
+        "check_manifest_path": ".agents/skills/flowguard-model-topology-hazard-review/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:ca7d9b08f1015e4099b58ee5186b27bdb172a4d21375457ba7b1f6440f2b34ca",
+        "contract_authority": "current",
+        "contract_hash": "sha256:a258f955c4c02d5d8dc356ee383322a2937bf625a7cc2bbef972cb21e9ec5edc",
+        "contract_path": ".agents/skills/flowguard-model-topology-hazard-review/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:1dd668de68f7f15824c7debd5e7fbb72830357a94b474680f3d184da1c3b4af9",
+        "contract_source_path": ".agents/skills/flowguard-model-topology-hazard-review/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:dcdd30bb358fa7df764f2cf45e3ba645ea6eef40502d7ed1296b17048befd3a5",
+        "default_route_id": "route:model_topology_hazard_review",
+        "function_ids": [
+          "function:model_topology_hazard_review"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.model_topology_hazard_review.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-model-topology-hazard-review:native-authority",
+            "owner_id": "model_topology_hazard_review"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "model_topology_hazard_review",
+            "route_id": "route:model_topology_hazard_review"
+          }
+        ],
+        "native_route_owner": "model_topology_hazard_review",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-model-topology-hazard-review/SKILL.md",
+          ".agents/skills/flowguard-model-topology-hazard-review/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-model-topology-hazard-review/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-model-topology-hazard-review/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:model_topology_hazard_review"
+        ]
+      },
+      "route_terms": [
+        "before",
+        "broad",
+        "closure",
+        "compatibility",
+        "confidence",
+        "conflicting",
+        "done",
+        "duplicate",
+        "effects",
+        "flowguard-model-topology-hazard-review",
+        "green",
+        "hazards.",
+        "hide",
+        "liveness",
+        "local",
+        "may",
+        "paths",
+        "publish",
+        "release",
+        "repeatable",
+        "side",
+        "terminals",
+        "use",
+        "when"
+      ],
+      "skill_file": ".agents/skills/flowguard-model-topology-hazard-review/SKILL.md",
+      "skill_id": "flowguard-model-topology-hazard-review",
+      "skill_name": "flowguard-model-topology-hazard-review",
+      "skill_path": ".agents/skills/flowguard-model-topology-hazard-review",
+      "skill_sha256": "sha256:d1748807533d3488b733a2ab98fee77db39c4fc79bef181d8dff46e63070d06a",
+      "status": "current",
+      "use_when": [
+        "Use before broad done/release/publish confidence when local green may hide duplicate/conflicting paths, broad terminals, repeatable side effects, compatibility paths, or closure/liveness hazards."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use only when explicitly requested or delegated by flowguard-development-process-flow's plan_detailing mode to compile a rough non-trivial plan into structured artifacts, steps, receipts, validations, failure/rework branches, and claim boundaries.",
+      "do_not_use_when": [
+        "Do not act as a generic planner, execute work, or replace downstream evidence; return unclear routing to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:a52271a2efaa39867ef11f89d6a0f32b08b657313d21a9c1bccd52613aacbc3e",
+        "check_manifest_hash": "sha256:3eb4be1468b24e164846ed814c0de24a38df05bffd84827d5aee3ae672ec308e",
+        "check_manifest_path": ".agents/skills/flowguard-plan-detailing-compiler/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:4767b87c98c519563e10e5f414c840141f5e711c7abd705796488627926292f0",
+        "contract_authority": "current",
+        "contract_hash": "sha256:e41a20276066fd108fafce4901c2ee51079a2f4682953137a52b974b94e3f3fb",
+        "contract_path": ".agents/skills/flowguard-plan-detailing-compiler/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:7dc0abf2b2f6acc7905ae15e5f468535d8071500051fd20c11884462e5013f1f",
+        "contract_source_path": ".agents/skills/flowguard-plan-detailing-compiler/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:741a2ddaad9037c1d1c1f2a3d09063488cb3e7d7ed5b6c4c6c1dce0f9a1aa2de",
+        "default_route_id": "route:plan_detailing_compiler",
+        "function_ids": [
+          "function:plan_detailing_compiler"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.plan_detailing_compiler.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-plan-detailing-compiler:native-authority",
+            "owner_id": "development_process_flow"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "development_process_flow",
+            "route_id": "route:plan_detailing_compiler"
+          }
+        ],
+        "native_route_owner": "development_process_flow",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-plan-detailing-compiler/SKILL.md",
+          ".agents/skills/flowguard-plan-detailing-compiler/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-plan-detailing-compiler/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-plan-detailing-compiler/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:plan_detailing_compiler"
+        ]
+      },
+      "route_terms": [
+        "artifacts",
+        "delegated",
+        "flowguard-plan-detailing-compiler",
+        "for",
+        "payload",
+        "plan_detailing",
+        "rework.",
+        "scope",
+        "steps",
+        "surfaces",
+        "underspecified",
+        "use",
+        "validation",
+        "with"
+      ],
+      "skill_file": ".agents/skills/flowguard-plan-detailing-compiler/SKILL.md",
+      "skill_id": "flowguard-plan-detailing-compiler",
+      "skill_name": "flowguard-plan-detailing-compiler",
+      "skill_path": ".agents/skills/flowguard-plan-detailing-compiler",
+      "skill_sha256": "sha256:4efe202901046f44e6e6d7b45dbaa456af64c8d5955256a08df519a5f1f9cd29",
+      "status": "current",
+      "use_when": [
+        "Use for delegated `plan_detailing` with underspecified scope, steps, artifacts, UI/payload surfaces, validation, or rework."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when an existing large script, module, package, command, public API, facade, config surface, or plugin entrypoint split needs model-derived ownership, dependency, compatibility, parity, and release gates.",
+      "do_not_use_when": [
+        "Do not derive behavior requirements from scratch, recommend greenfield modules, refactor code directly, or claim parity from internal/formatting checks; return unclear models to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:84f1574e1da8359ff5bffac441eb2e8d5a7c777d6e23068175240baccef1b259",
+        "check_manifest_hash": "sha256:3eefd27122cd25153f7d764df5e82a460d50dc82d151da81ec402e8fce0aa412",
+        "check_manifest_path": ".agents/skills/flowguard-structure-mesh/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:bcfc0703835e3e802f479ab37edf9f42b984f24c41b4f71afcd93e406ec3e6a2",
+        "contract_authority": "current",
+        "contract_hash": "sha256:f60b1fceef36e4c8f7539cf73d25877ee0329d4aa9965aacf4fcbb3dc5938630",
+        "contract_path": ".agents/skills/flowguard-structure-mesh/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:536f0602d800f41284ea3f76b06f9b8c3fba14a6b47eb06274701877be3df5df",
+        "contract_source_path": ".agents/skills/flowguard-structure-mesh/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:840508db4a52621e0b077572fb28f653b7f44601a2a456cd6308520167447877",
+        "default_route_id": "route:structure_mesh_maintenance",
+        "function_ids": [
+          "function:structure_mesh_maintenance"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.structure_mesh_maintenance.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-structure-mesh:native-authority",
+            "owner_id": "structure_mesh_maintenance"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "structure_mesh_maintenance",
+            "route_id": "route:structure_mesh_maintenance"
+          }
+        ],
+        "native_route_owner": "structure_mesh_maintenance",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-structure-mesh/SKILL.md",
+          ".agents/skills/flowguard-structure-mesh/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-structure-mesh/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-structure-mesh/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:structure_mesh_maintenance"
+        ]
+      },
+      "route_terms": [
+        "and",
+        "api",
+        "checking",
+        "cli",
+        "code",
+        "config",
+        "cycles",
+        "data",
+        "dependency",
+        "dividing",
+        "effects",
+        "entrypoints",
+        "flowguard-structure-mesh",
+        "for",
+        "imports",
+        "large",
+        "moving",
+        "parity.",
+        "plugin",
+        "public",
+        "side",
+        "splitting",
+        "state",
+        "surfaces",
+        "use"
+      ],
+      "skill_file": ".agents/skills/flowguard-structure-mesh/SKILL.md",
+      "skill_id": "flowguard-structure-mesh",
+      "skill_name": "flowguard-structure-mesh",
+      "skill_path": ".agents/skills/flowguard-structure-mesh",
+      "skill_sha256": "sha256:32f27c43061c147d24e6ddf5a8335dcec3e06f6b9c3ffef4c0230243b9f7d952",
+      "status": "current",
+      "use_when": [
+        "Use for splitting large code surfaces, moving public imports/CLI/API/data/plugin entrypoints, dividing state/config/side effects, or checking dependency cycles and parity."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when tests, checks, transition cells, payload cases, or evidence are large, slow, layered, stale, skipped, backgrounded, release-only, or require parent/child ownership and freshness proof.",
+      "do_not_use_when": [
+        "Do not split code/models, choose DPF process shape, group root causes, decide semantics, or execute tests; return small tests to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:dbc00441dc9e281f8962c11d9f7e7e6062fc630b94de3b482d0fdaa35d47a09a",
+        "check_manifest_hash": "sha256:488a8a0eaafd7c2ab5e9e193cb1a6c3f680649fc245f34a38d04015c9cb0c9ae",
+        "check_manifest_path": ".agents/skills/flowguard-test-mesh/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:e892900548c0327397dace147eac17058bf4e83a100e6742e8a3591792e49705",
+        "contract_authority": "current",
+        "contract_hash": "sha256:828372da1b5039220bd8b70378d25bfcaabec45761c5443061a3fee655855bde",
+        "contract_path": ".agents/skills/flowguard-test-mesh/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:c2cae95f081d99712b3aac564e7c2f80c7d2908e2e7f310d61cc5512ccbb732d",
+        "contract_source_path": ".agents/skills/flowguard-test-mesh/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:97bea4902e8a5443d9c4b2bac01a54699db781a27f437dccacbe3f69916d2022",
+        "default_route_id": "route:test_mesh_maintenance",
+        "function_ids": [
+          "function:test_mesh_maintenance"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.test_mesh_maintenance.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-test-mesh:native-authority",
+            "owner_id": "test_mesh_maintenance"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "test_mesh_maintenance",
+            "route_id": "route:test_mesh_maintenance"
+          }
+        ],
+        "native_route_owner": "test_mesh_maintenance",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-test-mesh/SKILL.md",
+          ".agents/skills/flowguard-test-mesh/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-test-mesh/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-test-mesh/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:test_mesh_maintenance"
+        ]
+      },
+      "route_terms": [
+        "artifact-payload",
+        "background",
+        "boundaries.",
+        "child",
+        "diagnostic",
+        "evidence",
+        "flowguard-test-mesh",
+        "for",
+        "gates",
+        "large",
+        "matrices",
+        "release",
+        "reused",
+        "scripts",
+        "slow",
+        "stale",
+        "test",
+        "use"
+      ],
+      "skill_file": ".agents/skills/flowguard-test-mesh/SKILL.md",
+      "skill_id": "flowguard-test-mesh",
+      "skill_name": "flowguard-test-mesh",
+      "skill_path": ".agents/skills/flowguard-test-mesh",
+      "skill_sha256": "sha256:b9154239a4b29644961fa466a950e6fb63592cab1e0da6da9812e6422255c77d",
+      "status": "current",
+      "use_when": [
+        "Use for large/slow/background child test scripts, stale/reused evidence, release gates, artifact-payload matrices, or diagnostic boundaries."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use for UI content admission, observed surface, behavior, structure/text, operability, evidence, or transitions.",
+      "do_not_use_when": [
+        "Do not style first, invent roles, or treat observation as permission; return non-UI work to `model-first-function-flow`."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:31ac5df962915f332066748ebea095d03d55ac738a47d754c338894a6b7f295f",
+        "check_manifest_hash": "sha256:68ea82b04017d34101b85bc2f204c6c32c20fbce31fb74b9e3f2f0819fd9fdb0",
+        "check_manifest_path": ".agents/skills/flowguard-ui-flow-structure/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:f93822f881fb7fffa3b72e69e4886021688a08651b664771547a14a3c4451a12",
+        "contract_authority": "current",
+        "contract_hash": "sha256:cea09828a0147a17623e19ef1a4f4a596387f0bc9322b5f2770a02bf9e9f58ab",
+        "contract_path": ".agents/skills/flowguard-ui-flow-structure/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:d35c054a892712cebb1d7eaec1eb9ea1fc4e35a0af2efe4d9da68beba8b4fead",
+        "contract_source_path": ".agents/skills/flowguard-ui-flow-structure/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:19d8c47c2e3306657ce0b58f224cd2d33803ebddfef9906e7e5bf8b9a8d8f155",
+        "default_route_id": "route:ui_flow_structure",
+        "function_ids": [
+          "function:ui_flow_structure"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.ui_flow_structure.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:flowguard-ui-flow-structure:native-authority",
+            "owner_id": "ui_flow_structure"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "ui_flow_structure",
+            "route_id": "route:ui_flow_structure"
+          }
+        ],
+        "native_route_owner": "ui_flow_structure",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/flowguard-ui-flow-structure/SKILL.md",
+          ".agents/skills/flowguard-ui-flow-structure/.skillguard/contract-source.json",
+          ".agents/skills/flowguard-ui-flow-structure/.skillguard/compiled-contract.json",
+          ".agents/skills/flowguard-ui-flow-structure/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:ui_flow_structure"
+        ]
+      },
+      "route_terms": [
+        "actions",
+        "content",
+        "controls",
+        "details",
+        "evidence",
+        "flowguard-ui-flow-structure",
+        "for",
+        "hierarchy",
+        "interaction",
+        "language.",
+        "layout",
+        "product-wide",
+        "runnable",
+        "surfaces",
+        "tasks",
+        "typography",
+        "use"
+      ],
+      "skill_file": ".agents/skills/flowguard-ui-flow-structure/SKILL.md",
+      "skill_id": "flowguard-ui-flow-structure",
+      "skill_name": "flowguard-ui-flow-structure",
+      "skill_path": ".agents/skills/flowguard-ui-flow-structure",
+      "skill_sha256": "sha256:6e941eabd2b60d70db05ab4c316dd81404055bd1017c6553baafdf34a8aed1e6",
+      "status": "current",
+      "use_when": [
+        "Use for UI content/details, controls, surfaces, tasks/actions, runnable/layout evidence, typography hierarchy, or product-wide interaction language."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "FlowGuard kernel for ordinary behavior/state modeling, unclear route selection, cross-route coordination, and kernel-owned internal gates. Use when no direct FlowGuard satellite clearly owns the risk or several routes must be coordinated; use the matching satellite directly when ownership is clear.",
+      "do_not_use_when": [
+        "Do not force the kernel before a clear peer satellite, use it for trivial copy/format/direct-command work, or treat check-engine helpers as independently triggerable Codex skills."
+      ],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:1bdfd565e1b81009e6414db92e6e56e7efabf60c5e46ff847d5bcabec43cdca9",
+        "check_manifest_hash": "sha256:d2df07aed4c1a63e1a8b3ecb4de18cf027dd27b29a0fb29b2dbf773e8b48e707",
+        "check_manifest_path": ".agents/skills/model-first-function-flow/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:f6c2e85c6de14b382a6fad7eb65d57a42926fc08f7e292815c6a22f781455eff",
+        "contract_authority": "current",
+        "contract_hash": "sha256:906285f256c9dfae9fb2af26a89c785790517a9fb9e43f404c7980f1d2f15138",
+        "contract_path": ".agents/skills/model-first-function-flow/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:aa0fbe3fa64ce1619e891b5c331bd1d1da8e8d4d78fa4d749bdce155e94240ee",
+        "contract_source_path": ".agents/skills/model-first-function-flow/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:4f5489ca1a08ba9e0c62282565ce6650a8eb2bdf3eaf271794930efe504ef9b3",
+        "default_route_id": "route:model_first_function_flow",
+        "function_ids": [
+          "function:model_first_function_flow"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "flowguard.model_first_function_flow.skill_contract.v2",
+        "native_check_bindings": [
+          {
+            "authority": "target-native",
+            "check_id": "check:model-first-function-flow:native-authority",
+            "owner_id": "model_first_function_flow"
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "authority": "target-native",
+            "owner_id": "model_first_function_flow",
+            "route_id": "route:model_first_function_flow"
+          }
+        ],
+        "native_route_owner": "model_first_function_flow",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/model-first-function-flow/SKILL.md",
+          ".agents/skills/model-first-function-flow/.skillguard/contract-source.json",
+          ".agents/skills/model-first-function-flow/.skillguard/compiled-contract.json",
+          ".agents/skills/model-first-function-flow/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:model_first_function_flow"
+        ]
+      },
+      "route_terms": [
+        "behavior",
+        "coordinated.",
+        "correct",
+        "input",
+        "model-first-function-flow",
+        "modeling",
+        "multiple",
+        "must",
+        "needs",
+        "order",
+        "output",
+        "outputs",
+        "retry",
+        "risk",
+        "route",
+        "satellite",
+        "set",
+        "side-effect",
+        "state",
+        "the",
+        "unclear",
+        "use",
+        "when"
+      ],
+      "skill_file": ".agents/skills/model-first-function-flow/SKILL.md",
+      "skill_id": "model-first-function-flow",
+      "skill_name": "model-first-function-flow",
+      "skill_path": ".agents/skills/model-first-function-flow",
+      "skill_sha256": "sha256:cc2c8dba996fc7c1156b4415a213d5f863d4fda7c2c61454da64fa766cb651d1",
+      "status": "current",
+      "use_when": [
+        "Use when behavior/state/order/retry/side-effect risk needs `Input x State -> Set(Output x State)` modeling, the correct satellite is unclear, or multiple route outputs must be coordinated."
+      ]
+    },
+    {
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
+      "description": "Use when maintaining, reviewing, or releasing Codex skill repositories and skill-like workflows that need inventory, activation-boundary checks, hard validation gates, and evidence-backed status reporting.",
+      "do_not_use_when": [],
+      "route_entrypoint": {
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:243eca983f3a6c68f4c48506211e3f999ebc106f31e2c355b1da67076421e664",
+        "check_manifest_hash": "sha256:4d145b41bb33ae3f53a520471c2fbc67ea2340f833e9d862a2e1fb3b0d41a8b0",
+        "check_manifest_path": ".agents/skills/skillguard/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:8510d222f1d11a9bb6e48de19b91025fa68d70e1fc65c8a5d0d673aa5c8e4acc",
+        "contract_authority": "current",
+        "contract_hash": "sha256:cfcf513f27a7e6237d5ecfefbd4e3b2b3d9f181b6f112cc2735f4cb6d84e85ae",
+        "contract_path": ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:2dc58c2da3eca8c6512b865885eb442ced1092089f2d137ab7b1e8ed81ab8c04",
+        "contract_source_path": ".agents/skills/skillguard/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:b1c09b405cd4c9e6211acd9ed7d9d919ca4c84ee829d47a729431f9eab84d9ad",
+        "default_route_id": "route:static-audit",
+        "function_ids": [
+          "static_audit",
+          "deep_audit",
+          "compile_contract",
+          "supervise_run",
+          "verify_evidence",
+          "derive_closure",
+          "graduate_portfolio",
+          "adopt_project",
+          "global_router_handoff",
+          "audit_provenance"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
+        "may_define_parallel_execution_route": false,
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "skillguard.executable_contract_runtime.v2",
+        "native_check_bindings": [
+          {
+            "binding_id": "native-check:static-audit",
+            "evidence_source": ".agents/skills/skillguard/scripts/skillguard.py",
+            "native_check_id": "check:self:run-native-static-checks",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:execution-depth",
+            "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/execution_depth.py",
+            "native_check_id": "check:self:declared-check-runtime",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:test-mesh",
+            "evidence_source": ".agents/skills/skillguard/scripts/skillguard_test_mesh.py",
+            "native_check_id": "check:self:test-mesh-fast",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:project-adoption",
+            "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/project_adoption.py",
+            "native_check_id": "check:self:audit-project-adoption",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:global-router-handoff",
+            "evidence_source": ".agents/skills/skillguard/scripts/skillguard.py",
+            "native_check_id": "check:self:verify-target-handoff",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:provenance",
+            "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/provenance.py",
+            "native_check_id": "check:self:verify-release-provenance",
+            "required": true
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "binding_id": "native:static-audit",
+            "native_route_id": "route:static-audit",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:deep-audit",
+            "native_route_id": "route:deep-audit",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard_v2/execution_depth.py"
+          },
+          {
+            "binding_id": "native:compile-contract",
+            "native_route_id": "route:compile-contract",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard_compile.py"
+          },
+          {
+            "binding_id": "native:supervise-run",
+            "native_route_id": "route:supervise-run",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard_v2/supervisor.py"
+          },
+          {
+            "binding_id": "native:verify-evidence",
+            "native_route_id": "route:verify-evidence",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard_v2/receipts.py"
+          },
+          {
+            "binding_id": "native:derive-closure",
+            "native_route_id": "route:derive-closure",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard_v2/closure.py"
+          },
+          {
+            "binding_id": "native:portfolio-graduation",
+            "native_route_id": "route:portfolio-graduation",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard_v2/portfolio.py"
+          },
+          {
+            "binding_id": "native:project-adoption",
+            "native_route_id": "route:project-adoption",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard_v2/project_adoption.py"
+          },
+          {
+            "binding_id": "native:global-router-handoff",
+            "native_route_id": "route:global-router-handoff",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:provenance-audit",
+            "native_route_id": "route:provenance-audit",
+            "required_before_closure": true,
+            "source": ".agents/skills/skillguard/scripts/skillguard_v2/provenance.py"
+          }
+        ],
+        "native_route_owner": "skillguard.executable_contract_runtime.v2",
+        "phase_native_bindings": [],
+        "route_confidence": "native-bound",
+        "route_doc_paths": [
+          ".agents/skills/skillguard/SKILL.md",
+          ".agents/skills/skillguard/.skillguard/contract-source.json",
+          ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+          ".agents/skills/skillguard/.skillguard/check-manifest.json"
+        ],
+        "route_ids": [
+          "route:static-audit",
+          "route:deep-audit",
+          "route:compile-contract",
+          "route:supervise-run",
+          "route:verify-evidence",
+          "route:derive-closure",
+          "route:portfolio-graduation",
+          "route:project-adoption",
+          "route:global-router-handoff",
+          "route:provenance-audit"
         ]
       },
       "route_terms": [
         "activate",
         "activation",
-        "activation-boundary",
+        "actually",
         "against",
         "and",
-        "asks",
         "audit",
+        "bilingual",
         "blockers",
         "boundaries.",
+        "boundary",
         "broad",
         "check",
         "checks",
@@ -57,76 +1639,167 @@
         "claims.",
         "clarity",
         "codex",
+        "command-surface",
         "compare",
+        "completed",
         "consistency",
+        "coverage",
         "create",
         "current",
+        "declared",
         "description",
         "does",
+        "ensure",
+        "every",
         "evidence",
-        "evidence-backed",
         "evidence.",
         "failed",
         "fixtures",
         "for",
         "gates",
-        "hard",
-        "hide",
-        "inventory",
-        "likely",
-        "maintained",
-        "maintaining",
-        "metadata",
-        "missing",
-        "need"
+        "generic",
+        "hero",
+        "hide"
       ],
       "skill_file": ".agents/skills/skillguard/SKILL.md",
       "skill_id": "skillguard",
       "skill_name": "skillguard",
       "skill_path": ".agents/skills/skillguard",
-      "skill_sha256": "1887DC5C0AF86325CD65712D8B5586227EE8BC830370B063F1FDBF2D8253C68A",
+      "skill_sha256": "sha256:50f2a35b6547703f6d546f54805661d5191fe110a3f37b266b96010f8de535ca",
       "status": "current",
       "use_when": [
-        "Use this skill when the user asks to:",
         "Create, update, audit, or prepare a Codex skill or skill-like workflow.",
         "Review a skill repository for public readiness, activation clarity, privacy safety, metadata consistency, or release claims.",
         "Check whether a skill's description is too broad, too vague, or likely to activate for unrelated tasks.",
         "Validate a maintained skill target, suite summary, README, `SKILL.md`, metadata, fixtures, schemas, scripts, or check evidence.",
+        "Check README-facing release gates such as bilingual mirror coverage, text-to-image hero provenance, README model evidence, version consistency, command-surface wording, and public-boundary safety.",
         "Compare parent status against child evidence so a suite or release summary does not hide stale, failed, missing, or skipped checks.",
-        "Produce a status report that needs current evidence, blockers, skipped checks, residual risk, and claim boundaries."
+        "Produce a status report that needs current evidence, blockers, skipped checks, residual risk, and claim boundaries.",
+        "Ensure that every check declared by a maintained skill was actually completed for the current request instead of merely loading the skill or running generic boundary checks."
       ]
     },
     {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
+      "claim_boundary": "This entry is a current file-derived routing index only; it does not prove target execution or domain correctness.",
       "description": "Use when maintaining the user-level SkillGuard global skill registry, route selection, managed AGENTS prompt block, or new-skill onboarding defaults.",
-      "do_not_use_when": [
-        "Do not use this skill to execute the selected target skill's actual work. After route selection, use the selected skill and its contract.",
-        "Do not use this skill as a parallel route system beside a target skill that already owns native route/check behavior. Bind and hand off to the native route documents instead.",
-        "Do not use this skill to claim global AI correctness, package publication, release readiness, test success, external service behavior, or future model compliance."
-      ],
+      "do_not_use_when": [],
       "route_entrypoint": {
-        "check_manifest_path": ".agents/skills/skillguard-global-router/.skillguard/check_manifest.json",
-        "check_manifest_sha256": "E6F97AF607C77A9EF7FA13CBE8CA4866AA48E206BFABDBA1CF61199B61E424E0",
-        "contract_hash": "F24D3505DA3F94AA606F86204B1ECD2C317E7121174AC7C11BB9C30534DBD463",
-        "contract_path": ".agents/skills/skillguard-global-router/.skillguard/work-contract.json",
-        "contract_sha256": "284EC593345D21286C0AEF11613B544AA4B09E6BB860983F8D72F43B386E4BA4",
-        "default_route_id": "audit",
-        "handoff_rule": "Use select-route/start-run/check-run/close-run against the target work contract before claiming closure.",
-        "integration_mode": "skillguard-runtime",
+        "authority_blockers": [],
+        "authority_decision": "current",
+        "check_declarations_hash": "sha256:0e4e2367bd02fb5776511c6830bc5e1e5a73046973210f72d757e0df17220342",
+        "check_manifest_hash": "sha256:e3841190c1f0bba4d53d9b583aa588ac056dc173c66aa4d1f4c5da0125f037ad",
+        "check_manifest_path": ".agents/skills/skillguard-global-router/.skillguard/check-manifest.json",
+        "check_manifest_sha256": "sha256:689d21bdb77534f334b09104552a8e97ac3c37c029cc7dfa790f704e2beba590",
+        "contract_authority": "current",
+        "contract_hash": "sha256:de257d00328d162e7e969fc52a746e00bac45db45de33553c59791002a7f8746",
+        "contract_path": ".agents/skills/skillguard-global-router/.skillguard/compiled-contract.json",
+        "contract_sha256": "sha256:a86d5829e287b813002e9a221be16b66a32e509ab9eb001d2fb35f8abace30e1",
+        "contract_source_path": ".agents/skills/skillguard-global-router/.skillguard/contract-source.json",
+        "contract_source_sha256": "sha256:c50c8d723c08cad58d85dd54ef9cbedfcf51559ea6269d38d00960a060158668",
+        "default_route_id": "route:scan-global-skills",
+        "function_ids": [
+          "function:scan-global-skills",
+          "function:build-global-registry",
+          "function:check-global-registry",
+          "function:render-global-prompt",
+          "function:install-global-prompt",
+          "function:check-global-prompt",
+          "function:resolve-global-skill",
+          "function:refresh-global-router"
+        ],
+        "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
+        "integration_mode": "native-integrated",
         "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": true,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
+        "may_define_skillguard_runtime_route": false,
+        "model_id": "skillguard.global_router.executable_contract.v2",
+        "native_check_bindings": [
+          {
+            "binding_id": "native-check:contract-adapter",
+            "evidence_source": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
+            "native_check_id": "skillguard.global_router_contract_check.v1",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:global-router-fixtures",
+            "evidence_source": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py plus fixtures/execution-depth/representative-positive.json and intentionally-shallow.json",
+            "native_check_id": "skillguard.global_router.fixture_test",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:flowguard-model",
+            "evidence_source": ".agents/skills/skillguard-global-router/scripts/skillguard_global_router_contract_model.py",
+            "native_check_id": "skillguard.global_router.flowguard_model",
+            "required": true
+          }
+        ],
+        "native_route_bindings": [
+          {
+            "binding_id": "native:scan-global-skills",
+            "native_route_id": "scan-global-skills",
+            "required_before_closure": true,
+            "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:build-global-registry",
+            "native_route_id": "build-global-registry",
+            "required_before_closure": true,
+            "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:check-global-registry",
+            "native_route_id": "check-global-registry",
+            "required_before_closure": true,
+            "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:render-global-prompt",
+            "native_route_id": "render-global-prompt",
+            "required_before_closure": true,
+            "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:install-global-prompt",
+            "native_route_id": "install-global-prompt",
+            "required_before_closure": true,
+            "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:check-global-prompt",
+            "native_route_id": "check-global-prompt",
+            "required_before_closure": true,
+            "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:resolve-global-skill",
+            "native_route_id": "resolve-global-skill",
+            "required_before_closure": true,
+            "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+          },
+          {
+            "binding_id": "native:refresh-global-router",
+            "native_route_id": "refresh-global-router",
+            "required_before_closure": true,
+            "source": "installed-or-sibling-skillguard/scripts/skillguard.py"
+          }
+        ],
+        "native_route_owner": "skillguard.global_router_cli",
         "phase_native_bindings": [],
-        "route_confidence": "explicit",
+        "route_confidence": "native-bound",
         "route_doc_paths": [
           ".agents/skills/skillguard-global-router/SKILL.md",
-          ".agents/skills/skillguard-global-router/.skillguard/work-contract.json",
-          ".agents/skills/skillguard-global-router/.skillguard/check_manifest.json"
+          ".agents/skills/skillguard-global-router/.skillguard/contract-source.json",
+          ".agents/skills/skillguard-global-router/.skillguard/compiled-contract.json",
+          ".agents/skills/skillguard-global-router/.skillguard/check-manifest.json"
         ],
         "route_ids": [
-          "audit"
+          "route:scan-global-skills",
+          "route:build-global-registry",
+          "route:check-global-registry",
+          "route:render-global-prompt",
+          "route:install-global-prompt",
+          "route:check-global-prompt",
+          "route:resolve-global-skill",
+          "route:refresh-global-router",
+          "route:shared-supervision"
         ]
       },
       "route_terms": [
@@ -134,7 +1807,6 @@
         "agents",
         "and",
         "appears",
-        "asks",
         "before",
         "begins.",
         "behavior",
@@ -146,18 +1818,14 @@
         "correct",
         "create",
         "default",
-        "defaults.",
         "global",
         "install",
         "installed",
-        "maintaining",
         "make",
         "managed",
         "native",
-        "new-skill",
         "newly",
         "onboard",
-        "onboarding",
         "projection.",
         "prompt",
         "refresh",
@@ -169,16 +1837,20 @@
         "route",
         "router.",
         "scan",
-        "selection"
+        "skill",
+        "skillguard",
+        "skillguard-global-router",
+        "skills",
+        "stale.",
+        "task"
       ],
       "skill_file": ".agents/skills/skillguard-global-router/SKILL.md",
       "skill_id": "skillguard-global-router",
       "skill_name": "skillguard-global-router",
       "skill_path": ".agents/skills/skillguard-global-router",
-      "skill_sha256": "4071608600A747B6481FA525152EFF35D10019149B0FC86242126218B83511CD",
+      "skill_sha256": "sha256:da2c88f17c7d51fa2a4de04865659326574688a6e442097bcd7242459ea168fe",
       "status": "current",
       "use_when": [
-        "Use this skill when the user asks to:",
         "Create, refresh, check, install, or repair the global SkillGuard skill router.",
         "Scan installed or repository-local Codex skills and build a global route registry.",
         "Make global prompt behavior default through a managed user-level AGENTS prompt block.",
@@ -186,517 +1858,17 @@
         "Onboard a newly added skill so it appears in the global registry and prompt projection.",
         "Check whether the global route registry or managed AGENTS prompt block is stale."
       ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Isolate the static-analysis failure caused by a missing non-empty `description` field in skill frontmatter.",
-      "do_not_use_when": [
-        "A task needs a passing skill fixture.",
-        "A task needs blocker, boundary, stale, release, package publication, suite automation, or code-contract validation evidence."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "contract_hash": "",
-        "contract_path": "",
-        "contract_sha256": "",
-        "default_route_id": "",
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-        "integration_mode": "missing",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": false,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "phase_native_bindings": [],
-        "route_confidence": "derived",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md"
-        ],
-        "route_ids": []
-      },
-      "route_terms": [
-        "bad-static-missing-description",
-        "bad_static_missing_description",
-        "branch.",
-        "caused",
-        "description",
-        "fail-class",
-        "failure",
-        "field",
-        "fixture-test",
-        "frontmatter",
-        "frontmatter.",
-        "isolate",
-        "local",
-        "missing",
-        "missing-description",
-        "needs",
-        "non-empty",
-        "result.",
-        "reviewer",
-        "run",
-        "skill",
-        "static",
-        "static-analysis",
-        "stays",
-        "that",
-        "the",
-        "verify"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description/SKILL.md",
-      "skill_id": "bad-static-missing-description",
-      "skill_name": "bad_static_missing_description",
-      "skill_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_description",
-      "skill_sha256": "EA2B7E4418A761E5B3D5E8F5871218EDCA8DDC81AB3681FD2A42E5E6378289CD",
-      "status": "missing_contract",
-      "use_when": [
-        "A local fixture-test run needs the missing-description static failure branch.",
-        "A reviewer needs to verify that missing frontmatter description stays a fail-class result."
-      ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Negative fixture for a missing declared reference.",
-      "do_not_use_when": [
-        "A task needs a passing skill fixture.",
-        "A task needs blocker, boundary, stale, release, package publication, suite automation, or code-contract validation evidence."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "contract_hash": "",
-        "contract_path": "",
-        "contract_sha256": "",
-        "default_route_id": "",
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-        "integration_mode": "missing",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": false,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "phase_native_bindings": [],
-        "route_confidence": "derived",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference/SKILL.md"
-        ],
-        "route_ids": []
-      },
-      "route_terms": [
-        "bad-static-missing-reference",
-        "bad_static_missing_reference",
-        "branch.",
-        "declared",
-        "fail-class",
-        "failure",
-        "fixture",
-        "fixture-test",
-        "for",
-        "local",
-        "missing",
-        "missing-reference",
-        "needs",
-        "negative",
-        "reference",
-        "reference.",
-        "result.",
-        "reviewer",
-        "run",
-        "static",
-        "stays",
-        "that",
-        "the",
-        "verify"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference/SKILL.md",
-      "skill_id": "bad-static-missing-reference",
-      "skill_name": "bad_static_missing_reference",
-      "skill_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_missing_reference",
-      "skill_sha256": "59F35D8BE8BF0EC31D0B4473B00DA60DFB2A3E10628D174090603886896A3D21",
-      "status": "missing_contract",
-      "use_when": [
-        "A local fixture-test run needs the missing-reference static failure branch.",
-        "A reviewer needs to verify that a missing declared reference stays a fail-class result."
-      ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Negative fixture for unsupported broad claim text.",
-      "do_not_use_when": [
-        "A task needs a passing skill fixture.",
-        "A task needs blocker, boundary, stale, release, package publication, suite automation, or code-contract validation evidence."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "contract_hash": "",
-        "contract_path": "",
-        "contract_sha256": "",
-        "default_route_id": "",
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-        "integration_mode": "missing",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": false,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "phase_native_bindings": [],
-        "route_confidence": "derived",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim/SKILL.md"
-        ],
-        "route_ids": []
-      },
-      "route_terms": [
-        "bad-static-unsafe-broad-claim",
-        "bad_static_unsafe_broad_claim",
-        "branch.",
-        "broad",
-        "broad-claim",
-        "claim",
-        "fail-class",
-        "failure",
-        "fixture",
-        "fixture-test",
-        "for",
-        "local",
-        "needs",
-        "negative",
-        "result.",
-        "reviewer",
-        "run",
-        "static",
-        "stays",
-        "text.",
-        "that",
-        "the",
-        "unsafe",
-        "unsupported",
-        "verify",
-        "wording"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim/SKILL.md",
-      "skill_id": "bad-static-unsafe-broad-claim",
-      "skill_name": "bad_static_unsafe_broad_claim",
-      "skill_path": ".agents/skills/skillguard/fixtures/bad_static/bad_static_unsafe_broad_claim",
-      "skill_sha256": "0285CD46FF49EF3A8217159173478F4A7EEB55E8E6B4D2493688940B84305B64",
-      "status": "missing_contract",
-      "use_when": [
-        "A local fixture-test run needs the unsafe broad-claim static failure branch.",
-        "A reviewer needs to verify that unsupported broad claim wording stays a fail-class result."
-      ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Suite member fixture for the child report without direct closure evidence case.",
-      "do_not_use_when": [
-        "The task needs package, release, or broad suite automation evidence."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "contract_hash": "",
-        "contract_path": "",
-        "contract_sha256": "",
-        "default_route_id": "",
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-        "integration_mode": "missing",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": false,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "phase_native_bindings": [],
-        "route_confidence": "derived",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member/SKILL.md"
-        ],
-        "route_ids": []
-      },
-      "route_terms": [
-        "cannot",
-        "case.",
-        "checked",
-        "child",
-        "child-without-closure-member",
-        "child_without_closure_member",
-        "closure",
-        "direct",
-        "evidence",
-        "evidence.",
-        "fixture",
-        "for",
-        "local",
-        "member",
-        "needs",
-        "report",
-        "show",
-        "suite",
-        "support",
-        "that",
-        "the",
-        "without"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member/SKILL.md",
-      "skill_id": "child-without-closure-member",
-      "skill_name": "child_without_closure_member",
-      "skill_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/members/child_without_closure_member",
-      "skill_sha256": "3AA1B99E2FE09AFA60C02102F355030547DAA7BBF16D0F0C944DC677F6152AD2",
-      "status": "missing_contract",
-      "use_when": [
-        "A local fixture needs to show that a checked child cannot support closure without direct evidence."
-      ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Suite member fixture for the missing suite-map negative case.",
-      "do_not_use_when": [
-        "The task needs release, package, or broad automation evidence."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "contract_hash": "",
-        "contract_path": "",
-        "contract_sha256": "",
-        "default_route_id": "",
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-        "integration_mode": "missing",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": false,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "phase_native_bindings": [],
-        "route_confidence": "derived",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member/SKILL.md"
-        ],
-        "route_ids": []
-      },
-      "route_terms": [
-        "case.",
-        "defect.",
-        "fixture",
-        "for",
-        "isolating",
-        "local",
-        "member",
-        "missing",
-        "needs",
-        "negative",
-        "router-member",
-        "router_member",
-        "suite",
-        "suite-map",
-        "the",
-        "valid",
-        "while"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member/SKILL.md",
-      "skill_id": "router-member",
-      "skill_name": "router_member",
-      "skill_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/members/router_member",
-      "skill_sha256": "C34CD37C8A2940F495A331E0A8C176DFC14A8C923A86EC39875BECFEF437CE5A",
-      "status": "missing_contract",
-      "use_when": [
-        "A local fixture needs a valid suite member while isolating a missing suite-map defect."
-      ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Suite member fixture for the stale evidence negative case.",
-      "do_not_use_when": [
-        "The task needs package, release, or broad suite automation evidence."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "contract_hash": "",
-        "contract_path": "",
-        "contract_sha256": "",
-        "default_route_id": "",
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-        "integration_mode": "missing",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": false,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "phase_native_bindings": [],
-        "route_confidence": "derived",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member/SKILL.md"
-        ],
-        "route_ids": []
-      },
-      "route_terms": [
-        "cannot",
-        "case.",
-        "checked",
-        "child.",
-        "evidence",
-        "fixture",
-        "fixture-local",
-        "for",
-        "local",
-        "member",
-        "needs",
-        "negative",
-        "show",
-        "stale",
-        "stale-member",
-        "stale_member",
-        "suite",
-        "support",
-        "that",
-        "the"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member/SKILL.md",
-      "skill_id": "stale-member",
-      "skill_name": "stale_member",
-      "skill_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/members/stale_member",
-      "skill_sha256": "BB255FA50519BEA1E1BBA76B9723125D0A6B40470568991DED460ABBA8942302",
-      "status": "missing_contract",
-      "use_when": [
-        "A local fixture needs to show that stale fixture-local evidence cannot support a checked child."
-      ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Positive maintained SkillGuard single-skill fixture.",
-      "do_not_use_when": [
-        "The task needs negative, stale, blocked, or regression fixture behavior.",
-        "The task needs release, package publication, suite automation evidence, broad fixture families, or code-contract validation evidence."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "contract_hash": "",
-        "contract_path": "",
-        "contract_sha256": "",
-        "default_route_id": "",
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-        "integration_mode": "missing",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": false,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "phase_native_bindings": [],
-        "route_confidence": "derived",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md"
-        ],
-        "route_ids": []
-      },
-      "route_terms": [
-        "check-skill",
-        "closure",
-        "current",
-        "data.",
-        "fixture",
-        "fixture-test",
-        "fixture.",
-        "good-single-skill",
-        "good_single_skill",
-        "local",
-        "maintained",
-        "needs",
-        "positive",
-        "reviewer",
-        "run",
-        "single-skill",
-        "skillguard",
-        "target",
-        "with",
-        "worker"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/good_single_skill/SKILL.md",
-      "skill_id": "good-single-skill",
-      "skill_name": "good_single_skill",
-      "skill_path": ".agents/skills/skillguard/fixtures/good_single_skill",
-      "skill_sha256": "CCF67EA3096A83C1D6943BD0C313BB48BAF00C8AF069504F5F460EB2CB418B01",
-      "status": "missing_contract",
-      "use_when": [
-        "A SkillGuard worker or reviewer needs a maintained single-skill positive fixture.",
-        "A local fixture-test or check-skill run needs a current fixture target with closure data."
-      ]
-    },
-    {
-      "claim_boundary": "This registry entry is a current file-derived routing index only; it does not prove the target skill's runtime result, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior.",
-      "description": "Positive suite member fixture for SkillGuard suite checks.",
-      "do_not_use_when": [
-        "The task needs multi-member routing, release publication, or broad suite automation evidence.",
-        "The task needs negative or stale suite member behavior."
-      ],
-      "route_entrypoint": {
-        "check_manifest_path": "",
-        "check_manifest_sha256": "",
-        "contract_hash": "",
-        "contract_path": "",
-        "contract_sha256": "",
-        "default_route_id": "",
-        "handoff_rule": "Read the selected SKILL.md before acting; no runnable SkillGuard contract was found.",
-        "integration_mode": "missing",
-        "may_define_parallel_execution_route": false,
-        "may_define_skillguard_runtime_route": false,
-        "native_check_bindings": [],
-        "native_route_bindings": [],
-        "native_route_owner": "",
-        "phase_native_bindings": [],
-        "route_confidence": "derived",
-        "route_doc_paths": [
-          ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member/SKILL.md"
-        ],
-        "route_ids": []
-      },
-      "route_terms": [
-        "against",
-        "check-suite",
-        "checks.",
-        "concrete",
-        "entrypoint.",
-        "example.",
-        "fixture",
-        "for",
-        "good-suite-member",
-        "good_suite_member",
-        "local",
-        "maintained",
-        "member",
-        "needs",
-        "path",
-        "positive",
-        "rerun",
-        "reviewer",
-        "skill",
-        "skillguard",
-        "suite",
-        "with"
-      ],
-      "skill_file": ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member/SKILL.md",
-      "skill_id": "good-suite-member",
-      "skill_name": "good_suite_member",
-      "skill_path": ".agents/skills/skillguard/fixtures/good_suite/members/good_suite_member",
-      "skill_sha256": "996ECA95B9B1B27135E30C1C1A512B3A9CC7A24A2FDE2F241F4FD7F9DFC33316",
-      "status": "missing_contract",
-      "use_when": [
-        "A local suite fixture needs a concrete member path with a skill entrypoint.",
-        "A reviewer needs to rerun `check-suite` against a maintained positive suite example."
-      ]
     }
   ],
-  "registry_hash": "56B5C919BEB3957A36A8BB8E01E5FECC2F2C19438E4651E772D93877A3A3F8E0",
+  "registry_hash": "sha256:9c1ab488fed574e5a58325e2850fdd91950b1c37607d3ab463ff639d7bedb37b",
   "router_skill_id": "skillguard-global-router",
   "scan_roots": [
     {
       "exists": true,
       "path": ".agents/skills",
-      "skill_file_count": 10
+      "skill_file_count": 19
     }
   ],
-  "schema_version": "skillguard.global_registry.v1",
+  "schema_version": "skillguard.global_registry.current",
   "warnings": []
 }

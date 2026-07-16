@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyingxuvka/SkillGuard/schemas/skillguard_depth_profile_v2.schema.json",
+  "title": "SkillGuard target-declared check supervision profile v2",
+  "description": "Fixed target-neutral supervision of the target skill's own declared checks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile_id",
+    "target_skill_id",
+    "integration_mode",
+    "native_owner_id",
+    "native_route_ids",
+    "native_check_ids",
+    "skillguard_adds_domain_route",
+    "enforcement_level",
+    "required_closure_profiles",
+    "provider_runtime",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.depth_profile.v2"},
+    "profile_id": {"$ref": "#/$defs/text"},
+    "target_skill_id": {"$ref": "#/$defs/text"},
+    "integration_mode": {"const": "native-integrated"},
+    "native_owner_id": {"$ref": "#/$defs/text"},
+    "native_route_ids": {"$ref": "#/$defs/ids"},
+    "native_check_ids": {"$ref": "#/$defs/nonempty_ids"},
+    "native_route_absent_confirmed": {"type": "boolean"},
+    "skillguard_adds_domain_route": {"const": false},
+    "enforcement_level": {"const": "enforced"},
+    "required_closure_profiles": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {"const": "enforced"}
+    },
+    "provider_runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id",
+        "required_runtime_contract_id",
+        "required_capability_ids",
+        "required_enrollment_status",
+        "readiness_check_ids"
+      ],
+      "properties": {
+        "provider_id": {"$ref": "#/$defs/text"},
+        "required_runtime_contract_id": {"$ref": "#/$defs/text"},
+        "required_capability_ids": {"$ref": "#/$defs/nonempty_ids"},
+        "required_enrollment_status": {"const": "enrolled"},
+        "readiness_check_ids": {"$ref": "#/$defs/nonempty_ids"}
+      }
+    },
+    "claim_boundary": {"$ref": "#/$defs/text"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "nonempty_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}}
+  }
+}

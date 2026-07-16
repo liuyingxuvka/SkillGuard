@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_self_host_cli_terminal_v1.schema.json",
+  "title": "SkillGuard Self-Host CLI Terminal v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact_type",
+    "status",
+    "error_code",
+    "reason",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "skillguard.self_host_cli_terminal.v1"
+    },
+    "artifact_type": {
+      "const": "skillguard_self_host_cli_terminal"
+    },
+    "status": {
+      "enum": [
+        "failed",
+        "blocked"
+      ]
+    },
+    "error_code": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:-]*$"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "claim_boundary": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

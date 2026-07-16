@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -12,8 +13,16 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .contract_compiler import canonical_hash, canonical_json_bytes
-from .contract_schema import EVENT_SCHEMA, RUN_SCHEMA, SchemaFinding, validate_runtime_payload
+from .contract_schema import (
+    EVENT_SCHEMA,
+    RUN_SCHEMA,
+    SchemaFinding,
+    validate_check_manifest,
+    validate_compiled_contract,
+    validate_runtime_payload,
+)
 from .route_runtime import RouteDecision
+from .execution_records import filesystem_path
 
 
 @dataclass(frozen=True)
@@ -52,6 +61,7 @@ def utc_now() -> str:
 
 
 def _json_load(path: Path) -> Mapping[str, Any]:
+    path = filesystem_path(path)
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -62,10 +72,114 @@ def _json_load(path: Path) -> Mapping[str, Any]:
 
 
 def _atomic_write(path: Path, payload: Mapping[str, Any]) -> None:
+    path = filesystem_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     temporary.write_bytes(canonical_json_bytes(payload))
     os.replace(temporary, path)
+
+
+def _hash_without(payload: Mapping[str, Any], field: str) -> str:
+    unsigned = dict(payload)
+    unsigned.pop(field, None)
+    return canonical_hash(unsigned)
+
+
+def _claim_artifact_findings(
+    contract: object,
+    check_manifest: object,
+) -> tuple[SchemaFinding, ...]:
+    findings: list[SchemaFinding] = []
+    findings.extend(validate_compiled_contract(contract))
+    findings.extend(validate_check_manifest(check_manifest))
+    if not isinstance(contract, Mapping) or not isinstance(check_manifest, Mapping):
+        return tuple(findings)
+    contract_hash = str(contract.get("contract_hash", ""))
+    manifest_hash = str(check_manifest.get("manifest_hash", ""))
+    declarations_hash = str(contract.get("check_declarations_hash", ""))
+    if contract_hash != _hash_without(contract, "contract_hash"):
+        findings.append(
+            SchemaFinding(
+                "compiled_contract_hash_mismatch",
+                "$.contract_hash",
+                "compiled contract content does not match contract_hash",
+            )
+        )
+    if manifest_hash != _hash_without(check_manifest, "manifest_hash"):
+        findings.append(
+            SchemaFinding(
+                "check_manifest_hash_mismatch",
+                "$.manifest_hash",
+                "check manifest content does not match manifest_hash",
+            )
+        )
+    if check_manifest.get("skill_id") != contract.get("skill_id"):
+        findings.append(
+            SchemaFinding(
+                "check_manifest_skill_mismatch",
+                "$.skill_id",
+                "check manifest and compiled contract must name the same skill",
+            )
+        )
+    if check_manifest.get("contract_hash") != contract_hash:
+        findings.append(
+            SchemaFinding(
+                "check_manifest_contract_mismatch",
+                "$.contract_hash",
+                "check manifest must bind the exact compiled contract hash",
+            )
+        )
+    checks = check_manifest.get("checks")
+    recomputed_declarations_hash = (
+        canonical_hash({"checks": list(checks)}) if isinstance(checks, list) else ""
+    )
+    if (
+        not declarations_hash
+        or check_manifest.get("check_declarations_hash") != declarations_hash
+        or recomputed_declarations_hash != declarations_hash
+    ):
+        findings.append(
+            SchemaFinding(
+                "check_declarations_hash_mismatch",
+                "$.check_declarations_hash",
+                "compiled contract and manifest must bind the exact check declarations",
+            )
+        )
+    check_ids = [
+        str(row.get("check_id", ""))
+        for row in checks or []
+        if isinstance(row, Mapping)
+    ]
+    if any(not check_id for check_id in check_ids) or len(check_ids) != len(
+        set(check_ids)
+    ):
+        findings.append(
+            SchemaFinding(
+                "check_manifest_ids_invalid",
+                "$.checks",
+                "check ids must be present and unique",
+            )
+        )
+    bound_check_ids = {
+        str(check_id)
+        for step in contract.get("steps", [])
+        if isinstance(step, Mapping)
+        for check_id in (
+            step.get("binding", {}).get("check_ids", [])
+            if isinstance(step.get("binding"), Mapping)
+            else []
+        )
+    }
+    missing = sorted(bound_check_ids - set(check_ids))
+    if missing:
+        findings.append(
+            SchemaFinding(
+                "check_manifest_bound_check_missing",
+                "$.checks",
+                ",".join(missing),
+            )
+        )
+    return tuple(findings)
 
 
 def _normalize_write_targets(target_root: Path, values: Sequence[object]) -> tuple[str, ...]:
@@ -86,16 +200,49 @@ def _run_id(
     contract: Mapping[str, Any],
     request: Mapping[str, Any],
     write_targets: Sequence[str],
-    guard_compatibility: Mapping[str, Any] | None = None,
+    check_manifest_hash: str,
+    claim_snapshot_hashes: Mapping[str, str] | None = None,
+    guard_runtime_identity: Mapping[str, Any] | None = None,
 ) -> str:
     identity = {
         "skill_id": contract.get("skill_id"),
         "contract_hash": contract.get("contract_hash"),
+        "check_manifest_hash": check_manifest_hash,
         "request": request,
         "write_targets": list(write_targets),
-        "guard_compatibility": dict(guard_compatibility or {}),
+        "claim_snapshot_hashes": dict(claim_snapshot_hashes or {}),
+        "guard_runtime_identity": dict(guard_runtime_identity or {}),
     }
     return f"run-{canonical_hash(identity)[:20].lower()}"
+
+
+def _normalize_claim_snapshots(
+    value: Mapping[str, Mapping[str, Any]] | None,
+) -> tuple[dict[str, dict[str, Any]], tuple[SchemaFinding, ...]]:
+    snapshots: dict[str, dict[str, Any]] = {}
+    findings: list[SchemaFinding] = []
+    for snapshot_id, payload in sorted((value or {}).items()):
+        normalized_id = str(snapshot_id)
+        if re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", normalized_id) is None:
+            findings.append(
+                SchemaFinding(
+                    "claim_snapshot_id_invalid",
+                    f"$.claim_snapshots.{normalized_id}",
+                    "snapshot ids must be lowercase kebab-case and at most 64 characters",
+                )
+            )
+            continue
+        if not isinstance(payload, Mapping):
+            findings.append(
+                SchemaFinding(
+                    "claim_snapshot_not_object",
+                    f"$.claim_snapshots.{normalized_id}",
+                    "claim snapshots must be JSON objects",
+                )
+            )
+            continue
+        snapshots[normalized_id] = dict(payload)
+    return snapshots, tuple(findings)
 
 
 def _lock_path(lock_root: Path, write_target: str) -> Path:
@@ -104,6 +251,7 @@ def _lock_path(lock_root: Path, write_target: str) -> Path:
 
 
 def _claim_lock(path: Path, payload: Mapping[str, Any]) -> bool:
+    path = filesystem_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
         descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
@@ -144,20 +292,6 @@ def _recoverable_lock_reason(control_root: Path, lock: Mapping[str, Any]) -> str
         if owner_pid == os.getpid() or _process_is_alive(owner_pid):
             return ""
         return "owner_process_not_alive"
-    run_id = str(lock.get("run_id", ""))
-    run_root = control_root / "runs" / run_id
-    if not run_root.is_dir():
-        return ""
-    try:
-        events = load_events(run_root)
-    except RunStoreError:
-        return ""
-    if events and str(events[-1].get("event_type", "")) in {
-        "step_failed",
-        "locks_released",
-        "closure_issued",
-    }:
-        return f"legacy_terminal_event:{events[-1]['event_type']}"
     return ""
 
 
@@ -263,6 +397,7 @@ def _acquire_run_locks(
 
 
 def _acquire_claim_guard(lock_root: Path) -> Path:
+    lock_root = filesystem_path(lock_root)
     lock_root.mkdir(parents=True, exist_ok=True)
     guard = lock_root / ".claim.lock"
     deadline = time.monotonic() + 5.0
@@ -284,7 +419,7 @@ def _event_hash(event: Mapping[str, Any]) -> str:
 
 
 def load_events(run_root: Path) -> tuple[Mapping[str, Any], ...]:
-    path = run_root / "events.jsonl"
+    path = filesystem_path(run_root / "events.jsonl")
     if not path.is_file():
         raise RunStoreError("events_missing", "events.jsonl is missing", path.name)
     rows: list[Mapping[str, Any]] = []
@@ -313,8 +448,8 @@ def load_events(run_root: Path) -> tuple[Mapping[str, Any], ...]:
 
 
 def append_event(run_root: Path, event_type: str, payload: Mapping[str, Any]) -> Mapping[str, Any]:
-    events_path = run_root / "events.jsonl"
-    event_lock = run_root / ".events.lock"
+    events_path = filesystem_path(run_root / "events.jsonl")
+    event_lock = filesystem_path(run_root / ".events.lock")
     deadline = time.monotonic() + 5.0
     while True:
         try:
@@ -358,7 +493,9 @@ def claim_run(
     target_root: Path,
     decision: RouteDecision,
     *,
-    guard_compatibility: Mapping[str, Any] | None = None,
+    check_manifest: Mapping[str, Any] | None = None,
+    claim_snapshots: Mapping[str, Mapping[str, Any]] | None = None,
+    guard_runtime_identity: Mapping[str, Any] | None = None,
 ) -> RunClaimResult:
     target_root = target_root.resolve()
     target_root.mkdir(parents=True, exist_ok=True)
@@ -372,30 +509,125 @@ def claim_run(
                 SchemaFinding(row.code, "$.route", row.message) for row in decision.findings
             ),
         )
-    contract_hash = str(contract.get("contract_hash", ""))
-    if not contract_hash:
+    if check_manifest is None:
         return RunClaimResult(
             False,
             "blocked",
             "",
             None,
-            findings=(SchemaFinding("contract_hash_missing", "$.contract_hash", "compiled contract hash required"),),
+            findings=(
+                SchemaFinding(
+                    "check_manifest_missing",
+                    "$.check_manifest",
+                    "a claimed current run requires the compiled check manifest",
+                ),
+            ),
         )
+    artifact_findings = _claim_artifact_findings(contract, check_manifest)
+    if artifact_findings:
+        return RunClaimResult(False, "blocked", "", None, findings=artifact_findings)
+    contract_hash = str(contract["contract_hash"])
+    check_manifest_hash = str(check_manifest["manifest_hash"])
+    normalized_snapshots, snapshot_findings = _normalize_claim_snapshots(
+        claim_snapshots
+    )
+    if snapshot_findings:
+        return RunClaimResult(
+            False,
+            "blocked",
+            "",
+            None,
+            findings=snapshot_findings,
+        )
+    claim_snapshot_hashes = {
+        snapshot_id: canonical_hash(payload)
+        for snapshot_id, payload in normalized_snapshots.items()
+    }
     write_targets = _normalize_write_targets(target_root, request.get("write_targets", ["."]))
-    guard_compatibility = dict(guard_compatibility or {})
-    guard_compatibility_fingerprint = canonical_hash(guard_compatibility)
-    run_id = _run_id(contract, request, write_targets, guard_compatibility)
+    guard_runtime_identity = dict(guard_runtime_identity or {})
+    guard_runtime_identity_hash = canonical_hash(guard_runtime_identity)
+    run_id = _run_id(
+        contract,
+        request,
+        write_targets,
+        check_manifest_hash,
+        claim_snapshot_hashes,
+        guard_runtime_identity,
+    )
     control_root = target_root / ".skillguard"
     run_root = control_root / "runs" / run_id
     run_path = run_root / "run.json"
-    if run_path.is_file():
+    if filesystem_path(run_path).is_file():
         existing = _json_load(run_path)
         if (
             existing.get("contract_hash") == contract_hash
+            and existing.get("check_manifest_hash") == check_manifest_hash
             and existing.get("request_fingerprint") == canonical_hash(request)
+            and existing.get("claim_snapshot_hashes", {}) == claim_snapshot_hashes
             and tuple(existing.get("write_targets", [])) == write_targets
-            and existing.get("guard_compatibility_fingerprint") == guard_compatibility_fingerprint
+            and existing.get("guard_runtime_identity_hash") == guard_runtime_identity_hash
         ):
+            try:
+                existing_manifest = load_check_manifest_snapshot(run_root)
+            except RunStoreError as exc:
+                return RunClaimResult(
+                    False,
+                    "blocked",
+                    run_id,
+                    run_root,
+                    findings=(
+                        SchemaFinding(
+                            "check_manifest_snapshot_invalid",
+                            "$.check_manifest",
+                            exc.code,
+                        ),
+                    ),
+                )
+            if dict(existing_manifest) != dict(check_manifest):
+                return RunClaimResult(
+                    False,
+                    "blocked",
+                    run_id,
+                    run_root,
+                    findings=(
+                        SchemaFinding(
+                            "check_manifest_snapshot_mismatch",
+                            "$.check_manifest",
+                            "idempotent run manifest differs from the claimed snapshot",
+                        ),
+                    ),
+                )
+            for snapshot_id, payload in normalized_snapshots.items():
+                try:
+                    existing_snapshot = load_claim_snapshot(run_root, snapshot_id)
+                except RunStoreError as exc:
+                    return RunClaimResult(
+                        False,
+                        "blocked",
+                        run_id,
+                        run_root,
+                        findings=(
+                            SchemaFinding(
+                                "claim_snapshot_invalid",
+                                f"$.claim_snapshots.{snapshot_id}",
+                                exc.code,
+                            ),
+                        ),
+                    )
+                if dict(existing_snapshot) != payload:
+                    return RunClaimResult(
+                        False,
+                        "blocked",
+                        run_id,
+                        run_root,
+                        findings=(
+                            SchemaFinding(
+                                "claim_snapshot_mismatch",
+                                f"$.claim_snapshots.{snapshot_id}",
+                                "idempotent run snapshot differs from the claimed payload",
+                            ),
+                        ),
+                    )
             _acquired, _lock_payloads, lock_finding = _acquire_run_locks(
                 control_root,
                 run_id,
@@ -419,9 +651,16 @@ def claim_run(
         "run_id": run_id,
         "skill_id": str(contract.get("skill_id", "")),
         "contract_hash": contract_hash,
+        "check_manifest_hash": check_manifest_hash,
+        "check_declarations_hash": str(contract["check_declarations_hash"]),
         "request_fingerprint": canonical_hash(request),
-        "guard_compatibility": guard_compatibility,
-        "guard_compatibility_fingerprint": guard_compatibility_fingerprint,
+        "claim_snapshot_hashes": claim_snapshot_hashes,
+        "claim_snapshot_files": {
+            snapshot_id: f"claim/{snapshot_id}.json"
+            for snapshot_id in claim_snapshot_hashes
+        },
+        "guard_runtime_identity": guard_runtime_identity,
+        "guard_runtime_identity_hash": guard_runtime_identity_hash,
         "request": dict(request),
         "function_ids": list(decision.function_ids),
         "route_ids": list(decision.route_ids),
@@ -437,8 +676,11 @@ def claim_run(
             if acquired_path.is_file() and _json_load(acquired_path).get("run_id") == run_id:
                 acquired_path.unlink()
         return RunClaimResult(False, "blocked", run_id, None, findings=findings)
-    run_root.mkdir(parents=True, exist_ok=False)
+    filesystem_path(run_root).mkdir(parents=True, exist_ok=False)
     _atomic_write(run_root / "contract.json", dict(contract))
+    _atomic_write(run_root / "check-manifest.json", dict(check_manifest))
+    for snapshot_id, payload in normalized_snapshots.items():
+        _atomic_write(run_root / "claim" / f"{snapshot_id}.json", payload)
     _atomic_write(run_path, run_record)
     append_event(
         run_root,
@@ -448,6 +690,8 @@ def claim_run(
             "function_ids": list(decision.function_ids),
             "claim_scope": decision.claim_scope,
             "write_targets": list(write_targets),
+            "check_manifest_hash": check_manifest_hash,
+            "claim_snapshot_hashes": claim_snapshot_hashes,
         },
     )
     return RunClaimResult(True, "claimed", run_id, run_root)
@@ -463,6 +707,74 @@ def load_run(run_root: Path) -> Mapping[str, Any]:
 
 def load_contract_snapshot(run_root: Path) -> Mapping[str, Any]:
     return _json_load(run_root / "contract.json")
+
+
+def load_check_manifest_snapshot(run_root: Path) -> Mapping[str, Any]:
+    manifest = _json_load(run_root / "check-manifest.json")
+    contract = load_contract_snapshot(run_root)
+    findings = _claim_artifact_findings(contract, manifest)
+    if findings:
+        raise RunStoreError(
+            "check_manifest_snapshot_invalid",
+            findings[0].code,
+            "check-manifest.json",
+        )
+    run_path = run_root / "run.json"
+    if filesystem_path(run_path).is_file():
+        run = _json_load(run_path)
+        if (
+            run.get("check_manifest_hash") != manifest.get("manifest_hash")
+            or run.get("check_declarations_hash")
+            != manifest.get("check_declarations_hash")
+        ):
+            raise RunStoreError(
+                "check_manifest_run_binding_mismatch",
+                "run record does not bind the current manifest snapshot",
+                "check-manifest.json",
+            )
+    return manifest
+
+
+def load_claim_snapshot(run_root: Path, snapshot_id: str) -> Mapping[str, Any]:
+    if re.fullmatch(r"[a-z0-9][a-z0-9-]{0,63}", snapshot_id) is None:
+        raise RunStoreError(
+            "claim_snapshot_id_invalid",
+            snapshot_id,
+            snapshot_id,
+        )
+    run = _json_load(run_root / "run.json")
+    hashes = run.get("claim_snapshot_hashes", {})
+    files = run.get("claim_snapshot_files", {})
+    if not isinstance(hashes, Mapping) or not isinstance(files, Mapping):
+        raise RunStoreError(
+            "claim_snapshot_index_invalid",
+            "run record claim snapshot index is invalid",
+            "run.json",
+        )
+    expected_hash = hashes.get(snapshot_id)
+    expected_file = files.get(snapshot_id)
+    expected_relative = f"claim/{snapshot_id}.json"
+    if expected_file != expected_relative or not isinstance(expected_hash, str):
+        raise RunStoreError(
+            "claim_snapshot_not_declared",
+            snapshot_id,
+            "run.json",
+        )
+    path = run_root / "claim" / f"{snapshot_id}.json"
+    if not filesystem_path(path).is_file():
+        raise RunStoreError(
+            "claim_snapshot_missing",
+            snapshot_id,
+            expected_relative,
+        )
+    payload = _json_load(path)
+    if canonical_hash(payload) != expected_hash:
+        raise RunStoreError(
+            "claim_snapshot_hash_mismatch",
+            snapshot_id,
+            expected_relative,
+        )
+    return payload
 
 
 def release_run_locks(run_root: Path) -> None:

@@ -17,13 +17,15 @@
       "fixtures/fixture-manifest.json",
       "tests/README.md",
       "tests/test_smoke.py",
-      ".skillguard/skillguard_manifest.json"
+      ".skillguard/flowguard_contract_model.py",
+      ".skillguard/contract-source.json",
+      ".skillguard/compiled-contract.json",
+      ".skillguard/check-manifest.json"
     ],
     "validate_generated_manifest": true,
     "post_generation_checks_pass": true,
     "check_maintenance_record": true,
     "detect_stale_evidence": true,
-    "refresh_maintenance_dry_run": true,
     "public_boundary_scan": true,
     "forbidden_output_substrings": [
       "FORBIDDEN_PUBLIC_BOUNDARY_PROBE"

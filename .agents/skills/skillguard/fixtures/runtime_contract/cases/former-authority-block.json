@@ -1,0 +1,6 @@
+{
+  "fixture_id": "former-runtime-authority-blocked",
+  "target_command": "check-runtime-authority",
+  "expected_decision": "block",
+  "target_path": ".agents/skills/skillguard/fixtures/runtime_contract/legacy_target"
+}

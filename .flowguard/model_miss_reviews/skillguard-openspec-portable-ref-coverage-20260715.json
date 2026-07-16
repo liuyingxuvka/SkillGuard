@@ -1,0 +1,50 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-openspec-portable-ref-coverage-20260715",
+  "status": "repair_validated_current_target",
+  "observed_failure": {
+    "surface": "OpenSpec full verification consuming a SkillGuard-projected portable parent receipt",
+    "prior_local_claim": "a passed SkillGuard OpenSpec projection produces the exact current portable-receipt.v1 wire accepted by OpenSpec",
+    "observed_result": "SkillGuard wrote coverage_ids into the envelope but omitted the same required field from the portable ref, so OpenSpec rejected the ref before executing any owner",
+    "failure_code": "portable_receipt_ref_coverage_ids_missing"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.openspec-projection.exact-consumer-wire",
+    "owner": "SkillGuard TestMesh OpenSpec receipt projector",
+    "miss_type": "contract_incomplete",
+    "error_signature": "Portable receipt ref contains unknown or missing fields.",
+    "affected_feature_tags": [
+      "openspec",
+      "portable-receipt",
+      "coverage",
+      "exact-wire",
+      "receipt-only-verification"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the projector test checked the pointer schema and envelope coverage but never asserted the pointer coverage field or its exact key set",
+    "would_have_failed_if": "the model and regression had replayed the generated pointer through the installed OpenSpec consumer or asserted the consumer's exact ref key set",
+    "new_model_item": "a portable projection is not current until the exact consumer ref schema, coverage set, envelope schema, semantic identity, and source freshness all replay end to end",
+    "owner_code_contract": "project_current_test_mesh_aggregation_to_openspec_receipt -> portable ref -> openspec verify external-receipt consumer"
+  },
+  "generalized_repair": {
+    "rule": "Project the sorted exact coverage_ids into both the portable ref and envelope and pin the ref to the consumer's complete current key set.",
+    "observed_regression": "the final installed SkillGuard projected the current PhysicsGuard parent aggregation and real OpenSpec full verification accepted the exact ref and envelope without executing an owner",
+    "same_class_regression": "the projection unit test asserts exact pointer keys and the exact coverage list",
+    "negative_boundary": "no compatibility reader, optional field, fallback ref, or alternate OpenSpec success path is introduced"
+  },
+  "required_revalidation": [
+    "focused OpenSpec projection regressions",
+    "complete SkillGuard regression suite",
+    "transactional SkillGuard reinstall and installed self-host",
+    "real PhysicsGuard portable projection and OpenSpec full verification with execution_count zero"
+  ],
+  "revalidation_evidence": {
+    "focused_regressions": "2 focused OpenSpec projection tests passed",
+    "installed_skillguard_projection": "PhysicsGuard aggregation sha256:7313fe74b57fdc99540d892df751490113504e4111a9c98da1d61d2db80dbf68 projected as portable receipt sha256:c74834e05bea18e7296ad5580fafde98183c5de013a42ad2ea23780e3f3eb602",
+    "openspec_full_verification": "passed with one aggregated external receipt, execution_count 0, and OpenSpec projection receipt sha256:10e1344c9a0df3209fc0d9148ef3bcd6ad51b64b056da8c02080049d023e5629",
+    "archive": "PhysicsGuard change archived as 2026-07-15-migrate-physicsguard-skill-suite-to-skillguard-v2 with 11 specification requirements added"
+  },
+  "claim_boundary": "The repair is validated for the current installed SkillGuard, PhysicsGuard parent aggregation, and real OpenSpec full receipt-only verification. It does not prove unrelated providers, future schema changes, publication, or future AI behavior."
+}
