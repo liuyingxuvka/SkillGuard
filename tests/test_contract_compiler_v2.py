@@ -1622,8 +1622,8 @@ class ContractCompilerV2Tests(unittest.TestCase):
             "skillguard_contract_source_v2.schema.json",
             "skillguard_depth_profile_v2.schema.json",
             "skillguard_guard_change_v2.schema.json",
-            "skillguard_native_terminal_receipt_v1.schema.json",
-            "skillguard_obligation_applicability_receipt_v1.schema.json",
+            "skillguard_native_terminal_receipt_v2.schema.json",
+            "skillguard_obligation_applicability_receipt_v2.schema.json",
             "skillguard_project_adoption_v1.schema.json",
             "skillguard_target_execution_receipt_v2.schema.json",
         }

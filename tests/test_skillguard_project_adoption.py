@@ -93,6 +93,19 @@ class SkillGuardProjectAdoptionTests(unittest.TestCase):
         self.assertNotIn("former_field", current)
         self.assertEqual("0.3.1", current["skillguard_version"])
 
+    def test_project_adopt_refreshes_current_manifest_version_from_explicit_input(self) -> None:
+        first = adopt_project(self.root, self.rows, skillguard_version="0.3.2")
+        self.assertTrue(first["ok"], first)
+
+        refreshed = adopt_project(self.root, self.rows, skillguard_version="0.3.3")
+
+        self.assertTrue(refreshed["ok"], refreshed)
+        self.assertTrue(refreshed["changed"])
+        current = json.loads(
+            (self.root / ".skillguard" / "project.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual("0.3.3", current["skillguard_version"])
+
     def test_non_current_integration_markers_are_rejected(self) -> None:
         for marker in ("skillguard-runtime", "hybrid-extension"):
             with self.subTest(marker=marker):

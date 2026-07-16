@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Mapping, Sequence
 
 from .contract_compiler import canonical_hash, canonical_json_bytes
+from .contract_schema import DEPTH_EVIDENCE_DOMAINS
 from .execution_depth import EXECUTION_DEPTH_PASS, load_target_execution_receipts
 from .installation_receipt import (
     VerifiedInstallationContext,
@@ -22,13 +23,11 @@ from .native_evidence_identity import (
 from .run_store import load_run, utc_now
 
 
-NATIVE_NOOP_RECEIPT_SCHEMA = "skillguard.native_noop_receipt.v1"
-NATIVE_TERMINAL_RECEIPT_SCHEMA = "skillguard.native_terminal_receipt.v1"
+NATIVE_NOOP_RECEIPT_SCHEMA = "skillguard.native_noop_receipt.v2"
+NATIVE_TERMINAL_RECEIPT_SCHEMA = "skillguard.native_terminal_receipt.v2"
 OBLIGATION_APPLICABILITY_RECEIPT_SCHEMA = (
-    "skillguard.obligation_applicability_receipt.v1"
+    "skillguard.obligation_applicability_receipt.v2"
 )
-NOOP_BRANCH_IDS = frozenset({"no-update", "waiting-for-user", "ui-running"})
-PREPARED_BRANCH_ID = "prepared-update"
 APPLICABILITY_VERIFIER_ID = "skillguard.route_branch_applicability_verifier"
 APPLICABILITY_VERIFIER_VERSION = "1"
 SHA256_CHARACTERS = frozenset("0123456789ABCDEF")
@@ -64,7 +63,7 @@ class NativeTerminalResolution:
 
     @property
     def is_noop(self) -> bool:
-        return self.branch_id in NOOP_BRANCH_IDS
+        return bool(self.not_applicable_obligation_ids)
 
     @property
     def branch_required_obligation_ids(self) -> tuple[str, ...]:
@@ -119,15 +118,11 @@ class NativeTerminalResolution:
         }
 
 
-def _expected_closure_disposition(*, branch_id: str, profile: str) -> str:
+def _expected_closure_disposition(*, profile: str) -> str:
     if profile not in STANDARD_CLOSURE_PROFILES:
         raise NativeTerminalError(
             "native_terminal_closure_profile_invalid", profile, "profile"
         )
-    if branch_id in NOOP_BRANCH_IDS:
-        return "terminal_completion"
-    if branch_id != PREPARED_BRANCH_ID:
-        raise NativeTerminalError("unknown_native_branch", branch_id, "branch_id")
     return "terminal_completion"
 
 
@@ -300,7 +295,7 @@ def _native_check_covers_branch(
     )
 
 
-def _select_scheduled_production_depth_receipt(
+def _select_current_depth_receipt(
     receipts: Sequence[Mapping[str, Any]],
     *,
     target_skill_id: str,
@@ -309,7 +304,7 @@ def _select_scheduled_production_depth_receipt(
     run_id: str,
     native_check_id: str,
 ) -> Mapping[str, Any]:
-    """Select one exact production PASS without history-order fallback."""
+    """Select one exact current PASS without history-order fallback."""
 
     matches: list[Mapping[str, Any]] = []
     for receipt in receipts:
@@ -321,7 +316,7 @@ def _select_scheduled_production_depth_receipt(
         check_ids = {str(item) for item in raw_check_ids}
         if (
             receipt.get("status") == EXECUTION_DEPTH_PASS
-            and receipt.get("evidence_domain") == "scheduled_production"
+            and receipt.get("evidence_domain") in DEPTH_EVIDENCE_DOMAINS
             and receipt.get("target_skill_id") == target_skill_id
             and receipt.get("contract_hash") == contract_hash
             and receipt.get("native_owner_id") == native_owner_id
@@ -332,7 +327,7 @@ def _select_scheduled_production_depth_receipt(
     if not matches:
         raise NativeTerminalError(
             "native_noop_depth_receipt_missing",
-            f"scheduled production PASS for {native_check_id}",
+            f"current PASS for {native_check_id}",
             "native_check_ids",
         )
     if len(matches) != 1:
@@ -344,12 +339,27 @@ def _select_scheduled_production_depth_receipt(
     return matches[0]
 
 
-def _validate_scheduled_identity(
+def _validate_depth_evidence_identity(
     receipt: Mapping[str, Any],
     *,
     verified_installation_context: VerifiedInstallationContext | None = None,
-) -> Mapping[str, Any]:
+) -> tuple[str, Mapping[str, Any]]:
+    evidence_domain = str(receipt.get("evidence_domain", ""))
+    if evidence_domain not in DEPTH_EVIDENCE_DOMAINS:
+        raise NativeTerminalError(
+            "native_terminal_evidence_domain_invalid",
+            evidence_domain,
+            "evidence_domain",
+        )
     scheduled = receipt.get("scheduled_production_identity")
+    if evidence_domain != "scheduled_production":
+        if scheduled not in (None, {}):
+            raise NativeTerminalError(
+                "native_terminal_nonproduction_schedule_identity_forbidden",
+                evidence_domain,
+                "scheduled_production_identity",
+            )
+        return evidence_domain, {}
     try:
         normalized = scheduled_production_identity(scheduled)
     except NativeEvidenceIdentityError as exc:
@@ -369,14 +379,14 @@ def _validate_scheduled_identity(
             str(exc),
             "scheduled_production_identity",
         ) from exc
-    return normalized
+    return evidence_domain, normalized
 
 
 def _build_applicability_receipts(
     terminal_receipt: Mapping[str, Any],
     route_requirement: Mapping[str, Any],
 ) -> tuple[Mapping[str, Any], ...]:
-    if str(terminal_receipt.get("branch_id", "")) not in NOOP_BRANCH_IDS:
+    if not route_requirement.get("applicability_rules"):
         return ()
     rows: list[Mapping[str, Any]] = []
     for rule in route_requirement.get("applicability_rules", []):
@@ -399,7 +409,7 @@ def _build_applicability_receipts(
             "run_id": str(terminal_receipt.get("run_id", "")),
             "obligation_id": str(rule.get("obligation_id", "")),
             "disposition": "not_applicable",
-            "reason_code": "verified_branch_not_prepared_update",
+            "reason_code": "verified_target_branch_not_applicable",
             "native_terminal_receipt_id": str(
                 terminal_receipt.get("receipt_id", "")
             ),
@@ -436,10 +446,10 @@ def build_target_native_terminal_receipt(
     """Build a target-owned terminal receipt from the exact latest depth receipt.
 
     This is the supported producer entry point between supervisor stage 1 and
-    stage 2.  It never fabricates a finalize witness: no-op branches take their
-    verifier-approved not-applicable set from the selected branch contract,
-    while the prepared branch retains the obligations of the sole enforced
-    closure. Every accepted receipt represents terminal completion.
+    stage 2. It never fabricates a completion witness: branches with verifier-
+    approved not-applicable rules produce conditional no-op receipts, while
+    branches without those rules retain every required obligation. Every
+    accepted receipt represents terminal completion.
     """
 
     run = load_run(run_root)
@@ -447,11 +457,7 @@ def build_target_native_terminal_receipt(
         raise NativeTerminalError(
             "native_terminal_route_mismatch", native_route_id, "native_route_id"
         )
-    if branch_id not in NOOP_BRANCH_IDS | {PREPARED_BRANCH_ID}:
-        raise NativeTerminalError("unknown_native_branch", branch_id, "branch_id")
-    closure_disposition = _expected_closure_disposition(
-        branch_id=branch_id, profile=profile
-    )
+    closure_disposition = _expected_closure_disposition(profile=profile)
     depth_profile = contract.get("depth_profile")
     if not isinstance(depth_profile, Mapping):
         raise NativeTerminalError(
@@ -476,7 +482,7 @@ def build_target_native_terminal_receipt(
             "native_terminal_check_mismatch", native_check_id, "native_check_id"
         )
     depth_receipts = load_target_execution_receipts(run_root)
-    depth_receipt = _select_scheduled_production_depth_receipt(
+    depth_receipt = _select_current_depth_receipt(
         depth_receipts,
         target_skill_id=str(contract.get("skill_id", "")),
         contract_hash=str(contract.get("contract_hash", "")),
@@ -489,7 +495,6 @@ def build_target_native_terminal_receipt(
         ("contract_hash", contract.get("contract_hash")),
         ("native_owner_id", depth_profile.get("native_owner_id")),
         ("run_id", run.get("run_id")),
-        ("evidence_domain", "scheduled_production"),
     ):
         if depth_receipt.get(field) != expected:
             raise NativeTerminalError(
@@ -511,7 +516,7 @@ def build_target_native_terminal_receipt(
             native_route_id,
             "native_route_ids",
         )
-    scheduled = _validate_scheduled_identity(
+    evidence_domain, scheduled = _validate_depth_evidence_identity(
         depth_receipt,
         verified_installation_context=verified_installation_context,
     )
@@ -524,7 +529,7 @@ def build_target_native_terminal_receipt(
         raise NativeTerminalError(
             "native_terminal_native_receipt_unreadable", type(exc).__name__
         ) from exc
-    is_noop = branch_id in NOOP_BRANCH_IDS
+    is_noop = bool(requirement.get("applicability_rules"))
     receipt: dict[str, Any] = {
         "schema_version": (
             NATIVE_NOOP_RECEIPT_SCHEMA
@@ -539,13 +544,13 @@ def build_target_native_terminal_receipt(
         "native_check_id": native_check_id,
         "run_id": str(run.get("run_id", "")),
         "branch_id": branch_id,
-        "terminal_kind": "legitimate_noop" if is_noop else "prepared_update",
+        "terminal_kind": "conditional_noop" if is_noop else "completed_branch",
         "closure_profile": profile,
         "closure_disposition": closure_disposition,
         "reason_code": branch_id,
         "observed_state_fingerprint": canonical_hash(dict(observed_state)),
         "target_obligation_ids": obligation_ids,
-        "evidence_domain": "scheduled_production",
+        "evidence_domain": evidence_domain,
         "scheduled_production_identity": dict(scheduled),
         "depth_receipt_id": str(depth_receipt.get("receipt_id", "")),
         "depth_receipt_hash": str(depth_receipt.get("receipt_hash", "")),
@@ -633,26 +638,27 @@ def resolve_native_terminal_receipt(
     )
     schema = str(receipt.get("schema_version", ""))
     branch_id = _required_text(receipt, "branch_id")
+    route_id = _required_text(receipt, "native_route_id")
     terminal_kind = _required_text(receipt, "terminal_kind")
     closure_profile = _required_text(receipt, "closure_profile")
     closure_disposition = _required_text(receipt, "closure_disposition")
-    if branch_id in NOOP_BRANCH_IDS:
-        if schema != NATIVE_NOOP_RECEIPT_SCHEMA or terminal_kind != "legitimate_noop":
+    requirement = _profile_route_requirement(
+        contract, profile, route_id, branch_id
+    )
+    is_noop = bool(requirement.get("applicability_rules"))
+    if is_noop:
+        if schema != NATIVE_NOOP_RECEIPT_SCHEMA or terminal_kind != "conditional_noop":
             raise NativeTerminalError(
                 "native_noop_terminal_kind_invalid", terminal_kind, "terminal_kind"
             )
         id_prefix = "native-noop"
-    elif branch_id == PREPARED_BRANCH_ID:
-        if schema != NATIVE_TERMINAL_RECEIPT_SCHEMA or terminal_kind != "prepared_update":
+    else:
+        if schema != NATIVE_TERMINAL_RECEIPT_SCHEMA or terminal_kind != "completed_branch":
             raise NativeTerminalError(
-                "native_prepared_terminal_kind_invalid", terminal_kind, "terminal_kind"
+                "native_completed_terminal_kind_invalid", terminal_kind, "terminal_kind"
             )
         id_prefix = "native-terminal"
-    else:
-        raise NativeTerminalError("unknown_native_branch", branch_id, "branch_id")
-    expected_disposition = _expected_closure_disposition(
-        branch_id=branch_id, profile=profile
-    )
+    expected_disposition = _expected_closure_disposition(profile=profile)
     if closure_profile != profile:
         raise NativeTerminalError(
             "native_terminal_closure_profile_mismatch",
@@ -739,7 +745,6 @@ def resolve_native_terminal_receipt(
             str(receipt.get("run_id", "")),
             "run_id",
         )
-    route_id = str(receipt.get("native_route_id", ""))
     if route_id not in {str(item) for item in run.get("route_ids", [])}:
         raise NativeTerminalError(
             "native_terminal_route_mismatch", route_id, "native_route_id"
@@ -756,9 +761,6 @@ def resolve_native_terminal_receipt(
             expected_branch_id,
             "expected_branch_id",
         )
-    requirement = _profile_route_requirement(
-        contract, profile, route_id, branch_id
-    )
     target_obligation_ids = _string_set(receipt, "target_obligation_ids")
     expected_obligation_ids = {
         str(item) for item in requirement.get("required_obligation_ids", [])
@@ -776,19 +778,13 @@ def resolve_native_terminal_receipt(
         raise NativeTerminalError(
             "native_terminal_check_mismatch", native_check_id, "native_check_id"
         )
-    if receipt.get("evidence_domain") != "scheduled_production":
+    if receipt.get("reason_code") != branch_id:
         raise NativeTerminalError(
-            "native_terminal_evidence_domain_mismatch",
-            str(receipt.get("evidence_domain", "")),
-            "evidence_domain",
-        )
-    if branch_id in NOOP_BRANCH_IDS and receipt.get("reason_code") != branch_id:
-        raise NativeTerminalError(
-            "native_noop_reason_mismatch",
+            "native_terminal_reason_mismatch",
             str(receipt.get("reason_code", "")),
             "reason_code",
         )
-    normalized_scheduled_identity = _validate_scheduled_identity(
+    evidence_domain, normalized_scheduled_identity = _validate_depth_evidence_identity(
         receipt,
         verified_installation_context=verified_installation_context,
     )
@@ -821,7 +817,7 @@ def resolve_native_terminal_receipt(
         raise NativeTerminalError(
             "native_noop_depth_receipt_invalid", getattr(exc, "code", type(exc).__name__)
         ) from exc
-    depth_receipt = _select_scheduled_production_depth_receipt(
+    depth_receipt = _select_current_depth_receipt(
         depth_receipts,
         target_skill_id=str(contract.get("skill_id", "")),
         contract_hash=str(contract.get("contract_hash", "")),
@@ -841,7 +837,7 @@ def resolve_native_terminal_receipt(
             str(receipt.get("depth_receipt_hash", "")),
             "depth_receipt_hash",
         )
-    if depth_receipt.get("scheduled_production_identity") != normalized_scheduled_identity:
+    if depth_receipt.get("scheduled_production_identity", {}) != normalized_scheduled_identity:
         raise NativeTerminalError(
             "native_terminal_scheduled_identity_mismatch",
             "terminal and depth receipts must bind the same installed scheduled execution",
@@ -852,7 +848,7 @@ def resolve_native_terminal_receipt(
         ("contract_hash", contract.get("contract_hash")),
         ("native_owner_id", depth_profile.get("native_owner_id")),
         ("run_id", run.get("run_id")),
-        ("evidence_domain", "scheduled_production"),
+        ("evidence_domain", evidence_domain),
     ):
         if depth_receipt.get(field) != expected:
             raise NativeTerminalError(
@@ -873,14 +869,14 @@ def resolve_native_terminal_receipt(
             "native_terminal_depth_route_mismatch", route_id, "native_route_ids"
         )
     applicability = _build_applicability_receipts(receipt, requirement)
-    if branch_id in NOOP_BRANCH_IDS and not applicability:
+    if is_noop and not applicability:
         raise NativeTerminalError(
             "native_noop_applicability_rule_missing",
             f"{route_id}:{branch_id}",
         )
-    if branch_id == PREPARED_BRANCH_ID and requirement.get("applicability_rules"):
+    if not is_noop and applicability:
         raise NativeTerminalError(
-            "prepared_update_finalize_cannot_be_not_applicable",
+            "native_completed_branch_applicability_forbidden",
             f"{route_id}:{branch_id}",
         )
     return NativeTerminalResolution(

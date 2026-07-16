@@ -206,8 +206,39 @@ class ClosureProfilesV2Tests(unittest.TestCase):
                         "verifier_check_id": "check:intake",
                     }
                 ],
-            }
+            },
+            {
+                "native_route_id": "route:analyze",
+                "branch_ids": ["fixture-complete"],
+                "required_obligation_ids": [
+                    "obligation:intake",
+                    "obligation:review",
+                ],
+                "applicability_rules": [],
+            },
         ]
+        conditional["depth_profile"] = {
+            "schema_version": "skillguard.depth_profile.v2",
+            "profile_id": "profile:conditional-fixture",
+            "target_skill_id": "runtime-fixture",
+            "integration_mode": "native-integrated",
+            "native_owner_id": "fixture-native-owner",
+            "native_route_ids": ["route:analyze"],
+            "native_check_ids": ["check:intake"],
+            "skillguard_adds_domain_route": False,
+            "enforcement_level": "enforced",
+            "required_closure_profiles": ["enforced"],
+            "provider_runtime": {
+                "provider_id": "fixture-provider",
+                "required_runtime_contract_id": "fixture-runtime-v2",
+                "required_capability_ids": [
+                    "declared-check-receipt-reconciliation.v1"
+                ],
+                "required_enrollment_status": "enrolled",
+                "readiness_check_ids": ["check:intake"],
+            },
+            "claim_boundary": "conditional closure fixture only",
+        }
         conditional["contract_hash"] = canonical_hash(
             {key: value for key, value in conditional.items() if key != "contract_hash"}
         )

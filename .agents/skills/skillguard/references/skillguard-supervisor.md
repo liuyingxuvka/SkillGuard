@@ -16,7 +16,7 @@ The target skill must already contain a confirmed `.skillguard/contract-source.j
 
 ## Packet
 
-Use `supervision_mode: close` for ordinary one-stage contracts. Route-conditional scheduled production uses two calls with the same `request`: first `stage_depth`, then `close`.
+Use `supervision_mode: close` for ordinary one-stage contracts. Every route-conditional contract uses two calls with the same `request`: first `stage_depth`, then `close`. The terminal inherits the stage receipt's evidence domain; only `scheduled_production` carries and reverifies a scheduled installation identity.
 
 ```json
 {
@@ -75,7 +75,7 @@ Stage 2 must use `"supervision_mode": "close"`, exactly `"profiles": ["enforced"
       "relative_path": "native-terminal/receipts/native-noop-....json"
     },
     "expected_route_id": "route:target-native-owner",
-    "expected_branch_id": "no-update"
+    "expected_branch_id": "target-declared-noop"
   }
 }
 ```

@@ -404,12 +404,11 @@ def adopt_project(
     old_agents = agents_path.read_bytes() if agents_path.is_file() else None
     old_manifest = manifest_path.read_bytes() if manifest_path.is_file() else None
     if manifest_path.is_file():
-        current = audit_project_adoption(project_root)
-        if current["ok"]:
-            return {**current, "action": "project-adopt", "changed": False, "status": "pass"}
-        # Reapply the sole current shape from explicit caller-owned inputs.  The
-        # non-current manifest is never interpreted, converted, or used as a
-        # source of managed-skill rows.
+        # Always compile the sole current shape from explicit caller-owned
+        # inputs. A byte-identical current manifest remains an idempotent no-op;
+        # a new declared version or managed-skill inventory replaces it
+        # directly. Existing bytes are never treated as a migration source.
+        audit_project_adoption(project_root)
     manifest = build_project_manifest(
         project_root,
         managed_skills,

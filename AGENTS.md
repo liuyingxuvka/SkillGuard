@@ -250,7 +250,7 @@ Canonical SkillGuard repository: https://github.com/liuyingxuvka/SkillGuard
 
 Managed skills:
 - `.agents/skills/skillguard` — native owner=`skillguard`, route evidence=`.agents/skills/skillguard/SKILL.md`; the target skill keeps domain-route, judgment, action, and native-check authority.
-- `.agents/skills/skillguard-global-router` — native owner=`skillguard-global-router`, route evidence=`.agents/skills/skillguard-global-router/SKILL.md`; the target skill keeps domain-route, judgment, action, and native-check authority.
+- `.agents/skills/skillguard-global-router` — native owner=`skillguard.global_router_cli`, route evidence=`.agents/skills/skillguard-global-router/SKILL.md`; the target skill keeps domain-route, judgment, action, and native-check authority.
 
 Required maintenance handoff:
 
