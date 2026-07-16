@@ -1,0 +1,310 @@
+{
+  "schema_version": "validated-template-pack-program-map/v1",
+  "program_id": "validated-template-pack-supervision",
+  "planning_provider": {
+    "provider_id": "official-openspec-cli-1.6.0",
+    "work_package_id": "openspec:add-validated-template-pack-supervision",
+    "change_id": "add-validated-template-pack-supervision",
+    "artifact_root": "openspec/changes/add-validated-template-pack-supervision",
+    "source_policy": "external_frozen_read_only",
+    "provider_artifacts": [
+      "proposal.md",
+      "design.md",
+      "specs/validated-template-pack-supervision/spec.md",
+      "specs/template-profile-compilation/spec.md",
+      "specs/template-first-skill-maintenance/spec.md",
+      "specs/portable-declared-check-launch/spec.md",
+      "tasks.md"
+    ]
+  },
+  "authority_boundaries": [
+    {
+      "authority_id": "authority:official-openspec",
+      "owns": ["proposal", "design", "delta_specifications", "provider_tasks"],
+      "must_not_own": ["guard_domain_meaning", "template_selection", "runtime_validation", "release_claim"]
+    },
+    {
+      "authority_id": "authority:flowguard-models",
+      "owns": ["behavior_model", "risk_model", "process_model", "counterexample_boundary"],
+      "must_not_own": ["openspec_provider_source", "skillguard_domain_inference", "target_native_oracle"]
+    },
+    {
+      "authority_id": "authority:skillguard-supervision",
+      "owns": ["template_protocol", "deterministic_supervision", "contract_compilation", "receipt_freshness", "installation_projection"],
+      "must_not_own": ["guard_family_route_selection", "guard_family_applicability", "guard_family_native_oracle"]
+    },
+    {
+      "authority_id": "authority:guard-family",
+      "owns": ["family_catalog", "applicability", "composition_policy", "field_ownership", "builders", "native_validators", "claim_boundary"],
+      "must_not_own": ["skillguard_supervisor_semantics", "other_guard_families"]
+    }
+  ],
+  "model_evidence": [
+    {
+      "model_id": "existing_model_preflight",
+      "provider_task_ids": ["1.4"],
+      "check_id": "check:model:existing-owner-preflight",
+      "execution_owner": "owner:flowguard-existing-model-preflight",
+      "execution_state": "passed",
+      "claim_boundary": "current ownership and duplicate-boundary only"
+    },
+    {
+      "model_id": "plan_detailing",
+      "provider_task_ids": ["1.4"],
+      "check_id": "check:model:plan-detailing",
+      "execution_owner": "owner:flowguard-plan-detailing",
+      "execution_state": "passed",
+      "claim_boundary": "plan completeness; implementation evidence remains not_run"
+    },
+    {
+      "model_id": "development_process_flow",
+      "provider_task_ids": ["1.4"],
+      "check_id": "check:model:planning-lifecycle",
+      "execution_owner": "owner:flowguard-development-process",
+      "execution_state": "passed",
+      "claim_boundary": "planning_ready only; not implementation, installation, release, archive, or publication"
+    },
+    {
+      "model_id": "risk_intent_check_plan",
+      "provider_task_ids": ["1.4"],
+      "check_id": "check:model:template-selection",
+      "execution_owner": "owner:flowguard-model-first",
+      "execution_state": "pass_with_gaps",
+      "known_bad_state": "failed_as_expected",
+      "claim_boundary": "model-level zero/one/many selection; production conformance remains not_run"
+    }
+  ],
+  "targets": [
+    {
+      "target_id": "skillguard",
+      "repository": "liuyingxuvka/SkillGuard",
+      "provider_task_ids": ["2.1-2.4", "3.1-3.6", "4.1-4.7", "5.1-5.7", "6.1-6.8", "7.1-7.7", "9.1-9.6", "10.1-10.8"],
+      "target_obligation_ids": [
+        "skillguard:template-manifest-protocol",
+        "skillguard:deterministic-selection",
+        "skillguard:fragment-compilation",
+        "skillguard:template-first-generation",
+        "skillguard:portable-declared-check-launch",
+        "skillguard:receipt-freshness",
+        "skillguard:direct-current-installation"
+      ],
+      "native_checks": [
+        {
+          "check_id": "check:skillguard:template-protocol",
+          "execution_owner": "owner:skillguard-template-protocol",
+          "planned_receipt_id": "receipt:skillguard-template-protocol",
+          "execution_state": "not_run"
+        },
+        {
+          "check_id": "check:skillguard:template-selection",
+          "execution_owner": "owner:skillguard-template-selection",
+          "planned_receipt_id": "receipt:skillguard-template-selection",
+          "execution_state": "not_run"
+        },
+        {
+          "check_id": "check:skillguard:fragment-compiler",
+          "execution_owner": "owner:skillguard-contract-compiler",
+          "planned_receipt_id": "receipt:skillguard-fragment-compiler",
+          "execution_state": "not_run"
+        },
+        {
+          "check_id": "check:skillguard:portable-launch",
+          "execution_owner": "owner:skillguard-declared-check-runner",
+          "planned_receipt_id": "receipt:skillguard-portable-launch",
+          "execution_state": "not_run"
+        }
+      ],
+      "receipt_root": ".skillguard/receipts/validated-template-pack-program",
+      "installed_projections": ["$CODEX_HOME/skills/skillguard", "$CODEX_HOME/skills/skillguard-global-router"],
+      "git_baseline": {
+        "primary_branch": "master",
+        "primary_head": "88d338388c191281df7ed9278f2c0534ddb003a3",
+        "active_peer_branch": "codex/portfolio-calibration-runtime",
+        "active_peer_head": "cfeef58ffc9c0ec018d5e6b493a16f1c41be428b",
+        "handoff_status": "required_before_shared-runtime-edit"
+      },
+      "final_git_identity": "not_frozen"
+    },
+    {
+      "target_id": "flowguard",
+      "repository": "liuyingxuvka/FlowGuard",
+      "work_package_id": "openspec:add-validated-template-pack-registry",
+      "provider_task_ids": ["8.1", "8.7", "8.8", "9.2", "10.3", "10.6", "10.7"],
+      "target_obligation_ids": ["flowguard:factory-manifests", "flowguard:risk-template-manifests", "flowguard:selection-receipt"],
+      "native_checks": [
+        {
+          "check_id": "check:flowguard:template-pack-registry",
+          "execution_owner": "owner:flowguard-template-pack-tests",
+          "planned_receipt_id": "receipt:flowguard-template-pack-registry",
+          "execution_state": "not_run"
+        }
+      ],
+      "receipt_root": ".flowguard/receipts/validated-template-pack-registry",
+      "installed_projections": ["editable-python-package:flowguard", "$CODEX_HOME/skills/flowguard-*"],
+      "git_baseline": {
+        "branch": "main",
+        "head": "10b6f108a741be8263cb9a09c105b369429c4766",
+        "peer_work_state": "dirty-active-mature-compositional-verification-kernel",
+        "handoff_status": "new-files-only-until-peer-freeze"
+      },
+      "final_git_identity": "not_frozen"
+    },
+    {
+      "target_id": "physicsguard",
+      "repository": "liuyingxuvka/PhysicsGuard",
+      "work_package_id": "openspec:add-physicsguard-purpose-pack-builder",
+      "provider_task_ids": ["8.2", "8.7", "8.8", "9.2", "10.3", "10.6", "10.7"],
+      "target_obligation_ids": ["physicsguard:purpose-pack-builder", "physicsguard:no-auto-refine", "physicsguard:native-verifier"],
+      "native_checks": [
+        {
+          "check_id": "check:physicsguard:purpose-pack-builder",
+          "execution_owner": "owner:physicsguard-template-pack-tests",
+          "planned_receipt_id": "receipt:physicsguard-purpose-pack-builder",
+          "execution_state": "not_run"
+        }
+      ],
+      "receipt_root": ".physicsguard/receipts/validated-template-pack-program",
+      "installed_projections": ["$CODEX_HOME/skills/physicsguard-*"],
+      "git_baseline": {
+        "branch": "main",
+        "head": "03dfed960bcc59f79984b7e2984dc545019e7458",
+        "peer_work_state": "ten-skill-files-dirty",
+        "handoff_status": "new-files-only-until-peer-freeze"
+      },
+      "final_git_identity": "not_frozen"
+    },
+    {
+      "target_id": "logicguard",
+      "repository": "liuyingxuvka/LogicGuard",
+      "work_package_id": "openspec:add-logicguard-template-pack-builder",
+      "provider_task_ids": ["8.3", "8.7", "8.8", "9.2", "10.3", "10.6", "10.7"],
+      "target_obligation_ids": ["logicguard:purpose-profiles", "logicguard:structured-artifact-profiles", "logicguard:source-deepening-synthesis-profiles"],
+      "native_checks": [
+        {
+          "check_id": "check:logicguard:template-pack-builder",
+          "execution_owner": "owner:logicguard-template-pack-tests",
+          "planned_receipt_id": "receipt:logicguard-template-pack-builder",
+          "execution_state": "not_run"
+        }
+      ],
+      "receipt_root": ".logicguard/receipts/validated-template-pack-program",
+      "installed_projections": ["$CODEX_HOME/skills/logicguard*", "$CODEX_HOME/skills/logic-writing"],
+      "git_baseline": {
+        "branch": "main",
+        "head": "ea90d06f872cd466642f544ed8a89a769a278eb8",
+        "peer_work_state": "dirty-active-modelmesh-modelstore",
+        "handoff_status": "openspec-and-new-files-only-until-peer-freeze"
+      },
+      "final_git_identity": "not_frozen"
+    },
+    {
+      "target_id": "sourceguard",
+      "repository": "liuyingxuvka/SourceGuard",
+      "work_package_id": "openspec:add-sourceguard-template-pack-builder",
+      "provider_task_ids": ["8.4", "8.7", "8.8", "9.2", "10.3", "10.6", "10.7"],
+      "target_obligation_ids": ["sourceguard:discovery-profiles", "sourceguard:evidence-gap-profiles", "sourceguard:provenance-anchor-lineage-profiles"],
+      "native_checks": [
+        {
+          "check_id": "check:sourceguard:template-pack-builder",
+          "execution_owner": "owner:sourceguard-template-pack-tests",
+          "planned_receipt_id": "receipt:sourceguard-template-pack-builder",
+          "execution_state": "not_run"
+        }
+      ],
+      "receipt_root": ".sourceguard/receipts/validated-template-pack-program",
+      "installed_projections": ["$CODEX_HOME/skills/sourceguard"],
+      "git_baseline": {
+        "primary_branch": "main",
+        "primary_head": "1a5f37702fbc78d124614b714296f0531ce514d8",
+        "active_peer_branch": "codex/skillguard-v05-closure",
+        "active_peer_head": "557be2900758695c959414b49d7abe941c18282d",
+        "handoff_status": "required-before-production-edit"
+      },
+      "final_git_identity": "not_frozen"
+    },
+    {
+      "target_id": "traceguard",
+      "repository": "liuyingxuvka/TraceGuard",
+      "work_package_id": "openspec:add-traceguard-template-pack-builder",
+      "provider_task_ids": ["8.5", "8.7", "8.8", "9.2", "10.3", "10.6", "10.7"],
+      "target_obligation_ids": ["traceguard:trace-purpose-profiles", "traceguard:causal-counterfactual-handoff-profiles", "traceguard:case-library-profiles", "traceguard:cli-example-projection"],
+      "native_checks": [
+        {
+          "check_id": "check:traceguard:template-pack-builder",
+          "execution_owner": "owner:traceguard-template-pack-tests",
+          "planned_receipt_id": "receipt:traceguard-template-pack-builder",
+          "execution_state": "not_run"
+        }
+      ],
+      "receipt_root": ".traceguard/receipts/validated-template-pack-program",
+      "installed_projections": ["$CODEX_HOME/skills/traceguard", "$CODEX_HOME/skills/traceguard-library"],
+      "git_baseline": {
+        "branch": "main",
+        "head": "97443cec9c995dd80128ba61270102e00c6971ef",
+        "peer_work_state": "one-skill-file-dirty-and-v1-v2-provenance-gap",
+        "handoff_status": "provenance-currentization-required-before-production-edit"
+      },
+      "final_git_identity": "not_frozen"
+    },
+    {
+      "target_id": "worldguard",
+      "repository": "liuyingxuvka/WorldGuard",
+      "work_package_id": "openspec:add-worldguard-template-pack-builder",
+      "provider_task_ids": ["8.6", "8.7", "8.8", "9.2", "10.3", "10.6", "10.7"],
+      "target_obligation_ids": ["worldguard:guard-contract-profile", "worldguard:modelmesh-profile", "worldguard:claim-derived-guard-profiles", "worldguard:native-validator"],
+      "native_checks": [
+        {
+          "check_id": "check:worldguard:template-pack-builder",
+          "execution_owner": "owner:worldguard-template-pack-tests",
+          "planned_receipt_id": "receipt:worldguard-template-pack-builder",
+          "execution_state": "not_run"
+        }
+      ],
+      "receipt_root": ".worldguard/receipts/validated-template-pack-program",
+      "installed_projections": ["$CODEX_HOME/skills/worldguard"],
+      "git_baseline": {
+        "branch": "main",
+        "head": "1427f4eff6cb879dd67f1fd566dd498d4125c2c9",
+        "peer_work_state": "clean-at-clone-then-new-program-files-only",
+        "handoff_status": "isolated-new-files-authorized"
+      },
+      "final_git_identity": "not_frozen"
+    }
+  ],
+  "final_validation_owners": [
+    {
+      "check_id": "check:program:all-models",
+      "execution_owner": "owner:final-all-model",
+      "planned_receipt_id": "receipt:program:all-models",
+      "execution_state": "not_run"
+    },
+    {
+      "check_id": "check:program:full-tests",
+      "execution_owner": "owner:final-full-tests",
+      "planned_receipt_id": "receipt:program:full-tests",
+      "execution_state": "not_run"
+    },
+    {
+      "check_id": "check:program:installed-parity",
+      "execution_owner": "owner:final-installed-parity",
+      "planned_receipt_id": "receipt:program:installed-parity",
+      "execution_state": "not_run"
+    },
+    {
+      "check_id": "check:program:git-sync",
+      "execution_owner": "owner:final-git-sync",
+      "planned_receipt_id": "receipt:program:git-sync",
+      "execution_state": "not_run"
+    }
+  ],
+  "identity_rules": [
+    "provider task ids are planning identities and never validation receipts",
+    "target obligations are domain commitments and never execution owners",
+    "native check ids are immutable inventory entries and never commands",
+    "each check has exactly one execution owner and one planned receipt identity",
+    "installed projection identity is separate from canonical source and Git identity",
+    "final Git identities remain not_frozen until all current receipts support the exact revisions",
+    "OpenSpec source, installation, skills, and Git identities are excluded from synchronization"
+  ],
+  "claim_boundary": "This map freezes identities and ownership only. Any row whose execution_state is not_run is not evidence of implementation, validation, installation, release, archive, publication, or Git synchronization."
+}
