@@ -10,7 +10,7 @@
 </p>
 <!-- README HERO END -->
 
-Current release: `v0.3.0` (source-only; validation evidence and publication status remain separate claims)
+Current release: `v0.3.1` (source-only; validation evidence and publication status remain separate claims)
 
 English comes first; the second half is a full Chinese mirror.
 
@@ -78,7 +78,7 @@ SkillGuard currently ships as source plus a local Python script dispatcher insid
 | --- | --- |
 | Codex skill entrypoint | `.agents/skills/skillguard/SKILL.md` |
 | Local command dispatcher | `.agents/skills/skillguard/scripts/skillguard.py` |
-| Public source version | `0.3.0` |
+| Public source version | `0.3.1` |
 | Release mode | Source development; tag and GitHub Release require separate verification |
 | Binary artifact | Not provided |
 | Packaged CLI install | Not claimed |
@@ -265,7 +265,7 @@ Portfolio status is private, hash-bound maintenance evidence. The impact receipt
 ### Adopt Or Audit A Skill Repository
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py project-adopt --root <repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.3.0
+python .agents/skills/skillguard/scripts/skillguard.py project-adopt --root <repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.3.1
 python .agents/skills/skillguard/scripts/skillguard.py project-audit --root <repository>
 ```
 
@@ -316,16 +316,15 @@ python -m pytest tests/test_execution_depth.py tests/test_skillguard_generic_sup
 python .agents/skills/skillguard/scripts/skillguard.py check-depth --target .agents/skills/skillguard
 python .agents/skills/skillguard/scripts/skillguard.py check-readme-release --repo .
 python .agents/skills/skillguard/scripts/skillguard.py audit-installed-skills --root <skill-root>
-python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --profile focused --repository-root .
-python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --profile full --repository-root . --result-root <result-root> --closure-receipt-root <closure-receipt-root>
-python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --replay-receipt-root <closure-receipt-root> --repository-root . --result-root <result-root>
+python -m pytest -q
+python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --profile focused --mode plan_only --repository-root . --run-root <run-root> --skill-root .agents/skills/skillguard --target-root .agents/skills/skillguard --owner-evidence-root <owner-evidence-root>
 python .agents/skills/skillguard/scripts/skillguard_self_host.py --repository-root .
 python .agents/skills/skillguard/scripts/skillguard_provenance.py --repository-root . --development
 python .agents/skills/skillguard/scripts/skillguard_privacy.py --repository-root .
 python -m flowguard project-audit --root .
 ```
 
-Run an expensive full TestMesh parent once after source freeze and publish its closure receipt. The current full parent binds one sealed installation identity and one separately typed current global-router prompt identity; neither comes from a child-suite pass. Later verification layers consume that exact parent with `--replay-receipt-root`; cross-profile child reuse is accepted only through an explicit `--reuse-source-parent <closure-root> <source-result-root>` anchor. A copied or bare child result is not reusable proof.
+Run the full test suite after source freeze. For receipt-governed TestMesh work, first create the immutable plan with `plan_only`, then pass that exact saved plan to `owner_execution_only`, and finally to `aggregation_only`; replay consumes the returned aggregation reference through `--replay-aggregation-ref`. Full aggregation additionally requires the exact current installation receipt and global-prompt binding. A copied or bare child result is not reusable proof. The target skill's current `SKILL.md` is authoritative for this three-stage lifecycle.
 
 The focused/full TestMesh results, installed-source parity, privacy audit, and two-stage self-host are current local release evidence only when their source fingerprints still match. They do not prove future AI behavior, external service behavior, legal compliance, packaged CLI distribution, remote CI execution, or GitHub publication.
 
@@ -399,7 +398,7 @@ SkillGuard is licensed under the MIT License. See [LICENSE](LICENSE).
 
 # SkillGuard 中文说明
 
-当前发布版本：`v0.3.0`（仅源码；验证证据和发布状态仍是彼此独立的声明）
+当前发布版本：`v0.3.1`（仅源码；验证证据和发布状态仍是彼此独立的声明）
 
 SkillGuard 是一个面向 Codex 技能的本地运行合同和维护框架。它帮助一个技能先选对路线，再把要完成的工作写进可检查的合同，记录运行证据，在关闭任务前运行检查，并明确报告哪些已经检查、哪些跳过、哪些过期、哪些被阻塞、哪些不在本次证据边界内。
 
@@ -462,7 +461,7 @@ SkillGuard 现在以源码加本地 Python 脚本分发，还不是一个打包�
 | --- | --- |
 | Codex 技能入口 | `.agents/skills/skillguard/SKILL.md` |
 | 本地命令分发器 | `.agents/skills/skillguard/scripts/skillguard.py` |
-| 公开源码版本 | `0.3.0` |
+| 公开源码版本 | `0.3.1` |
 | 发布方式 | 源码开发版；标签和 GitHub Release 需要独立验证 |
 | 二进制文件 | 不提供 |
 | 打包 CLI 安装 | 不声明 |
@@ -644,7 +643,7 @@ python .agents/skills/skillguard/scripts/skillguard.py graduate-portfolio --help
 ### 接管或审计技能仓库
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py project-adopt --root <repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.3.0
+python .agents/skills/skillguard/scripts/skillguard.py project-adopt --root <repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.3.1
 python .agents/skills/skillguard/scripts/skillguard.py project-audit --root <repository>
 ```
 
@@ -695,16 +694,15 @@ python -m pytest tests/test_execution_depth.py tests/test_skillguard_generic_sup
 python .agents/skills/skillguard/scripts/skillguard.py check-depth --target .agents/skills/skillguard
 python .agents/skills/skillguard/scripts/skillguard.py check-readme-release --repo .
 python .agents/skills/skillguard/scripts/skillguard.py audit-installed-skills --root <skill-root>
-python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --profile focused --repository-root .
-python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --profile full --repository-root . --result-root <result-root> --closure-receipt-root <closure-receipt-root>
-python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --replay-receipt-root <closure-receipt-root> --repository-root . --result-root <result-root>
+python -m pytest -q
+python .agents/skills/skillguard/scripts/skillguard_test_mesh.py --profile focused --mode plan_only --repository-root . --run-root <run-root> --skill-root .agents/skills/skillguard --target-root .agents/skills/skillguard --owner-evidence-root <owner-evidence-root>
 python .agents/skills/skillguard/scripts/skillguard_self_host.py --repository-root .
 python .agents/skills/skillguard/scripts/skillguard_provenance.py --repository-root . --development
 python .agents/skills/skillguard/scripts/skillguard_privacy.py --repository-root .
 python -m flowguard project-audit --root .
 ```
 
-源码冻结后只运行一次昂贵的完整 TestMesh 父档位并生成闭环收据。当前完整父结果会绑定一个封存安装身份，以及一个单独类型化的当前全局路由提示词身份；两者都不能由子测试通过来替代。后续验证层用 `--replay-receipt-root` 消费这一个精确父结果；跨档位子结果只有通过显式 `--reuse-source-parent <closure-root> <source-result-root>` 锚定才可复用，复制出来的或裸露的 child result 没有复用权威。
+源码冻结后运行完整测试套件。需要收据治理的 TestMesh 工作先用 `plan_only` 生成不可变计划，再把同一份计划依次交给 `owner_execution_only` 和 `aggregation_only`；回放只用 `--replay-aggregation-ref` 消费聚合引用。完整聚合还必须绑定当前安装收据和全局提示身份。复制出来的或裸露的 child result 没有复用权威；三阶段生命周期以目标技能当前 `SKILL.md` 为准。
 
 聚焦/完整 TestMesh、安装来源一致性、隐私审计和双层自托管只有在源码指纹仍匹配时，才是当前本地发布证据。它们不证明未来 AI 行为、外部服务行为、法律合规、打包 CLI 分发、远端 CI 执行或 GitHub 发布。
 

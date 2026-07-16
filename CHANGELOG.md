@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.1 - 2026-07-16
+
+- Normalized line endings for text template inputs so compiled installation projections remain identical across Windows and Linux clean checkouts.
+- Replaced retired one-shot TestMesh CI invocations with direct current test-suite commands, corrected the README's three-stage TestMesh guidance, and pinned CI to the public FlowGuard `v0.56.0` runtime.
+- Added a regression proving `.template` source fingerprints are portable across LF and CRLF checkouts.
+
 ## v0.3.0 - 2026-07-15
 
 - **BREAKING:** Collapsed SkillGuard to one fixed target-neutral workflow: freeze the target's exact declared checks, resolve one owner and valid dependency graph per check, admit only current immutable terminal results for the same request, and close only after exact reconciliation.

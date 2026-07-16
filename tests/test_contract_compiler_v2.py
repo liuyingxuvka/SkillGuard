@@ -39,6 +39,7 @@ from skillguard_v2.supervisor import (  # noqa: E402
 )
 from skillguard_v2.runtime_fingerprint import guard_runtime_fingerprint  # noqa: E402
 from skillguard_v2.execution_records import filesystem_path  # noqa: E402
+from skillguard_v2.content_projection import source_file_hash  # noqa: E402
 from skillguard_v2.installation import (  # noqa: E402
     _installation_member_relative_path,
     installation_projection_identity,
@@ -103,6 +104,15 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.assertEqual(path_fingerprint(left), path_fingerprint(right))
         right.joinpath("asset.bin").write_bytes(b"\x00\r\n")
         self.assertNotEqual(path_fingerprint(left), path_fingerprint(right))
+
+        left_template = left / "prompt.md.template"
+        right_template = right / "prompt.md.template"
+        left_template.write_bytes(b"first\nsecond\n")
+        right_template.write_bytes(b"first\r\nsecond\r\n")
+        self.assertEqual(
+            source_file_hash(left_template),
+            source_file_hash(right_template),
+        )
 
     def test_single_file_fingerprint_uses_shared_portable_policy(self) -> None:
         cache_file = self.repo / ".pytest_cache" / "state.json"

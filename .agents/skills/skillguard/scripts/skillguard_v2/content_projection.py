@@ -30,6 +30,7 @@ TEXT_SOURCE_SUFFIXES = frozenset(
         ".html",
         ".css",
         ".js",
+        ".template",
     }
 )
 TEXT_SOURCE_NAMES = frozenset({".gitignore", ".gitattributes"})
