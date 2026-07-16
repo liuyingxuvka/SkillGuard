@@ -20,13 +20,38 @@
     },
     "receipt": {
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "evidence_domain": {
+                "const": "scheduled_production"
+              }
+            },
+            "required": [
+              "evidence_domain"
+            ]
+          },
+          "then": {
+            "properties": {
+              "scheduled_production_identity": {
+                "$ref": "#/$defs/scheduled_identity"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "scheduled_production_identity": {
+                "maxProperties": 0
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "branch_id": {
-          "enum": [
-            "no-update",
-            "waiting-for-user",
-            "ui-running"
-          ]
+          "minLength": 1,
+          "type": "string"
         },
         "closure_disposition": {
           "const": "terminal_completion"
@@ -49,7 +74,11 @@
           "type": "string"
         },
         "evidence_domain": {
-          "const": "scheduled_production"
+          "enum": [
+            "fixture_validation",
+            "capability_validation",
+            "scheduled_production"
+          ]
         },
         "native_check_id": {
           "minLength": 1,
@@ -73,11 +102,8 @@
           "$ref": "#/$defs/sha256"
         },
         "reason_code": {
-          "enum": [
-            "no-update",
-            "waiting-for-user",
-            "ui-running"
-          ]
+          "minLength": 1,
+          "type": "string"
         },
         "receipt_hash": {
           "$ref": "#/$defs/sha256"
@@ -91,10 +117,10 @@
           "type": "string"
         },
         "scheduled_production_identity": {
-          "$ref": "#/$defs/scheduled_identity"
+          "type": "object"
         },
         "schema_version": {
-          "const": "skillguard.native_noop_receipt.v1"
+          "const": "skillguard.native_noop_receipt.v2"
         },
         "target_contract_hash": {
           "$ref": "#/$defs/sha256"
@@ -113,7 +139,7 @@
           "type": "string"
         },
         "terminal_kind": {
-          "const": "legitimate_noop"
+          "const": "conditional_noop"
         }
       },
       "required": [
@@ -199,7 +225,7 @@
       "type": "string"
     }
   },
-  "$id": "https://skillguard.local/schemas/skillguard_native_noop_receipt_v1.schema.json",
+  "$id": "https://skillguard.local/schemas/skillguard_native_noop_receipt_v2.schema.json",
   "$ref": "#/$defs/receipt",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "required": [
@@ -228,6 +254,6 @@
     "created_at",
     "receipt_hash"
   ],
-  "title": "SkillGuard Native No-op Receipt V1",
+  "title": "SkillGuard Native No-op Receipt V2",
   "type": "object"
 }

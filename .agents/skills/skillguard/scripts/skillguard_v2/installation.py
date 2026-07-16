@@ -1029,7 +1029,14 @@ def _activation_receipt_active_recoverable(record: dict[str, Any]) -> bool:
 def _activation_receipt_active_replacement_eligible(
     record: dict[str, Any],
 ) -> bool:
-    """Admit a safe raw snapshot only while a verified replacement is pending."""
+    """Admit a safe non-empty snapshot only while a verified replacement is pending.
+
+    A historical head may have both active and backup drift after an interrupted
+    recovery. The ordinary restore path must remain blocked in that state. A
+    separately verified replacement may still proceed because the next
+    transaction snapshots the exact current active trees as its own backups
+    before activation. This never promotes the drifted tree to current evidence.
+    """
 
     receipt = _activation_receipt_payload(record)
     if receipt is None or not _hardened_activation_receipt_stored_integrity(
@@ -1046,7 +1053,7 @@ def _activation_receipt_active_replacement_eligible(
             continue
         if (
             actual.get("exists") is not True
-            or actual.get("kind") != "recovery_directory"
+            or actual.get("kind") not in {"directory", "recovery_directory"}
             or int(actual.get("file_count", 0)) <= 0
         ):
             return False

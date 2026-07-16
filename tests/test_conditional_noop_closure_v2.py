@@ -21,8 +21,9 @@ from skillguard_v2.native_terminal import (
     NATIVE_NOOP_RECEIPT_SCHEMA,
     NATIVE_TERMINAL_RECEIPT_SCHEMA,
     NativeTerminalError,
-    _select_scheduled_production_depth_receipt,
+    _select_current_depth_receipt,
     build_target_native_terminal_receipt,
+    resolve_native_terminal_receipt,
     write_target_native_terminal_receipt,
 )
 from skillguard_v2.receipts import fingerprint_value, issue_receipt
@@ -37,7 +38,8 @@ from skillguard_v2.step_runtime import (
 )
 
 
-NOOP_BRANCHES = ("no-update", "waiting-for-user", "ui-running")
+NOOP_BRANCHES = ("current-noop", "manual-deferred")
+COMPLETING_BRANCH = "manual-apply"
 def _branch_contract() -> dict[str, object]:
     contract = runtime_contract()
     contract["route_branch_closure_required"] = True
@@ -82,7 +84,7 @@ def _branch_contract() -> dict[str, object]:
             },
             {
                 "native_route_id": "route:analyze",
-                "branch_ids": ["prepared-update"],
+                "branch_ids": [COMPLETING_BRANCH],
                 "required_obligation_ids": prepared_obligation_ids,
                 "applicability_rules": [],
             },
@@ -198,7 +200,12 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
             self.run_root, "step:finish", intake_receipt["receipt_id"]
         )
 
-    def _depth_receipt(self, branch_id: str) -> dict[str, object]:
+    def _depth_receipt(
+        self,
+        branch_id: str,
+        *,
+        evidence_domain: str = "scheduled_production",
+    ) -> dict[str, object]:
         run = json.loads(
             (self.run_root / "run.json").read_text(encoding="utf-8")
         )
@@ -207,7 +214,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                 {
                     "check_id": "check:update",
                     "execution_owner_id": "fixture-native-update",
-                    "evidence_domain_id": "scheduled_production",
+                    "evidence_domain_id": evidence_domain,
                     "depends_on_check_ids": [],
                 }
             ],
@@ -237,18 +244,22 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
             "declared_check_inventory": inventory,
             "declared_check_results": [check_result],
             "unresolved_check_ids": [],
-            "evidence_domain": "scheduled_production",
-            "scheduled_production_identity": {
-                "scheduler_or_trigger_id": "scheduler:update",
-                "scheduled_execution_id": f"scheduled:{branch_id}",
-                "installation_receipt_id": "installation:fixture",
-                "installation_receipt_hash": "D" * 64,
-                "installation_receipt_root_ref": {
-                    "path_token": "active_skill_root",
-                    "relative_path": ".sg-runtime/installation",
-                },
-                "installed_runtime_fingerprint": "E" * 64,
-            },
+            "evidence_domain": evidence_domain,
+            "scheduled_production_identity": (
+                {
+                    "scheduler_or_trigger_id": "scheduler:update",
+                    "scheduled_execution_id": f"scheduled:{branch_id}",
+                    "installation_receipt_id": "installation:fixture",
+                    "installation_receipt_hash": "D" * 64,
+                    "installation_receipt_root_ref": {
+                        "path_token": "active_skill_root",
+                        "relative_path": ".sg-runtime/installation",
+                    },
+                    "installed_runtime_fingerprint": "E" * 64,
+                }
+                if evidence_domain == "scheduled_production"
+                else {}
+            ),
             "status": EXECUTION_DEPTH_PASS,
             "enforcement_decision": "allow",
             "dimension_results": [],
@@ -288,9 +299,10 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
         branch_id: str,
         *,
         profile: str = "enforced",
+        evidence_domain: str = "scheduled_production",
         mutate: dict[str, object] | None = None,
     ) -> tuple[str, dict[str, object], dict[str, object]]:
-        depth = self._depth_receipt(branch_id)
+        depth = self._depth_receipt(branch_id, evidence_domain=evidence_domain)
         native_raw = canonical_json_bytes(
             {"native_update_result": branch_id, "observed": True}
         )
@@ -312,7 +324,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
             "native_check_id": "check:update",
             "run_id": self.run_root.name,
             "branch_id": branch_id,
-            "terminal_kind": "legitimate_noop" if is_noop else "prepared_update",
+            "terminal_kind": "conditional_noop" if is_noop else "completed_branch",
             "closure_profile": profile,
             "closure_disposition": (
                 "terminal_completion"
@@ -330,18 +342,10 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                     "obligation:release",
                 ]
             ),
-            "evidence_domain": "scheduled_production",
-            "scheduled_production_identity": {
-                "scheduler_or_trigger_id": "scheduler:update",
-                "scheduled_execution_id": f"scheduled:{branch_id}",
-                "installation_receipt_id": "installation:fixture",
-                "installation_receipt_hash": "D" * 64,
-                "installation_receipt_root_ref": {
-                    "path_token": "active_skill_root",
-                    "relative_path": ".sg-runtime/installation",
-                },
-                "installed_runtime_fingerprint": "E" * 64,
-            },
+            "evidence_domain": evidence_domain,
+            "scheduled_production_identity": dict(
+                depth["scheduled_production_identity"]
+            ),
             "depth_receipt_id": depth["receipt_id"],
             "depth_receipt_hash": depth["receipt_hash"],
             "native_receipt_artifact_ref": {
@@ -373,12 +377,12 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
 
     def test_target_owned_builder_consumes_exact_depth_without_finalize_placeholder(self) -> None:
         self._skip_finalize()
-        depth = self._depth_receipt("no-update")
+        depth = self._depth_receipt("current-noop")
         native_path = self.run_root / "native-terminal" / "builder-native.json"
         native_path.parent.mkdir(parents=True, exist_ok=True)
         native_path.write_bytes(
             canonical_json_bytes(
-                {"branch_id": "no-update", "update_available": False}
+                {"branch_id": "current-noop", "update_available": False}
             )
         )
         built = build_target_native_terminal_receipt(
@@ -386,7 +390,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
             self.contract,
             profile="enforced",
             native_route_id="route:analyze",
-            branch_id="no-update",
+            branch_id="current-noop",
             native_check_id="check:update",
             native_receipt_artifact_ref={
                 "path_token": "run_root",
@@ -427,20 +431,63 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                 target_root=self.target,
                 native_terminal_receipt_ref=persisted["receipt_ref"],
                 expected_route_id="route:analyze",
-                expected_branch_id="no-update",
+                expected_branch_id="current-noop",
             )
         self.assertEqual("closed", evaluation.status)
         self.assertIsNotNone(closure)
 
+    def test_non_scheduled_terminal_inherits_depth_domain_without_scheduler_identity(self) -> None:
+        self._skip_finalize()
+        depth = self._depth_receipt(
+            "current-noop", evidence_domain="capability_validation"
+        )
+        native_path = self.run_root / "native-terminal" / "manual-native.json"
+        native_path.parent.mkdir(parents=True, exist_ok=True)
+        native_path.write_bytes(
+            canonical_json_bytes(
+                {"branch_id": "current-noop", "manual_execution": True}
+            )
+        )
+        built = build_target_native_terminal_receipt(
+            self.run_root,
+            self.contract,
+            profile="enforced",
+            native_route_id="route:analyze",
+            branch_id="current-noop",
+            native_check_id="check:update",
+            native_receipt_artifact_ref={
+                "path_token": "run_root",
+                "relative_path": native_path.relative_to(self.run_root).as_posix(),
+            },
+            observed_state={"manual_execution": True},
+            created_at="2026-07-12T00:00:00Z",
+        )
+        persisted = write_target_native_terminal_receipt(self.run_root, built)
+        run = json.loads((self.run_root / "run.json").read_text(encoding="utf-8"))
+        resolved = resolve_native_terminal_receipt(
+            self.run_root,
+            self.contract,
+            run,
+            profile="enforced",
+            artifact_ref=persisted["receipt_ref"],
+            expected_route_id="route:analyze",
+            expected_branch_id="current-noop",
+        )
+        self.assertEqual("capability_validation", built["evidence_domain"])
+        self.assertEqual({}, built["scheduled_production_identity"])
+        self.assertEqual("current-noop", resolved.branch_id)
+        self.assertTrue(resolved.is_noop)
+        self.installation_verifier_mock.assert_not_called()
+
     def test_production_depth_selection_ignores_later_nonproduction_result(self) -> None:
-        passed = self._depth_receipt("no-update")
+        passed = self._depth_receipt("current-noop")
         shallow = {
             **passed,
             "receipt_id": "depth-capability-only",
             "status": "BOUNDED_PARTIAL",
             "evidence_domain": "capability_validation",
         }
-        selected = _select_scheduled_production_depth_receipt(
+        selected = _select_current_depth_receipt(
             [passed, shallow],
             target_skill_id=str(self.contract["skill_id"]),
             contract_hash=str(self.contract["contract_hash"]),
@@ -451,10 +498,10 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
         self.assertIs(passed, selected)
 
     def test_duplicate_production_depth_passes_block_terminal_selection(self) -> None:
-        passed = self._depth_receipt("no-update")
+        passed = self._depth_receipt("current-noop")
         duplicate = {**passed, "receipt_id": "depth-duplicate-pass"}
         with self.assertRaises(NativeTerminalError) as ambiguity:
-            _select_scheduled_production_depth_receipt(
+            _select_current_depth_receipt(
                 [passed, duplicate],
                 target_skill_id=str(self.contract["skill_id"]),
                 contract_hash=str(self.contract["contract_hash"]),
@@ -467,14 +514,14 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
         )
 
     def test_missing_production_depth_pass_blocks_terminal_selection(self) -> None:
-        passed = self._depth_receipt("no-update")
+        passed = self._depth_receipt("current-noop")
         shallow = {
             **passed,
             "receipt_id": "depth-shallow-only",
             "status": "SHALLOW_BLOCKED",
         }
         with self.assertRaises(NativeTerminalError) as missing:
-            _select_scheduled_production_depth_receipt(
+            _select_current_depth_receipt(
                 [shallow],
                 target_skill_id=str(self.contract["skill_id"]),
                 contract_hash=str(self.contract["contract_hash"]),
@@ -486,12 +533,12 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
 
     def test_target_owned_builder_keeps_prepared_finalize_active(self) -> None:
         self._complete("step:finish", "check:finalize")
-        depth = self._depth_receipt("prepared-update")
+        depth = self._depth_receipt(COMPLETING_BRANCH)
         native_path = self.run_root / "native-terminal" / "prepared-native.json"
         native_path.parent.mkdir(parents=True, exist_ok=True)
         native_path.write_bytes(
             canonical_json_bytes(
-                {"branch_id": "prepared-update", "prepared": True}
+                {"branch_id": COMPLETING_BRANCH, "completed": True}
             )
         )
         built = build_target_native_terminal_receipt(
@@ -499,7 +546,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
             self.contract,
             profile="enforced",
             native_route_id="route:analyze",
-            branch_id="prepared-update",
+            branch_id=COMPLETING_BRANCH,
             native_check_id="check:update",
             native_receipt_artifact_ref={
                 "path_token": "run_root",
@@ -514,7 +561,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
             self.run_root, built
         )
         self.assertEqual(NATIVE_TERMINAL_RECEIPT_SCHEMA, built["schema_version"])
-        self.assertEqual("prepared_update", built["terminal_kind"])
+        self.assertEqual("completed_branch", built["terminal_kind"])
         self.assertEqual("enforced", built["closure_profile"])
         self.assertEqual("terminal_completion", built["closure_disposition"])
         self.assertEqual(depth["receipt_id"], built["depth_receipt_id"])
@@ -531,19 +578,19 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                 target_root=self.target,
                 native_terminal_receipt_ref=persisted["receipt_ref"],
                 expected_route_id="route:analyze",
-                expected_branch_id="prepared-update",
+                expected_branch_id=COMPLETING_BRANCH,
             )
         self.assertEqual("closed", evaluation.status)
         self.assertIsNotNone(closure)
         self.assertFalse(evaluation.applicability_results)
 
     def test_non_enforced_terminal_profile_is_rejected(self) -> None:
-        self._depth_receipt("prepared-update")
+        self._depth_receipt(COMPLETING_BRANCH)
         native_path = self.run_root / "native-terminal" / "prepared-authorize-native.json"
         native_path.parent.mkdir(parents=True, exist_ok=True)
         native_path.write_bytes(
             canonical_json_bytes(
-                {"branch_id": "prepared-update", "authorized": True, "finalized": False}
+                {"branch_id": COMPLETING_BRANCH, "authorized": True, "finalized": False}
             )
         )
         with self.assertRaises(NativeTerminalError) as rejected:
@@ -552,7 +599,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                 self.contract,
                 profile="routine",
                 native_route_id="route:analyze",
-                branch_id="prepared-update",
+                branch_id=COMPLETING_BRANCH,
                 native_check_id="check:update",
                 native_receipt_artifact_ref={
                     "path_token": "run_root",
@@ -566,7 +613,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
 
     def test_terminal_closure_replays_installation_currentness(self) -> None:
         self._skip_finalize()
-        ref, _terminal, _depth = self._terminal_receipt("no-update")
+        ref, _terminal, _depth = self._terminal_receipt("current-noop")
         self.closure_installation_context.stop()
         try:
             with self.assertRaises(ClosureError) as missing_context:
@@ -651,7 +698,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
 
     def test_non_enforced_and_bare_branch_shortcuts_are_rejected(self) -> None:
         self._skip_finalize()
-        ref, _terminal, _depth = self._terminal_receipt("no-update")
+        ref, _terminal, _depth = self._terminal_receipt("current-noop")
         with self.assertRaises(ClosureError) as routine:
             close_run(
                 self.run_root,
@@ -665,7 +712,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                 self.run_root,
                 profile="enforced",
                 current_fingerprints=self.current,
-                expected_branch_id="no-update",
+                expected_branch_id="current-noop",
             )
         self.assertEqual("bare_branch_label_rejected", bare.exception.code)
 
@@ -682,7 +729,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                     self.setUp()
                     self._skip_finalize()
                 ref, _terminal, _depth = self._terminal_receipt(
-                    "no-update", mutate=mutate
+                    "current-noop", mutate=mutate
                 )
                 with self.assertRaises(ClosureError) as raised:
                     close_run(
@@ -695,14 +742,14 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
         self.tearDown()
         self.setUp()
         self._skip_finalize()
-        ref, _terminal, _depth = self._terminal_receipt("no-update")
+        ref, _terminal, _depth = self._terminal_receipt("current-noop")
         with self.assertRaises(ClosureError) as mismatch:
             close_run(
                 self.run_root,
                 profile="enforced",
                 current_fingerprints=self.current,
                 native_terminal_receipt_ref=ref,
-                expected_branch_id="ui-running",
+                expected_branch_id="another-target-branch",
             )
         self.assertEqual(
             "native_terminal_expected_branch_mismatch", mismatch.exception.code
@@ -711,7 +758,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
     def test_wrong_native_receipt_and_missing_depth_receipt_are_rejected(self) -> None:
         self._skip_finalize()
         ref, _terminal, _depth = self._terminal_receipt(
-            "no-update", mutate={"native_receipt_hash": "9" * 64}
+            "current-noop", mutate={"native_receipt_hash": "9" * 64}
         )
         with self.assertRaises(ClosureError) as native_hash:
             close_run(
@@ -728,7 +775,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
         self.tearDown()
         self.setUp()
         self._skip_finalize()
-        ref, _terminal, _depth = self._terminal_receipt("no-update")
+        ref, _terminal, _depth = self._terminal_receipt("current-noop")
         for path in (self.run_root / "depth-receipts").glob("*.json"):
             path.unlink()
         with self.assertRaises(ClosureError) as missing_depth:
@@ -769,7 +816,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                     input_fingerprints=self.current,
                 )
                 self._skip_finalize()
-                ref, _terminal, depth = self._terminal_receipt("no-update")
+                ref, _terminal, depth = self._terminal_receipt("current-noop")
                 with patch(
                     "skillguard_v2.closure.evaluate_depth_receipt_gate",
                     return_value=self._gate(depth),
@@ -791,8 +838,8 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                     evaluation.gaps,
                 )
 
-    def test_prepared_update_keeps_finalize_active(self) -> None:
-        ref, _terminal, depth = self._terminal_receipt("prepared-update")
+    def test_completed_branch_keeps_finalize_active(self) -> None:
+        ref, _terminal, depth = self._terminal_receipt(COMPLETING_BRANCH)
         with patch(
             "skillguard_v2.closure.evaluate_depth_receipt_gate",
             return_value=self._gate(depth),
@@ -811,7 +858,7 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
         self.tearDown()
         self.setUp()
         self._complete("step:finish", "check:finalize")
-        ref, _terminal, depth = self._terminal_receipt("prepared-update")
+        ref, _terminal, depth = self._terminal_receipt(COMPLETING_BRANCH)
         with patch(
             "skillguard_v2.closure.evaluate_depth_receipt_gate",
             return_value=self._gate(depth),
@@ -836,14 +883,21 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
             )["status"],
         )
 
-    def test_compiler_accepts_one_enforced_branch_map_and_rejects_prepared_applicability(self) -> None:
+    def test_compiler_accepts_arbitrary_branch_map_and_rejects_unreachable_condition(self) -> None:
         valid = _branch_contract()
         valid_codes = {row.code for row in validate_compiled_contract(valid)}
         self.assertEqual(["enforced"], [row["profile_id"] for row in valid["closure_profiles"]])
         self.assertNotIn("closure_profiles_incomplete", valid_codes)
 
-        prepared_na = _branch_contract()
-        prepared_na["closure_profiles"][-1]["route_branch_requirements"][1][
+        never_applicable = _branch_contract()
+        completing = never_applicable["closure_profiles"][-1][
+            "route_branch_requirements"
+        ][1]
+        completing["required_obligation_ids"] = [
+            "obligation:intake",
+            "obligation:review",
+        ]
+        completing[
             "applicability_rules"
         ] = [
             {
@@ -852,11 +906,36 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
                 "verifier_check_id": "check:applicability",
             }
         ]
-        prepared_codes = {
-            row.code for row in validate_compiled_contract(prepared_na)
+        invalid_codes = {
+            row.code for row in validate_compiled_contract(never_applicable)
         }
         self.assertIn(
-            "prepared_update_finalize_cannot_be_not_applicable", prepared_codes
+            "conditional_obligation_never_applicable", invalid_codes
+        )
+
+    def test_compiler_rejects_missing_and_never_conditional_dispositions(self) -> None:
+        missing = _branch_contract()
+        missing["closure_profiles"][-1]["route_branch_requirements"][0][
+            "applicability_rules"
+        ] = []
+        missing_codes = {row.code for row in validate_compiled_contract(missing)}
+        self.assertIn(
+            "conditional_obligation_branch_disposition_missing", missing_codes
+        )
+
+        always_active = _branch_contract()
+        noop = always_active["closure_profiles"][-1]["route_branch_requirements"][0]
+        noop["required_obligation_ids"] = [
+            "obligation:intake",
+            "obligation:review",
+            "obligation:release",
+        ]
+        noop["applicability_rules"] = []
+        always_codes = {
+            row.code for row in validate_compiled_contract(always_active)
+        }
+        self.assertIn(
+            "conditional_obligation_never_not_applicable", always_codes
         )
 
     def test_conditional_obligation_cannot_opt_out_by_omitting_branch_contract(self) -> None:

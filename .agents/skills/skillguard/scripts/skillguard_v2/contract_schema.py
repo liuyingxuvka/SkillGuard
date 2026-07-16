@@ -20,10 +20,10 @@ EVENT_SCHEMA = "skillguard.run_event.v2"
 ARTIFACT_SCHEMA = "skillguard.artifact_record.v2"
 RECEIPT_SCHEMA = "skillguard.evidence_receipt.v2"
 CLOSURE_SCHEMA = "skillguard.closure_receipt.v2"
-NATIVE_NOOP_RECEIPT_SCHEMA = "skillguard.native_noop_receipt.v1"
-NATIVE_TERMINAL_RECEIPT_SCHEMA = "skillguard.native_terminal_receipt.v1"
+NATIVE_NOOP_RECEIPT_SCHEMA = "skillguard.native_noop_receipt.v2"
+NATIVE_TERMINAL_RECEIPT_SCHEMA = "skillguard.native_terminal_receipt.v2"
 OBLIGATION_APPLICABILITY_RECEIPT_SCHEMA = (
-    "skillguard.obligation_applicability_receipt.v1"
+    "skillguard.obligation_applicability_receipt.v2"
 )
 DEPTH_PROFILE_SCHEMA = "skillguard.depth_profile.v2"
 TARGET_EXECUTION_RECEIPT_SCHEMA = "skillguard.target_execution_receipt.v2"
@@ -41,8 +41,6 @@ TARGET_KINDS = frozenset({"skill", "internal_route", "helper_api", "external_act
 EVIDENCE_CLASSES = frozenset({"hard", "witnessed", "judged"})
 TERMINAL_KINDS = frozenset({"", "success", "blocked"})
 CLOSURE_PROFILE_ORDER = ("enforced",)
-NOOP_BRANCH_IDS = frozenset({"no-update", "waiting-for-user", "ui-running"})
-PREPARED_BRANCH_ID = "prepared-update"
 DEPTH_INTEGRATION_MODES = frozenset({"native-integrated"})
 DEPTH_ENFORCEMENT_LEVELS = frozenset({"enforced"})
 DEPTH_DIMENSIONS = frozenset(
@@ -769,64 +767,52 @@ def _validate_route_branch_closure_profiles(
                 )
         previous_active = current_active
 
-    no_op_routes = {
-        route_id
-        for route_id, branch_id in highest_projection
-        if branch_id in NOOP_BRANCH_IDS
+    conditional_ids = set(conditional_obligation_ids)
+    conditional_active: dict[str, set[tuple[str, str]]] = {
+        obligation_id: set() for obligation_id in conditional_ids
     }
-    for route_id in sorted(no_op_routes):
-        route_branches = {
-            branch_id
-            for candidate_route, branch_id in highest_projection
-            if candidate_route == route_id
-        }
-        required_branches = set(NOOP_BRANCH_IDS) | {PREPARED_BRANCH_ID}
-        if not required_branches.issubset(route_branches):
+    conditional_not_applicable: dict[str, set[tuple[str, str]]] = {
+        obligation_id: set() for obligation_id in conditional_ids
+    }
+    for pair, (active, _branch_requirements, not_applicable) in sorted(
+        highest_projection.items()
+    ):
+        missing_dispositions = conditional_ids - active - not_applicable
+        for obligation_id in sorted(missing_dispositions):
             findings.append(
                 _finding(
-                    "route_branch_requirement_missing",
+                    "conditional_obligation_branch_disposition_missing",
                     path,
-                    f"{route_id}:{sorted(required_branches-route_branches)}",
+                    f"{pair[0]}:{pair[1]}:{obligation_id}",
                 )
             )
-        noop_applicability_sets = {
-            tuple(sorted(highest_projection[(route_id, branch_id)][2]))
-            for branch_id in NOOP_BRANCH_IDS
-            if (route_id, branch_id) in highest_projection
-        }
-        if len(noop_applicability_sets) != 1 or not next(
-            iter(noop_applicability_sets), ()
-        ):
+        for obligation_id in conditional_ids & active:
+            conditional_active[obligation_id].add(pair)
+        for obligation_id in conditional_ids & not_applicable:
+            conditional_not_applicable[obligation_id].add(pair)
+    for obligation_id in sorted(conditional_ids):
+        if not conditional_active[obligation_id]:
             findings.append(
                 _finding(
-                    "native_noop_applicability_rule_missing",
+                    "conditional_obligation_never_applicable",
                     path,
-                    route_id,
+                    obligation_id,
                 )
             )
-        prepared = highest_projection.get((route_id, PREPARED_BRANCH_ID))
-        if prepared is not None:
-            prepared_active, _prepared_branch, prepared_not_applicable = prepared
-            if prepared_not_applicable:
-                findings.append(
-                    _finding(
-                        "prepared_update_finalize_cannot_be_not_applicable",
-                        path,
-                        route_id,
-                    )
+        if not conditional_not_applicable[obligation_id]:
+            findings.append(
+                _finding(
+                    "conditional_obligation_never_not_applicable",
+                    path,
+                    obligation_id,
                 )
-            for applicability_ids in noop_applicability_sets:
-                for obligation_id in applicability_ids:
-                    if obligation_id not in prepared_active:
-                        findings.append(
-                            _finding(
-                                "prepared_update_finalize_requirement_missing",
-                                path,
-                                obligation_id,
-                            )
-                        )
+            )
     depth_profile = root.get("depth_profile")
-    if no_op_routes and (
+    has_not_applicable_branch = any(
+        bool(not_applicable)
+        for _active, _branch_requirements, not_applicable in highest_projection.values()
+    )
+    if has_not_applicable_branch and (
         not isinstance(depth_profile, Mapping)
         or "enforced"
         not in {

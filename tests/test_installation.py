@@ -602,6 +602,74 @@ class InstallationTests(unittest.TestCase):
             )
             self.assertTrue(_activation_receipt_current(replacement_record))
 
+    def test_drifted_active_and_backup_allow_only_verified_forward_replacement(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            canonical_parent = root / "canonical"
+            canonical = canonical_parent / "skillguard"
+            make_current_skill(canonical, "skillguard", revision="first revision")
+            make_current_skill(
+                canonical_parent / "skillguard-global-router",
+                "skillguard-global-router",
+            )
+            codex_home = root / "active" / ".codex"
+            make_current_skill(
+                codex_home / "skills" / "skillguard",
+                "skillguard",
+                revision="preexisting install",
+            )
+            make_current_skill(
+                codex_home / "skills" / "skillguard-global-router",
+                "skillguard-global-router",
+            )
+            first_stage = root / "stage-one" / ".codex" / "skills" / "skillguard"
+            self.assertEqual("passed", prepare_stage(canonical, first_stage)["status"])
+            first = activate_stage(canonical, first_stage, codex_home)
+            self.assertEqual("passed", first["status"], first)
+            first_record = _load_transaction(codex_home, first["transaction_id"])
+
+            with (codex_home / "skills" / "skillguard" / "SKILL.md").open(
+                "a", encoding="utf-8"
+            ) as stream:
+                stream.write("\nactive drift\n")
+            with Path(
+                first_record["members"]["skillguard"]["backup_root"]
+            ).joinpath("SKILL.md").open("a", encoding="utf-8") as stream:
+                stream.write("\nbackup drift\n")
+
+            ordinary_recovery = recover_incomplete_installations(codex_home)
+            self.assertEqual("blocked", ordinary_recovery["status"])
+            self.assertIn(
+                f"transaction_recovery_failed:{first['transaction_id']}",
+                ordinary_recovery["blockers"],
+            )
+
+            make_current_skill(
+                canonical, "skillguard", revision="verified replacement"
+            )
+            replacement_stage = (
+                root / "stage-two" / ".codex" / "skills" / "skillguard"
+            )
+            self.assertEqual(
+                "passed", prepare_stage(canonical, replacement_stage)["status"]
+            )
+            replacement = activate_stage(
+                canonical, replacement_stage, codex_home
+            )
+            self.assertEqual("passed", replacement["status"], replacement)
+            recovered = _load_transaction(codex_home, first["transaction_id"])
+            self.assertEqual("committed", recovered["status"])
+            self.assertEqual(
+                "restore_historical_commit_for_replacement",
+                recovered["replacement_recovery_provenance"]["recovery_kind"],
+            )
+            replacement_record = _load_transaction(
+                codex_home, replacement["transaction_id"]
+            )
+            self.assertTrue(_activation_receipt_current(replacement_record))
+
     def test_commit_head_recovery_uses_canonical_phase_and_separate_provenance(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

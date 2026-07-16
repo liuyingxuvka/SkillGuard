@@ -248,29 +248,6 @@ def evaluate_closure(
     not_applicable_obligation_ids = set(
         native_terminal.not_applicable_obligation_ids if native_terminal else ()
     )
-    prepared_protected_obligation_ids: set[str] = set()
-    if native_terminal is not None and native_terminal.branch_id == "prepared-update":
-        profile_row = next(
-            (
-                row
-                for row in contract.get("closure_profiles", [])
-                if isinstance(row, Mapping) and row.get("profile_id") == profile
-            ),
-            {},
-        )
-        for requirement_row in profile_row.get("route_branch_requirements", []):
-            if (
-                not isinstance(requirement_row, Mapping)
-                or requirement_row.get("native_route_id") != native_terminal.route_id
-                or "prepared-update" in requirement_row.get("branch_ids", [])
-            ):
-                continue
-            prepared_protected_obligation_ids.update(
-                str(rule.get("obligation_id", ""))
-                for rule in requirement_row.get("applicability_rules", [])
-                if isinstance(rule, Mapping)
-                and rule.get("allowed_disposition") == "not_applicable"
-            )
     requirements = tuple(
         sorted(
             (
@@ -353,23 +330,6 @@ def evaluate_closure(
             for item in obligation.get("owner_step_ids", [])
             if str(item) in state.step_statuses
         )
-        if (
-            obligation_id not in prepared_protected_obligation_ids
-            and bool(obligation.get("conditional"))
-            and owner_steps
-            and all(
-            state.step_statuses.get(step_id) == STEP_SKIPPED for step_id in owner_steps
-            )
-        ):
-            obligation_results.append(
-                {
-                    "obligation_id": obligation_id,
-                    "status": "not_applicable",
-                    "receipt_id": "",
-                    "detail": "conditional owner steps were verifier-approved as not applicable",
-                }
-            )
-            continue
         required_steps.update(owner_steps)
         allowed_classes = {
             str(item) for item in obligation.get("evidence_classes", [])
@@ -395,7 +355,7 @@ def evaluate_closure(
         status = "missing"
         detail = "no matching receipt"
         for candidate in candidates:
-            if obligation_id in prepared_protected_obligation_ids:
+            if bool(obligation.get("conditional")):
                 invalid_applicability = placeholder_or_caller_applicability(candidate)
                 if invalid_applicability:
                     status = "blocked"

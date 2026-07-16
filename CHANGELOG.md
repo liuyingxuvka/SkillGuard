@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.3 - 2026-07-16
+
+- Removed target-specific conditional branch names from the universal compiler and runtime. Conditional branches, applicability, and total obligation disposition now come only from the target contract.
+- Replaced native no-op, terminal, and applicability receipts with strict v2 schemas. Structural no-op branches emit `conditional_noop`; active branches emit `completed_branch`; no legacy receipt reader or compatibility alias remains.
+- Limited scheduled-production identity checks to scheduled evidence and allowed non-scheduled targets to inherit their exact validated evidence domain without manufacturing scheduler fields.
+- Removed the hidden skip-as-not-applicable closure path so only verifier-owned applicability receipts can mark a conditional obligation not applicable.
+- Repaired official staged installation recovery so a separately verified current replacement can supersede a historical active and backup tree whose identities both drifted, while ordinary recovery remains fail-closed.
+- Made idempotent `project-adopt` refresh an explicitly changed current SkillGuard version and managed inventory instead of silently preserving stale manifest metadata.
+- Added arbitrary-branch compiler, closure, schema, non-scheduled terminal, portfolio, and installation-recovery regressions and passed the native self-host enforced closure.
+
 ## v0.3.2 - 2026-07-16
 
 - Unified filesystem-object identity across portable content, contract compilation, external target binding, portfolio assembly, report output, installation verification, and TestMesh replay so Windows 8.3 and long path spellings cannot split one physical object into two identities.

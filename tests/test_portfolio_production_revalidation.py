@@ -79,7 +79,7 @@ def _binding() -> dict[str, object]:
             "evidence_domain": "scheduled_production",
             "conditional": True,
             "native_route_id": "route:member-production",
-            "branch_id": "no-update",
+            "branch_id": "member-noop",
         },
         "installation_identity": {
             "scheduler_or_trigger_id": "schedule:member",
