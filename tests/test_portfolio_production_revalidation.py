@@ -501,6 +501,9 @@ class PortfolioProductionRevalidationTests(unittest.TestCase):
         def graduate(*_args, **kwargs):
             observed["context"] = kwargs["verified_installation_context"]
             observed["roots"] = kwargs["portfolio_target_repository_roots"]
+            observed["root_identity_matches"] = Path(
+                kwargs["portfolio_target_repository_roots"]["member-skill"]
+            ).samefile(repository)
             return {"status": "current"}, {}, {
                 "receipt_id": "graduation:one",
                 "receipt_hash": HASH,
@@ -557,7 +560,7 @@ class PortfolioProductionRevalidationTests(unittest.TestCase):
         self.assertEqual("assembled", result["status"])
         self.assertEqual(1, load_bindings.call_count)
         self.assertIs(context, observed["context"])
-        self.assertEqual(repository, observed["roots"]["member-skill"])
+        self.assertTrue(observed["root_identity_matches"])
 
     def test_capture_public_api_writes_only_verifier_derived_binding(self) -> None:
         identity = {

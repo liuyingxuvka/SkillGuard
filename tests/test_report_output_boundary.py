@@ -20,7 +20,7 @@ class ReportOutputBoundaryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             path = write_report({"status": "pass"}, "work/report.json", root)
-            self.assertEqual(root / "work" / "report.json", path)
+            self.assertTrue(path.samefile(root / "work" / "report.json"))
             self.assertEqual({"status": "pass"}, json.loads(path.read_text(encoding="utf-8")))
 
     def test_maintained_source_and_fixture_trees_are_not_report_destinations(self) -> None:

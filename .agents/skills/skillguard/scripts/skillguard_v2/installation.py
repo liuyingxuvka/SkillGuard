@@ -525,17 +525,22 @@ def _source_identity(
         projection = installation_projection_identity(root)
         member_paths = installation_member_paths(root)
     except (OSError, UnicodeError, ValueError) as exc:
-        return {
-            "exists": True,
-            "kind": "unsupported_directory_authority",
-            "manifest_hash": canonical_hash(
-                {
-                    "policy": INSTALLATION_PROJECTION_SCHEMA,
-                    "error": str(exc),
-                }
-            ),
-            "file_count": 0,
-        }
+        try:
+            recovery_identity = _raw_recovery_tree_identity(root)
+        except (OSError, UnicodeError, ValueError):
+            return {
+                "exists": True,
+                "kind": "unsupported_directory_authority",
+                "manifest_hash": canonical_hash(
+                    {
+                        "policy": INSTALLATION_PROJECTION_SCHEMA,
+                        "error": str(exc),
+                    }
+                ),
+                "file_count": 0,
+            }
+        recovery_identity["projection_error"] = str(exc)
+        return recovery_identity
     return {
         "exists": True,
         "kind": "directory",
@@ -564,6 +569,44 @@ def _identities_equal(actual: dict[str, Any], expected: dict[str, Any]) -> bool:
         and str(actual["manifest_hash"]) == str(expected.get("manifest_hash"))
         and int(actual["file_count"]) == int(expected.get("file_count", -1))
     )
+
+
+def _raw_recovery_tree_identity(root: Path) -> dict[str, Any]:
+    """Hash one whole non-link tree for replacement rollback only."""
+
+    rows: list[dict[str, Any]] = []
+    for directory_text, directory_names, file_names in os.walk(
+        root, topdown=True, followlinks=False
+    ):
+        directory = Path(directory_text)
+        retained: list[str] = []
+        for name in sorted(directory_names):
+            candidate = directory / name
+            relative = candidate.relative_to(root).as_posix()
+            if _is_reparse_point(candidate) or not candidate.is_dir():
+                raise ValueError(f"recovery_tree_directory_unsafe:{relative}")
+            rows.append({"path": relative, "kind": "directory"})
+            retained.append(name)
+        directory_names[:] = retained
+        for name in sorted(file_names):
+            candidate = directory / name
+            relative = candidate.relative_to(root).as_posix()
+            if _is_reparse_point(candidate) or not candidate.is_file():
+                raise ValueError(f"recovery_tree_file_unsafe:{relative}")
+            rows.append(
+                {
+                    "path": relative,
+                    "kind": "file",
+                    "sha256": file_hash(candidate),
+                    "byte_count": candidate.stat().st_size,
+                }
+            )
+    return {
+        "exists": True,
+        "kind": "recovery_directory",
+        "manifest_hash": canonical_hash(rows),
+        "file_count": sum(row["kind"] == "file" for row in rows),
+    }
 
 
 def _transaction_root(codex_home: Path) -> Path:
@@ -945,18 +988,69 @@ def _activation_receipt_active_current(record: dict[str, Any]) -> bool:
         record, receipt
     ):
         return False
-    return all(
-        installation_projection_identity(
-            Path(record["members"][member_id]["active_root"])
+    try:
+        return all(
+            installation_projection_identity(
+                Path(record["members"][member_id]["active_root"])
+            )
+            == record["members"][member_id]["installed_installation_projection"]
+            and _identity_matches(
+                Path(record["members"][member_id]["active_root"]),
+                record["members"][member_id]["installed_identity"],
+                active_installation_currentness=True,
+            )
+            for member_id in record["member_order"]
         )
-        == record["members"][member_id]["installed_installation_projection"]
-        and _identity_matches(
+    except (OSError, UnicodeError, ValueError):
+        # Projection-policy drift or active-byte drift makes the committed head
+        # non-current and therefore recoverable. It must never crash recovery
+        # or be promoted to a valid active receipt.
+        return False
+
+
+def _activation_receipt_active_recoverable(record: dict[str, Any]) -> bool:
+    """Check rollback eligibility from stored bytes without future policy replay."""
+
+    receipt = _activation_receipt_payload(record)
+    if receipt is None or not _hardened_activation_receipt_stored_integrity(
+        record, receipt
+    ):
+        return False
+    return all(
+        _identity_matches(
             Path(record["members"][member_id]["active_root"]),
             record["members"][member_id]["installed_identity"],
             active_installation_currentness=True,
         )
         for member_id in record["member_order"]
     )
+
+
+def _activation_receipt_active_replacement_eligible(
+    record: dict[str, Any],
+) -> bool:
+    """Admit a safe raw snapshot only while a verified replacement is pending."""
+
+    receipt = _activation_receipt_payload(record)
+    if receipt is None or not _hardened_activation_receipt_stored_integrity(
+        record, receipt
+    ):
+        return False
+    for member_id in record["member_order"]:
+        member = record["members"][member_id]
+        actual = _source_identity(
+            Path(member["active_root"]),
+            active_installation_currentness=True,
+        )
+        if _identities_equal(actual, member["installed_identity"]):
+            continue
+        if (
+            actual.get("exists") is not True
+            or actual.get("kind") != "recovery_directory"
+            or int(actual.get("file_count", 0)) <= 0
+        ):
+            return False
+    return True
 
 
 def _activation_receipt_current(record: dict[str, Any]) -> bool:
@@ -2161,7 +2255,11 @@ def _restore_transaction_locked(
     }
 
 
-def _recover_incomplete_installations_locked(codex_home: Path) -> dict[str, Any]:
+def _recover_incomplete_installations_locked(
+    codex_home: Path,
+    *,
+    allow_replacement_only_head: bool = False,
+) -> dict[str, Any]:
     transaction_root = _transaction_root(codex_home)
     if not transaction_root.is_dir():
         return {
@@ -2236,6 +2334,35 @@ def _recover_incomplete_installations_locked(codex_home: Path) -> dict[str, Any]
         status = str(record.get("status", ""))
         generation = int(record.get("generation", 0))
         if (
+            allow_replacement_only_head
+            and head_id == transaction_id
+            and status == "recovery_blocked"
+            and record.get("phase") == "recovery_preflight_blocked"
+            and _activation_receipt_active_replacement_eligible(record)
+        ):
+            record["status"] = "committed"
+            record["phase"] = "committed"
+            record["replacement_recovery_provenance"] = {
+                "recovery_kind": "restore_historical_commit_for_replacement",
+                "recovered_from_status": "recovery_blocked",
+                "recovered_from_phase": "recovery_preflight_blocked",
+                "recovered_at": _utc_now(),
+            }
+            record.pop("recovery_blockers", None)
+            journal_path = _persist_transaction(codex_home, record)
+            reports.append(
+                {
+                    "status": "committed",
+                    "transaction_id": transaction_id,
+                    "journal_path": str(journal_path),
+                    "recovery_kind": (
+                        "restore_historical_commit_for_replacement"
+                    ),
+                    "blockers": [],
+                }
+            )
+            status = "committed"
+        if (
             status in TERMINAL_TRANSACTION_STATUSES
             and not _terminal_record_uses_current_projection(record)
         ):
@@ -2282,7 +2409,12 @@ def _recover_incomplete_installations_locked(codex_home: Path) -> dict[str, Any]
                     continue
                 blockers.append(f"non_head_committed_receipt_invalid:{transaction_id}")
                 continue
-            if _activation_receipt_active_current(record):
+            if _activation_receipt_active_recoverable(record):
+                continue
+            if (
+                allow_replacement_only_head
+                and _activation_receipt_active_replacement_eligible(record)
+            ):
                 continue
             previous_id = record.get("previous_committed_transaction_id")
             previous_record = records.get(str(previous_id)) if previous_id else None
@@ -2478,7 +2610,10 @@ def activate_stage(
         }
     try:
         with _InstallMutex(codex_home, "activate"):
-            recovery = _recover_incomplete_installations_locked(codex_home)
+            recovery = _recover_incomplete_installations_locked(
+                codex_home,
+                allow_replacement_only_head=True,
+            )
             if recovery["status"] == "blocked":
                 return {
                     "artifact_type": "skillguard_install_activation",
@@ -2533,7 +2668,9 @@ def activate_stage(
                 )
                 if not head_status_and_generation_current or (
                     _terminal_record_uses_current_projection(head_record)
-                    and not _activation_receipt_active_current(head_record)
+                    and not _activation_receipt_active_replacement_eligible(
+                        head_record
+                    )
                 ):
                     return {
                         "artifact_type": "skillguard_install_activation",

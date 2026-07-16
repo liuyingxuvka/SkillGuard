@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TextIO
 
+from skillguard_v2.path_identity import canonical_filesystem_path, physical_relative_path
+
 
 REPORT_OUTPUT_DIRECTORIES = (
     "work",
@@ -22,7 +24,7 @@ def skill_root() -> Path:
 
 
 def repository_root_for_skill_root(root: Path) -> Path:
-    resolved = root.resolve()
+    resolved = canonical_filesystem_path(root)
     if resolved.parent.name == "skills" and resolved.parent.parent.name == ".agents":
         return resolved.parents[2]
     if resolved.parent.name == "skills" and resolved.parent.parent.name == ".codex":
@@ -40,25 +42,23 @@ def utc_timestamp() -> str:
 
 
 def ensure_under_root(path_text: str | Path, root: Path | None = None) -> Path:
-    base = (root or repository_root()).resolve()
+    base = canonical_filesystem_path(root or repository_root())
     candidate = Path(path_text)
     if not candidate.is_absolute():
         candidate = base / candidate
-    candidate = candidate.resolve()
     try:
-        candidate.relative_to(base)
+        relative = physical_relative_path(candidate, base)
     except ValueError as exc:
         raise ValueError(f"path must stay under configured root: {path_text}") from exc
-    return candidate
+    return base / relative
 
 
 def public_relative_path(path_text: str | Path, root: Path | None = None) -> str:
-    base = (root or repository_root()).resolve()
+    base = canonical_filesystem_path(root or repository_root())
     candidate = Path(path_text)
     if not candidate.is_absolute():
         candidate = base / candidate
-    candidate = candidate.resolve()
-    return candidate.relative_to(base).as_posix()
+    return physical_relative_path(candidate, base).as_posix()
 
 
 def load_json(path_text: str | Path, root: Path | None = None) -> Any:
@@ -103,7 +103,7 @@ def write_report(payload: Any, output: str | Path | None = None, root: Path | No
     if output is None or str(output) == "-":
         emit_json(payload)
         return None
-    base = (root or skill_root()).resolve()
+    base = canonical_filesystem_path(root or skill_root())
     path = ensure_under_root(output, base)
     allowed_roots = [(base / relative).resolve() for relative in REPORT_OUTPUT_DIRECTORIES]
     if not any(path == allowed or path.is_relative_to(allowed) for allowed in allowed_roots):

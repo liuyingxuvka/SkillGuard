@@ -36,6 +36,7 @@ from .content_projection import (
     source_file_hash,
 )
 from .global_router_projection import is_global_router_projection_path
+from .path_identity import canonical_filesystem_path, physical_relative_path
 
 
 BINDING_SOURCE_FILE = "contract-source.json"
@@ -196,12 +197,11 @@ def _load_json(path: Path) -> Mapping[str, Any]:
 
 
 def _ensure_under(path: Path, root: Path, finding_path: str) -> Path:
-    resolved = path.resolve()
     try:
-        resolved.relative_to(root.resolve())
+        relative = physical_relative_path(path, root)
     except ValueError as exc:
         raise ValueError(f"{finding_path} must stay under repository root") from exc
-    return resolved
+    return canonical_filesystem_path(root) / relative
 
 
 def _index(rows: Sequence[Mapping[str, Any]], key: str) -> dict[str, Mapping[str, Any]]:
@@ -213,7 +213,7 @@ def _wire_file_hash(path: Path) -> str:
 
 
 def _relative_path(path: Path, repository_root: Path) -> str:
-    return path.resolve(strict=True).relative_to(repository_root.resolve(strict=True)).as_posix()
+    return physical_relative_path(path, repository_root).as_posix()
 
 
 def _existing_argument_paths(
@@ -226,7 +226,7 @@ def _existing_argument_paths(
     """
 
     rows: set[tuple[str, str]] = set()
-    root = repository_root.resolve(strict=True)
+    root = canonical_filesystem_path(repository_root)
     for value in check.get("args", []):
         text = str(value).strip()
         if (
@@ -243,7 +243,7 @@ def _existing_argument_paths(
             continue
         resolved = (root / candidate).resolve()
         try:
-            relative = resolved.relative_to(root).as_posix()
+            relative = physical_relative_path(resolved, root).as_posix()
         except ValueError:
             continue
         if resolved.is_file():
@@ -687,8 +687,8 @@ def _build_content_impact_plan(
 ) -> tuple[dict[str, Any], list[dict[str, Any]], tuple[SchemaFinding, ...]]:
     findings: list[SchemaFinding] = []
     try:
-        member_root_path = skill_root.resolve().relative_to(
-            repository_root.resolve()
+        member_root_path = physical_relative_path(
+            skill_root, repository_root
         ).as_posix()
     except ValueError:
         findings.append(

@@ -91,14 +91,14 @@
 - [x] 13.1 Record the Storyline installation-projection miss and extend the validation-composition model with positive complete-subtree and negative missed-descendant cases.
 - [x] 13.2 Let one reviewed content-role override select a maintained directory subtree, inherit to future inventoried descendants, and block overlapping selectors without precedence or fallback.
 - [x] 13.3 Run the focused compiler/model/schema regressions, install the affected current SkillGuard projection transactionally, and recompile Storyline Design with its example fixture subtree source-only.
-- [ ] 13.4 Defer the single full SkillGuard/TestMesh parent to the portfolio final gate after every governed source and target freezes; do not issue a second equivalent full owner here.
+- [x] 13.4 Defer the single full SkillGuard/TestMesh parent to the portfolio final gate after every governed source and target freezes; do not issue a second equivalent full owner here.
 
 ## 14. Portfolio model-miss repair: empty non-production schedule sentinel
 
 - [x] 14.1 Record the Storyline supervisor miss and align the supervisor with the execution-depth domain rule: only `scheduled_production` owns installation identity loading.
 - [x] 14.2 Accept only absent or empty schedule identity for non-production domains and keep non-empty non-production identities fail-closed.
 - [x] 14.3 Run the focused supervisor regression, install the affected current SkillGuard projection transactionally, and rerun the Storyline formal supervisor contract.
-- [ ] 14.4 Defer the single full SkillGuard/TestMesh parent to the portfolio final gate after every governed source and target freezes.
+- [x] 14.4 Defer the single full SkillGuard/TestMesh parent to the portfolio final gate after every governed source and target freezes.
 
 ## 15. Portfolio model-miss repair: nested skill-root installation projection
 

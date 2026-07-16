@@ -9,6 +9,7 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Mapping
 
 from .wire_identity import wire_hash
+from .path_identity import canonical_filesystem_path, physical_relative_path
 
 
 CONTENT_IMPACT_PLAN_SCHEMA = "skillguard.content_impact_plan.current"
@@ -223,13 +224,13 @@ def current_content_projection_from_files(
         for row in components
         if isinstance(row, Mapping)
     }
-    root = repository_root.resolve(strict=True)
+    root = canonical_filesystem_path(repository_root)
     normalized_member_roots: list[tuple[str, Path]] = []
     for prefix_value, member_root_value in (member_roots or {}).items():
         prefix = str(prefix_value).replace("\\", "/").strip("/") + "/"
         if not prefix or prefix == "/":
             raise ValueError("content_projection_member_prefix_invalid")
-        member_root = Path(member_root_value).resolve(strict=True)
+        member_root = canonical_filesystem_path(Path(member_root_value))
         normalized_member_roots.append((prefix, member_root))
     normalized_member_roots.sort(key=lambda row: (-len(row[0]), row[0]))
 
@@ -264,14 +265,14 @@ def current_content_projection_from_files(
                     suffix = member_path[len(prefix) :]
                     candidate = member_root / Path(*PurePosixPath(suffix).parts)
                     try:
-                        candidate.resolve(strict=True).relative_to(member_root)
+                        physical_relative_path(candidate, member_root)
                     except (FileNotFoundError, OSError, ValueError) as exc:
                         raise ValueError("content_projection_member_missing") from exc
                     break
             if candidate is None:
                 candidate = root / relative
                 try:
-                    candidate.resolve(strict=True).relative_to(root)
+                    physical_relative_path(candidate, root)
                 except (FileNotFoundError, OSError, ValueError) as exc:
                     raise ValueError("content_projection_member_missing") from exc
             if candidate.is_symlink() or not candidate.is_file():

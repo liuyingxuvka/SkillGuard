@@ -1,12 +1,12 @@
 # SkillGuard README Model Evidence
 
-This file records the LogicGuard-backed capability model used for the `v0.3.1` source README update. It is evidence for README synthesis only; it does not replace runnable SkillGuard checks, FlowGuard checks, package publication, GitHub release confirmation, or future AI behavior validation.
+This file records the LogicGuard-backed capability model used for the `v0.3.2` source README update. It is evidence for README synthesis only; it does not replace runnable SkillGuard checks, FlowGuard checks, package publication, GitHub release confirmation, or future AI behavior validation.
 
 ## Repository Fact Ledger
 
 - product surface: SkillGuard is a local Codex skill maintenance and runtime-contract framework with a Python command dispatcher under `.agents/skills/skillguard/scripts/`.
 - entry points: public README, `.agents/skills/skillguard/SKILL.md`, the current dispatcher, compiler, supervisor, execution-depth, project-adoption, self-host, TestMesh, install, provenance, and privacy scripts, the FlowGuard executable model, schemas, fixtures, tests, and CI workflow definition.
-- release/version facts: the source version is being advanced to `v0.3.1`; `VERSION`, `pyproject.toml`, README, changelog, and release notes must match before any tag or GitHub Release claim.
+- release/version facts: the source version is being advanced to `v0.3.2`; `VERSION`, `pyproject.toml`, README, changelog, and release notes must match before any tag or GitHub Release claim.
 - runtime facts: the supported interpreter boundary is Python 3.11+ because the current FlowGuard runtime requires standard-library `tomllib`; CI covers Python 3.11 and 3.12 on Windows and Linux.
 - privacy-sensitive exclusions: public README material must not expose local absolute paths, private installed-skill inventories, private task text, credentials, internal coordination transcripts, or user-specific workflow details.
 

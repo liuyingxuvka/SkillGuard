@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +17,7 @@ if str(SCRIPT_ROOT) not in sys.path:
 
 import skillguard_v2.installation as installation_module  # noqa: E402
 from skillguard_v2.installation import (  # noqa: E402
+    _activation_receipt_active_current,
     _activation_receipt_current,
     _hardened_activation_receipt_historical_integrity,
     _load_transaction,
@@ -494,6 +496,111 @@ class InstallationTests(unittest.TestCase):
                 second_record["previous_committed_transaction_id"],
             )
             self.assertTrue(_activation_receipt_current(second_record))
+
+    def test_active_projection_drift_is_recovered_before_replacement(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            canonical_parent = root / "canonical"
+            canonical = canonical_parent / "skillguard"
+            make_current_skill(canonical, "skillguard", revision="first revision")
+            make_current_skill(
+                canonical_parent / "skillguard-global-router",
+                "skillguard-global-router",
+            )
+            codex_home = root / "active" / ".codex"
+            first_stage = root / "stage-one" / ".codex" / "skills" / "skillguard"
+            self.assertEqual("passed", prepare_stage(canonical, first_stage)["status"])
+            first = activate_stage(canonical, first_stage, codex_home)
+            self.assertEqual("passed", first["status"], first)
+
+            active_skill = codex_home / "skills" / "skillguard"
+            with (active_skill / "SKILL.md").open("a", encoding="utf-8") as stream:
+                stream.write("\npost-install drift\n")
+            self.assertFalse(
+                _activation_receipt_active_current(
+                    _load_transaction(codex_home, first["transaction_id"])
+                )
+            )
+
+            make_current_skill(
+                canonical, "skillguard", revision="replacement revision"
+            )
+            second_stage = root / "stage-two" / ".codex" / "skills" / "skillguard"
+            self.assertEqual("passed", prepare_stage(canonical, second_stage)["status"])
+            second = activate_stage(canonical, second_stage, codex_home)
+
+            self.assertEqual("passed", second["status"], second)
+            second_record = _load_transaction(codex_home, second["transaction_id"])
+            self.assertTrue(_activation_receipt_current(second_record))
+
+    def test_projection_policy_error_allows_raw_bound_replacement(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            canonical_parent = root / "canonical"
+            canonical = canonical_parent / "skillguard"
+            make_current_skill(canonical, "skillguard")
+            make_current_skill(
+                canonical_parent / "skillguard-global-router",
+                "skillguard-global-router",
+            )
+            codex_home = root / "active" / ".codex"
+            stage = root / "stage" / ".codex" / "skills" / "skillguard"
+            self.assertEqual("passed", prepare_stage(canonical, stage)["status"])
+            activated = activate_stage(canonical, stage, codex_home)
+            self.assertEqual("passed", activated["status"], activated)
+            record = _load_transaction(codex_home, activated["transaction_id"])
+            active_root = (codex_home / "skills" / "skillguard").resolve()
+            active_manifest = active_root / ".skillguard" / "check-manifest.json"
+            old_manifest_bytes = active_manifest.read_bytes()
+            original_projection = installation_module.installation_projection_identity
+            record["status"] = "recovery_blocked"
+            record["phase"] = "recovery_preflight_blocked"
+            record["recovery_blockers"] = ["backup_identity_mismatch:skillguard"]
+            _persist_transaction(codex_home, record)
+            record = _load_transaction(codex_home, activated["transaction_id"])
+
+            def policy_stale_projection(path: Path):
+                candidate = Path(path).resolve()
+                candidate_manifest = (
+                    candidate / ".skillguard" / "check-manifest.json"
+                )
+                if (
+                    candidate_manifest.is_file()
+                    and candidate_manifest.read_bytes() == old_manifest_bytes
+                ):
+                    raise ValueError("installation_projection_component_hash_mismatch")
+                return original_projection(path)
+
+            make_current_skill(
+                canonical, "skillguard", revision="replacement revision"
+            )
+            replacement_stage = (
+                root / "replacement-stage" / ".codex" / "skills" / "skillguard"
+            )
+            self.assertEqual(
+                "passed", prepare_stage(canonical, replacement_stage)["status"]
+            )
+            with mock.patch.object(
+                installation_module,
+                "installation_projection_identity",
+                side_effect=policy_stale_projection,
+            ):
+                self.assertFalse(_activation_receipt_active_current(record))
+                replacement = activate_stage(
+                    canonical, replacement_stage, codex_home
+                )
+
+            self.assertEqual("passed", replacement["status"], replacement)
+            replacement_record = _load_transaction(
+                codex_home, replacement["transaction_id"]
+            )
+            self.assertEqual(
+                activated["transaction_id"],
+                replacement_record["previous_committed_transaction_id"],
+            )
+            self.assertTrue(_activation_receipt_current(replacement_record))
 
     def test_commit_head_recovery_uses_canonical_phase_and_separate_provenance(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Iterable, Iterator
 
+from .path_identity import canonical_filesystem_path, physical_relative_path
+
 
 PORTABLE_CONTENT_POLICY_ID = "skillguard.portable_content.v2"
 RUNTIME_FINGERPRINT_PROJECTION_ID = "skillguard.portable_content.runtime_fingerprint.v1"
@@ -171,10 +173,14 @@ def classify_relative_path(
 def relative_member_path(member_root: Path, candidate: Path) -> PurePosixPath | None:
     """Return a lexical member-relative token without following a candidate link."""
 
-    root = Path(os.path.abspath(member_root))
-    path = Path(os.path.abspath(candidate))
     try:
-        return PurePosixPath(path.relative_to(root).as_posix())
+        return PurePosixPath(
+            physical_relative_path(
+                candidate,
+                member_root,
+                preserve_final_component=True,
+            ).as_posix()
+        )
     except ValueError:
         return None
 
@@ -226,7 +232,7 @@ def owned_runtime_parent_may_be_pruned(member_root: Path, candidate: Path) -> bo
 def scan_member_boundary(member_root: Path) -> PortableBoundaryReport:
     """Inspect one current member tree without following links or reading file bodies."""
 
-    root = member_root.resolve()
+    root = canonical_filesystem_path(member_root)
     if not root.is_dir():
         return PortableBoundaryReport(
             PORTABLE_CONTENT_POLICY_ID,
@@ -339,7 +345,7 @@ def scan_active_installation_currentness_boundary(
 def portable_files(member_root: Path) -> Iterator[tuple[PurePosixPath, Path]]:
     """Yield deterministic portable regular files; unsafe entries raise ValueError."""
 
-    root = member_root.resolve(strict=True)
+    root = canonical_filesystem_path(member_root)
     rows: list[tuple[PurePosixPath, Path]] = []
     for candidate in root.rglob("*"):
         decision = classify_member_path(root, candidate)

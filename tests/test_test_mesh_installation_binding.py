@@ -266,6 +266,9 @@ class TestMeshInstallationBindingTests(unittest.TestCase):
             "skillguard_v2.test_mesh._load_current_installation_binding",
             return_value=copy.deepcopy(binding),
         ), patch(
+            "skillguard_v2.test_mesh.resolve_codex_home_root",
+            return_value=self.codex_home,
+        ), patch(
             "skillguard_v2.test_mesh._load_global_prompt_currentness_binding",
             return_value=copy.deepcopy(prompt_binding),
         ):
@@ -303,6 +306,9 @@ class TestMeshInstallationBindingTests(unittest.TestCase):
         with patch(
             "skillguard_v2.test_mesh._load_current_installation_binding",
             return_value=changed,
+        ), patch(
+            "skillguard_v2.test_mesh.resolve_codex_home_root",
+            return_value=self.codex_home,
         ), patch(
             "skillguard_v2.test_mesh._load_global_prompt_currentness_binding",
             return_value=copy.deepcopy(prompt_binding),

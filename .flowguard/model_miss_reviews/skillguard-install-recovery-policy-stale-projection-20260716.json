@@ -1,0 +1,53 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-install-recovery-policy-stale-projection-20260716",
+  "status": "repair_local_and_installation_validated_remote_gate_pending",
+  "observed_failure": {
+    "surface": "SkillGuard v0.3.2 candidate transactional synchronization to the active Codex installation",
+    "prior_local_claim": "a validated replacement stage can recover an old committed installation and activate transactionally",
+    "observed_result": "the active v0.3.1-era tree carried a manifest compiled under an older template-hash projection; current projection replay raised installation_projection_component_hash_mismatch and crashed recovery before replacement activation",
+    "failure_code": "install_recovery_policy_stale_projection_exception"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.installation-recovery.current",
+    "owner": "SkillGuard committed-head active-currentness replay",
+    "miss_type": "code_boundary_mismatch",
+    "error_signature": "installation_projection_identity raises while recovery evaluates the committed HEAD",
+    "affected_feature_tags": [
+      "installation",
+      "recovery",
+      "projection-policy",
+      "active-currentness",
+      "upgrade"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the recovery model distinguished active installed identity from evolving canonical source, but the implementation assumed active projection replay always returned a value and did not model a fail-closed projection exception",
+    "would_have_failed_if": "the model had included a committed active tree whose stored bytes remain available but whose embedded component hashes are not recomputable under the current projection policy",
+    "new_model_item": "an active projection replay error makes the old committed head non-current for publication, but a separately exact stored byte identity keeps it recoverably sound for direct validated replacement; byte drift still enters rollback",
+    "owner_code_contract": "installation._activation_receipt_active_current owns semantic currentness; installation._activation_receipt_active_recoverable owns stored-byte rollback integrity"
+  },
+  "generalized_repair": {
+    "rule": "Separate semantic currentness from stored-byte recovery integrity: policy-stale projection errors cannot satisfy currentness, but do not roll back an otherwise exact committed HEAD before a verified replacement; actual byte drift still follows rollback.",
+    "observed_regression": "a mocked current-policy projection error leaves the exact committed HEAD in place, while a separate active-byte drift case returns non-current and is recovered before a fresh replacement activates",
+    "same_class_regression": "policy-stale and byte-drift projections are both non-current but have distinct recovery dispositions based on exact stored identity",
+    "negative_boundary": "the old active tree does not become publication-current, no compatibility reader is added, no manifest is rewritten in place, byte drift does not pass, and the incoming stage must still pass exact parity and smoke checks"
+  },
+  "required_revalidation": [
+    "focused installation recovery regression",
+    "complete installation test module",
+    "current contract compilation and FlowGuard validation composition",
+    "real transactional reinstall and installed receipt parity",
+    "frozen-commit Windows and Ubuntu GitHub Actions"
+  ],
+  "revalidation_evidence": {
+    "focused_recovery": "the policy-stale projection replacement regression and active-byte-drift replacement regression passed",
+    "installation_module": "19 installation tests and 6 subtests passed before the final status-normalization adjustment; the exact added status-normalization regression passed afterward",
+    "affected_release_shard": "60 passed, 1 capability-dependent case skipped, and 30 subtests passed across all affected release modules after the final repair",
+    "model_and_contract": "validation composition passed 19/19 positive and 7/7 known-bad gates; contract 325507B1F9D1D26EFB484AB950879EA828F1C239BABEB9D685E8470E54E990CC and manifest 0F140F0571CA948B3137CED347D174730E59A126FC1A43354464D7D5BD20D1FC compiled current",
+    "real_installation": "transaction install-e20fbe62e4994e42a2c081a22e33f154 replaced the policy-stale generation and committed as generation 36 with all installed smoke checks passed",
+    "installed_receipt": "installation-05f5d47eb06c449e10782f97 replayed current canonical-to-active parity with no blockers"
+  },
+  "claim_boundary": "This record proves the named local recovery repair, affected regressions, current model/contract compilation, real transactional replacement, and installed parity receipt. Remote Windows/Ubuntu CI, the corrective tag, and GitHub Release remain pending claims."
+}

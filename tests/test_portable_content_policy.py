@@ -16,6 +16,35 @@ from skillguard_v2.runtime_fingerprint import (
 
 
 class PortableContentPolicyTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == "nt", "Windows short-path identity regression")
+    def test_windows_short_and_long_aliases_share_member_identity(self) -> None:
+        import ctypes
+
+        with tempfile.TemporaryDirectory() as tmp:
+            long_root = Path(tmp) / "member-root"
+            candidate = long_root / ".pytest_cache" / "state.json"
+            candidate.parent.mkdir(parents=True)
+            candidate.write_text("{}\n", encoding="utf-8")
+            required = ctypes.windll.kernel32.GetShortPathNameW(
+                str(long_root), None, 0
+            )
+            if not required:
+                self.skipTest("Windows short names are unavailable")
+            buffer = ctypes.create_unicode_buffer(required)
+            written = ctypes.windll.kernel32.GetShortPathNameW(
+                str(long_root), buffer, required
+            )
+            if not written or Path(buffer.value) == long_root:
+                self.skipTest("Windows short names are not distinct")
+            short_root = Path(buffer.value)
+
+            decision = portable_content.classify_member_path(
+                short_root, candidate
+            )
+
+        self.assertEqual(portable_content.RUNTIME, decision.classification)
+        self.assertEqual("generic_transient", decision.reason)
+
     def test_reserved_runtime_workspaces_block_at_any_depth(self) -> None:
         for token in (
             ".sg-runtime/run.json",

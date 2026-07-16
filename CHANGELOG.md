@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.2 - 2026-07-16
+
+- Unified filesystem-object identity across portable content, contract compilation, external target binding, portfolio assembly, report output, installation verification, and TestMesh replay so Windows 8.3 and long path spellings cannot split one physical object into two identities.
+- Preserved lexical final-component identity long enough to reject symlink and reparse-point stage roots before resolution.
+- Removed clean-runner test dependence on a coincidental user-level SkillGuard installation by binding replay currentness to fixture-owned `CODEX_HOME` evidence.
+- Split installation publication currentness from rollback integrity: an unreadable or policy-stale semantic projection remains non-current, while a byte-exact committed HEAD stays recoverably sound and may be transactionally replaced instead of crashing or rolling back.
+- Added Windows short/long alias, reparse-stage, external-binding, report, portfolio, and replay regression coverage without weakening real escape, link, installation, or receipt-currentness blockers.
+- Changed release closure ordering so corrective tags and GitHub Releases are created only after the pushed commit passes the Windows and Ubuntu GitHub Actions matrix.
+
 ## v0.3.1 - 2026-07-16
 
 - Normalized line endings for text template inputs so compiled installation projections remain identical across Windows and Linux clean checkouts.

@@ -48,6 +48,7 @@ from .run_store import (
     load_contract_snapshot,
     load_run,
 )
+from .path_identity import canonical_filesystem_path, physical_relative_path
 
 
 CURRENT_TEST_MESH_MANIFEST_SCHEMA = "skillguard.test_mesh_manifest.current"
@@ -401,14 +402,14 @@ def _load_current_installation_binding(
 ) -> dict[str, Any]:
     """Verify and normalize one current installation receipt for TestMesh."""
 
-    repository_root = repository_root.resolve()
+    repository_root = canonical_filesystem_path(repository_root)
     try:
         codex_home = resolve_codex_home_root()
     except OSError:
         raise ExecutionRecordError("codex_home_not_current") from None
     try:
-        receipt_root = installation_receipt_root.resolve(strict=True)
-        receipt_root_relative = receipt_root.relative_to(codex_home)
+        receipt_root = canonical_filesystem_path(installation_receipt_root)
+        receipt_root_relative = physical_relative_path(receipt_root, codex_home)
     except (OSError, ValueError):
         raise ExecutionRecordError("installation_receipt_root_not_portable") from None
     expected_relative = Path(
@@ -2647,7 +2648,7 @@ def execute_test_mesh(
     verified_installation_context: VerifiedInstallationContext | None = None,
     global_prompt_codex_home: Path | None = None,
 ) -> dict[str, Any]:
-    repository_root = repository_root.resolve()
+    repository_root = canonical_filesystem_path(repository_root)
     try:
         manifest = json.loads(
             filesystem_path(manifest_path).read_text(encoding="utf-8")

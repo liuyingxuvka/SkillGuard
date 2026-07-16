@@ -1,0 +1,56 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-windows-path-identity-and-isolation-20260716",
+  "status": "repair_local_and_installation_validated_remote_gate_pending",
+  "observed_failure": {
+    "surface": "SkillGuard v0.3.1 GitHub Actions full Windows suite",
+    "prior_local_claim": "the complete local regression and release validation were green",
+    "observed_result": "Windows CI reported seven failures while both Ubuntu jobs passed: one physical temporary directory appeared under both 8.3 short and long spellings, a stage-root link lost its reparse identity after resolution, and isolated replay tests consulted the runner's undeclared user installation root",
+    "failure_code": "windows_path_identity_and_test_isolation_gap"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.cross-platform-release-currentness",
+    "owner": "portable content boundary, target installation stage verification, and release TestMesh",
+    "miss_type": "boundary_missing",
+    "error_signature": "RUNNER~1 and runneradmin spellings compare unequal, reparse stage resolves before rejection, or replay reaches an undeclared real CODEX_HOME",
+    "affected_feature_tags": [
+      "windows",
+      "path-identity",
+      "portable-content",
+      "target-installation",
+      "test-isolation",
+      "release"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the model covered portable relative paths, long-path I/O, and installation projection bytes, but did not distinguish physical path identity from lexical spelling at all Windows boundaries or require every external-binding replay fixture to own its CODEX_HOME lookup",
+    "would_have_failed_if": "the release model had included a Windows runner whose temporary root is returned once as an 8.3 alias and once as a long path, a valid directory symlink presented as a stage root, and a clean runner with no user-level SkillGuard installation",
+    "new_model_item": "same physical root under supported Windows aliases must preserve containment and role classification; final-component reparse identity must be checked before resolution; isolated replay must bind every external root lookup to fixture-owned evidence",
+    "owner_code_contract": "portable_content.relative_member_path + target_installation.verify_target_stage + test_mesh replay fixture bindings"
+  },
+  "generalized_repair": {
+    "rule": "Canonicalize existing Windows ancestors to their long physical spelling while preserving the final lexical component, reject reparse stage roots before following them, compare physical test paths by same-file identity, and inject the fixture CODEX_HOME before replay currentness lookup.",
+    "observed_regression": "the original seven failing tests are the first affected regression shard",
+    "same_class_regression": "a dedicated Windows test presents the same member under short-root and long-candidate spellings and still classifies .pytest_cache as generic transient runtime content",
+    "negative_boundary": "an actual escape or final-component link remains unsafe; no compatibility reader, alternate install root, skipped check, or weakened invariant is introduced"
+  },
+  "required_revalidation": [
+    "original seven-failure focused shard",
+    "portable-content and target-installation regression shards",
+    "complete local SkillGuard suite",
+    "current FlowGuard model checks and SkillGuard contract compilation",
+    "transactional installed projection parity",
+    "Windows and Ubuntu GitHub Actions before the corrective release"
+  ],
+  "revalidation_evidence": {
+    "original_failure_shard": "17 passed, 2 capability-dependent Windows cases skipped, and 14 subtests passed on the local Windows host",
+    "affected_release_shard": "60 passed, 1 capability-dependent case skipped, and 30 subtests passed across installation, portable-content, portfolio, report-output, TestMesh installation-binding, and provenance tests",
+    "full_local_snapshot": "The complete local suite reached 469 passed, 2 skipped, and 146 subtests; its only two failures were v0.3.1 version-sync residues, and both affected version checks passed after correction",
+    "validation_composition_model": "19/19 positive gates and 7/7 known-bad gates passed",
+    "development_process_models": "current runtime authority, portfolio scope lifecycle, global router, and runtime contract reviews passed with expected violations only",
+    "contract_compilation": "contract 325507B1F9D1D26EFB484AB950879EA828F1C239BABEB9D685E8470E54E990CC and manifest 0F140F0571CA948B3137CED347D174730E59A126FC1A43354464D7D5BD20D1FC compiled current with zero findings",
+    "installed_parity": "transaction install-e20fbe62e4994e42a2c081a22e33f154 committed as generation 36; installation receipt installation-05f5d47eb06c449e10782f97 replayed current canonical-to-active parity"
+  },
+  "claim_boundary": "The repair has passed the named local regressions, executable model checks, deterministic compilation, and transactional installed parity. Pushed Windows/Ubuntu CI, the corrective tag, GitHub Release, future platform behavior, and unrelated target-domain correctness remain separate pending claims."
+}

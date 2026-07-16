@@ -55,7 +55,7 @@
       ]
     }
   ],
-  "check_declarations_hash": "D10C6B5EA5686B56295D7A877653AF25CC063D59B34A399356F3DE2820737249",
+  "check_declarations_hash": "0B9ECF5CC6C61857287276D54CC491FD1A1D4E5F91D67E6050017D0342A60A91",
   "checks": [
     {
       "args": [
@@ -120,10 +120,10 @@
         "component:prompt_router:7d34e0f607d9047e",
         "component:prompt_router:fc4e66c2f748ac9f",
         "component:runtime_source:4076fa4e0de756b5",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:72da40253187425e",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:bc3c28f7e6709c49",
         "component:runtime_source:ca32a4e7e84800a3",
@@ -154,7 +154,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:47bc406e2e9ca603f18c1dc904cbc51ba936d417490788b60b2a638a516531d7",
-      "owner_input_projection_hash": "sha256:cfc0438cbc0154ba3b2cfc4016c374f2c7532366cb9a6267f2cb549648b01d46",
+      "owner_input_projection_hash": "sha256:dd2a1020be69cabdd5b06978822a4379cac259e6cd0b10c2ad9fac08123dad63",
       "projection_declaration_hash": "sha256:89d32a949483da108543971b2ba7ce42e83ace4c3de8e29769a319b968339030",
       "semantic_check_id": "check:self:run-native-static-checks",
       "timeout_seconds": 180
@@ -258,10 +258,10 @@
         "component:prompt_router:7d34e0f607d9047e",
         "component:prompt_router:fc4e66c2f748ac9f",
         "component:runtime_source:4076fa4e0de756b5",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:72da40253187425e",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:bc3c28f7e6709c49",
         "component:runtime_source:ca32a4e7e84800a3",
@@ -288,7 +288,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:235688f3b841024f6563c46974f3f2aef631b1ccca41242aaeec7418c089b661",
-      "owner_input_projection_hash": "sha256:4c82c86a2e37cefea7d5cb6166f4993a1e75595fbd3433d029c8efc8e2e94c4c",
+      "owner_input_projection_hash": "sha256:2eeb24a91416d88889da929da7e6c7ef9907197ddd24e3f40c2d7cfa5021005a",
       "projection_declaration_hash": "sha256:536afaeae51d27431e445a11c152abe06c669d325160ecfb9171ab0adbba7faf",
       "semantic_check_id": "check:self:run-declared-checks",
       "timeout_seconds": 180
@@ -359,7 +359,7 @@
       "input_component_ids": [
         "component:contract_schema:f177812dd85e604e",
         "component:prompt_router:7d34e0f607d9047e",
-        "component:runtime_source:8b48c413f9611cfd",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:test_dev:6fbc012719063fe1"
       ],
@@ -379,7 +379,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:79a37819a1b64298788cae45a0ce83c727891996ac95eb30a342c07cd732b58d",
-      "owner_input_projection_hash": "sha256:3f6f4e8e9e1e2007cd69e6958ce07a79362276d28d3e5ecff9b19e454f57d5b8",
+      "owner_input_projection_hash": "sha256:5f811c9a96aa73a5aee49c181a629ab9ab9caf826d2f9dc95f117897e2b12585",
       "projection_declaration_hash": "sha256:46e3bf61c262578feacc01bb92fe065d86703b436fc8f309f8660680b4ba0b7b",
       "semantic_check_id": "check:self:declared-check-runtime",
       "timeout_seconds": 180
@@ -562,7 +562,7 @@
         "component:contract_schema:f177812dd85e604e",
         "component:documentation_model:b8ce7b31de15b76e",
         "component:prompt_router:7d34e0f607d9047e",
-        "component:runtime_source:8b48c413f9611cfd"
+        "component:runtime_source:4097d191cd4bab42"
       ],
       "input_selectors": [
         {
@@ -596,7 +596,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:0ca5d276c3d75cf3053ea8f6d8979b055ca50b495d2070f8e7fc778f44e58b82",
-      "owner_input_projection_hash": "sha256:e3b0b4e6cdd2697ee59067559f53ae39ce42b642f8e8676df8e83d78534879b1",
+      "owner_input_projection_hash": "sha256:c7f80285187dd4632530b4a4c91d23fb1cfef74a782a59b2cc292bda28e03d4b",
       "projection_declaration_hash": "sha256:ee1d518b37e10f8d9993e75f8d53acba5aa873be3aefc026990977d25c21eb9b",
       "semantic_check_id": "check:self:compile-generated-contract",
       "timeout_seconds": 180
@@ -626,10 +626,10 @@
       "input_component_ids": [
         "component:contract_schema:f177812dd85e604e",
         "component:prompt_router:7d34e0f607d9047e",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:72da40253187425e",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:ca32a4e7e84800a3",
         "component:runtime_source:edf9658019200ade",
@@ -643,7 +643,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:814cdfdcaeebe4dad6f82b8da7b1e8c5ca2c62a905004116464966dc1146d733",
-      "owner_input_projection_hash": "sha256:a143106b71e7c462d0d39d3f399fde7a72907093406ab0b8377901bd7e8ca9f5",
+      "owner_input_projection_hash": "sha256:41cb23f4cbe826fa81633e27274e5c6b3e45ae665ddab57415c471bea99ca612",
       "projection_declaration_hash": "sha256:896b3a9c8399db457ea649b70ed5361a239f9e497ba73ede0334b8124cae43e6",
       "semantic_check_id": "check:self:verify-generated-parity",
       "timeout_seconds": 180
@@ -679,11 +679,11 @@
         "component:prompt_router:7d34e0f607d9047e",
         "component:prompt_router:fc4e66c2f748ac9f",
         "component:runtime_source:4076fa4e0de756b5",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:72da40253187425e",
         "component:runtime_source:7c727d9302861ef9",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:ca32a4e7e84800a3",
         "component:runtime_source:d18d5604d52193ff",
@@ -726,7 +726,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:8258746497f86f8ad0431ba001fb977f80a4095acd67232d59c4b8e22f344d3f",
-      "owner_input_projection_hash": "sha256:a8ec68ca669dd4d2b540bf2e93e8ef84b698a305de036d73cd49e62c560a87cd",
+      "owner_input_projection_hash": "sha256:c907d8396c3b6efb28475fb5de1844c69b0d0c4cc261d426b17619775fc78c8b",
       "projection_declaration_hash": "sha256:13a3b19c6ac3c354081317793137978b7bb0d5bca04a3e482c0d1011b69b0a82",
       "semantic_check_id": "check:self:test-mesh-fast",
       "timeout_seconds": 900
@@ -790,10 +790,10 @@
       "input_component_ids": [
         "component:contract_schema:f177812dd85e604e",
         "component:prompt_router:7d34e0f607d9047e",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:72da40253187425e",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:ca32a4e7e84800a3",
         "component:runtime_source:edf9658019200ade",
@@ -807,7 +807,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:5b9f1c7ececd7baf0d5d6c7bb81950677a3a75cb58e3d9a6975032659c9bbdd2",
-      "owner_input_projection_hash": "sha256:a143106b71e7c462d0d39d3f399fde7a72907093406ab0b8377901bd7e8ca9f5",
+      "owner_input_projection_hash": "sha256:41cb23f4cbe826fa81633e27274e5c6b3e45ae665ddab57415c471bea99ca612",
       "projection_declaration_hash": "sha256:1f89116fbf2e721339a78c9c6b748f7ea22c17097a8634793b3781983f6ffe3a",
       "semantic_check_id": "check:self:packet-consumption",
       "timeout_seconds": 180
@@ -879,8 +879,8 @@
       "input_component_ids": [
         "component:contract_schema:f177812dd85e604e",
         "component:prompt_router:7d34e0f607d9047e",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:ca32a4e7e84800a3",
         "component:test_dev:10963523ff2a7f85"
       ],
@@ -892,7 +892,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:0886477e209eb77e339babe840425258a7c4a971a8c1e37e3d3e723563afc212",
-      "owner_input_projection_hash": "sha256:e81e1e5abc72f17ac2428a381f3d91d37a47951708a5e46a3cb76f46a701cddc",
+      "owner_input_projection_hash": "sha256:574578203b011ec3b1d18613a94eaac4054b5fe38778e0132d98e5228e9e3046",
       "projection_declaration_hash": "sha256:0d3ccc313eefc6b035b20d0c33c7f609e4ed5dd420d4aba44e4157aa7a738e7a",
       "semantic_check_id": "check:self:guard-run-identity",
       "timeout_seconds": 180
@@ -926,8 +926,8 @@
       "input_component_ids": [
         "component:contract_schema:f177812dd85e604e",
         "component:prompt_router:7d34e0f607d9047e",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:ca32a4e7e84800a3",
         "component:test_dev:10963523ff2a7f85"
       ],
@@ -939,7 +939,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:60126914732ae26ad10f208603b8e50bb57163e27443b85cdde795877b225552",
-      "owner_input_projection_hash": "sha256:e81e1e5abc72f17ac2428a381f3d91d37a47951708a5e46a3cb76f46a701cddc",
+      "owner_input_projection_hash": "sha256:574578203b011ec3b1d18613a94eaac4054b5fe38778e0132d98e5228e9e3046",
       "projection_declaration_hash": "sha256:0606a31da97580f9a8c7a7cce531d2e7d8dd0735cf7f9fbacc4b6d827a0f2a2a",
       "semantic_check_id": "check:self:failed-lock-recovery",
       "timeout_seconds": 180
@@ -1044,8 +1044,8 @@
       "input_component_ids": [
         "component:contract_schema:f177812dd85e604e",
         "component:prompt_router:7d34e0f607d9047e",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:test_dev:0e76933c23b8037e"
       ],
       "input_selectors": [
@@ -1068,7 +1068,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:41d49ca172eb37c782b6d12b7201ecbc1d8161dfa289f085bc13cc36de4b88d1",
-      "owner_input_projection_hash": "sha256:2d19c59ca878c2f8c4e1a6e1059c6e926728b9b62f277c44819311640df18b51",
+      "owner_input_projection_hash": "sha256:f270805a5e169a09ef302578a5068b584684f17d1c9f47d406c7de08ece9b3d3",
       "projection_declaration_hash": "sha256:982a3d4d6acecd422e191aa0ac1b4eabce7250a47f0add83640979180b8a5003",
       "semantic_check_id": "check:self:validate-step-evidence",
       "timeout_seconds": 180
@@ -1135,8 +1135,8 @@
       "input_component_ids": [
         "component:contract_schema:f177812dd85e604e",
         "component:prompt_router:7d34e0f607d9047e",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:ca32a4e7e84800a3",
         "component:runtime_source:edf9658019200ade",
@@ -1158,7 +1158,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:985408baf8d27d734028ec3d3efc83723629389a06de8612e847bbe01adcdea0",
-      "owner_input_projection_hash": "sha256:e5053efc6eb83361312f0791a3ee4cfe3d4a1faddba992d03c14813f78aea261",
+      "owner_input_projection_hash": "sha256:a2c9ec050761ca7736a4461164bc8d0c6b3501a035365205f85963086ccb8be9",
       "projection_declaration_hash": "sha256:9b84f9dcb2678f7bfabf12138046b6da321e9fbb8c3ca688a2654e3e0d51cc34",
       "semantic_check_id": "check:self:check-run-closure",
       "timeout_seconds": 180
@@ -1439,10 +1439,10 @@
         "component:prompt_router:7d34e0f607d9047e",
         "component:prompt_router:fc4e66c2f748ac9f",
         "component:runtime_source:4076fa4e0de756b5",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:72da40253187425e",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:bc3c28f7e6709c49",
         "component:runtime_source:ca32a4e7e84800a3",
@@ -1473,7 +1473,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:89c987ab7a13d1791c88c51f7ad8ecb7b458e59c010419758bf59518cee48ad5",
-      "owner_input_projection_hash": "sha256:59d3fb47d2f748f388cb41785edd68b27310f6d1d79a60947a7a1641d2747e94",
+      "owner_input_projection_hash": "sha256:92eb6066cb7b4006631c1aae738ff6316331cb93a7442f043210378ea52c5214",
       "projection_declaration_hash": "sha256:6b45c983d83ceb9908f7a2091f5cff24d76a29ef95ce79972d85bcbab08dcd35",
       "semantic_check_id": "check:self:audit-project-adoption",
       "timeout_seconds": 180
@@ -1696,11 +1696,11 @@
         "component:prompt_router:7d34e0f607d9047e",
         "component:prompt_router:fc4e66c2f748ac9f",
         "component:runtime_source:4076fa4e0de756b5",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:72da40253187425e",
         "component:runtime_source:7c727d9302861ef9",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:b5d5a214d70e5523",
         "component:runtime_source:bc3c28f7e6709c49",
@@ -1724,7 +1724,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:b1c241355616df3ea2c504025842f2828bf2838720cf88619fad6be4331eb763",
-      "owner_input_projection_hash": "sha256:d260c2820f7e0bbfa8c96c79631b8aa5274e12413f9525ebe60160f43a13afad",
+      "owner_input_projection_hash": "sha256:a8caef66183b0a276d826f5c28f83ee2d7f8530a0a3661828040b8721c2800ee",
       "projection_declaration_hash": "sha256:2a4dcbad91968607f9fdafe02d6db8be4525efd5c8550d43369125bced1261ab",
       "semantic_check_id": "check:self:installed-provenance",
       "timeout_seconds": 180
@@ -1793,9 +1793,9 @@
       "input_component_ids": [
         "component:contract_schema:f177812dd85e604e",
         "component:prompt_router:7d34e0f607d9047e",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:ca32a4e7e84800a3",
         "component:runtime_source:d18d5604d52193ff",
@@ -1814,7 +1814,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:235cb8c078edc2cb7b1d7551c498e58a3a3155bbb1d16b57087c12dc4aeb9e70",
-      "owner_input_projection_hash": "sha256:6c7d693883256455bfd80a614f0d8bbf405356b9dbcb24ccf230da72f338052a",
+      "owner_input_projection_hash": "sha256:6678df215fd652ed34147724dd3b7192e1fbc22dc668ed8bef1457949662208c",
       "projection_declaration_hash": "sha256:b92cc7726ba5f497352248495bcc914e16be1af0b27fd39484a344cd451431d2",
       "semantic_check_id": "check:self:installation-safety",
       "timeout_seconds": 900
@@ -1857,11 +1857,11 @@
         "component:prompt_router:7d34e0f607d9047e",
         "component:prompt_router:fc4e66c2f748ac9f",
         "component:runtime_source:4076fa4e0de756b5",
+        "component:runtime_source:4097d191cd4bab42",
         "component:runtime_source:5ab96f61faa6e2da",
         "component:runtime_source:72da40253187425e",
         "component:runtime_source:7c727d9302861ef9",
         "component:runtime_source:89c69e40d8dbc6c2",
-        "component:runtime_source:8b48c413f9611cfd",
         "component:runtime_source:a5a2f0a0487866c7",
         "component:runtime_source:b5d5a214d70e5523",
         "component:runtime_source:bc3c28f7e6709c49",
@@ -1889,7 +1889,7 @@
       ],
       "kind": "command",
       "owner_declaration_hash": "sha256:efd3d4a0f2144d55c711dd2e4a08418e521ec74329308c5492fe1cd617e7d5d0",
-      "owner_input_projection_hash": "sha256:d260c2820f7e0bbfa8c96c79631b8aa5274e12413f9525ebe60160f43a13afad",
+      "owner_input_projection_hash": "sha256:a8caef66183b0a276d826f5c28f83ee2d7f8530a0a3661828040b8721c2800ee",
       "projection_declaration_hash": "sha256:30375636b875144831858afcfc497e2b75ab9239bb30d59d8aef39976d093786",
       "semantic_check_id": "check:self:public-export-privacy",
       "timeout_seconds": 180
@@ -2435,7 +2435,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:contract_schema"
         ],
-        "component_hash": "sha256:5bd516585433d7bd27be506c474978a6779996f73f2902b5cbec89a9f204fc92",
+        "component_hash": "sha256:5b468af2736cd3590dec414c39ea1f8a11d1d5e530652515197898dbb9a91499",
         "component_id": "component:contract_schema:f177812dd85e604e",
         "consumer_ids": [
           "owner:self:audit-project-adoption",
@@ -2982,7 +2982,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:prompt_router"
         ],
-        "component_hash": "sha256:5b3f8fe1a2ffeef87b61d33f01dccd0421ebc65895e868ce8e018ccdd8268cf6",
+        "component_hash": "sha256:41207f8357e5b6326896f07280944b315302743bf3fa914a49070fc18e975516",
         "component_id": "component:prompt_router:7d34e0f607d9047e",
         "consumer_ids": [
           "owner:self:audit-project-adoption",
@@ -3061,8 +3061,8 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:7610ed7c2efb4a95c31141feeab9181ad05f12296babc007f1c7370d10094e67",
-        "component_id": "component:runtime_source:8b48c413f9611cfd",
+        "component_hash": "sha256:32270400f1f0207c1701b6c1dcdc03eb669ee8b5809e0f00ecc656f000120dbe",
+        "component_id": "component:runtime_source:4097d191cd4bab42",
         "consumer_ids": [
           "owner:self:audit-project-adoption",
           "owner:self:check-run-closure",
@@ -3094,6 +3094,7 @@
           ".agents/skills/skillguard/scripts/skillguard_v2/capability_contract.py",
           ".agents/skills/skillguard/scripts/skillguard_v2/evidence_policy.py",
           ".agents/skills/skillguard/scripts/skillguard_v2/flowguard_adapter.py",
+          ".agents/skills/skillguard/scripts/skillguard_v2/path_identity.py",
           ".agents/skills/skillguard/scripts/skillguard_v2/portable_content.py"
         ],
         "role": "runtime_source"
@@ -3136,7 +3137,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:40e7fc5ac9d7271a45ab54acf8ff4dc2611d01c9fb388f0fb932fe42d850da97",
+        "component_hash": "sha256:3c31dc1c32bf7018719f6087893b8b9da6be92c0bc876c7dc23078311c41a149",
         "component_id": "component:runtime_source:5ab96f61faa6e2da",
         "consumer_ids": [
           "owner:self:audit-project-adoption",
@@ -3284,7 +3285,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:c33dff44a3578c5172b011718be7486e69cfd10402fd464fa0cde239d1632281",
+        "component_hash": "sha256:03c51f6962148d1feeb3bb333c0639bf522c794d8f650f75342e461138cbeacc",
         "component_id": "component:runtime_source:d18d5604d52193ff",
         "consumer_ids": [
           "owner:self:audit-project-adoption",
@@ -3345,7 +3346,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:163632a30f0e4cf0f3edd1ce00fbd3281d6ccb849da222bbaeea885e9b8322b4",
+        "component_hash": "sha256:b6edd5981f9812df7da7b9b5028c7805fd0dd0189ca1828f60ad9dd9e1fc3b41",
         "component_id": "component:runtime_source:4076fa4e0de756b5",
         "consumer_ids": [
           "owner:self:audit-project-adoption",
@@ -3399,7 +3400,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:b2a4aa9a607681e866c251c514cd216289ff97058f8de9eaffca0e7748911465",
+        "component_hash": "sha256:cba8a2952fc2107ab90d813c26e1f3eaf318a8fccac10b66ce3242a1282b1b9b",
         "component_id": "component:runtime_source:7c727d9302861ef9",
         "consumer_ids": [
           "owner:self:installed-provenance",
@@ -3424,7 +3425,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:02eb87327a8c09919682cfe00741024a8b491ab79ff1876b425399954618d0b7",
+        "component_hash": "sha256:4ee82f82501534e4753cbdeb6c71402d5e3a0422252c127ef43a06858576cfa8",
         "component_id": "component:runtime_source:b5d5a214d70e5523",
         "consumer_ids": [
           "owner:self:installed-provenance",
@@ -3519,7 +3520,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:test_dev"
         ],
-        "component_hash": "sha256:117349c6509422e28722564625a7a9387614477a8262fee020d011ef144a8b3c",
+        "component_hash": "sha256:c89f6f5dbca9f1a798e5907111586fc6740b5139ebab5f6c95af9f8f35469ee7",
         "component_id": "component:test_dev:5d203b692a80f8f6",
         "consumer_ids": [
           "owner:self:installation-safety"
@@ -3551,7 +3552,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:test_dev"
         ],
-        "component_hash": "sha256:9ba8f6dd76458dd24edce7755e3b8872c2a26bf7b8dfda7e2cd2dd14a8631cdd",
+        "component_hash": "sha256:a06a7392667996f78d7c843bbce84440e66145b914577d3931147efd423c21d6",
         "component_id": "component:test_dev:f8ac4c11d569755e",
         "consumer_ids": [
           "owner:self:test-mesh-fast"
@@ -3588,7 +3589,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:test_dev"
         ],
-        "component_hash": "sha256:527b2c02175c3770d0b796ef4c18c081bf57b2e1eca7dcb296eb35a1205e0546",
+        "component_hash": "sha256:52446ba8de5652e2c0af0d7546606904a43d6db4c1ab924dc477fcb86d676853",
         "component_id": "component:test_dev:727ef9cfddb1905f",
         "consumer_ids": [
           "projection:portfolio"
@@ -3615,7 +3616,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:8e37f1b54cff4fc2d5b41f04b805b8a50d4c8d2fafe9a324057b9a93edf92564",
+    "impact_graph_hash": "sha256:285d43db61d93ed3ecadccf2ee3d6a1164b620b88f175cd458fe23db705bd499",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -5348,7 +5349,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:e98448e78bbe85cee2816804d1d5d51e863eda8eeb782ab5bec731a8125c6660",
+        "content_hash": "sha256:08b20f8c3ac0622b09e79492353c41d88c407dcbb8ebd4c37bd1de5afab2a99c",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/checker_engine.py",
         "role": "runtime_source"
@@ -5418,7 +5419,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:c8dfb97511ecbccc8ca2c8e731645b401a7c42951c8acbcbce5921f5653c928d",
+        "content_hash": "sha256:4ddfb798a5e6715fc212ce3f5642fd1ecb48f3f38c63fac5bba5575238d2aa00",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_utils.py",
         "role": "runtime_source"
@@ -5460,14 +5461,14 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:prompt_router",
-        "content_hash": "sha256:d90cc5807400aae34cc983c74ceff0d5876352f7aae5d39b9159bb2e13713c8c",
+        "content_hash": "sha256:ca18849a648fc00a0f7c3e3466cedba3e443d64c6785643ca18df3072d1d211f",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/content_projection.py",
         "role": "prompt_router"
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
-        "content_hash": "sha256:d7e636ae6ebd68c213a05930461d01207c2234f8bf091a2097a1dbbbc1abd3a8",
+        "content_hash": "sha256:a5d2503c6b8cbce3b60835354200e5ee6a8b659cadd80fdeae8f5cc70a8063c3",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/contract_compiler.py",
         "role": "contract_schema"
@@ -5537,7 +5538,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:c694b6119de305981824c5b533bab54cd23ede528dcbe21efcbbd038223abbce",
+        "content_hash": "sha256:8683a5666a0c26d936ef44c0404ae3d3ef551204bea123026ac92a78117ae58f",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/installation.py",
         "role": "runtime_source"
@@ -5572,7 +5573,14 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:4ff312902aa405b5d2aa3c7feb72c106f5d7bb089f7a4ef6156ff13134e724d2",
+        "content_hash": "sha256:bbd860c0e42c0284b919d3e9fabcd1495f6541b7a674d2f6de2141248be3d17c",
+        "install_disposition": "copy",
+        "path": ".agents/skills/skillguard/scripts/skillguard_v2/path_identity.py",
+        "role": "runtime_source"
+      },
+      {
+        "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
+        "content_hash": "sha256:02de224db6315e57351fdd2ff1806ee3da983994dd3e27f185a4fbb40c7d2bf7",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/portable_content.py",
         "role": "runtime_source"
@@ -5607,7 +5615,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:56284ece22280355fbf4ad7464c5d0288e5f79fd3d7bcc614f25773854747ac6",
+        "content_hash": "sha256:83021f9a665491083491712e3120d4e89dee15a49af6f7173c7c4eefe409d422",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_runner.py",
         "role": "runtime_source"
@@ -5698,14 +5706,14 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:efa671c7ad31079897e4540e85a371fb6c238a76b23dbf52fee9a87511af9530",
+        "content_hash": "sha256:c5fcc9be64ca49d6e6ef0f94496df9926b2e6c66d01bdc232d91d3de36c506a7",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/target_installation.py",
         "role": "runtime_source"
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:f7d6e6aa79c93745575f1d6e815fb2f111725559627a176de31533f41f86275a",
+        "content_hash": "sha256:c532cdbcaaed641b6b5774ec68654fbd1230c7f8a8fa70534e8615265a9aa2ca",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/test_mesh.py",
         "role": "runtime_source"
@@ -5880,7 +5888,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
-        "content_hash": "sha256:47a92f8111849c31f190a1776d181517548e342aa81c124fc75ff739690ebb60",
+        "content_hash": "sha256:fd6a2c3129c58ba303fd0ee25d3d2ea4537927c979b16c2bd21890a06417e996",
         "install_disposition": "source_only",
         "path": "tests/test_installation.py",
         "role": "test_dev"
@@ -5901,7 +5909,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
-        "content_hash": "sha256:67643c4afafb7f6ef6b7781e4f69f962e9c34e6b4b1fc04934dd2781d7b29258",
+        "content_hash": "sha256:461db268138ba5e9efb60e9873c854ba4eef3729a6a4e48f4624f7834ebb01d5",
         "install_disposition": "source_only",
         "path": "tests/test_portfolio_production_revalidation.py",
         "role": "test_dev"
@@ -5929,7 +5937,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
-        "content_hash": "sha256:81c144d3d07c2b19dd344e245e37aebf19076e6ee8fdcb0b92cfa9a3b4ea6aeb",
+        "content_hash": "sha256:28c79bdefd85eed7da5fa65b799753809271fa8c2a526e1021b30fce20ee0d22",
         "install_disposition": "source_only",
         "path": "tests/test_test_mesh_installation_binding.py",
         "role": "test_dev"
@@ -5956,7 +5964,7 @@
         "role": "test_dev"
       }
     ],
-    "inventory_hash": "sha256:19219b75314c860298f01f5a2950dad5d241efc96d43be08f0dbd020b0362c15",
+    "inventory_hash": "sha256:5d12ffb8eea4957bab5888ce222edb330dba880b9759b01cc49d250ce6f30e88",
     "member_root_path": ".agents/skills/skillguard",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -5978,10 +5986,10 @@
           "component:prompt_router:7d34e0f607d9047e",
           "component:prompt_router:fc4e66c2f748ac9f",
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:bc3c28f7e6709c49",
           "component:runtime_source:ca32a4e7e84800a3",
@@ -6011,7 +6019,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:89c987ab7a13d1791c88c51f7ad8ecb7b458e59c010419758bf59518cee48ad5",
-        "owner_input_projection_hash": "sha256:59d3fb47d2f748f388cb41785edd68b27310f6d1d79a60947a7a1641d2747e94"
+        "owner_input_projection_hash": "sha256:92eb6066cb7b4006631c1aae738ff6316331cb93a7442f043210378ea52c5214"
       },
       {
         "check_ids": [
@@ -6044,8 +6052,8 @@
         "input_component_ids": [
           "component:contract_schema:f177812dd85e604e",
           "component:prompt_router:7d34e0f607d9047e",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:ca32a4e7e84800a3",
           "component:runtime_source:edf9658019200ade",
@@ -6066,7 +6074,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:985408baf8d27d734028ec3d3efc83723629389a06de8612e847bbe01adcdea0",
-        "owner_input_projection_hash": "sha256:e5053efc6eb83361312f0791a3ee4cfe3d4a1faddba992d03c14813f78aea261"
+        "owner_input_projection_hash": "sha256:a2c9ec050761ca7736a4461164bc8d0c6b3501a035365205f85963086ccb8be9"
       },
       {
         "check_ids": [
@@ -6127,7 +6135,7 @@
           "component:contract_schema:f177812dd85e604e",
           "component:documentation_model:b8ce7b31de15b76e",
           "component:prompt_router:7d34e0f607d9047e",
-          "component:runtime_source:8b48c413f9611cfd"
+          "component:runtime_source:4097d191cd4bab42"
         ],
         "input_selectors": [
           {
@@ -6160,7 +6168,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:0ca5d276c3d75cf3053ea8f6d8979b055ca50b495d2070f8e7fc778f44e58b82",
-        "owner_input_projection_hash": "sha256:e3b0b4e6cdd2697ee59067559f53ae39ce42b642f8e8676df8e83d78534879b1"
+        "owner_input_projection_hash": "sha256:c7f80285187dd4632530b4a4c91d23fb1cfef74a782a59b2cc292bda28e03d4b"
       },
       {
         "check_ids": [
@@ -6174,7 +6182,7 @@
         "input_component_ids": [
           "component:contract_schema:f177812dd85e604e",
           "component:prompt_router:7d34e0f607d9047e",
-          "component:runtime_source:8b48c413f9611cfd",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:test_dev:6fbc012719063fe1"
         ],
@@ -6193,7 +6201,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:79a37819a1b64298788cae45a0ce83c727891996ac95eb30a342c07cd732b58d",
-        "owner_input_projection_hash": "sha256:3f6f4e8e9e1e2007cd69e6958ce07a79362276d28d3e5ecff9b19e454f57d5b8"
+        "owner_input_projection_hash": "sha256:5f811c9a96aa73a5aee49c181a629ab9ab9caf826d2f9dc95f117897e2b12585"
       },
       {
         "check_ids": [
@@ -6235,8 +6243,8 @@
         "input_component_ids": [
           "component:contract_schema:f177812dd85e604e",
           "component:prompt_router:7d34e0f607d9047e",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:ca32a4e7e84800a3",
           "component:test_dev:10963523ff2a7f85"
         ],
@@ -6247,7 +6255,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:60126914732ae26ad10f208603b8e50bb57163e27443b85cdde795877b225552",
-        "owner_input_projection_hash": "sha256:e81e1e5abc72f17ac2428a381f3d91d37a47951708a5e46a3cb76f46a701cddc"
+        "owner_input_projection_hash": "sha256:574578203b011ec3b1d18613a94eaac4054b5fe38778e0132d98e5228e9e3046"
       },
       {
         "check_ids": [
@@ -6282,8 +6290,8 @@
         "input_component_ids": [
           "component:contract_schema:f177812dd85e604e",
           "component:prompt_router:7d34e0f607d9047e",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:ca32a4e7e84800a3",
           "component:test_dev:10963523ff2a7f85"
         ],
@@ -6294,7 +6302,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:0886477e209eb77e339babe840425258a7c4a971a8c1e37e3d3e723563afc212",
-        "owner_input_projection_hash": "sha256:e81e1e5abc72f17ac2428a381f3d91d37a47951708a5e46a3cb76f46a701cddc"
+        "owner_input_projection_hash": "sha256:574578203b011ec3b1d18613a94eaac4054b5fe38778e0132d98e5228e9e3046"
       },
       {
         "check_ids": [
@@ -6349,9 +6357,9 @@
         "input_component_ids": [
           "component:contract_schema:f177812dd85e604e",
           "component:prompt_router:7d34e0f607d9047e",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:ca32a4e7e84800a3",
           "component:runtime_source:d18d5604d52193ff",
@@ -6369,7 +6377,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:235cb8c078edc2cb7b1d7551c498e58a3a3155bbb1d16b57087c12dc4aeb9e70",
-        "owner_input_projection_hash": "sha256:6c7d693883256455bfd80a614f0d8bbf405356b9dbcb24ccf230da72f338052a"
+        "owner_input_projection_hash": "sha256:6678df215fd652ed34147724dd3b7192e1fbc22dc668ed8bef1457949662208c"
       },
       {
         "check_ids": [
@@ -6396,11 +6404,11 @@
           "component:prompt_router:7d34e0f607d9047e",
           "component:prompt_router:fc4e66c2f748ac9f",
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -6423,7 +6431,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:b1c241355616df3ea2c504025842f2828bf2838720cf88619fad6be4331eb763",
-        "owner_input_projection_hash": "sha256:d260c2820f7e0bbfa8c96c79631b8aa5274e12413f9525ebe60160f43a13afad"
+        "owner_input_projection_hash": "sha256:a8caef66183b0a276d826f5c28f83ee2d7f8530a0a3661828040b8721c2800ee"
       },
       {
         "check_ids": [
@@ -6620,10 +6628,10 @@
         "input_component_ids": [
           "component:contract_schema:f177812dd85e604e",
           "component:prompt_router:7d34e0f607d9047e",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:ca32a4e7e84800a3",
           "component:runtime_source:edf9658019200ade",
@@ -6636,7 +6644,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:5b9f1c7ececd7baf0d5d6c7bb81950677a3a75cb58e3d9a6975032659c9bbdd2",
-        "owner_input_projection_hash": "sha256:a143106b71e7c462d0d39d3f399fde7a72907093406ab0b8377901bd7e8ca9f5"
+        "owner_input_projection_hash": "sha256:41cb23f4cbe826fa81633e27274e5c6b3e45ae665ddab57415c471bea99ca612"
       },
       {
         "check_ids": [
@@ -6664,11 +6672,11 @@
           "component:prompt_router:7d34e0f607d9047e",
           "component:prompt_router:fc4e66c2f748ac9f",
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -6695,7 +6703,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:efd3d4a0f2144d55c711dd2e4a08418e521ec74329308c5492fe1cd617e7d5d0",
-        "owner_input_projection_hash": "sha256:d260c2820f7e0bbfa8c96c79631b8aa5274e12413f9525ebe60160f43a13afad"
+        "owner_input_projection_hash": "sha256:a8caef66183b0a276d826f5c28f83ee2d7f8530a0a3661828040b8721c2800ee"
       },
       {
         "check_ids": [
@@ -6835,10 +6843,10 @@
           "component:prompt_router:7d34e0f607d9047e",
           "component:prompt_router:fc4e66c2f748ac9f",
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:bc3c28f7e6709c49",
           "component:runtime_source:ca32a4e7e84800a3",
@@ -6864,7 +6872,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:235688f3b841024f6563c46974f3f2aef631b1ccca41242aaeec7418c089b661",
-        "owner_input_projection_hash": "sha256:4c82c86a2e37cefea7d5cb6166f4993a1e75595fbd3433d029c8efc8e2e94c4c"
+        "owner_input_projection_hash": "sha256:2eeb24a91416d88889da929da7e6c7ef9907197ddd24e3f40c2d7cfa5021005a"
       },
       {
         "check_ids": [
@@ -6882,10 +6890,10 @@
           "component:prompt_router:7d34e0f607d9047e",
           "component:prompt_router:fc4e66c2f748ac9f",
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:bc3c28f7e6709c49",
           "component:runtime_source:ca32a4e7e84800a3",
@@ -6915,7 +6923,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:47bc406e2e9ca603f18c1dc904cbc51ba936d417490788b60b2a638a516531d7",
-        "owner_input_projection_hash": "sha256:cfc0438cbc0154ba3b2cfc4016c374f2c7532366cb9a6267f2cb549648b01d46"
+        "owner_input_projection_hash": "sha256:dd2a1020be69cabdd5b06978822a4379cac259e6cd0b10c2ad9fac08123dad63"
       },
       {
         "check_ids": [
@@ -6970,11 +6978,11 @@
           "component:prompt_router:7d34e0f607d9047e",
           "component:prompt_router:fc4e66c2f748ac9f",
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:ca32a4e7e84800a3",
           "component:runtime_source:d18d5604d52193ff",
@@ -7016,7 +7024,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:8258746497f86f8ad0431ba001fb977f80a4095acd67232d59c4b8e22f344d3f",
-        "owner_input_projection_hash": "sha256:a8ec68ca669dd4d2b540bf2e93e8ef84b698a305de036d73cd49e62c560a87cd"
+        "owner_input_projection_hash": "sha256:c907d8396c3b6efb28475fb5de1844c69b0d0c4cc261d426b17619775fc78c8b"
       },
       {
         "check_ids": [
@@ -7050,8 +7058,8 @@
         "input_component_ids": [
           "component:contract_schema:f177812dd85e604e",
           "component:prompt_router:7d34e0f607d9047e",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:test_dev:0e76933c23b8037e"
         ],
         "input_selectors": [
@@ -7073,7 +7081,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:41d49ca172eb37c782b6d12b7201ecbc1d8161dfa289f085bc13cc36de4b88d1",
-        "owner_input_projection_hash": "sha256:2d19c59ca878c2f8c4e1a6e1059c6e926728b9b62f277c44819311640df18b51"
+        "owner_input_projection_hash": "sha256:f270805a5e169a09ef302578a5068b584684f17d1c9f47d406c7de08ece9b3d3"
       },
       {
         "check_ids": [
@@ -7111,10 +7119,10 @@
         "input_component_ids": [
           "component:contract_schema:f177812dd85e604e",
           "component:prompt_router:7d34e0f607d9047e",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:ca32a4e7e84800a3",
           "component:runtime_source:edf9658019200ade",
@@ -7127,7 +7135,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:814cdfdcaeebe4dad6f82b8da7b1e8c5ca2c62a905004116464966dc1146d733",
-        "owner_input_projection_hash": "sha256:a143106b71e7c462d0d39d3f399fde7a72907093406ab0b8377901bd7e8ca9f5"
+        "owner_input_projection_hash": "sha256:41cb23f4cbe826fa81633e27274e5c6b3e45ae665ddab57415c471bea99ca612"
       },
       {
         "check_ids": [
@@ -7178,11 +7186,11 @@
       {
         "input_component_ids": [
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -7202,11 +7210,11 @@
       {
         "input_component_ids": [
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -7220,11 +7228,11 @@
       {
         "input_component_ids": [
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -7238,11 +7246,11 @@
       {
         "input_component_ids": [
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -7256,11 +7264,11 @@
       {
         "input_component_ids": [
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -7274,11 +7282,11 @@
       {
         "input_component_ids": [
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -7293,7 +7301,7 @@
     "projection_consumers": [
       {
         "consumer_id": "projection:contract-compile",
-        "consumer_projection_hash": "sha256:f0a74ff6216df05ba84c8824d33092e2ae8135f9a46752243411a398f4e97a3f",
+        "consumer_projection_hash": "sha256:c05a283b38dca048b093bab887b0769aa46142384ed279af2826068e0a5cd004",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
@@ -7301,15 +7309,15 @@
           "component:contract_schema:f177812dd85e604e",
           "component:documentation_model:b8ce7b31de15b76e",
           "component:prompt_router:7d34e0f607d9047e",
-          "component:runtime_source:8b48c413f9611cfd"
+          "component:runtime_source:4097d191cd4bab42"
         ],
-        "input_projection_hash": "sha256:599e32d15de0eeb390ae622b536505a90717245f02fc42cce6c388603355867e",
+        "input_projection_hash": "sha256:068a0156287d2c72e07fb203c23c66618c87bd22af12abfc75150e23cab60c86",
         "kind": "contract_compile",
-        "projection_declaration_hash": "sha256:eb1b464a04b8deafcba7f0aa583cf401df4a8a81b3adbb2fbcc4b6cbfca58a3d"
+        "projection_declaration_hash": "sha256:b29c6c4b093c9d1fbe2625c784aadbf5aef4a561acca05c44ff4dc631f7b284d"
       },
       {
         "consumer_id": "projection:global-router",
-        "consumer_projection_hash": "sha256:3bdf727c54ebd0cf4666171b5c7094ae1c4c90bf8363d4365ff60b8e1c70b3f3",
+        "consumer_projection_hash": "sha256:11ed6a1d458cea3906b05436edda157b434aaddc5ba8fa35201c93eed13fefb2",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
@@ -7317,13 +7325,13 @@
           "component:prompt_router:7d34e0f607d9047e",
           "component:prompt_router:fc4e66c2f748ac9f"
         ],
-        "input_projection_hash": "sha256:4aa900365213b59a04b920b2f4d21c087b1ed74376dbe4dd45bc17c18c1dcd45",
+        "input_projection_hash": "sha256:1359f64f8f87d2e2ce1a71da65fc55fa3e24843d0fb54eaeb98e4537cbfb4f36",
         "kind": "global_router",
         "projection_declaration_hash": "sha256:2a362a99bb54b2318c3ccec11d2a64858f65348264cd9e8942c7b756971b4fc3"
       },
       {
         "consumer_id": "projection:installation",
-        "consumer_projection_hash": "sha256:aa60a8ad4d5dc2fa3aeb9129e7bf118182e3417e2e2557864e39bdd22760476b",
+        "consumer_projection_hash": "sha256:161307ad6c7ca3b871317f42676a86ef48991b4628e24eaf7eaab1b46eb021d0",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
@@ -7342,11 +7350,11 @@
           "component:prompt_router:7d34e0f607d9047e",
           "component:prompt_router:fc4e66c2f748ac9f",
           "component:runtime_source:4076fa4e0de756b5",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:72da40253187425e",
           "component:runtime_source:7c727d9302861ef9",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:b5d5a214d70e5523",
           "component:runtime_source:bc3c28f7e6709c49",
@@ -7354,13 +7362,13 @@
           "component:runtime_source:d18d5604d52193ff",
           "component:runtime_source:edf9658019200ade"
         ],
-        "input_projection_hash": "sha256:d260c2820f7e0bbfa8c96c79631b8aa5274e12413f9525ebe60160f43a13afad",
+        "input_projection_hash": "sha256:a8caef66183b0a276d826f5c28f83ee2d7f8530a0a3661828040b8721c2800ee",
         "kind": "installation",
-        "projection_declaration_hash": "sha256:a4e6017484e979eeddfb67cb5489ef55fffb4bbb6c5597b10634f46ad56a5236"
+        "projection_declaration_hash": "sha256:2f586921c00592e8549ce51df7968be6456cefdec2a480daf434605c7cc6fd2f"
       },
       {
         "consumer_id": "projection:portfolio",
-        "consumer_projection_hash": "sha256:9b5832259d9d29d18b6dfc81467022e9ab85af0920152c57e07b8927b988fa46",
+        "consumer_projection_hash": "sha256:7723173f8bfe0b69659464076a76cf2cd5368b3bb26b3e1a02784d9db964ffc4",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
@@ -7369,18 +7377,18 @@
           "component:documentation_model:611bf763ba8e27ce",
           "component:fixture_reference:1680efd592df0c67",
           "component:prompt_router:7d34e0f607d9047e",
+          "component:runtime_source:4097d191cd4bab42",
           "component:runtime_source:5ab96f61faa6e2da",
           "component:runtime_source:89c69e40d8dbc6c2",
-          "component:runtime_source:8b48c413f9611cfd",
           "component:runtime_source:a5a2f0a0487866c7",
           "component:runtime_source:ca32a4e7e84800a3",
           "component:runtime_source:d18d5604d52193ff",
           "component:runtime_source:edf9658019200ade",
           "component:test_dev:727ef9cfddb1905f"
         ],
-        "input_projection_hash": "sha256:4b45c73a361ac89e01aecaafac39fb060ec5bbe01b2cda5f58545eeb447fbe2d",
+        "input_projection_hash": "sha256:5ce2e2635db2afd979b05eb75bb1b6b59563857f0381e4cbf319aab2e2e9fe84",
         "kind": "portfolio",
-        "projection_declaration_hash": "sha256:ab3fe5af342e0d21856d0779bcfe2481317b7fd26e6c90bdfdb8ffe7bc983fda"
+        "projection_declaration_hash": "sha256:cda7bc422aad3ad34fbb9f945d9009f6142417a9706cb96611fd7540c999e198"
       },
       {
         "consumer_id": "projection:source-maintenance",
@@ -7399,7 +7407,7 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "8D8C2D541DF9AA8EDCD66F7136539FCE0DF4B5E63CD6408F0D70836D703F98CF",
+  "contract_hash": "325507B1F9D1D26EFB484AB950879EA828F1C239BABEB9D685E8470E54E990CC",
   "depth_profile": {
     "claim_boundary": "SkillGuard freezes and reconciles the target skill's own declared checks. The target skill alone owns domain purpose, failure classes, oracles, fixtures, and depth meaning.",
     "enforcement_level": "enforced",
@@ -8237,7 +8245,7 @@
     "implementation:.agents/skills/skillguard/references/skillguard-execution-records.md": "8FCFA6C0096FB0F2CBB5B1DC17C2C84228D31DD82520EA13299B5B8B6447A61F",
     "implementation:.agents/skills/skillguard/references/skillguard-portfolio.md": "35F5C35497425F49E5BCE91E4FA3609E2FA792009D4B8D6F0E8D7B1F130C0A75",
     "implementation:.agents/skills/skillguard/references/skillguard-supervisor.md": "4CC9AC95D45BCF525D377E6649B244ADB70F096C8ED5CEF3803763F695450180",
-    "implementation:.agents/skills/skillguard/scripts/checker_engine.py": "E98448E78BBE85CEE2816804D1D5D51E863EDA8EEB782AB5BEC731A8125C6660",
+    "implementation:.agents/skills/skillguard/scripts/checker_engine.py": "08B20F8C3AC0622B09E79492353C41D88C407DCBB8EBD4C37BD1DE5AFAB2A99C",
     "implementation:.agents/skills/skillguard/scripts/skillguard.py": "F41793A67366E1D098D16A0C563E44EFD77B093C18BD4507267B9F2BAFD815DF",
     "implementation:.agents/skills/skillguard/scripts/skillguard_compile.py": "F02E95610C2E314CFD7F155AF447EE97044C33637A86A452F94E7B9B55F27F2E",
     "implementation:.agents/skills/skillguard/scripts/skillguard_install.py": "87B2C214F7955E6E6C27FD54276346C1DD22C9E58B1381D222275C41A8991866",
@@ -8246,13 +8254,13 @@
     "implementation:.agents/skills/skillguard/scripts/skillguard_self_host.py": "9889D0C2F1EC5F66E59E9D2AA54C96770FB77141AC7E7BDE5E144AD8B0AA3649",
     "implementation:.agents/skills/skillguard/scripts/skillguard_supervise.py": "8238FAEDEA116EAB56D600112C11927DA13F5B183D2FABD396EAD5EE0CD83E82",
     "implementation:.agents/skills/skillguard/scripts/skillguard_test_mesh.py": "645F548163CB918CB3695AB35E68C91B2FC02313BCCAB70EA99B4CD7C3901ED4",
-    "implementation:.agents/skills/skillguard/scripts/skillguard_v2": "3A6EA4127287A48F9481A82C75E879CF6DB4C74C82A53000A491D539991641BA",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2": "A9B72E1EA6DA932B3DB69F0415CC335822DA475767AFF1FD45CCC7E12451D50A",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/installation_receipt.py": "D825447329A959BA4AE26F2B7027146A122B9D92FDFB6AF53BD4269694445821",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/portfolio.py": "6C1C4A7C45564568F62D9F5803EF28866DF83532210802357D68B539506F10AC",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/portfolio_cli.py": "F08CE397590C23426FD6F15C8CFA7915C989D112E99086214E7D00682DF4E1D2",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/portfolio_records.py": "DFFB94F8EDD9C5178B06F6561EA76D85E2311ED420B9E0219A583BCAA4EA102E",
-    "implementation:.agents/skills/skillguard/scripts/skillguard_v2/portfolio_runner.py": "56284ECE22280355FBF4AD7464C5D0288E5F79FD3D7BCC614F25773854747AC6",
-    "implementation:.agents/skills/skillguard/scripts/skillguard_v2/test_mesh.py": "F7D6E6AA79C93745575F1D6E815FB2F111725559627A176DE31533F41F86275A",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2/portfolio_runner.py": "83021F9A665491083491712E3120D4E89DEE15A49AF6F7173C7C4EEFE409D422",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2/test_mesh.py": "C532CDBCAAED641B6B5774EC68654FBD1230C7F8A8FA70534E8615265A9AA2CA",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/validation_execution_policy.py": "621E04E9DCB94AB1115CF7EC74DB22FAC9F20EDE62E04F9ED287BD20C0F05AB2",
     "implementation:.agents/skills/skillguard/scripts/skillguard_verification_contract_review.py": "101BF1347722A68D469DBF4984F3F7549156E42E7CE1D03E69009BECBA3559A0",
     "implementation:.agents/skills/skillguard/test-mesh.json": "870525A9711277E7DD27A94EB16226C5349A8261618746315E58218FE99FF95C",
@@ -8261,8 +8269,8 @@
     "implementation:tests/test_conditional_noop_closure_v2.py": "753FB46BBFAFC1556262C6DDAC79EC9949E026B0D898FEDDF09190A4F99C3BFF",
     "implementation:tests/test_contract_compiler_v2.py": "7CC002B8A6BA8A3555252639E1C5376EEEA82BAD5A194ED685A1673A516A5DAA",
     "implementation:tests/test_installation_verification_receipt.py": "5A3A39B11E42F0949A7C4A92C45068E4D28E947818FD9216D92376A9AB685029",
-    "implementation:tests/test_portfolio_production_revalidation.py": "67643C4AFAFB7F6EF6B7781E4F69F962E9C34E6B4B1FC04934DD2781D7B29258",
-    "implementation:tests/test_test_mesh_installation_binding.py": "81C144D3D07C2B19DD344E245E37AEBF19076E6EE8FDCB0B92CFA9A3B4EA6AEB",
+    "implementation:tests/test_portfolio_production_revalidation.py": "461DB268138BA5E9EFB60E9873C854BA4EEF3729A6A4E48F4624F7834EBB01D5",
+    "implementation:tests/test_test_mesh_installation_binding.py": "28C79BDEFD85EED7DA5FA65B799753809271FA8C2A526E1021B30FCE20EE0D22",
     "implementation:tests/test_test_mesh_legacy_rejection.py": "76DA531798523914263C0957F030E420ADCCC34030E0280AA02C7CF2FC40A5E3",
     "implementation:tests/test_test_mesh_schemas.py": "6FBE63AA37A6E9D1D20359B4666A2757523491EF850B841FEC94B597F3994A54",
     "implementation:tests/test_validation_execution_policy_projection.py": "68765A3C88C0498813E8361A035264A9E517E522CABC9FF05951F7113EEB1C1E",

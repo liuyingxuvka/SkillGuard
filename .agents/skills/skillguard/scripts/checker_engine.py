@@ -55,6 +55,10 @@ from skillguard_v2.portable_content import (
     owned_runtime_parent_may_be_pruned,
     portable_files,
 )
+from skillguard_v2.path_identity import (
+    canonical_filesystem_path,
+    physical_relative_path,
+)
 from skillguard_v2.validation_execution_policy import (
     VALIDATION_EXECUTION_POLICY_ID,
     VALIDATION_EXECUTION_POLICY_LINES,
@@ -1070,13 +1074,13 @@ def resolve_check_target_binding(
     reference authority.
     """
 
-    configured_root = repository_root().resolve()
-    configured_skill = skill_root().resolve()
+    configured_root = canonical_filesystem_path(repository_root())
+    configured_skill = canonical_filesystem_path(skill_root())
     normalized_target = str(target_text).replace("\\", "/").strip()
     explicit_repository = repository_root_text is not None
 
     if explicit_repository:
-        canonical_root = Path(str(repository_root_text)).resolve()
+        canonical_root = canonical_filesystem_path(Path(str(repository_root_text)))
         if not canonical_root.is_dir():
             raise SkillGuardCliError(
                 command,
@@ -1086,11 +1090,11 @@ def resolve_check_target_binding(
         candidate = Path(target_text)
         if not candidate.is_absolute():
             candidate = canonical_root / candidate
-        member_root = candidate.resolve()
+        member_root = canonical_filesystem_path(candidate)
         report_root = canonical_root
         binding_mode = "explicit_repository"
     elif normalized_target in {".", "./"}:
-        canonical_root = Path.cwd().resolve()
+        canonical_root = canonical_filesystem_path(Path.cwd())
         member_root = canonical_root
         report_root = canonical_root
         binding_mode = "standalone_dot"
@@ -1115,8 +1119,8 @@ def resolve_check_target_binding(
         report_root = configured_root
 
     try:
-        member_root_path = member_root.resolve().relative_to(
-            canonical_root.resolve()
+        member_root_path = physical_relative_path(
+            member_root, canonical_root
         ).as_posix()
     except ValueError as exc:
         raise SkillGuardCliError(

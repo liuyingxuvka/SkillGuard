@@ -39,6 +39,10 @@ from .installation import (
 )
 from .portable_content import portable_files, scan_member_boundary
 from .runtime_authority import resolve_runtime_authority
+from .path_identity import (
+    canonical_filesystem_path,
+    same_filesystem_object,
+)
 
 
 TARGET_TRANSACTION_SCHEMA = "skillguard.target_install_transaction.current"
@@ -90,8 +94,8 @@ def _read_json_object(path: Path, error_code: str) -> dict[str, Any]:
 def _canonical_target(
     repository_root: Path, canonical_skill_root: Path
 ) -> dict[str, Any]:
-    repository = repository_root.resolve(strict=True)
-    canonical = canonical_skill_root.resolve(strict=True)
+    repository = canonical_filesystem_path(repository_root)
+    canonical = canonical_filesystem_path(canonical_skill_root)
     if not canonical.is_dir() or not canonical.is_relative_to(repository):
         raise ValueError("target_install_skill_root_outside_repository")
     manifest = _read_json_object(
@@ -108,7 +112,7 @@ def _canonical_target(
     expected = repository if member_root_path == "." else repository / Path(
         *member_root_path.split("/")
     )
-    if expected.resolve() != canonical:
+    if not same_filesystem_object(expected, canonical):
         raise ValueError("target_install_member_root_path_mismatch")
     if canonical.is_symlink() or _is_reparse_point(canonical):
         raise ValueError("target_install_canonical_root_unsafe")
@@ -133,7 +137,7 @@ def _canonical_target(
 
 
 def _roots_overlap(*roots: Path) -> bool:
-    resolved = [root.resolve() for root in roots]
+    resolved = [canonical_filesystem_path(root) for root in roots]
     for index, left in enumerate(resolved):
         for right in resolved[index + 1 :]:
             if left == right or left.is_relative_to(right) or right.is_relative_to(left):
@@ -251,9 +255,15 @@ def verify_target_stage(
     stage_skill_root: Path,
 ) -> dict[str, Any]:
     target = _canonical_target(repository_root, canonical_skill_root)
-    stage = stage_skill_root.resolve(strict=True)
-    if stage.name != target["skill_id"] or stage.is_symlink() or _is_reparse_point(stage):
+    lexical_stage = stage_skill_root.absolute()
+    if (
+        lexical_stage.name != target["skill_id"]
+        or not _path_entity_exists(lexical_stage)
+        or lexical_stage.is_symlink()
+        or _is_reparse_point(lexical_stage)
+    ):
         raise ValueError("target_install_stage_root_invalid")
+    stage = lexical_stage.resolve(strict=True)
     if _roots_overlap(target["repository_root"], stage):
         raise ValueError("target_install_stage_overlaps_repository")
     boundary = scan_member_boundary(stage)

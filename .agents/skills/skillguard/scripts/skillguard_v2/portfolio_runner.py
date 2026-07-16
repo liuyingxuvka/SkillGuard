@@ -67,6 +67,7 @@ from .portfolio_records import (
     write_hash_bound_json,
 )
 from .portable_content import ignored_copy_names
+from .path_identity import canonical_filesystem_path
 from .receipts import load_receipts
 from .run_store import utc_now
 from .step_runtime import resume_run
@@ -537,8 +538,8 @@ def prepare_portfolio_attempt(
 ) -> dict[str, Any]:
     """Freeze one complete target attempt before any representative claim."""
 
-    repository_root = repository_root.resolve()
-    workspace_root = workspace_root.resolve()
+    repository_root = canonical_filesystem_path(repository_root)
+    workspace_root = canonical_filesystem_path(workspace_root)
     workspace_root.mkdir(parents=True, exist_ok=True)
     _assert_distinct_roots(repository_root, workspace_root)
     guard = current_guard()
@@ -1855,13 +1856,13 @@ def assemble_portfolio_attempt(
     repository_root = repository_root.resolve()
     workspace_root = workspace_root.resolve()
     installed_target_root = (
-        installed_target_root.resolve()
+        canonical_filesystem_path(installed_target_root)
         if installed_target_root is not None
         else None
     )
     receipt = _preparation_current(preparation_ref, workspace_root=workspace_root)
     portfolio_target_repository_roots = {
-        str(skill_id): Path(root).resolve()
+        str(skill_id): canonical_filesystem_path(Path(root))
         for skill_id, root in dict(
             portfolio_target_repository_roots or {}
         ).items()
