@@ -2,7 +2,7 @@
 
 - [x] 1.1 Inventory canonical SkillGuard and Guard-family repositories, installed projections, active Git worktrees, dirty paths, current OpenSpec changes, and peer-owned overlap without rolling back existing work.
 - [x] 1.2 Freeze OpenSpec as an external official provider and exclude OpenSpec source, installation, skills, and Git history from modification.
-- [ ] 1.3 Complete current FlowGuard project adoption/audit for every implementation repository and preserve any adoption blockers as explicit not-run descendants.
+- [x] 1.3 Complete current FlowGuard project adoption/audit for every implementation repository and preserve any adoption blockers as explicit not-run descendants.
 - [x] 1.4 Customize and pass the generated ExistingModelPreflight, Risk Intent, PlanDetail, and DevelopmentProcessFlow models for this template-pack program.
 - [x] 1.5 Freeze one cross-repository program map that keeps provider task ids, target obligations, native check ids, execution owners, receipts, installed projections, and Git identities distinct.
 
@@ -90,6 +90,7 @@
 - [x] 10.3 Stage and content-verify each affected target installation, activate transactionally, run installed currentness/native checks separately, and preserve rollback receipts.
 - [x] 10.4 Refresh and verify the global registry and managed AGENTS prompt only for changed router projections.
 - [ ] 10.5 Prove canonical source, working evidence, installed projection, package/runtime, OpenSpec provider receipts, and local Git identities independently.
-- [ ] 10.6 Preserve all peer work, reconcile unknown-writer changes, and commit scoped changes in each canonical Guard repository without destructive reset or checkout.
-- [ ] 10.7 Push synchronized Guard branches/remotes only after current verification evidence supports the exact pushed revisions; leave OpenSpec source, installation, skills, and Git untouched.
+- Provider receipt blocker: official OpenSpec CLI `1.6.0` returns `unknown command 'verify'`; source, installed, package/runtime, and Git identities are current, but this task remains open rather than treating strict validation or task checkmarks as a substitute.
+- [x] 10.6 Preserve all peer work, reconcile unknown-writer changes, and commit scoped changes in each canonical Guard repository without destructive reset or checkout.
+- [x] 10.7 Push synchronized Guard branches/remotes only after current verification evidence supports the exact pushed revisions; leave OpenSpec source, installation, skills, and Git untouched.
 - [ ] 10.8 Audit every original requirement and deliverable against current files, receipts, tests, installed parity, and Git state before claiming program completion.
