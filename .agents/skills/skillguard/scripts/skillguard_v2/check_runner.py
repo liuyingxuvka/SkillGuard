@@ -46,6 +46,7 @@ from .execution_records import (
 from .provenance import active_installation_source_manifest
 from .receipts import fingerprint_value
 from .target_inputs import fingerprint_target_input_roles, fingerprint_target_inputs
+from .launch_plan import LaunchPlanError, ResolvedLaunchPlan, resolve_launch_plan
 from .run_store import (
     load_check_manifest_snapshot,
     load_contract_snapshot,
@@ -113,6 +114,133 @@ def _resolve_cwd(
     if relative_path.is_absolute():
         raise CheckRunnerError("cwd_relative_absolute", relative)
     return _under(roots[token] / relative_path, roots[token], "cwd_outside_token_root")
+
+
+def _resolve_check_launch_plan(
+    check: Mapping[str, Any],
+    *,
+    target_root: Path,
+    repository_root: Path,
+    run_root: Path,
+) -> tuple[
+    ResolvedLaunchPlan,
+    list[str],
+    list[str],
+    Path,
+    dict[str, str],
+    dict[str, Any],
+    str,
+]:
+    check_id = str(check.get("check_id", ""))
+    command = check.get("command")
+    args = check.get("args", [])
+    if not isinstance(command, str) or not command:
+        raise CheckRunnerError(
+            "check_command_missing", "command is required", check_id
+        )
+    if not isinstance(args, list) or any(not isinstance(item, str) for item in args):
+        raise CheckRunnerError(
+            "check_args_invalid", "args must be an array of strings", check_id
+        )
+    declared_args = list(args)
+    argument_tokens = {
+        "{{target_root}}": str(target_root.resolve()),
+        "{{repository_root}}": str(repository_root.resolve()),
+        "{{run_root}}": str(run_root.resolve()),
+    }
+    resolved_args = [argument_tokens.get(item, item) for item in declared_args]
+    cwd_token = str(check.get("cwd_token", "target_root"))
+    cwd_relative = str(check.get("cwd_relative", "."))
+    cwd = _resolve_cwd(
+        cwd_token,
+        target_root=target_root,
+        repository_root=repository_root,
+        run_root=run_root,
+        relative=cwd_relative,
+    )
+    environment = os.environ.copy()
+    declared_environment = check.get("environment", {})
+    if declared_environment:
+        if not isinstance(declared_environment, Mapping) or any(
+            not isinstance(key, str) or not isinstance(value, str)
+            for key, value in declared_environment.items()
+        ):
+            raise CheckRunnerError(
+                "check_environment_invalid",
+                "environment must map strings",
+                check_id,
+            )
+        environment.update(declared_environment)
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    execution_environment: dict[str, Any] = {
+        "os_name": os.name,
+        "platform": sys.platform,
+        "python_implementation": platform.python_implementation(),
+        "python_version": platform.python_version(),
+        "declared_environment_value_hashes": {
+            str(key): wire_hash(str(value))
+            for key, value in sorted(
+                declared_environment.items()
+                if isinstance(declared_environment, Mapping)
+                else ()
+            )
+        },
+        "python_dont_write_bytecode": "1",
+    }
+    execution_environment_fingerprint = canonical_hash(execution_environment)
+    try:
+        launch_plan = resolve_launch_plan(
+            command,
+            resolved_args,
+            cwd=cwd,
+            environment=environment,
+            environment_fingerprint=execution_environment_fingerprint,
+            cwd_token=cwd_token,
+            cwd_relative=cwd_relative,
+        )
+    except LaunchPlanError as exc:
+        semantic = {
+            "schema_version": "skillguard.launch_plan.v1",
+            "status": "blocked",
+            "requested_command": command,
+            "requested_args": resolved_args,
+            "resolved_program": "",
+            "resolved_program_identity": "",
+            "adapter": "unresolved",
+            "interpreter": "",
+            "interpreter_identity": "",
+            "argv": [],
+            "cwd": {
+                "token": cwd_token,
+                "relative": cwd_relative,
+                "resolved_identity": canonical_hash(str(cwd.resolve())),
+            },
+            "platform": sys.platform,
+            "environment_fingerprint": execution_environment_fingerprint,
+            "resolution_error_code": exc.code,
+            "resolution_error_kind": type(exc).__name__,
+            "claim_boundary": (
+                "Blocked command resolution is non-run evidence and cannot "
+                "authorize a receipt."
+            ),
+        }
+        launch_plan = ResolvedLaunchPlan(
+            record={
+                **semantic,
+                "launch_plan_fingerprint": canonical_hash(semantic),
+            },
+            argv=(),
+            popen_args=(),
+        )
+    return (
+        launch_plan,
+        declared_args,
+        resolved_args,
+        cwd,
+        environment,
+        execution_environment,
+        execution_environment_fingerprint,
+    )
 
 
 def _capture_file(handle: BinaryIO) -> tuple[str, str, bool, int, int]:
@@ -982,6 +1110,12 @@ def _check_execution_identity(
             for role, inventory in sorted(current_role_inputs.items())
         }
     toolchain_identity = check_toolchain_identity(declared)
+    launch_plan, *_launch_details = _resolve_check_launch_plan(
+        declared,
+        target_root=target_root,
+        repository_root=repository_root,
+        run_root=run_root,
+    )
     semantic_identity = {
         "execution_owner_id": str(owner.get("execution_owner_id", "")),
         "owner_declaration_hash": str(owner.get("owner_declaration_hash", "")),
@@ -992,6 +1126,15 @@ def _check_execution_identity(
         ),
         "target_input_role_fingerprints": target_input_role_fingerprints,
         **toolchain_identity,
+        "launch_plan_fingerprint": str(
+            launch_plan.record.get("launch_plan_fingerprint", "")
+        ),
+        "resolved_program_identity": str(
+            launch_plan.record.get("resolved_program_identity", "")
+        ),
+        "resolved_interpreter_identity": str(
+            launch_plan.record.get("interpreter_identity", "")
+        ),
         "evidence_domain_id": str(owner.get("evidence_domain_id", "")),
         "impact_policy_id": str(plan.get("policy_id", "")),
     }
@@ -1000,6 +1143,7 @@ def _check_execution_identity(
         "execution_key": wire_hash(semantic_identity),
         "owner_input_components": owner_input_components,
         "check_manifest_hash": str(manifest.get("manifest_hash", "")),
+        "_resolved_launch_plan": launch_plan,
     }
 
 
@@ -1859,6 +2003,7 @@ def get_or_execute_check(
                     progress_callback=progress_callback,
                     process_started_callback=process_started_callback,
                     heartbeat_interval_seconds=heartbeat_interval_seconds,
+                    resolved_launch_plan=identity["_resolved_launch_plan"],
                 )
             )
             raw.update(
@@ -2023,28 +2168,6 @@ def execute_check(
     timeout = float(check.get("timeout_seconds", 30))
     if timeout <= 0 or timeout > 3600:
         raise CheckRunnerError("check_timeout_invalid", str(timeout), check_id)
-    environment = os.environ.copy()
-    declared_environment = check.get("environment", {})
-    if declared_environment:
-        if not isinstance(declared_environment, Mapping) or any(
-            not isinstance(key, str) or not isinstance(value, str)
-            for key, value in declared_environment.items()
-        ):
-            raise CheckRunnerError("check_environment_invalid", "environment must map strings", check_id)
-        environment.update(declared_environment)
-    # Declared checks must not mutate a maintained or installed skill merely
-    # by importing Python modules.  This is target-neutral execution hygiene;
-    # non-Python commands ignore it.  Apply it after declared variables so a
-    # target cannot accidentally re-enable bytecode writes inside the source
-    # or installation projection being validated.
-    environment["PYTHONDONTWRITEBYTECODE"] = "1"
-    execution_environment = {
-        "os_name": os.name,
-        "platform": sys.platform,
-        "python_implementation": platform.python_implementation(),
-        "python_version": platform.python_version(),
-    }
-    execution_environment_fingerprint = canonical_hash(execution_environment)
     expected = check.get("expected", {})
     expected_exit = int(expected.get("exit_code", 0)) if isinstance(expected, Mapping) else 0
     context = dict(progress_context or {})
@@ -2225,34 +2348,19 @@ def execute_check(
                         progress_delta_bytes=0,
                         no_progress_ms=max(0, round((now - last_progress_at) * 1000)),
                     )
-                    last_output_bytes = output_bytes
-                    last_progress_at = now
-                _emit_execution_event(
-                    run_root,
-                    event_type="heartbeat",
-                    step_id=current_step_id,
-                    check_id=check_id,
-                    completed_count=completed_before,
-                    total_count=total_count,
-                    elapsed_seconds=elapsed,
-                    started_at=started,
-                    deadline_at=deadline_at,
-                    callback=progress_callback,
-                    stdout_total_bytes=stdout_bytes,
-                    stderr_total_bytes=stderr_bytes,
-                    progress_delta_bytes=0,
-                    no_progress_ms=max(0, round((now - last_progress_at) * 1000)),
-                )
-                next_heartbeat = now + heartbeat_interval
-            if elapsed >= timeout:
-                timed_out = True
-                break
-            time.sleep(0.05)
-        termination_facts = release_process_tree_containment(
-            process,
-            containment,
-            timed_out=timed_out,
-        )
+                    next_heartbeat = now + heartbeat_interval
+                if elapsed >= timeout:
+                    timed_out = True
+                    break
+                time.sleep(0.05)
+        except (KeyboardInterrupt, SystemExit):
+            cancelled = True
+        finally:
+            termination_facts = release_process_tree_containment(
+                process,
+                containment,
+                timed_out=timed_out,
+            )
         exit_code = process.returncode
         stdout, stdout_content_hash, stdout_truncated, stdout_total_bytes, stdout_captured_bytes = _capture_file(stdout_file)
         stderr, stderr_content_hash, stderr_truncated, stderr_total_bytes, stderr_captured_bytes = _capture_file(stderr_file)

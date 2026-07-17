@@ -568,6 +568,28 @@
       "type": "array",
       "uniqueItems": true
     },
+    "supervision_fragment_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fragment_id", "revision", "fragment_digest", "slot_bindings"],
+        "properties": {
+          "fragment_id": {"type": "string", "minLength": 1},
+          "revision": {"type": "string", "minLength": 1},
+          "fragment_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "slot_bindings": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "array",
+              "items": {"type": "string", "minLength": 1},
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
     "judgment_rubrics": {
       "items": {
         "type": "object"

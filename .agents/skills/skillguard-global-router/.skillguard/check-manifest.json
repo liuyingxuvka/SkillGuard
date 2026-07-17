@@ -424,7 +424,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:contract_schema"
         ],
-        "component_hash": "sha256:f00bd38cc3f6f7cdfa8dda641ba2dc02e295900d05c220cb5364a1403fa95677",
+        "component_hash": "sha256:a120656c350e01730f6f5c511f9d632b1bd94f8be22f8317a882c9fa6f547a19",
         "component_id": "component:contract_schema:76f4bbe801029f81",
         "consumer_ids": [
           "projection:contract-compile",
@@ -507,11 +507,11 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:72149ae66eefa1e84ef093af0e365d4a78b5a0cdfe3126028bb4aa8c04212538",
+    "impact_graph_hash": "sha256:fe444437eec14c612387005d79757a9b5bf1aec3f022000b20b7622dbdad791e",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
-        "content_hash": "sha256:c50c8d723c08cad58d85dd54ef9cbedfcf51559ea6269d38d00960a060158668",
+        "content_hash": "sha256:073073e6e5bafbed61204896ff8390dbd520fbf14d8a8fc376c46173045769f8",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard-global-router/.skillguard/contract-source.json",
         "role": "contract_schema"
@@ -545,7 +545,7 @@
         "role": "documentation_model"
       }
     ],
-    "inventory_hash": "sha256:eb7774a70773ed318c7d5435203344f4f5074dcfa011f5f0a101f0ebae06331a",
+    "inventory_hash": "sha256:f01aad67d3d4a3553382fbe3fcd9db5781670cbc7e5a97d7dfd3014f6de3b6e2",
     "member_root_path": ".agents/skills/skillguard-global-router",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -722,14 +722,14 @@
     "projection_consumers": [
       {
         "consumer_id": "projection:contract-compile",
-        "consumer_projection_hash": "sha256:f5bbae2ba4a847bf9d11cbbcf076c46943566e284b804a68e870e0fa65c8ce24",
+        "consumer_projection_hash": "sha256:9c84f75375cadc5d0f5560d18ca36e936b4056e0264cb4ff68a0e202e2feeec2",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
           "component:contract_schema:76f4bbe801029f81",
           "component:documentation_model:08c69f953871b1a6"
         ],
-        "input_projection_hash": "sha256:f3f63ecaf337062aa3f716620a2a15bd331885d8a4408f9cbf665d61a8cda1a3",
+        "input_projection_hash": "sha256:c6bc7eb2379e502fefa650ab8918b4c22c595919959820185d6b23f9b496f387",
         "kind": "contract_compile",
         "projection_declaration_hash": "sha256:583f25459c26c01b02ff46d538b19eaf8c58b1aad5359c3d5a5285236dfddd0d"
       },
@@ -745,7 +745,7 @@
       },
       {
         "consumer_id": "projection:installation",
-        "consumer_projection_hash": "sha256:54285a84da3aa0d76b11349e07911e379e8a813bc9a3bbe447d467bcc1d3dd2f",
+        "consumer_projection_hash": "sha256:fe416d1e4947e2d098e875fd0ad3588f3b3e3c8b87e8b8fe47d222eb48f9571e",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
@@ -754,7 +754,7 @@
           "component:documentation_model:6466c47961246656",
           "component:runtime_source:6947961631f58e64"
         ],
-        "input_projection_hash": "sha256:cfea116996da3fbc8a75c5677899c680b4cc2552172f3508eda2a6324c300d5c",
+        "input_projection_hash": "sha256:6a41735c7be05085f412e10804207d68a7bd078f4191b7288fd1f9dcb5130715",
         "kind": "installation",
         "projection_declaration_hash": "sha256:4c32823e02c06583e1fcc4b25c469305ea3af27a05f6df6e41db5de9562fb973"
       },
@@ -782,16 +782,15 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "DE257D00328D162E7E969FC52A746E00BAC45DB45DE33553C59791002A7F8746",
-  "manifest_hash": "E3841190C1F0BBA4D53D9B583AA588AC056DC173C66AA4D1F4C5DA0125F037AD",
+  "contract_hash": "B39AF405C0D464F107C08B5EFECCE72104D9E69297368B0379CD150DB4F9B92A",
+  "manifest_hash": "985F379F058FE64A2372E305E90C4BB6ABE3AB723DAEC4A2D6E8878748EE1CD7",
   "model_id": "skillguard.global_router.executable_contract.v2",
   "schema_version": "skillguard.check_manifest.v2",
   "skill_id": "skillguard-global-router",
   "source_fingerprints": {
-    "binding": "C50C8D723C08CAD58D85DD54EF9CBEDFCF51559EA6269D38D00960A060158668",
+    "binding": "073073E6E5BAFBED61204896FF8390DBD520FBF14D8A8FC376C46173045769F8",
     "entrypoint": "DA2C88F17C7D51FA2A4DE04865659326574688A6E442097BCD7242459EA168FE",
     "implementation:.agents/skills/skillguard-global-router/SKILL.md": "DA2C88F17C7D51FA2A4DE04865659326574688A6E442097BCD7242459EA168FE",
-    "implementation:.agents/skills/skillguard-global-router/fixtures": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570",
     "implementation:.agents/skills/skillguard-global-router/references": "3FEDE3093AD3AEF6B0C5257BF5E82CECAA36DE7199BC6EED72E20136AF995E94",
     "implementation:.agents/skills/skillguard-global-router/scripts": "7E59705FC345825DB599602D5B8E10283129F30F97850DE5DB72141B93890A1A",
     "model": "B93B36FC8FDBBE55FD9807CF06F150FF527624FA5D68E7A40526BBDBCEC15D52",

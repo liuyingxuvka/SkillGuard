@@ -127,6 +127,16 @@ FULL_ADMISSION_REASON_CODES = frozenset(
         "all_owner_component_changed",
     }
 )
+PLATFORM_BRIDGE_FLAGS = {
+    "cmd": frozenset({"/c", "/k"}),
+    "cmd.exe": frozenset({"/c", "/k"}),
+    "powershell": frozenset({"-command", "-encodedcommand"}),
+    "powershell.exe": frozenset({"-command", "-encodedcommand"}),
+    "pwsh": frozenset({"-command", "-encodedcommand"}),
+    "pwsh.exe": frozenset({"-command", "-encodedcommand"}),
+    "bash": frozenset({"-c"}),
+    "sh": frozenset({"-c"}),
+}
 BINDING_SOURCE_FIELDS = frozenset(
     {
         "artifacts",
@@ -156,6 +166,7 @@ BINDING_SOURCE_FIELDS = frozenset(
         "schema_version",
         "skill_id",
         "step_bindings",
+        "supervision_fragment_refs",
     }
 )
 COMPILED_CONTRACT_FIELDS = frozenset(
@@ -183,6 +194,8 @@ COMPILED_CONTRACT_FIELDS = frozenset(
         "skill_id",
         "source_fingerprints",
         "steps",
+        "supervision_fragments",
+        "content_components",
     }
 )
 CHECK_MANIFEST_FIELDS = frozenset(
@@ -198,6 +211,8 @@ CHECK_MANIFEST_FIELDS = frozenset(
         "schema_version",
         "skill_id",
         "source_fingerprints",
+        "supervision_fragments",
+        "content_components",
     }
 )
 SOURCE_CHECK_FIELDS = frozenset(
@@ -942,6 +957,76 @@ def validate_binding_source(payload: object) -> tuple[SchemaFinding, ...]:
         findings.append(_finding("unconfirmed_binding_source", "$.confirmed", "release compilation requires confirmed=true"))
     if "implementation_paths" in root:
         _string_list(root.get("implementation_paths"), "$.implementation_paths", findings)
+    fragment_refs = _rows(
+        root.get("supervision_fragment_refs", []),
+        "$.supervision_fragment_refs",
+        findings,
+    )
+    fragment_ref_ids: set[str] = set()
+    fragment_ref_fields = {
+        "fragment_id",
+        "revision",
+        "fragment_digest",
+        "slot_bindings",
+    }
+    for index, row in enumerate(fragment_refs):
+        path = f"$.supervision_fragment_refs[{index}]"
+        for key in sorted(set(row) - fragment_ref_fields):
+            findings.append(
+                _finding(
+                    "fragment_reference_unknown_field",
+                    f"{path}.{key}",
+                    "supervision fragments cannot add domain fields or checks",
+                )
+            )
+        fragment_id = _required_text(row, "fragment_id", path, findings)
+        if fragment_id in fragment_ref_ids:
+            findings.append(
+                _finding(
+                    "duplicate_fragment_reference",
+                    f"{path}.fragment_id",
+                    fragment_id,
+                )
+            )
+        fragment_ref_ids.add(fragment_id)
+        _required_text(row, "revision", path, findings)
+        digest = _required_text(row, "fragment_digest", path, findings)
+        if digest and not WIRE_SHA256_RE.fullmatch(digest):
+            findings.append(
+                _finding(
+                    "fragment_digest_invalid",
+                    f"{path}.fragment_digest",
+                    digest,
+                )
+            )
+        slot_bindings = _mapping(
+            row.get("slot_bindings"),
+            f"{path}.slot_bindings",
+            findings,
+        )
+        if not slot_bindings:
+            findings.append(
+                _finding(
+                    "fragment_slot_bindings_empty",
+                    f"{path}.slot_bindings",
+                    "at least one reviewed slot binding is required",
+                )
+            )
+        for slot_id, target_ids in slot_bindings.items():
+            if not isinstance(slot_id, str) or not slot_id:
+                findings.append(
+                    _finding(
+                        "fragment_slot_id_invalid",
+                        f"{path}.slot_bindings",
+                        str(slot_id),
+                    )
+                )
+                continue
+            _string_list(
+                target_ids,
+                f"{path}.slot_bindings.{slot_id}",
+                findings,
+            )
     if "content_impact_policy" in root:
         _validate_content_impact_policy(
             root.get("content_impact_policy"), "$.content_impact_policy", findings
@@ -1039,6 +1124,27 @@ def validate_binding_source(payload: object) -> tuple[SchemaFinding, ...]:
         if evidence_class and evidence_class not in EVIDENCE_CLASSES:
             findings.append(_finding("invalid_evidence_class", f"$.checks[{index}].evidence_class", evidence_class))
         _string_list(row.get("covers_obligation_ids"), f"$.checks[{index}].covers_obligation_ids", findings)
+        command = row.get("command")
+        args = row.get("args", [])
+        if isinstance(command, str) and isinstance(args, list):
+            executable = command.replace("\\", "/").rsplit("/", 1)[-1].lower()
+            forbidden_flags = PLATFORM_BRIDGE_FLAGS.get(
+                executable, frozenset()
+            )
+            if any(
+                isinstance(item, str) and item.lower() in forbidden_flags
+                for item in args
+            ):
+                findings.append(
+                    _finding(
+                        "platform_bridge_must_use_launch_resolver",
+                        f"$.checks[{index}]",
+                        (
+                            "declare the target program and arguments directly; "
+                            "platform shell bridges belong to runtime launch planning"
+                        ),
+                    )
+                )
         if "execution_owner_id" in row:
             _required_text(row, "execution_owner_id", f"$.checks[{index}]", findings)
         if "input_selectors" in row:

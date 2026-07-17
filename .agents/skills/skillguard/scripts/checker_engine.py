@@ -67,6 +67,24 @@ from skillguard_v2.runtime_authority import (
     AUTHORITY_CURRENT,
     resolve_runtime_authority,
 )
+from skillguard_v2.template_packs import (
+    TemplatePackError,
+    build_instance_receipt,
+    seal_builder_receipt,
+    seal_validator_receipt,
+    sha256_identity,
+    unresolved_placeholders,
+    validate_template_catalog,
+)
+from skillguard_v2.template_adapters import compile_target_template_projection
+from skillguard_v2.template_profiles import (
+    TEMPLATE_PROFILE_SCHEMA,
+    TemplateProfileError,
+    build_builtin_scaffold_profile,
+    build_external_selection_profile,
+    validate_builtin_profile_current,
+    validate_template_profile,
+)
 
 
 CHECKER_VERSION = "skillguard.local_cli_dispatch.v1"
@@ -3073,13 +3091,27 @@ def render_global_prompt_block(registry: dict[str, Any], registry_path: str = ""
         / "templates"
         / "global_skillguard_prompt_block.md.template"
     )
-    return current_global_router.render_prompt_block(
+    block = current_global_router.render_prompt_block(
         registry,
         registry_path=registry_path,
         template=template_path.read_text(encoding="utf-8"),
         policy_id=VALIDATION_EXECUTION_POLICY_ID,
         policy_lines=VALIDATION_EXECUTION_POLICY_LINES,
     )
+    lifecycle, lifecycle_hash = template_lifecycle_prompt_bundle()
+    insertion = "\n".join(
+        [
+            lifecycle,
+            "",
+            f"- template_lifecycle_hash: {lifecycle_hash}",
+            "- template_domain_selection_owner: selected_target_skill",
+            "- global_router_selects_domain_template: false",
+        ]
+    )
+    marker = "\n### Current Route Index"
+    if block.count(marker) != 1:
+        raise ValueError("global_prompt_route_index_marker_invalid")
+    return block.replace(marker, f"\n{insertion}\n\n### Current Route Index", 1)
 
 
 def build_global_prompt_projection(registry: dict[str, Any], registry_path: str = "") -> dict[str, Any]:
@@ -3722,6 +3754,12 @@ def build_generate_skill_scaffold(blueprint: dict[str, Any], target: Path, input
     output_terms = ["evidence", "failures", "blockers", "skipped_checks", "residual_risk", "claim_boundary"]
     generated_at = "generated-scaffold-draft"
     claim_boundary = common_claim_boundary("generated scaffold")
+    template_routing_guidance = "\n".join(
+        ensure_under_root(skill_root() / relative_path)
+        .read_text(encoding="utf-8")
+        .strip()
+        for relative_path in TEMPLATE_PROFILE_PROMPT_PATHS.values()
+    )
     blueprint_trace = {
         "blueprint_id": blueprint.get("blueprint_id"),
         "source_input": input_relative,

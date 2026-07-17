@@ -19,7 +19,10 @@ Run from an installed SkillGuard root:
 
 from __future__ import annotations
 
+import importlib.util
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterable, Sequence
 
 import flowguard as _flowguard
@@ -989,6 +992,30 @@ def run_scenario_review():
     return review_scenarios(SCENARIOS)
 
 
+def _load_template_lifecycle_extension() -> dict[str, object]:
+    model_path = Path(__file__).with_name("template_lifecycle_model.py")
+    module_name = "skillguard_template_lifecycle_model_current"
+    spec = importlib.util.spec_from_file_location(module_name, model_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(
+            "skillguard template lifecycle model cannot be loaded"
+        )
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    exporter = getattr(module, "export_contract_extension", None)
+    if not callable(exporter):
+        raise RuntimeError(
+            "skillguard template lifecycle model has no current contract extension"
+        )
+    extension = exporter()
+    if not isinstance(extension, dict):
+        raise RuntimeError(
+            "skillguard template lifecycle contract extension must be an object"
+        )
+    return extension
+
+
 def export_contract_model() -> dict[str, object]:
     """Return the canonical machine projection consumed by current SkillGuard.
 
@@ -1063,6 +1090,8 @@ def export_contract_model() -> dict[str, object]:
             "composable_with": ["static_audit", "global_router_handoff"],
         },
     )
+    template_extension = _load_template_lifecycle_extension()
+    functions = functions + tuple(template_extension["functions"])
     function_ids = tuple(str(row["function_id"]) for row in functions)
     functions = tuple(
         {
@@ -1267,7 +1296,7 @@ def export_contract_model() -> dict[str, object]:
             "blocked_terminal_step_id": "terminal:provenance-blocked",
             "handoffs": [],
         },
-    )
+    ) + tuple(template_extension["routes"])
 
     def step(
         step_id: str,
@@ -1341,7 +1370,7 @@ def export_contract_model() -> dict[str, object]:
         step("step:verify-release-provenance", "route:provenance-audit", "provenance-audit-v2", "validator", ("step:compare-installed-and-repository",)),
         step("terminal:provenance-current", "route:provenance-audit", "provenance-audit-v2", "terminal", ("step:verify-release-provenance",), terminal_kind="success"),
         step("terminal:provenance-blocked", "route:provenance-audit", "provenance-audit-v2", "terminal", terminal_kind="blocked"),
-    )
+    ) + tuple(template_extension["steps"])
     obligation_rows = (
         ("obligation:static-audit", "artifacts_and_checks_are_current", ["step:inventory-static-surface", "step:run-native-static-checks", "step:issue-static-audit-receipt"]),
         ("obligation:deep-audit", "artifacts_and_checks_are_current", ["step:freeze-declared-check-inventory", "step:run-declared-checks", "step:reconcile-declared-check-results"]),
@@ -1364,7 +1393,7 @@ def export_contract_model() -> dict[str, object]:
         ("obligation:project-adoption", "adopted_projects_keep_skillguard_maintenance_visible", ["step:inspect-project-adoption", "step:render-managed-project-prompt", "step:install-project-adoption", "step:audit-project-adoption"]),
         ("obligation:global-router-handoff", "routes_are_typed_and_uniquely_owned", ["step:refresh-global-router", "step:check-global-registry-and-prompt", "step:verify-target-handoff"]),
         ("obligation:provenance", "model_and_binding_are_authoritative", ["step:resolve-canonical-source", "step:compare-installed-and-repository", "step:verify-release-provenance"]),
-    )
+    ) + tuple(template_extension["obligations"])
     return {
         "schema_version": "skillguard.flowguard_model_export.v2",
         "flowguard_schema_version": str(_flowguard.SCHEMA_VERSION),
@@ -1382,11 +1411,16 @@ def export_contract_model() -> dict[str, object]:
             }
             for obligation_id, invariant_id, owner_step_ids in obligation_rows
         ],
-        "invariant_ids": [invariant.name for invariant in INVARIANTS],
+        "invariant_ids": [
+            *[invariant.name for invariant in INVARIANTS],
+            *template_extension["invariant_ids"],
+        ],
         "claim_boundary": (
             "This export defines executable-contract behavior and topology. "
             "It does not supply target commands, tools, artifacts, native checks, "
-            "current runtime receipts, or publication evidence."
+            "current runtime receipts, or publication evidence. The template "
+            "lifecycle extension preserves target-owned route, builder, "
+            "validator, and semantic authority."
         ),
     }
 

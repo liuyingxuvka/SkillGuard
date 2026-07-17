@@ -2,6 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://skillguard.local/schemas/skillguard_template_pack_protocol_v1.schema.json",
   "title": "SkillGuard validated Template Pack protocol v1",
+  "type": "object",
+  "required": ["schema_version"],
   "oneOf": [
     {"$ref": "#/$defs/manifest"},
     {"$ref": "#/$defs/catalog"},

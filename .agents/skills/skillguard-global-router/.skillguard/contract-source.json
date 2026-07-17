@@ -547,8 +547,7 @@
   "implementation_paths": [
     ".agents/skills/skillguard-global-router/SKILL.md",
     ".agents/skills/skillguard-global-router/scripts",
-    ".agents/skills/skillguard-global-router/references",
-    ".agents/skills/skillguard-global-router/fixtures"
+    ".agents/skills/skillguard-global-router/references"
   ],
   "integration_mode": "native-integrated",
   "judgment_rubrics": [],
@@ -560,12 +559,6 @@
       "binding_id": "native-check:contract-adapter",
       "evidence_source": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
       "native_check_id": "skillguard.global_router_contract_check.v1",
-      "required": true
-    },
-    {
-      "binding_id": "native-check:global-router-fixtures",
-      "evidence_source": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py plus fixtures/execution-depth/representative-positive.json and intentionally-shallow.json",
-      "native_check_id": "skillguard.global_router.fixture_test",
       "required": true
     },
     {

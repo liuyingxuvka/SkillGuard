@@ -25,6 +25,11 @@
     "checks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/compiled_check"}},
     "source_fingerprints": {"type": "object"},
     "content_impact_plan": {"$ref": "#/$defs/content_impact_plan"},
+    "supervision_fragments": {"type": "array"},
+    "content_components": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+    },
     "claim_boundary": {"type": "string", "minLength": 1},
     "contract_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}
   },

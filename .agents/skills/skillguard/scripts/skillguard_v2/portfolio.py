@@ -17,7 +17,6 @@ from typing import Any, Iterator, Mapping, Sequence
 from .contract_compiler import (
     canonical_hash,
     canonical_json_bytes,
-    check_declarations_payload,
     compile_skill_contract,
     current_content_projection,
 )
@@ -3133,7 +3132,13 @@ def _runtime_evidence_findings(
     )
     unsigned_manifest = dict(check_manifest)
     stored_manifest_hash = str(unsigned_manifest.pop("manifest_hash", ""))
-    declarations_hash = canonical_hash(check_declarations_payload(check_manifest))
+    declarations_hash = canonical_hash(
+        {
+            "checks": list(check_manifest.get("checks", []))
+            if isinstance(check_manifest.get("checks"), list)
+            else []
+        }
+    )
     if (
         check_manifest.get("schema_version") != "skillguard.check_manifest.v2"
         or check_manifest.get("skill_id") != skill_id

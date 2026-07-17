@@ -1,8 +1,8 @@
 {
   "claim_boundary": "This registry selects current skill routes only. It does not replace target contracts, execute checks, or prove future AI behavior.",
   "current_item_count": 19,
-  "diagnostic_inventory_hash": "sha256:c5a7f35bcd0e36a04738fd8438184fe778fd127394925b7e4aabbc9c00faa3a8",
-  "generated_at": "2026-07-15T22:19:56Z",
+  "diagnostic_inventory_hash": "sha256:01e1fc82eae961bae2dbdea8184fe0d959bbbcd4f8cd912137dcbed69f21c9c8",
+  "generated_at": "2026-07-17T05:32:52Z",
   "item_count": 19,
   "items": [
     {
@@ -1469,16 +1469,16 @@
       "route_entrypoint": {
         "authority_blockers": [],
         "authority_decision": "current",
-        "check_declarations_hash": "sha256:243eca983f3a6c68f4c48506211e3f999ebc106f31e2c355b1da67076421e664",
-        "check_manifest_hash": "sha256:4d145b41bb33ae3f53a520471c2fbc67ea2340f833e9d862a2e1fb3b0d41a8b0",
+        "check_declarations_hash": "sha256:dfa5734cf0e0efff74e55daf03eb21ccff22e3b79c62b790b6df92d5f98fd160",
+        "check_manifest_hash": "sha256:fd554c3ea0454bb9da46c3473e87db33514069a4dc7031216399ce8c7b8af2db",
         "check_manifest_path": ".agents/skills/skillguard/.skillguard/check-manifest.json",
-        "check_manifest_sha256": "sha256:8510d222f1d11a9bb6e48de19b91025fa68d70e1fc65c8a5d0d673aa5c8e4acc",
+        "check_manifest_sha256": "sha256:0d0577cbf899f8a9f6ea92f2ea215a94d50a23ab57974cf21b089b4b3cb223ff",
         "contract_authority": "current",
-        "contract_hash": "sha256:cfcf513f27a7e6237d5ecfefbd4e3b2b3d9f181b6f112cc2735f4cb6d84e85ae",
+        "contract_hash": "sha256:54e863167980480e6f7637f0b07580989a916107c6dec57f9718c0c378f90bd1",
         "contract_path": ".agents/skills/skillguard/.skillguard/compiled-contract.json",
-        "contract_sha256": "sha256:2dc58c2da3eca8c6512b865885eb442ced1092089f2d137ab7b1e8ed81ab8c04",
+        "contract_sha256": "sha256:a68e3ced082c643b15c43be1351a6d688d5199f923ef5fb099ffcd830b1db715",
         "contract_source_path": ".agents/skills/skillguard/.skillguard/contract-source.json",
-        "contract_source_sha256": "sha256:b1c09b405cd4c9e6211acd9ed7d9d919ca4c84ee829d47a729431f9eab84d9ad",
+        "contract_source_sha256": "sha256:312e9730ff58df9616f863bdff28c36aae98f245100310d82737796769fb34d4",
         "default_route_id": "route:static-audit",
         "function_ids": [
           "static_audit",
@@ -1490,7 +1490,8 @@
           "graduate_portfolio",
           "adopt_project",
           "global_router_handoff",
-          "audit_provenance"
+          "audit_provenance",
+          "supervise_template_lifecycle"
         ],
         "handoff_rule": "Use this registry only to select the skill, read its SKILL.md, then hand off through contract-source.json, compiled-contract.json, and the exact check-manifest.json. Old authority is rejection-only.",
         "integration_mode": "native-integrated",
@@ -1532,6 +1533,18 @@
             "binding_id": "native-check:provenance",
             "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/provenance.py",
             "native_check_id": "check:self:verify-release-provenance",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:template-lifecycle-model-v1",
+            "evidence_source": ".agents/skills/skillguard/.skillguard/template_lifecycle_model.py",
+            "native_check_id": "check:self:template-lifecycle-model-v1",
+            "required": true
+          },
+          {
+            "binding_id": "native-check:template-protocol-v1",
+            "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/template_packs.py",
+            "native_check_id": "check:self:template-protocol-v1",
             "required": true
           }
         ],
@@ -1616,7 +1629,8 @@
           "route:portfolio-graduation",
           "route:project-adoption",
           "route:global-router-handoff",
-          "route:provenance-audit"
+          "route:provenance-audit",
+          "route:template-lifecycle-supervision"
         ]
       },
       "route_terms": [
@@ -1665,7 +1679,7 @@
       "skill_id": "skillguard",
       "skill_name": "skillguard",
       "skill_path": ".agents/skills/skillguard",
-      "skill_sha256": "sha256:50f2a35b6547703f6d546f54805661d5191fe110a3f37b266b96010f8de535ca",
+      "skill_sha256": "sha256:b9620585b9a373484d0c2ffa03f0685b65444cd2baae3e4edd2686ede193109e",
       "status": "current",
       "use_when": [
         "Create, update, audit, or prepare a Codex skill or skill-like workflow.",
@@ -1686,15 +1700,15 @@
         "authority_blockers": [],
         "authority_decision": "current",
         "check_declarations_hash": "sha256:0e4e2367bd02fb5776511c6830bc5e1e5a73046973210f72d757e0df17220342",
-        "check_manifest_hash": "sha256:e3841190c1f0bba4d53d9b583aa588ac056dc173c66aa4d1f4c5da0125f037ad",
+        "check_manifest_hash": "sha256:985f379f058fe64a2372e305e90c4bb6abe3ab723daec4a2d6e8878748ee1cd7",
         "check_manifest_path": ".agents/skills/skillguard-global-router/.skillguard/check-manifest.json",
-        "check_manifest_sha256": "sha256:689d21bdb77534f334b09104552a8e97ac3c37c029cc7dfa790f704e2beba590",
+        "check_manifest_sha256": "sha256:a8d938e5537a5bed2f5a01658872ee3c12c515e10f1912e1a003a98d55ad1581",
         "contract_authority": "current",
-        "contract_hash": "sha256:de257d00328d162e7e969fc52a746e00bac45db45de33553c59791002a7f8746",
+        "contract_hash": "sha256:b39af405c0d464f107c08b5efecce72104d9e69297368b0379cd150db4f9b92a",
         "contract_path": ".agents/skills/skillguard-global-router/.skillguard/compiled-contract.json",
-        "contract_sha256": "sha256:a86d5829e287b813002e9a221be16b66a32e509ab9eb001d2fb35f8abace30e1",
+        "contract_sha256": "sha256:17d969933675c051232e23303f36ceaf735f95b13603510674bc972fe67a71b4",
         "contract_source_path": ".agents/skills/skillguard-global-router/.skillguard/contract-source.json",
-        "contract_source_sha256": "sha256:c50c8d723c08cad58d85dd54ef9cbedfcf51559ea6269d38d00960a060158668",
+        "contract_source_sha256": "sha256:073073e6e5bafbed61204896ff8390dbd520fbf14d8a8fc376c46173045769f8",
         "default_route_id": "route:scan-global-skills",
         "function_ids": [
           "function:scan-global-skills",
@@ -1716,12 +1730,6 @@
             "binding_id": "native-check:contract-adapter",
             "evidence_source": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py",
             "native_check_id": "skillguard.global_router_contract_check.v1",
-            "required": true
-          },
-          {
-            "binding_id": "native-check:global-router-fixtures",
-            "evidence_source": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py plus fixtures/execution-depth/representative-positive.json and intentionally-shallow.json",
-            "native_check_id": "skillguard.global_router.fixture_test",
             "required": true
           },
           {
@@ -1860,7 +1868,7 @@
       ]
     }
   ],
-  "registry_hash": "sha256:9c1ab488fed574e5a58325e2850fdd91950b1c37607d3ab463ff639d7bedb37b",
+  "registry_hash": "sha256:5e3a12b72fca86e28a275bfb13139338aeabdf6c2f2e529866c017be12cf81c1",
   "router_skill_id": "skillguard-global-router",
   "scan_roots": [
     {

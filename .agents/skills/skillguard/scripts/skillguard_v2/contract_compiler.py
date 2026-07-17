@@ -37,6 +37,7 @@ from .content_projection import (
 )
 from .global_router_projection import is_global_router_projection_path
 from .path_identity import canonical_filesystem_path, physical_relative_path
+from .template_fragments import compile_supervision_fragment_refs
 
 
 BINDING_SOURCE_FILE = "contract-source.json"
@@ -109,6 +110,44 @@ FULL_ADMISSION_REASON_CODES = (
     "all_owner_component_changed",
 )
 
+SUPERVISION_FRAGMENT_CATALOG = (
+    Path(__file__).resolve().parents[2]
+    / "assets"
+    / "contract_fragments"
+    / "catalog.json"
+)
+TEMPLATE_RUNTIME_COMPONENT_PATHS = {
+    "template_runtime:compiler": Path(__file__).resolve(),
+    "template_runtime:selector": Path(__file__).resolve().with_name("template_packs.py"),
+    "template_runtime:profile": Path(__file__).resolve().with_name("template_profiles.py"),
+    "template_runtime:target_adapter": Path(__file__).resolve().with_name("template_adapters.py"),
+    "template_runtime:target_prompt": Path(__file__).resolve().with_name("template_prompts.py"),
+    "template_runtime:fragment_compiler": Path(__file__).resolve().with_name("template_fragments.py"),
+    "template_runtime:launch_resolver": Path(__file__).resolve().with_name("launch_plan.py"),
+    "template_runtime:check_runner": Path(__file__).resolve().with_name("check_runner.py"),
+    "template_prompt:selection": Path(__file__).resolve().parents[2] / "assets" / "templates" / "template_selection_supervision.md.template",
+    "template_prompt:instance": Path(__file__).resolve().parents[2] / "assets" / "templates" / "template_instance_supervision.md.template",
+    "template_prompt:installation": Path(__file__).resolve().parents[2] / "assets" / "templates" / "template_installation_supervision.md.template",
+    "template_schema:protocol": Path(__file__).resolve().parents[2] / "assets" / "schemas" / "skillguard_template_pack_protocol_v1.schema.json",
+    "template_schema:profile": Path(__file__).resolve().parents[2] / "assets" / "schemas" / "skillguard_template_profile_v1.schema.json",
+    "template_schema:launch_plan": Path(__file__).resolve().parents[2] / "assets" / "schemas" / "skillguard_launch_plan_v1.schema.json",
+    "template_schema:target_projection": Path(__file__).resolve().parents[2] / "assets" / "schemas" / "skillguard_target_template_projection_v1.schema.json",
+}
+TRANSIENT_IMPLEMENTATION_PARTS = frozenset(
+    {
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".skillguard",
+        "__pycache__",
+        "node_modules",
+    }
+)
+TRANSIENT_IMPLEMENTATION_SUFFIXES = frozenset({".pyc", ".pyo"})
+TRANSIENT_IMPLEMENTATION_FILES = frozenset({".DS_Store", "Thumbs.db"})
+
+
 def _is_transient_implementation_output(relative: Path) -> bool:
     parts = relative.parts
     if set(parts) & TRANSIENT_IMPLEMENTATION_PARTS:
@@ -177,6 +216,22 @@ def file_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest().upper()
 
 
+def template_runtime_content_components() -> dict[str, str]:
+    missing = [
+        component_id
+        for component_id, path in TEMPLATE_RUNTIME_COMPONENT_PATHS.items()
+        if not path.is_file()
+    ]
+    if missing:
+        raise ValueError(
+            f"template_runtime_component_missing:{','.join(sorted(missing))}"
+        )
+    return {
+        component_id: "sha256:" + source_file_hash(path).lower()
+        for component_id, path in sorted(TEMPLATE_RUNTIME_COMPONENT_PATHS.items())
+    }
+
+
 def path_fingerprint(path: Path, *, member_root: Path | None = None) -> str:
     if path.is_file():
         root = (member_root or path.parent).resolve(strict=True)
@@ -206,6 +261,7 @@ def path_fingerprint(path: Path, *, member_root: Path | None = None) -> str:
             }
             for relative, child in portable_files(path)
             if ".skillguard" not in relative.parts
+            and not _is_transient_implementation_output(relative)
         ]
         return canonical_hash(rows)
     raise ValueError(f"implementation path is missing: {path}")
@@ -1457,6 +1513,8 @@ def _build_outputs(
     source_fingerprints: Mapping[str, str],
     compiled_checks: Sequence[Mapping[str, Any]],
     content_impact_plan: Mapping[str, Any],
+    supervision_fragments: Sequence[Mapping[str, Any]] = (),
+    fragment_content_components: Mapping[str, str] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     capability_contracts, capability_findings = (
         normalize_portfolio_capability_contracts(
@@ -1524,6 +1582,13 @@ def _build_outputs(
         "content_impact_plan": dict(content_impact_plan),
         "claim_boundary": str(binding.get("claim_boundary", "")),
     }
+    if supervision_fragments:
+        contract["supervision_fragments"] = [
+            dict(item) for item in supervision_fragments
+        ]
+        contract["content_components"] = dict(
+            fragment_content_components or {}
+        )
     if "route_branch_closure_required" in binding:
         contract["route_branch_closure_required"] = binding[
             "route_branch_closure_required"
@@ -1585,6 +1650,18 @@ def compile_skill_contract(
             findings.extend(exc.findings)
     if model is not None:
         findings.extend(_cross_validate(model, binding, repo_root))
+    fragment_result = None
+    if model is not None and binding.get("supervision_fragment_refs"):
+        fragment_result = compile_supervision_fragment_refs(
+            references=binding.get("supervision_fragment_refs"),
+            model=model,
+            binding=binding,
+            catalog_path=SUPERVISION_FRAGMENT_CATALOG,
+        )
+        findings.extend(
+            SchemaFinding(row.code, row.path, row.message)
+            for row in fragment_result.findings
+        )
     if findings or model is None:
         return CompileResult(False, "blocked", tuple(findings))
 
@@ -1634,6 +1711,10 @@ def compile_skill_contract(
         source_fingerprints,
         compiled_checks,
         content_impact_plan,
+        supervision_fragments=(
+            fragment_result.projections if fragment_result is not None else ()
+        ),
+        fragment_content_components=compiled_content_components,
     )
     findings.extend(
         SchemaFinding(row.code, row.path, row.message)

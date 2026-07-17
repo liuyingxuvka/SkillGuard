@@ -53,6 +53,30 @@
         "exists",
         "nonempty"
       ]
+    },
+    {
+      "artifact_id": "artifact:self-template-selection-receipt",
+      "kind": "json",
+      "path_template": ".skillguard/runs/{run_id}/template-selection-receipt.json",
+      "producer_step_id": "step:issue-template-selection-receipt",
+      "required": true,
+      "validators": [
+        "exists",
+        "json",
+        "receipt_hash"
+      ]
+    },
+    {
+      "artifact_id": "artifact:self-template-instance-receipt",
+      "kind": "json",
+      "path_template": ".skillguard/runs/{run_id}/template-instance-receipt.json",
+      "producer_step_id": "step:issue-template-instance-receipt",
+      "required": true,
+      "validators": [
+        "exists",
+        "json",
+        "receipt_hash"
+      ]
     }
   ],
   "checks": [
@@ -1273,6 +1297,119 @@
       ],
       "kind": "model_assertion",
       "timeout_seconds": 30
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/.skillguard/template_lifecycle_model.py"
+      ],
+      "check_id": "check:self:template-lifecycle-model-v1",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:template-target-route",
+        "obligation:template-selection",
+        "obligation:template-instance",
+        "obligation:template-domain-ownership",
+        "obligation:template-harvest"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:template-supervision",
+      "execution_owner_id": "owner:self:template-lifecycle-model-v1",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/template_lifecycle_model.py"
+        },
+        {
+          "kind": "path",
+          "path": ".flowguard/development_process_flow/skillguard_template_lifecycle_model.py"
+        }
+      ],
+      "kind": "command",
+      "timeout_seconds": 180
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_template_adapters_v2.py",
+        "tests/test_template_packs_v2.py",
+        "tests/test_template_fragments_v2.py",
+        "tests/test_template_profiles_v2.py",
+        "tests/test_template_prompts_v2.py",
+        "-q"
+      ],
+      "check_id": "check:self:template-protocol-v1",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:template-target-route",
+        "obligation:template-selection",
+        "obligation:template-instance",
+        "obligation:template-domain-ownership",
+        "obligation:template-harvest"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:template-lifecycle-model-v1"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:template-supervision",
+      "execution_owner_id": "owner:self:template-protocol-v1",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_adapters.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_fragments.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_packs.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_profiles.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_template_adapters_v2.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_template_packs_v2.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_template_fragments_v2.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_template_profiles_v2.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_template_prompts_v2.py"
+        }
+      ],
+      "kind": "command",
+      "timeout_seconds": 300
     }
   ],
   "claim_boundary": "This binding covers SkillGuard self-maintenance through one enforced declared-check workflow. Publication, installation, and release claims still require their own listed checks inside that same workflow.",
@@ -1297,7 +1434,12 @@
         "obligation:project-adoption",
         "obligation:global-router-handoff",
         "obligation:provenance",
-        "obligation:portfolio-freshness"
+        "obligation:portfolio-freshness",
+        "obligation:template-target-route",
+        "obligation:template-selection",
+        "obligation:template-instance",
+        "obligation:template-domain-ownership",
+        "obligation:template-harvest"
       ]
     }
   ],
@@ -1336,7 +1478,9 @@
       "check:self:render-managed-project-prompt",
       "check:self:run-declared-checks",
       "check:self:validate-binding",
-      "check:self:validation-composition-model"
+      "check:self:validation-composition-model",
+      "check:self:template-lifecycle-model-v1",
+      "check:self:template-protocol-v1"
     ],
     "native_owner_id": "skillguard",
     "native_route_ids": [
@@ -1442,7 +1586,24 @@
     "tests/test_test_mesh_legacy_rejection.py",
     "tests/test_conditional_noop_closure_v2.py",
     "tests/test_contract_compiler_v2.py",
-    "tests/test_validation_execution_policy_projection.py"
+    "tests/test_validation_execution_policy_projection.py",
+    ".agents/skills/skillguard/.skillguard/template_lifecycle_model.py",
+    ".flowguard/development_process_flow/skillguard_template_lifecycle_model.py",
+    ".agents/skills/skillguard/assets/contract_fragments",
+    ".agents/skills/skillguard/assets/templates",
+    ".agents/skills/skillguard/assets/schemas/skillguard_template_pack_protocol_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_template_profile_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_target_template_projection_v1.schema.json",
+    ".agents/skills/skillguard/scripts/skillguard_v2/template_adapters.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/template_fragments.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/template_packs.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/template_profiles.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py",
+    "tests/test_template_adapters_v2.py",
+    "tests/test_template_fragments_v2.py",
+    "tests/test_template_packs_v2.py",
+    "tests/test_template_profiles_v2.py",
+    "tests/test_template_prompts_v2.py"
   ],
   "integration_mode": "native-integrated",
   "judgment_rubrics": [],
@@ -1485,6 +1646,18 @@
       "binding_id": "native-check:provenance",
       "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/provenance.py",
       "native_check_id": "check:self:verify-release-provenance",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:template-lifecycle-model-v1",
+      "evidence_source": ".agents/skills/skillguard/.skillguard/template_lifecycle_model.py",
+      "native_check_id": "check:self:template-lifecycle-model-v1",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:template-protocol-v1",
+      "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/template_packs.py",
+      "native_check_id": "check:self:template-protocol-v1",
       "required": true
     }
   ],
@@ -1654,26 +1827,6 @@
         ],
         "instance-receipt-artifact": [
           "artifact:self-template-instance-receipt"
-        ]
-      }
-    },
-    {
-      "fragment_id": "template-installation-supervision",
-      "revision": "1",
-      "fragment_digest": "sha256:ab3619571e96af090592584eda962f1b8af7665de366e24b442de0e635048b72",
-      "slot_bindings": {
-        "stage-step": [
-          "step:stage-template-installation-projection"
-        ],
-        "activation-step": [
-          "step:activate-staged-suite-pair"
-        ],
-        "installed-check": [
-          "check:self:installation-safety",
-          "check:self:install-suite-provenance"
-        ],
-        "installation-receipt-artifact": [
-          "artifact:self-template-installation-receipt"
         ]
       }
     }
@@ -2037,6 +2190,130 @@
       ],
       "output_artifact_ids": [],
       "step_id": "step:verify-release-provenance"
+    },
+    {
+      "action": {
+        "kind": "router",
+        "summary": "Require the selected target Guard to issue the current native route before SkillGuard sees any template catalog."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:resolve-template-native-route"
+    },
+    {
+      "action": {
+        "kind": "input",
+        "summary": "Load the target-authored neutral projection without inferring family, route, predicates, builders, or validators."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:load-target-template-projection"
+    },
+    {
+      "action": {
+        "kind": "validator",
+        "summary": "Validate complete target candidate accounting and current applicability evidence under the exact target route."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:validate-template-applicability"
+    },
+    {
+      "action": {
+        "kind": "router",
+        "summary": "Apply only the generic zero/one/safe-many decision over target-authored applicability, compatibility, ownership, and dominance facts."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:select-template-pack"
+    },
+    {
+      "action": {
+        "kind": "receipt",
+        "summary": "Issue the immutable selection receipt with full candidate and rejection accounting."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [
+        "artifact:self-template-selection-receipt"
+      ],
+      "step_id": "step:issue-template-selection-receipt"
+    },
+    {
+      "action": {
+        "kind": "preview",
+        "summary": "Materialize a read-only preview and block unresolved placeholders before any target write."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:materialize-template-preview"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Hand the current selection and preview to the builder declared by the target Guard; SkillGuard never substitutes a domain builder."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:run-target-native-template-builder"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Run or consume the exact target-native validator inventory; template structure cannot replace domain validation."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:run-target-native-template-validators"
+    },
+    {
+      "action": {
+        "kind": "receipt",
+        "summary": "Issue an immutable instance receipt bound to selection, preview, parameters, artifacts, builder, and native validator receipts."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [
+        "artifact:self-template-instance-receipt"
+      ],
+      "step_id": "step:issue-template-instance-receipt"
+    },
+    {
+      "action": {
+        "kind": "receipt",
+        "summary": "Record reused, created, or not-harvestable under the target's declared harvest policy."
+      },
+      "check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:record-template-harvest-disposition"
     }
   ]
 }

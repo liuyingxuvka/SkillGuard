@@ -29,7 +29,7 @@
 - After any launcher timeout, cancellation, or interruption, confirm the entire descendant process tree count is zero before accepting evidence or starting another owner; `cleanup-unconfirmed` results are invalid and non-reusable.
 - Never use a Windows Scheduled Task, background resume, or unattended retry script to run full validation or resume a mutable worktree.
 - router_skill_id: skillguard-global-router
-- registry_hash: sha256:9c1ab488fed574e5a58325e2850fdd91950b1c37607d3ab463ff639d7bedb37b
+- registry_hash: sha256:5e3a12b72fca86e28a275bfb13139338aeabdf6c2f2e529866c017be12cf81c1
 - registry_path: .agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json
 
 ## Validated Template Pack Selection
