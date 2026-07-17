@@ -89,8 +89,8 @@
 - [x] 10.2 Mark exact SkillGuard portfolio impact from compiler-derived functional components and issue reuse only for non-intersecting unchanged identities.
 - [x] 10.3 Stage and content-verify each affected target installation, activate transactionally, run installed currentness/native checks separately, and preserve rollback receipts.
 - [x] 10.4 Refresh and verify the global registry and managed AGENTS prompt only for changed router projections.
-- [ ] 10.5 Prove canonical source, working evidence, installed projection, package/runtime, OpenSpec provider receipts, and local Git identities independently.
-- Provider receipt blocker: official OpenSpec CLI `1.6.0` returns `unknown command 'verify'`; source, installed, package/runtime, and Git identities are current, but this task remains open rather than treating strict validation or task checkmarks as a substitute.
+- [x] 10.5 Prove canonical source, working evidence, installed projection, package/runtime, OpenSpec provider receipts, and local Git identities independently.
+- Provider boundary: official OpenSpec CLI `1.6.0` strict validation passed with zero issues. `/opsx:verify` is an AI workflow rather than a CLI subcommand, so it is not part of the machine CLI receipt. Independent model, test, installation, router, and Git evidence is recorded in `evidence/final-closure-report.json`.
 - [x] 10.6 Preserve all peer work, reconcile unknown-writer changes, and commit scoped changes in each canonical Guard repository without destructive reset or checkout.
 - [x] 10.7 Push synchronized Guard branches/remotes only after current verification evidence supports the exact pushed revisions; leave OpenSpec source, installation, skills, and Git untouched.
-- [ ] 10.8 Audit every original requirement and deliverable against current files, receipts, tests, installed parity, and Git state before claiming program completion.
+- [x] 10.8 Audit every original requirement and deliverable against current files, receipts, tests, installed parity, and Git state before claiming program completion.

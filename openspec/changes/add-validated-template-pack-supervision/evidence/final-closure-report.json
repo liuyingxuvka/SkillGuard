@@ -1,0 +1,213 @@
+{
+  "schema_version": "validated-template-pack-final-closure/v1",
+  "program_id": "validated-template-pack-supervision",
+  "status": "passed",
+  "closed_on": "2026-07-17",
+  "official_openspec": {
+    "provider": "official-openspec-cli-1.6.0",
+    "source_policy": "external_frozen_read_only",
+    "source_modified": false,
+    "command": "openspec validate add-validated-template-pack-supervision --strict --json --no-interactive",
+    "result": {
+      "status": "passed",
+      "items": 1,
+      "passed": 1,
+      "failed": 0,
+      "issues": []
+    },
+    "boundary": "/opsx:verify is an AI workflow, not an OpenSpec CLI subcommand. Strict validation proves the change artifacts only and does not replace implementation, native-check, installation, or Git evidence."
+  },
+  "model_evidence": {
+    "skillguard_program_models": [
+      {
+        "model_id": "existing_model_preflight",
+        "status": "passed",
+        "known_bad": "blocked_as_expected"
+      },
+      {
+        "model_id": "plan_detailing",
+        "status": "passed",
+        "known_bad": "blocked_as_expected"
+      },
+      {
+        "model_id": "development_process_flow",
+        "status": "passed",
+        "known_bad": "blocked_as_expected"
+      },
+      {
+        "model_id": "risk_intent_check_plan",
+        "status": "pass_with_gaps",
+        "known_bad": "failed_as_expected",
+        "production_conformance": "not_run_by_declared_boundary"
+      }
+    ],
+    "flowguard_manifest_models": {
+      "status": "passed",
+      "registered": 60,
+      "required_public_selected": 34,
+      "required_public_passed": 34,
+      "failed": 0,
+      "skipped": 0,
+      "optional_local_unavailable": 26,
+      "boundary": "The 26 absent optional-local adoption records are explicitly outside public distribution requirements."
+    }
+  },
+  "full_test_evidence": [
+    {
+      "target_id": "skillguard",
+      "validated_source_head": "f2457399c0ece7018d06b25fd3e6fc7afe8307e5",
+      "status": "passed",
+      "collected_tests": 525,
+      "exit_code": 0,
+      "note": "The terminal owner completed successfully; the retained console capture did not preserve a trustworthy per-status count, so no pass-count reconstruction is claimed."
+    },
+    {
+      "target_id": "flowguard",
+      "validated_source_head": "6ffe98ac241759e2656cc127080e553d47d3c33c",
+      "status": "passed",
+      "passed_tests": 1408,
+      "skipped_tests": 2,
+      "passed_subtests": 750,
+      "exit_code": 0
+    },
+    {
+      "target_id": "physicsguard",
+      "validated_source_head": "107c62f06d35093d33c5fa62a2eb4e15587a5158",
+      "status": "passed",
+      "passed_tests": 863,
+      "exit_code": 0
+    },
+    {
+      "target_id": "logicguard",
+      "validated_source_head": "ca2c2127d9d4fc7cc571f3e023c37223388abb47",
+      "status": "passed",
+      "passed_tests": 332,
+      "exit_code": 0
+    },
+    {
+      "target_id": "sourceguard",
+      "validated_source_head": "f58e5bf177110fd7a2d3d0f469e3c06859ca8b48",
+      "status": "passed",
+      "passed_tests": 99,
+      "exit_code": 0
+    },
+    {
+      "target_id": "traceguard",
+      "validated_source_head": "afd4237dcabb018973caf99b07a9234efa25f766",
+      "status": "passed",
+      "passed_tests": 128,
+      "exit_code": 0
+    },
+    {
+      "target_id": "worldguard",
+      "validated_source_head": "85581f8154f14c55cae002c59179b0eae7011ed5",
+      "status": "passed",
+      "passed_tests": 119,
+      "exit_code": 0
+    }
+  ],
+  "installed_projection_evidence": {
+    "guard_skill_cohort": {
+      "audited": 38,
+      "deep_pass": 38,
+      "skipped": 0,
+      "failed": 0,
+      "blocked": 0,
+      "target_receipt_aggregate_sha256": "sha256:ec7319fb394c3029b1a5653a2d1a500f56a6b705e24ffd327e2da5fbd29d65a8"
+    },
+    "skillguard_installation": {
+      "status": "current_installed_parity",
+      "transaction_id": "install-d94d51b9ddcd4984918319a22933e689",
+      "install_head_hash": "C24BEBF82102AB48B86545E09ECBF84F7ACB35C7A6731161AAA5BF42F41AA32B",
+      "receipt_id": "installation-2500cd51c785a022e67f5594",
+      "receipt_hash": "7ADB1C90F2BC833959905E9D85DCE2135E9D0216D88D4026E9541B55AB767CDA",
+      "verification_head_hash": "2DED5B4704485C10872482CF2A8F017B1068C6E5CE5B4807CD43584514123F4D",
+      "rollback_disposition": "not_required"
+    },
+    "global_router": {
+      "registry_status": "passed",
+      "prompt_status": "passed",
+      "registry_hash": "sha256:de1af7038c910c103a3dccb511f1ae1b9a56e77d55eaedbc3d9ffdd41833be08",
+      "registry_items": 60,
+      "current_items": 40,
+      "domain_template_selection_owner": "selected_target_skill",
+      "global_router_selects_domain_template": false
+    }
+  },
+  "git_evidence": [
+    {
+      "target_id": "skillguard",
+      "validated_source_head": "f2457399c0ece7018d06b25fd3e6fc7afe8307e5",
+      "remote_ref": "origin/master",
+      "remote_equal_at_validation": true,
+      "closure_report_successor_policy": "The commit containing this report changes evidence outputs only; its final remote equality is verified after commit."
+    },
+    {
+      "target_id": "flowguard",
+      "head": "6ffe98ac241759e2656cc127080e553d47d3c33c",
+      "remote_ref": "origin/main",
+      "remote_equal": true
+    },
+    {
+      "target_id": "physicsguard",
+      "head": "107c62f06d35093d33c5fa62a2eb4e15587a5158",
+      "remote_ref": "origin/main",
+      "remote_equal": true
+    },
+    {
+      "target_id": "logicguard",
+      "head": "ca2c2127d9d4fc7cc571f3e023c37223388abb47",
+      "remote_ref": "origin/main",
+      "remote_equal": true
+    },
+    {
+      "target_id": "sourceguard",
+      "head": "f58e5bf177110fd7a2d3d0f469e3c06859ca8b48",
+      "remote_ref": "origin/main",
+      "remote_equal": true
+    },
+    {
+      "target_id": "traceguard",
+      "head": "afd4237dcabb018973caf99b07a9234efa25f766",
+      "remote_ref": "origin/main",
+      "remote_equal": true
+    },
+    {
+      "target_id": "worldguard",
+      "head": "85581f8154f14c55cae002c59179b0eae7011ed5",
+      "remote_ref": "origin/main",
+      "remote_equal": true
+    }
+  ],
+  "preserved_peer_work": {
+    "flowguard": [
+      "flowguard/skill_contracts.py",
+      "flowguard/skill_native_checks.py",
+      "tests/test_skill_contract_v2_projection.py",
+      "tests/test_skill_installed_layout.py",
+      "tests/test_skill_native_checks.py",
+      "worktrees/"
+    ],
+    "worldguard": [
+      ".flowguard/project.toml",
+      ".skillguard/project.json",
+      "AGENTS.md"
+    ],
+    "disposition": "preserved_without_reset_or_overwrite"
+  },
+  "repaired_validation_misses": [
+    {
+      "miss_id": "flowguard-clean-checkout-model-distribution",
+      "root_cause": "Required model and ledger inputs existed only as ignored checkout-local files, so a dirty local checkout could pass while a clean Git checkout failed.",
+      "repair": "Track the required public model inputs, classify six consumed models as required-public, and make the repository inventory test respect explicit optional-local absence.",
+      "verification": "34 of 34 required-public models passed; 1408 tests and 750 subtests passed."
+    },
+    {
+      "miss_id": "openspec-cli-workflow-boundary",
+      "root_cause": "An AI workflow name was incorrectly treated as an official CLI subcommand.",
+      "repair": "Use official strict CLI validation as the provider receipt and keep /opsx:verify outside the CLI contract.",
+      "verification": "Official OpenSpec strict validation passed one of one change with zero issues."
+    }
+  ],
+  "claim_boundary": "This report proves the named local source snapshots, model checks, tests, installed projections, provider artifacts, and Git comparisons. It does not claim package publication, public release, external deployment, production truth beyond target-native validators, or guaranteed future AI behavior."
+}

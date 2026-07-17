@@ -83,6 +83,14 @@ Catalog, manifest, template content, fragment, builder, validator, prompt projec
 
 There is no normal dual runtime. Work is rehearsed in isolated previews and fixtures; when accepted, each maintained target is directly rewritten to the current trio, installed through its target installation transaction, natively revalidated, and refreshed in the global router only when its route projection changes.
 
+### 9. Official OpenSpec provider verification boundary
+
+OpenSpec remains an external, read-only planning provider. For official CLI `1.6.0`, the machine-checkable provider receipt is:
+
+`openspec validate add-validated-template-pack-supervision --strict --json --no-interactive`
+
+`/opsx:verify` is an AI workflow command, not an OpenSpec CLI subcommand. Its absence from the CLI is therefore not a provider failure and must not trigger a local OpenSpec patch or compatibility bridge. Strict provider validation proves only that the change artifacts satisfy the official OpenSpec contract; implementation, native Guard checks, installation parity, and Git synchronization remain independently owned evidence.
+
 ## Risks / Trade-offs
 
 - **[Risk] A template becomes a second domain router** → Require a prior target-native route and verifier-owned applicability receipt; SkillGuard rejects family inference.

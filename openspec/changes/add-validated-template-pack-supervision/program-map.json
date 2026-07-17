@@ -7,6 +7,8 @@
     "change_id": "add-validated-template-pack-supervision",
     "artifact_root": "openspec/changes/add-validated-template-pack-supervision",
     "source_policy": "external_frozen_read_only",
+    "verification_command": "openspec validate add-validated-template-pack-supervision --strict --json --no-interactive",
+    "verification_boundary": "Official CLI artifact validation only; /opsx:verify is an AI workflow and is not a CLI subcommand.",
     "provider_artifacts": [
       "proposal.md",
       "design.md",
@@ -93,25 +95,25 @@
           "check_id": "check:skillguard:template-protocol",
           "execution_owner": "owner:skillguard-template-protocol",
           "planned_receipt_id": "receipt:skillguard-template-protocol",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         },
         {
           "check_id": "check:skillguard:template-selection",
           "execution_owner": "owner:skillguard-template-selection",
           "planned_receipt_id": "receipt:skillguard-template-selection",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         },
         {
           "check_id": "check:skillguard:fragment-compiler",
           "execution_owner": "owner:skillguard-contract-compiler",
           "planned_receipt_id": "receipt:skillguard-fragment-compiler",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         },
         {
           "check_id": "check:skillguard:portable-launch",
           "execution_owner": "owner:skillguard-declared-check-runner",
           "planned_receipt_id": "receipt:skillguard-portable-launch",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         }
       ],
       "receipt_root": ".skillguard/receipts/validated-template-pack-program",
@@ -126,7 +128,7 @@
         "planning_merge_head": "6128d84bacf7615639c2c66c6d820cebdcdb1b21",
         "handoff_status": "reconciled_checkpoint_preserves_peer_work"
       },
-      "final_git_identity": "not_frozen"
+      "final_git_identity": "validated-source:f2457399c0ece7018d06b25fd3e6fc7afe8307e5;remote:origin/master"
     },
     {
       "target_id": "flowguard",
@@ -139,7 +141,7 @@
           "check_id": "check:flowguard:template-pack-registry",
           "execution_owner": "owner:flowguard-template-pack-tests",
           "planned_receipt_id": "receipt:flowguard-template-pack-registry",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         }
       ],
       "receipt_root": ".flowguard/receipts/validated-template-pack-registry",
@@ -150,7 +152,7 @@
         "peer_work_state": "dirty-active-mature-compositional-verification-kernel",
         "handoff_status": "new-files-only-until-peer-freeze"
       },
-      "final_git_identity": "not_frozen"
+      "final_git_identity": "6ffe98ac241759e2656cc127080e553d47d3c33c;remote:origin/main"
     },
     {
       "target_id": "physicsguard",
@@ -163,7 +165,7 @@
           "check_id": "check:physicsguard:purpose-pack-builder",
           "execution_owner": "owner:physicsguard-template-pack-tests",
           "planned_receipt_id": "receipt:physicsguard-purpose-pack-builder",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         }
       ],
       "receipt_root": ".physicsguard/receipts/validated-template-pack-program",
@@ -174,7 +176,7 @@
         "peer_work_state": "ten-skill-files-dirty",
         "handoff_status": "new-files-only-until-peer-freeze"
       },
-      "final_git_identity": "not_frozen"
+      "final_git_identity": "107c62f06d35093d33c5fa62a2eb4e15587a5158;remote:origin/main"
     },
     {
       "target_id": "logicguard",
@@ -187,7 +189,7 @@
           "check_id": "check:logicguard:template-pack-builder",
           "execution_owner": "owner:logicguard-template-pack-tests",
           "planned_receipt_id": "receipt:logicguard-template-pack-builder",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         }
       ],
       "receipt_root": ".logicguard/receipts/validated-template-pack-program",
@@ -198,7 +200,7 @@
         "peer_work_state": "dirty-active-modelmesh-modelstore",
         "handoff_status": "openspec-and-new-files-only-until-peer-freeze"
       },
-      "final_git_identity": "not_frozen"
+      "final_git_identity": "ca2c2127d9d4fc7cc571f3e023c37223388abb47;remote:origin/main"
     },
     {
       "target_id": "sourceguard",
@@ -211,7 +213,7 @@
           "check_id": "check:sourceguard:template-pack-builder",
           "execution_owner": "owner:sourceguard-template-pack-tests",
           "planned_receipt_id": "receipt:sourceguard-template-pack-builder",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         }
       ],
       "receipt_root": ".sourceguard/receipts/validated-template-pack-program",
@@ -223,7 +225,7 @@
         "active_peer_head": "557be2900758695c959414b49d7abe941c18282d",
         "handoff_status": "required-before-production-edit"
       },
-      "final_git_identity": "not_frozen"
+      "final_git_identity": "f58e5bf177110fd7a2d3d0f469e3c06859ca8b48;remote:origin/main"
     },
     {
       "target_id": "traceguard",
@@ -236,7 +238,7 @@
           "check_id": "check:traceguard:template-pack-builder",
           "execution_owner": "owner:traceguard-template-pack-tests",
           "planned_receipt_id": "receipt:traceguard-template-pack-builder",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         }
       ],
       "receipt_root": ".traceguard/receipts/validated-template-pack-program",
@@ -247,7 +249,7 @@
         "peer_work_state": "one-skill-file-dirty-and-v1-v2-provenance-gap",
         "handoff_status": "provenance-currentization-required-before-production-edit"
       },
-      "final_git_identity": "not_frozen"
+      "final_git_identity": "afd4237dcabb018973caf99b07a9234efa25f766;remote:origin/main"
     },
     {
       "target_id": "worldguard",
@@ -260,7 +262,7 @@
           "check_id": "check:worldguard:template-pack-builder",
           "execution_owner": "owner:worldguard-template-pack-tests",
           "planned_receipt_id": "receipt:worldguard-template-pack-builder",
-          "execution_state": "not_run"
+          "execution_state": "passed"
         }
       ],
       "receipt_root": ".worldguard/receipts/validated-template-pack-program",
@@ -271,7 +273,7 @@
         "peer_work_state": "clean-at-clone-then-new-program-files-only",
         "handoff_status": "isolated-new-files-authorized"
       },
-      "final_git_identity": "not_frozen"
+      "final_git_identity": "85581f8154f14c55cae002c59179b0eae7011ed5;remote:origin/main"
     }
   ],
   "final_validation_owners": [
@@ -279,25 +281,25 @@
       "check_id": "check:program:all-models",
       "execution_owner": "owner:final-all-model",
       "planned_receipt_id": "receipt:program:all-models",
-      "execution_state": "not_run"
+      "execution_state": "passed"
     },
     {
       "check_id": "check:program:full-tests",
       "execution_owner": "owner:final-full-tests",
       "planned_receipt_id": "receipt:program:full-tests",
-      "execution_state": "not_run"
+      "execution_state": "passed"
     },
     {
       "check_id": "check:program:installed-parity",
       "execution_owner": "owner:final-installed-parity",
       "planned_receipt_id": "receipt:program:installed-parity",
-      "execution_state": "not_run"
+      "execution_state": "passed"
     },
     {
       "check_id": "check:program:git-sync",
       "execution_owner": "owner:final-git-sync",
       "planned_receipt_id": "receipt:program:git-sync",
-      "execution_state": "not_run"
+      "execution_state": "passed"
     }
   ],
   "identity_rules": [
@@ -306,8 +308,9 @@
     "native check ids are immutable inventory entries and never commands",
     "each check has exactly one execution owner and one planned receipt identity",
     "installed projection identity is separate from canonical source and Git identity",
-    "final Git identities remain not_frozen until all current receipts support the exact revisions",
+    "validated source Git identities are frozen only after current receipts support the exact revisions; closure-report-only successors are checked independently",
     "OpenSpec source, installation, skills, and Git identities are excluded from synchronization"
   ],
-  "claim_boundary": "This map freezes identities and ownership only. Any row whose execution_state is not_run is not evidence of implementation, validation, installation, release, archive, publication, or Git synchronization."
+  "final_evidence_report": "evidence/final-closure-report.json",
+  "claim_boundary": "This map records current program closure for the named local repositories and installed projections. It does not prove package publication, public release, external deployment, or future AI behavior."
 }
