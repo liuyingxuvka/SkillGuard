@@ -36,6 +36,20 @@ class ResolvedLaunchPlan:
     popen_args: str | tuple[str, ...]
 
 
+def launch_plan_fingerprint(semantic: Mapping[str, Any]) -> str:
+    """Hash the portable launch meaning without one run's physical cwd."""
+
+    payload = dict(semantic)
+    raw_cwd = payload.get("cwd")
+    if isinstance(raw_cwd, Mapping):
+        payload["cwd"] = {
+            key: value
+            for key, value in raw_cwd.items()
+            if key != "resolved_identity"
+        }
+    return canonical_hash(payload)
+
+
 def _content_identity(path: Path) -> str:
     if not path.is_file():
         raise LaunchPlanError("launch_program_not_file", str(path))
@@ -169,7 +183,10 @@ def resolve_launch_plan(
             "It does not prove process success, target semantics, or cleanup."
         ),
     }
-    record = {**semantic, "launch_plan_fingerprint": canonical_hash(semantic)}
+    record = {
+        **semantic,
+        "launch_plan_fingerprint": launch_plan_fingerprint(semantic),
+    }
     return ResolvedLaunchPlan(record=record, argv=tuple(argv), popen_args=popen_args)
 
 
@@ -177,5 +194,6 @@ __all__ = [
     "LAUNCH_PLAN_SCHEMA",
     "LaunchPlanError",
     "ResolvedLaunchPlan",
+    "launch_plan_fingerprint",
     "resolve_launch_plan",
 ]

@@ -1,8 +1,8 @@
 {
   "claim_boundary": "This registry selects current skill routes only. It does not replace target contracts, execute checks, or prove future AI behavior.",
   "current_item_count": 19,
-  "diagnostic_inventory_hash": "sha256:01e1fc82eae961bae2dbdea8184fe0d959bbbcd4f8cd912137dcbed69f21c9c8",
-  "generated_at": "2026-07-17T05:32:52Z",
+  "diagnostic_inventory_hash": "sha256:5b236ceb3530dbc48cc57e8d28788634623e785c8e6db0b6dee5de889105bc53",
+  "generated_at": "2026-07-17T06:03:58Z",
   "item_count": 19,
   "items": [
     {
@@ -1469,14 +1469,14 @@
       "route_entrypoint": {
         "authority_blockers": [],
         "authority_decision": "current",
-        "check_declarations_hash": "sha256:dfa5734cf0e0efff74e55daf03eb21ccff22e3b79c62b790b6df92d5f98fd160",
-        "check_manifest_hash": "sha256:fd554c3ea0454bb9da46c3473e87db33514069a4dc7031216399ce8c7b8af2db",
+        "check_declarations_hash": "sha256:56e137029c0f026f0e8e65fbedcac1bbecdb3e2fc36a5a28d29fb76700bb169f",
+        "check_manifest_hash": "sha256:b42054eafc1d58d19036bea13a90ed0032fd9c4185305324af999fce10cde733",
         "check_manifest_path": ".agents/skills/skillguard/.skillguard/check-manifest.json",
-        "check_manifest_sha256": "sha256:0d0577cbf899f8a9f6ea92f2ea215a94d50a23ab57974cf21b089b4b3cb223ff",
+        "check_manifest_sha256": "sha256:fe7afde739bb3b34a1736a8f4c89d193223cc7a7a228a8eecbba84e6fca14be0",
         "contract_authority": "current",
-        "contract_hash": "sha256:54e863167980480e6f7637f0b07580989a916107c6dec57f9718c0c378f90bd1",
+        "contract_hash": "sha256:7825b50feba0c2b6d5850fe2d8c705a0655b74bf73059d55d58733bf208bcd2f",
         "contract_path": ".agents/skills/skillguard/.skillguard/compiled-contract.json",
-        "contract_sha256": "sha256:a68e3ced082c643b15c43be1351a6d688d5199f923ef5fb099ffcd830b1db715",
+        "contract_sha256": "sha256:677431bb3aa8145d3a2ae7e1890fbbfb5999ccd9a5b1c6fe54e1d82fbf90358c",
         "contract_source_path": ".agents/skills/skillguard/.skillguard/contract-source.json",
         "contract_source_sha256": "sha256:312e9730ff58df9616f863bdff28c36aae98f245100310d82737796769fb34d4",
         "default_route_id": "route:static-audit",

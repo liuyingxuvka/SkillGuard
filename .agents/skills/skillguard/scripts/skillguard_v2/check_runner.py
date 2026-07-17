@@ -46,7 +46,12 @@ from .execution_records import (
 from .provenance import active_installation_source_manifest
 from .receipts import fingerprint_value
 from .target_inputs import fingerprint_target_input_roles, fingerprint_target_inputs
-from .launch_plan import LaunchPlanError, ResolvedLaunchPlan, resolve_launch_plan
+from .launch_plan import (
+    LaunchPlanError,
+    ResolvedLaunchPlan,
+    launch_plan_fingerprint,
+    resolve_launch_plan,
+)
 from .run_store import (
     load_check_manifest_snapshot,
     load_contract_snapshot,
@@ -227,7 +232,7 @@ def _resolve_check_launch_plan(
         launch_plan = ResolvedLaunchPlan(
             record={
                 **semantic,
-                "launch_plan_fingerprint": canonical_hash(semantic),
+                "launch_plan_fingerprint": launch_plan_fingerprint(semantic),
             },
             argv=(),
             popen_args=(),

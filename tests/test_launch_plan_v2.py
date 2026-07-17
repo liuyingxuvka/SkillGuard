@@ -92,6 +92,24 @@ class LaunchPlanTest(unittest.TestCase):
             self.assertNotEqual(first_plan.record["resolved_program_identity"], second_plan.record["resolved_program_identity"])
             self.assertNotEqual(first_plan.record["launch_plan_fingerprint"], second_plan.record["launch_plan_fingerprint"])
 
+    def test_physical_cwd_changes_do_not_change_portable_launch_identity(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="launch-cwd-", dir=ROOT) as tmp:
+            workspace = Path(tmp)
+            first = workspace / "first"
+            second = workspace / "second"
+            first.mkdir()
+            second.mkdir()
+            first_plan = self.plan(sys.executable, ["--version"], first)
+            second_plan = self.plan(sys.executable, ["--version"], second)
+            self.assertNotEqual(
+                first_plan.record["cwd"]["resolved_identity"],
+                second_plan.record["cwd"]["resolved_identity"],
+            )
+            self.assertEqual(
+                first_plan.record["launch_plan_fingerprint"],
+                second_plan.record["launch_plan_fingerprint"],
+            )
+
     def test_unresolved_program_fails_closed(self) -> None:
         with self.assertRaises(LaunchPlanError) as caught:
             self.plan("definitely-not-a-current-program", [], ROOT, environment={"PATH": ""})

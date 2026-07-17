@@ -232,13 +232,36 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
         self.assertTrue(result.ok, result.to_dict())
         contract = result.compiled_contract
         manifest = result.check_manifest
-        self.assertEqual(31, sum(1 for row in contract["steps"] if not row["terminal_kind"]))
+        self.assertEqual(41, sum(1 for row in contract["steps"] if not row["terminal_kind"]))
+        template_step_ids = {
+            row["step_id"]
+            for row in contract["steps"]
+            if row["route_id"] == "route:template-lifecycle-supervision"
+            and not row["terminal_kind"]
+        }
+        self.assertEqual(
+            {
+                "step:resolve-template-native-route",
+                "step:load-target-template-projection",
+                "step:validate-template-applicability",
+                "step:select-template-pack",
+                "step:issue-template-selection-receipt",
+                "step:materialize-template-preview",
+                "step:run-target-native-template-builder",
+                "step:run-target-native-template-validators",
+                "step:issue-template-instance-receipt",
+                "step:record-template-harvest-disposition",
+            },
+            template_step_ids,
+        )
         self.assertEqual(
             {
                 "artifact:self-compiled-contract",
                 "artifact:self-check-manifest",
                 "artifact:self-project-adoption-manifest",
                 "artifact:self-project-prompt",
+                "artifact:self-template-selection-receipt",
+                "artifact:self-template-instance-receipt",
             },
             {row["artifact_id"] for row in contract["artifacts"]},
         )
@@ -257,6 +280,14 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
         self.assertEqual(
             ".skillguard/project.json",
             artifact_paths["artifact:self-project-adoption-manifest"],
+        )
+        self.assertEqual(
+            ".skillguard/runs/{run_id}/template-selection-receipt.json",
+            artifact_paths["artifact:self-template-selection-receipt"],
+        )
+        self.assertEqual(
+            ".skillguard/runs/{run_id}/template-instance-receipt.json",
+            artifact_paths["artifact:self-template-instance-receipt"],
         )
         project_audit = next(
             row
