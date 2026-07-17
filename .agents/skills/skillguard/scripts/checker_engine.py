@@ -135,6 +135,11 @@ DATABASE_RUNTIME_SEGMENT_RE = re.compile(
 )
 DATABASE_FILE_SUFFIX_RE = re.compile(r"\.(?:db|sqlite3?|duckdb|mdb|accdb)(?:[?#].*)?$", re.IGNORECASE)
 PLAIN_LOCAL_FILENAME_RE = re.compile(r"^[A-Za-z0-9_.][A-Za-z0-9_. -]*\.[A-Za-z0-9_-]{1,32}$")
+SLASH_VALUE_SEQUENCE_RE = re.compile(
+    r"^[0-9]+(?:\.[0-9]+)?(?:ms|s|m|h|kb|mb|gb)"
+    r"(?:/[0-9]+(?:\.[0-9]+)?(?:ms|s|m|h|kb|mb|gb))+$",
+    re.IGNORECASE,
+)
 TRANSIENT_SKILLGUARD_RUNTIME_PREFIXES = (
     ".skillguard/runs",
     ".skillguard/locks",
@@ -402,6 +407,18 @@ VALIDATION_REGISTRY_CONFLICT_CODES = {
 }
 PLAN_SKILL_SUPPORTED_WORKFLOW_MODES = ("create",)
 PLAN_SKILL_SUPPORTED_SAFE_EDIT_MODES = ("no_write",)
+SKILL_BLUEPRINT_SCHEMA_VERSION = "skillguard.skill_blueprint.v2"
+TEMPLATE_REQUEST_FIELDS = frozenset(
+    {
+        "adapter_projection_path",
+        "parameters",
+    }
+)
+TEMPLATE_PROFILE_PROMPT_PATHS = {
+    "prompt_selection": "assets/templates/template_selection_supervision.md.template",
+    "prompt_instance": "assets/templates/template_instance_supervision.md.template",
+    "prompt_installation": "assets/templates/template_installation_supervision.md.template",
+}
 PLAN_SKILL_DEFAULT_LISTS = {
     "use_when": ["Use when the declared skill purpose and activation boundary match the requested work."],
     "do_not_use_when": ["Do not use when the request falls outside the declared activation boundary or required evidence is unavailable."],
@@ -426,7 +443,10 @@ PLAN_SKILL_DEFAULT_LISTS = {
 }
 GENERATE_SKILL_REQUIRED_BLUEPRINT_FIELDS = (
     "blueprint_id",
+    "source_command",
+    "source_input",
     "target",
+    "skill",
     "workflow_mode",
     "closure_scope",
     "evidence_policy",
@@ -437,6 +457,13 @@ GENERATE_SKILL_REQUIRED_BLUEPRINT_FIELDS = (
     "closure_report",
     "residual_risk",
     "claim_boundary",
+    "template_profile",
+)
+GENERATE_SKILL_BLUEPRINT_FIELDS = frozenset(
+    {"schema_version", *GENERATE_SKILL_REQUIRED_BLUEPRINT_FIELDS}
+)
+GENERATE_SKILL_SKILL_FIELDS = frozenset(
+    {"name", "description", "purpose", "target_path", "use_when", "do_not_use_when"}
 )
 GENERATE_SKILL_REQUIRED_DIRECTORIES = (
     ".skillguard",
@@ -2489,6 +2516,40 @@ def resolve_plan_skill_target(target_text: str, blockers: list[str]) -> str:
         return ""
 
 
+def template_source_identity(path: Path) -> str:
+    return "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def normalize_template_request(data: dict[str, Any], blockers: list[str]) -> dict[str, Any]:
+    request = data.get("template_request")
+    if request is None:
+        return {"profile_kind": "skillguard_validated_base"}
+    if not isinstance(request, dict):
+        blockers.append("template_request must be an object when supplied")
+        return {}
+    unknown = set(request) - TEMPLATE_REQUEST_FIELDS
+    blockers.extend(f"template_request contains unknown field: {field}" for field in sorted(unknown))
+    normalized: dict[str, Any] = {"profile_kind": "target_owned_selection"}
+    for field in ("adapter_projection_path",):
+        value = request.get(field)
+        if not isinstance(value, str) or not value.strip():
+            blockers.append(f"template_request.{field} must be a non-empty repository-relative path")
+            continue
+        if Path(value).is_absolute():
+            blockers.append(f"template_request.{field} must be repository-relative")
+            continue
+        try:
+            normalized[field] = public_relative_path(ensure_under_root(value))
+        except ValueError:
+            blockers.append(f"template_request.{field} must stay under the repository root")
+    parameters = request.get("parameters", {})
+    if not isinstance(parameters, dict):
+        blockers.append("template_request.parameters must be an object when supplied")
+        parameters = {}
+    normalized["parameters"] = parameters
+    return normalized
+
+
 def normalize_plan_skill_input(data: Any) -> tuple[dict[str, Any], list[str]]:
     blockers: list[str] = []
     if not isinstance(data, dict):
@@ -2499,6 +2560,7 @@ def normalize_plan_skill_input(data: Any) -> tuple[dict[str, Any], list[str]]:
     normalized["description"] = string_field(data, "description", blockers)
     normalized["target_path"] = string_field(data, "target_path", blockers)
     normalized["purpose"] = string_field(data, "purpose", blockers)
+    normalized["template_request"] = normalize_template_request(data, blockers)
     for field in PLAN_SKILL_DEFAULT_LISTS:
         normalized[field] = string_list_field(data, field, blockers)
 
@@ -2553,8 +2615,8 @@ def build_plan_skill_blueprint(input_data: dict[str, Any], input_relative: str) 
     target_path = input_data["target_path"]
     no_write_note = "plan-skill emits a blueprint preview only and does not create or modify target files."
     return {
-        "schema_version": "skillguard.skill_blueprint.v1",
-        "blueprint_id": f"skillguard.skill_blueprint.{slug}.v1",
+        "schema_version": SKILL_BLUEPRINT_SCHEMA_VERSION,
+        "blueprint_id": f"skillguard.skill_blueprint.{slug}.v2",
         "source_command": "plan-skill",
         "source_input": input_relative,
         "target": target_path,
@@ -2996,6 +3058,14 @@ global_candidate_handoff_blockers = (
 )
 
 
+def template_lifecycle_prompt_bundle() -> tuple[str, str]:
+    content = "\n\n".join(
+        ensure_under_root(skill_root() / relative_path).read_text(encoding="utf-8").strip()
+        for relative_path in TEMPLATE_PROFILE_PROMPT_PATHS.values()
+    )
+    return content, sha256_identity(content)
+
+
 def render_global_prompt_block(registry: dict[str, Any], registry_path: str = "") -> str:
     template_path = (
         skill_root()
@@ -3137,12 +3207,14 @@ def check_global_prompt_text(
 def extract_skill_blueprint(data: Any) -> tuple[dict[str, Any], list[str]]:
     if not isinstance(data, dict):
         return {}, ["generate-skill input must be a JSON object"]
-    if data.get("schema_version") == "skillguard.skill_blueprint.v1":
+    if data.get("schema_version") == SKILL_BLUEPRINT_SCHEMA_VERSION:
         return data, []
     nested = data.get("skill_blueprint")
-    if isinstance(nested, dict) and nested.get("schema_version") == "skillguard.skill_blueprint.v1":
+    if isinstance(nested, dict) and nested.get("schema_version") == SKILL_BLUEPRINT_SCHEMA_VERSION:
         return nested, []
-    return {}, ["input must be a Skill Blueprint object or a current plan-skill result containing skill_blueprint"]
+    return {}, [
+        f"input must be a current {SKILL_BLUEPRINT_SCHEMA_VERSION} object or a current plan-skill result containing skill_blueprint"
+    ]
 
 
 def resolve_generate_skill_target(blueprint: dict[str, Any], blockers: list[str]) -> Path | None:
@@ -3181,11 +3253,19 @@ def relative_to_any(path: Path, roots: list[Path]) -> bool:
 
 def validate_generate_skill_blueprint(blueprint: dict[str, Any]) -> tuple[Path | None, list[str]]:
     blockers: list[str] = []
-    if blueprint.get("schema_version") != "skillguard.skill_blueprint.v1":
-        blockers.append("Skill Blueprint schema_version must be skillguard.skill_blueprint.v1")
+    if blueprint.get("schema_version") != SKILL_BLUEPRINT_SCHEMA_VERSION:
+        blockers.append(f"Skill Blueprint schema_version must be {SKILL_BLUEPRINT_SCHEMA_VERSION}")
+    blockers.extend(
+        f"Skill Blueprint contains unknown field: {field}"
+        for field in sorted(set(blueprint) - GENERATE_SKILL_BLUEPRINT_FIELDS)
+    )
     for field in GENERATE_SKILL_REQUIRED_BLUEPRINT_FIELDS:
         if field not in blueprint:
             blockers.append(f"Skill Blueprint missing required field: {field}")
+    if blueprint.get("source_command") != "plan-skill":
+        blockers.append("Skill Blueprint source_command must be plan-skill")
+    if not isinstance(blueprint.get("source_input"), str) or not blueprint.get("source_input", "").strip():
+        blockers.append("Skill Blueprint source_input must be a non-empty repository-relative path")
     if blueprint.get("workflow_mode") != "create":
         blockers.append("generate-skill only supports Skill Blueprints with workflow_mode=create")
 
@@ -3193,6 +3273,10 @@ def validate_generate_skill_blueprint(blueprint: dict[str, Any]) -> tuple[Path |
     if not isinstance(skill, dict):
         blockers.append("Skill Blueprint field skill must be an object")
         skill = {}
+    blockers.extend(
+        f"Skill Blueprint skill object contains unknown field: {field}"
+        for field in sorted(set(skill) - GENERATE_SKILL_SKILL_FIELDS)
+    )
     for field in ("name", "description", "purpose", "use_when", "do_not_use_when"):
         if field not in skill:
             blockers.append(f"Skill Blueprint skill object missing required field: {field}")
@@ -3202,6 +3286,11 @@ def validate_generate_skill_blueprint(blueprint: dict[str, Any]) -> tuple[Path |
             blockers.append(f"Skill Blueprint field {field} must be an array")
     if "closure_report" in blueprint and not isinstance(blueprint["closure_report"], dict):
         blockers.append("Skill Blueprint field closure_report must be an object")
+    if "template_profile" in blueprint:
+        try:
+            validate_template_profile(blueprint["template_profile"])
+        except TemplateProfileError as exc:
+            blockers.extend(f"Skill Blueprint template_profile invalid: {finding}" for finding in exc.findings)
     safe_edit_scope = blueprint.get("safe_edit_scope")
     if not isinstance(safe_edit_scope, dict):
         blockers.append("Skill Blueprint field safe_edit_scope must be an object")
@@ -3677,6 +3766,8 @@ This generated entrypoint is a scaffold for `{target_relative}`. It is not accep
 - There is no legacy contract, route, run, or fallback success path. A missing or stale current trio is blocked.
 - Use `.skillguard/runs/` only for current run evidence and receipts; runtime outputs are not source authority.
 
+{template_routing_guidance}
+
 ## Entrypoint Acceptance Map
 
 - `checked` requires current deterministic evidence for the declared scope.
@@ -3826,6 +3917,296 @@ Inspect the generated files, run the declared current owner checks, and recompil
     return files
 
 
+def template_profile_parameters(blueprint: dict[str, Any]) -> dict[str, Any]:
+    skill = blueprint.get("skill") if isinstance(blueprint.get("skill"), dict) else {}
+    return {
+        "skill_name": str(skill.get("name") or ""),
+        "description": str(skill.get("description") or ""),
+        "purpose": str(skill.get("purpose") or ""),
+        "target_path": str(blueprint.get("target") or skill.get("target_path") or ""),
+    }
+
+
+def template_source_binding(role: str, path: Path) -> dict[str, str]:
+    resolved = ensure_under_root(path)
+    return {
+        "role": role,
+        "path": public_relative_path(resolved),
+        "sha256": template_source_identity(resolved),
+    }
+
+
+def builtin_template_source_bindings(source_input_path: Path) -> list[dict[str, str]]:
+    checker_path = Path(__file__).resolve()
+    bindings = [
+        template_source_binding("builder", checker_path),
+        template_source_binding("source_input", source_input_path),
+        template_source_binding("validator", checker_path),
+    ]
+    bindings.extend(
+        template_source_binding(role, ensure_under_root(skill_root() / relative_path))
+        for role, relative_path in TEMPLATE_PROFILE_PROMPT_PATHS.items()
+    )
+    return bindings
+
+
+def template_prompt_bundle_hash(binding_index: dict[str, dict[str, str]]) -> str:
+    return sha256_identity(
+        {
+            role: binding_index[role]["sha256"]
+            for role in sorted(TEMPLATE_PROFILE_PROMPT_PATHS)
+        }
+    )
+
+
+def template_profile_projection(profile: dict[str, Any]) -> dict[str, Any]:
+    catalog = profile.get("catalog") if isinstance(profile.get("catalog"), dict) else {}
+    selection = profile.get("selection_receipt") if isinstance(profile.get("selection_receipt"), dict) else {}
+    applicability = profile.get("applicability_receipt") if isinstance(profile.get("applicability_receipt"), dict) else {}
+    manifests = catalog.get("templates") if isinstance(catalog.get("templates"), list) else []
+    return {
+        "template_capability_inventory": [
+            {
+                "template_id": item.get("template_id"),
+                "template_kind": item.get("template_kind"),
+                "native_owner_id": item.get("native_owner_id"),
+                "family_id": item.get("family_id"),
+                "route_ids": item.get("route_ids", []),
+                "builder_id": (item.get("builder") or {}).get("builder_id") if isinstance(item.get("builder"), dict) else None,
+                "validator_ids": [
+                    row.get("validator_id")
+                    for row in item.get("validators", [])
+                    if isinstance(row, dict)
+                ],
+            }
+            for item in manifests
+            if isinstance(item, dict)
+        ],
+        "template_candidates": selection.get("candidate_accounting", []),
+        "template_applicability": applicability.get("results", []),
+        "template_selection": {
+            "status": selection.get("status"),
+            "disposition": selection.get("disposition"),
+            "selected_template_ids": selection.get("selected_template_ids", []),
+            "composition_order": selection.get("composition_order", []),
+            "field_owner_map": selection.get("field_owner_map", {}),
+            "findings": selection.get("findings", []),
+            "receipt_id": selection.get("receipt_id"),
+            "receipt_hash": selection.get("receipt_hash"),
+        },
+        "template_preview": profile.get("materialized_preview", {}),
+        "affected_components": profile.get("content_components", {}),
+    }
+
+
+def build_plan_template_profile(
+    normalized: dict[str, Any],
+    blueprint: dict[str, Any],
+    input_path: Path,
+    input_relative: str,
+) -> dict[str, Any]:
+    request = normalized.get("template_request") if isinstance(normalized.get("template_request"), dict) else {}
+    if request.get("profile_kind") == "target_owned_selection":
+        adapter_path = ensure_under_root(request["adapter_projection_path"])
+        if not adapter_path.is_file():
+            raise TemplateProfileError((f"template_source_missing:{public_relative_path(adapter_path)}",))
+        records = compile_target_template_projection(load_json(adapter_path))
+        return build_external_selection_profile(
+            catalog_payload=records.catalog,
+            native_route_receipt=records.native_route_receipt,
+            applicability_receipt=records.applicability_receipt,
+            parameters=request.get("parameters", {}),
+            source_bindings=[
+                template_source_binding("adapter_projection", adapter_path),
+            ],
+        )
+
+    target = ensure_under_root(blueprint["target"])
+    scaffold_files = build_generate_skill_scaffold(blueprint, target, input_relative)
+    bindings = builtin_template_source_bindings(input_path)
+    binding_index = {item["role"]: item for item in bindings}
+    return build_builtin_scaffold_profile(
+        parameters=template_profile_parameters(blueprint),
+        artifact_paths=sorted(scaffold_files),
+        scaffold_files=scaffold_files,
+        source_input_hash=binding_index["source_input"]["sha256"],
+        builder_content_hash=binding_index["builder"]["sha256"],
+        validator_content_hash=binding_index["validator"]["sha256"],
+        prompt_content_hash=template_prompt_bundle_hash(binding_index),
+        source_bindings=bindings,
+    )
+
+
+def validate_template_profile_source_bindings(profile: dict[str, Any]) -> tuple[dict[str, dict[str, str]], list[str]]:
+    bindings = profile.get("source_bindings") if isinstance(profile.get("source_bindings"), list) else []
+    index: dict[str, dict[str, str]] = {}
+    blockers: list[str] = []
+    for item in bindings:
+        if not isinstance(item, dict):
+            blockers.append("template source binding must be an object")
+            continue
+        role = item.get("role")
+        path_text = item.get("path")
+        if not isinstance(role, str) or not isinstance(path_text, str):
+            blockers.append("template source binding must declare string role and path")
+            continue
+        try:
+            path = ensure_under_root(path_text)
+        except ValueError:
+            blockers.append(f"template source escapes repository boundary: {role}")
+            continue
+        if not path.is_file():
+            blockers.append(f"template source is missing: {path_text}")
+            continue
+        current_hash = template_source_identity(path)
+        if current_hash != item.get("sha256"):
+            blockers.append(f"template source is stale: {role}:{path_text}")
+        index[role] = {"role": role, "path": path_text, "sha256": current_hash}
+    return index, blockers
+
+
+def validate_generate_skill_template_profile(
+    blueprint: dict[str, Any],
+    target: Path,
+) -> tuple[dict[str, Any], dict[str, str], list[str]]:
+    blockers: list[str] = []
+    scaffold_files: dict[str, str] = {}
+    try:
+        profile = validate_template_profile(blueprint.get("template_profile"))
+    except TemplateProfileError as exc:
+        return {}, {}, [f"template profile invalid: {finding}" for finding in exc.findings]
+    source_index, source_blockers = validate_template_profile_source_bindings(profile)
+    blockers.extend(source_blockers)
+    if blockers:
+        return profile, {}, blockers
+
+    if profile.get("profile_kind") == "target_owned_selection":
+        required_roles = {"adapter_projection"}
+        if set(source_index) != required_roles:
+            blockers.append("target-owned template profile source roles must equal adapter_projection")
+        else:
+            records = compile_target_template_projection(
+                load_json(ensure_under_root(source_index["adapter_projection"]["path"]))
+            )
+            rebuilt = build_external_selection_profile(
+                catalog_payload=records.catalog,
+                native_route_receipt=records.native_route_receipt,
+                applicability_receipt=records.applicability_receipt,
+                parameters=profile.get("parameters", {}),
+                source_bindings=list(source_index.values()),
+            )
+            if rebuilt.get("profile_hash") != profile.get("profile_hash"):
+                blockers.append("target-owned template profile is stale after current source recomputation")
+        blockers.append("target_native_builder_required: generic generate-skill cannot execute a target-owned template builder")
+        return profile, {}, blockers
+
+    required_roles = {"builder", "source_input", "validator", *TEMPLATE_PROFILE_PROMPT_PATHS}
+    if set(source_index) != required_roles:
+        return profile, {}, ["SkillGuard validated-base profile source roles are incomplete"]
+    stable_input = str(blueprint.get("source_input") or source_index["source_input"]["path"])
+    scaffold_files = build_generate_skill_scaffold(blueprint, target, stable_input)
+    try:
+        validate_builtin_profile_current(
+            profile,
+            parameters=template_profile_parameters(blueprint),
+            artifact_paths=sorted(scaffold_files),
+            scaffold_files=scaffold_files,
+            source_input_hash=source_index["source_input"]["sha256"],
+            builder_content_hash=source_index["builder"]["sha256"],
+            validator_content_hash=source_index["validator"]["sha256"],
+            prompt_content_hash=template_prompt_bundle_hash(source_index),
+            source_bindings=list(source_index.values()),
+        )
+    except TemplateProfileError as exc:
+        blockers.extend(f"template profile stale: {finding}" for finding in exc.findings)
+    return profile, scaffold_files, blockers
+
+
+def build_generate_skill_instance_receipt(
+    template_profile: dict[str, Any],
+    scaffold_files: dict[str, str],
+    post_generation_checks: list[dict[str, Any]],
+) -> dict[str, Any]:
+    catalog = validate_template_catalog(template_profile["catalog"])
+    selection = template_profile["selection_receipt"]
+    selected_ids = list(selection.get("selected_template_ids", []))
+    check_status_by_command = {
+        str(item.get("command")): str(item.get("status"))
+        for item in post_generation_checks
+        if isinstance(item, dict)
+    }
+    builder_receipts: list[dict[str, Any]] = []
+    validator_receipts: list[dict[str, Any]] = []
+    generated_artifacts: list[dict[str, Any]] = []
+    manifests = catalog.manifest_index()
+    validator_command = {
+        "check:generated-skill-static": "check-skill",
+        "check:generated-skill-contract": "check-contract",
+    }
+    for template_id in selected_ids:
+        manifest = manifests[template_id]
+        builder = manifest.payload["builder"]
+        builder_receipts.append(
+            seal_builder_receipt(
+                {
+                    "template_id": template_id,
+                    "manifest_digest": manifest.digest,
+                    "builder_id": builder["builder_id"],
+                    "builder_content_hash": builder["content_hash"],
+                    "status": "passed",
+                    "claim_boundary": "The generic scaffold was materialized; target acceptance remains separate.",
+                }
+            )
+        )
+        for artifact in manifest.payload["artifacts"]:
+            relative_path = artifact["path_template"]
+            content = scaffold_files.get(relative_path, "")
+            generated_artifacts.append(
+                {
+                    "template_id": template_id,
+                    "artifact_id": artifact["artifact_id"],
+                    "manifest_digest": manifest.digest,
+                    "relative_path": relative_path,
+                    "sha256": sha256_identity(
+                        content.replace("\r\n", "\n").replace("\r", "\n")
+                    ),
+                }
+            )
+        for validator in manifest.payload["validators"]:
+            command = validator_command.get(validator["check_id"], "")
+            observed = check_status_by_command.get(command, "not_run")
+            validator_status = {
+                "pass": "passed",
+                "fail": "failed",
+                "block": "blocked",
+                "skip": "skipped",
+            }.get(observed, observed)
+            validator_receipts.append(
+                seal_validator_receipt(
+                    {
+                        "template_id": template_id,
+                        "manifest_digest": manifest.digest,
+                        "validator_id": validator["validator_id"],
+                        "check_id": validator["check_id"],
+                        "validator_content_hash": validator["content_hash"],
+                        "status": validator_status,
+                        "claim_boundary": "This receipt covers only the mapped generated-skill native check.",
+                    }
+                )
+            )
+    return build_instance_receipt(
+        selection_receipt_payload=selection,
+        catalog_payload=catalog.payload,
+        route_receipt_payload=template_profile["native_route_receipt"],
+        applicability_receipt_payload=template_profile["applicability_receipt"],
+        parameters={template_id: template_profile.get("parameters", {}) for template_id in selected_ids},
+        builder_receipts=builder_receipts,
+        generated_artifacts=generated_artifacts,
+        unresolved_placeholders=unresolved_placeholders(scaffold_files),
+        validator_receipts=validator_receipts,
+    )
+
+
 def preflight_generate_skill_writes(
     target: Path, files: dict[str, str]
 ) -> tuple[list[str], list[str], list[str], list[dict[str, str]]]:
@@ -3898,6 +4279,21 @@ def preflight_generate_skill_writes(
                 conflicts.append(f"{public_relative_path(path)} exists with different content")
         else:
             created_files.append(public_relative_path(path))
+    if target.exists() and created_files and not conflicts:
+        conflict = {
+            "conflict_kind": "existing_target_requires_atomic_replacement",
+            "conflicting_path": public_relative_path(target),
+            "expected_generated_owner": command_name,
+            "safe_remediation_path": public_relative_path(target),
+            "safe_remediation": (
+                "Move or rename the existing target before generation. A new scaffold is activated only by one atomic "
+                "directory replacement; SkillGuard does not partially fill an existing directory."
+            ),
+        }
+        directory_conflicts.append(conflict)
+        conflicts.append(
+            f"existing target requires atomic direct-current replacement: {public_relative_path(target)}"
+        )
     if conflicts:
         return [], existing_files, conflicts, directory_conflicts
     return created_files, existing_files, conflicts, directory_conflicts
@@ -4938,6 +5334,11 @@ def looks_like_reference_span(
     if source_kind == "markdown-link":
         return True
     declared_context = has_declared_reference_context(context_before)
+    # Slash-delimited unit values such as fast/focused/full timeout budgets are
+    # data tuples, not local paths.  They still remain references when a link or
+    # explicit declared-path context says otherwise.
+    if not declared_context and SLASH_VALUE_SEQUENCE_RE.fullmatch(reference_text):
+        return False
     if DATABASE_URI_RE.search(reference_text) or SQL_EXPRESSION_RE.match(reference_text):
         return False
     if looks_like_inline_command(
@@ -6598,8 +6999,74 @@ def plan_skill(argv: list[str]) -> int:
         payload["supported_safe_edit_modes"] = list(PLAN_SKILL_SUPPORTED_SAFE_EDIT_MODES)
         return write_and_exit(payload)
 
-    payload["decision"] = "pass"
-    payload["skill_blueprint"] = build_plan_skill_blueprint(normalized, input_relative)
+    blueprint = build_plan_skill_blueprint(normalized, input_relative)
+    try:
+        template_profile = build_plan_template_profile(
+            normalized,
+            blueprint,
+            input_path,
+            input_relative,
+        )
+    except TemplateProfileError as exc:
+        payload["decision"] = "block"
+        payload["blockers"] = [f"template profile planning failed: {finding}" for finding in exc.findings]
+        payload["skipped_checks"] = [
+            "No target files were written and no template builder was invoked because template profile planning blocked."
+        ]
+        return write_and_exit(payload)
+    except TemplatePackError as exc:
+        payload["decision"] = "block"
+        payload["blockers"] = [
+            f"template protocol planning failed: {finding.code}:{finding.path}:{finding.message}"
+            for finding in exc.findings
+        ]
+        payload["skipped_checks"] = [
+            "No target files were written and no template builder was invoked because target template inputs were invalid."
+        ]
+        return write_and_exit(payload)
+    except (OSError, ValueError) as exc:
+        payload["decision"] = "block"
+        payload["blockers"] = [f"template profile planning failed: {exc}"]
+        payload["skipped_checks"] = [
+            "No target files were written because current template source material could not be loaded."
+        ]
+        return write_and_exit(payload)
+
+    blueprint["template_profile"] = template_profile
+    payload["skill_blueprint"] = blueprint
+    payload.update(template_profile_projection(template_profile))
+    selection = template_profile.get("selection_receipt", {})
+    selection_blocked = selection.get("status") != "selected"
+    payload["checks"].append(
+        {
+            "check_id": "plan-skill:template-profile",
+            "name": "Validated template profile",
+            "required": True,
+            "status": "block" if selection_blocked else "pass",
+            "summary": (
+                "Resolved the complete target-authored candidate set, applicability evidence, deterministic selection, "
+                "materialized preview, and affected components without writing target files."
+            ),
+        }
+    )
+    payload["evidence"].append(
+        {
+            "evidence_id": "template-selection-receipt",
+            "kind": "immutable_template_selection",
+            "fresh": not selection_blocked,
+            "summary": (
+                f"disposition={selection.get('disposition')} status={selection.get('status')} "
+                f"receipt={selection.get('receipt_id')}"
+            ),
+            "source_path": input_relative,
+        }
+    )
+    payload["decision"] = "block" if selection_blocked else "pass"
+    if selection_blocked:
+        payload["blockers"] = [
+            "ambiguous_template_selection: target-owned candidates cannot be safely composed or uniquely dominated",
+            *[str(item) for item in selection.get("findings", [])],
+        ]
     payload["skipped_checks"] = [
         "Target file creation, target validation, reviewer judgment, and closure are outside plan-skill's no-write preview scope."
     ]
@@ -6692,9 +7159,27 @@ def generate_skill(argv: list[str]) -> int:
     target_relative = public_relative_path(target) if target is not None else ""
     payload["target_path"] = target_relative
     blockers = [*extraction_blockers, *validation_blockers]
-    scaffold_files = build_generate_skill_scaffold(blueprint, target, input_relative) if target is not None and not blockers else {}
+    template_profile: dict[str, Any] = {}
+    scaffold_files: dict[str, str] = {}
+    template_blockers: list[str] = []
+    if target is not None and not blockers:
+        try:
+            template_profile, scaffold_files, template_blockers = validate_generate_skill_template_profile(
+                blueprint,
+                target,
+            )
+        except TemplatePackError as exc:
+            template_blockers = [
+                f"template protocol validation failed: {finding.code}:{finding.path}:{finding.message}"
+                for finding in exc.findings
+            ]
+        except (OSError, ValueError) as exc:
+            template_blockers = [f"template profile currentness validation failed: {exc}"]
+    blockers.extend(template_blockers)
     planned_created, planned_existing, conflict_blockers, directory_conflicts = (
-        preflight_generate_skill_writes(target, scaffold_files) if target is not None and scaffold_files else ([], [], [], [])
+        preflight_generate_skill_writes(target, scaffold_files)
+        if target is not None and scaffold_files and not blockers
+        else ([], [], [], [])
     )
     blockers.extend(conflict_blockers)
 
@@ -6714,10 +7199,20 @@ def generate_skill(argv: list[str]) -> int:
             "summary": "Checked current Skill Blueprint schema, required fields, workflow mode, skill identity, target boundary, and safe-edit boundary.",
         },
         {
+            "check_id": "generate-skill:template-profile",
+            "name": "Current validated template profile",
+            "required": True,
+            "status": "block" if extraction_blockers or validation_blockers or template_blockers else "pass",
+            "summary": (
+                "Recomputed source, catalog, route, applicability, selection, builder, validator, prompt, and materialized preview identities. "
+                "Target-owned profiles are handed to their native builder instead of the generic scaffold writer."
+            ),
+        },
+        {
             "check_id": "generate-skill:write-preflight",
             "name": "Controlled write preflight",
             "required": True,
-            "status": "block" if conflict_blockers else "pass",
+            "status": "block" if blockers or conflict_blockers else "pass",
             "summary": (
                 "Planned scaffold writes before creating files; required directory path conflicts and differing existing files "
                 "block generation while identical files are preserved."
@@ -6743,6 +7238,20 @@ def generate_skill(argv: list[str]) -> int:
             "source_path": target_relative,
         },
     ]
+    if template_profile:
+        payload.update(template_profile_projection(template_profile))
+        payload["evidence"].append(
+            {
+                "evidence_id": "template-profile-currentness",
+                "kind": "template_profile_recomputation",
+                "fresh": not template_blockers,
+                "summary": (
+                    f"profile_kind={template_profile.get('profile_kind')} "
+                    f"profile_hash={template_profile.get('profile_hash')} blockers={len(template_blockers)}"
+                ),
+                "source_path": str(blueprint.get("source_input") or input_relative),
+            }
+        )
     payload["planned_created_files"] = planned_created
     payload["existing_files"] = planned_existing
     payload["write_preflight_conflicts"] = directory_conflicts
@@ -6824,6 +7333,71 @@ def generate_skill(argv: list[str]) -> int:
             "summary": "Ran check-skill and check-contract against the final generated skill path after scaffold writes completed.",
         }
     )
+    template_instance_failures: list[str] = []
+    try:
+        template_instance_receipt = build_generate_skill_instance_receipt(
+            template_profile,
+            scaffold_files,
+            post_generation_checks,
+        )
+        payload["template_instance_receipt"] = template_instance_receipt
+        if template_instance_receipt.get("status") != "passed":
+            template_instance_failures = [
+                f"template instance validation remained open: {finding}"
+                for finding in template_instance_receipt.get("findings", [])
+            ] or ["template instance validation remained open"]
+    except TemplatePackError as exc:
+        template_instance_receipt = {}
+        template_instance_failures = [
+            f"template instance receipt invalid: {finding.code}:{finding.path}:{finding.message}"
+            for finding in exc.findings
+        ]
+    payload["checks"].append(
+        {
+            "check_id": "generate-skill:template-instance",
+            "name": "Validated template instance receipt",
+            "required": True,
+            "status": "fail" if template_instance_failures else "pass",
+            "summary": (
+                "Bound the current selection, exact parameters, builder identity, generated artifact inventory, "
+                "placeholder scan, and mapped native validator receipts."
+            ),
+        }
+    )
+    payload["evidence"].append(
+        {
+            "evidence_id": "template-instance-receipt",
+            "kind": "immutable_template_instance",
+            "fresh": not template_instance_failures,
+            "summary": (
+                f"status={template_instance_receipt.get('status')} "
+                f"receipt={template_instance_receipt.get('receipt_id')} "
+                f"fingerprint={template_instance_receipt.get('instance_fingerprint')}"
+            ),
+            "source_path": target_relative,
+        }
+    )
+    payload["template_harvest_review"] = {
+        "required": True,
+        "disposition": "not_harvestable",
+        "reason": (
+            "The SkillGuard validated base generated only a generic skill scaffold and did not create or materially deepen "
+            "a target-domain model. A later target-owned model task must issue its own harvest disposition."
+        ),
+        "allowed_dispositions": template_profile.get("catalog", {})
+        .get("harvest_policy", {})
+        .get("allowed_dispositions", []),
+        "claim_boundary": "This review covers only the generic scaffold instance; it does not decide target-domain reuse.",
+    }
+    payload["checks"].append(
+        {
+            "check_id": "generate-skill:template-harvest-review",
+            "name": "Template harvest disposition",
+            "required": True,
+            "status": "pass",
+            "summary": "Recorded an explicit disposition instead of silently turning a one-off generated scaffold into a domain template.",
+        }
+    )
     payload["global_router_refresh"] = {
         "required": True,
         "status": "required_after_generation",
@@ -6879,12 +7453,13 @@ def generate_skill(argv: list[str]) -> int:
         "block"
         if post_generation_blockers
         else "fail"
-        if missing_after_write or post_generation_failures
+        if missing_after_write or post_generation_failures or template_instance_failures
         else "pass"
     )
     payload["failures"] = [
         *[f"required scaffold file missing after write: {path}" for path in missing_after_write],
         *post_generation_failures,
+        *template_instance_failures,
     ]
     payload["blockers"] = post_generation_blockers
     attach_maintenance_record(

@@ -384,6 +384,7 @@ def _execution_proof_fingerprint(result: Mapping[str, Any]) -> str:
                 result.get("source_authority_hash", "")
             ),
             "command": str(result.get("command", "")),
+            "launch_plan_fingerprint": str(result.get("launch_plan_fingerprint", "")),
             "args": result.get("args", []),
             "declared_args": result.get("declared_args", []),
             "cwd_token": str(result.get("cwd_token", "")),
@@ -437,6 +438,8 @@ def _stable_persisted_result(result: Mapping[str, Any]) -> dict[str, Any]:
         "command": "",
         "command_token": "",
         "command_fingerprint": "",
+        "launch_plan": {},
+        "launch_plan_fingerprint": "",
         "args": [],
         "declared_args": [],
         "cwd_token": "",
@@ -469,6 +472,13 @@ def _stable_persisted_result(result: Mapping[str, Any]) -> dict[str, Any]:
         "termination_succeeded": False,
         "termination_method": "not_required",
         "termination_error_kind": "",
+        "cleanup_confirmed": False,
+        "cleanup_confirmation_method": "not_required",
+        "descendant_count_before": 0,
+        "descendant_count_after": 0,
+        "remaining_descendant_pids": [],
+        "cleanup_blocker_ref": "",
+        "cleanup_blocker_hash": "",
         "proof_fingerprint": "",
         "timeout_receipt_write_status": "not_applicable",
         "timeout_receipt_error_kind": "",
@@ -1908,6 +1918,7 @@ def execute_check(
     progress_callback: ProgressCallback | None = None,
     process_started_callback: ProcessStartedCallback | None = None,
     heartbeat_interval_seconds: float = 5.0,
+    resolved_launch_plan: ResolvedLaunchPlan | None = None,
 ) -> Mapping[str, Any]:
     check, manifest = _declared_check_for_run(run_root, check)
     check_id = str(check["check_id"])
@@ -1941,19 +1952,32 @@ def execute_check(
             "executed": False,
             "claim_boundary": "Unsupported checks remain not-run and cannot pass.",
         }
-    command = check.get("command")
-    args = check.get("args", [])
-    if not isinstance(command, str) or not command:
-        raise CheckRunnerError("check_command_missing", "command is required", check_id)
-    if not isinstance(args, list) or any(not isinstance(item, str) for item in args):
-        raise CheckRunnerError("check_args_invalid", "args must be an array of strings", check_id)
-    declared_args = list(args)
-    argument_tokens = {
-        "{{target_root}}": str(target_root.resolve()),
-        "{{repository_root}}": str(repository_root.resolve()),
-        "{{run_root}}": str(run_root.resolve()),
-    }
-    args = [argument_tokens.get(item, item) for item in args]
+    (
+        current_launch_plan,
+        declared_args,
+        args,
+        cwd,
+        environment,
+        execution_environment,
+        execution_environment_fingerprint,
+    ) = _resolve_check_launch_plan(
+        check,
+        target_root=target_root,
+        repository_root=repository_root,
+        run_root=run_root,
+    )
+    command = str(check.get("command", ""))
+    if (
+        resolved_launch_plan is not None
+        and resolved_launch_plan.record.get("launch_plan_fingerprint")
+        != current_launch_plan.record.get("launch_plan_fingerprint")
+    ):
+        raise CheckRunnerError(
+            "launch_plan_changed_after_execution_key",
+            "command resolution changed between receipt lookup and process launch",
+            check_id,
+        )
+    launch_plan = resolved_launch_plan or current_launch_plan
     projected_declared_args = [
         redact_runtime_text(
             item,
@@ -1967,13 +1991,6 @@ def execute_check(
     ]
     cwd_token = str(check.get("cwd_token", "target_root"))
     cwd_relative = str(check.get("cwd_relative", "."))
-    cwd = _resolve_cwd(
-        cwd_token,
-        target_root=target_root,
-        repository_root=repository_root,
-        run_root=run_root,
-        relative=cwd_relative,
-    )
     if not cwd.is_dir():
         return {
             **base,
@@ -2053,7 +2070,45 @@ def execute_check(
         deadline_at=deadline_at,
         callback=progress_callback,
     )
+    if not launch_plan.argv:
+        _emit_execution_event(
+            run_root,
+            event_type="end",
+            step_id=current_step_id,
+            check_id=check_id,
+            completed_count=completed_before,
+            total_count=total_count,
+            elapsed_seconds=time.monotonic() - started_monotonic,
+            started_at=started,
+            deadline_at=deadline_at,
+            callback=progress_callback,
+            status="not_run",
+        )
+        return {
+            **base,
+            "status": "not_run",
+            "reason": str(launch_plan.record.get("resolution_error_code", "launch_resolution_failed")),
+            "executed": False,
+            "process_started": False,
+            "launch_error_kind": str(launch_plan.record.get("resolution_error_kind", "LaunchPlanError")),
+            "terminal_kind": "launch_error",
+            "command": command_token(command),
+            "command_token": command_token(command),
+            "command_fingerprint": command_fingerprint(command, args),
+            "args": projected_declared_args,
+            "declared_args": projected_declared_args,
+            "cwd_token": cwd_token,
+            "cwd_relative": cwd_relative,
+            "launch_plan": dict(launch_plan.record),
+            "launch_plan_fingerprint": str(launch_plan.record.get("launch_plan_fingerprint", "")),
+            "step_id": current_step_id,
+            "started_at": started,
+            "deadline_at": deadline_at,
+            "finished_at": utc_now_precise(),
+            "claim_boundary": "A blocked launch plan is a non-run and never passing evidence.",
+        }
     timed_out = False
+    cancelled = False
     exit_code: int | None = None
     termination_facts: Mapping[str, Any] = {
         "termination_scope": "none",
@@ -2061,13 +2116,18 @@ def execute_check(
         "termination_succeeded": False,
         "termination_method": "not_required",
         "termination_error_kind": "",
+        "cleanup_confirmed": True,
+        "cleanup_confirmation_method": "not_required",
+        "descendant_count_before": 0,
+        "descendant_count_after": 0,
+        "remaining_descendant_pids": [],
     }
     with tempfile.TemporaryFile(mode="w+b") as stdout_file, tempfile.TemporaryFile(
         mode="w+b"
     ) as stderr_file:
         try:
             process = subprocess.Popen(
-                [command, *args],
+                launch_plan.popen_args,
                 cwd=cwd,
                 env=environment,
                 stdin=subprocess.DEVNULL,
@@ -2107,6 +2167,8 @@ def execute_check(
                 "command": command_token(command),
                 "command_token": command_token(command),
                 "command_fingerprint": command_fingerprint(command, args),
+                "launch_plan": dict(launch_plan.record),
+                "launch_plan_fingerprint": str(launch_plan.record["launch_plan_fingerprint"]),
                 "args": projected_declared_args,
                 "declared_args": projected_declared_args,
                 "cwd_token": cwd_token,
@@ -2120,17 +2182,36 @@ def execute_check(
         next_heartbeat = started_monotonic + heartbeat_interval
         last_output_bytes = 0
         last_progress_at = started_monotonic
-        while process.poll() is None:
-            now = time.monotonic()
-            elapsed = now - started_monotonic
-            if now >= next_heartbeat:
-                stdout_bytes = os.fstat(stdout_file.fileno()).st_size
-                stderr_bytes = os.fstat(stderr_file.fileno()).st_size
-                output_bytes = stdout_bytes + stderr_bytes
-                if output_bytes > last_output_bytes:
+        try:
+            while process.poll() is None:
+                now = time.monotonic()
+                elapsed = now - started_monotonic
+                if now >= next_heartbeat:
+                    stdout_bytes = os.fstat(stdout_file.fileno()).st_size
+                    stderr_bytes = os.fstat(stderr_file.fileno()).st_size
+                    output_bytes = stdout_bytes + stderr_bytes
+                    if output_bytes > last_output_bytes:
+                        _emit_execution_event(
+                            run_root,
+                            event_type="progress",
+                            step_id=current_step_id,
+                            check_id=check_id,
+                            completed_count=completed_before,
+                            total_count=total_count,
+                            elapsed_seconds=elapsed,
+                            started_at=started,
+                            deadline_at=deadline_at,
+                            callback=progress_callback,
+                            stdout_total_bytes=stdout_bytes,
+                            stderr_total_bytes=stderr_bytes,
+                            progress_delta_bytes=output_bytes - last_output_bytes,
+                            no_progress_ms=0,
+                        )
+                        last_output_bytes = output_bytes
+                        last_progress_at = now
                     _emit_execution_event(
                         run_root,
-                        event_type="progress",
+                        event_type="heartbeat",
                         step_id=current_step_id,
                         check_id=check_id,
                         completed_count=completed_before,
@@ -2141,8 +2222,8 @@ def execute_check(
                         callback=progress_callback,
                         stdout_total_bytes=stdout_bytes,
                         stderr_total_bytes=stderr_bytes,
-                        progress_delta_bytes=output_bytes - last_output_bytes,
-                        no_progress_ms=0,
+                        progress_delta_bytes=0,
+                        no_progress_ms=max(0, round((now - last_progress_at) * 1000)),
                     )
                     last_output_bytes = output_bytes
                     last_progress_at = now
@@ -2225,7 +2306,11 @@ def execute_check(
         else "failed"
     )
     reason = (
-        "timeout"
+        "cleanup_unconfirmed"
+        if (timed_out or cancelled) and not cleanup_confirmed
+        else "cancelled"
+        if cancelled
+        else "timeout"
         if timed_out
         else "cleanup_unconfirmed"
         if not cleanup_confirmed
@@ -2250,6 +2335,8 @@ def execute_check(
         "command": command_token(command),
         "command_token": command_token(command),
         "command_fingerprint": command_fingerprint(command, args),
+        "launch_plan": dict(launch_plan.record),
+        "launch_plan_fingerprint": str(launch_plan.record["launch_plan_fingerprint"]),
         "args": projected_declared_args,
         "declared_args": projected_declared_args,
         "cwd_token": cwd_token,
@@ -2335,6 +2422,9 @@ def execute_check(
                 "check_id": check_id,
                 "command_token": command_token(command),
                 "command_fingerprint": command_fingerprint(command, args),
+                "launch_plan_fingerprint": str(launch_plan.record["launch_plan_fingerprint"]),
+                "resolved_program_identity": str(launch_plan.record["resolved_program_identity"]),
+                "resolved_interpreter_identity": str(launch_plan.record["interpreter_identity"]),
                 "started_at": started,
                 "deadline_at": deadline_at,
                 "finished_at": finished_at,

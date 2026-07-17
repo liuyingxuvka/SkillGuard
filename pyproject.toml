@@ -23,6 +23,10 @@ classifiers = [
   "Topic :: Software Development :: Quality Assurance"
 ]
 
+[tool.setuptools]
+packages = ["skillguard_v2"]
+package-dir = { "" = ".agents/skills/skillguard/scripts" }
+
 [tool.skillguard.repository]
 baseline_version = "0.3.3"
 implementation_status = "local-cli-dispatch-runtime-contract"

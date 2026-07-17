@@ -1617,6 +1617,67 @@
   "release_eligible": true,
   "schema_version": "skillguard.contract_source.v2",
   "skill_id": "skillguard",
+  "supervision_fragment_refs": [
+    {
+      "fragment_id": "template-selection-supervision",
+      "revision": "1",
+      "fragment_digest": "sha256:a488f76a50d9b64034be1e3bd9dde24c827addc0035b8b4d80628436db40e23f",
+      "slot_bindings": {
+        "native-route-step": [
+          "step:resolve-template-native-route"
+        ],
+        "applicability-step": [
+          "step:validate-template-applicability"
+        ],
+        "selection-check": [
+          "check:self:template-lifecycle-model-v1",
+          "check:self:template-protocol-v1"
+        ],
+        "selection-receipt-artifact": [
+          "artifact:self-template-selection-receipt"
+        ]
+      }
+    },
+    {
+      "fragment_id": "template-instance-supervision",
+      "revision": "1",
+      "fragment_digest": "sha256:b81b2d27b6ef52f277944cf3733ddc0c0ec4035f06a100402e9a62ec382533b1",
+      "slot_bindings": {
+        "preview-step": [
+          "step:materialize-template-preview"
+        ],
+        "builder-step": [
+          "step:run-target-native-template-builder"
+        ],
+        "native-validator-check": [
+          "check:self:template-protocol-v1"
+        ],
+        "instance-receipt-artifact": [
+          "artifact:self-template-instance-receipt"
+        ]
+      }
+    },
+    {
+      "fragment_id": "template-installation-supervision",
+      "revision": "1",
+      "fragment_digest": "sha256:ab3619571e96af090592584eda962f1b8af7665de366e24b442de0e635048b72",
+      "slot_bindings": {
+        "stage-step": [
+          "step:stage-template-installation-projection"
+        ],
+        "activation-step": [
+          "step:activate-staged-suite-pair"
+        ],
+        "installed-check": [
+          "check:self:installation-safety",
+          "check:self:install-suite-provenance"
+        ],
+        "installation-receipt-artifact": [
+          "artifact:self-template-installation-receipt"
+        ]
+      }
+    }
+  ],
   "step_bindings": [
     {
       "action": {

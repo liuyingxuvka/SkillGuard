@@ -480,6 +480,19 @@ def validate_timeout_receipt(receipt: Mapping[str, Any], expected_schema: str) -
         raise ExecutionRecordError("timeout_receipt_kind_invalid")
     if receipt.get("policy_version") != TIMEOUT_POLICY_VERSION:
         raise ExecutionRecordError("timeout_receipt_policy_invalid")
+    if expected_schema == CHECK_TIMEOUT_SCHEMA:
+        required.update(
+            {
+                "launch_plan_fingerprint",
+                "resolved_program_identity",
+                "resolved_interpreter_identity",
+                "cleanup_confirmed",
+                "cleanup_confirmation_method",
+                "descendant_count_before",
+                "descendant_count_after",
+                "remaining_descendant_pids",
+            }
+        )
     missing = sorted(required - set(receipt))
     if missing:
         raise ExecutionRecordError("timeout_receipt_fields_missing", ",".join(missing))
@@ -958,12 +971,21 @@ def release_process_tree_containment(
 
 
 def terminate_process_tree(process: subprocess.Popen[Any]) -> Mapping[str, Any]:
+    before_rows, before_method = _process_parent_rows()
+    descendants_before = (
+        _descendants(process.pid, before_rows) if before_rows is not None else set()
+    )
     facts: dict[str, Any] = {
         "termination_scope": "process_tree",
         "termination_attempted": True,
         "termination_succeeded": False,
         "termination_method": "",
         "termination_error_kind": "",
+        "cleanup_confirmed": False,
+        "cleanup_confirmation_method": before_method,
+        "descendant_count_before": len(descendants_before),
+        "descendant_count_after": -1,
+        "remaining_descendant_pids": [],
     }
     if process.poll() is not None:
         facts.update(
@@ -972,6 +994,17 @@ def terminate_process_tree(process: subprocess.Popen[Any]) -> Mapping[str, Any]:
                 "termination_method": "already_exited",
             }
         )
+        after_rows, after_method = _process_parent_rows()
+        if before_rows is not None and after_rows is not None:
+            remaining = sorted(pid for pid in descendants_before if pid in after_rows)
+            facts.update(
+                {
+                    "cleanup_confirmed": not remaining,
+                    "cleanup_confirmation_method": f"{before_method}+{after_method}",
+                    "descendant_count_after": len(remaining),
+                    "remaining_descendant_pids": remaining,
+                }
+            )
         return facts
     try:
         if os.name == "nt":
@@ -1011,4 +1044,23 @@ def terminate_process_tree(process: subprocess.Popen[Any]) -> Mapping[str, Any]:
             facts["termination_error_kind"] = (
                 f"{type(exc).__name__}:{type(fallback_exc).__name__}"
             )
+    after_rows, after_method = _process_parent_rows()
+    if before_rows is not None and after_rows is not None:
+        newly_attached = _descendants(process.pid, after_rows)
+        remaining = sorted(
+            pid for pid in descendants_before | newly_attached if pid in after_rows
+        )
+        facts.update(
+            {
+                "cleanup_confirmed": process.poll() is not None and not remaining,
+                "cleanup_confirmation_method": f"{before_method}+{after_method}",
+                "descendant_count_after": len(remaining),
+                "remaining_descendant_pids": remaining,
+            }
+        )
+    else:
+        facts["cleanup_confirmation_method"] = f"{before_method}+{after_method}"
+    facts["termination_succeeded"] = bool(
+        facts["termination_succeeded"] and facts["cleanup_confirmed"]
+    )
     return facts

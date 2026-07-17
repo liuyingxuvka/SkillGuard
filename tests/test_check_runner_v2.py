@@ -20,6 +20,7 @@ from skillguard_v2.check_runner import (
     CheckRunnerError,
     _installed_runtime_input_component,
     execute_check,
+    get_or_execute_check,
     hard_evidence_from_check,
     load_check_result,
     store_check_result,

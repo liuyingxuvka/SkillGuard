@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_template_profile_v1.schema.json",
+  "title": "SkillGuard current template profile v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "profile_kind",
+    "catalog",
+    "native_route_receipt",
+    "applicability_receipt",
+    "selection_receipt",
+    "source_bindings",
+    "parameters",
+    "materialized_preview",
+    "content_components",
+    "claim_boundary",
+    "profile_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.template_profile.v1"},
+    "profile_kind": {"enum": ["skillguard_validated_base", "target_owned_selection"]},
+    "catalog": {"$ref": "skillguard_template_pack_protocol_v1.schema.json#/$defs/catalog"},
+    "native_route_receipt": {"$ref": "skillguard_template_pack_protocol_v1.schema.json#/$defs/nativeRouteReceipt"},
+    "applicability_receipt": {"$ref": "skillguard_template_pack_protocol_v1.schema.json#/$defs/applicabilityReceipt"},
+    "selection_receipt": {"$ref": "skillguard_template_pack_protocol_v1.schema.json#/$defs/selectionReceipt"},
+    "source_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["role", "path", "sha256"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!\\\\\\\\)(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$"
+          },
+          "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "parameters": {"type": "object"},
+    "materialized_preview": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["status", "selection_receipt_hash", "source_input_hash", "builder_content_hash", "artifacts", "unresolved_placeholders", "claim_boundary", "preview_fingerprint"],
+          "properties": {
+            "status": {"enum": ["current", "blocked"]},
+            "selection_receipt_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            "source_input_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            "builder_content_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["relative_path", "sha256"],
+                "properties": {
+                  "relative_path": {"type": "string", "minLength": 1},
+                  "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+                },
+                "additionalProperties": false
+              }
+            },
+            "unresolved_placeholders": {"type": "array", "items": {"type": "string"}},
+            "claim_boundary": {"type": "string", "minLength": 1},
+            "preview_fingerprint": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["status", "selection_receipt_hash", "expected_artifacts", "unresolved_placeholders", "claim_boundary", "preview_fingerprint"],
+          "properties": {
+            "status": {"enum": ["target_builder_required", "blocked"]},
+            "selection_receipt_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            "expected_artifacts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["template_id", "artifact_id", "path_template", "builder_id"],
+                "properties": {
+                  "template_id": {"type": "string", "minLength": 1},
+                  "artifact_id": {"type": "string", "minLength": 1},
+                  "path_template": {"type": "string", "minLength": 1},
+                  "builder_id": {"type": "string", "minLength": 1}
+                },
+                "additionalProperties": false
+              }
+            },
+            "unresolved_placeholders": {"type": "array", "items": {"type": "string"}},
+            "claim_boundary": {"type": "string", "minLength": 1},
+            "preview_fingerprint": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "content_components": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+    },
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "profile_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

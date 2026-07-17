@@ -119,9 +119,12 @@
       "git_baseline": {
         "primary_branch": "master",
         "primary_head": "88d338388c191281df7ed9278f2c0534ddb003a3",
-        "active_peer_branch": "codex/portfolio-calibration-runtime",
-        "active_peer_head": "cfeef58ffc9c0ec018d5e6b493a16f1c41be428b",
-        "handoff_status": "required_before_shared-runtime-edit"
+        "peer_source_branch": "codex/portfolio-calibration-runtime",
+        "peer_source_head": "cfeef58ffc9c0ec018d5e6b493a16f1c41be428b",
+        "integration_branch": "codex/validated-template-pack-integration",
+        "integration_baseline_head": "ea19d73ad6cb0e9c58916b22d53277e52e5ef50f",
+        "planning_merge_head": "6128d84bacf7615639c2c66c6d820cebdcdb1b21",
+        "handoff_status": "reconciled_checkpoint_preserves_peer_work"
       },
       "final_git_identity": "not_frozen"
     },

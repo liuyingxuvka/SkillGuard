@@ -1,0 +1,7 @@
+## Validated Template Pack Installation
+
+- Stage the compiler-owned installation projection and verify content before activation.
+- Activate the maintained target transactionally and run installed currentness separately from native validation.
+- Restore the previous active projection when a required post-activation check fails.
+- Refresh the global router only when the target route projection changed; the router never selects a domain template.
+- Keep installation, source, package/runtime, receipt, and Git identities distinct.

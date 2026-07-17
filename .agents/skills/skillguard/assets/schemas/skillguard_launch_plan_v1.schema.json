@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_launch_plan_v1.schema.json",
+  "title": "SkillGuard canonical launch plan v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "requested_command",
+    "requested_args",
+    "resolved_program",
+    "resolved_program_identity",
+    "adapter",
+    "interpreter",
+    "interpreter_identity",
+    "argv",
+    "cwd",
+    "platform",
+    "environment_fingerprint",
+    "claim_boundary",
+    "launch_plan_fingerprint"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.launch_plan.v1"},
+    "status": {"const": "blocked"},
+    "requested_command": {"type": "string", "minLength": 1},
+    "requested_args": {"type": "array", "items": {"type": "string"}},
+    "resolved_program": {"type": "string"},
+    "resolved_program_identity": {"type": "string", "pattern": "^(?:|sha256:[0-9a-f]{64})$"},
+    "adapter": {"enum": ["direct_executable", "windows_command_shim", "windows_powershell_script", "windows_python_script", "unresolved"]},
+    "interpreter": {"type": "string"},
+    "interpreter_identity": {"type": "string", "pattern": "^(?:|sha256:[0-9a-f]{64})$"},
+    "argv": {"type": "array", "items": {"type": "string"}},
+    "cwd": {
+      "type": "object",
+      "required": ["token", "relative", "resolved_identity"],
+      "properties": {
+        "token": {"type": "string", "minLength": 1},
+        "relative": {"type": "string", "minLength": 1},
+        "resolved_identity": {"type": "string", "pattern": "^[0-9A-F]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "platform": {"type": "string", "minLength": 1},
+    "environment_fingerprint": {"type": "string", "pattern": "^[0-9A-F]{64}$"},
+    "resolution_error_code": {"type": "string", "minLength": 1},
+    "resolution_error_kind": {"type": "string", "minLength": 1},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "launch_plan_fingerprint": {"type": "string", "pattern": "^[0-9A-F]{64}$"}
+  },
+  "additionalProperties": false
+}

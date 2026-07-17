@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_skill_blueprint_v2.schema.json",
+  "title": "SkillGuard current skill blueprint v2",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "blueprint_id",
+    "source_command",
+    "source_input",
+    "target",
+    "skill",
+    "workflow_mode",
+    "closure_scope",
+    "evidence_policy",
+    "safe_edit_scope",
+    "phase_plan",
+    "evidence_gates",
+    "handoffs",
+    "closure_report",
+    "residual_risk",
+    "claim_boundary",
+    "template_profile"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.skill_blueprint.v2"},
+    "blueprint_id": {"type": "string", "minLength": 1},
+    "source_command": {"const": "plan-skill"},
+    "source_input": {"type": "string", "minLength": 1},
+    "target": {"type": "string", "minLength": 1},
+    "skill": {
+      "type": "object",
+      "required": ["name", "description", "purpose", "target_path", "use_when", "do_not_use_when"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "purpose": {"type": "string", "minLength": 1},
+        "target_path": {"type": "string", "minLength": 1},
+        "use_when": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "do_not_use_when": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "workflow_mode": {"const": "create"},
+    "closure_scope": {"type": "string", "minLength": 1},
+    "evidence_policy": {"type": "object"},
+    "safe_edit_scope": {"type": "object"},
+    "phase_plan": {"type": "array", "minItems": 1},
+    "evidence_gates": {"type": "array", "minItems": 1},
+    "handoffs": {"type": "array", "minItems": 1},
+    "closure_report": {"type": "object"},
+    "residual_risk": {"type": "array", "items": {"type": "string"}},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "template_profile": {"$ref": "skillguard_template_profile_v1.schema.json"}
+  },
+  "additionalProperties": false
+}

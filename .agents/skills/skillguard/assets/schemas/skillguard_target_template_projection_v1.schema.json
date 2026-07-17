@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_target_template_projection_v1.schema.json",
+  "title": "SkillGuard target-owned neutral template projection v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "target_id",
+    "native_owner_id",
+    "family_id",
+    "route_id",
+    "request_fingerprint",
+    "catalog",
+    "applicability_results",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.target_template_projection.v1"},
+    "target_id": {"type": "string", "minLength": 1},
+    "native_owner_id": {"type": "string", "minLength": 1},
+    "family_id": {"type": "string", "minLength": 1},
+    "route_id": {"type": "string", "minLength": 1},
+    "request_fingerprint": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "catalog": {"type": "object"},
+    "applicability_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "template_id",
+          "eligible",
+          "predicate_evidence_ids",
+          "forbidden_clearance_evidence_ids",
+          "reasons"
+        ],
+        "properties": {
+          "template_id": {"type": "string", "minLength": 1},
+          "eligible": {"type": "boolean"},
+          "predicate_evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "forbidden_clearance_evidence_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "reasons": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

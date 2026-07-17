@@ -108,6 +108,9 @@ Rollback is transaction-based: before activation, discard the isolated stage; af
 
 ## Open Questions
 
-- Which exact active-runtime commit/worktree will be handed to this change as its prerequisite identity?
 - Which Guard family will be the first fully installed pilot after its current native work is frozen?
 - Which existing contract-source repetitions qualify as SkillGuard-owned fragments after compiler component analysis, rather than merely looking similar?
+
+## Resolved Integration Baseline
+
+- The 142-path peer runtime was preserved as commit `ea19d73ad6cb0e9c58916b22d53277e52e5ef50f` on `codex/validated-template-pack-integration`; the official OpenSpec planning change was then merged as `6128d84bacf7615639c2c66c6d820cebdcdb1b21`. This branch is the sole shared-runtime integration baseline for the template-pack program.

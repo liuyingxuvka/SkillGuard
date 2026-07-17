@@ -917,6 +917,22 @@ class ContractCompilerV2Tests(unittest.TestCase):
         result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
         self.assertIn("judged_step_rubric_unknown", {row.code for row in result.findings})
 
+    def test_platform_shell_bridge_is_rejected_from_contract_source(self) -> None:
+        check = self.binding["checks"][0]
+        check.update(
+            {
+                "kind": "command",
+                "command": "cmd.exe",
+                "args": ["/c", "openspec", "validate"],
+            }
+        )
+        self._write_binding(self.binding)
+        result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
+        self.assertIn(
+            "platform_bridge_must_use_launch_resolver",
+            {row.code for row in result.findings},
+        )
+
     def test_generic_supervisor_claims_executes_closes_and_replays_selected_route(self) -> None:
         static_obligation = "obligation:static-audit"
         for profile in self.binding["closure_profiles"]:

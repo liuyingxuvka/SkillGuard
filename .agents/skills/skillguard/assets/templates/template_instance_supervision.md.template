@@ -1,0 +1,7 @@
+## Validated Template Pack Instance
+
+- Bind the instance to one current selection receipt, exact parameters, and target builder identities.
+- Require the generated artifact inventory to equal the selected manifests and scan every output for unresolved placeholders.
+- Consume every target-declared native validator receipt; failed, skipped, stale, blocked, or not-run validation keeps the instance blocked.
+- Keep the instance fingerprint separate from source, installed projection, release, and Git identities.
+- Require a harvest disposition after a new or materially deepened reusable model.

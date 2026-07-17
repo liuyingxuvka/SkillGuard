@@ -109,6 +109,22 @@ FULL_ADMISSION_REASON_CODES = (
     "all_owner_component_changed",
 )
 
+def _is_transient_implementation_output(relative: Path) -> bool:
+    parts = relative.parts
+    if set(parts) & TRANSIENT_IMPLEMENTATION_PARTS:
+        return True
+    if relative.suffix.lower() in TRANSIENT_IMPLEMENTATION_SUFFIXES:
+        return True
+    if relative.name in TRANSIENT_IMPLEMENTATION_FILES:
+        return True
+    if "openspec" in parts and "changes" in parts:
+        changes_index = parts.index("changes")
+        change_tail = parts[changes_index + 1 :]
+        if relative.name == "tasks.md" or "evidence" in change_tail:
+            return True
+    return False
+
+
 @dataclass(frozen=True)
 class CompileResult:
     ok: bool
@@ -1530,6 +1546,9 @@ def _build_outputs(
             "prove target execution, user-visible quality, full closure, installation, or publication."
         ),
     }
+    if supervision_fragments:
+        manifest["supervision_fragments"] = [dict(item) for item in supervision_fragments]
+        manifest["content_components"] = dict(fragment_content_components or {})
     manifest["manifest_hash"] = canonical_hash(manifest)
     return contract, manifest
 
@@ -1576,6 +1595,15 @@ def compile_skill_contract(
         "entrypoint": source_file_hash(entrypoint) if entrypoint.is_file() else "MISSING",
         "model_export": canonical_hash(model),
     }
+    compiled_content_components: dict[str, str] = {}
+    if fragment_result is not None:
+        try:
+            compiled_content_components.update(template_runtime_content_components())
+        except ValueError as exc:
+            findings.append(SchemaFinding("template_runtime_component_missing", "$.supervision_fragment_refs", str(exc)))
+        compiled_content_components.update(fragment_result.content_components)
+        for component_id, digest in compiled_content_components.items():
+            source_fingerprints[f"fragment:{component_id}"] = digest
     for index, path_text in enumerate(binding.get("implementation_paths", [])):
         try:
             implementation_path = _ensure_under(repo_root / str(path_text), repo_root, f"$.implementation_paths[{index}]")

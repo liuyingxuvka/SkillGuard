@@ -32,6 +32,35 @@
 - registry_hash: sha256:9c1ab488fed574e5a58325e2850fdd91950b1c37607d3ab463ff639d7bedb37b
 - registry_path: .agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json
 
+## Validated Template Pack Selection
+
+- Ask the selected target skill for its current native route receipt before consulting its catalog.
+- Require target-authored applicability and forbidden-condition evidence for every frozen candidate.
+- Reconcile zero, one, and many candidates without lexical scoring or guessed family semantics.
+- Permit composition only when dependencies, mutual compatibility, declared order, and single field ownership are complete.
+- Materialize a read-only preview and keep ambiguity, no-match, stale, and rejected-candidate reasons visible.
+- Treat the selection receipt as planning evidence only; it does not prove instantiation or closure.
+
+## Validated Template Pack Instance
+
+- Bind the instance to one current selection receipt, exact parameters, and target builder identities.
+- Require the generated artifact inventory to equal the selected manifests and scan every output for unresolved placeholders.
+- Consume every target-declared native validator receipt; failed, skipped, stale, blocked, or not-run validation keeps the instance blocked.
+- Keep the instance fingerprint separate from source, installed projection, release, and Git identities.
+- Require a harvest disposition after a new or materially deepened reusable model.
+
+## Validated Template Pack Installation
+
+- Stage the compiler-owned installation projection and verify content before activation.
+- Activate the maintained target transactionally and run installed currentness separately from native validation.
+- Restore the previous active projection when a required post-activation check fails.
+- Refresh the global router only when the target route projection changed; the router never selects a domain template.
+- Keep installation, source, package/runtime, receipt, and Git identities distinct.
+
+- template_lifecycle_hash: sha256:602df2d488f470fce94f187803c27a625180eae549355bce982e474fc58aa555
+- template_domain_selection_owner: selected_target_skill
+- global_router_selects_domain_template: false
+
 ### Current Route Index
 - `flowguard-agent-workflow-rehearsal` -> .agents/skills/flowguard-agent-workflow-rehearsal/SKILL.md (default_route=route:agent_workflow_rehearsal, integration=native-integrated)
 - `flowguard-architecture-reduction` -> .agents/skills/flowguard-architecture-reduction/SKILL.md (default_route=route:architecture_reduction, integration=native-integrated)

@@ -1,0 +1,321 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_template_pack_protocol_v1.schema.json",
+  "title": "SkillGuard validated Template Pack protocol v1",
+  "oneOf": [
+    {"$ref": "#/$defs/manifest"},
+    {"$ref": "#/$defs/catalog"},
+    {"$ref": "#/$defs/nativeRouteReceipt"},
+    {"$ref": "#/$defs/applicabilityReceipt"},
+    {"$ref": "#/$defs/selectionReceipt"},
+    {"$ref": "#/$defs/instanceReceipt"}
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$"
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "stringArray": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "nonEmptyStringArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!\\\\\\\\)(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$"
+    },
+    "parameterProperty": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["string", "integer", "number", "boolean", "array", "object"]},
+        "enum": {"type": "array", "minItems": 1},
+        "default": {},
+        "pattern": {"type": "string"},
+        "minimum": {"type": "number"},
+        "maximum": {"type": "number"}
+      },
+      "additionalProperties": false
+    },
+    "parameterSchema": {
+      "type": "object",
+      "required": ["type", "properties", "required", "additionalProperties"],
+      "properties": {
+        "type": {"const": "object"},
+        "properties": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/parameterProperty"}
+        },
+        "required": {"$ref": "#/$defs/stringArray"},
+        "additionalProperties": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "artifactDeclaration": {
+      "type": "object",
+      "required": ["artifact_id", "path_template", "content_template_hash"],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/id"},
+        "path_template": {"$ref": "#/$defs/relativePath"},
+        "content_template_hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "builderDeclaration": {
+      "type": "object",
+      "required": ["builder_id", "entrypoint", "content_hash"],
+      "properties": {
+        "builder_id": {"$ref": "#/$defs/id"},
+        "entrypoint": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!\\\\\\\\).+$"},
+        "content_hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "validatorDeclaration": {
+      "type": "object",
+      "required": ["validator_id", "check_id", "evidence_domain", "content_hash"],
+      "properties": {
+        "validator_id": {"$ref": "#/$defs/id"},
+        "check_id": {"$ref": "#/$defs/id"},
+        "evidence_domain": {"$ref": "#/$defs/id"},
+        "content_hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "promptFragment": {
+      "type": "object",
+      "required": ["fragment_id", "content_hash"],
+      "properties": {
+        "fragment_id": {"$ref": "#/$defs/id"},
+        "content_hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "fixtures": {
+      "type": "object",
+      "required": ["known_good_ids", "known_bad_by_failure", "ambiguity_ids", "stale_ids"],
+      "properties": {
+        "known_good_ids": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "known_bad_by_failure": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/nonEmptyStringArray"}
+        },
+        "ambiguity_ids": {"$ref": "#/$defs/stringArray"},
+        "stale_ids": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "manifest": {
+      "type": "object",
+      "required": [
+        "schema_version", "template_id", "revision", "template_kind",
+        "native_owner_id", "family_id", "route_ids",
+        "applicability_predicate_ids", "forbidden_condition_ids",
+        "dependencies", "compatible_with", "conflicts_with",
+        "dominates_template_ids", "composable", "composition_order",
+        "is_validated_base", "field_ownership", "parameter_schema",
+        "artifacts", "builder", "validators", "prompt_fragments",
+        "protected_failure_ids", "fixtures", "claim_boundary",
+        "manifest_digest"
+      ],
+      "properties": {
+        "schema_version": {"const": "skillguard.template_manifest.v1"},
+        "template_id": {"$ref": "#/$defs/id"},
+        "revision": {"type": "string", "minLength": 1},
+        "template_kind": {"enum": ["base", "profile", "fragment"]},
+        "native_owner_id": {"$ref": "#/$defs/id"},
+        "family_id": {"$ref": "#/$defs/id"},
+        "route_ids": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "applicability_predicate_ids": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "forbidden_condition_ids": {"$ref": "#/$defs/stringArray"},
+        "dependencies": {"$ref": "#/$defs/stringArray"},
+        "compatible_with": {"$ref": "#/$defs/stringArray"},
+        "conflicts_with": {"$ref": "#/$defs/stringArray"},
+        "dominates_template_ids": {"$ref": "#/$defs/stringArray"},
+        "composable": {"type": "boolean"},
+        "composition_order": {"type": "integer", "minimum": 0},
+        "is_validated_base": {"type": "boolean"},
+        "field_ownership": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "parameter_schema": {"$ref": "#/$defs/parameterSchema"},
+        "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifactDeclaration"}},
+        "builder": {"$ref": "#/$defs/builderDeclaration"},
+        "validators": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/validatorDeclaration"}},
+        "prompt_fragments": {"type": "array", "items": {"$ref": "#/$defs/promptFragment"}},
+        "protected_failure_ids": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "fixtures": {"$ref": "#/$defs/fixtures"},
+        "claim_boundary": {"type": "string", "minLength": 1},
+        "manifest_digest": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "catalog": {
+      "type": "object",
+      "required": [
+        "schema_version", "catalog_id", "revision", "native_owner_id",
+        "family_id", "base_template_id", "templates", "harvest_policy",
+        "claim_boundary", "catalog_digest"
+      ],
+      "properties": {
+        "schema_version": {"const": "skillguard.template_catalog.v1"},
+        "catalog_id": {"$ref": "#/$defs/id"},
+        "revision": {"type": "string", "minLength": 1},
+        "native_owner_id": {"$ref": "#/$defs/id"},
+        "family_id": {"$ref": "#/$defs/id"},
+        "base_template_id": {"type": "string"},
+        "templates": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/manifest"}},
+        "harvest_policy": {
+          "type": "object",
+          "required": ["required", "allowed_dispositions"],
+          "properties": {
+            "required": {"const": true},
+            "allowed_dispositions": {"$ref": "#/$defs/nonEmptyStringArray"}
+          },
+          "additionalProperties": false
+        },
+        "claim_boundary": {"type": "string", "minLength": 1},
+        "catalog_digest": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "nativeRouteReceipt": {
+      "type": "object",
+      "required": [
+        "schema_version", "target_id", "native_owner_id", "family_id",
+        "route_id", "request_fingerprint", "catalog_id", "status",
+        "claim_boundary", "receipt_id", "receipt_hash"
+      ],
+      "properties": {
+        "schema_version": {"const": "skillguard.native_route_receipt.v1"},
+        "target_id": {"$ref": "#/$defs/id"},
+        "native_owner_id": {"$ref": "#/$defs/id"},
+        "family_id": {"$ref": "#/$defs/id"},
+        "route_id": {"$ref": "#/$defs/id"},
+        "request_fingerprint": {"$ref": "#/$defs/hash"},
+        "catalog_id": {"$ref": "#/$defs/id"},
+        "status": {"const": "passed"},
+        "claim_boundary": {"type": "string", "minLength": 1},
+        "receipt_id": {"type": "string", "pattern": "^native-route-[0-9a-f]{24}$"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "applicabilityResult": {
+      "type": "object",
+      "required": [
+        "template_id", "manifest_digest", "eligible",
+        "predicate_evidence_ids", "forbidden_clearance_evidence_ids", "reasons"
+      ],
+      "properties": {
+        "template_id": {"$ref": "#/$defs/id"},
+        "manifest_digest": {"$ref": "#/$defs/hash"},
+        "eligible": {"type": "boolean"},
+        "predicate_evidence_ids": {"$ref": "#/$defs/stringArray"},
+        "forbidden_clearance_evidence_ids": {"$ref": "#/$defs/stringArray"},
+        "reasons": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "applicabilityReceipt": {
+      "type": "object",
+      "required": [
+        "schema_version", "native_owner_id", "family_id",
+        "request_fingerprint", "catalog_digest", "route_receipt_hash",
+        "results", "claim_boundary", "receipt_id", "receipt_hash"
+      ],
+      "properties": {
+        "schema_version": {"const": "skillguard.template_applicability_receipt.v1"},
+        "native_owner_id": {"$ref": "#/$defs/id"},
+        "family_id": {"$ref": "#/$defs/id"},
+        "request_fingerprint": {"$ref": "#/$defs/hash"},
+        "catalog_digest": {"$ref": "#/$defs/hash"},
+        "route_receipt_hash": {"$ref": "#/$defs/hash"},
+        "results": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/applicabilityResult"}},
+        "claim_boundary": {"type": "string", "minLength": 1},
+        "receipt_id": {"type": "string", "pattern": "^template-applicability-[0-9a-f]{24}$"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "candidateAccounting": {
+      "type": "object",
+      "required": ["template_id", "manifest_digest", "native_eligible", "selection_status", "reasons"],
+      "properties": {
+        "template_id": {"$ref": "#/$defs/id"},
+        "manifest_digest": {"$ref": "#/$defs/hash"},
+        "native_eligible": {"type": "boolean"},
+        "selection_status": {"enum": ["selected", "rejected"]},
+        "reasons": {"$ref": "#/$defs/stringArray"}
+      },
+      "additionalProperties": false
+    },
+    "selectionReceipt": {
+      "type": "object",
+      "required": [
+        "schema_version", "status", "disposition", "request_fingerprint",
+        "catalog_digest", "route_receipt_hash", "applicability_receipt_hash",
+        "candidate_accounting", "selected_template_ids", "composition_order",
+        "field_owner_map", "findings", "harvest_review_required",
+        "claim_boundary", "receipt_id", "receipt_hash"
+      ],
+      "properties": {
+        "schema_version": {"const": "skillguard.template_selection_receipt.v1"},
+        "status": {"enum": ["selected", "blocked"]},
+        "disposition": {"enum": ["base_no_match", "single_selected", "composed", "strictly_dominated_selection", "ambiguous_template_selection"]},
+        "request_fingerprint": {"$ref": "#/$defs/hash"},
+        "catalog_digest": {"$ref": "#/$defs/hash"},
+        "route_receipt_hash": {"$ref": "#/$defs/hash"},
+        "applicability_receipt_hash": {"$ref": "#/$defs/hash"},
+        "candidate_accounting": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/candidateAccounting"}},
+        "selected_template_ids": {"$ref": "#/$defs/stringArray"},
+        "composition_order": {"$ref": "#/$defs/stringArray"},
+        "field_owner_map": {"type": "object", "additionalProperties": {"$ref": "#/$defs/id"}},
+        "findings": {"$ref": "#/$defs/stringArray"},
+        "harvest_review_required": {"type": "boolean"},
+        "claim_boundary": {"type": "string", "minLength": 1},
+        "receipt_id": {"type": "string", "pattern": "^template-selection-[0-9a-f]{24}$"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "instanceReceipt": {
+      "type": "object",
+      "required": [
+        "schema_version", "status", "selection_receipt_hash", "catalog_digest",
+        "selected_template_ids", "parameters", "builder_receipts",
+        "generated_artifacts", "unresolved_placeholders", "validator_receipts",
+        "findings", "instance_fingerprint", "claim_boundary", "receipt_id",
+        "receipt_hash"
+      ],
+      "properties": {
+        "schema_version": {"const": "skillguard.template_instance_receipt.v1"},
+        "status": {"enum": ["passed", "blocked"]},
+        "selection_receipt_hash": {"$ref": "#/$defs/hash"},
+        "catalog_digest": {"$ref": "#/$defs/hash"},
+        "selected_template_ids": {"$ref": "#/$defs/nonEmptyStringArray"},
+        "parameters": {"type": "object"},
+        "builder_receipts": {"type": "array", "items": {"type": "object"}},
+        "generated_artifacts": {"type": "array", "items": {"type": "object"}},
+        "unresolved_placeholders": {"$ref": "#/$defs/stringArray"},
+        "validator_receipts": {"type": "array", "items": {"type": "object"}},
+        "findings": {"$ref": "#/$defs/stringArray"},
+        "instance_fingerprint": {"$ref": "#/$defs/hash"},
+        "claim_boundary": {"type": "string", "minLength": 1},
+        "receipt_id": {"type": "string", "pattern": "^template-instance-[0-9a-f]{24}$"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

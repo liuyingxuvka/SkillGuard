@@ -1,0 +1,58 @@
+{
+  "schema_version": "skillguard.supervision_fragment_catalog.v1",
+  "fragments": [
+    {
+      "schema_version": "skillguard.supervision_fragment.v1",
+      "fragment_id": "template-selection-supervision",
+      "revision": "1",
+      "description": "Bind native route, target applicability, deterministic selection, and the selection receipt without adding domain checks.",
+      "slots": [
+        {"slot_id": "native-route-step", "target_type": "step", "min_items": 1, "max_items": 1, "purpose": "Existing target step that owns native route selection."},
+        {"slot_id": "applicability-step", "target_type": "step", "min_items": 1, "max_items": 1, "purpose": "Existing target step that owns applicability evidence."},
+        {"slot_id": "selection-check", "target_type": "check", "min_items": 1, "max_items": 8, "purpose": "Existing target checks that validate selection behavior."},
+        {"slot_id": "selection-receipt-artifact", "target_type": "artifact", "min_items": 1, "max_items": 1, "purpose": "Existing target artifact that carries the selection receipt."}
+      ],
+      "content_components": [
+        {"component_id": "prompt:template-selection-supervision", "component_kind": "prompt", "content_hash": "sha256:b0b1d5b13ed4b42e515681e19a75f2569389f44843f9f93a75b31e5b5c8df23d"}
+      ],
+      "claim_boundary": "Selection supervision only; target domain meaning, builders, validators, closure, installation, and release remain outside this fragment.",
+      "fragment_digest": "sha256:a488f76a50d9b64034be1e3bd9dde24c827addc0035b8b4d80628436db40e23f"
+    },
+    {
+      "schema_version": "skillguard.supervision_fragment.v1",
+      "fragment_id": "template-instance-supervision",
+      "revision": "1",
+      "description": "Bind preview, builder, native validator, and instance receipt ownership without adding or reinterpreting target checks.",
+      "slots": [
+        {"slot_id": "preview-step", "target_type": "step", "min_items": 1, "max_items": 1, "purpose": "Existing target step that materializes the read-only preview."},
+        {"slot_id": "builder-step", "target_type": "step", "min_items": 1, "max_items": 8, "purpose": "Existing target builder steps."},
+        {"slot_id": "native-validator-check", "target_type": "check", "min_items": 1, "max_items": 32, "purpose": "Existing target-native validator checks."},
+        {"slot_id": "instance-receipt-artifact", "target_type": "artifact", "min_items": 1, "max_items": 1, "purpose": "Existing target artifact that carries the instance receipt."}
+      ],
+      "content_components": [
+        {"component_id": "prompt:template-instance-supervision", "component_kind": "prompt", "content_hash": "sha256:27bfd5710fd1bb41a5df42ead3eb03f3ee251b66c7169985455348ebec3fdefc"}
+      ],
+      "claim_boundary": "Instance supervision only; it cannot create target-domain validity, installed parity, release, publication, or future behavior evidence.",
+      "fragment_digest": "sha256:b81b2d27b6ef52f277944cf3733ddc0c0ec4035f06a100402e9a62ec382533b1"
+    },
+    {
+      "schema_version": "skillguard.supervision_fragment.v1",
+      "fragment_id": "template-installation-supervision",
+      "revision": "1",
+      "description": "Bind staged projection, activation, installed checks, and rollback ownership without becoming an installation authority.",
+      "slots": [
+        {"slot_id": "stage-step", "target_type": "step", "min_items": 1, "max_items": 1, "purpose": "Existing target step that stages the installation projection."},
+        {"slot_id": "activation-step", "target_type": "step", "min_items": 1, "max_items": 1, "purpose": "Existing target step that activates or restores the projection."},
+        {"slot_id": "installed-check", "target_type": "check", "min_items": 1, "max_items": 16, "purpose": "Existing installed currentness and native checks."},
+        {"slot_id": "installation-receipt-artifact", "target_type": "artifact", "min_items": 1, "max_items": 1, "purpose": "Existing target installation receipt artifact."}
+      ],
+      "content_components": [
+        {"component_id": "prompt:template-installation-supervision", "component_kind": "prompt", "content_hash": "sha256:58687567107a1e0614d3e8a7d10fca4134dfa4352405928bd8ce8e7b6cf51e1b"}
+      ],
+      "claim_boundary": "Installation supervision only; it does not prove native target behavior, release, publication, or Git synchronization.",
+      "fragment_digest": "sha256:ab3619571e96af090592584eda962f1b8af7665de366e24b442de0e635048b72"
+    }
+  ],
+  "catalog_digest": "sha256:cf9bf6757d5b5b3cd64bb956465a7f6ba84cf4355c1231ea8543858666f19093",
+  "claim_boundary": "This reviewed catalog supplies target-neutral compiler inputs only. Runtime authority remains the current contract source, compiled contract, and exact check manifest."
+}

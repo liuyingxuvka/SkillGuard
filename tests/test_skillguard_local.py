@@ -1146,6 +1146,10 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             managed_prompt = (codex_home / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn("do not make it a mandatory pre-execution gate for every skill invocation", managed_prompt)
             self.assertIn("Handoff order: select the target skill from the registry when selection help is needed", managed_prompt)
+            self.assertIn("## Validated Template Pack Selection", managed_prompt)
+            self.assertIn("## Validated Template Pack Instance", managed_prompt)
+            self.assertIn("## Validated Template Pack Installation", managed_prompt)
+            self.assertIn("global_router_selects_domain_template: false", managed_prompt)
             self.assertNotIn("Before using a Codex skill", managed_prompt)
 
             tampered_prompt_home = workspace / "tampered_prompt_home"
@@ -2788,7 +2792,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
         with tempfile.TemporaryDirectory(prefix="generated-skill-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             target = Path(tmp)
             invalid_path = target / "invalid.json"
-            write_json(invalid_path, {"schema_version": "skillguard.skill_blueprint.v1", "target": rel(target)})
+            write_json(invalid_path, {"schema_version": "skillguard.skill_blueprint.v2", "target": rel(target)})
 
             report = run_skillguard("generate-skill", "--input", rel(invalid_path), expected_exit=1)
 

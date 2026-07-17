@@ -7996,6 +7996,89 @@
         "check:self:resolve-canonical-source",
         "check:self:verify-release-provenance"
       ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "template_route_precedes_selection",
+      "obligation_id": "obligation:template-target-route",
+      "owner_step_ids": [
+        "step:resolve-template-native-route",
+        "step:load-target-template-projection",
+        "step:validate-template-applicability"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "template_ambiguity_never_builds",
+      "obligation_id": "obligation:template-selection",
+      "owner_step_ids": [
+        "step:select-template-pack",
+        "step:issue-template-selection-receipt",
+        "step:materialize-template-preview"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "template_instance_requires_target_native_validation",
+      "obligation_id": "obligation:template-instance",
+      "owner_step_ids": [
+        "step:run-target-native-template-builder",
+        "step:run-target-native-template-validators",
+        "step:issue-template-instance-receipt"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "template_skillguard_never_owns_domain_semantics",
+      "obligation_id": "obligation:template-domain-ownership",
+      "owner_step_ids": [
+        "step:resolve-template-native-route",
+        "step:run-target-native-template-builder",
+        "step:run-target-native-template-validators"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ]
+    },
+    {
+      "evidence_classes": [
+        "hard"
+      ],
+      "invariant_id": "template_instance_requires_target_native_validation",
+      "obligation_id": "obligation:template-harvest",
+      "owner_step_ids": [
+        "step:record-template-harvest-disposition"
+      ],
+      "required": true,
+      "required_check_ids": [
+        "check:self:template-lifecycle-model-v1",
+        "check:self:template-protocol-v1"
+      ]
     }
   ],
   "parent_model_id": "skillguard.runtime_contract_executor.v1",

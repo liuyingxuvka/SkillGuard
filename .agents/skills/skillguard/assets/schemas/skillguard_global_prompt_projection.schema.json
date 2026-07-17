@@ -66,6 +66,10 @@
     ,"template_content_hash": {
       "pattern": "^sha256:[0-9a-f]{64}$",
       "type": "string"
+    },
+    "template_lifecycle_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
     }
   },
   "required": [
