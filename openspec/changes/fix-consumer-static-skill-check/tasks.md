@@ -12,6 +12,7 @@
 
 ## 3. Integration And Closure
 
-- [x] 3.1 Run one frozen full SkillGuard validation against the stable source
+- [ ] 3.1 Run one frozen full SkillGuard validation against the stable source
 - [ ] 3.2 Commit, push, release, and transactionally install the repaired SkillGuard version
-- [x] 3.3 Re-run external FlowGuard and ResearchGuard checks that previously failed
+- [ ] 3.3 Re-run external FlowGuard and ResearchGuard checks that previously failed
+- [x] 3.4 Exclude generated `*.egg-info` metadata and pass focused compiler/installation regressions

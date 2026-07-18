@@ -37,3 +37,12 @@ provide a legacy, mode-selectable, conditional, or fallback section policy.
 #### Scenario: Retired author heading is supplied
 - **WHEN** a caller attempts to rely on the old author-heading requirement
 - **THEN** it SHALL receive no alternate success route or compatibility mode
+
+### Requirement: Generated package metadata is never source authority
+The contract compiler SHALL exclude every `*.egg-info` directory from source,
+impact, and installation projections.
+
+#### Scenario: Local editable-install metadata exists
+- **WHEN** a maintained source contains generated `*.egg-info` package metadata
+- **THEN** compilation and installation identity ignore it and a clean Git
+  checkout produces the same authoritative projection

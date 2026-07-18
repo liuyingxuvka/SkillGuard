@@ -15,6 +15,8 @@ current consumer-independence contract and blocks valid graduated skills.
   `check-skill` without mentioning SkillGuard.
 - Extend the existing current-authority FlowGuard model so any consumer
   entrypoint that carries an author-maintenance prompt is explicitly blocked.
+- Exclude generated `*.egg-info` package metadata from compiled source and
+  installation authority so clean Git checkouts reproduce local projections.
 
 ## Capabilities
 

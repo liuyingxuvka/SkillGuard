@@ -159,6 +159,8 @@ def _is_transient_implementation_output(relative: Path) -> bool:
     parts = relative.parts
     if set(parts) & TRANSIENT_IMPLEMENTATION_PARTS:
         return True
+    if any(part.casefold().endswith(".egg-info") for part in parts):
+        return True
     if relative.suffix.lower() in TRANSIENT_IMPLEMENTATION_SUFFIXES:
         return True
     if relative.name in TRANSIENT_IMPLEMENTATION_FILES:
@@ -438,6 +440,11 @@ def _inventory_rows(
             findings.append(
                 SchemaFinding("impact_inventory_path_invalid", "$.content_impact_plan", str(exc))
             )
+            return
+        if any(
+            part.casefold().endswith(".egg-info")
+            for part in Path(relative).parts
+        ):
             return
         paths[relative] = resolved_candidate.resolve(strict=True)
         if role:

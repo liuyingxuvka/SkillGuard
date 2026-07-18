@@ -1541,6 +1541,9 @@ class ContractCompilerV2Tests(unittest.TestCase):
         cache = runtime_dir / "__pycache__"
         cache.mkdir()
         (cache / "engine.cpython-312.pyc").write_bytes(b"transient bytecode")
+        egg_info = runtime_dir / "example.egg-info"
+        egg_info.mkdir()
+        (egg_info / "PKG-INFO").write_text("generated metadata\n", encoding="utf-8")
         control = runtime_dir / ".skillguard"
         control.mkdir()
         (control / "compiled-contract.json").write_text("{}\n", encoding="utf-8")

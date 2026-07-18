@@ -10,6 +10,9 @@
 - Extended the current-runtime-authority FlowGuard model and external-target
   regression coverage to block author-maintenance instructions in consumer
   prompts while accepting clean consumer skills.
+- Excluded generated `*.egg-info` package metadata from authoritative source,
+  impact, and installation projections so clean Git checkouts reproduce the
+  exact compiled installation inventory.
 
 ## v0.3.3 - 2026-07-16
 
