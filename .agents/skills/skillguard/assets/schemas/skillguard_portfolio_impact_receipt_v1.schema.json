@@ -51,11 +51,10 @@
     "memberStatus": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["graduation_status", "pending_guard_change_id", "reuse_ticket_absent"],
+      "required": ["graduation_status", "pending_guard_change_id"],
       "properties": {
         "graduation_status": {"const": "revalidation_required"},
-        "pending_guard_change_id": {"type": "string", "minLength": 1},
-        "reuse_ticket_absent": {"const": true}
+        "pending_guard_change_id": {"type": "string", "minLength": 1}
       }
     },
     "memberStatusesBySuite": {

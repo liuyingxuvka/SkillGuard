@@ -1,104 +1,96 @@
-# SkillGuard current generic supervisor
+# SkillGuard author-side supervisor
 
-The generic supervisor is the executable AI work contract entrypoint. It does not reimplement a target skill. It selects only routes already declared by the target FlowGuard model, claims a target-local run, invokes the bound native checks, validates the bound artifacts, and records the target skill's own action results as hard, witnessed, or judged receipts.
+The supervisor executes one explicitly maintained unit's declared workflow. It
+does not reimplement the target skill, and it never writes into an ordinary
+business project by default.
+
+## Required author context
+
+Before compilation, run claim, receipt lookup, or directory creation, the
+caller must provide:
+
+- an explicit `skill_maintainer_source` repository;
+- one `maintenance_unit_id`;
+- one declared member skill;
+- an author `run_state_root`;
+- an author `owner_evidence_root`;
+- the separate task-data `target_root`.
+
+The run and evidence roots must belong to the author-maintenance workspace.
+They have no fallback to `target_root`, the consumer skill, the current working
+directory, or a user's ordinary project. Missing or invalid author context
+blocks with zero writes.
 
 ## Command
 
 ```text
-python .agents/skills/skillguard/scripts/skillguard_supervise.py <skill-root> <packet.json> --target-root <target-root> --repository-root <repository-root> --run-state-root <repository-level-run-state-root> --owner-evidence-root <repository-level-owner-evidence-root>
+python scripts/skillguard_supervise.py <skill-root> <packet.json> \
+  --repository-root <author-repository> \
+  --target-root <task-data-root> \
+  --run-state-root <private-author-run-root> \
+  --owner-evidence-root <private-author-evidence-root>
 ```
 
-`--owner-evidence-root` names the one persistent authority for immutable check-owner receipts. Give every maintained target in one repository the same repository-level short path (for example `work/verification/owner-evidence`) when the skill itself is deeply nested. This is a storage binding, not a selectable supervision mode; it does not change declared checks, dependencies, execution owners, or closure rules. If it is omitted, the sole default remains `<repository-root>/work/verification/owner-evidence`.
+The maintained source contains the current author contract trio and declared
+FlowGuard model. Compilation regenerates only the compiled author contract and
+check manifest.
 
-`--run-state-root` names the one directory that owns the claimed run, progress, diagnostics, step receipts, and closure for this target invocation. Bind each deeply nested maintained skill to one repository-level path-budgeted short run root (for example `work/r/02`, with the skill id retained inside the contract and receipts rather than repeated in the directory name). Budget the complete descendant path, not only the supplied root. It cannot alter the contract, route, checks, evidence owner, or closure profile. If it is omitted, the existing target-local run root remains authoritative.
+## Packet boundary
 
-The target skill must already contain a confirmed `.skillguard/contract-source.json` and its declared FlowGuard model. Compilation regenerates `.skillguard/compiled-contract.json` and `.skillguard/check-manifest.json` before the run claim.
+The packet selects routes already declared by the target and supplies only
+task inputs, witnessed observations, declared judgments, or contract-authorized
+skip evidence. It cannot assert pass status, invent a receipt, change the
+maintenance unit, change an execution owner, or broaden the closure.
 
-## Packet
-
-Use `supervision_mode: close` for ordinary one-stage contracts. Every route-conditional contract uses two calls with the same `request`: first `stage_depth`, then `close`. The terminal inherits the stage receipt's evidence domain; only `scheduled_production` carries and reverifies a scheduled installation identity.
-
-```json
-{
-  "supervision_mode": "close",
-  "request": {
-    "route_ids": ["route:chosen-entry", "route:delivery"],
-    "compose": true,
-    "request": "the concrete target outcome",
-    "claim_scope": "enforced",
-    "write_targets": ["."]
-  },
-  "profiles": ["enforced"],
-  "steps": {
-    "step:runtime-witness": {
-      "witness": {
-        "witness_kind": "ui_interaction",
-        "target_id": "surface-id",
-        "executor_id": "browser-or-tool-id",
-        "input": {},
-        "output": {},
-        "limitations": []
-      }
-    },
-    "step:quality-review": {
-      "judgment": {
-        "rubric_id": "rubric:declared-id",
-        "rubric_version": "1",
-        "evaluator_id": "reviewer-id",
-        "input": {},
-        "conclusion": "bounded conclusion",
-        "limitations": ["explicit limitation"],
-        "self_review": true,
-        "confidence_boundary": "why this cannot support a stronger claim"
-      }
-    },
-    "step:conditional-work": {
-      "skip": {
-        "reason": "why the declared condition is not applicable",
-        "condition_step_id": "step:prior-condition-proof",
-        "verifier_step_id": "step:prior-verifier-proof"
-      }
-    }
-  }
-}
-```
-
-Stage 1 must use `"supervision_mode": "stage_depth"`, `"profiles": []`, and no `native_terminal`. Its `status` is `staged`, never passed, and its `target_execution_depth_receipt` is the only receipt the target terminal builder may bind.
-
-Stage 2 must use `"supervision_mode": "close"`, exactly `"profiles": ["enforced"]`, and for a selected branch contract:
-
-```json
-{
-  "native_terminal": {
-    "receipt_ref": {
-      "path_token": "run_root",
-      "relative_path": "native-terminal/receipts/native-noop-....json"
-    },
-    "expected_route_id": "route:target-native-owner",
-    "expected_branch_id": "target-declared-noop"
-  }
-}
-```
-
-Generate that receipt from the stage-1 run with `build_target_native_terminal_receipt(...)` and persist it with `write_target_native_terminal_receipt(...)`. Do not hand-author or pre-guess the depth id/hash. The builder binds the fixed `enforced` closure and derives `closure_disposition`. An intermediate authorization is `non_terminal_authorization`; it cannot be replayed as terminal completion. The later composed run produces its own `terminal_completion` receipt. A legitimate no-op is accepted only when the target's current branch contract supplies verifier-owned applicability evidence. The close phase resumes the same run, sees no ready completed steps, reuses the exact depth receipt, and performs closure only.
-
-File, directory, JSON, image, document, and screenshot outputs are declared by the contract and validated from `target-root`. Witness artifacts may use the step witness or an `artifact_witnesses` entry. A screenshot witness must name the exact `surface_id`, `state_id`, and the prior interaction receipt step so a file from the wrong surface or state cannot close the obligation.
+Conditional targets use the target's own branch contract. An intermediate
+authorization is non-terminal; final closure consumes the exact target-native
+terminal and current declared-check evidence.
 
 ## Evidence authority
 
-- `hard`: produced only from a stored, executed, passing declared check and any current artifact records attached to it.
-- `witnessed`: requires a concrete executor, target, input fingerprint, output fingerprint, and limitations. The supervisor also retains the supporting hard check receipts.
-- `judged`: requires a declared versioned rubric, evaluator identity, input fingerprint, conclusion, limitations, and a confidence boundary for self-review. Supporting hard checks do not promote the judgment to hard proof.
-- `skip`: allowed only for a model-declared optional step and only after passed condition and verifier receipts already exist in the same run.
+- `hard` evidence comes from a stored, executed, passing declared check.
+- `witnessed` evidence binds a concrete executor, target, input, output, and
+  limitations.
+- `judged` evidence binds a declared rubric, evaluator, input, conclusion,
+  limitations, and confidence boundary.
+- `skip` is legal only for a model-declared optional step after its condition
+  and verifier evidence pass.
 
-The runtime verifies that the receipt used to pass a step has the action's required evidence class. A caller cannot pass a judged or witnessed step using a generic model assertion.
+Every declared check identity includes maintenance unit, member, evidence
+subject, semantic check, execution owner, request, inputs, dependencies,
+toolchain, environment, and evidence domain.
 
-When the compiled contract has an enforced `depth_profile`, the supervisor freezes the target's exact declared-check inventory. Each check must resolve to exactly one execution owner and one current terminal-success receipt for the same request. The packet cannot assert pass status, receipt identity, provider readiness, runtime identity, or final depth status.
+One exact terminal-success receipt may be reused only inside the same
+maintenance unit under that complete identity. A foreign-unit receipt or
+dependency blocks before process launch and cannot be projected into closure.
 
-The supervisor reconciles declared and observed check ids exactly. A missing, duplicate, failed, skipped, stale, timed-out, cancelled, cleanup-unconfirmed, owner-mismatched, or request-mismatched result blocks receipt issuance. SkillGuard does not classify the target or interpret check names, fixtures, or domain oracles. Those remain target-owned.
+## Execution and cleanup
 
-`--repository-root` and `--target-root` are not aliases. The former owns maintained skill and contract inputs; the latter owns this task's data and artifacts. The supervisor binds both through portable content identities. For scheduled production it additionally verifies the exact current installation receipt and installed-runtime identity.
+The supervisor:
 
-## Closure boundary
+1. freezes the unit's complete check inventory;
+2. resolves current same-unit receipts;
+3. executes only missing owners;
+4. records immutable results and sidecars;
+5. confirms zero descendant processes after timeout, cancellation, or
+   interruption;
+6. reconciles every declared check exactly;
+7. derives only the fixed `enforced` closure.
 
-The supervisor reports only selected routes and the fixed `enforced` closure. Unselected routes, missing browser states, skipped checks, stale fingerprints, external installation, Git history, GitHub publication, and future AI behavior remain outside the closure unless separately declared and proven.
+Missing, duplicate, failed, skipped, stale, timed-out, cancelled,
+cleanup-unconfirmed, non-terminal, wrong-member, wrong-subject, or wrong-unit
+evidence blocks.
+
+## Consumer boundary
+
+Supervisor packets, run state, receipts, compiled contracts, check manifests,
+and author roots are not consumer files. A graduated consumer uses its own
+`SKILL.md`, scripts, references, assets, runtime, and native checks without
+calling this supervisor or locating SkillGuard.
+
+## Claim boundary
+
+A supervisor result proves only the named maintenance unit's exact author-side
+run and bounded closure. It does not prove another unit, consumer installation,
+publication, future AI behavior, or the correctness of the target's own domain
+specification.

@@ -9,7 +9,7 @@
       "SKILL.md",
       "README.md",
       "references/README.md",
-      "assets/schemas/skillguard_generated_record.schema.json",
+      "assets/schemas/generated_record.schema.json",
       "assets/templates/check_report.template.json",
       "scripts/README.md",
       "scripts/run_checks.py",

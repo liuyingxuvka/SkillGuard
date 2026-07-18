@@ -1,15 +1,15 @@
 """Fail-closed adapter from a router work package to the native SkillGuard CLI.
 
-This script performs no scan, registry build, prompt installation, or route
-selection of its own.  It invokes the existing SkillGuard command owner and
-checks the returned evidence plus the one current handoff identity.
+This script performs no scan, registry build, private prompt installation, or
+route selection of its own. It invokes only the author-side SkillGuard command
+owner and checks the returned evidence plus the one current author handoff
+identity.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -21,11 +21,13 @@ REQUIRED_ROUTER_COMMANDS = {
     "scan-global-skills",
     "build-global-registry",
     "check-global-registry",
+    "refresh-global-router",
+}
+RETIRED_PUBLIC_ROUTER_COMMANDS = {
     "render-global-prompt",
     "install-global-prompt",
     "check-global-prompt",
     "resolve-global-skill",
-    "refresh-global-router",
 }
 
 
@@ -58,17 +60,12 @@ def _load_json(path: Path, code: str) -> Mapping[str, Any]:
 
 def _native_skillguard_root() -> Path:
     skill_root = Path(__file__).resolve().parents[1]
-    candidates = [skill_root.parent / "skillguard"]
-    codex_home = os.environ.get("CODEX_HOME", "").strip()
-    if codex_home:
-        candidates.append(Path(codex_home) / "skills" / "skillguard")
-    candidates.append(Path.home() / ".codex" / "skills" / "skillguard")
-    for candidate in candidates:
-        if (candidate / "scripts" / "skillguard.py").is_file():
-            return candidate.resolve()
+    candidate = skill_root.parent / "skillguard"
+    if (candidate / "scripts" / "skillguard.py").is_file():
+        return candidate.resolve()
     raise ContractCheckError(
         "native_skillguard_runtime_missing",
-        "a sibling or installed skillguard runtime is required for native router checks",
+        "the sibling author-side skillguard source runtime is required",
     )
 
 
@@ -118,6 +115,9 @@ def _check_command_surface() -> Mapping[str, Any]:
     missing = sorted(REQUIRED_ROUTER_COMMANDS - names)
     if missing:
         raise ContractCheckError("router_command_surface_incomplete", ",".join(missing))
+    leaked = sorted(RETIRED_PUBLIC_ROUTER_COMMANDS & names)
+    if leaked:
+        raise ContractCheckError("retired_public_router_command_present", ",".join(leaked))
     return native
 
 
@@ -180,31 +180,36 @@ def _check_registry(repository_root: Path, target_root: Path) -> tuple[Mapping[s
     return native, registry
 
 
-def _check_prompt(
-    repository_root: Path,
+def _check_private_author_prompt(
     target_root: Path,
     registry: Mapping[str, Any] | None = None,
 ) -> Mapping[str, Any]:
-    registry_path = target_root / "global_router" / "global_registry.json"
-    registry = registry or _load_json(registry_path, "registry_unreadable")
-    native = _run_native_cli(
-        (
-            "check-global-prompt",
-            "--registry",
-            str(registry_path),
-            "--codex-home",
-            str(target_root / "codex_home"),
-        ),
+    registry = registry or _load_json(
+        target_root / "global_router" / "global_registry.json",
+        "registry_unreadable",
     )
-    if native.get("registry_hash") != registry.get("registry_hash"):
-        raise ContractCheckError("prompt_registry_hash_mismatch", str(native.get("registry_hash", "missing")))
     agents = target_root / "codex_home" / "AGENTS.md"
     text = agents.read_text(encoding="utf-8") if agents.is_file() else ""
     if text.count("<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->") != 1:
         raise ContractCheckError("managed_prompt_begin_marker_count", "expected exactly one")
     if text.count("<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->") != 1:
         raise ContractCheckError("managed_prompt_end_marker_count", "expected exactly one")
-    return native
+    lowered = text.lower()
+    for required in (
+        "private maintainer-computer",
+        "explicit author-side",
+        "ordinary use",
+        "does not start skillguard maintenance",
+    ):
+        if required not in lowered:
+            raise ContractCheckError("private_author_prompt_boundary_missing", required)
+    if str(registry.get("registry_hash", "")) not in text:
+        raise ContractCheckError("private_author_prompt_registry_hash_missing", "AGENTS.md")
+    return {
+        "decision": "pass",
+        "registry_hash": registry.get("registry_hash"),
+        "prompt_path": "codex_home/AGENTS.md",
+    }
 
 
 def _check_projection(target_root: Path) -> Mapping[str, Any]:
@@ -228,37 +233,16 @@ def _check_projection(target_root: Path) -> Mapping[str, Any]:
         raise ContractCheckError("projection_begin_marker_count", "expected exactly one")
     if block.count("<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->") != 1:
         raise ContractCheckError("projection_end_marker_count", "expected exactly one")
+    lowered = block.lower()
+    for required in (
+        "private maintainer-computer",
+        "explicit author-side",
+        "ordinary use",
+        "does not start skillguard maintenance",
+    ):
+        if required not in lowered:
+            raise ContractCheckError("projection_author_boundary_missing", required)
     return projection
-
-
-def _check_resolution(
-    repository_root: Path,
-    target_root: Path,
-    registry: Mapping[str, Any] | None = None,
-) -> Mapping[str, Any]:
-    registry_path = target_root / "global_router" / "global_registry.json"
-    registry = registry or _load_json(registry_path, "registry_unreadable")
-    _require_current_handoff(registry)
-    native = _run_native_cli(
-        (
-            "resolve-global-skill",
-            "--registry",
-            str(registry_path),
-            "--task",
-            "Refresh and verify the global SkillGuard router",
-            "--route-hint",
-            ROUTER_SKILL_ID,
-        ),
-    )
-    decision = native.get("routing_decision")
-    if not isinstance(decision, Mapping) or decision.get("skill_id") != ROUTER_SKILL_ID:
-        raise ContractCheckError("router_smoke_handoff_wrong_target", str(decision))
-    route_docs = {str(item).replace("\\", "/") for item in decision.get("route_doc_paths", [])}
-    if not any(item.endswith("/.skillguard/compiled-contract.json") for item in route_docs):
-        raise ContractCheckError("router_smoke_current_contract_missing", ROUTER_SKILL_ID)
-    if not any(item.endswith("/.skillguard/check-manifest.json") for item in route_docs):
-        raise ContractCheckError("router_smoke_current_manifest_missing", ROUTER_SKILL_ID)
-    return native
 
 
 def check(mode: str, repository_root: Path, target_root: Path) -> Mapping[str, Any]:
@@ -275,27 +259,20 @@ def check(mode: str, repository_root: Path, target_root: Path) -> Mapping[str, A
     elif mode == "registry":
         native, _registry = _check_registry(repository_root, target_root)
         results["registry"] = {"decision": native.get("decision"), "registry_hash": native.get("registry_hash")}
-    elif mode == "prompt":
-        native = _check_prompt(repository_root, target_root)
-        results["prompt"] = {"decision": native.get("decision"), "registry_hash": native.get("registry_hash")}
     elif mode == "projection":
         projection = _check_projection(target_root)
         results["projection"] = {
             "registry_hash": projection.get("registry_hash"),
             "router_skill_id": projection.get("router_skill_id"),
         }
-    elif mode == "resolve":
-        native = _check_resolution(repository_root, target_root)
-        results["resolve"] = {"decision": native.get("decision"), "skill_id": ROUTER_SKILL_ID}
     elif mode == "refresh":
-        _check_scan(target_root)
         registry_native, registry = _check_registry(repository_root, target_root)
-        prompt_native = _check_prompt(repository_root, target_root, registry)
-        resolve_native = _check_resolution(repository_root, target_root, registry)
+        projection = _check_projection(target_root)
+        prompt = _check_private_author_prompt(target_root, registry)
         results = {
             "registry": {"decision": registry_native.get("decision"), "registry_hash": registry.get("registry_hash")},
-            "prompt": {"decision": prompt_native.get("decision")},
-            "resolve": {"decision": resolve_native.get("decision"), "skill_id": ROUTER_SKILL_ID},
+            "projection": {"registry_hash": projection.get("registry_hash")},
+            "private_author_prompt": {"decision": prompt.get("decision")},
         }
     else:  # pragma: no cover - argparse owns this boundary
         raise ContractCheckError("unknown_mode", mode)
@@ -307,8 +284,10 @@ def check(mode: str, repository_root: Path, target_root: Path) -> Mapping[str, A
         "failures": [],
         "blockers": [],
         "claim_boundary": (
-            "This adapter proves only current native router checks and the current handoff identity for the supplied work package. "
-            "It does not execute a selected target skill, prove publication, or guarantee future AI behavior."
+            "This adapter proves only current author-side router checks, private author projection, "
+            "and the current handoff identity for the supplied maintenance work package. It does not "
+            "create a consumer dependency, execute a selected target skill, prove publication, or "
+            "guarantee future AI behavior."
         ),
     }
 
@@ -323,8 +302,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             "scan",
             "registry",
             "projection",
-            "prompt",
-            "resolve",
             "refresh",
         ),
     )

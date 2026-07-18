@@ -110,7 +110,7 @@ class ExecutableContractCase:
     closure_requested: bool = True
     enforced_closure_exact: bool = True
     safe_claim_scoped: bool = True
-    graduated_children_current: bool = True
+    maintenance_unit_evidence_current: bool = True
     depth_profile_present: bool = True
     depth_profile_target_neutral: bool = True
     native_route_preserved: bool = True
@@ -133,7 +133,7 @@ class ExecutableContractCase:
     member_binding_fallback_used: bool = False
     repository_relative_reference_fallback_used: bool = False
     standalone_member_root_path_current: bool = True
-    project_adoption_current: bool = True
+    author_repository_adoption_current: bool = True
 
 
 @dataclass(frozen=True)
@@ -168,7 +168,7 @@ class ExecutableContractState:
     closure_requested: bool = False
     enforced_closure_exact: bool = False
     safe_claim_scoped: bool = False
-    graduated_children_current: bool = False
+    maintenance_unit_evidence_current: bool = False
     depth_profile_present: bool = False
     depth_profile_target_neutral: bool = False
     native_route_preserved: bool = False
@@ -191,7 +191,7 @@ class ExecutableContractState:
     member_binding_fallback_used: bool = False
     repository_relative_reference_fallback_used: bool = False
     standalone_member_root_path_current: bool = False
-    project_adoption_current: bool = False
+    author_repository_adoption_current: bool = False
 
 
 class EvaluateExecutableContract:
@@ -426,13 +426,16 @@ def failures_and_former_authority_cannot_hide(
     return _pass()
 
 
-def portfolio_children_remain_current(state: ExecutableContractState, _trace: object) -> InvariantResult:
+def maintenance_unit_graduation_uses_only_unit_evidence(
+    state: ExecutableContractState,
+    _trace: object,
+) -> InvariantResult:
     if _empty(state) or not state.closure_requested:
         return _pass()
-    if not state.graduated_children_current:
+    if not state.maintenance_unit_evidence_current:
         return _fail(
-            "portfolio_children_remain_current",
-            "portfolio graduation cannot hide a stale or revalidation-required prior skill",
+            "maintenance_unit_graduation_uses_only_unit_evidence",
+            "a maintenance unit cannot graduate without its own complete current evidence",
         )
     return _pass()
 
@@ -552,16 +555,16 @@ def external_target_binding_is_explicit(
     return _pass()
 
 
-def adopted_projects_keep_skillguard_maintenance_visible(
+def author_repositories_keep_skillguard_maintenance_private(
     state: ExecutableContractState,
     _trace: object,
 ) -> InvariantResult:
     if _empty(state) or not state.closure_requested:
         return _pass()
-    if not state.project_adoption_current:
+    if not state.author_repository_adoption_current:
         return _fail(
-            "adopted_projects_keep_skillguard_maintenance_visible",
-            "a maintained target repository needs a current marker-bounded SkillGuard project prompt and portable adoption record",
+            "author_repositories_keep_skillguard_maintenance_private",
+            "an explicit author repository needs a current marker-bounded maintainer prompt and private author manifest",
         )
     return _pass()
 
@@ -657,9 +660,9 @@ INVARIANTS = (
         failures_and_former_authority_cannot_hide,
     ),
     Invariant(
-        "portfolio_children_remain_current",
-        "Portfolio graduation consumes current prior-skill evidence.",
-        portfolio_children_remain_current,
+        "maintenance_unit_graduation_uses_only_unit_evidence",
+        "Each maintenance unit graduates only from its own current evidence.",
+        maintenance_unit_graduation_uses_only_unit_evidence,
     ),
     Invariant(
         "depth_profile_preserves_native_authority",
@@ -682,9 +685,9 @@ INVARIANTS = (
         external_target_binding_is_explicit,
     ),
     Invariant(
-        "adopted_projects_keep_skillguard_maintenance_visible",
-        "Adopted repositories keep a current SkillGuard maintenance prompt and record.",
-        adopted_projects_keep_skillguard_maintenance_visible,
+        "author_repositories_keep_skillguard_maintenance_private",
+        "Explicit author repositories keep a current private maintainer prompt and manifest.",
+        author_repositories_keep_skillguard_maintenance_private,
     ),
 )
 
@@ -866,10 +869,16 @@ SCENARIOS = (
         _violation("closure is not exact", "closure_consumes_current_exact_receipts"),
     ),
     _scenario(
-        "stale_prior_graduate_blocks",
-        "The current target cannot graduate while a prior skill needs revalidation.",
-        ExecutableContractCase("stale_prior_graduate", graduated_children_current=False),
-        _violation("prior stale", "portfolio_children_remain_current"),
+        "missing_unit_evidence_blocks",
+        "A maintenance unit cannot graduate when its own required evidence is stale or missing.",
+        ExecutableContractCase(
+            "missing_unit_evidence",
+            maintenance_unit_evidence_current=False,
+        ),
+        _violation(
+            "unit evidence stale",
+            "maintenance_unit_graduation_uses_only_unit_evidence",
+        ),
     ),
     _scenario(
         "parallel_domain_executor_blocks",
@@ -980,10 +989,16 @@ SCENARIOS = (
         _violation("standalone member path stale", "external_target_binding_is_explicit"),
     ),
     _scenario(
-        "missing_project_adoption_blocks_maintenance_closure",
-        "A maintained repository cannot hide a missing or stale SkillGuard project prompt.",
-        ExecutableContractCase("missing_project_adoption", project_adoption_current=False),
-        _violation("project adoption stale", "adopted_projects_keep_skillguard_maintenance_visible"),
+        "missing_author_adoption_blocks_maintenance_closure",
+        "An explicit author repository cannot hide a missing or stale maintainer prompt.",
+        ExecutableContractCase(
+            "missing_author_adoption",
+            author_repository_adoption_current=False,
+        ),
+        _violation(
+            "author adoption stale",
+            "author_repositories_keep_skillguard_maintenance_private",
+        ),
     ),
 )
 
@@ -1070,10 +1085,10 @@ def export_contract_model() -> dict[str, object]:
             "route_ids": ["route:portfolio-graduation"],
         },
         {
-            "function_id": "adopt_project",
-            "business_intent": "adopt or upgrade a SkillGuard-maintained skill project",
-            "owner_id": "project-adoption-v2",
-            "route_ids": ["route:project-adoption"],
+            "function_id": "adopt_author_repository",
+            "business_intent": "adopt an explicit SkillGuard author repository",
+            "owner_id": "author-repository-adoption-current",
+            "route_ids": ["route:author-repository-adoption"],
         },
         {
             "function_id": "global_router_handoff",
@@ -1235,33 +1250,33 @@ def export_contract_model() -> dict[str, object]:
             "route_id": "route:portfolio-graduation",
             "function_id": "graduate_portfolio",
             "owner_id": "portfolio-runtime-v2",
-            "start_step_id": "step:scan-graduate-freshness",
+            "start_step_id": "step:scan-maintenance-unit-freshness",
             "step_ids": [
-                "step:scan-graduate-freshness",
-                "step:revalidate-affected-graduates",
+                "step:scan-maintenance-unit-freshness",
+                "step:validate-maintenance-unit-evidence",
                 "step:issue-portfolio-receipt",
                 "terminal:portfolio-graduated",
-                "terminal:portfolio-revalidation-required",
+                "terminal:maintenance-unit-evidence-blocked",
             ],
             "success_terminal_step_id": "terminal:portfolio-graduated",
-            "blocked_terminal_step_id": "terminal:portfolio-revalidation-required",
+            "blocked_terminal_step_id": "terminal:maintenance-unit-evidence-blocked",
             "handoffs": [],
         },
         {
-            "route_id": "route:project-adoption",
-            "function_id": "adopt_project",
-            "owner_id": "project-adoption-v2",
-            "start_step_id": "step:inspect-project-adoption",
+            "route_id": "route:author-repository-adoption",
+            "function_id": "adopt_author_repository",
+            "owner_id": "author-repository-adoption-current",
+            "start_step_id": "step:inspect-author-repository-adoption",
             "step_ids": [
-                "step:inspect-project-adoption",
+                "step:inspect-author-repository-adoption",
                 "step:render-managed-project-prompt",
-                "step:install-project-adoption",
-                "step:audit-project-adoption",
-                "terminal:project-adopted",
-                "terminal:project-adoption-blocked",
+                "step:install-author-repository-adoption",
+                "step:audit-author-repository-adoption",
+                "terminal:author-repository-adopted",
+                "terminal:author-repository-adoption-blocked",
             ],
-            "success_terminal_step_id": "terminal:project-adopted",
-            "blocked_terminal_step_id": "terminal:project-adoption-blocked",
+            "success_terminal_step_id": "terminal:author-repository-adopted",
+            "blocked_terminal_step_id": "terminal:author-repository-adoption-blocked",
             "handoffs": [],
         },
         {
@@ -1349,17 +1364,17 @@ def export_contract_model() -> dict[str, object]:
         step("step:issue-closure-receipt", "route:derive-closure", "closure-runtime-v2", "receipt", ("step:check-run-closure",)),
         step("terminal:run-closed", "route:derive-closure", "closure-runtime-v2", "terminal", ("step:issue-closure-receipt",), terminal_kind="success"),
         step("terminal:closure-blocked", "route:derive-closure", "closure-runtime-v2", "terminal", terminal_kind="blocked"),
-        step("step:scan-graduate-freshness", "route:portfolio-graduation", "portfolio-runtime-v2", "validator"),
-        step("step:revalidate-affected-graduates", "route:portfolio-graduation", "portfolio-runtime-v2", "native", ("step:scan-graduate-freshness",)),
-        step("step:issue-portfolio-receipt", "route:portfolio-graduation", "portfolio-runtime-v2", "receipt", ("step:revalidate-affected-graduates",)),
+        step("step:scan-maintenance-unit-freshness", "route:portfolio-graduation", "portfolio-runtime-v2", "validator"),
+        step("step:validate-maintenance-unit-evidence", "route:portfolio-graduation", "portfolio-runtime-v2", "native", ("step:scan-maintenance-unit-freshness",)),
+        step("step:issue-portfolio-receipt", "route:portfolio-graduation", "portfolio-runtime-v2", "receipt", ("step:validate-maintenance-unit-evidence",)),
         step("terminal:portfolio-graduated", "route:portfolio-graduation", "portfolio-runtime-v2", "terminal", ("step:issue-portfolio-receipt",), terminal_kind="success"),
-        step("terminal:portfolio-revalidation-required", "route:portfolio-graduation", "portfolio-runtime-v2", "terminal", terminal_kind="blocked"),
-        step("step:inspect-project-adoption", "route:project-adoption", "project-adoption-v2", "inventory"),
-        step("step:render-managed-project-prompt", "route:project-adoption", "project-adoption-v2", "renderer", ("step:inspect-project-adoption",)),
-        step("step:install-project-adoption", "route:project-adoption", "project-adoption-v2", "state_write", ("step:render-managed-project-prompt",)),
-        step("step:audit-project-adoption", "route:project-adoption", "project-adoption-v2", "verifier", ("step:install-project-adoption",)),
-        step("terminal:project-adopted", "route:project-adoption", "project-adoption-v2", "terminal", ("step:audit-project-adoption",), terminal_kind="success"),
-        step("terminal:project-adoption-blocked", "route:project-adoption", "project-adoption-v2", "terminal", terminal_kind="blocked"),
+        step("terminal:maintenance-unit-evidence-blocked", "route:portfolio-graduation", "portfolio-runtime-v2", "terminal", terminal_kind="blocked"),
+        step("step:inspect-author-repository-adoption", "route:author-repository-adoption", "author-repository-adoption-current", "inventory"),
+        step("step:render-managed-project-prompt", "route:author-repository-adoption", "author-repository-adoption-current", "renderer", ("step:inspect-author-repository-adoption",)),
+        step("step:install-author-repository-adoption", "route:author-repository-adoption", "author-repository-adoption-current", "state_write", ("step:render-managed-project-prompt",)),
+        step("step:audit-author-repository-adoption", "route:author-repository-adoption", "author-repository-adoption-current", "verifier", ("step:install-author-repository-adoption",)),
+        step("terminal:author-repository-adopted", "route:author-repository-adoption", "author-repository-adoption-current", "terminal", ("step:audit-author-repository-adoption",), terminal_kind="success"),
+        step("terminal:author-repository-adoption-blocked", "route:author-repository-adoption", "author-repository-adoption-current", "terminal", terminal_kind="blocked"),
         step("step:refresh-global-router", "route:global-router-handoff", "global-router-handoff-v2", "native"),
         step("step:check-global-registry-and-prompt", "route:global-router-handoff", "global-router-handoff-v2", "native", ("step:refresh-global-router",)),
         step("step:verify-target-handoff", "route:global-router-handoff", "global-router-handoff-v2", "verifier", ("step:check-global-registry-and-prompt",)),
@@ -1386,11 +1401,11 @@ def export_contract_model() -> dict[str, object]:
         ("obligation:loop-liveness", "loops_require_progress_and_a_finite_bound", ["step:record-step-event"]),
         ("obligation:exact-closure", "closure_consumes_current_exact_receipts", ["step:check-run-closure", "step:issue-closure-receipt"]),
         ("obligation:no-former-authority-success", "failures_and_former_authority_cannot_hide", ["step:select-function-route", "step:check-run-closure"]),
-        ("obligation:portfolio-freshness", "portfolio_children_remain_current", ["step:scan-graduate-freshness", "step:issue-portfolio-receipt"]),
+        ("obligation:portfolio-freshness", "maintenance_unit_graduation_uses_only_unit_evidence", ["step:scan-maintenance-unit-freshness", "step:validate-maintenance-unit-evidence", "step:issue-portfolio-receipt"]),
         ("obligation:depth-native-authority", "depth_profile_preserves_native_authority", ["step:freeze-declared-check-inventory", "step:reconcile-declared-check-results"]),
         ("obligation:execution-depth-closure", "execution_depth_is_current_and_consumed", ["step:reconcile-declared-check-results", "step:check-run-closure", "step:issue-closure-receipt"]),
         ("obligation:unique-depth-evidence", "evidence_contribution_is_unique", ["step:reconcile-declared-check-results", "step:validate-step-evidence"]),
-        ("obligation:project-adoption", "adopted_projects_keep_skillguard_maintenance_visible", ["step:inspect-project-adoption", "step:render-managed-project-prompt", "step:install-project-adoption", "step:audit-project-adoption"]),
+        ("obligation:author-repository-adoption", "author_repositories_keep_skillguard_maintenance_private", ["step:inspect-author-repository-adoption", "step:render-managed-project-prompt", "step:install-author-repository-adoption", "step:audit-author-repository-adoption"]),
         ("obligation:global-router-handoff", "routes_are_typed_and_uniquely_owned", ["step:refresh-global-router", "step:check-global-registry-and-prompt", "step:verify-target-handoff"]),
         ("obligation:provenance", "model_and_binding_are_authoritative", ["step:resolve-canonical-source", "step:compare-installed-and-repository", "step:verify-release-provenance"]),
     ) + tuple(template_extension["obligations"])
@@ -1504,8 +1519,8 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             "commitment:portfolio-revalidates-after-guard-change",
             BCL_COMMITMENT_PROCESS,
             "a later target exposes a SkillGuard miss or changes Guard semantics",
-            "affected prior graduates become revalidation-required and regain currentness through full evidence or a proof-bound reuse ticket",
-            "portfolio graduation blocks while any required child is stale, missing, failed, or blocked",
+            "only maintenance units whose declared source inputs changed become stale, and each unit regains currentness through its own full evidence",
+            "a unit graduation blocks while that unit's required evidence is stale, missing, failed, skipped, or not run",
             "graduate skill portfolio",
             "portfolio-graduation-v2",
             ("surface:portfolio-spec", "surface:executable-model"),
@@ -1521,14 +1536,14 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             ("surface:execution-depth-spec", "surface:executable-model"),
         ),
         (
-            "commitment:project-adoption-is-portable",
+            "commitment:author-repository-adoption-is-private",
             BCL_COMMITMENT_PROCESS,
-            "SkillGuard adopts or upgrades a target skill repository",
-            "one marker-bounded AGENTS block and portable project record name SkillGuard and preserve native route ownership",
-            "missing, duplicate, incomplete, stale, or hand-diverged project guidance blocks maintenance confidence",
-            "adopt target skill project",
-            "project-adoption-v2",
-            ("surface:project-adoption-spec", "surface:executable-model"),
+            "SkillGuard adopts an explicit skill-authoring repository",
+            "one marker-bounded maintainer AGENTS block and private author manifest preserve native route and maintenance-unit ownership",
+            "missing, duplicate, incomplete, stale, hand-diverged, consumer-copied, or ordinary-project guidance blocks maintenance confidence",
+            "adopt explicit author repository",
+            "author-repository-adoption-current",
+            ("surface:author-repository-adoption-spec", "surface:executable-model"),
         ),
     )
     commitments = tuple(
@@ -1624,15 +1639,15 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             rationale="defines target-neutral profiles, native authority, unique evidence, statuses, and closure",
         ),
         BehaviorSourceSurface(
-            "surface:project-adoption-spec",
+            "surface:author-repository-adoption-spec",
             surface_kind=BCL_SOURCE_OPENSPEC,
             source_ref="openspec/changes/harden-native-depth-evidence-identity/specs/universal-execution-depth/spec.md",
-            commitment_ids=("commitment:project-adoption-is-portable",),
-            business_intent_ids=("intent:project-adoption-is-portable",),
-            primary_path_id="project-adoption-v2",
+            commitment_ids=("commitment:author-repository-adoption-is-private",),
+            business_intent_ids=("intent:author-repository-adoption-is-private",),
+            primary_path_id="author-repository-adoption-current",
             owner=MODEL_ID,
-            validation_boundary="approved project-adoption requirements",
-            rationale="defines the portable managed project prompt and safe lifecycle",
+            validation_boundary="approved author-repository adoption requirements",
+            rationale="defines the private maintainer prompt, author manifest, and consumer exclusion boundary",
         ),
     )
     model_surfaces = tuple(
@@ -1733,12 +1748,12 @@ def build_primary_path_authority_plan() -> PrimaryPathAuthorityPlan:
             failure_policy="fail_closed",
         ),
         PrimaryPathContract(
-            "project-adoption-v2",
-            business_intent="adopt target skill project",
-            primary_entrypoint_id="skillguard.project-adopt",
+            "author-repository-adoption-current",
+            business_intent="adopt explicit author repository",
+            primary_entrypoint_id="skillguard.maintainer-adopt",
             owner_model_id=MODEL_ID,
-            owner_code_contract_id="contract:project-adoption-v2",
-            expected_terminal="project_adopted_or_visible_blocker",
+            owner_code_contract_id="contract:author-repository-adoption-current",
+            expected_terminal="author_repository_adopted_or_visible_blocker",
             failure_policy="fail_closed",
         ),
     )
@@ -1864,11 +1879,11 @@ def build_contract_exhaustion_plan() -> ContractExhaustionPlan:
         ContractMutationCase("case:concurrency:double-claim", "run_claim", "conflict", oracle_id=block_oracle.oracle_id, input_delta={"active_writers": 2}, expected_status="blocked", required_test_cell_id="test:model:double-claim"),
         ContractMutationCase("case:concurrency:stale-lock-not-recovered", "run_claim", "stale_lock", oracle_id=block_oracle.oracle_id, input_delta={"prior_writer": "failed_or_dead", "lock_recovered": False}, expected_status="blocked", required_test_cell_id="test:model:stale-lock-recovery"),
         ContractMutationCase("case:packet:unknown-field", "packet_field_contract", "unconsumed", oracle_id=block_oracle.oracle_id, input_delta={"packet_field_contract": "unknown_step"}, expected_status="blocked", required_test_cell_id="test:model:packet-unknown-field"),
-        ContractMutationCase("case:project-adoption:wrong-artifact-root", "path_shape", "wrong_root", oracle_id=block_oracle.oracle_id, input_delta={"artifact": ".agents/skills/skillguard/.skillguard/project.json", "required_root": ".skillguard/project.json"}, expected_status="blocked", required_test_cell_id="test:model:project-adoption-wrong-artifact-root"),
+        ContractMutationCase("case:author-adoption:wrong-artifact-root", "path_shape", "wrong_root", oracle_id=block_oracle.oracle_id, input_delta={"artifact": ".agents/skills/skillguard/.skillguard/author-project.json", "required_root": ".skillguard/author-project.json"}, expected_status="blocked", required_test_cell_id="test:model:author-adoption-wrong-artifact-root"),
         ContractMutationCase("case:guard:changed-same-run", "guard_compatibility", "stale_identity", oracle_id=stale_oracle.oracle_id, input_delta={"guard_runtime": "changed", "run_identity": "old"}, expected_status="revalidation_required", required_test_cell_id="test:model:guard-changed-same-run"),
         ContractMutationCase("case:loop:no-delta", "loop_progress", "no_progress", oracle_id=block_oracle.oracle_id, input_delta={"progress_changed": False, "reentries": 1}, expected_status="blocked", required_test_cell_id="test:model:no-delta"),
         ContractMutationCase("case:loop:over-bound", "loop_progress", "out_of_range", oracle_id=block_oracle.oracle_id, input_delta={"reentries": 4, "max_reentries": 3}, expected_status="blocked", required_test_cell_id="test:model:over-bound"),
-        ContractMutationCase("case:portfolio:prior-stale", "receipt_freshness", "stale", oracle_id=stale_oracle.oracle_id, input_delta={"prior_graduate": "revalidation_required"}, expected_status="revalidation_required", required_test_cell_id="test:model:portfolio-prior-stale"),
+        ContractMutationCase("case:portfolio:unit-evidence-stale", "receipt_freshness", "stale", oracle_id=stale_oracle.oracle_id, input_delta={"maintenance_unit_evidence": "stale"}, expected_status="revalidation_required", required_test_cell_id="test:model:portfolio-unit-evidence-stale"),
     )
     return ContractExhaustionPlan(
         "skillguard-v2-contract-exhaustion",
@@ -1948,11 +1963,11 @@ def build_model_test_alignment_plan() -> ModelTestAlignmentPlan:
         ("obligation:loop-liveness", "loops require progress and bounds", "loops_require_progress_and_a_finite_bound", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:exact-closure", "closure consumes exact current receipts", "closure_consumes_current_exact_receipts", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:no-former-authority-success", "failures and former authority residuals stay visible", "failures_and_former_authority_cannot_hide", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
-        ("obligation:portfolio-freshness", "prior graduates remain current", "portfolio_children_remain_current", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
+        ("obligation:portfolio-freshness", "each maintenance unit graduates from its own current evidence", "maintenance_unit_graduation_uses_only_unit_evidence", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:depth-native-authority", "depth profiles preserve the target's native owner", "depth_profile_preserves_native_authority", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:execution-depth-closure", "closure consumes a current passing execution-depth receipt", "execution_depth_is_current_and_consumed", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:unique-depth-evidence", "unrelated depth obligations need unique evidence contribution", "evidence_contribution_is_unique", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
-        ("obligation:project-adoption", "maintained repositories preserve current SkillGuard project guidance", "adopted_projects_keep_skillguard_maintenance_visible", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
+        ("obligation:author-repository-adoption", "explicit author repositories preserve private current SkillGuard maintainer guidance", "author_repositories_keep_skillguard_maintenance_private", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:global-router-handoff", "global routing preserves one typed handoff", "global_router_handoff_is_current", "test_self_host_functions_have_distinct_routes_and_terminals", "test_known_bad_scenarios_are_required"),
         ("obligation:provenance", "canonical installed repository and release provenance stay distinct", "provenance_is_non_downgrade", "test_self_host_functions_have_distinct_routes_and_terminals", "test_known_bad_scenarios_are_required"),
     )

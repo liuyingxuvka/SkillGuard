@@ -1,13 +1,50 @@
 # Changelog
 
+## v0.3.4 - 2026-07-18
+
+- Fixed `check-skill` so its required target sections are exclusively
+  target-owned consumer instructions; the author-only `SkillGuard Maintenance`
+  heading is no longer required in graduated entrypoints.
+- Kept author currentness on the exact contract trio and author repository
+  policy, with no conditional section mode, fallback, or compatibility route.
+- Extended the current-runtime-authority FlowGuard model and external-target
+  regression coverage to block author-maintenance instructions in consumer
+  prompts while accepting clean consumer skills.
+- Excluded generated `*.egg-info` package metadata from authoritative source,
+  impact, and installation projections so clean Git checkouts reproduce the
+  exact compiled installation inventory.
+
 ## v0.3.3 - 2026-07-16
 
+- **BREAKING:** Separated private author maintenance from clean consumer
+  distribution. Graduated skills no longer carry `.skillguard`, SkillGuard
+  prompts, commands, receipts, Portfolio state, or router state.
+- **BREAKING:** Bound every declared check and receipt to one maintenance unit,
+  member, evidence subject, and semantic check; foreign-unit proof is rejected
+  even when command text and inputs match.
+- **BREAKING:** Replaced ordinary project adoption with explicit
+  `maintainer-adopt` / `maintainer-audit`, with zero writes for ineligible
+  business projects.
+- **BREAKING:** Retired public ordinary global skill resolution, standalone
+  consumer prompt installation, installed-skill contract auditing, and
+  Portfolio result-reuse ticket paths.
+- Contracted TestMesh and Portfolio to same-unit execution and independent
+  status aggregation; semantic overlap now requires split, merge, or retirement
+  rather than shared evidence.
+- Added clean consumer distribution construction, target-runtime preflight,
+  safe installer-owned withdrawal, conflict preservation, and transactional
+  activation/rollback.
+- Restored official OpenSpec to an external unmanaged boundary and limited
+  FlowGuard integration to read-only proposal, design, specs, tasks, and status
+  context.
 - Removed target-specific conditional branch names from the universal compiler and runtime. Conditional branches, applicability, and total obligation disposition now come only from the target contract.
 - Replaced native no-op, terminal, and applicability receipts with strict v2 schemas. Structural no-op branches emit `conditional_noop`; active branches emit `completed_branch`; no legacy receipt reader or compatibility alias remains.
 - Limited scheduled-production identity checks to scheduled evidence and allowed non-scheduled targets to inherit their exact validated evidence domain without manufacturing scheduler fields.
 - Removed the hidden skip-as-not-applicable closure path so only verifier-owned applicability receipts can mark a conditional obligation not applicable.
 - Repaired official staged installation recovery so a separately verified current replacement can supersede a historical active and backup tree whose identities both drifted, while ordinary recovery remains fail-closed.
-- Made idempotent `project-adopt` refresh an explicitly changed current SkillGuard version and managed inventory instead of silently preserving stale manifest metadata.
+- Made idempotent author-repository adoption refresh an explicitly changed
+  current SkillGuard version and managed inventory instead of silently
+  preserving stale manifest metadata.
 - Added arbitrary-branch compiler, closure, schema, non-scheduled terminal, portfolio, and installation-recovery regressions and passed the native self-host enforced closure.
 
 ## v0.3.2 - 2026-07-16

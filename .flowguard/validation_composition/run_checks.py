@@ -267,7 +267,7 @@ def run_all() -> tuple[bool, dict[str, Any]]:
         },
         "skipped_checks": skipped_checks,
         "residual_risk": [
-            "production compiler, owner receipt, TestMesh, installation, Portfolio, router, and OpenSpec wire behavior require the later focused implementation regressions",
+            "production compiler, same-unit owner receipt, TestMesh, consumer distribution, Portfolio summary, private author router, and external-provider exclusion require focused implementation regressions",
             "manifest alignment does not prove that every selected owner has a current independently replayable receipt",
         ],
         "claim_boundary": CLAIM_BOUNDARY,

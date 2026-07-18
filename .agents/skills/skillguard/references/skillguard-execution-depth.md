@@ -9,8 +9,8 @@ It does not decide what the target should protect, which domain failures matter,
 There is no optional, advisory, bypass, family-specific, or target-category mode.
 
 1. Read the target's current `depth_profile` and exact `native_check_ids`.
-2. Freeze one inventory containing every declared check, its execution owner, evidence domain, and dependencies.
-3. Execute each owner once or reuse one immutable current terminal-success receipt with the same frozen execution identity and inputs.
+2. Freeze one maintenance-unit inventory containing every member, semantic check, evidence subject, execution owner, evidence domain, and dependency.
+3. Execute each owner once or reuse one immutable current terminal-success receipt only inside the same unit with the same complete execution identity and inputs.
 4. Reconcile the frozen inventory against results by exact check id, owner id, request fingerprint, disposition, freshness, receipt id, and receipt hash.
 5. Block when a result is absent, duplicated, stale, non-terminal, failed, skipped, timed out, cancelled, cleanup-unconfirmed, or bound to another request or owner.
 6. Issue one declared-check execution receipt only when the unresolved-check set is empty and the enrolled provider runtime is current.
@@ -24,6 +24,7 @@ A target may declare one check or many checks. SkillGuard treats both shapes ide
 - SkillGuard owns inventory equality, single execution ownership, receipt completeness, request/input freshness, runtime enrollment, and closure consumption.
 - SkillGuard never branches on a target name or family and never infers semantics from a check id.
 - A target-specific pattern becomes mandatory only because the target placed every member of that pattern in its own declared inventory.
+- A different maintenance unit never satisfies the target's obligation, even when it runs the same command over the same files.
 
 This separation lets an ordinary one-way skill use its natural verification without inventing an artificial second case, while a target with several native checks still cannot omit one and pass.
 
@@ -44,7 +45,10 @@ Former target-domain policy fields and any target classification are invalid cur
 
 `CONTRACT_DEPTH_PASS` means the declared inventory is structurally valid and bound to known current checks and owners. It does not prove execution.
 
-`EXECUTION_DEPTH_PASS` means every frozen declared check has exactly one current terminal-success result for the same request and runtime, with an immutable receipt identity and no unresolved check. It does not prove claims beyond the target's own check boundaries.
+`EXECUTION_DEPTH_PASS` means every frozen declared check has exactly one current terminal-success result for the same maintenance unit, member, evidence subject, semantic check, request, and runtime, with an immutable receipt identity and no unresolved check. It does not prove claims beyond the target's own check boundaries.
+
+This receipt is author-maintenance evidence. It is not copied into the
+graduated consumer and is not a consumer runtime prerequisite.
 
 For scheduled production, the receipt must additionally bind the exact current installation receipt and installed runtime identity. Capability-validation evidence cannot substitute for scheduled-production authority.
 

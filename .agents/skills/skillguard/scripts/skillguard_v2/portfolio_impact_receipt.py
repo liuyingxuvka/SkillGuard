@@ -157,7 +157,6 @@ def build_portfolio_impact_receipt(
         target_id: {
             "graduation_status": str(entries[target_id].get("graduation_status", "")),
             "pending_guard_change_id": str(entries[target_id].get("pending_guard_change_id", "")),
-            "reuse_ticket_absent": entries[target_id].get("reuse_ticket") is None,
         }
         for target_id in invalidated
         if target_id in entries
@@ -387,8 +386,6 @@ def verify_portfolio_impact_receipt(
                     blockers.append(f"portfolio_impact_registry_status_mismatch:{target_id}")
                 if entry.get("pending_guard_change_id") != require_change_id:
                     blockers.append(f"portfolio_impact_registry_change_mismatch:{target_id}")
-                if entry.get("reuse_ticket") is not None:
-                    blockers.append(f"portfolio_impact_reuse_not_cleared:{target_id}")
                 projected = target_statuses.get(target_id)
                 if not isinstance(projected, Mapping):
                     blockers.append(
@@ -399,8 +396,6 @@ def verify_portfolio_impact_receipt(
                     != entry.get("graduation_status")
                     or projected.get("pending_guard_change_id")
                     != entry.get("pending_guard_change_id")
-                    or projected.get("reuse_ticket_absent")
-                    is not (entry.get("reuse_ticket") is None)
                 ):
                     blockers.append(
                         f"portfolio_impact_target_status_mismatch:{target_id}"
@@ -426,10 +421,6 @@ def verify_portfolio_impact_receipt(
                     blockers.append(
                         f"portfolio_impact_registry_change_mismatch:{suite_id}"
                     )
-                if suite.get("reuse_ticket") is not None:
-                    blockers.append(
-                        f"portfolio_impact_reuse_not_cleared:{suite_id}"
-                    )
                 registry_member_statuses = suite.get(
                     "member_revalidation_statuses", {}
                 )
@@ -442,7 +433,6 @@ def verify_portfolio_impact_receipt(
                     expected_member_status = {
                         "graduation_status": "revalidation_required",
                         "pending_guard_change_id": require_change_id,
-                        "reuse_ticket_absent": True,
                     }
                     if registry_member_statuses.get(member_id) != expected_member_status:
                         blockers.append(

@@ -1,5 +1,5 @@
 {
-  "schema_version": "skillguard.suite_contract.v1",
+  "schema_version": "skillguard.suite_contract.v2",
   "suite_name": "{{suite_name}}",
   "purpose": "{{suite_purpose}}",
   "target_path": "{{target_path}}",
@@ -29,8 +29,8 @@
       "status": "{{dependency_status}}"
     }
   ],
-  "shared_evidence_rules": [
-    "{{shared_evidence_rule}}"
+  "independent_evidence_rules": [
+    "{{independent_evidence_rule}}"
   ],
   "current_identity": {
     "suite_version": "{{suite_version}}",

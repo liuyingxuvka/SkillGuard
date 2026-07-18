@@ -1,5 +1,5 @@
 {
-  "schema_version": "skillguard.suite_contract.v1",
+  "schema_version": "skillguard.suite_contract.v2",
   "suite_name": "bad_suite_child_without_closure",
   "purpose": "Provide a negative suite fixture whose checked child report lacks direct evidence entries.",
   "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_child_without_closure/suite",
@@ -29,7 +29,7 @@
       "status": "checked"
     }
   ],
-  "shared_evidence_rules": [
+  "independent_evidence_rules": [
     "Checked children require direct member report evidence.",
     "Progress ledgers, runtime ids, and PM text cannot satisfy suite closure."
   ],

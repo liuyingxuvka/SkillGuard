@@ -1495,9 +1495,7 @@ def execute_portfolio_attempt(
             ),
             guard_runtime_identity=guard,
         )
-        run_root = run_state_root / ".skillguard" / "runs" / str(
-            supervisor_result["run_id"]
-        )
+        run_root = Path(str(supervisor_result["run_root"])).resolve()
         terminal_observed_at = utc_now()
         after_identity = _identity_current(working_repository, receipt)
         after = str(after_identity["source_fingerprint"])
@@ -1849,7 +1847,6 @@ def assemble_portfolio_attempt(
     workspace_root: Path,
     installed_target_root: Path | None = None,
     production_revalidation_refs: Sequence[str] = (),
-    portfolio_target_repository_roots: Mapping[str, Path] | None = None,
 ) -> dict[str, Any]:
     """Replay one complete execution and build verifier-authored graduation input."""
 
@@ -1861,15 +1858,6 @@ def assemble_portfolio_attempt(
         else None
     )
     receipt = _preparation_current(preparation_ref, workspace_root=workspace_root)
-    portfolio_target_repository_roots = {
-        str(skill_id): canonical_filesystem_path(Path(root))
-        for skill_id, root in dict(
-            portfolio_target_repository_roots or {}
-        ).items()
-    }
-    portfolio_target_repository_roots.setdefault(
-        str(receipt["skill_id"]), repository_root
-    )
     assembly_result_path = (
         workspace_root
         / "portfolio-runs"
@@ -1978,9 +1966,6 @@ def assemble_portfolio_attempt(
             target_repository_root=repository_root,
             installed_target_root=installed_target_root,
             verified_installation_context=verified_installation_context,
-            portfolio_target_repository_roots=(
-                portfolio_target_repository_roots
-            ),
         )
         if (
             replay_receipt is None
@@ -2086,7 +2071,6 @@ def assemble_portfolio_attempt(
         target_repository_root=repository_root,
         installed_target_root=installed_target_root,
         verified_installation_context=verified_installation_context,
-        portfolio_target_repository_roots=portfolio_target_repository_roots,
     )
     if graduation_receipt is None:
         blockers = report.get("blockers", []) if isinstance(report, Mapping) else []

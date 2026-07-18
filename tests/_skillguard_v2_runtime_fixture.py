@@ -23,6 +23,9 @@ def _current_checks_and_plan(
     checks = copy.deepcopy(source_checks)
     for check in checks:
         check_id = str(check.get("check_id", ""))
+        check.setdefault("maintenance_unit_id", "unit:runtime-fixture")
+        check.setdefault("member_skill_id", "runtime-fixture")
+        check.setdefault("evidence_subject_id", f"subject:{check_id.removeprefix('check:')}")
         check.setdefault("semantic_check_id", check_id)
         check.setdefault("execution_owner_id", f"owner:{check_id.removeprefix('check:')}")
         check.setdefault(
@@ -189,6 +192,19 @@ def runtime_contract() -> dict[str, object]:
         "schema_version": "skillguard.compiled_contract.v2",
         "compiler_version": "fixture",
         "skill_id": "runtime-fixture",
+        "repository_role": "skill_maintainer_source",
+        "maintenance_unit_id": "unit:runtime-fixture",
+        "member_skill_ids": ["runtime-fixture"],
+        "consumer_projection": {
+            "projection_id": "projection:consumer-distribution",
+            "prohibited_path_prefixes": [".skillguard/"],
+            "prohibited_prompt_tokens": [
+                "SkillGuard",
+                ".skillguard",
+                "skillguard.py",
+            ],
+            "release_manifest_path": "consumer-release.json",
+        },
         "model_id": "runtime-fixture-model",
         "parent_model_id": "fixture-parent",
         "flowguard_schema_version": "1.0",
@@ -380,6 +396,9 @@ def runtime_check_manifest(
         "schema_version": "skillguard.check_manifest.v2",
         "compiler_version": "fixture",
         "skill_id": contract["skill_id"],
+        "maintenance_unit_id": contract["maintenance_unit_id"],
+        "member_skill_ids": contract["member_skill_ids"],
+        "consumer_projection": contract["consumer_projection"],
         "model_id": contract["model_id"],
         "contract_hash": contract["contract_hash"],
         "check_declarations_hash": contract["check_declarations_hash"],

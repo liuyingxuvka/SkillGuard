@@ -3,10 +3,12 @@
   "$id": "skillguard_test_mesh_execution_plan_current.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "status", "mode", "profile_id", "execution_count", "selected_owner_ids", "changed_component_ids", "will_reuse_owner_ids", "will_execute_owner_ids", "will_aggregate_only", "required_install_component_ids", "required_router_refresh", "required_portfolio_target_ids", "full_required_reason_codes", "owner_plans", "findings", "claim_boundary"],
+  "required": ["schema_version", "artifact_type", "maintenance_unit_id", "member_skill_id", "status", "mode", "profile_id", "execution_count", "selected_owner_ids", "changed_component_ids", "will_reuse_owner_ids", "will_execute_owner_ids", "will_aggregate_only", "required_install_component_ids", "required_router_refresh", "required_portfolio_target_ids", "full_required_reason_codes", "owner_plans", "findings", "claim_boundary"],
   "properties": {
     "schema_version": {"const": "skillguard.test_mesh_execution_plan.current"},
     "artifact_type": {"const": "skillguard_test_mesh_execution_plan"},
+    "maintenance_unit_id": {"type": "string", "minLength": 1},
+    "member_skill_id": {"type": "string", "minLength": 1},
     "status": {"enum": ["passed", "blocked"]},
     "mode": {"const": "plan_only"},
     "profile_id": {"type": "string"},

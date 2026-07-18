@@ -258,8 +258,8 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             {
                 "artifact:self-compiled-contract",
                 "artifact:self-check-manifest",
-                "artifact:self-project-adoption-manifest",
-                "artifact:self-project-prompt",
+                "artifact:self-author-project-manifest",
+                "artifact:self-author-project-prompt",
                 "artifact:self-template-selection-receipt",
                 "artifact:self-template-instance-receipt",
             },
@@ -278,8 +278,8 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             artifact_paths["artifact:self-check-manifest"],
         )
         self.assertEqual(
-            ".skillguard/project.json",
-            artifact_paths["artifact:self-project-adoption-manifest"],
+            ".skillguard/author-project.json",
+            artifact_paths["artifact:self-author-project-manifest"],
         )
         self.assertEqual(
             ".skillguard/runs/{run_id}/template-selection-receipt.json",
@@ -289,21 +289,21 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             ".skillguard/runs/{run_id}/template-instance-receipt.json",
             artifact_paths["artifact:self-template-instance-receipt"],
         )
-        project_audit = next(
+        author_audit = next(
             row
             for row in manifest["checks"]
-            if row["check_id"] == "check:self:audit-project-adoption"
+            if row["check_id"] == "check:self:audit-author-repository-adoption"
         )
-        self.assertEqual("command", project_audit["kind"])
-        self.assertEqual("python", project_audit["command"])
+        self.assertEqual("command", author_audit["kind"])
+        self.assertEqual("python", author_audit["command"])
         self.assertEqual(
             [
                 ".agents/skills/skillguard/scripts/skillguard.py",
-                "project-audit",
+                "maintainer-audit",
                 "--root",
                 ".",
             ],
-            project_audit["args"],
+            author_audit["args"],
         )
         all_obligations = {row["obligation_id"] for row in contract["obligations"]}
         for check in manifest["checks"]:

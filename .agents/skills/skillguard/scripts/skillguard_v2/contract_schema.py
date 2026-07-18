@@ -155,6 +155,10 @@ BINDING_SOURCE_FIELDS = frozenset(
         "may_define_skillguard_runtime_route",
         "model_id",
         "model_path",
+        "repository_role",
+        "maintenance_unit_id",
+        "member_skill_ids",
+        "consumer_projection",
         "native_check_bindings",
         "native_route_bindings",
         "native_route_owner",
@@ -185,6 +189,10 @@ COMPILED_CONTRACT_FIELDS = frozenset(
         "judgment_rubrics",
         "model_id",
         "model_path",
+        "repository_role",
+        "maintenance_unit_id",
+        "member_skill_ids",
+        "consumer_projection",
         "obligations",
         "parent_model_id",
         "portfolio_capability_contracts",
@@ -208,6 +216,9 @@ CHECK_MANIFEST_FIELDS = frozenset(
         "contract_hash",
         "manifest_hash",
         "model_id",
+        "maintenance_unit_id",
+        "member_skill_ids",
+        "consumer_projection",
         "schema_version",
         "skill_id",
         "source_fingerprints",
@@ -229,6 +240,9 @@ SOURCE_CHECK_FIELDS = frozenset(
         "evidence_class",
         "evidence_domain_id",
         "execution_owner_id",
+        "maintenance_unit_id",
+        "member_skill_id",
+        "evidence_subject_id",
         "environment",
         "expected",
         "input_selectors",
@@ -249,6 +263,10 @@ COMPILED_CHECK_FIELDS = SOURCE_CHECK_FIELDS | frozenset(
     }
 )
 OWNER_BEHAVIOR_FIELDS = (
+    "maintenance_unit_id",
+    "member_skill_id",
+    "evidence_subject_id",
+    "semantic_check_id",
     "kind",
     "command",
     "args",
@@ -951,8 +969,101 @@ def validate_binding_source(payload: object) -> tuple[SchemaFinding, ...]:
         )
     if root.get("schema_version") != BINDING_SOURCE_SCHEMA:
         findings.append(_finding("unsupported_binding_schema", "$.schema_version", BINDING_SOURCE_SCHEMA))
-    for key in ("skill_id", "model_id", "model_path", "claim_boundary"):
+    for key in (
+        "skill_id",
+        "model_id",
+        "model_path",
+        "claim_boundary",
+        "repository_role",
+        "maintenance_unit_id",
+    ):
         _required_text(root, key, "$", findings)
+    if root.get("repository_role") != "skill_maintainer_source":
+        findings.append(
+            _finding(
+                "repository_role_not_author_source",
+                "$.repository_role",
+                "skill_maintainer_source is required",
+            )
+        )
+    member_skill_ids = _string_list(
+        root.get("member_skill_ids"), "$.member_skill_ids", findings
+    )
+    if (
+        not member_skill_ids
+        or len(member_skill_ids) != len(set(member_skill_ids))
+        or root.get("skill_id") not in member_skill_ids
+    ):
+        findings.append(
+            _finding(
+                "member_skill_ids_invalid",
+                "$.member_skill_ids",
+                "must be unique, non-empty, and contain skill_id",
+            )
+        )
+    consumer_projection = _mapping(
+        root.get("consumer_projection"), "$.consumer_projection", findings
+    )
+    expected_consumer_fields = {
+        "projection_id",
+        "prohibited_path_prefixes",
+        "prohibited_prompt_tokens",
+        "release_manifest_path",
+    }
+    unknown_consumer_fields = sorted(
+        set(consumer_projection) - expected_consumer_fields
+    )
+    if unknown_consumer_fields:
+        findings.append(
+            _finding(
+                "consumer_projection_unknown_field",
+                "$.consumer_projection",
+                ",".join(unknown_consumer_fields),
+            )
+        )
+    if (
+        consumer_projection.get("projection_id")
+        != "projection:consumer-distribution"
+    ):
+        findings.append(
+            _finding(
+                "consumer_projection_id_invalid",
+                "$.consumer_projection.projection_id",
+                "projection:consumer-distribution is required",
+            )
+        )
+    prohibited_prefixes = _string_list(
+        consumer_projection.get("prohibited_path_prefixes"),
+        "$.consumer_projection.prohibited_path_prefixes",
+        findings,
+    )
+    if ".skillguard/" not in prohibited_prefixes:
+        findings.append(
+            _finding(
+                "consumer_projection_skillguard_prefix_missing",
+                "$.consumer_projection.prohibited_path_prefixes",
+                ".skillguard/ must be prohibited",
+            )
+        )
+    prohibited_tokens = _string_list(
+        consumer_projection.get("prohibited_prompt_tokens"),
+        "$.consumer_projection.prohibited_prompt_tokens",
+        findings,
+    )
+    if not {"SkillGuard", ".skillguard"}.issubset(set(prohibited_tokens)):
+        findings.append(
+            _finding(
+                "consumer_projection_prompt_tokens_incomplete",
+                "$.consumer_projection.prohibited_prompt_tokens",
+                "SkillGuard and .skillguard must be prohibited",
+            )
+        )
+    _required_text(
+        consumer_projection,
+        "release_manifest_path",
+        "$.consumer_projection",
+        findings,
+    )
     if root.get("confirmed") is not True:
         findings.append(_finding("unconfirmed_binding_source", "$.confirmed", "release compilation requires confirmed=true"))
     if "implementation_paths" in root:
@@ -1115,10 +1226,31 @@ def validate_binding_source(payload: object) -> tuple[SchemaFinding, ...]:
                     ",".join(unknown_check_fields),
                 )
             )
-        _required_text(row, "kind", f"$.checks[{index}]", findings)
-        if "semantic_check_id" in row:
-            _required_text(
-                row, "semantic_check_id", f"$.checks[{index}]", findings
+        check_path = f"$.checks[{index}]"
+        _required_text(row, "kind", check_path, findings)
+        for identity_field in (
+            "semantic_check_id",
+            "maintenance_unit_id",
+            "member_skill_id",
+            "evidence_subject_id",
+            "execution_owner_id",
+        ):
+            _required_text(row, identity_field, check_path, findings)
+        if row.get("maintenance_unit_id") != root.get("maintenance_unit_id"):
+            findings.append(
+                _finding(
+                    "check_maintenance_unit_mismatch",
+                    f"{check_path}.maintenance_unit_id",
+                    str(row.get("maintenance_unit_id", "")),
+                )
+            )
+        if row.get("member_skill_id") not in set(member_skill_ids):
+            findings.append(
+                _finding(
+                    "check_member_skill_unknown",
+                    f"{check_path}.member_skill_id",
+                    str(row.get("member_skill_id", "")),
+                )
             )
         evidence_class = _required_text(row, "evidence_class", f"$.checks[{index}]", findings)
         if evidence_class and evidence_class not in EVIDENCE_CLASSES:
@@ -1145,8 +1277,6 @@ def validate_binding_source(payload: object) -> tuple[SchemaFinding, ...]:
                         ),
                     )
                 )
-        if "execution_owner_id" in row:
-            _required_text(row, "execution_owner_id", f"$.checks[{index}]", findings)
         if "input_selectors" in row:
             _validate_input_selectors(
                 row.get("input_selectors"),
@@ -1279,6 +1409,8 @@ RUNTIME_REQUIRED_FIELDS: Mapping[str, tuple[str, ...]] = {
     RUN_SCHEMA: (
         "run_id",
         "skill_id",
+        "maintenance_unit_id",
+        "member_skill_id",
         "contract_hash",
         "check_manifest_hash",
         "check_declarations_hash",
@@ -1288,7 +1420,18 @@ RUNTIME_REQUIRED_FIELDS: Mapping[str, tuple[str, ...]] = {
     ),
     EVENT_SCHEMA: ("event_id", "run_id", "sequence", "event_type", "created_at", "payload_hash"),
     ARTIFACT_SCHEMA: ("artifact_id", "run_id", "kind", "producer_step_id", "fingerprint", "status"),
-    RECEIPT_SCHEMA: ("receipt_id", "run_id", "step_id", "evidence_class", "status", "input_fingerprints"),
+    RECEIPT_SCHEMA: (
+        "receipt_id",
+        "run_id",
+        "maintenance_unit_id",
+        "member_skill_id",
+        "evidence_subject_id",
+        "semantic_check_id",
+        "step_id",
+        "evidence_class",
+        "status",
+        "input_fingerprints",
+    ),
     CLOSURE_SCHEMA: (
         "closure_receipt_id",
         "run_id",
@@ -2105,11 +2248,38 @@ def validate_compiled_contract(payload: object) -> tuple[SchemaFinding, ...]:
     for key in (
         "skill_id",
         "model_id",
+        "repository_role",
+        "maintenance_unit_id",
         "check_declarations_hash",
         "contract_hash",
         "claim_boundary",
     ):
         _required_text(root, key, "$", findings)
+    member_skill_ids = _string_list(
+        root.get("member_skill_ids"), "$.member_skill_ids", findings
+    )
+    if root.get("skill_id") not in member_skill_ids:
+        findings.append(
+            _finding(
+                "compiled_member_skill_ids_invalid",
+                "$.member_skill_ids",
+                str(root.get("skill_id", "")),
+            )
+        )
+    consumer_projection = _mapping(
+        root.get("consumer_projection"), "$.consumer_projection", findings
+    )
+    if (
+        consumer_projection.get("projection_id")
+        != "projection:consumer-distribution"
+    ):
+        findings.append(
+            _finding(
+                "compiled_consumer_projection_invalid",
+                "$.consumer_projection.projection_id",
+                "projection:consumer-distribution",
+            )
+        )
     compiled_rows: dict[str, tuple[Mapping[str, Any], ...]] = {}
     for key in (
         "functions",
@@ -2181,12 +2351,38 @@ def validate_check_manifest(payload: object) -> tuple[SchemaFinding, ...]:
         findings.append(_finding("check_manifest_schema_mismatch", "$.schema_version", CHECK_MANIFEST_SCHEMA))
     for key in (
         "skill_id",
+        "maintenance_unit_id",
         "contract_hash",
         "check_declarations_hash",
         "manifest_hash",
         "claim_boundary",
     ):
         _required_text(root, key, "$", findings)
+    member_skill_ids = _string_list(
+        root.get("member_skill_ids"), "$.member_skill_ids", findings
+    )
+    if root.get("skill_id") not in member_skill_ids:
+        findings.append(
+            _finding(
+                "manifest_member_skill_ids_invalid",
+                "$.member_skill_ids",
+                str(root.get("skill_id", "")),
+            )
+        )
+    consumer_projection = _mapping(
+        root.get("consumer_projection"), "$.consumer_projection", findings
+    )
+    if (
+        consumer_projection.get("projection_id")
+        != "projection:consumer-distribution"
+    ):
+        findings.append(
+            _finding(
+                "manifest_consumer_projection_invalid",
+                "$.consumer_projection.projection_id",
+                "projection:consumer-distribution",
+            )
+        )
     checks = _rows(root.get("checks"), "$.checks", findings)
     _unique_ids(checks, "semantic_check_id", "$.checks", findings)
     if "content_impact_plan" not in root:

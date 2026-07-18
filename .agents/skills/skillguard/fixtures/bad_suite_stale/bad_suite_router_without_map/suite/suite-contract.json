@@ -1,5 +1,5 @@
 {
-  "schema_version": "skillguard.suite_contract.v1",
+  "schema_version": "skillguard.suite_contract.v2",
   "suite_name": "bad_suite_router_without_map",
   "purpose": "Provide a negative suite fixture with a valid contract and member but no suite map record.",
   "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_router_without_map/suite",
@@ -29,7 +29,7 @@
       "status": "checked"
     }
   ],
-  "shared_evidence_rules": [
+  "independent_evidence_rules": [
     "Direct member evidence is required for checked member status.",
     "Progress ledgers, runtime ids, and PM text cannot satisfy suite closure."
   ],

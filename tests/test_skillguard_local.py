@@ -679,9 +679,9 @@ Read `references/README.md` before closing.
         global_router_before = {path: sha256(path) for path in global_router_evidence}
         global_router = run_skillguard("fixture-test", "--manifest", ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json")
         self.assert_clean_pass(global_router)
-        self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_pass"), 3)
-        self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_fail"), 2)
-        self.assertEqual(global_router.get("fixture_class_counts", {}).get("blocker_condition"), 5)
+        self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_pass"), 1)
+        self.assertEqual(global_router.get("fixture_class_counts", {}).get("expected_fail"), 1)
+        self.assertIsNone(global_router.get("fixture_class_counts", {}).get("blocker_condition"))
         self.assertEqual(global_router_before, {path: sha256(path) for path in global_router_evidence})
 
     def test_check_depth_blocks_former_authority_before_reading_old_run(self) -> None:
@@ -768,12 +768,12 @@ Read `references/README.md` before closing.
         self.assertIn("scan-global-skills", names)
         self.assertIn("build-global-registry", names)
         self.assertIn("check-global-registry", names)
-        self.assertIn("resolve-global-skill", names)
-        self.assertIn("render-global-prompt", names)
-        self.assertIn("install-global-prompt", names)
-        self.assertIn("check-global-prompt", names)
         self.assertIn("refresh-global-router", names)
-        self.assertIn("audit-installed-skills", names)
+        self.assertNotIn("resolve-global-skill", names)
+        self.assertNotIn("render-global-prompt", names)
+        self.assertNotIn("install-global-prompt", names)
+        self.assertNotIn("check-global-prompt", names)
+        self.assertNotIn("audit-installed-skills", names)
         self.assertIn("detect-stale-evidence", names)
         self.assertNotIn("refresh-maintenance", names)
         self.assertIn("review-checker-change", names)
@@ -929,40 +929,10 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 report.get("failures", []),
             )
 
-    def test_audit_installed_skills_separates_local_coverage_from_github_publication(self) -> None:
-        from tests._runtime_authority_consumer_fixture import make_current_skill
-
-        with tempfile.TemporaryDirectory(prefix="skillguard-local-audit-", dir=REPO_ROOT) as tmp:
-            skills_root = Path(tmp) / "skills"
-            target = skills_root / "local-only-skill"
-            make_current_skill(target, "local-only-skill")
-
-            report = run_skillguard(
-                "audit-installed-skills",
-                "--root",
-                str(skills_root),
-                expected_exit=1,
-            )
-
-            rows = report.get("skill_results", [])
-            self.assertEqual(1, len(rows), rows)
-            row = rows[0]
-            self.assertEqual("current", row.get("authority_decision"))
-            self.assertEqual("not-a-git-repo", row.get("publication_status"))
-            self.assertIs(row.get("github_publication_checked"), False)
-            self.assertNotEqual("published", row.get("publication_status"))
-            self.assertFalse(
-                any(
-                    marker in failure
-                    for marker in (
-                        "flowguard_model_missing",
-                        "implementation_path_invalid",
-                        "stale_generated_contract",
-                    )
-                    for failure in row.get("failures", [])
-                ),
-                row.get("failures", []),
-            )
+    def test_retired_installed_skill_audit_is_not_a_public_command(self) -> None:
+        report = run_skillguard("commands")
+        names = {item.get("name") for item in report.get("commands", [])}
+        self.assertNotIn("audit-installed-skills", names)
 
     def test_global_route_score_prefers_readme_skill_for_readme_task(self) -> None:
         task = "用 README 技能给 SkillGuard 写发布 README，中英双语，文生图 hero"
@@ -1030,6 +1000,23 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 model_source, binding = checker_engine.generated_current_contract_sources(
                     skill_dir.name
                 )
+                binding.update(
+                    {
+                        "repository_role": "skill_maintainer_source",
+                        "maintenance_unit_id": f"unit:{skill_dir.name}",
+                        "member_skill_ids": [skill_dir.name],
+                        "consumer_projection": {
+                            "projection_id": "projection:consumer-distribution",
+                            "prohibited_path_prefixes": [".skillguard/"],
+                            "prohibited_prompt_tokens": [
+                                "SkillGuard",
+                                ".skillguard",
+                                "skillguard.py",
+                            ],
+                            "release_manifest_path": "consumer-release.json",
+                        },
+                    }
+                )
                 control.joinpath("flowguard_contract_model.py").write_text(
                     model_source,
                     encoding="utf-8",
@@ -1089,6 +1076,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             )
             self.assert_clean_pass(refresh)
             self.assertEqual(refresh.get("target_path"), rel(output_dir))
+            self.assertEqual(2, refresh.get("registry_item_count", 0), refresh)
             self.assertEqual(2, refresh.get("current_item_count", 0), refresh)
             self.assertTrue((codex_home / "AGENTS.md").is_file())
             self.assertTrue(registry.is_file())
@@ -1117,145 +1105,43 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertEqual(registry_check.get("registry_hash"), refresh.get("registry_hash"))
             registry_payload = json.loads(registry.read_text(encoding="utf-8"))
             entries = {item.get("skill_id"): item for item in registry_payload.get("items", [])}
-            self.assertEqual(entries["fixture-missing-contract"].get("status"), "blocked")
-            unmanaged_entrypoint = entries["fixture-missing-contract"].get("route_entrypoint", {})
-            self.assertEqual(unmanaged_entrypoint.get("contract_authority"), "missing")
-            self.assertEqual(unmanaged_entrypoint.get("route_confidence"), "blocked")
-            self.assertIn(
-                "global route has no usable typed runtime authority",
-                checker_engine.global_candidate_handoff_blockers(unmanaged_entrypoint),
-            )
             self.assertEqual(
-                entries["skillguard"].get("route_entrypoint", {}).get("authority_decision"),
-                "current",
+                {"skillguard", "skillguard-global-router"},
+                set(entries),
             )
-            self.assertEqual(
-                entries["skillguard-global-router"].get("route_entrypoint", {}).get("authority_decision"),
-                "current",
-            )
-            for skill_id in ("fixture-former-one", "fixture-former-two"):
-                self.assertNotEqual("current", entries[skill_id].get("status"))
-                self.assertEqual(
-                    "blocked",
-                    entries[skill_id].get("route_entrypoint", {}).get("authority_decision"),
+            self.assertTrue(
+                all(
+                    item.get("route_entrypoint", {}).get("repository_role")
+                    == "skill_maintainer_source"
+                    for item in entries.values()
                 )
+            )
+            self.assertTrue(
+                any(
+                    "not an explicit SkillGuard author source" in warning
+                    for warning in registry_payload.get("warnings", [])
+                )
+            )
 
-            prompt_check = run_skillguard("check-global-prompt", "--registry", rel(registry), "--codex-home", rel(codex_home))
-            self.assert_clean_pass(prompt_check)
-            self.assertEqual(prompt_check.get("registry_hash"), refresh.get("registry_hash"))
             managed_prompt = (codex_home / "AGENTS.md").read_text(encoding="utf-8")
-            self.assertIn("do not make it a mandatory pre-execution gate for every skill invocation", managed_prompt)
-            self.assertIn("Handoff order: select the target skill from the registry when selection help is needed", managed_prompt)
+            self.assertIn("private maintainer-computer routing projection", managed_prompt)
+            self.assertIn(
+                "Do not use this registry as a pre-execution gate for ordinary domain use",
+                managed_prompt,
+            )
+            self.assertIn(
+                "Different maintenance units never share, import, project, or reuse check receipts",
+                managed_prompt,
+            )
+            self.assertIn(
+                "External OpenSpec is outside this registry",
+                managed_prompt,
+            )
             self.assertIn("## Validated Template Pack Selection", managed_prompt)
             self.assertIn("## Validated Template Pack Instance", managed_prompt)
             self.assertIn("## Validated Template Pack Installation", managed_prompt)
             self.assertIn("global_router_selects_domain_template: false", managed_prompt)
             self.assertNotIn("Before using a Codex skill", managed_prompt)
-
-            tampered_prompt_home = workspace / "tampered_prompt_home"
-            tampered_prompt_home.mkdir(parents=True)
-            typed_authority_rule = (
-                "- Handoff order: select the target skill from the registry when "
-                "selection help is needed and read its `SKILL.md`; a current route "
-                "uses `.skillguard/contract-source.json`, "
-                "`.skillguard/compiled-contract.json`, and the exact "
-                "`.skillguard/check-manifest.json`. Every non-current authority is "
-                "`blocked` and has no alternate success route."
-            )
-            tampered_prompt_home.joinpath("AGENTS.md").write_text(
-                managed_prompt.replace(typed_authority_rule, ""),
-                encoding="utf-8",
-            )
-            tampered_prompt = run_skillguard(
-                "check-global-prompt",
-                "--registry",
-                rel(registry),
-                "--codex-home",
-                rel(tampered_prompt_home),
-                expected_exit=1,
-            )
-            self.assertEqual(tampered_prompt.get("decision"), "fail")
-            self.assertTrue(
-                any(
-                    "exact canonical template projection" in item
-                    for item in tampered_prompt.get("failures", [])
-                ),
-                tampered_prompt,
-            )
-
-            router_route = run_skillguard(
-                "resolve-global-skill",
-                "--registry",
-                rel(registry),
-                "--task",
-                "Refresh the global SkillGuard router prompt and registry",
-            )
-            self.assert_clean_pass(router_route)
-            self.assertEqual(router_route.get("routing_decision", {}).get("skill_id"), "skillguard-global-router")
-            self.assertIn(
-                rel(extra_root / "skillguard-global-router" / "SKILL.md"),
-                router_route.get("routing_decision", {}).get("route_doc_paths", []),
-            )
-
-            skillguard_route = run_skillguard(
-                "resolve-global-skill",
-                "--registry",
-                rel(registry),
-                "--task",
-                "Audit a Codex skill activation boundary with SkillGuard",
-            )
-            self.assert_clean_pass(skillguard_route)
-            self.assertEqual(skillguard_route.get("routing_decision", {}).get("skill_id"), "skillguard")
-
-            blocked_former_route = run_skillguard(
-                "resolve-global-skill",
-                "--registry",
-                rel(registry),
-                "--task",
-                "Use fixture-former-one",
-                "--route-hint",
-                "fixture-former-one",
-                expected_exit=1,
-            )
-            self.assertEqual(blocked_former_route.get("decision"), "block")
-
-            missing_prompt_home = workspace / "missing_prompt_home"
-            missing_prompt_home.mkdir(parents=True)
-            missing_prompt_home.joinpath("AGENTS.md").write_text("# Existing user instructions\n", encoding="utf-8")
-            missing_prompt = run_skillguard(
-                "check-global-prompt",
-                "--registry",
-                rel(registry),
-                "--codex-home",
-                rel(missing_prompt_home),
-                expected_exit=1,
-            )
-            self.assertEqual(missing_prompt.get("decision"), "block")
-
-            stale_prompt_home = workspace / "stale_prompt_home"
-            stale_prompt_home.mkdir(parents=True)
-            stale_prompt_home.joinpath("AGENTS.md").write_text(
-                "\n".join(
-                    [
-                        "<!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->",
-                        "## SkillGuard Global Router",
-                        "- router_skill_id: skillguard-global-router",
-                        "- registry_hash: " + ("0" * 64),
-                        "<!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->",
-                        "",
-                    ]
-                ),
-                encoding="utf-8",
-            )
-            stale_prompt = run_skillguard(
-                "check-global-prompt",
-                "--registry",
-                rel(registry),
-                "--codex-home",
-                rel(stale_prompt_home),
-                expected_exit=1,
-            )
-            self.assertEqual(stale_prompt.get("decision"), "fail")
 
     def test_global_registry_check_resolves_codex_scan_roots_from_codex_home(self) -> None:
         with tempfile.TemporaryDirectory(prefix="skillguard-global-router-roots-", dir=REPO_ROOT) as tmp:
@@ -2501,7 +2387,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 "SKILL.md",
                 "README.md",
                 "references/README.md",
-                "assets/schemas/skillguard_generated_record.schema.json",
+                "assets/schemas/generated_record.schema.json",
                 "assets/templates/check_report.template.json",
                 "scripts/README.md",
                 "scripts/run_checks.py",
@@ -2529,8 +2415,9 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                 self.assertNotIn("v1-legacy", text)
                 self.assertNotIn(".skillguard/work-contract.json", text)
                 self.assertNotIn(".skillguard/check_manifest.json", text)
-                self.assertIn(".skillguard/contract-source.json", text)
-                self.assertIn(".skillguard/check-manifest.json", text)
+            self.assertIn("private graduation evidence", generated_entrypoint)
+            self.assertNotIn(".skillguard/", current_template)
+            self.assertNotIn("SkillGuard", current_template)
             self.assertEqual(
                 json.loads((target / ".skillguard" / "contract-source.json").read_text(encoding="utf-8"))[
                     "schema_version"
@@ -2675,7 +2562,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
                         "SKILL.md",
                         "README.md",
                         "references/README.md",
-                        "assets/schemas/skillguard_generated_record.schema.json",
+                        "assets/schemas/generated_record.schema.json",
                         "assets/templates/check_report.template.json",
                         "scripts/run_checks.py",
                         "fixtures/fixture-manifest.json",
@@ -3072,7 +2959,8 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             "fixture-test",
             "check-depth",
             "check-readme-release",
-            "audit-installed-skills",
+            "maintainer-adopt",
+            "maintainer-audit",
             "self-check",
             "route-task",
             "plan-skill",

@@ -1,3 +1,6 @@
-# Generic Project Adoption Fixture
+# Retired Portable Project Fixture
 
-This isolated fixture proves that SkillGuard project adoption works for a target skill while preserving pre-existing project instructions and native target authority.
+This negative fixture preserves a former portable project manifest only so the
+current author-side adoption checker can prove that the retired shape is
+rejected. It is not a current prompt, consumer installation, compatibility
+route, or example to copy.

@@ -1,5 +1,5 @@
 {
-  "schema_version": "skillguard.suite_contract.v1",
+  "schema_version": "skillguard.suite_contract.v2",
   "suite_name": "good_suite",
   "purpose": "Provide a maintained positive suite fixture with one explicit member and direct closure evidence.",
   "target_path": ".agents/skills/skillguard/fixtures/good_suite/suite",
@@ -29,7 +29,7 @@
       "status": "checked"
     }
   ],
-  "shared_evidence_rules": [
+  "independent_evidence_rules": [
     "Direct member evidence is required for checked member status.",
     "Progress ledgers, runtime ids, and PM text cannot satisfy suite closure."
   ],

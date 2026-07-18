@@ -79,6 +79,9 @@ CHECK_SOURCE_FIELDS = frozenset(
         "evidence_class",
         "evidence_domain_id",
         "execution_owner_id",
+        "maintenance_unit_id",
+        "member_skill_id",
+        "evidence_subject_id",
         "environment",
         "expected",
         "input_selectors",
@@ -90,6 +93,10 @@ CHECK_SOURCE_FIELDS = frozenset(
     }
 )
 OWNER_BEHAVIOR_FIELDS = (
+    "maintenance_unit_id",
+    "member_skill_id",
+    "evidence_subject_id",
+    "semantic_check_id",
     "kind",
     "command",
     "args",
@@ -151,6 +158,8 @@ TRANSIENT_IMPLEMENTATION_FILES = frozenset({".DS_Store", "Thumbs.db"})
 def _is_transient_implementation_output(relative: Path) -> bool:
     parts = relative.parts
     if set(parts) & TRANSIENT_IMPLEMENTATION_PARTS:
+        return True
+    if any(part.casefold().endswith(".egg-info") for part in parts):
         return True
     if relative.suffix.lower() in TRANSIENT_IMPLEMENTATION_SUFFIXES:
         return True
@@ -431,6 +440,11 @@ def _inventory_rows(
             findings.append(
                 SchemaFinding("impact_inventory_path_invalid", "$.content_impact_plan", str(exc))
             )
+            return
+        if any(
+            part.casefold().endswith(".egg-info")
+            for part in Path(relative).parts
+        ):
             return
         paths[relative] = resolved_candidate.resolve(strict=True)
         if role:
@@ -1568,6 +1582,10 @@ def _build_outputs(
         "parent_model_id": model["parent_model_id"],
         "flowguard_schema_version": model["flowguard_schema_version"],
         "model_path": model_path,
+        "repository_role": str(binding.get("repository_role", "")),
+        "maintenance_unit_id": str(binding.get("maintenance_unit_id", "")),
+        "member_skill_ids": list(binding.get("member_skill_ids", [])),
+        "consumer_projection": dict(binding.get("consumer_projection", {})),
         "functions": list(model["functions"]),
         "routes": list(model["routes"]),
         "steps": bound_steps,
@@ -1601,6 +1619,9 @@ def _build_outputs(
         "compiler_version": COMPILER_VERSION,
         "skill_id": skill_id,
         "model_id": model["model_id"],
+        "maintenance_unit_id": str(binding.get("maintenance_unit_id", "")),
+        "member_skill_ids": list(binding.get("member_skill_ids", [])),
+        "consumer_projection": dict(binding.get("consumer_projection", {})),
         "contract_hash": contract["contract_hash"],
         "check_declarations_hash": check_declarations_hash,
         "checks": list(compiled_checks),

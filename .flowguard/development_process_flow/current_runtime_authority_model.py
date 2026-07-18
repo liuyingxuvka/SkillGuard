@@ -23,6 +23,9 @@ MODEL_ID = "skillguard.current_runtime_authority.current"
 AUTHORITY_CURRENT = "current"
 AUTHORITY_BLOCKED = "blocked"
 AUTHORITY_DECISIONS = frozenset({AUTHORITY_CURRENT, AUTHORITY_BLOCKED})
+CONSUMER_CLEAN = "clean"
+CONSUMER_BLOCKED = "blocked"
+CONSUMER_DISTRIBUTION_DECISIONS = frozenset({CONSUMER_CLEAN, CONSUMER_BLOCKED})
 
 FORMER_RUN_RECORD_SCHEMA = "skillguard.run_record.v1"
 FORMER_EXACT_PATHS = frozenset(
@@ -44,10 +47,11 @@ FORMER_EXACT_PATHS = frozenset(
 FORMER_HISTORY_PREFIX = ".skillguard/v1r/"
 
 CLAIM_BOUNDARY = (
-    "A passing review proves only the modeled current-or-blocked authority, "
-    "former-surface rejection, direct-replacement gates, exact consumer "
-    "alignment, and bounded authority claims. It does not edit files, execute "
-    "target-domain work, install packages, publish, or prove future AI behavior."
+    "A passing review proves only the modeled current-or-blocked author "
+    "authority, former-surface rejection, direct-replacement gates, clean "
+    "consumer-distribution separation, and bounded author claims. It does not "
+    "edit files, execute target-domain work, install packages, publish, or "
+    "prove future AI behavior."
 )
 
 
@@ -107,7 +111,13 @@ class CurrentAuthorityCase:
     fixture_in_owner_identity: bool = False
     fixture_requires_installation: bool = False
     fixture_admits_full: bool = False
-    consumer_authority_decisions: tuple[str, ...] = (AUTHORITY_CURRENT,)
+    consumer_distribution_decisions: tuple[str, ...] = (CONSUMER_CLEAN,)
+    consumer_carries_authority_decision: bool = False
+    consumer_contains_skillguard_control_files: bool = False
+    consumer_contains_skillguard_prompt: bool = False
+    consumer_contains_skillguard_maintenance_section: bool = False
+    consumer_contains_skillguard_receipt: bool = False
+    consumer_contains_router_state: bool = False
     authority_claimed: bool = True
     claims_domain_correctness: bool = False
     claims_future_ai_behavior: bool = False
@@ -279,20 +289,40 @@ def rejection_fixtures_are_source_only(
     return _pass()
 
 
-def consumers_share_one_authority(
+def consumer_distributions_are_independent(
     state: CurrentAuthorityState, _trace: object
 ) -> InvariantResult:
     if _empty(state):
         return _pass()
-    if (
-        not state.consumer_authority_decisions
-        or len(set(state.consumer_authority_decisions)) != 1
-        or state.consumer_authority_decisions[0]
-        != state.authority_decisions[0]
+    decisions = state.consumer_distribution_decisions
+    if not decisions or any(
+        decision not in CONSUMER_DISTRIBUTION_DECISIONS
+        for decision in decisions
     ):
         return _fail(
-            "consumers_share_one_authority",
-            "every consumer must project the same current-or-blocked decision",
+            "consumer_distributions_are_independent",
+            "each consumer distribution must report only clean or blocked",
+        )
+    if CONSUMER_CLEAN in decisions and state.authority_decisions != (
+        AUTHORITY_CURRENT,
+    ):
+        return _fail(
+            "consumer_distributions_are_independent",
+            "a clean consumer may be built only from current author authority",
+        )
+    if any(
+        (
+            state.consumer_carries_authority_decision,
+            state.consumer_contains_skillguard_control_files,
+            state.consumer_contains_skillguard_prompt,
+            state.consumer_contains_skillguard_maintenance_section,
+            state.consumer_contains_skillguard_receipt,
+            state.consumer_contains_router_state,
+        )
+    ):
+        return _fail(
+            "consumer_distributions_are_independent",
+            "a consumer cannot carry SkillGuard authority, control files, author-maintenance sections, prompts, receipts, or router state",
         )
     return _pass()
 
@@ -344,9 +374,9 @@ INVARIANTS = (
         rejection_fixtures_are_source_only,
     ),
     Invariant(
-        "consumers_share_one_authority",
-        "All consumers project one authority decision.",
-        consumers_share_one_authority,
+        "consumer_distributions_are_independent",
+        "Consumers contain target-owned runtime only and never project SkillGuard authority.",
+        consumer_distributions_are_independent,
     ),
     Invariant(
         "authority_claim_is_bounded",
@@ -406,7 +436,7 @@ SCENARIOS = (
             GOOD_CASE,
             case_name="incomplete_direct_replacement_remains_blocked",
             authority_decisions=(AUTHORITY_BLOCKED,),
-            consumer_authority_decisions=(AUTHORITY_BLOCKED,),
+            consumer_distribution_decisions=(CONSUMER_BLOCKED,),
             contract_source_current=False,
             direct_replacement_requested=True,
             authority_claimed=False,
@@ -480,7 +510,7 @@ SCENARIOS = (
             GOOD_CASE,
             case_name="partial_replacement_cannot_activate",
             authority_decisions=(AUTHORITY_BLOCKED,),
-            consumer_authority_decisions=(AUTHORITY_BLOCKED,),
+            consumer_distribution_decisions=(CONSUMER_BLOCKED,),
             compiled_contract_current=False,
             direct_replacement_requested=True,
             installation_activated=True,
@@ -489,8 +519,43 @@ SCENARIOS = (
         _violation("partial replacement cannot activate", "partial_replacement_cannot_activate", "direct_replacement_controls_activation"),
     ),
     _scenario(
-        replace(GOOD_CASE, case_name="consumer_authority_divergence_blocks", consumer_authority_decisions=(AUTHORITY_CURRENT, AUTHORITY_BLOCKED)),
-        _violation("consumers cannot invent different authority decisions", "consumer_authority_divergence_blocks", "consumers_share_one_authority"),
+        replace(
+            GOOD_CASE,
+            case_name="independent_consumer_builds_may_differ",
+            consumer_distribution_decisions=(CONSUMER_CLEAN, CONSUMER_BLOCKED),
+        ),
+        _ok(
+            "independent consumer builds may report different build outcomes without sharing authority",
+            "independent_consumer_builds_may_differ",
+        ),
+    ),
+    _scenario(
+        replace(
+            GOOD_CASE,
+            case_name="consumer_skillguard_projection_blocks",
+            consumer_carries_authority_decision=True,
+            consumer_contains_skillguard_control_files=True,
+            consumer_contains_skillguard_prompt=True,
+            consumer_contains_skillguard_receipt=True,
+            consumer_contains_router_state=True,
+        ),
+        _violation(
+            "a consumer cannot carry the author system",
+            "consumer_skillguard_projection_blocks",
+            "consumer_distributions_are_independent",
+        ),
+    ),
+    _scenario(
+        replace(
+            GOOD_CASE,
+            case_name="consumer_author_maintenance_section_blocks",
+            consumer_contains_skillguard_maintenance_section=True,
+        ),
+        _violation(
+            "a consumer entrypoint cannot carry an author-maintenance section",
+            "consumer_author_maintenance_section_blocks",
+            "consumer_distributions_are_independent",
+        ),
     ),
     _scenario(
         replace(GOOD_CASE, case_name="authority_claim_overreach_blocks", claims_domain_correctness=True),
@@ -513,6 +578,9 @@ def model_summary() -> dict[str, object]:
             "Set(Output x CurrentAuthorityState)"
         ),
         "authority_decisions": sorted(AUTHORITY_DECISIONS),
+        "consumer_distribution_decisions": sorted(
+            CONSUMER_DISTRIBUTION_DECISIONS
+        ),
         "former_exact_paths": sorted(FORMER_EXACT_PATHS),
         "former_shape_disposition": "rejection_fixture_only",
         "replacement_mode": "direct_current_maintenance_only",

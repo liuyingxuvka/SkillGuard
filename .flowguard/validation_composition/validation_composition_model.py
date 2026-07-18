@@ -5,8 +5,9 @@ Created with FlowGuard: https://github.com/liuyingxuvka/FlowGuard
 The model extends the existing SkillGuard validation-composition owner.  It
 keeps a complete repository inventory for omission detection, but derives
 execution, installation, Portfolio, router, and aggregation effects from one
-content-impact graph.  It does not replace a target executor, TestMesh, the
-installer, Portfolio, the global router, or the OpenSpec verifier.
+single-maintenance-unit content-impact graph. It does not replace a target
+executor, TestMesh, the installer, Portfolio, the author router, or an external
+specification provider, and it never projects author evidence into consumers.
 """
 
 from __future__ import annotations
@@ -50,14 +51,12 @@ DOMAIN_STAGE = "staged_install"
 DOMAIN_ACTIVE = "active_installation"
 DOMAIN_TARGET = "synchronized_target"
 DOMAIN_PROMPT = "global_prompt"
-DOMAIN_OPENSPEC = "openspec_report"
 EVIDENCE_DOMAINS = (
     DOMAIN_SOURCE,
     DOMAIN_STAGE,
     DOMAIN_ACTIVE,
     DOMAIN_TARGET,
     DOMAIN_PROMPT,
-    DOMAIN_OPENSPEC,
 )
 
 ROLE_RUNTIME = "runtime_source"
@@ -151,6 +150,21 @@ class ValidationCase:
     """One immutable validation-composition observation and requested claim."""
 
     case_name: str
+    maintenance_unit_id: str = "unit:skillguard"
+    author_context_explicit: bool = True
+    owner_maintenance_units: tuple[tuple[str, str], ...] = (
+        ("owner.runtime", "unit:skillguard"),
+        ("owner.tests", "unit:skillguard"),
+        ("owner.router", "unit:skillguard"),
+    )
+    receipt_maintenance_units: tuple[tuple[str, str], ...] = (
+        ("owner.runtime", "unit:skillguard"),
+        ("owner.tests", "unit:skillguard"),
+        ("owner.router", "unit:skillguard"),
+    )
+    external_receipt_bridge_enabled: bool = False
+    consumer_distribution_author_control_paths: tuple[str, ...] = ()
+    ordinary_project_skillguard_write: bool = False
 
     # Cheap portable/source preflight.
     runtime_artifact_paths: tuple[str, ...] = ()
@@ -268,6 +282,7 @@ class ValidationCase:
     parent_receipt_valid: bool = True
     parent_receipt_consumer_read_only: bool = True
     parent_consumer_execution_count: int = 0
+    consumer_carries_owner_receipt: bool = False
     consumer_carries_owner_command: bool = False
     required_evidence_domains: tuple[str, ...] = (DOMAIN_SOURCE,)
     domain_receipts: tuple[tuple[str, str], ...] = (
@@ -370,10 +385,15 @@ def _graph_gaps(case: ValidationCase) -> tuple[str, ...]:
     }
     consumer_components = {component_id for component_id, _owner_id in case.component_consumers}
     input_owners = {owner_id for owner_id, _component_id in case.owner_input_components}
+    owner_units = dict(case.owner_maintenance_units)
     gaps: list[str] = []
     gaps.extend(f"unmapped:{path}" for path in case.unmapped_paths)
     gaps.extend(f"ambiguous:{path}" for path in case.ambiguous_role_paths)
     gaps.extend(f"duplicate-owner:{owner_id}" for owner_id in case.duplicate_owner_ids)
+    if not case.maintenance_unit_id:
+        gaps.append("maintenance-unit-missing")
+    if not case.author_context_explicit:
+        gaps.append("author-context-missing")
     if (
         case.declared_override_descendant_count < 0
         or case.classified_override_descendant_count
@@ -420,6 +440,8 @@ def _graph_gaps(case: ValidationCase) -> tuple[str, ...]:
     for owner_id in case.owner_ids:
         if owner_id not in input_owners:
             gaps.append(f"owner-without-input:{owner_id}")
+        if owner_units.get(owner_id) != case.maintenance_unit_id:
+            gaps.append(f"owner-outside-maintenance-unit:{owner_id}")
     for component_id in case.router_projection_component_ids:
         if component_id not in component_set:
             gaps.append(f"invalid-router-projection-edge:{component_id}")
@@ -469,6 +491,7 @@ def _owner_key(case: ValidationCase, owner_id: str) -> str:
     )
     return _sha(
         {
+            "maintenance_unit_id": case.maintenance_unit_id,
             "execution_owner_id": owner_id,
             "owner_declaration": "current" if case.owner_declarations_current else "stale",
             "input_components": input_components,
@@ -527,7 +550,7 @@ class ClassifyPortableArtifacts:
         "report_collision_status",
         "preflight_status",
     )
-    input_description = "one immutable source boundary and receipt-consumer declaration"
+    input_description = "one immutable author source boundary and same-unit receipt declaration"
     output_description = "typed portable/runtime classifications and cheap preflight status"
     idempotency = "the same case and policy version produce the same classifications"
 
@@ -1052,6 +1075,16 @@ def portable_boundary_is_fail_closed(state: ValidationState, _trace: object) -> 
         or case.installed_projection_recompiled_as_source
     ):
         return _fail("portable_boundary_is_fail_closed", "reports, receipts, logs, progress, checkbox state, and installed projections cannot become canonical-source compiler inputs")
+    if case.consumer_distribution_author_control_paths:
+        return _fail(
+            "portable_boundary_is_fail_closed",
+            "consumer distribution cannot contain .skillguard, author prompts, receipts, Portfolio, or router state",
+        )
+    if case.ordinary_project_skillguard_write:
+        return _fail(
+            "portable_boundary_is_fail_closed",
+            "ordinary projects must reject SkillGuard state before any write",
+        )
     return _pass()
 
 
@@ -1269,6 +1302,25 @@ def receipt_consumers_are_read_only(state: ValidationState, _trace: object) -> I
     if state.phase < 8 or state.case is None:
         return _pass()
     case = state.case
+    receipt_units = dict(case.receipt_maintenance_units)
+    if case.external_receipt_bridge_enabled:
+        return _fail(
+            "receipt_consumers_are_read_only",
+            "OpenSpec and other external providers cannot consume or transport SkillGuard receipts",
+        )
+    if any(
+        receipt_units.get(owner_id) != case.maintenance_unit_id
+        for owner_id in state.selected_owner_ids
+    ):
+        return _fail(
+            "receipt_consumers_are_read_only",
+            "a receipt from another maintenance unit cannot satisfy this unit",
+        )
+    if case.consumer_carries_owner_receipt:
+        return _fail(
+            "receipt_consumers_are_read_only",
+            "graduated consumers carry no SkillGuard receipt reference",
+        )
     if (
         not case.parent_receipt_consumer_read_only
         or case.parent_consumer_execution_count
@@ -1276,7 +1328,7 @@ def receipt_consumers_are_read_only(state: ValidationState, _trace: object) -> I
     ):
         return _fail(
             "receipt_consumers_are_read_only",
-            "OpenSpec and other receipt consumers cannot carry, execute, resume, repair, or backfill owner commands",
+            "same-unit parent aggregation cannot carry, execute, resume, repair, or backfill owner commands",
         )
     if case.resume_used_as_readonly_audit:
         return _fail("receipt_consumers_are_read_only", "resume may execute missing owners and is never a read-only audit")
@@ -1313,12 +1365,12 @@ INVARIANTS = (
     Invariant("owner_identity_is_semantic_and_persistent", "Owner keys bind exact behavior and inputs while persistent receipts bind complete sidecars.", owner_identity_is_semantic_and_persistent),
     Invariant("execution_matches_frozen_owner_plan", "Only stale owners execute and only terminal success becomes reusable.", execution_matches_frozen_owner_plan),
     Invariant("execution_report_matches_process_start", "Post-launch failures preserve the true process-start count.", execution_report_matches_process_start),
-    Invariant("parent_aggregation_is_one_way", "Parent and consumer projection changes aggregate immutable child receipts with zero reverse execution.", parent_aggregation_is_one_way),
+    Invariant("parent_aggregation_is_one_way", "A same-unit parent aggregates immutable child receipts with zero reverse execution.", parent_aggregation_is_one_way),
     Invariant("full_admission_is_explicit_and_frozen", "Full requires one allowlisted derived reason, frozen identities, and one owner.", full_admission_is_explicit_and_frozen),
     Invariant("current_protocol_has_no_success_fallback", "One current runtime path succeeds and retired shapes are rejection fixtures only.", current_protocol_has_no_success_fallback),
     Invariant("compatibility_admission_is_explicit", "Skills use direct current replacement; ordinary-software compatibility requires an explicit bounded historical-input contract.", compatibility_admission_is_explicit),
-    Invariant("evidence_domains_do_not_substitute", "Source, install, target, prompt, and OpenSpec evidence remain distinct.", evidence_domains_do_not_substitute),
-    Invariant("receipt_consumers_are_read_only", "Receipt consumers never execute or resume owners.", receipt_consumers_are_read_only),
+    Invariant("evidence_domains_do_not_substitute", "Source, install, target, and author-prompt evidence remain distinct.", evidence_domains_do_not_substitute),
+    Invariant("receipt_consumers_are_read_only", "Only same-unit parent aggregation may reference receipts; external and foreign-unit consumers are forbidden.", receipt_consumers_are_read_only),
     Invariant("interrupted_or_unattended_execution_is_not_evidence", "Interrupted descendants and unattended mutable retries cannot yield evidence.", interrupted_or_unattended_execution_is_not_evidence),
     Invariant("production_roots_preserve_roles", "Source, target snapshot, evidence, and portable refs keep stable roles.", production_roots_preserve_roles),
 )
@@ -1477,6 +1529,63 @@ SCENARIOS = (
     _ok(GOOD_FULL, "an explicit final gate admits one frozen full parent under one owner"),
     _ok(GOOD_SOFTWARE_COMPATIBILITY, "an explicit ordinary-software historical reader stays bounded outside skill runtime authority"),
     _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-owner-crosses-maintenance-unit",
+            owner_maintenance_units=(
+                ("owner.runtime", "unit:foreign"),
+                ("owner.tests", "unit:skillguard"),
+                ("owner.router", "unit:skillguard"),
+            ),
+            force_graph_accept_gap=True,
+        ),
+        "impact_graph_is_complete_and_acyclic",
+        "every execution owner must remain inside one maintenance unit",
+    ),
+    _bad(
+        replace(
+            GOOD_REUSE,
+            case_name="bad-foreign-unit-receipt-reused",
+            receipt_maintenance_units=(
+                ("owner.runtime", "unit:foreign"),
+                ("owner.tests", "unit:skillguard"),
+                ("owner.router", "unit:skillguard"),
+            ),
+        ),
+        "receipt_consumers_are_read_only",
+        "a foreign-unit receipt cannot satisfy an identical local owner request",
+    ),
+    _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-openspec-receipt-bridge",
+            external_receipt_bridge_enabled=True,
+        ),
+        "receipt_consumers_are_read_only",
+        "an external specification provider cannot consume SkillGuard receipts",
+    ),
+    _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-consumer-distribution-carries-author-control",
+            consumer_distribution_author_control_paths=(
+                ".skillguard/compiled-contract.json",
+                ".skillguard/receipts/current.json",
+            ),
+        ),
+        "portable_boundary_is_fail_closed",
+        "a graduated consumer distribution cannot carry author-control state",
+    ),
+    _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-ordinary-project-skillguard-write",
+            ordinary_project_skillguard_write=True,
+        ),
+        "portable_boundary_is_fail_closed",
+        "ordinary project use cannot create .skillguard or SkillGuard prompts",
+    ),
+    _bad(
         replace(GOOD_DIRECT, case_name="bad-runtime-classified-portable", runtime_artifact_paths=(".skillguard/derived-evidence/result.json",), force_classifier_accept_runtime=True),
         "portable_boundary_is_fail_closed",
         "a persistent receipt output cannot become maintained source",
@@ -1595,7 +1704,7 @@ SCENARIOS = (
     _bad(
         replace(GOOD_CONSUMER_ONLY, case_name="bad-consumer-covers-reruns-owner", force_execute_owner_ids=("owner.runtime",)),
         "affected_plan_is_exact_and_frozen",
-        "consumer coverage drift cannot reverse-invalidate the owner",
+            "same-unit parent projection drift cannot reverse-invalidate the owner",
     ),
     _bad(
         replace(GOOD_TEST_ONLY, case_name="bad-test-only-triggers-install", force_install_component_ids=("component.tests",)),
@@ -1709,11 +1818,12 @@ SCENARIOS = (
     _bad(
         replace(
             GOOD_DIRECT,
-            case_name="bad-consumer-copies-owner-command",
+            case_name="bad-consumer-copies-owner-receipt-or-command",
+            consumer_carries_owner_receipt=True,
             consumer_carries_owner_command=True,
         ),
         "receipt_consumers_are_read_only",
-        "a consumer may carry only the immutable owner receipt and its own projection identity",
+        "a graduated consumer may carry neither the owner receipt nor its command",
     ),
     _bad(
         replace(GOOD_DIRECT, case_name="bad-resume-used-as-readonly-audit", resume_used_as_readonly_audit=True),
@@ -1899,5 +2009,8 @@ def model_summary() -> dict[str, object]:
         ],
         "allowed_full_reason_codes": sorted(ALLOWED_FULL_REASONS),
         "evidence_domains": list(EVIDENCE_DOMAINS),
+        "maintenance_unit_identity": GOOD_DIRECT.maintenance_unit_id,
+        "consumer_projection_boundary": "author_control_forbidden",
+        "external_provider_receipt_bridge": "forbidden",
         "claim_boundary": CLAIM_BOUNDARY,
     }

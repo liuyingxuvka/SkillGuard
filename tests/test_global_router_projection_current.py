@@ -17,7 +17,7 @@ import checker_engine  # noqa: E402
 
 
 class GlobalRouterProjectionCurrentTests(unittest.TestCase):
-    def test_skill_scan_ignores_nested_fixture_skill_files(self) -> None:
+    def test_skill_scan_ignores_unmaintained_and_nested_skill_files(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             skills_root = Path(temporary) / "skills"
             direct = skills_root / "direct-skill"
@@ -36,7 +36,7 @@ class GlobalRouterProjectionCurrentTests(unittest.TestCase):
                 [skills_root]
             )
 
-            self.assertEqual(["direct-skill"], [row["skill_id"] for row in items])
+            self.assertEqual([], [row["skill_id"] for row in items])
 
     def test_renderer_uses_exact_template_and_maintenance_boundary(self) -> None:
         registry = {
@@ -66,17 +66,22 @@ class GlobalRouterProjectionCurrentTests(unittest.TestCase):
         self.assertEqual([], failures)
         self.assertEqual([], blockers)
         self.assertIn(
-            "Creating, updating, directly rewriting a non-current target, installing/synchronizing, or releasing",
+            "explicitly registered maintained skill source requires SkillGuard author-side supervision",
             block,
         )
         self.assertIn(
-            "Ordinary use of an already-installed skill",
+            "Ordinary use of an installed consumer skill",
+            block,
+        )
+        self.assertIn("External OpenSpec is outside this registry", block)
+        self.assertIn(
+            "Different maintenance units never share, import, project, or reuse check receipts",
             block,
         )
         self.assertIn("invalidates only owners and projections", block)
         self.assertNotIn("v1-legacy", block)
         tampered = block.replace(
-            "Ordinary use of an already-installed skill",
+            "Ordinary use of an installed consumer skill",
             "Ordinary use of a skill",
             1,
         )
@@ -182,6 +187,9 @@ class GlobalRouterProjectionCurrentTests(unittest.TestCase):
 
     def test_real_discovery_ignores_description_but_tracks_use_when(self) -> None:
         contract = {
+            "repository_role": "skill_maintainer_source",
+            "maintenance_unit_id": "unit:fixture",
+            "member_skill_id": "fixture",
             "contract_authority": "current",
             "authority_decision": "current",
             "authority_blockers": [],
@@ -226,6 +234,11 @@ class GlobalRouterProjectionCurrentTests(unittest.TestCase):
             skill = skills_root / "fixture"
             skill.mkdir(parents=True)
             skill_file = skill / "SKILL.md"
+            control = skill / ".skillguard"
+            control.mkdir()
+            control.joinpath("contract-source.json").write_text(
+                "{}\n", encoding="utf-8"
+            )
             with mock.patch.object(
                 checker_engine.current_global_discovery,
                 "contract_projection",

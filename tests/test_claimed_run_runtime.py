@@ -8,7 +8,12 @@ from pathlib import Path
 from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.contract_compiler import canonical_hash
 from skillguard_v2.route_runtime import select_routes
-from skillguard_v2.run_store import claim_run, load_events, release_run_locks
+from skillguard_v2.run_store import (
+    author_run_control_root,
+    claim_run,
+    load_events,
+    release_run_locks,
+)
 from skillguard_v2.receipts import fingerprint_value, issue_receipt
 from skillguard_v2.step_runtime import (
     StepRuntimeError,
@@ -32,6 +37,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
         self.contract = runtime_contract()
         self.manifest = runtime_check_manifest(self.contract)
         self.decision = select_routes(self.contract, {"function_ids": ["analyze"]})
+        self.control = author_run_control_root(self.target, self.contract)
 
     def tearDown(self) -> None:
         self.temp.cleanup()
@@ -62,12 +68,12 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
     def test_idempotent_resume_reacquires_released_write_locks(self) -> None:
         first = self._claim()
         release_run_locks(first.run_root)
-        self.assertEqual([], list((self.target / ".skillguard" / "locks").glob("*.json")))
+        self.assertEqual([], list((self.control / "locks").glob("*.json")))
         resumed = self._claim()
         self.assertTrue(resumed.idempotent)
         lock_rows = [
             json.loads(path.read_text(encoding="utf-8"))
-            for path in (self.target / ".skillguard" / "locks").glob("*.json")
+            for path in (self.control / "locks").glob("*.json")
         ]
         self.assertEqual(1, len(lock_rows))
         self.assertEqual(first.run_id, lock_rows[0]["run_id"])
@@ -132,7 +138,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
 
     def test_dead_owner_lock_is_recovered_with_an_audit_event(self) -> None:
         first = self._claim()
-        for path in (self.target / ".skillguard" / "locks").glob("*.json"):
+        for path in (self.control / "locks").glob("*.json"):
             payload = json.loads(path.read_text(encoding="utf-8"))
             payload["owner_pid"] = 999999
             path.write_text(json.dumps(payload), encoding="utf-8")
@@ -156,7 +162,7 @@ class ClaimedRunRuntimeTests(unittest.TestCase):
         begin_step(first.run_root, "step:intake")
         record_step(first.run_root, "step:intake", {"check_record_ids": ["fixture"]})
         record_failure(first.run_root, "step:intake", "check passes", "failed", "fixture failure")
-        for path in (self.target / ".skillguard" / "locks").glob("*.json"):
+        for path in (self.control / "locks").glob("*.json"):
             payload = json.loads(path.read_text(encoding="utf-8"))
             payload.pop("owner_pid", None)
             path.write_text(json.dumps(payload), encoding="utf-8")

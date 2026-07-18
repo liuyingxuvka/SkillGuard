@@ -17,8 +17,8 @@ from skillguard_v2.project_adoption import (  # noqa: E402
     END_MARKER,
     SKILLGUARD_REPOSITORY,
     ProjectAdoptionError,
-    adopt_project,
-    audit_project_adoption,
+    adopt_maintainer_repository,
+    audit_maintainer_repository,
 )
 from skillguard_v2.validation_execution_policy import (  # noqa: E402
     VALIDATION_EXECUTION_POLICY_ID,
@@ -45,7 +45,7 @@ class SkillGuardProjectAdoptionTests(unittest.TestCase):
         self.temp.cleanup()
 
     def test_adopt_preserves_existing_prompt_and_installs_portable_rules(self) -> None:
-        result = adopt_project(self.root, self.rows, skillguard_version="0.3.0")
+        result = adopt_maintainer_repository(self.root, self.rows, skillguard_version="0.3.0")
         self.assertTrue(result["ok"], result)
         text = (self.root / "AGENTS.md").read_text(encoding="utf-8")
         self.assertTrue(text.startswith("# Existing project rules"))
@@ -57,36 +57,36 @@ class SkillGuardProjectAdoptionTests(unittest.TestCase):
         self.assertIn(VALIDATION_EXECUTION_POLICY_ID, text)
         for line in VALIDATION_EXECUTION_POLICY_LINES:
             self.assertIn(line, text)
-        audit = audit_project_adoption(self.root)
+        audit = audit_maintainer_repository(self.root)
         self.assertTrue(audit["ok"], audit)
 
     def test_tampered_or_duplicated_prompt_fails_closed(self) -> None:
-        adopt_project(self.root, self.rows, skillguard_version="0.3.0")
+        adopt_maintainer_repository(self.root, self.rows, skillguard_version="0.3.0")
         path = self.root / "AGENTS.md"
         path.write_text(path.read_text(encoding="utf-8") + BEGIN_MARKER + "\n", encoding="utf-8")
-        audit = audit_project_adoption(self.root)
+        audit = audit_maintainer_repository(self.root)
         self.assertFalse(audit["ok"])
         self.assertIn("managed_begin_marker_count:2", audit["findings"])
 
     def test_manifest_repository_link_is_integrity_checked(self) -> None:
-        adopt_project(self.root, self.rows, skillguard_version="0.3.0")
-        path = self.root / ".skillguard" / "project.json"
+        adopt_maintainer_repository(self.root, self.rows, skillguard_version="0.3.0")
+        path = self.root / ".skillguard" / "author-project.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
         payload["skillguard_repository"] = "https://example.invalid/not-skillguard"
         path.write_text(json.dumps(payload), encoding="utf-8")
-        audit = audit_project_adoption(self.root)
+        audit = audit_maintainer_repository(self.root)
         self.assertFalse(audit["ok"])
         self.assertIn("skillguard_repository_mismatch", audit["findings"])
         self.assertIn("project_manifest_hash_mismatch", audit["findings"])
 
     def test_project_adopt_directly_replaces_noncurrent_shape_from_explicit_inputs(self) -> None:
-        adopt_project(self.root, self.rows, skillguard_version="0.3.0")
-        manifest_path = self.root / ".skillguard" / "project.json"
+        adopt_maintainer_repository(self.root, self.rows, skillguard_version="0.3.0")
+        manifest_path = self.root / ".skillguard" / "author-project.json"
         payload = json.loads(manifest_path.read_text(encoding="utf-8"))
         payload["former_field"] = {"must_not_be_read": True}
         manifest_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
 
-        result = adopt_project(self.root, self.rows, skillguard_version="0.3.1")
+        result = adopt_maintainer_repository(self.root, self.rows, skillguard_version="0.3.1")
 
         self.assertTrue(result["ok"], result)
         current = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -94,15 +94,15 @@ class SkillGuardProjectAdoptionTests(unittest.TestCase):
         self.assertEqual("0.3.1", current["skillguard_version"])
 
     def test_project_adopt_refreshes_current_manifest_version_from_explicit_input(self) -> None:
-        first = adopt_project(self.root, self.rows, skillguard_version="0.3.2")
+        first = adopt_maintainer_repository(self.root, self.rows, skillguard_version="0.3.2")
         self.assertTrue(first["ok"], first)
 
-        refreshed = adopt_project(self.root, self.rows, skillguard_version="0.3.3")
+        refreshed = adopt_maintainer_repository(self.root, self.rows, skillguard_version="0.3.3")
 
         self.assertTrue(refreshed["ok"], refreshed)
         self.assertTrue(refreshed["changed"])
         current = json.loads(
-            (self.root / ".skillguard" / "project.json").read_text(encoding="utf-8")
+            (self.root / ".skillguard" / "author-project.json").read_text(encoding="utf-8")
         )
         self.assertEqual("0.3.3", current["skillguard_version"])
 
@@ -117,13 +117,47 @@ class SkillGuardProjectAdoptionTests(unittest.TestCase):
                     }
                 ]
                 with self.assertRaises(ProjectAdoptionError) as raised:
-                    adopt_project(self.root, rows, skillguard_version="0.3.0")
+                    adopt_maintainer_repository(self.root, rows, skillguard_version="0.3.0")
                 self.assertEqual(
                     "managed_skill_integration_mode_invalid", raised.exception.code
                 )
 
+    def test_ordinary_project_is_rejected_without_any_write(self) -> None:
+        ordinary = self.root / "ordinary-business-project"
+        skill = ordinary / "skills" / "demo"
+        skill.mkdir(parents=True)
+        (skill / "SKILL.md").write_text(
+            "---\nname: demo\ndescription: Standalone demo.\n---\n# Demo\n",
+            encoding="utf-8",
+        )
+        (ordinary / "AGENTS.md").write_text(
+            "# Business rules\n\nKeep unchanged.\n",
+            encoding="utf-8",
+        )
+        before = {
+            path.relative_to(ordinary).as_posix(): path.read_bytes()
+            for path in ordinary.rglob("*")
+            if path.is_file()
+        }
+
+        with self.assertRaises(ProjectAdoptionError) as raised:
+            adopt_maintainer_repository(
+                ordinary,
+                self.rows,
+                skillguard_version="0.3.0",
+            )
+
+        self.assertEqual("author_contract_source_missing", raised.exception.code)
+        after = {
+            path.relative_to(ordinary).as_posix(): path.read_bytes()
+            for path in ordinary.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(before, after)
+        self.assertFalse((ordinary / ".skillguard").exists())
+
     def test_repository_root_skill_has_portable_identity_and_evidence_path(self) -> None:
-        make_current_skill(self.root, self.root.name)
+        make_current_skill(self.root, "root-skill")
         rows = [
             {
                 "skill_path": ".",
@@ -131,15 +165,15 @@ class SkillGuardProjectAdoptionTests(unittest.TestCase):
                 "native_owner_id": "root-native-route",
             }
         ]
-        result = adopt_project(self.root, rows, skillguard_version="0.3.0")
+        result = adopt_maintainer_repository(self.root, rows, skillguard_version="0.3.0")
         self.assertTrue(result["ok"], result)
-        manifest = json.loads((self.root / ".skillguard" / "project.json").read_text(encoding="utf-8"))
+        manifest = json.loads((self.root / ".skillguard" / "author-project.json").read_text(encoding="utf-8"))
         root_row = manifest["managed_skills"][0]
-        self.assertEqual(self.root.name, root_row["skill_id"])
+        self.assertEqual("root-skill", root_row["skill_id"])
         self.assertEqual("SKILL.md", root_row["native_route_evidence_path"])
-        self.assertTrue(audit_project_adoption(self.root)["ok"])
+        self.assertTrue(audit_maintainer_repository(self.root)["ok"])
 
-    def test_repository_generic_vertical_slice_is_current(self) -> None:
+    def test_retired_portable_project_fixture_is_not_current_author_adoption(self) -> None:
         fixture_root = (
             ROOT
             / ".agents"
@@ -148,14 +182,9 @@ class SkillGuardProjectAdoptionTests(unittest.TestCase):
             / "fixtures"
             / "generic_project"
         )
-        audit = audit_project_adoption(fixture_root)
-        self.assertTrue(audit["ok"], audit)
-        prompt = (fixture_root / "AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn("Keep fixture outputs local", prompt)
-        self.assertIn(SKILLGUARD_REPOSITORY, prompt)
-        self.assertIn(VALIDATION_EXECUTION_POLICY_ID, prompt)
-        for line in VALIDATION_EXECUTION_POLICY_LINES:
-            self.assertIn(line, prompt)
+        audit = audit_maintainer_repository(fixture_root)
+        self.assertFalse(audit["ok"], audit)
+        self.assertIn("project_manifest_missing", audit["findings"])
 
 
 if __name__ == "__main__":

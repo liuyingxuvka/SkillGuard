@@ -111,7 +111,7 @@
     "intended_entry_state_hash": {"$ref": "#/$defs/hash"},
     "prior_evidence": {
       "type": "array",
-      "items": {"$ref": "#/$defs/prior_proof"}
+      "maxItems": 0
     },
     "graduation_evidence_hash": {"$ref": "#/$defs/hash"},
     "issued_at": {"$ref": "#/$defs/timestamp"},
@@ -342,30 +342,6 @@
         "base_registry_hash": {"$ref": "#/$defs/hash"},
         "committed_registry_revision": {"type": "integer", "minimum": 2},
         "intended_entry_state_hash": {"$ref": "#/$defs/hash"}
-      }
-    },
-    "prior_proof": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "skill_id",
-        "proof_kind",
-        "proof_id",
-        "proof_hash",
-        "guard_runtime",
-        "source_fingerprint",
-        "contract_hash",
-        "coverage_fingerprint"
-      ],
-      "properties": {
-        "skill_id": {"$ref": "#/$defs/non_empty_string"},
-        "proof_kind": {"enum": ["reuse_ticket", "full_run_receipt"]},
-        "proof_id": {"$ref": "#/$defs/non_empty_string"},
-        "proof_hash": {"$ref": "#/$defs/hash"},
-        "guard_runtime": {"$ref": "#/$defs/guard"},
-        "source_fingerprint": {"$ref": "#/$defs/hash"},
-        "contract_hash": {"$ref": "#/$defs/hash"},
-        "coverage_fingerprint": {"$ref": "#/$defs/hash"}
       }
     },
     "job_positive": {

@@ -497,6 +497,10 @@ def _execution_proof_fingerprint(result: Mapping[str, Any]) -> str:
     if owner_receipt_id and owner_receipt_hash and projection_hash:
         return wire_hash(
             {
+                "maintenance_unit_id": str(result.get("maintenance_unit_id", "")),
+                "member_skill_id": str(result.get("member_skill_id", "")),
+                "evidence_subject_id": str(result.get("evidence_subject_id", "")),
+                "semantic_check_id": str(result.get("semantic_check_id", "")),
                 "check_id": str(result.get("check_id", "")),
                 "execution_owner_id": str(
                     result.get("execution_owner_id", "")
@@ -509,6 +513,9 @@ def _execution_proof_fingerprint(result: Mapping[str, Any]) -> str:
         )
     return canonical_hash(
         {
+            "maintenance_unit_id": str(result.get("maintenance_unit_id", "")),
+            "member_skill_id": str(result.get("member_skill_id", "")),
+            "evidence_subject_id": str(result.get("evidence_subject_id", "")),
             "check_id": str(result.get("check_id", "")),
             "semantic_check_id": str(result.get("semantic_check_id", "")),
             "execution_id": str(result.get("execution_id", "")),
@@ -554,6 +561,9 @@ def _stable_persisted_result(result: Mapping[str, Any]) -> dict[str, Any]:
         "artifact_type": "skillguard_check_execution_result",
         "reason": "",
         "semantic_check_id": "",
+        "maintenance_unit_id": "",
+        "member_skill_id": "",
+        "evidence_subject_id": "",
         "execution_id": "",
         "execution_key": "",
         "execution_owner_id": "",
@@ -633,6 +643,9 @@ def _semantic_result_sidecar(result: Mapping[str, Any]) -> dict[str, Any]:
         "artifact_type",
         "check_id",
         "semantic_check_id",
+        "maintenance_unit_id",
+        "member_skill_id",
+        "evidence_subject_id",
         "kind",
         "covers_obligation_ids",
         "check_manifest_hash",
@@ -1076,6 +1089,23 @@ def _check_execution_identity(
             "check_dependency_receipt_set_mismatch",
             f"expected={expected_dependency_owner_ids};actual={supplied_dependency_owner_ids}",
         )
+    maintenance_unit_id = str(declared.get("maintenance_unit_id", ""))
+    member_skill_id = str(declared.get("member_skill_id", ""))
+    evidence_subject_id = str(declared.get("evidence_subject_id", ""))
+    semantic_check_id = str(
+        declared.get("semantic_check_id") or declared.get("check_id", "")
+    )
+    if (
+        run.get("maintenance_unit_id") != maintenance_unit_id
+        or contract.get("maintenance_unit_id") != maintenance_unit_id
+        or manifest.get("maintenance_unit_id") != maintenance_unit_id
+        or run.get("member_skill_id") != member_skill_id
+        or contract.get("skill_id") != member_skill_id
+    ):
+        raise CheckRunnerError(
+            "check_maintenance_identity_mismatch",
+            str(declared.get("check_id", "")),
+        )
     dependency_identities: list[dict[str, str]] = []
     for dependency_owner_id in expected_dependency_owner_ids:
         receipt = dependency_receipts[dependency_owner_id]
@@ -1083,9 +1113,14 @@ def _check_execution_identity(
             owner_evidence_root,
             receipt,
             expected_owner_id=dependency_owner_id,
+            expected_maintenance_unit_id=maintenance_unit_id,
         )
         dependency_identities.append(
             {
+                "maintenance_unit_id": str(receipt.get("maintenance_unit_id", "")),
+                "member_skill_id": str(receipt.get("member_skill_id", "")),
+                "evidence_subject_id": str(receipt.get("evidence_subject_id", "")),
+                "semantic_check_id": str(receipt.get("semantic_check_id", "")),
                 "execution_owner_id": dependency_owner_id,
                 "receipt_id": str(receipt.get("receipt_id", "")),
                 "receipt_hash": str(receipt.get("receipt_hash", "")),
@@ -1122,6 +1157,10 @@ def _check_execution_identity(
         run_root=run_root,
     )
     semantic_identity = {
+        "maintenance_unit_id": maintenance_unit_id,
+        "member_skill_id": member_skill_id,
+        "evidence_subject_id": evidence_subject_id,
+        "semantic_check_id": semantic_check_id,
         "execution_owner_id": str(owner.get("execution_owner_id", "")),
         "owner_declaration_hash": str(owner.get("owner_declaration_hash", "")),
         "owner_input_projection_hash": owner_input_projection_hash,
@@ -1207,6 +1246,10 @@ def _canonical_success_slot(
 def _receipt_identity_payload(receipt: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "schema_version": str(receipt.get("schema_version", "")),
+        "maintenance_unit_id": str(receipt.get("maintenance_unit_id", "")),
+        "member_skill_id": str(receipt.get("member_skill_id", "")),
+        "evidence_subject_id": str(receipt.get("evidence_subject_id", "")),
+        "semantic_check_id": str(receipt.get("semantic_check_id", "")),
         "execution_owner_id": str(receipt.get("execution_owner_id", "")),
         "execution_key": str(receipt.get("execution_key", "")),
         "owner_declaration_hash": str(receipt.get("owner_declaration_hash", "")),
@@ -1234,9 +1277,17 @@ def _validate_owner_receipt(
     receipt: Mapping[str, Any],
     *,
     expected_owner_id: str | None = None,
+    expected_maintenance_unit_id: str | None = None,
+    expected_member_skill_id: str | None = None,
+    expected_evidence_subject_id: str | None = None,
+    expected_semantic_check_id: str | None = None,
 ) -> dict[str, Mapping[str, Any]]:
     required = {
         "schema_version",
+        "maintenance_unit_id",
+        "member_skill_id",
+        "evidence_subject_id",
+        "semantic_check_id",
         "execution_owner_id",
         "execution_key",
         "owner_declaration_hash",
@@ -1266,6 +1317,24 @@ def _validate_owner_receipt(
         raise CheckRunnerError(
             "check_execution_receipt_invalid", "execution_owner_id"
         )
+    expected_identities = {
+        "maintenance_unit_id": expected_maintenance_unit_id,
+        "member_skill_id": expected_member_skill_id,
+        "evidence_subject_id": expected_evidence_subject_id,
+        "semantic_check_id": expected_semantic_check_id,
+    }
+    for field, expected in expected_identities.items():
+        actual = str(receipt.get(field, ""))
+        if not actual:
+            raise CheckRunnerError(
+                "check_execution_receipt_invalid",
+                field,
+            )
+        if expected is not None and actual != expected:
+            raise CheckRunnerError(
+                "check_execution_receipt_identity_mismatch",
+                field,
+            )
     for field in (
         "execution_key",
         "owner_declaration_hash",
@@ -1343,6 +1412,10 @@ def _validate_owner_receipt(
         )
     for dependency in dependencies:
         if not isinstance(dependency, Mapping) or set(dependency) != {
+            "maintenance_unit_id",
+            "member_skill_id",
+            "evidence_subject_id",
+            "semantic_check_id",
             "execution_owner_id",
             "receipt_id",
             "receipt_hash",
@@ -1355,6 +1428,13 @@ def _validate_owner_receipt(
                 raise CheckRunnerError(
                     "check_execution_receipt_invalid", f"dependency_{field}"
                 )
+        if dependency.get("maintenance_unit_id") != receipt.get(
+            "maintenance_unit_id"
+        ):
+            raise CheckRunnerError(
+                "check_execution_receipt_foreign_unit_dependency",
+                str(dependency.get("execution_owner_id", "")),
+            )
     sidecars = receipt.get("sidecars")
     if not isinstance(sidecars, Mapping) or set(sidecars) != RECEIPT_SIDECAR_KINDS:
         raise CheckRunnerError(
@@ -1442,6 +1522,10 @@ def _load_canonical_success(
     stored_head_hash = unsigned_head.pop("head_hash", None)
     if set(head) != {
         "schema_version",
+        "maintenance_unit_id",
+        "member_skill_id",
+        "evidence_subject_id",
+        "semantic_check_id",
         "execution_owner_id",
         "execution_key",
         "receipt_id",
@@ -1458,6 +1542,14 @@ def _load_canonical_success(
         raise CheckRunnerError("check_execution_head_invalid", "execution_key")
     if head.get("execution_owner_id") != identity.get("execution_owner_id"):
         raise CheckRunnerError("check_execution_head_invalid", "execution_owner_id")
+    for field in (
+        "maintenance_unit_id",
+        "member_skill_id",
+        "evidence_subject_id",
+        "semantic_check_id",
+    ):
+        if head.get(field) != identity.get(field):
+            raise CheckRunnerError("check_execution_head_invalid", field)
     receipt_ref = head.get("receipt_ref", {})
     if not isinstance(receipt_ref, Mapping):
         raise CheckRunnerError("check_execution_receipt_ref_invalid", head_path.name)
@@ -1473,6 +1565,10 @@ def _load_canonical_success(
         owner_evidence_root,
         receipt,
         expected_owner_id=str(identity["execution_owner_id"]),
+        expected_maintenance_unit_id=str(identity["maintenance_unit_id"]),
+        expected_member_skill_id=str(identity["member_skill_id"]),
+        expected_evidence_subject_id=str(identity["evidence_subject_id"]),
+        expected_semantic_check_id=str(identity["semantic_check_id"]),
     )
     if (
         receipt.get("receipt_id") != head.get("receipt_id")
@@ -1483,6 +1579,10 @@ def _load_canonical_success(
         or any(
             receipt.get(field) != identity.get(field)
             for field in (
+                "maintenance_unit_id",
+                "member_skill_id",
+                "evidence_subject_id",
+                "semantic_check_id",
                 "execution_owner_id",
                 "execution_key",
                 "owner_declaration_hash",
@@ -1568,6 +1668,7 @@ def inspect_current_owner_execution(
 def inspect_owner_receipt_history(
     owner_evidence_root: Path,
     *,
+    maintenance_unit_id: str,
     execution_owner_id: str,
     owner_declaration_hash: str,
 ) -> list[Mapping[str, Any]]:
@@ -1580,6 +1681,10 @@ def inspect_owner_receipt_history(
         return []
     expected_head_fields = {
         "schema_version",
+        "maintenance_unit_id",
+        "member_skill_id",
+        "evidence_subject_id",
+        "semantic_check_id",
         "execution_owner_id",
         "execution_key",
         "receipt_id",
@@ -1600,6 +1705,7 @@ def inspect_owner_receipt_history(
                 set(head) != expected_head_fields
                 or head.get("schema_version") != CHECK_EXECUTION_HEAD_SCHEMA
                 or stored_hash != wire_hash(unsigned)
+                or head.get("maintenance_unit_id") != maintenance_unit_id
                 or head.get("execution_owner_id") != execution_owner_id
                 or not isinstance(head.get("receipt_ref"), Mapping)
             ):
@@ -1616,6 +1722,7 @@ def inspect_owner_receipt_history(
                 root,
                 receipt,
                 expected_owner_id=execution_owner_id,
+                expected_maintenance_unit_id=maintenance_unit_id,
             )
             if (
                 receipt.get("owner_declaration_hash")
@@ -1654,6 +1761,10 @@ def _write_canonical_success(
     }
     receipt: dict[str, Any] = {
         "schema_version": CHECK_EXECUTION_RECEIPT_SCHEMA,
+        "maintenance_unit_id": str(identity["maintenance_unit_id"]),
+        "member_skill_id": str(identity["member_skill_id"]),
+        "evidence_subject_id": str(identity["evidence_subject_id"]),
+        "semantic_check_id": str(identity["semantic_check_id"]),
         "execution_owner_id": str(identity["execution_owner_id"]),
         "execution_key": str(identity["execution_key"]),
         "owner_declaration_hash": str(identity["owner_declaration_hash"]),
@@ -1686,6 +1797,10 @@ def _write_canonical_success(
     durable_write_immutable_json(owner_evidence_root / receipt_relative, receipt)
     head: dict[str, Any] = {
         "schema_version": CHECK_EXECUTION_HEAD_SCHEMA,
+        "maintenance_unit_id": str(identity["maintenance_unit_id"]),
+        "member_skill_id": str(identity["member_skill_id"]),
+        "evidence_subject_id": str(identity["evidence_subject_id"]),
+        "semantic_check_id": str(identity["semantic_check_id"]),
         "execution_owner_id": str(identity["execution_owner_id"]),
         "execution_key": str(identity["execution_key"]),
         "receipt_id": str(receipt["receipt_id"]),
@@ -1863,6 +1978,13 @@ def _projection_result_from_receipt(
     projected = dict(owner_result)
     projected.update(
         {
+            "maintenance_unit_id": str(
+                declared.get("maintenance_unit_id", "")
+            ),
+            "member_skill_id": str(declared.get("member_skill_id", "")),
+            "evidence_subject_id": str(
+                declared.get("evidence_subject_id", "")
+            ),
             "check_id": str(declared.get("check_id", "")),
             "semantic_check_id": str(
                 declared.get("semantic_check_id") or declared.get("check_id", "")
@@ -2013,6 +2135,15 @@ def get_or_execute_check(
             )
             raw.update(
                 {
+                    "maintenance_unit_id": str(
+                        declared.get("maintenance_unit_id", "")
+                    ),
+                    "member_skill_id": str(
+                        declared.get("member_skill_id", "")
+                    ),
+                    "evidence_subject_id": str(
+                        declared.get("evidence_subject_id", "")
+                    ),
                     "semantic_check_id": semantic_check_id,
                     "execution_id": execution_id,
                     "execution_key": str(identity["execution_key"]),
@@ -2684,6 +2815,9 @@ def store_check_result(run_root: Path, step_id: str, result: Mapping[str, Any]) 
         "declared_check_hash": declared_check_hash,
         "step_id": step_id,
         "check_id": str(result.get("check_id", "")),
+        "maintenance_unit_id": str(result.get("maintenance_unit_id", "")),
+        "member_skill_id": str(result.get("member_skill_id", "")),
+        "evidence_subject_id": str(result.get("evidence_subject_id", "")),
         "semantic_check_id": str(
             result.get("semantic_check_id") or result.get("check_id", "")
         ),
@@ -2811,6 +2945,18 @@ def load_owner_receipt_from_projection(
         owner_evidence_root.resolve(),
         receipt,
         expected_owner_id=str(projection_record.get("execution_owner_id", "")),
+        expected_maintenance_unit_id=str(
+            projection_record.get("maintenance_unit_id", "")
+        ),
+        expected_member_skill_id=str(
+            projection_record.get("member_skill_id", "")
+        ),
+        expected_evidence_subject_id=str(
+            projection_record.get("evidence_subject_id", "")
+        ),
+        expected_semantic_check_id=str(
+            projection_record.get("semantic_check_id", "")
+        ),
     )
     if (
         projection_record.get("owner_receipt_id") != receipt.get("receipt_id")
@@ -2831,6 +2977,7 @@ def load_owner_receipt_from_ref(
     reference: Mapping[str, Any],
     *,
     expected_owner_id: str | None = None,
+    expected_maintenance_unit_id: str | None = None,
 ) -> Mapping[str, Any]:
     """Read and fully verify one portable owner receipt reference."""
 
@@ -2844,6 +2991,7 @@ def load_owner_receipt_from_ref(
         owner_evidence_root.resolve(),
         receipt,
         expected_owner_id=expected_owner_id,
+        expected_maintenance_unit_id=expected_maintenance_unit_id,
     )
     return receipt
 
@@ -2931,6 +3079,10 @@ def hard_evidence_from_check(result: Mapping[str, Any]) -> Mapping[str, Any]:
     evidence = {
         "proof_kind": "owner_receipt_projection",
         "proof_fingerprint": proof_fingerprint,
+        "maintenance_unit_id": str(result.get("maintenance_unit_id", "")),
+        "member_skill_id": str(result.get("member_skill_id", "")),
+        "evidence_subject_id": str(result.get("evidence_subject_id", "")),
+        "semantic_check_id": str(result.get("semantic_check_id", "")),
         "check_id": str(result.get("check_id", "")),
         "check_record_id": check_record_id,
         "check_record_hash": check_record_hash,

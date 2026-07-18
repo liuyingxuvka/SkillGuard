@@ -30,6 +30,9 @@ TEMPLATE_PLACEHOLDERS = frozenset(
     }
 )
 CURRENT_ROUTE_ENTRYPOINT_FIELDS = (
+    "repository_role",
+    "maintenance_unit_id",
+    "member_skill_id",
     "integration_mode",
     "route_confidence",
     "contract_authority",

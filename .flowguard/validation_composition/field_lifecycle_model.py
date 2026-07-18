@@ -52,6 +52,10 @@ GRAPH_HEALTH_FIELDS = (
 )
 OWNER_FIELDS = (
     "field:execution_owner.execution_owner_id",
+    "field:execution_owner.semantic_check_id",
+    "field:execution_owner.maintenance_unit_id",
+    "field:execution_owner.member_skill_id",
+    "field:execution_owner.evidence_subject_id",
     "field:execution_owner.input_selectors",
     "field:execution_owner.depends_on_check_ids",
     "field:execution_owner.evidence_domain_id",
@@ -88,6 +92,9 @@ OWNER_EXECUTION_RESULT_FIELDS = (
 RECEIPT_FIELDS = (
     "field:owner_receipt.execution_key",
     "field:owner_receipt.receipt_id",
+    "field:owner_receipt.maintenance_unit_id",
+    "field:owner_receipt.member_skill_id",
+    "field:owner_receipt.evidence_subject_id",
     "field:owner_receipt.dependency_receipt_ids",
     "field:owner_receipt.stdout_sidecar_ref",
     "field:owner_receipt.stderr_sidecar_ref",
@@ -97,12 +104,12 @@ RECEIPT_FIELDS = (
     "field:owner_receipt.disposition",
 )
 AGGREGATION_FIELDS = (
+    "field:parent_aggregation.maintenance_unit_id",
     "field:parent_aggregation.owner_receipt_refs",
     "field:parent_aggregation.owner_receipt_hashes",
     "field:parent_aggregation.selection_hash",
     "field:parent_aggregation.aggregation_declaration_hash",
     "field:parent_aggregation.aggregation_identity",
-    "field:parent_aggregation.consumer_projection_hash",
 )
 PROJECTION_FIELDS = (
     "field:external_projection.install_plan_hash",
@@ -117,6 +124,7 @@ DOMAIN_FIELDS = (
     "field:evidence_domain.missing_domain_ids",
 )
 EXECUTION_POLICY_FIELDS = (
+    "field:execution_policy.consumer_carries_owner_receipt",
     "field:execution_policy.consumer_carries_owner_command",
     "field:execution_policy.resume_used_as_readonly_audit",
     "field:execution_policy.source_frozen",
@@ -156,13 +164,13 @@ GROUPS = (
     ("source-inventory", INVENTORY_FIELDS, "complete omission-detection inventory that is not an owner key"),
     ("content-component", COMPONENT_FIELDS, "semantic roles, installation disposition, members, hashes, and consumers"),
     ("impact-graph", GRAPH_HEALTH_FIELDS, "fail-closed graph health and deterministic identity"),
-    ("execution-owner", OWNER_FIELDS, "exact owner declaration, selectors, dependencies, and input projection"),
+    ("execution-owner", OWNER_FIELDS, "exact maintenance-unit owner, semantic check, member, subject, selectors, dependencies, and input projection"),
     ("affected-plan", PLAN_FIELDS, "frozen reuse, execution, aggregation, install, router, Portfolio, and full decisions"),
     ("owner-execution-result", OWNER_EXECUTION_RESULT_FIELDS, "exact frozen-plan resolution with visible reuse, execution, failure, and not-run outcomes"),
-    ("owner-receipt", RECEIPT_FIELDS, "cross-run terminal-success identity with four complete sidecars"),
-    ("parent-aggregation", AGGREGATION_FIELDS, "immutable child refs and independent projection identity"),
-    ("external-projection", PROJECTION_FIELDS, "installation, parity, Portfolio, router, and managed-prompt projections"),
-    ("evidence-domain", DOMAIN_FIELDS, "source, installation, target, prompt, and OpenSpec receipt separation"),
+    ("owner-receipt", RECEIPT_FIELDS, "same-unit cross-run terminal-success identity with four complete sidecars"),
+    ("parent-aggregation", AGGREGATION_FIELDS, "same-unit immutable child refs and independent aggregation identity"),
+    ("external-projection", PROJECTION_FIELDS, "consumer distribution, parity, Portfolio summary, private router, and author-prompt projections"),
+    ("evidence-domain", DOMAIN_FIELDS, "author source, owner, aggregation, and distribution-gate evidence separation"),
     ("execution-policy", EXECUTION_POLICY_FIELDS, "full fixpoint, one owner, cleanup, resume, and current-only boundaries"),
     ("external-target-binding", EXTERNAL_TARGET_BINDING_FIELDS, "canonical repository/member roles and direct replacement of the ambiguous old option"),
 )
@@ -236,7 +244,7 @@ def build_field_lifecycle() -> FieldLifecyclePlan:
                 "skillguard.installer",
                 "skillguard.portfolio",
                 "skillguard.global_router",
-                "openspec.receipt_consumer",
+                "skillguard.consumer_distribution",
             ),
             writer_ids=(
                 "skillguard.contract_compiler",

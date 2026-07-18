@@ -1,0 +1,17 @@
+{
+  "schema_version": "flowguard.spec_context.v1",
+  "contexts": [
+    {
+      "provider_id": "openspec",
+      "change_id": "separate-skillguard-authoring-from-consumer-runtime",
+      "status": "active",
+      "artifact_paths": [
+        "openspec/changes/separate-skillguard-authoring-from-consumer-runtime/proposal.md",
+        "openspec/changes/separate-skillguard-authoring-from-consumer-runtime/design.md",
+        "openspec/changes/separate-skillguard-authoring-from-consumer-runtime/specs",
+        "openspec/changes/separate-skillguard-authoring-from-consumer-runtime/tasks.md"
+      ],
+      "claim_boundary": "This record supplies read-only requirement context only. It contains no test command, execution owner, session, cache, receipt reference, validation result, or cross-tool authority."
+    }
+  ]
+}

@@ -20,7 +20,6 @@ from .portfolio import (
     build_current_portfolio_registry,
     current_guard,
     graduate_portfolio_target,
-    issue_reuse_ticket,
     portfolio_registry_lock,
     PortfolioRegistryLockError,
 )
@@ -821,136 +820,6 @@ def verify_installation_receipt_command(argv: list[str]) -> int:
     return 0 if report["status"] == "passed" else 1
 
 
-def issue_portfolio_reuse_ticket_command(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(prog="skillguard.py issue-portfolio-reuse-ticket")
-    _common(parser)
-    parser.add_argument("--request", required=True)
-    parser.add_argument("--impact-plan", required=True)
-    parser.add_argument("--ticket-output")
-    parser.add_argument(
-        "--target-repository-root",
-        required=True,
-        help="Canonical local repository root for verifier-derived target identity",
-    )
-    parser.add_argument(
-        "--installed-target-root",
-        help=(
-            "Non-authoritative installed copy used for final content parity; "
-            "required when graduating a suite"
-        ),
-    )
-    parser.add_argument("--write", action="store_true")
-    args = parser.parse_args(argv)
-    workspace = Path(args.workspace_root).resolve()
-    paths = _assert_distinct_path_roles(
-        workspace,
-        registry=args.registry,
-        request=args.request,
-        impact_plan=args.impact_plan,
-        ticket_output=args.ticket_output,
-        output=args.output,
-    )
-    target_repository_root = Path(args.target_repository_root).resolve()
-    installed_target_root = (
-        Path(args.installed_target_root).resolve()
-        if args.installed_target_root
-        else None
-    )
-    target_path_projection = _validated_target_path_projection(
-        workspace_root=workspace,
-        target_repository_root=target_repository_root,
-        installed_target_root=installed_target_root,
-    )
-    protected_roots = [target_repository_root]
-    if installed_target_root is not None:
-        protected_roots.append(installed_target_root)
-    _assert_mutation_paths_outside_roots(
-        paths,
-        mutable_roles=("registry", "ticket_output", "output"),
-        protected_roots=tuple(protected_roots),
-    )
-    _emit_runtime_target_path_display(
-        workspace_root=workspace,
-        target_repository_root=target_repository_root,
-        installed_target_root=installed_target_root,
-        projection=target_path_projection,
-    )
-    registry_path = paths["registry"]
-    request = _load(paths["request"])
-    content_impact_plan = _load_content_impact_plan(paths["impact_plan"])
-    if args.write and not args.ticket_output:
-        raise ValueError("--ticket-output is required with --write")
-    try:
-        if args.write:
-            ticket_path = paths["ticket_output"]
-            with portfolio_registry_lock(registry_path) as lock:
-                base_registry = _load(registry_path)
-                report, updated, ticket = issue_reuse_ticket(
-                    base_registry,
-                    request,
-                    content_impact_plan=content_impact_plan,
-                    evidence_root=workspace,
-                    target_repository_root=target_repository_root,
-                )
-                if (
-                    updated is not None
-                    and ticket is not None
-                    and report.get("status") != "already_committed"
-                ):
-                    transaction = _commit_registry_mutation(
-                        workspace=workspace,
-                        registry_path=registry_path,
-                        base_registry=base_registry,
-                        updated_registry=updated,
-                        request=request,
-                        mutation_kind="reuse_ticket",
-                        artifact_path=ticket_path,
-                        artifact_payload=ticket,
-                        artifact_semantic_hash=str(ticket["ticket_hash"]),
-                    )
-                    report["transaction"] = transaction
-                    report["registry_written"] = True
-                    report["ticket_written"] = True
-                elif updated is not None and ticket is not None:
-                    if not ticket_path.exists():
-                        atomic_write_json(ticket_path, ticket)
-                    report["registry_written"] = False
-                    report["ticket_written"] = ticket_path.exists()
-                    report["transaction_reused"] = True
-                else:
-                    report["registry_written"] = False
-                    report["ticket_written"] = False
-                report["registry_lock_recovered"] = lock["lock_recovered"]
-        else:
-            report, updated, ticket = issue_reuse_ticket(
-                _load(registry_path),
-                request,
-                content_impact_plan=content_impact_plan,
-                evidence_root=workspace,
-                target_repository_root=target_repository_root,
-            )
-            report["registry_written"] = False
-            report["ticket_written"] = False
-    except (PortfolioRegistryLockError, PortfolioRegistryCASMismatch) as exc:
-        code = (
-            "portfolio_registry_cas_mismatch"
-            if isinstance(exc, PortfolioRegistryCASMismatch)
-            else "portfolio_registry_writer_conflict"
-        )
-        report = {
-            "artifact_type": "skillguard_reuse_ticket_result",
-            "status": "blocked",
-            "blockers": [{"code": code, "detail": str(exc)}],
-            "registry_written": False,
-            "ticket_written": False,
-        }
-        updated = None
-        ticket = None
-    report["target_path_projection"] = target_path_projection
-    _output(report, args.output, workspace)
-    return 0 if ticket is not None else 1
-
-
 def graduate_portfolio_command(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="skillguard.py graduate-portfolio")
     _common(parser)
@@ -968,16 +837,6 @@ def graduate_portfolio_command(argv: list[str]) -> int:
     parser.add_argument(
         "--installed-target-root",
         help="Optional installed copy for status, hashed identity, and redacted display; never canonical source authority",
-    )
-    parser.add_argument(
-        "--portfolio-target-repository-root",
-        action="append",
-        default=[],
-        metavar="SKILL_ID=PATH",
-        help=(
-            "Repeat for prior active portfolio targets whose production "
-            "currentness must be replayed before graduation."
-        ),
     )
     parser.add_argument("--write", action="store_true")
     args = parser.parse_args(argv)
@@ -1019,12 +878,6 @@ def graduate_portfolio_command(argv: list[str]) -> int:
     registry_path = paths["registry"]
     guard = current_guard(Path(args.runtime_root).resolve()) if args.runtime_root else current_guard()
     evidence = _load(paths["evidence"])
-    portfolio_target_repository_roots = _target_repository_root_map(
-        args.portfolio_target_repository_root, workspace
-    )
-    portfolio_target_repository_roots.setdefault(
-        str(evidence.get("skill_id", "")), target_repository_root
-    )
     if args.write and not args.receipt_output:
         raise ValueError("--receipt-output is required with --write")
     try:
@@ -1039,9 +892,6 @@ def graduate_portfolio_command(argv: list[str]) -> int:
                     evidence_root=workspace,
                     target_repository_root=target_repository_root,
                     installed_target_root=installed_target_root,
-                    portfolio_target_repository_roots=(
-                        portfolio_target_repository_roots
-                    ),
                 )
                 if (
                     updated is not None
@@ -1080,9 +930,6 @@ def graduate_portfolio_command(argv: list[str]) -> int:
                 evidence_root=workspace,
                 target_repository_root=target_repository_root,
                 installed_target_root=installed_target_root,
-                portfolio_target_repository_roots=(
-                    portfolio_target_repository_roots
-                ),
             )
             report["registry_written"] = False
             report["receipt_written"] = False
@@ -1373,16 +1220,6 @@ def assemble_portfolio_run_command(argv: list[str]) -> int:
             "required by the runner when the prepared target is a suite"
         ),
     )
-    parser.add_argument(
-        "--portfolio-target-repository-root",
-        action="append",
-        default=[],
-        metavar="SKILL_ID=PATH",
-        help=(
-            "Repeat for prior active portfolio targets whose production "
-            "currentness the graduation dry-run must replay."
-        ),
-    )
     args = parser.parse_args(argv)
     workspace = Path(args.workspace_root).resolve()
     paths = _assert_distinct_path_roles(
@@ -1395,9 +1232,6 @@ def assemble_portfolio_run_command(argv: list[str]) -> int:
         Path(args.installed_target_root).resolve()
         if args.installed_target_root
         else None
-    )
-    portfolio_target_repository_roots = _target_repository_root_map(
-        args.portfolio_target_repository_root, workspace
     )
     projection = _runner_target_projection(
         workspace=workspace,
@@ -1422,9 +1256,6 @@ def assemble_portfolio_run_command(argv: list[str]) -> int:
             workspace_root=workspace,
             installed_target_root=installed_target_root,
             production_revalidation_refs=args.production_revalidation_ref,
-            portfolio_target_repository_roots=(
-                portfolio_target_repository_roots
-            ),
         )
     except PortfolioRunnerError as exc:
         result = _portfolio_runner_failure(
@@ -1456,7 +1287,6 @@ PORTFOLIO_COMMANDS: dict[str, Callable[[list[str]], int]] = {
     "verify-portfolio-impact-receipt": verify_portfolio_impact_receipt_command,
     "capture-installation-receipt": capture_installation_receipt_command,
     "verify-installation-receipt": verify_installation_receipt_command,
-    "issue-portfolio-reuse-ticket": issue_portfolio_reuse_ticket_command,
     "graduate-portfolio": graduate_portfolio_command,
     "prepare-portfolio-run": prepare_portfolio_run_command,
 }

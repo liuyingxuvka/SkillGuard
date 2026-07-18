@@ -47,7 +47,7 @@ ROUTE_PRIORITY = (
     "route:deep-audit",
     "route:compile-contract",
     "route:supervise-run",
-    "route:project-adoption",
+    "route:author-repository-adoption",
     "route:global-router-handoff",
     "route:provenance-audit",
     "route:portfolio-graduation",
@@ -615,7 +615,8 @@ def run_current_verifier(
     repository_root = repository_root.resolve()
     persistent_owner_root = resolve_owner_evidence_root(
         repository_root,
-        owner_evidence_root,
+        owner_evidence_root
+        or repository_root / "work" / "verification" / "owner-evidence",
     )
     skill_root = repository_root / ".agents" / "skills" / "skillguard"
     compile_result = compile_skill_contract(skill_root, repository_root=repository_root, write=True)
@@ -639,7 +640,7 @@ def run_current_verifier(
     claim = claim_run(
         contract,
         request,
-        repository_root,
+        repository_root / "work" / "verification" / "skillguard-author-state",
         decision,
         check_manifest=manifest,
         guard_runtime_identity=guard_execution_runtime_fingerprint(),

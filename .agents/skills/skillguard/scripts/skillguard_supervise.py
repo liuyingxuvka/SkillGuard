@@ -20,20 +20,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("skill_root", help="Skill root containing .skillguard/contract-source.json")
     parser.add_argument("packet", help="JSON execution packet with request, step evidence, and profiles")
-    parser.add_argument("--target-root", required=True, help="Target-local run and artifact root")
+    parser.add_argument("--target-root", required=True, help="Maintained target root inside the author repository")
     parser.add_argument("--repository-root", required=True, help="Canonical repository root")
     parser.add_argument(
         "--owner-evidence-root",
         help=(
-            "One persistent owner-receipt authority. Use a repository-level short path "
-            "when a deeply nested skill root would exceed the platform path budget."
+            "Optional persistent owner-receipt authority. When omitted, the supervisor "
+            "derives the private author path under the repository work directory."
         ),
     )
     parser.add_argument(
         "--run-state-root",
         help=(
-            "One target-local run-state root. Use a repository-level short path "
-            "when the maintained skill is deeply nested."
+            "Optional target-local run-state root. When omitted, the supervisor derives "
+            "the private author path under the repository work directory."
         ),
     )
     args = parser.parse_args(argv)
@@ -46,16 +46,8 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.target_root),
             Path(args.repository_root),
             packet,
-            run_state_root=(
-                Path(args.run_state_root)
-                if args.run_state_root
-                else None
-            ),
-            owner_evidence_root=(
-                Path(args.owner_evidence_root)
-                if args.owner_evidence_root
-                else None
-            ),
+            run_state_root=Path(args.run_state_root) if args.run_state_root else None,
+            owner_evidence_root=Path(args.owner_evidence_root) if args.owner_evidence_root else None,
         )
     except (OSError, json.JSONDecodeError, ValueError, SupervisorError) as exc:
         print(json.dumps({"ok": False, "error": str(exc)}, sort_keys=True))

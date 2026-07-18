@@ -748,6 +748,9 @@ def _exact_owner_check_projection(
     for check_id in declared_check_ids:
         check = check_index[check_id]
         projection = {
+            "maintenance_unit_id": str(check.get("maintenance_unit_id", "")),
+            "member_skill_id": str(check.get("member_skill_id", "")),
+            "evidence_subject_id": str(check.get("evidence_subject_id", "")),
             "check_id": check_id,
             "semantic_check_id": str(check.get("semantic_check_id", "")),
             "projection_declaration_hash": str(
@@ -758,6 +761,9 @@ def _exact_owner_check_projection(
             check.get("execution_owner_id") != owner_id
             or check.get("owner_declaration_hash") != owner_declaration_hash
             or str(check.get("evidence_domain_id", "")) != evidence_domain_id
+            or not projection["maintenance_unit_id"]
+            or not projection["member_skill_id"]
+            or not projection["evidence_subject_id"]
             or not projection["semantic_check_id"]
             or not re.fullmatch(
                 r"sha256:[0-9a-f]{64}",
@@ -991,6 +997,8 @@ def _compile_current_test_mesh_plan(
     except (ValueError, OSError) as exc:
         return _blocked_current_plan(profile_id, [str(exc)])
     impact_plan = contract["content_impact_plan"]
+    maintenance_unit_id = str(contract.get("maintenance_unit_id", ""))
+    member_skill_id = str(contract.get("skill_id", ""))
     persistent_root = resolve_owner_evidence_root(
         repository_root, owner_evidence_root
     )
@@ -1080,6 +1088,9 @@ def _compile_current_test_mesh_plan(
                 receipt_binding = None
                 history = inspect_owner_receipt_history(
                     persistent_root,
+                    maintenance_unit_id=str(
+                        check.get("maintenance_unit_id", "")
+                    ),
                     execution_owner_id=owner_id,
                     owner_declaration_hash=str(
                         owner.get("owner_declaration_hash", "")
@@ -1092,6 +1103,8 @@ def _compile_current_test_mesh_plan(
                 )
             owner_plans.append(
                 {
+                    "maintenance_unit_id": maintenance_unit_id,
+                    "member_skill_id": member_skill_id,
                     "execution_owner_id": owner_id,
                     "primary_check_id": str(check.get("check_id", "")),
                     "check_ids": check_ids,
@@ -1190,6 +1203,8 @@ def _compile_current_test_mesh_plan(
         "status": "passed",
         "mode": "plan_only",
         "profile_id": profile_id,
+        "maintenance_unit_id": maintenance_unit_id,
+        "member_skill_id": member_skill_id,
         "full_admission_required": full_required,
         "full_admission_reason": (
             full_admission_reason if full_required else ""
@@ -1245,6 +1260,14 @@ def _validate_frozen_current_plan(
     contract = load_contract_snapshot(run_root)
     check_manifest = load_check_manifest_snapshot(run_root)
     run = load_run(run_root)
+    if (
+        frozen_plan.get("maintenance_unit_id")
+        != contract.get("maintenance_unit_id")
+        or frozen_plan.get("member_skill_id") != contract.get("skill_id")
+        or run.get("maintenance_unit_id") != contract.get("maintenance_unit_id")
+        or run.get("member_skill_id") != contract.get("skill_id")
+    ):
+        raise ValueError("current_test_mesh_frozen_maintenance_identity_stale")
     _profile, selected_rows = _selected_owner_rows(
         contract, mesh_manifest, str(frozen_plan.get("profile_id", ""))
     )
@@ -1326,6 +1349,8 @@ def _validate_frozen_current_plan(
             else "execute_owner"
         )
         expected_owner_fields = {
+            "maintenance_unit_id": str(contract.get("maintenance_unit_id", "")),
+            "member_skill_id": str(contract.get("skill_id", "")),
             "primary_check_id": str(check.get("check_id", "")),
             "check_ids": check_ids,
             "check_projections": check_projections,
@@ -1951,6 +1976,10 @@ def _aggregate_frozen_current_test_mesh(
         receipts[owner_id] = receipt
         child_receipts.append(
             {
+                "maintenance_unit_id": str(
+                    receipt.get("maintenance_unit_id", "")
+                ),
+                "member_skill_id": str(receipt.get("member_skill_id", "")),
                 "execution_owner_id": owner_id,
                 **_owner_result_check_projection(plan_by_owner[owner_id]),
                 "receipt_id": str(receipt["receipt_id"]),
@@ -1960,6 +1989,10 @@ def _aggregate_frozen_current_test_mesh(
         )
     aggregation: dict[str, Any] = {
         "schema_version": CURRENT_TEST_MESH_AGGREGATION_SCHEMA,
+        "maintenance_unit_id": str(
+            frozen_plan.get("maintenance_unit_id", "")
+        ),
+        "member_skill_id": str(frozen_plan.get("member_skill_id", "")),
         "profile_id": str(frozen_plan.get("profile_id", "")),
         "plan_hash": str(frozen_plan.get("plan_hash", "")),
         "full_admission_required": bool(
@@ -2129,6 +2162,8 @@ def replay_current_test_mesh_aggregation(
         seen: set[str] = set()
         for child in children:
             if not isinstance(child, Mapping) or set(child) != {
+                "maintenance_unit_id",
+                "member_skill_id",
                 "execution_owner_id",
                 "check_ids",
                 "check_projections",
@@ -2139,6 +2174,15 @@ def replay_current_test_mesh_aggregation(
                 findings.append("aggregation_child_shape_invalid")
                 continue
             owner_id = str(child.get("execution_owner_id", ""))
+            if (
+                child.get("maintenance_unit_id")
+                != payload.get("maintenance_unit_id")
+                or child.get("member_skill_id") != payload.get("member_skill_id")
+            ):
+                findings.append(
+                    f"aggregation_child_foreign_maintenance_identity:{owner_id}"
+                )
+                continue
             if not owner_id or owner_id in seen:
                 findings.append("aggregation_child_owner_duplicate_or_missing")
                 continue
@@ -2159,6 +2203,9 @@ def replay_current_test_mesh_aggregation(
                     not isinstance(row, Mapping)
                     or set(row)
                     != {
+                        "maintenance_unit_id",
+                        "member_skill_id",
+                        "evidence_subject_id",
                         "check_id",
                         "semantic_check_id",
                         "projection_declaration_hash",
@@ -2176,6 +2223,9 @@ def replay_current_test_mesh_aggregation(
                     owner_evidence_root,
                     child["receipt_ref"],
                     expected_owner_id=owner_id,
+                    expected_maintenance_unit_id=str(
+                        payload.get("maintenance_unit_id", "")
+                    ),
                 )
             except CheckRunnerError as exc:
                 findings.append(f"aggregation_child_invalid:{owner_id}:{exc.code}")
@@ -2379,11 +2429,12 @@ def project_current_test_mesh_aggregation_to_openspec_receipt(
     canonical_skillguard_root: Path | None = None,
     global_prompt_codex_home: Path | None = None,
 ) -> dict[str, Any]:
-    """Project one replayed current parent into OpenSpec's existing wire.
+    """Reject the retired external-provider receipt bridge."""
 
-    This is a format/identity projection only.  It is structurally unable to
-    execute a TestMesh child or to repair a missing receipt.
-    """
+    raise ValueError(
+        "external_provider_receipt_bridge_forbidden: OpenSpec owns its own "
+        "validation and cannot consume SkillGuard TestMesh receipts"
+    )
 
     findings: list[str] = []
     identities = {

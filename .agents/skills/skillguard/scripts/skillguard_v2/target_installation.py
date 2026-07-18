@@ -17,6 +17,11 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .contract_compiler import canonical_hash
+from .consumer_distribution import (
+    audit_consumer_distribution,
+    build_consumer_distribution,
+    consumer_distribution_plan,
+)
 from .installation import (
     WINDOWS_PATH_BUDGET_ENABLED,
     WINDOWS_STAGE_DIRECTORY_PATH_LIMIT,
@@ -26,19 +31,14 @@ from .installation import (
     _InstallMutex,
     _activation_exception_diagnostic,
     _atomic_write_json,
-    _comparison_current,
     _durable_mkdir,
     _durable_rename,
     _fsync_tree,
     _is_reparse_point,
     _path_entity_exists,
     _validate_codex_control_paths,
-    compare_installation_projection_member,
-    installation_member_paths,
-    installation_projection_identity,
 )
-from .portable_content import portable_files, scan_member_boundary
-from .runtime_authority import resolve_runtime_authority
+from .portable_content import portable_files
 from .path_identity import (
     canonical_filesystem_path,
     same_filesystem_object,
@@ -98,15 +98,15 @@ def _canonical_target(
     canonical = canonical_filesystem_path(canonical_skill_root)
     if not canonical.is_dir() or not canonical.is_relative_to(repository):
         raise ValueError("target_install_skill_root_outside_repository")
-    manifest = _read_json_object(
-        canonical / ".skillguard" / "check-manifest.json",
-        "target_install_manifest_missing",
+    contract = _read_json_object(
+        canonical / ".skillguard" / "compiled-contract.json",
+        "target_install_compiled_contract_missing",
     )
-    skill_id = _safe_skill_id(manifest.get("skill_id"))
-    plan = manifest.get("content_impact_plan")
-    if not isinstance(plan, Mapping):
+    skill_id = _safe_skill_id(contract.get("skill_id"))
+    impact_plan = contract.get("content_impact_plan")
+    if not isinstance(impact_plan, Mapping):
         raise ValueError("target_install_content_impact_plan_missing")
-    member_root_path = str(plan.get("member_root_path", "")).replace("\\", "/")
+    member_root_path = str(impact_plan.get("member_root_path", "")).replace("\\", "/")
     if not member_root_path:
         raise ValueError("target_install_member_root_path_missing")
     expected = repository if member_root_path == "." else repository / Path(
@@ -116,21 +116,36 @@ def _canonical_target(
         raise ValueError("target_install_member_root_path_mismatch")
     if canonical.is_symlink() or _is_reparse_point(canonical):
         raise ValueError("target_install_canonical_root_unsafe")
-    boundary = scan_member_boundary(canonical)
+    consumer_plan = consumer_distribution_plan(canonical, contract)
     blockers = [
-        *(f"canonical_runtime_artifact:{path}" for path in boundary.blocking_runtime_paths),
-        *(f"canonical_unsafe_path:{path}" for path in boundary.unsafe_paths),
+        f"{row['code']}:{row['path']}"
+        for row in consumer_plan.get("findings", [])
+        if isinstance(row, Mapping)
     ]
     if blockers:
         raise ValueError(";".join(blockers))
-    projection = installation_projection_identity(canonical)
-    member_paths = installation_member_paths(canonical)
+    member_paths = tuple(
+        sorted(
+            [
+                str(row["path"])
+                for row in consumer_plan["files"]
+            ]
+            + [str(consumer_plan["release_manifest_path"])]
+        )
+    )
+    projection = {
+        "projection_id": "projection:consumer-distribution",
+        "release_id": str(consumer_plan["release_id"]),
+        "member_paths_hash": canonical_hash(list(member_paths)),
+    }
     return {
         "repository_root": repository,
         "canonical_root": canonical,
         "skill_id": skill_id,
         "member_root_path": member_root_path,
         "projection": projection,
+        "contract": contract,
+        "consumer_plan": consumer_plan,
         "member_paths": member_paths,
         "member_paths_hash": canonical_hash(list(member_paths)),
     }
@@ -198,12 +213,17 @@ def _remove_new_tree(path: Path, allowed_parent: Path) -> None:
     shutil.rmtree(lexical)
 
 
-def _copy_projection(source_root: Path, destination_root: Path) -> dict[str, Any]:
+def _copy_projection(
+    source_root: Path,
+    destination_root: Path,
+    *,
+    member_paths: tuple[str, ...] | None = None,
+) -> dict[str, Any]:
     source = source_root.resolve(strict=True)
     destination = destination_root.absolute()
     if _path_entity_exists(destination):
         raise FileExistsError("target_install_destination_exists")
-    member_paths = installation_member_paths(source)
+    member_paths = member_paths or _portable_relative_files(source)
     destination.mkdir(parents=True, exist_ok=False)
     copied: list[str] = []
     try:
@@ -236,17 +256,32 @@ def _portable_relative_files(root: Path) -> tuple[str, ...]:
     return tuple(relative.as_posix() for relative, _path in portable_files(root))
 
 
-def _target_comparison(canonical_root: Path, projected_root: Path) -> dict[str, Any]:
-    comparison = compare_installation_projection_member(
-        canonical_root, projected_root
+def _target_comparison(target: Mapping[str, Any], projected_root: Path) -> dict[str, Any]:
+    audit = audit_consumer_distribution(projected_root)
+    current = (
+        audit.get("status") == "passed"
+        and audit.get("release_id") == target["projection"]["release_id"]
+        and _portable_relative_files(projected_root)
+        == tuple(target["member_paths"])
     )
-    comparison["canonical_runtime_authority"] = resolve_runtime_authority(
-        canonical_root
-    ).to_dict()
-    comparison["installed_runtime_authority"] = resolve_runtime_authority(
-        projected_root
-    ).to_dict()
-    return comparison
+    return {
+        "status": "current" if current else "stale",
+        "current": current,
+        "projection_id": "projection:consumer-distribution",
+        "expected_release_id": target["projection"]["release_id"],
+        "actual_release_id": audit.get("release_id"),
+        "audit": audit,
+    }
+
+
+def _consumer_tree_projection(root: Path) -> dict[str, Any]:
+    audit = audit_consumer_distribution(root)
+    member_paths = _portable_relative_files(root)
+    return {
+        "projection_id": "projection:consumer-distribution",
+        "release_id": audit.get("release_id"),
+        "member_paths_hash": canonical_hash(list(member_paths)),
+    }
 
 
 def verify_target_stage(
@@ -266,10 +301,11 @@ def verify_target_stage(
     stage = lexical_stage.resolve(strict=True)
     if _roots_overlap(target["repository_root"], stage):
         raise ValueError("target_install_stage_overlaps_repository")
-    boundary = scan_member_boundary(stage)
+    audit = audit_consumer_distribution(stage)
     blockers = [
-        *(f"stage_runtime_artifact:{path}" for path in boundary.blocking_runtime_paths),
-        *(f"stage_unsafe_path:{path}" for path in boundary.unsafe_paths),
+        f"{row['code']}:{row['path']}"
+        for row in audit.get("findings", [])
+        if isinstance(row, Mapping)
     ]
     expected_files = tuple(target["member_paths"])
     actual_files = _portable_relative_files(stage)
@@ -277,10 +313,8 @@ def verify_target_stage(
     unexpected = sorted(set(actual_files) - set(expected_files))
     comparison: dict[str, Any] = {}
     if not blockers and not missing and not unexpected:
-        comparison = _target_comparison(
-            target["canonical_root"], stage
-        )
-        if not _comparison_current(comparison):
+        comparison = _target_comparison(target, stage)
+        if not comparison.get("current"):
             blockers.append("target_stage_projection_or_authority_mismatch")
     blockers.extend(f"target_stage_missing:{path}" for path in missing)
     blockers.extend(f"target_stage_unexpected:{path}" for path in unexpected)
@@ -291,13 +325,19 @@ def verify_target_stage(
         "member_root_path": target["member_root_path"],
         "canonical_projection": target["projection"],
         "stage_projection": (
-            installation_projection_identity(stage) if not blockers else None
+            {
+                "projection_id": "projection:consumer-distribution",
+                "release_id": audit.get("release_id"),
+                "member_paths_hash": canonical_hash(list(actual_files)),
+            }
+            if not blockers
+            else None
         ),
         "member_count": len(expected_files),
         "member_paths_hash": target["member_paths_hash"],
         "missing": missing,
         "unexpected": unexpected,
-        "comparison_current": bool(comparison and _comparison_current(comparison)),
+        "comparison_current": bool(comparison and comparison.get("current")),
         "comparison": comparison,
         "blockers": sorted(set(blockers)),
         "claim_boundary": "Stage verification proves only exact projected bytes and current static authority; it executes no target command and does not activate the install.",
@@ -329,7 +369,24 @@ def prepare_target_stage(
             "blockers": list(budget["blockers"]),
         }
     _durable_mkdir(stage.parent)
-    copy_result = _copy_projection(target["canonical_root"], stage)
+    copy_result = build_consumer_distribution(
+        target["canonical_root"],
+        stage,
+        target["contract"],
+    )
+    if copy_result.get("status") != "passed":
+        return {
+            "schema_version": TARGET_STAGE_SCHEMA,
+            "status": "blocked",
+            "skill_id": target["skill_id"],
+            "path_budget": budget,
+            "copy": copy_result,
+            "blockers": [
+                f"{row['code']}:{row['path']}"
+                for row in copy_result.get("findings", [])
+                if isinstance(row, Mapping)
+            ],
+        }
     verification = verify_target_stage(
         target["repository_root"], target["canonical_root"], stage
     )
@@ -658,7 +715,11 @@ def activate_target_stage(
             backup = Path(record["backup_root"])
             try:
                 _durable_mkdir(active.parent)
-                _copy_projection(stage, incoming)
+                _copy_projection(
+                    stage,
+                    incoming,
+                    member_paths=tuple(target["member_paths"]),
+                )
                 record["status"] = "incoming_ready"
                 record = _write_journal(home, record)
                 if _path_entity_exists(active):
@@ -677,16 +738,14 @@ def activate_target_stage(
                     raise RuntimeError("target_install_failpoint_after_activation")
                 record["status"] = "post_activation_verifying"
                 record = _write_journal(home, record)
-                comparison = _target_comparison(
-                    target["canonical_root"], active
-                )
+                comparison = _target_comparison(target, active)
                 active_files = _portable_relative_files(active)
                 if (
-                    not _comparison_current(comparison)
+                    not comparison.get("current")
                     or active_files != tuple(target["member_paths"])
                 ):
                     raise ValueError("target_install_active_projection_mismatch")
-                active_projection = installation_projection_identity(active)
+                active_projection = _consumer_tree_projection(active)
                 record["active_projection"] = active_projection
                 record["status"] = "receipt_pending"
                 record = _write_journal(home, record)
@@ -772,7 +831,7 @@ def rollback_target_install(
             active = Path(str(record.get("active_root", "")))
             if (
                 not active.is_dir()
-                or installation_projection_identity(active)
+                or _consumer_tree_projection(active)
                 != record.get("active_projection")
             ):
                 return {"status": "blocked", "blockers": ["target_active_projection_drift"]}

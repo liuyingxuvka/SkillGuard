@@ -3,9 +3,11 @@
   "$id": "skillguard_test_mesh_aggregation_current.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "status", "mode", "execution_count", "findings"],
+  "required": ["schema_version", "maintenance_unit_id", "member_skill_id", "status", "mode", "execution_count", "findings"],
   "properties": {
     "schema_version": {"const": "skillguard.test_mesh_aggregation.current"},
+    "maintenance_unit_id": {"type": "string", "minLength": 1},
+    "member_skill_id": {"type": "string", "minLength": 1},
     "status": {"enum": ["passed", "blocked"]},
     "mode": {"const": "aggregation_only"},
     "execution_count": {"const": 0},

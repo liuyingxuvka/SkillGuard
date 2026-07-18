@@ -10,7 +10,8 @@ from unittest import mock
 import tests.test_contract_compiler_v2 as compiler_tests
 
 from skillguard_v2.contract_compiler import compile_skill_contract
-from skillguard_v2.installation import _InstallMutex, installation_projection_identity
+from skillguard_v2.consumer_distribution import audit_consumer_distribution
+from skillguard_v2.installation import _InstallMutex
 from skillguard_v2.target_installation import (
     activate_target_stage,
     prepare_target_stage,
@@ -89,9 +90,10 @@ class TargetInstallationTests(unittest.TestCase):
         self.assertEqual("passed", activated["status"], activated)
         active = self.codex_home / "skills" / "fixture-skill"
         self.assertEqual(
-            installation_projection_identity(self.skill),
-            installation_projection_identity(active),
+            audit_consumer_distribution(stage)["release_id"],
+            audit_consumer_distribution(active)["release_id"],
         )
+        self.assertFalse((active / ".skillguard").exists())
         self.assertFalse((active / "tests" / source_only.name).exists())
         self.assertEqual(before_self_head, self.self_head.read_bytes())
         transaction_id = str(activated["transaction_id"])
@@ -119,8 +121,8 @@ class TargetInstallationTests(unittest.TestCase):
         self.assertEqual("rolled_back", second["restored_status"])
         self.assertEqual(first_runtime, (active / "runtime.py").read_text(encoding="utf-8"))
         self.assertEqual(
-            installation_projection_identity(stage_one),
-            installation_projection_identity(active),
+            audit_consumer_distribution(stage_one)["release_id"],
+            audit_consumer_distribution(active)["release_id"],
         )
 
     def test_successful_replacement_and_manual_rollback_restore_previous_version(self) -> None:
@@ -183,7 +185,7 @@ class TargetInstallationTests(unittest.TestCase):
         report = verify_target_stage(self.repo, self.skill, stage)
 
         self.assertEqual("blocked", report["status"], report)
-        self.assertIn("target_stage_projection_or_authority_mismatch", report["blockers"])
+        self.assertIn("consumer_file_hash_mismatch:runtime.py", report["blockers"])
 
     def test_crash_after_backup_is_recovered_without_touching_self_head(self) -> None:
         stage_one, prepared_one = self._prepare("recover-one")
