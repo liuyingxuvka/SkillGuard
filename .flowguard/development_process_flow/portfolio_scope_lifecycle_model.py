@@ -25,9 +25,10 @@ ACTIVE_LIFECYCLES = frozenset(
 CLAIM_BOUNDARY = (
     "A pass proves only the modeled user-confirmed portfolio replacement, "
     "superseded-skill installation/router absence, preserved exclusion, and "
-    "direct current-registry replacement and single-writer boundary. It does not rewrite a receipt, "
-    "run target checks, install a skill, refresh a router, graduate the "
-    "portfolio, or prove release readiness."
+    "direct current-registry replacement, maintenance-unit isolation, and "
+    "single-writer boundary. It does not rewrite or transfer a receipt, run "
+    "target checks, install a skill, refresh a router, graduate the portfolio, "
+    "or prove release readiness."
 )
 
 
@@ -68,6 +69,10 @@ class PortfolioScopeObservation:
     replacement_registry_scope_revision: int = 2
     prior_registry_consumed: bool = False
     historical_green_evidence_carried: bool = False
+    cross_unit_reuse_ticket_present: bool = False
+    shared_evidence_root_present: bool = False
+    prior_unit_graduation_gate_enabled: bool = False
+    maintenance_unit_ids: tuple[str, ...] = ("unit:logic-writing",)
     active_entries_require_fresh_evidence: bool = True
     registry_lock_acquired_before_write: bool = True
     live_registry_writer_present: bool = False
@@ -222,6 +227,25 @@ def registry_replacement_is_single_writer(
     return _pass()
 
 
+def maintenance_units_own_their_evidence(
+    state: PortfolioScopeState, _trace: object
+) -> InvariantResult:
+    if _empty(state):
+        return _pass()
+    if (
+        not state.maintenance_unit_ids
+        or len(set(state.maintenance_unit_ids)) != len(state.maintenance_unit_ids)
+        or state.cross_unit_reuse_ticket_present
+        or state.shared_evidence_root_present
+        or state.prior_unit_graduation_gate_enabled
+    ):
+        return _fail(
+            "maintenance_units_own_their_evidence",
+            "Portfolio may summarize independent units but cannot share evidence, issue reuse tickets, or gate one unit on prior graduates",
+        )
+    return _pass()
+
+
 INVARIANTS = (
     Invariant(
         "replacement_is_the_only_active_owner",
@@ -252,6 +276,11 @@ INVARIANTS = (
         "registry_replacement_is_single_writer",
         "Direct replacement cannot overwrite a live registry writer.",
         registry_replacement_is_single_writer,
+    ),
+    Invariant(
+        "maintenance_units_own_their_evidence",
+        "Every maintenance unit graduates from its own evidence.",
+        maintenance_units_own_their_evidence,
     ),
 )
 
@@ -366,6 +395,17 @@ SCENARIOS = (
         expected_status="violation",
         violation_names=("registry_replacement_is_single_writer",),
     ),
+    _scenario(
+        replace(
+            GOOD,
+            case_name="cross_unit_proof_transfer_blocks",
+            cross_unit_reuse_ticket_present=True,
+            shared_evidence_root_present=True,
+            prior_unit_graduation_gate_enabled=True,
+        ),
+        expected_status="violation",
+        violation_names=("maintenance_units_own_their_evidence",),
+    ),
 )
 
 
@@ -395,6 +435,7 @@ def main(argv: list[str] | None = None) -> int:
                         "replacement-registry": "revision one bound to current scope",
                         "replacement-registry-writer": "sole lock owner before commit",
                         "active-target-evidence": "pending or revalidation required",
+                        "maintenance-unit-evidence": "independent; no reuse ticket or shared proof root",
                         "impact-frozen-plans": "stale downstream evidence",
                     },
                     "scenario_review": report.to_dict(),

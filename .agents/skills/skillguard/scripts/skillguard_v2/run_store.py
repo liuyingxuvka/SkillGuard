@@ -1,4 +1,4 @@
-"""Target-local claimed-run storage with atomic locks and hash-chained events."""
+"""Author-local claimed-run storage with atomic locks and hash-chained events."""
 
 from __future__ import annotations
 
@@ -121,6 +121,26 @@ def _claim_artifact_findings(
                 "check manifest and compiled contract must name the same skill",
             )
         )
+    if check_manifest.get("maintenance_unit_id") != contract.get(
+        "maintenance_unit_id"
+    ):
+        findings.append(
+            SchemaFinding(
+                "check_manifest_maintenance_unit_mismatch",
+                "$.maintenance_unit_id",
+                "check manifest and compiled contract must name the same maintenance unit",
+            )
+        )
+    if check_manifest.get("member_skill_ids") != contract.get(
+        "member_skill_ids"
+    ):
+        findings.append(
+            SchemaFinding(
+                "check_manifest_member_skills_mismatch",
+                "$.member_skill_ids",
+                "check manifest and compiled contract must name the same member skills",
+            )
+        )
     if check_manifest.get("contract_hash") != contract_hash:
         findings.append(
             SchemaFinding(
@@ -206,6 +226,8 @@ def _run_id(
 ) -> str:
     identity = {
         "skill_id": contract.get("skill_id"),
+        "maintenance_unit_id": contract.get("maintenance_unit_id"),
+        "member_skill_id": contract.get("skill_id"),
         "contract_hash": contract.get("contract_hash"),
         "check_manifest_hash": check_manifest_hash,
         "request": request,
@@ -214,6 +236,29 @@ def _run_id(
         "guard_runtime_identity": dict(guard_runtime_identity or {}),
     }
     return f"run-{canonical_hash(identity)[:20].lower()}"
+
+
+def _identity_directory(value: object) -> str:
+    text = str(value)
+    readable = re.sub(r"[^a-zA-Z0-9._-]+", "-", text).strip("-._")[:48]
+    if not readable:
+        readable = "identity"
+    return f"{readable}-{canonical_hash({'identity': text})[:12].lower()}"
+
+
+def author_run_control_root(
+    author_state_root: Path,
+    contract: Mapping[str, Any],
+) -> Path:
+    """Return the unit/member-local control root under explicit author state."""
+
+    return (
+        author_state_root.resolve()
+        / "units"
+        / _identity_directory(contract.get("maintenance_unit_id", ""))
+        / "members"
+        / _identity_directory(contract.get("skill_id", ""))
+    )
 
 
 def _normalize_claim_snapshots(
@@ -490,15 +535,14 @@ def append_event(run_root: Path, event_type: str, payload: Mapping[str, Any]) ->
 def claim_run(
     contract: Mapping[str, Any],
     request: Mapping[str, Any],
-    target_root: Path,
+    author_state_root: Path,
     decision: RouteDecision,
     *,
     check_manifest: Mapping[str, Any] | None = None,
     claim_snapshots: Mapping[str, Mapping[str, Any]] | None = None,
     guard_runtime_identity: Mapping[str, Any] | None = None,
 ) -> RunClaimResult:
-    target_root = target_root.resolve()
-    target_root.mkdir(parents=True, exist_ok=True)
+    author_state_root = author_state_root.resolve()
     if not decision.ok:
         return RunClaimResult(
             False,
@@ -543,7 +587,10 @@ def claim_run(
         snapshot_id: canonical_hash(payload)
         for snapshot_id, payload in normalized_snapshots.items()
     }
-    write_targets = _normalize_write_targets(target_root, request.get("write_targets", ["."]))
+    write_targets = _normalize_write_targets(
+        author_state_root,
+        request.get("write_targets", ["."]),
+    )
     guard_runtime_identity = dict(guard_runtime_identity or {})
     guard_runtime_identity_hash = canonical_hash(guard_runtime_identity)
     run_id = _run_id(
@@ -554,13 +601,17 @@ def claim_run(
         claim_snapshot_hashes,
         guard_runtime_identity,
     )
-    control_root = target_root / ".skillguard"
+    maintenance_unit_id = str(contract.get("maintenance_unit_id", ""))
+    member_skill_id = str(contract.get("skill_id", ""))
+    control_root = author_run_control_root(author_state_root, contract)
     run_root = control_root / "runs" / run_id
     run_path = run_root / "run.json"
     if filesystem_path(run_path).is_file():
         existing = _json_load(run_path)
         if (
             existing.get("contract_hash") == contract_hash
+            and existing.get("maintenance_unit_id") == maintenance_unit_id
+            and existing.get("member_skill_id") == member_skill_id
             and existing.get("check_manifest_hash") == check_manifest_hash
             and existing.get("request_fingerprint") == canonical_hash(request)
             and existing.get("claim_snapshot_hashes", {}) == claim_snapshot_hashes
@@ -650,6 +701,8 @@ def claim_run(
         "schema_version": RUN_SCHEMA,
         "run_id": run_id,
         "skill_id": str(contract.get("skill_id", "")),
+        "maintenance_unit_id": maintenance_unit_id,
+        "member_skill_id": member_skill_id,
         "contract_hash": contract_hash,
         "check_manifest_hash": check_manifest_hash,
         "check_declarations_hash": str(contract["check_declarations_hash"]),

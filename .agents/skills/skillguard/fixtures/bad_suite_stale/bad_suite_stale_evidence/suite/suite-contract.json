@@ -1,5 +1,5 @@
 {
-  "schema_version": "skillguard.suite_contract.v1",
+  "schema_version": "skillguard.suite_contract.v2",
   "suite_name": "bad_suite_stale_evidence",
   "purpose": "Provide a negative suite fixture whose checked child report is stale.",
   "target_path": ".agents/skills/skillguard/fixtures/bad_suite_stale/bad_suite_stale_evidence/suite",
@@ -29,7 +29,7 @@
       "status": "checked"
     }
   ],
-  "shared_evidence_rules": [
+  "independent_evidence_rules": [
     "Checked children require current member evidence.",
     "Progress ledgers, runtime ids, and PM text cannot satisfy suite closure."
   ],

@@ -285,13 +285,11 @@
         "additionalProperties": false,
         "required": [
           "graduation_status",
-          "pending_guard_change_id",
-          "reuse_ticket_absent"
+          "pending_guard_change_id"
         ],
         "properties": {
           "graduation_status": {"const": "revalidation_required"},
-          "pending_guard_change_id": {"$ref": "#/$defs/non_empty_string"},
-          "reuse_ticket_absent": {"const": true}
+          "pending_guard_change_id": {"$ref": "#/$defs/non_empty_string"}
         }
       }
     },
@@ -655,86 +653,6 @@
         }
       ]
     },
-    "reuse_ticket": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "schema_version",
-        "ticket_id",
-        "transaction_id",
-        "skill_id",
-        "status",
-        "change_id",
-        "from_guard",
-        "to_guard",
-        "affected_feature_tags",
-        "broad_semantic_change",
-        "identity",
-        "registry_id",
-        "scope_manifest_id",
-        "scope_manifest_hash",
-        "base_registry_revision",
-        "base_registry_hash",
-        "previous_full_receipt_hash",
-        "target_identity_receipt_id",
-        "target_identity_receipt_hash",
-        "issued_at",
-        "claim_boundary",
-        "ticket_hash"
-      ],
-      "properties": {
-        "schema_version": {"const": "skillguard.test_result_reuse_ticket.v2"},
-        "ticket_id": {"$ref": "#/$defs/non_empty_string"},
-        "transaction_id": {"$ref": "#/$defs/non_empty_string"},
-        "skill_id": {"$ref": "#/$defs/non_empty_string"},
-        "status": {"const": "current"},
-        "change_id": {"$ref": "#/$defs/non_empty_string"},
-        "from_guard": {"$ref": "#/$defs/guard"},
-        "to_guard": {"$ref": "#/$defs/guard"},
-        "affected_feature_tags": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {"$ref": "#/$defs/non_empty_string"}
-        },
-        "broad_semantic_change": {"const": false},
-        "identity": {"$ref": "#/$defs/receipt_identity"},
-        "registry_id": {"$ref": "#/$defs/non_empty_string"},
-        "scope_manifest_id": {"$ref": "#/$defs/non_empty_string"},
-        "scope_manifest_hash": {"$ref": "#/$defs/hash"},
-        "base_registry_revision": {"type": "integer", "minimum": 1},
-        "base_registry_hash": {"$ref": "#/$defs/hash"},
-        "previous_full_receipt_hash": {"$ref": "#/$defs/hash"},
-        "target_identity_receipt_id": {"$ref": "#/$defs/non_empty_string"},
-        "target_identity_receipt_hash": {"$ref": "#/$defs/hash"},
-        "issued_at": {"$ref": "#/$defs/timestamp"},
-        "claim_boundary": {"$ref": "#/$defs/non_empty_string"},
-        "ticket_hash": {"$ref": "#/$defs/hash"}
-      }
-    },
-    "prior_proof": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "skill_id",
-        "proof_kind",
-        "proof_id",
-        "proof_hash",
-        "guard_runtime",
-        "source_fingerprint",
-        "contract_hash",
-        "coverage_fingerprint"
-      ],
-      "properties": {
-        "skill_id": {"$ref": "#/$defs/non_empty_string"},
-        "proof_kind": {"enum": ["reuse_ticket", "full_run_receipt"]},
-        "proof_id": {"$ref": "#/$defs/non_empty_string"},
-        "proof_hash": {"$ref": "#/$defs/hash"},
-        "guard_runtime": {"$ref": "#/$defs/guard"},
-        "source_fingerprint": {"$ref": "#/$defs/hash"},
-        "contract_hash": {"$ref": "#/$defs/hash"},
-        "coverage_fingerprint": {"$ref": "#/$defs/hash"}
-      }
-    },
     "portfolio_graduation_receipt": {
       "type": "object",
       "additionalProperties": false,
@@ -842,7 +760,7 @@
         "full_run_receipt_hash": {"$ref": "#/$defs/hash"},
         "full_run_result_hash": {"$ref": "#/$defs/hash"},
         "intended_entry_state_hash": {"$ref": "#/$defs/hash"},
-        "prior_evidence": {"type": "array", "items": {"$ref": "#/$defs/prior_proof"}},
+        "prior_evidence": {"type": "array", "maxItems": 0},
         "graduation_evidence_hash": {"$ref": "#/$defs/hash"},
         "issued_at": {"$ref": "#/$defs/timestamp"},
         "claim_boundary": {"$ref": "#/$defs/non_empty_string"},
@@ -904,9 +822,7 @@
         "required_capability_ids",
         "member_capability_inventory",
         "required_job_class_ids",
-        "unresolved_failure_ids",
-        "reuse_ticket",
-        "reuse_ticket_chain"
+        "unresolved_failure_ids"
       ],
       "properties": {
         "skill_id": {"$ref": "#/$defs/non_empty_string"},
@@ -959,13 +875,6 @@
         "production_revalidation_fingerprint": {"$ref": "#/$defs/hash"},
         "target_identity_receipt": {"$ref": "#/$defs/target_identity_receipt"},
         "portfolio_graduation_receipt": {"$ref": "#/$defs/portfolio_graduation_receipt"},
-        "reuse_ticket": {
-          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/reuse_ticket"}]
-        },
-        "reuse_ticket_chain": {
-          "type": "array",
-          "items": {"$ref": "#/$defs/reuse_ticket"}
-        },
         "last_revalidation": {"$ref": "#/$defs/timestamp_or_empty"},
         "failure_classification": {"$ref": "#/$defs/failure_classification"},
         "unresolved_failure_ids": {
@@ -1020,13 +929,6 @@
               "unresolved_failure_ids": {"maxItems": 0}
             }
           }
-        },
-        {
-          "if": {
-            "properties": {"reuse_ticket": {"type": "object"}},
-            "required": ["reuse_ticket"]
-          },
-          "then": {"properties": {"reuse_ticket_chain": {"minItems": 1}}}
         }
       ]
     },
@@ -1111,7 +1013,7 @@
       "properties": {
         "schema_version": {"const": "skillguard.portfolio_registry_transaction.v1"},
         "transaction_id": {"$ref": "#/$defs/non_empty_string"},
-        "mutation_kind": {"enum": ["guard_change", "reuse_ticket", "graduation"]},
+        "mutation_kind": {"enum": ["guard_change", "graduation"]},
         "base_registry_revision": {"type": "integer", "minimum": 1},
         "base_registry_hash": {"$ref": "#/$defs/hash"},
         "committed_registry_revision": {"type": "integer", "minimum": 2},

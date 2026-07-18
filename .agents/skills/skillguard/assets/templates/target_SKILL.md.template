@@ -36,28 +36,17 @@ Use this skill when:
 4. Run the strongest practical checks that are in scope for the target.
 5. Report only evidence-backed findings and keep the claim boundary explicit.
 
-## SkillGuard Runtime Rules
+## Native Validation
 
-This generated scaffold starts on the single current contract path. Contract presence is not execution-depth or release evidence. Before claiming closure:
+This skill owns its own domain behavior and its own checks. Before claiming closure:
 
-1. Preserve this skill's target-owned native route/check system and bind that owner in `.skillguard/contract-source.json`; do not add a second domain executor.
-2. Maintain `.skillguard/flowguard_contract_model.py` and `.skillguard/contract-source.json` as source inputs. Generate `.skillguard/compiled-contract.json` and `.skillguard/check-manifest.json` deterministically; never hand-edit generated authority.
-3. Freeze one exact validation-owner plan before multi-skill testing. Every check declares one owner, exact maintained inputs, covered obligations, dependencies, and a persistent receipt root.
-4. Reuse an immutable terminal-success receipt only when its complete execution identity and declared inputs still match. Missing or stale owner evidence blocks; a consumer must not rerun the owner command.
-5. Invalidate only affected receipts. Reports, receipts, logs, timestamps, progress, and status records are outputs and do not retrigger their producer.
-6. Use only the fixed `enforced` closure. Run a full parent only after source and toolchain freeze, under one owner.
-7. Block when the current trio is missing or stale, ownership is ambiguous, evidence is incomplete, cleanup is unconfirmed, or closure wording exceeds the evidence. There is no legacy or migration fallback success route.
+1. Run the checks declared by this skill for the exact target and requested outcome.
+2. Keep each check tied to the behavior, invariant, or output it proves.
+3. Treat missing, stale, failed, skipped, or not-run checks as visible limits.
+4. Re-run only the checks affected by the changed source, configuration, fixture, or toolchain input.
+5. Use one final full validation only after the relevant source and toolchain inputs are stable.
 
 AI or human judgment may explain semantic risk, but it must not replace required runnable checks.
-
-## Global Router Onboarding
-
-After this skill is created, directly replaced with the current shape, installed, moved, renamed, or its `SKILL.md`, current contract trio, or native route binding changes, refresh the SkillGuard global router before claiming default global routing is current. Ordinary use of an unchanged installed skill does not require a SkillGuard rerun:
-
-1. Run `refresh-global-router` against the relevant installed or repository-local skill roots.
-2. Check the generated global registry with `check-global-registry`.
-3. Check the user-level managed `AGENTS.md` block with `check-global-prompt`.
-4. Do not claim this skill is globally routable by default when the registry or managed prompt block is missing or stale.
 
 ## Hard Gates
 

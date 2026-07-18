@@ -1,47 +1,60 @@
-# SkillGuard Project Adoption Protocol
+# SkillGuard author-repository adoption
 
-## Purpose
+This workflow is only for a repository that authors and maintains skills.
+It is not project adoption in the ordinary sense.
 
-Project adoption makes SkillGuard maintenance portable with the repository. A future AI or another computer should be able to discover that the repository's skills are maintained through SkillGuard, locate the canonical SkillGuard source, preserve target-native authority, and fail visibly when maintenance governance is unavailable or stale.
+## Current author surfaces
 
-Canonical repository: <https://github.com/liuyingxuvka/SkillGuard>
+- `AGENTS.md` contains one marker-bounded
+  `MANAGED SKILLGUARD AUTHOR RULES` block.
+- `.skillguard/author-project.json` records the explicit author repository,
+  maintenance units, and member skills.
 
-## Managed artifacts
+Both surfaces are author-side control material. They must never be copied into
+a consumer skill or an unrelated project.
 
-Project adoption owns exactly two repository-root artifacts:
+## Preconditions
 
-- `.skillguard/project.json`: deterministic adoption manifest.
-- the text between `<!-- BEGIN MANAGED SKILLGUARD PROJECT RULES -->` and `<!-- END MANAGED SKILLGUARD PROJECT RULES -->` in `AGENTS.md`.
+Before `maintainer-adopt` writes anything, every declared member must already
+have a current `.skillguard/contract-source.json` that proves:
 
-Everything outside those markers belongs to the project and must be preserved byte-for-byte except for the minimum newline needed to insert the block.
+- `repository_role: skill_maintainer_source`;
+- a non-empty `maintenance_unit_id`;
+- the member's `skill_id` is present in `member_skill_ids`;
+- the skill path is inside the author repository.
 
-The manifest records the project id, canonical repository URL, SkillGuard version, managed skill paths, skill ids, the fixed `native-integrated` marker, native owner ids, route status, native-route evidence path, managed block hash, manifest hash, and claim boundary.
+Missing or ambiguous preconditions block before the AGENTS file or manifest is
+written.
 
-## Lifecycle
+## Commands
 
-### Adopt or directly rewrite current state
+```text
+python scripts/skillguard.py maintainer-adopt \
+  --root <author-repository> \
+  --managed-skill "<skill-path>|<native-owner>"
 
-Run `project-adopt` with every managed skill supplied as `PATH|NATIVE_OWNER`. The command assigns the fixed `native-integrated` marker, validates those explicit current inputs, renders the sole current block and manifest, writes them atomically, detects an intervening peer write, and immediately audits the result. If a non-current block or manifest exists, it is replaced directly; its rows are never reused, converted, renewed, or treated as authority.
+python scripts/skillguard.py maintainer-audit \
+  --root <author-repository>
+```
 
-### Audit
+`maintainer-adopt` writes the one current author shape directly. It does not
+convert an older project-adoption manifest.
 
-Run `project-audit` before broad maintenance closure and after repository transfer, SkillGuard installation, route changes, managed prompt changes, or direct current rewrites. Audit fails closed when:
+`maintainer-audit` is read-only. It checks the marker block, manifest hash,
+repository role, unit/member bindings, paths, and native owners.
 
-- the manifest or `AGENTS.md` is missing;
-- marker count is not exactly one begin and one end;
-- the canonical repository URL is absent or changed;
-- manifest or block hashes do not match;
-- the rendered block is stale;
-- a managed `SKILL.md` entrypoint is missing;
-- the fixed integration marker, native owner, route status, or skill rows are invalid or non-canonical.
+## Ordinary-project zero-write rule
 
-## Native-route rule
+If the root is not an explicit skill-author repository, SkillGuard must:
 
-- `native-integrated` is the only current marker: the target owns its native route and exact declared checks, and SkillGuard only supervises their execution and receipts.
-- Any other marker is blocked; SkillGuard never creates, completes, or substitutes a target-domain route.
-
-The project block routes maintenance to SkillGuard. It does not make SkillGuard the domain owner and does not prove that any skill ran deeply.
+- create no `.skillguard` directory;
+- modify no `AGENTS.md`;
+- create no receipt, router, Portfolio, or run state;
+- return a blocker explaining that ordinary projects are outside the adoption
+  boundary.
 
 ## Claim boundary
 
-A passing project audit proves only that portable project-maintenance instructions and manifest integrity are current. It does not prove runtime execution, target semantics, simulation validity, source completeness, tests, installation parity, release readiness, publication, or future AI behavior. Those require their own current evidence, including a declared-check execution receipt.
+Author adoption proves only that a source repository carries current
+SkillGuard maintenance instructions. It does not prove a member passed its
+checks, graduated, was installed, or will behave correctly in future use.

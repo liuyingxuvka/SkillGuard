@@ -188,6 +188,9 @@ def _validate_class_evidence(evidence_class: str, evidence: Mapping[str, Any]) -
 
 
 def _evidence_subject_id(evidence_class: str, evidence: Mapping[str, Any]) -> str:
+    declared_subject = str(evidence.get("evidence_subject_id", ""))
+    if declared_subject:
+        return declared_subject
     if evidence_class == "hard":
         if evidence.get("check_id"):
             return f"check:{evidence['check_id']}"
@@ -313,6 +316,10 @@ def issue_receipt(
         if check_record.get("record_hash") != evidence.get("check_record_hash"):
             raise ReceiptError("hard_check_record_hash_mismatch", check_record_id, step_id)
         for field in (
+            "maintenance_unit_id",
+            "member_skill_id",
+            "evidence_subject_id",
+            "semantic_check_id",
             "execution_owner_id",
             "execution_key",
             "projection_declaration_hash",
@@ -326,6 +333,16 @@ def issue_receipt(
                     f"{check_record_id}:{field}",
                     step_id,
                 )
+        if (
+            check_record.get("maintenance_unit_id")
+            != run.get("maintenance_unit_id")
+            or check_record.get("member_skill_id") != run.get("member_skill_id")
+        ):
+            raise ReceiptError(
+                "hard_check_maintenance_identity_mismatch",
+                check_record_id,
+                step_id,
+            )
         if owner_evidence_root is None:
             raise ReceiptError(
                 "hard_check_owner_evidence_root_missing",
@@ -369,6 +386,12 @@ def issue_receipt(
     receipt: dict[str, Any] = {
         "schema_version": RECEIPT_SCHEMA,
         "run_id": str(run["run_id"]),
+        "maintenance_unit_id": str(run["maintenance_unit_id"]),
+        "member_skill_id": str(run["member_skill_id"]),
+        "evidence_subject_id": subject_id,
+        "semantic_check_id": str(
+            evidence.get("semantic_check_id", step_id)
+        ),
         "step_id": step_id,
         "evidence_class": evidence_class,
         "subject_id": subject_id,
@@ -453,12 +476,13 @@ def derive_freshness(
             affected.append(str(key))
 
     all_receipts: dict[str, Mapping[str, Any]] = {}
-    latest_by_subject: dict[tuple[str, str, str, str], Mapping[str, Any]] = {}
+    latest_by_subject: dict[tuple[str, str, str, str, str], Mapping[str, Any]] = {}
     for root in receipt_roots:
         for row in load_receipts(root):
             receipt_id = str(row.get("receipt_id", ""))
             all_receipts[receipt_id] = row
             subject = (
+                str(row.get("maintenance_unit_id", "")),
                 str(row.get("run_id", "")),
                 str(row.get("step_id", "")),
                 str(row.get("evidence_class", "")),
@@ -471,7 +495,14 @@ def derive_freshness(
             reasons.append(f"consumed_child_missing:{child_id}")
             affected.append(f"child:{child_id}")
             continue
+        if child.get("maintenance_unit_id") != receipt.get(
+            "maintenance_unit_id"
+        ):
+            reasons.append(f"consumed_child_foreign_unit:{child_id}")
+            affected.append(f"child:{child_id}")
+            continue
         subject = (
+            str(child.get("maintenance_unit_id", "")),
             str(child.get("run_id", "")),
             str(child.get("step_id", "")),
             str(child.get("evidence_class", "")),

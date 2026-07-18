@@ -269,7 +269,8 @@ class PortfolioScopeLifecycleTest(unittest.TestCase):
                 entries["logic-writing"]["graduation_status"],
             )
             self.assertNotIn("full_run_receipt", entries["logic-writing"])
-            self.assertIsNone(entries["logic-writing"]["reuse_ticket"])
+            self.assertNotIn("reuse_ticket", entries["logic-writing"])
+            self.assertNotIn("reuse_ticket_chain", entries["logic-writing"])
             self.assertEqual(
                 "excluded", entries["databank-workflow"]["graduation_status"]
             )

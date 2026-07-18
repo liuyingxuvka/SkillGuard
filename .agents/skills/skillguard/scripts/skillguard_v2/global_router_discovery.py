@@ -107,6 +107,9 @@ def _schema_warnings(label: str, findings: Sequence[Any]) -> list[str]:
 
 def _empty_contract_projection(skill_file_path: str) -> dict[str, Any]:
     return {
+        "repository_role": "",
+        "maintenance_unit_id": "",
+        "member_skill_id": "",
         "integration_mode": "missing",
         "route_confidence": "blocked",
         "contract_authority": "missing",
@@ -244,6 +247,33 @@ def contract_projection(
     )
     if not identities[0] or len(set(identities)) != 1:
         warnings.append("current contract trio skill_id binding is inconsistent")
+    repository_roles = (
+        source.get("repository_role"),
+        contract.get("repository_role"),
+    )
+    if (
+        repository_roles[0] != "skill_maintainer_source"
+        or len(set(repository_roles)) != 1
+    ):
+        warnings.append(
+            "global router accepts only explicit skill_maintainer_source contracts"
+        )
+    maintenance_unit_ids = (
+        source.get("maintenance_unit_id"),
+        contract.get("maintenance_unit_id"),
+        manifest.get("maintenance_unit_id"),
+    )
+    if not maintenance_unit_ids[0] or len(set(maintenance_unit_ids)) != 1:
+        warnings.append(
+            "current contract trio maintenance_unit_id binding is inconsistent"
+        )
+    member_skill_ids = source.get("member_skill_ids")
+    if (
+        not isinstance(member_skill_ids, list)
+        or not identities[0]
+        or identities[0] not in member_skill_ids
+    ):
+        warnings.append("skill_id is not a declared member of its maintenance unit")
     model_ids = (source.get("model_id"), contract.get("model_id"), manifest.get("model_id"))
     if not model_ids[0] or len(set(model_ids)) != 1:
         warnings.append("current contract trio model_id binding is inconsistent")
@@ -320,6 +350,9 @@ def contract_projection(
     )
     projection.update(
         {
+            "repository_role": str(source.get("repository_role") or ""),
+            "maintenance_unit_id": str(source.get("maintenance_unit_id") or ""),
+            "member_skill_id": str(source.get("skill_id") or ""),
             "integration_mode": integration_mode,
             "route_confidence": "native-bound",
             "authority_decision": authority.authority,
@@ -344,9 +377,10 @@ def contract_projection(
                 source.get("may_define_skillguard_runtime_route")
             ),
             "handoff_rule": (
-                "Use this registry only to select the skill, read its SKILL.md, "
-                "then hand off through contract-source.json, compiled-contract.json, "
-                "and the exact check-manifest.json. Old authority is rejection-only."
+                "Use this private author registry only to select a maintained skill "
+                "source. Read its SKILL.md for domain work. Its adjacent maintenance "
+                "contract is author-side audit evidence and is never a consumer "
+                "runtime dependency."
             ),
         }
     )
@@ -448,6 +482,18 @@ def discover_skill_items(
                 continue
             metadata = _frontmatter(text)
             skill_dir = skill_file.parent
+            if not (
+                skill_dir / ".skillguard" / "contract-source.json"
+            ).is_file():
+                warnings.append(
+                    public_path(
+                        skill_dir,
+                        repository_root=repository_root,
+                        codex_home=codex_home,
+                    )
+                    + ": skipped because it is not an explicit SkillGuard author source"
+                )
+                continue
             declared_name = metadata.get("name") or skill_dir.name
             description = metadata.get("description") or "No description declared."
             use_when = _section_items(text, "Use When")
@@ -556,8 +602,10 @@ def build_registry_payload(
         "items": items,
         "warnings": warnings,
         "claim_boundary": (
-            "This registry selects current skill routes only. It does not replace "
-            "target contracts, execute checks, or prove future AI behavior."
+            "This private maintainer registry selects explicit author-side skill "
+            "sources only. It does not govern consumer execution, require SkillGuard "
+            "on another machine, cover external OpenSpec, execute checks, or prove "
+            "future AI behavior."
         ),
     }
     payload["diagnostic_inventory_hash"] = diagnostic_inventory_hash(payload)

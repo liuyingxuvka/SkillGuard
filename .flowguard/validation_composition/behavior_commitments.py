@@ -20,7 +20,7 @@ from validation_composition_model import MODEL_ID, MODEL_PATH, PARENT_MODEL_ID
 
 
 SPEC_PATH = (
-    "openspec/changes/compose-validation-evidence/specs/"
+    "openspec/changes/separate-skillguard-authoring-from-consumer-runtime/specs/"
     "composable-validation-evidence/spec.md"
 )
 RUNNER_PATH = ".flowguard/validation_composition/run_checks.py"
@@ -63,17 +63,17 @@ COMMITMENT_ROWS = (
     (
         "commitment:parent-aggregation-is-one-way",
         "intent:parent-aggregation-is-one-way",
-        "all selected owner receipts are current or newly executed",
-        "the parent binds the immutable receipt set, selection, and parent declaration into its own aggregation identity without copying, rewriting, or re-signing children",
-        "a parent/profile/coverage-only change produces aggregation-only work and zero owner executions",
+        "all selected receipts owned by one maintenance unit are current or newly executed",
+        "the same-unit parent binds that unit's immutable receipt set, selection, and declaration into its own aggregation identity without copying, rewriting, or re-signing children",
+        "another maintenance unit or an external provider cannot consume the aggregation; a same-unit parent/profile/coverage-only change produces aggregation-only work and zero owner executions",
         ("parent_consumed_receipt_ids", "aggregation_identity", "child_receipt_rewritten"),
     ),
     (
         "commitment:install-portfolio-router-share-plan",
         "intent:install-portfolio-router-share-plan",
-        "validation, installation, Portfolio, or managed-prompt maintenance is requested",
-        "each subsystem consumes the same frozen impact graph and exact projection instead of inventing broad invalidation independently",
-        "source-only tests do not install, unrelated targets remain current, and router refresh occurs only for components on the exact router consumer edge rather than every file sharing a broad role",
+        "author validation, consumer distribution, Portfolio summary, or private maintainer-prompt maintenance is requested",
+        "each author-side subsystem consumes the same frozen impact graph and its exact projection without turning that graph into consumer runtime state",
+        "source-only tests do not enter the consumer distribution, unrelated maintenance units remain current, and the private router refreshes only for components on its exact author projection edge",
         (
             "required_install_component_ids",
             "required_portfolio_target_ids",
@@ -91,9 +91,9 @@ COMMITMENT_ROWS = (
     (
         "commitment:evidence-domains-and-consumers-remain-separated",
         "intent:evidence-domains-and-consumers-remain-separated",
-        "source evidence moves through installation, target, prompt, and OpenSpec closure",
-        "each domain contributes its own current receipt and downstream consumers replay receipts read-only",
-        "OpenSpec and other consumers carry only receipt refs plus projection identity and never copy, wrap, execute, resume, repair, or backfill owner commands; resume remains an execution command",
+        "author evidence moves through one maintenance unit's source, checks, aggregation, and consumer-distribution gate",
+        "the maintenance unit owns its own current receipts while graduated consumers and external providers carry no SkillGuard receipt reference",
+        "OpenSpec, another maintenance unit, and a graduated consumer cannot copy, wrap, replay, resume, repair, backfill, or transport owner receipts; resume remains an author-side execution command",
         ("domain_status", "missing_domain_ids", "closure_status"),
     ),
     (

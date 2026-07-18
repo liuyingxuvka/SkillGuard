@@ -1,4 +1,4 @@
-"""Portable repository adoption for SkillGuard-maintained skill projects."""
+"""Explicit author-repository adoption for SkillGuard-maintained skills."""
 
 from __future__ import annotations
 
@@ -17,12 +17,13 @@ from .validation_execution_policy import (
 
 
 SKILLGUARD_REPOSITORY = "https://github.com/liuyingxuvka/SkillGuard"
-BEGIN_MARKER = "<!-- BEGIN MANAGED SKILLGUARD PROJECT RULES -->"
-END_MARKER = "<!-- END MANAGED SKILLGUARD PROJECT RULES -->"
-MANIFEST_RELATIVE_PATH = Path(".skillguard") / "project.json"
+BEGIN_MARKER = "<!-- BEGIN MANAGED SKILLGUARD AUTHOR RULES -->"
+END_MARKER = "<!-- END MANAGED SKILLGUARD AUTHOR RULES -->"
+MANIFEST_RELATIVE_PATH = Path(".skillguard") / "author-project.json"
 PROJECT_MANIFEST_FIELDS = {
     "schema_version",
     "project_id",
+    "repository_role",
     "skillguard_repository",
     "skillguard_version",
     "project_prompt_path",
@@ -35,6 +36,7 @@ PROJECT_MANIFEST_FIELDS = {
 PROJECT_MANAGED_SKILL_FIELDS = {
     "skill_path",
     "skill_id",
+    "maintenance_unit_id",
     "integration_mode",
     "native_owner_id",
     "native_route_status",
@@ -82,7 +84,11 @@ def _normalize_skill_rows(
             raise ProjectAdoptionError("managed_skill_native_owner_missing", skill_path)
         route_status = "present"
         is_root_skill = skill_path == "."
-        skill_id = project_id if is_root_skill else Path(skill_path).name
+        declared_skill_id = str(raw.get("skill_id", "")).strip()
+        skill_id = (
+            declared_skill_id
+            or (project_id if is_root_skill else Path(skill_path).name)
+        )
         native_route_evidence_path = "SKILL.md" if is_root_skill else f"{skill_path}/SKILL.md"
         normalized.append(
             {
@@ -107,6 +113,7 @@ def build_project_manifest(
     skillguard_version: str,
 ) -> dict[str, Any]:
     rows = _normalize_skill_rows(managed_skills, project_id=project_root.resolve().name)
+    enriched_rows: list[dict[str, str]] = []
     for row in rows:
         evidence_path = project_root / row["native_route_evidence_path"]
         if not evidence_path.is_file():
@@ -114,17 +121,62 @@ def build_project_manifest(
                 "native_route_evidence_missing",
                 row["native_route_evidence_path"],
             )
+        skill_root = (
+            project_root
+            if row["skill_path"] == "."
+            else project_root / row["skill_path"]
+        )
+        source_path = skill_root / ".skillguard" / "contract-source.json"
+        try:
+            source = json.loads(source_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ProjectAdoptionError(
+                "author_contract_source_missing",
+                row["skill_path"],
+            ) from exc
+        if not isinstance(source, Mapping) or source.get(
+            "repository_role"
+        ) != "skill_maintainer_source":
+            raise ProjectAdoptionError(
+                "author_repository_role_required",
+                row["skill_path"],
+            )
+        source_skill_id = str(source.get("skill_id", "")).strip()
+        if not source_skill_id:
+            raise ProjectAdoptionError(
+                "author_skill_id_missing",
+                row["skill_path"],
+            )
+        maintenance_unit_id = str(source.get("maintenance_unit_id", ""))
+        member_skill_ids = source.get("member_skill_ids", [])
+        if (
+            not maintenance_unit_id
+            or not isinstance(member_skill_ids, list)
+            or source_skill_id not in member_skill_ids
+        ):
+            raise ProjectAdoptionError(
+                "author_maintenance_unit_binding_invalid",
+                row["skill_path"],
+            )
+        enriched_rows.append(
+            {
+                **row,
+                "skill_id": source_skill_id,
+                "maintenance_unit_id": maintenance_unit_id,
+            }
+        )
     manifest: dict[str, Any] = {
         "schema_version": PROJECT_ADOPTION_SCHEMA,
         "project_id": project_root.resolve().name,
+        "repository_role": "skill_maintainer_source",
         "skillguard_repository": SKILLGUARD_REPOSITORY,
         "skillguard_version": skillguard_version or "unknown",
         "project_prompt_path": "AGENTS.md",
-        "managed_skills": rows,
-        "maintenance_default": "skillguard-required-for-nontrivial-skill-work",
+        "managed_skills": enriched_rows,
+        "maintenance_default": "skillguard-author-maintenance-only",
         "claim_boundary": (
-            "Project adoption makes SkillGuard maintenance instructions portable and auditable. "
-            "It does not prove that target-owned domain routes or depth checks have run."
+            "Author adoption marks only this explicit skill-maintainer repository. "
+            "It creates no consumer or ordinary-project dependency and proves no target-domain work."
         ),
     }
     block = render_project_block(manifest)
@@ -141,16 +193,17 @@ def render_project_block(manifest: Mapping[str, Any]) -> str:
             continue
         skill_lines.append(
             f"- `{str(row.get('skill_path', ''))}` — native owner="
-            f"`{str(row.get('native_owner_id', ''))}`, route evidence="
+            f"`{str(row.get('native_owner_id', ''))}`, maintenance unit="
+            f"`{str(row.get('maintenance_unit_id', ''))}`, route evidence="
             f"`{str(row.get('native_route_evidence_path', ''))}`; the target skill keeps domain-route, "
             "judgment, action, and native-check authority."
         )
     body = [
         BEGIN_MARKER,
-        "## SkillGuard project maintenance",
+        "## SkillGuard author maintenance",
         "",
-        "This repository contains skills maintained with SkillGuard. For non-trivial skill maintenance, "
-        "validation, installation, synchronization, or release work, use SkillGuard by default.",
+        "This repository is an explicit skill-authoring workspace. Use SkillGuard only while "
+        "maintaining, validating, graduating, or releasing the managed source skills below.",
         "",
         f"Canonical SkillGuard repository: {SKILLGUARD_REPOSITORY}",
         "",
@@ -164,15 +217,17 @@ def render_project_block(manifest: Mapping[str, Any]) -> str:
         "3. Preserve the target's sole current native route and exact declared checks; SkillGuard never supplies a target-domain route.",
         "4. Never let SkillGuard replace target-owned domain judgment, simulation, search, modeling, actions, or checks.",
         "5. Do not claim complete use from contract presence alone; require a current declared-check execution receipt.",
-        "6. If SkillGuard is unavailable or this block/manifest is missing, stale, duplicated, or invalid, "
-        "report the maintenance result as blocked instead of silently bypassing it.",
+        "6. Never copy this block, the author manifest, contracts, receipts, router state, or Portfolio state "
+        "into a graduated consumer skill or an ordinary business project.",
+        "7. If SkillGuard is unavailable or this block/manifest is missing, stale, duplicated, or invalid, "
+        "report only author maintenance as blocked; ordinary consumer use remains independent.",
         "",
         "Validation execution ownership:",
         "",
         f"- policy_id: `{VALIDATION_EXECUTION_POLICY_ID}`",
         *VALIDATION_EXECUTION_POLICY_LINES,
         "",
-        "Portable audit command: `python <installed-skillguard>/scripts/skillguard.py project-audit --root .`",
+        "Author audit command: `python <installed-skillguard>/scripts/skillguard.py maintainer-audit --root .`",
         "",
         "This managed block is a routing and maintenance contract. It is not runtime, test, release, or future-behavior proof.",
         END_MARKER,
@@ -246,7 +301,10 @@ def _require_current_project_manifest(
     manifest: Mapping[str, Any] | None,
 ) -> dict[str, Any]:
     if manifest is None:
-        raise ProjectAdoptionError("project_manifest_missing", "run project-adopt with explicit current managed skills")
+        raise ProjectAdoptionError(
+            "project_manifest_missing",
+            "run maintainer-adopt only in an explicit skill-authoring repository",
+        )
     if set(manifest) != PROJECT_MANIFEST_FIELDS:
         raise ProjectAdoptionError(
             "project_manifest_shape_not_current",
@@ -256,6 +314,11 @@ def _require_current_project_manifest(
         raise ProjectAdoptionError("project_manifest_schema_mismatch", "former project manifest shapes are rejection-only")
     if manifest.get("project_id") != project_root.resolve().name:
         raise ProjectAdoptionError("project_manifest_project_mismatch", str(manifest.get("project_id", "")))
+    if manifest.get("repository_role") != "skill_maintainer_source":
+        raise ProjectAdoptionError(
+            "author_repository_role_required",
+            str(manifest.get("repository_role", "")),
+        )
     if manifest.get("skillguard_repository") != SKILLGUARD_REPOSITORY:
         raise ProjectAdoptionError("skillguard_repository_mismatch", str(manifest.get("skillguard_repository", "")))
     if manifest.get("project_prompt_path") != "AGENTS.md":
@@ -266,8 +329,6 @@ def _require_current_project_manifest(
     if any(set(row) != PROJECT_MANAGED_SKILL_FIELDS for row in rows):
         raise ProjectAdoptionError("managed_skills_not_canonical", "managed skill rows must use only current fields")
     normalized = _normalize_skill_rows(rows, project_id=project_root.resolve().name)
-    if normalized != rows:
-        raise ProjectAdoptionError("managed_skills_not_canonical", "managed skill rows are not canonically normalized")
     unsigned = dict(manifest)
     stored_manifest_hash = str(unsigned.pop("manifest_hash", ""))
     if not stored_manifest_hash or stored_manifest_hash != _hash(unsigned):
@@ -288,7 +349,7 @@ def _require_current_project_manifest(
     return expected
 
 
-def audit_project_adoption(project_root: Path) -> dict[str, Any]:
+def audit_maintainer_repository(project_root: Path) -> dict[str, Any]:
     project_root = project_root.resolve()
     findings: list[str] = []
     authority_rows: list[dict[str, Any]] = []
@@ -322,8 +383,6 @@ def audit_project_adoption(project_root: Path) -> dict[str, Any]:
         except ProjectAdoptionError as exc:
             normalized = []
             findings.append(exc.code)
-        if normalized and normalized != manifest.get("managed_skills"):
-            findings.append("managed_skills_not_canonical")
         for row in normalized:
             skill_root = project_root / row["skill_path"]
             try:
@@ -383,13 +442,13 @@ def audit_project_adoption(project_root: Path) -> dict[str, Any]:
         "skillguard_repository": SKILLGUARD_REPOSITORY,
         "runtime_authorities": authority_rows,
         "claim_boundary": (
-            "A pass proves current portable project-maintenance instructions and manifest integrity only; "
+            "A pass proves current private author-maintenance instructions and manifest integrity only; "
             "it does not prove target skill execution depth or release readiness."
         ),
     }
 
 
-def adopt_project(
+def adopt_maintainer_repository(
     project_root: Path,
     managed_skills: Sequence[Mapping[str, Any]],
     *,
@@ -408,7 +467,7 @@ def adopt_project(
         # inputs. A byte-identical current manifest remains an idempotent no-op;
         # a new declared version or managed-skill inventory replaces it
         # directly. Existing bytes are never treated as a migration source.
-        audit_project_adoption(project_root)
+        audit_maintainer_repository(project_root)
     manifest = build_project_manifest(
         project_root,
         managed_skills,
@@ -421,7 +480,7 @@ def adopt_project(
     if not dry_run:
         _atomic_compare_and_write(agents_path, new_text.encode("utf-8"), old_agents)
         _atomic_compare_and_write(manifest_path, _canonical_bytes(manifest), old_manifest)
-        audit = audit_project_adoption(project_root)
+        audit = audit_maintainer_repository(project_root)
         if not audit["ok"]:
             raise ProjectAdoptionError("project_adoption_postwrite_audit_failed", ",".join(audit["findings"]))
     else:
@@ -433,7 +492,7 @@ def adopt_project(
         }
     return {
         **audit,
-        "action": "project-adopt",
+        "action": "maintainer-adopt",
         "changed": changed,
         "dry_run": dry_run,
         "managed_skills": manifest["managed_skills"],
@@ -444,7 +503,7 @@ def adopt_project(
 def _parser(command: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog=f"skillguard.py {command}")
     parser.add_argument("--root", required=True)
-    if command != "project-audit":
+    if command != "maintainer-audit":
         parser.add_argument(
             "--managed-skill",
             action="append",
@@ -474,19 +533,19 @@ def _emit(payload: Mapping[str, Any]) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
 
 
-def project_audit_command(argv: list[str]) -> int:
-    args = _parser("project-audit").parse_args(argv)
-    report = audit_project_adoption(Path(args.root))
+def maintainer_audit_command(argv: list[str]) -> int:
+    args = _parser("maintainer-audit").parse_args(argv)
+    report = audit_maintainer_repository(Path(args.root))
     _emit(report)
     return 0 if report["ok"] else 1
 
 
-def project_adopt_command(argv: list[str]) -> int:
-    args = _parser("project-adopt").parse_args(argv)
+def maintainer_adopt_command(argv: list[str]) -> int:
+    args = _parser("maintainer-adopt").parse_args(argv)
     root = Path(args.root).resolve()
     rows = [_parse_managed_skill(value) for value in args.managed_skill]
     skillguard_version = str(args.skillguard_version) if args.skillguard_version else "unknown"
-    report = adopt_project(
+    report = adopt_maintainer_repository(
         root,
         rows,
         skillguard_version=skillguard_version,

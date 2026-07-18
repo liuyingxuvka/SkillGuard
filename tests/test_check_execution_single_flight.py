@@ -106,10 +106,30 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
         *,
         implementation_path: Path | None = None,
         target_root: Path | None = None,
+        maintenance_unit_id: str = "unit:runtime-fixture",
     ) -> tuple[dict[str, object], Path]:
         declared = dict(check)
+        declared.setdefault("maintenance_unit_id", maintenance_unit_id)
+        declared.setdefault("member_skill_id", "runtime-fixture")
+        declared.setdefault(
+            "evidence_subject_id",
+            f"subject:{str(declared['check_id']).removeprefix('check:')}",
+        )
         declared.setdefault("semantic_check_id", str(declared["check_id"]))
         contract, manifest = runtime_contract_with_checks([declared])
+        if maintenance_unit_id != contract["maintenance_unit_id"]:
+            contract["maintenance_unit_id"] = maintenance_unit_id
+            contract["contract_hash"] = canonical_hash(
+                {
+                    key: value
+                    for key, value in contract.items()
+                    if key != "contract_hash"
+                }
+            )
+            manifest["maintenance_unit_id"] = maintenance_unit_id
+            manifest["contract_hash"] = contract["contract_hash"]
+            manifest.pop("manifest_hash", None)
+            manifest["manifest_hash"] = canonical_hash(manifest)
         if implementation_path is not None:
             relative_path = implementation_path.relative_to(
                 self.repository_root
@@ -445,7 +465,7 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
             second["execution_receipt"]["receipt_id"],
         )
 
-    def test_projection_only_change_reuses_owner_without_reexecution(self) -> None:
+    def test_distinct_semantic_checks_do_not_reuse_one_owner_receipt(self) -> None:
         counter = "projection-counter.txt"
         script = (
             "import pathlib,sys; p=pathlib.Path(sys.argv[1])/sys.argv[2]; "
@@ -478,12 +498,59 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
             first_check["projection_declaration_hash"],
             second_check["projection_declaration_hash"],
         )
-        self.assertEqual(
+        self.assertNotEqual(
             first["execution_receipt"]["receipt_id"],
             second["execution_receipt"]["receipt_id"],
         )
-        self.assertEqual("reused_terminal_success", second["disposition"])
-        self.assertEqual("1", (self.repository_root / counter).read_text())
+        self.assertEqual("executed_terminal_success", second["disposition"])
+        self.assertEqual("2", (self.repository_root / counter).read_text())
+
+    def test_identical_checks_in_different_units_keep_independent_receipts(self) -> None:
+        counter = "cross-unit-counter.txt"
+        declaration = {
+            "check_id": "check:unit-local",
+            "semantic_check_id": "semantic:unit-local",
+            "evidence_subject_id": "subject:unit-local",
+            "kind": "command",
+            "command": sys.executable,
+            "args": [
+                "-c",
+                (
+                    "import pathlib,sys; p=pathlib.Path(sys.argv[1])/sys.argv[2]; "
+                    "n=int(p.read_text())+1 if p.exists() else 1; "
+                    "p.write_text(str(n))"
+                ),
+                "{{repository_root}}",
+                counter,
+            ],
+            "expected": {"exit_code": 0},
+            "covers_obligation_ids": ["obligation:intake"],
+        }
+        first_target = self.root / "unit-one-target"
+        second_target = self.root / "unit-two-target"
+        first_target.mkdir()
+        second_target.mkdir()
+        first_check, first_run = self._claim(
+            declaration,
+            target_root=first_target,
+            maintenance_unit_id="unit:one",
+        )
+        second_check, second_run = self._claim(
+            declaration,
+            target_root=second_target,
+            maintenance_unit_id="unit:two",
+        )
+
+        first = self._run(first_check, first_run, target_root=first_target)
+        second = self._run(second_check, second_run, target_root=second_target)
+
+        self.assertEqual("executed_terminal_success", first["disposition"])
+        self.assertEqual("executed_terminal_success", second["disposition"])
+        self.assertNotEqual(
+            first["execution_receipt"]["receipt_id"],
+            second["execution_receipt"]["receipt_id"],
+        )
+        self.assertEqual("2", (self.repository_root / counter).read_text())
 
     def test_changed_dependency_receipt_invalidates_only_dependent_owner(self) -> None:
         counter = "dependent-counter.txt"

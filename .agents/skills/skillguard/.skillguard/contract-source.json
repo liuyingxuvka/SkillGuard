@@ -25,13 +25,14 @@
       ]
     },
     {
-      "artifact_id": "artifact:self-project-adoption-manifest",
+      "artifact_id": "artifact:self-author-project-manifest",
       "kind": "json",
-      "path_template": ".skillguard/project.json",
-      "producer_step_id": "step:install-project-adoption",
+      "path_template": ".skillguard/author-project.json",
+      "producer_step_id": "step:install-author-repository-adoption",
       "required": true,
       "required_keys": [
         "schema_version",
+        "repository_role",
         "skillguard_repository",
         "managed_skills",
         "managed_block_hash",
@@ -44,10 +45,10 @@
       ]
     },
     {
-      "artifact_id": "artifact:self-project-prompt",
+      "artifact_id": "artifact:self-author-project-prompt",
       "kind": "document",
       "path_template": "AGENTS.md",
-      "producer_step_id": "step:install-project-adoption",
+      "producer_step_id": "step:install-author-repository-adoption",
       "required": true,
       "validators": [
         "exists",
@@ -88,6 +89,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:static-audit",
+      "evidence_subject_id": "subject:skillguard:check:self:inventory-static-surface",
       "execution_owner_id": "owner:self:inventory-static-surface",
       "input_selectors": [
         {
@@ -96,6 +98,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:inventory-static-surface",
       "timeout_seconds": 30
     },
     {
@@ -116,6 +121,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:static-audit",
+      "evidence_subject_id": "subject:skillguard:check:self:run-native-static-checks",
       "execution_owner_id": "owner:self:run-native-static-checks",
       "expected": {
         "exit_code": 0
@@ -143,6 +149,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:run-native-static-checks",
       "timeout_seconds": 180
     },
     {
@@ -155,6 +164,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:static-audit",
+      "evidence_subject_id": "subject:skillguard:check:self:issue-static-audit-receipt",
       "execution_owner_id": "owner:self:issue-static-audit-receipt",
       "input_selectors": [
         {
@@ -163,6 +173,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:issue-static-audit-receipt",
       "timeout_seconds": 30
     },
     {
@@ -173,6 +186,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
+      "evidence_subject_id": "subject:skillguard:check:self:freeze-declared-check-inventory",
       "execution_owner_id": "owner:self:freeze-declared-check-inventory",
       "input_selectors": [
         {
@@ -181,6 +195,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:freeze-declared-check-inventory",
       "timeout_seconds": 30
     },
     {
@@ -202,6 +219,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
+      "evidence_subject_id": "subject:skillguard:check:self:run-declared-checks",
       "execution_owner_id": "owner:self:run-declared-checks",
       "expected": {
         "exit_code": 0
@@ -225,6 +243,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:run-declared-checks",
       "timeout_seconds": 180
     },
     {
@@ -238,6 +259,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
+      "evidence_subject_id": "subject:skillguard:check:self:reconcile-declared-check-results",
       "execution_owner_id": "owner:self:reconcile-declared-check-results",
       "input_selectors": [
         {
@@ -246,6 +268,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:reconcile-declared-check-results",
       "timeout_seconds": 30
     },
     {
@@ -270,6 +295,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
+      "evidence_subject_id": "subject:skillguard:check:self:declared-check-runtime",
       "execution_owner_id": "owner:self:declared-check-runtime",
       "expected": {
         "exit_code": 0
@@ -289,6 +315,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:declared-check-runtime",
       "timeout_seconds": 180
     },
     {
@@ -307,6 +336,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
+      "evidence_subject_id": "subject:skillguard:check:self:declared-check-supervision-model",
       "execution_owner_id": "owner:self:declared-check-supervision-model",
       "expected": {
         "exit_code": 0
@@ -322,6 +352,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:declared-check-supervision-model",
       "timeout_seconds": 180
     },
     {
@@ -337,6 +370,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "evidence_subject_id": "subject:skillguard:check:self:load-model-export",
       "execution_owner_id": "owner:self:load-model-export",
       "expected": {
         "exit_code": 0
@@ -348,6 +382,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:load-model-export",
       "timeout_seconds": 180
     },
     {
@@ -364,6 +401,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "evidence_subject_id": "subject:skillguard:check:self:validation-composition-model",
       "execution_owner_id": "owner:self:validation-composition-model",
       "expected": {
         "exit_code": 0
@@ -379,6 +417,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:validation-composition-model",
       "timeout_seconds": 180
     },
     {
@@ -392,6 +433,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "evidence_subject_id": "subject:skillguard:check:self:validate-binding",
       "execution_owner_id": "owner:self:validate-binding",
       "input_selectors": [
         {
@@ -400,6 +442,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:validate-binding",
       "timeout_seconds": 30
     },
     {
@@ -420,6 +465,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "evidence_subject_id": "subject:skillguard:check:self:compile-generated-contract",
       "execution_owner_id": "owner:self:compile-generated-contract",
       "expected": {
         "exit_code": 0
@@ -455,6 +501,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:compile-generated-contract",
       "timeout_seconds": 180
     },
     {
@@ -475,6 +524,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "evidence_subject_id": "subject:skillguard:check:self:verify-generated-parity",
       "execution_owner_id": "owner:self:verify-generated-parity",
       "expected": {
         "exit_code": 0
@@ -486,6 +536,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:verify-generated-parity",
       "timeout_seconds": 180
     },
     {
@@ -509,6 +562,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
+      "evidence_subject_id": "subject:skillguard:check:self:test-mesh-fast",
       "execution_owner_id": "owner:self:test-mesh-fast",
       "expected": {
         "exit_code": 0
@@ -548,6 +602,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:test-mesh-fast",
       "timeout_seconds": 900
     },
     {
@@ -558,6 +615,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:select-function-route",
       "execution_owner_id": "owner:self:select-function-route",
       "input_selectors": [
         {
@@ -566,6 +624,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:select-function-route",
       "timeout_seconds": 30
     },
     {
@@ -586,6 +647,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:packet-consumption",
       "execution_owner_id": "owner:self:packet-consumption",
       "expected": {
         "exit_code": 0
@@ -597,6 +659,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:packet-consumption",
       "timeout_seconds": 180
     },
     {
@@ -611,6 +676,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:claim-run",
       "execution_owner_id": "owner:self:claim-run",
       "input_selectors": [
         {
@@ -619,6 +685,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:claim-run",
       "timeout_seconds": 30
     },
     {
@@ -643,6 +712,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:guard-run-identity",
       "execution_owner_id": "owner:self:guard-run-identity",
       "expected": {
         "exit_code": 0
@@ -654,6 +724,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:guard-run-identity",
       "timeout_seconds": 180
     },
     {
@@ -678,6 +751,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:failed-lock-recovery",
       "execution_owner_id": "owner:self:failed-lock-recovery",
       "expected": {
         "exit_code": 0
@@ -689,6 +763,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:failed-lock-recovery",
       "timeout_seconds": 180
     },
     {
@@ -703,6 +780,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:next-ready-step",
       "execution_owner_id": "owner:self:next-ready-step",
       "input_selectors": [
         {
@@ -711,6 +789,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:next-ready-step",
       "timeout_seconds": 30
     },
     {
@@ -723,6 +804,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:record-step-event",
       "execution_owner_id": "owner:self:record-step-event",
       "input_selectors": [
         {
@@ -731,6 +813,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:record-step-event",
       "timeout_seconds": 30
     },
     {
@@ -752,6 +837,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:validate-step-evidence",
       "execution_owner_id": "owner:self:validate-step-evidence",
       "expected": {
         "exit_code": 0
@@ -775,6 +861,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:validate-step-evidence",
       "timeout_seconds": 180
     },
     {
@@ -787,6 +876,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:issue-step-receipt",
       "execution_owner_id": "owner:self:issue-step-receipt",
       "input_selectors": [
         {
@@ -795,6 +885,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:issue-step-receipt",
       "timeout_seconds": 30
     },
     {
@@ -816,6 +909,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:check-run-closure",
       "execution_owner_id": "owner:self:check-run-closure",
       "expected": {
         "exit_code": 0
@@ -835,6 +929,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:check-run-closure",
       "timeout_seconds": 180
     },
     {
@@ -847,6 +944,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:issue-closure-receipt",
       "execution_owner_id": "owner:self:issue-closure-receipt",
       "input_selectors": [
         {
@@ -855,17 +953,21 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:issue-closure-receipt",
       "timeout_seconds": 30
     },
     {
-      "check_id": "check:self:scan-graduate-freshness",
+      "check_id": "check:self:scan-maintenance-unit-freshness",
       "covers_obligation_ids": [
         "obligation:portfolio-freshness"
       ],
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:portfolio-impact",
-      "execution_owner_id": "owner:self:scan-graduate-freshness",
+      "evidence_subject_id": "subject:skillguard:check:self:scan-maintenance-unit-freshness",
+      "execution_owner_id": "owner:self:scan-maintenance-unit-freshness",
       "input_selectors": [
         {
           "kind": "path",
@@ -873,19 +975,23 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:scan-maintenance-unit-freshness",
       "timeout_seconds": 30
     },
     {
-      "check_id": "check:self:revalidate-affected-graduates",
+      "check_id": "check:self:validate-maintenance-unit-evidence",
       "covers_obligation_ids": [
         "obligation:model-authority"
       ],
       "depends_on_check_ids": [
-        "check:self:scan-graduate-freshness"
+        "check:self:scan-maintenance-unit-freshness"
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:portfolio-impact",
-      "execution_owner_id": "owner:self:revalidate-affected-graduates",
+      "evidence_subject_id": "subject:skillguard:check:self:validate-maintenance-unit-evidence",
+      "execution_owner_id": "owner:self:validate-maintenance-unit-evidence",
       "input_selectors": [
         {
           "kind": "path",
@@ -893,6 +999,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:validate-maintenance-unit-evidence",
       "timeout_seconds": 30
     },
     {
@@ -901,10 +1010,11 @@
         "obligation:portfolio-freshness"
       ],
       "depends_on_check_ids": [
-        "check:self:revalidate-affected-graduates"
+        "check:self:validate-maintenance-unit-evidence"
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:portfolio-impact",
+      "evidence_subject_id": "subject:skillguard:check:self:issue-portfolio-receipt",
       "execution_owner_id": "owner:self:issue-portfolio-receipt",
       "input_selectors": [
         {
@@ -913,17 +1023,21 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:issue-portfolio-receipt",
       "timeout_seconds": 30
     },
     {
-      "check_id": "check:self:inspect-project-adoption",
+      "check_id": "check:self:inspect-author-repository-adoption",
       "covers_obligation_ids": [
-        "obligation:project-adoption"
+        "obligation:author-repository-adoption"
       ],
       "depends_on_check_ids": [],
       "evidence_class": "hard",
-      "evidence_domain_id": "skillguard:project-adoption",
-      "execution_owner_id": "owner:self:inspect-project-adoption",
+      "evidence_domain_id": "skillguard:author-repository-adoption",
+      "evidence_subject_id": "subject:skillguard:check:self:inspect-author-repository-adoption",
+      "execution_owner_id": "owner:self:inspect-author-repository-adoption",
       "input_selectors": [
         {
           "kind": "path",
@@ -931,18 +1045,22 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:inspect-author-repository-adoption",
       "timeout_seconds": 30
     },
     {
       "check_id": "check:self:render-managed-project-prompt",
       "covers_obligation_ids": [
-        "obligation:project-adoption"
+        "obligation:author-repository-adoption"
       ],
       "depends_on_check_ids": [
-        "check:self:inspect-project-adoption"
+        "check:self:inspect-author-repository-adoption"
       ],
       "evidence_class": "hard",
-      "evidence_domain_id": "skillguard:project-adoption",
+      "evidence_domain_id": "skillguard:author-repository-adoption",
+      "evidence_subject_id": "subject:skillguard:check:self:render-managed-project-prompt",
       "execution_owner_id": "owner:self:render-managed-project-prompt",
       "input_selectors": [
         {
@@ -951,19 +1069,23 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:render-managed-project-prompt",
       "timeout_seconds": 30
     },
     {
-      "check_id": "check:self:install-project-adoption",
+      "check_id": "check:self:install-author-repository-adoption",
       "covers_obligation_ids": [
-        "obligation:project-adoption"
+        "obligation:author-repository-adoption"
       ],
       "depends_on_check_ids": [
         "check:self:render-managed-project-prompt"
       ],
       "evidence_class": "hard",
-      "evidence_domain_id": "skillguard:project-adoption",
-      "execution_owner_id": "owner:self:install-project-adoption",
+      "evidence_domain_id": "skillguard:author-repository-adoption",
+      "evidence_subject_id": "subject:skillguard:check:self:install-author-repository-adoption",
+      "execution_owner_id": "owner:self:install-author-repository-adoption",
       "input_selectors": [
         {
           "kind": "path",
@@ -971,27 +1093,31 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:install-author-repository-adoption",
       "timeout_seconds": 30
     },
     {
       "args": [
         ".agents/skills/skillguard/scripts/skillguard.py",
-        "project-audit",
+        "maintainer-audit",
         "--root",
         "."
       ],
-      "check_id": "check:self:audit-project-adoption",
+      "check_id": "check:self:audit-author-repository-adoption",
       "command": "python",
       "covers_obligation_ids": [
-        "obligation:project-adoption"
+        "obligation:author-repository-adoption"
       ],
       "cwd_token": "repository_root",
       "depends_on_check_ids": [
-        "check:self:install-project-adoption"
+        "check:self:install-author-repository-adoption"
       ],
       "evidence_class": "hard",
-      "evidence_domain_id": "skillguard:project-adoption",
-      "execution_owner_id": "owner:self:audit-project-adoption",
+      "evidence_domain_id": "skillguard:author-repository-adoption",
+      "evidence_subject_id": "subject:skillguard:check:self:audit-author-repository-adoption",
+      "execution_owner_id": "owner:self:audit-author-repository-adoption",
       "expected": {
         "exit_code": 0
       },
@@ -1018,6 +1144,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:audit-author-repository-adoption",
       "timeout_seconds": 180
     },
     {
@@ -1028,6 +1157,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router",
+      "evidence_subject_id": "subject:skillguard:check:self:refresh-global-router",
       "execution_owner_id": "owner:self:refresh-global-router",
       "input_selectors": [
         {
@@ -1036,6 +1166,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:refresh-global-router",
       "timeout_seconds": 30
     },
     {
@@ -1048,6 +1181,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router",
+      "evidence_subject_id": "subject:skillguard:check:self:check-global-registry-and-prompt",
       "execution_owner_id": "owner:self:check-global-registry-and-prompt",
       "input_selectors": [
         {
@@ -1056,6 +1190,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:check-global-registry-and-prompt",
       "timeout_seconds": 30
     },
     {
@@ -1068,6 +1205,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router",
+      "evidence_subject_id": "subject:skillguard:check:self:verify-target-handoff",
       "execution_owner_id": "owner:self:verify-target-handoff",
       "input_selectors": [
         {
@@ -1076,6 +1214,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:verify-target-handoff",
       "timeout_seconds": 30
     },
     {
@@ -1086,6 +1227,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
+      "evidence_subject_id": "subject:skillguard:check:self:resolve-canonical-source",
       "execution_owner_id": "owner:self:resolve-canonical-source",
       "input_selectors": [
         {
@@ -1094,6 +1236,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:resolve-canonical-source",
       "timeout_seconds": 30
     },
     {
@@ -1106,6 +1251,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
+      "evidence_subject_id": "subject:skillguard:check:self:compare-installed-and-repository",
       "execution_owner_id": "owner:self:compare-installed-and-repository",
       "input_selectors": [
         {
@@ -1114,6 +1260,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:compare-installed-and-repository",
       "timeout_seconds": 30
     },
     {
@@ -1138,6 +1287,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
+      "evidence_subject_id": "subject:skillguard:check:self:installed-provenance",
       "execution_owner_id": "owner:self:installed-provenance",
       "expected": {
         "exit_code": 0
@@ -1157,6 +1307,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:installed-provenance",
       "timeout_seconds": 180
     },
     {
@@ -1170,6 +1323,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
+      "evidence_subject_id": "subject:skillguard:check:self:verify-release-provenance",
       "execution_owner_id": "owner:self:verify-release-provenance",
       "input_selectors": [
         {
@@ -1178,6 +1332,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:verify-release-provenance",
       "timeout_seconds": 30
     },
     {
@@ -1200,6 +1357,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
+      "evidence_subject_id": "subject:skillguard:check:self:installation-safety",
       "execution_owner_id": "owner:self:installation-safety",
       "expected": {
         "exit_code": 0
@@ -1215,6 +1373,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:installation-safety",
       "timeout_seconds": 900
     },
     {
@@ -1235,6 +1396,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
+      "evidence_subject_id": "subject:skillguard:check:self:public-export-privacy",
       "execution_owner_id": "owner:self:public-export-privacy",
       "expected": {
         "exit_code": 0
@@ -1258,6 +1420,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:public-export-privacy",
       "timeout_seconds": 180
     },
     {
@@ -1270,6 +1435,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:obligation:loop-liveness",
       "execution_owner_id": "owner:self:obligation:loop-liveness",
       "input_selectors": [
         {
@@ -1278,6 +1444,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:obligation:loop-liveness",
       "timeout_seconds": 30
     },
     {
@@ -1288,6 +1457,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
+      "evidence_subject_id": "subject:skillguard:check:self:obligation:no-former-authority-success",
       "execution_owner_id": "owner:self:obligation:no-former-authority-success",
       "input_selectors": [
         {
@@ -1296,6 +1466,9 @@
         }
       ],
       "kind": "model_assertion",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:obligation:no-former-authority-success",
       "timeout_seconds": 30
     },
     {
@@ -1315,6 +1488,7 @@
       "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:template-supervision",
+      "evidence_subject_id": "subject:skillguard:check:self:template-lifecycle-model-v1",
       "execution_owner_id": "owner:self:template-lifecycle-model-v1",
       "expected": {
         "exit_code": 0
@@ -1334,6 +1508,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:template-lifecycle-model-v1",
       "timeout_seconds": 180
     },
     {
@@ -1362,6 +1539,7 @@
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:template-supervision",
+      "evidence_subject_id": "subject:skillguard:check:self:template-protocol-v1",
       "execution_owner_id": "owner:self:template-protocol-v1",
       "expected": {
         "exit_code": 0
@@ -1409,6 +1587,9 @@
         }
       ],
       "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:template-protocol-v1",
       "timeout_seconds": 300
     }
   ],
@@ -1431,7 +1612,7 @@
         "obligation:depth-native-authority",
         "obligation:execution-depth-closure",
         "obligation:unique-depth-evidence",
-        "obligation:project-adoption",
+        "obligation:author-repository-adoption",
         "obligation:global-router-handoff",
         "obligation:provenance",
         "obligation:portfolio-freshness",
@@ -1444,6 +1625,18 @@
     }
   ],
   "confirmed": true,
+  "consumer_projection": {
+    "prohibited_path_prefixes": [
+      ".skillguard/"
+    ],
+    "prohibited_prompt_tokens": [
+      "SkillGuard",
+      ".skillguard",
+      "skillguard.py"
+    ],
+    "projection_id": "projection:consumer-distribution",
+    "release_manifest_path": "consumer-release.json"
+  },
   "content_impact_policy": {
     "full_admission_reason_codes": [
       "explicit_final_gate",
@@ -1466,13 +1659,13 @@
     "enforcement_level": "enforced",
     "integration_mode": "native-integrated",
     "native_check_ids": [
-      "check:self:audit-project-adoption",
+      "check:self:audit-author-repository-adoption",
       "check:self:check-run-closure",
       "check:self:compile-generated-contract",
       "check:self:declared-check-runtime",
       "check:self:freeze-declared-check-inventory",
-      "check:self:inspect-project-adoption",
-      "check:self:install-project-adoption",
+      "check:self:inspect-author-repository-adoption",
+      "check:self:install-author-repository-adoption",
       "check:self:load-model-export",
       "check:self:reconcile-declared-check-results",
       "check:self:render-managed-project-prompt",
@@ -1488,7 +1681,7 @@
       "route:verify-evidence",
       "route:derive-closure",
       "route:portfolio-graduation",
-      "route:project-adoption"
+      "route:author-repository-adoption"
     ],
     "profile_id": "skillguard-declared-check-supervision-current",
     "provider_runtime": {
@@ -1607,8 +1800,12 @@
   ],
   "integration_mode": "native-integrated",
   "judgment_rubrics": [],
+  "maintenance_unit_id": "unit:skillguard",
   "may_define_parallel_execution_route": false,
   "may_define_skillguard_runtime_route": false,
+  "member_skill_ids": [
+    "skillguard"
+  ],
   "model_id": "skillguard.executable_contract_runtime.v2",
   "model_path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
   "native_check_bindings": [
@@ -1631,9 +1828,9 @@
       "required": true
     },
     {
-      "binding_id": "native-check:project-adoption",
+      "binding_id": "native-check:author-repository-adoption",
       "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/project_adoption.py",
-      "native_check_id": "check:self:audit-project-adoption",
+      "native_check_id": "check:self:audit-author-repository-adoption",
       "required": true
     },
     {
@@ -1705,8 +1902,8 @@
       "source": ".agents/skills/skillguard/scripts/skillguard_v2/portfolio.py"
     },
     {
-      "binding_id": "native:project-adoption",
-      "native_route_id": "route:project-adoption",
+      "binding_id": "native:author-repository-adoption",
+      "native_route_id": "route:author-repository-adoption",
       "required_before_closure": true,
       "source": ".agents/skills/skillguard/scripts/skillguard_v2/project_adoption.py"
     },
@@ -1788,49 +1985,9 @@
     }
   ],
   "release_eligible": true,
+  "repository_role": "skill_maintainer_source",
   "schema_version": "skillguard.contract_source.v2",
   "skill_id": "skillguard",
-  "supervision_fragment_refs": [
-    {
-      "fragment_id": "template-selection-supervision",
-      "revision": "1",
-      "fragment_digest": "sha256:a488f76a50d9b64034be1e3bd9dde24c827addc0035b8b4d80628436db40e23f",
-      "slot_bindings": {
-        "native-route-step": [
-          "step:resolve-template-native-route"
-        ],
-        "applicability-step": [
-          "step:validate-template-applicability"
-        ],
-        "selection-check": [
-          "check:self:template-lifecycle-model-v1",
-          "check:self:template-protocol-v1"
-        ],
-        "selection-receipt-artifact": [
-          "artifact:self-template-selection-receipt"
-        ]
-      }
-    },
-    {
-      "fragment_id": "template-instance-supervision",
-      "revision": "1",
-      "fragment_digest": "sha256:b81b2d27b6ef52f277944cf3733ddc0c0ec4035f06a100402e9a62ec382533b1",
-      "slot_bindings": {
-        "preview-step": [
-          "step:materialize-template-preview"
-        ],
-        "builder-step": [
-          "step:run-target-native-template-builder"
-        ],
-        "native-validator-check": [
-          "check:self:template-protocol-v1"
-        ],
-        "instance-receipt-artifact": [
-          "artifact:self-template-instance-receipt"
-        ]
-      }
-    }
-  ],
   "step_bindings": [
     {
       "action": {
@@ -2045,24 +2202,24 @@
     {
       "action": {
         "kind": "validator",
-        "summary": "Execute and verify the self-host step step:scan-graduate-freshness."
+        "summary": "Execute and verify the self-host step step:scan-maintenance-unit-freshness."
       },
       "check_ids": [
-        "check:self:scan-graduate-freshness"
+        "check:self:scan-maintenance-unit-freshness"
       ],
       "output_artifact_ids": [],
-      "step_id": "step:scan-graduate-freshness"
+      "step_id": "step:scan-maintenance-unit-freshness"
     },
     {
       "action": {
         "kind": "native",
-        "summary": "Execute and verify the self-host step step:revalidate-affected-graduates."
+        "summary": "Execute and verify the self-host step step:validate-maintenance-unit-evidence."
       },
       "check_ids": [
-        "check:self:revalidate-affected-graduates"
+        "check:self:validate-maintenance-unit-evidence"
       ],
       "output_artifact_ids": [],
-      "step_id": "step:revalidate-affected-graduates"
+      "step_id": "step:validate-maintenance-unit-evidence"
     },
     {
       "action": {
@@ -2078,13 +2235,13 @@
     {
       "action": {
         "kind": "inventory",
-        "summary": "Inspect AGENTS.md, existing project adoption, target native routes, and duplicate-boundary risk."
+        "summary": "Inspect AGENTS.md, explicit author-repository adoption, target native routes, and duplicate-boundary risk."
       },
       "check_ids": [
-        "check:self:inspect-project-adoption"
+        "check:self:inspect-author-repository-adoption"
       ],
       "output_artifact_ids": [],
-      "step_id": "step:inspect-project-adoption"
+      "step_id": "step:inspect-author-repository-adoption"
     },
     {
       "action": {
@@ -2103,13 +2260,13 @@
         "summary": "Install or upgrade the managed AGENTS.md block and project manifest without changing surrounding instructions."
       },
       "check_ids": [
-        "check:self:install-project-adoption"
+        "check:self:install-author-repository-adoption"
       ],
       "output_artifact_ids": [
-        "artifact:self-project-adoption-manifest",
-        "artifact:self-project-prompt"
+        "artifact:self-author-project-manifest",
+        "artifact:self-author-project-prompt"
       ],
-      "step_id": "step:install-project-adoption"
+      "step_id": "step:install-author-repository-adoption"
     },
     {
       "action": {
@@ -2117,10 +2274,10 @@
         "summary": "Audit project prompt uniqueness, repository link, manifest integrity, native-route disposition, and currentness."
       },
       "check_ids": [
-        "check:self:audit-project-adoption"
+        "check:self:audit-author-repository-adoption"
       ],
       "output_artifact_ids": [],
-      "step_id": "step:audit-project-adoption"
+      "step_id": "step:audit-author-repository-adoption"
     },
     {
       "action": {
@@ -2314,6 +2471,47 @@
       ],
       "output_artifact_ids": [],
       "step_id": "step:record-template-harvest-disposition"
+    }
+  ],
+  "supervision_fragment_refs": [
+    {
+      "fragment_digest": "sha256:a488f76a50d9b64034be1e3bd9dde24c827addc0035b8b4d80628436db40e23f",
+      "fragment_id": "template-selection-supervision",
+      "revision": "1",
+      "slot_bindings": {
+        "applicability-step": [
+          "step:validate-template-applicability"
+        ],
+        "native-route-step": [
+          "step:resolve-template-native-route"
+        ],
+        "selection-check": [
+          "check:self:template-lifecycle-model-v1",
+          "check:self:template-protocol-v1"
+        ],
+        "selection-receipt-artifact": [
+          "artifact:self-template-selection-receipt"
+        ]
+      }
+    },
+    {
+      "fragment_digest": "sha256:b81b2d27b6ef52f277944cf3733ddc0c0ec4035f06a100402e9a62ec382533b1",
+      "fragment_id": "template-instance-supervision",
+      "revision": "1",
+      "slot_bindings": {
+        "builder-step": [
+          "step:run-target-native-template-builder"
+        ],
+        "instance-receipt-artifact": [
+          "artifact:self-template-instance-receipt"
+        ],
+        "native-validator-check": [
+          "check:self:template-protocol-v1"
+        ],
+        "preview-step": [
+          "step:materialize-template-preview"
+        ]
+      }
     }
   ]
 }

@@ -39,25 +39,36 @@ STATUS_NOT_RUN = "not_run"
 
 CLAIM_BOUNDARY = (
     "A green report proves the finite generic supervision model: a non-empty "
-    "target-declared check inventory is frozen exactly, every check has one "
-    "declared execution owner, dependencies are valid and acyclic, every result "
-    "is a current terminal receipt for the same request and owner, and closure "
-    "occurs only after exact reconciliation. It does not judge what a target "
-    "check means, invent target checks, or prove a target's domain correctness."
+    "target-declared check inventory is frozen exactly inside one explicit "
+    "maintenance unit; every check names its member, evidence subject, semantic "
+    "check, and execution owner; dependencies remain inside that unit; every "
+    "result is a current terminal receipt for the same unit, subject, request, "
+    "semantic check, and owner; and closure occurs only after exact "
+    "reconciliation. It does not share proof across maintenance units, judge "
+    "what a target check means, invent target checks, or prove a target's "
+    "domain correctness."
 )
 
 
 @dataclass(frozen=True)
 class CheckDeclaration:
     check_id: str
+    semantic_check_id: str
     execution_owner_id: str
+    maintenance_unit_id: str
+    member_skill_id: str
+    evidence_subject_id: str
     depends_on_check_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
 class CheckResult:
     check_id: str
+    semantic_check_id: str
     execution_owner_id: str
+    maintenance_unit_id: str
+    member_skill_id: str
+    evidence_subject_id: str
     request_fingerprint: str
     status: str = STATUS_PASS
     terminal: bool = True
@@ -65,25 +76,60 @@ class CheckResult:
     completion_index: int = 1
 
 
-SINGLE_DECLARATIONS = (CheckDeclaration("check:target:one", "owner:target:one"),)
+SINGLE_DECLARATIONS = (
+    CheckDeclaration(
+        "check:target:one",
+        "semantic:target:one",
+        "owner:target:one",
+        "unit:target",
+        "target",
+        "subject:target:one",
+    ),
+)
 SINGLE_RESULTS = (
-    CheckResult("check:target:one", "owner:target:one", "sha256:request-current", completion_index=1),
+    CheckResult(
+        "check:target:one",
+        "semantic:target:one",
+        "owner:target:one",
+        "unit:target",
+        "target",
+        "subject:target:one",
+        "sha256:request-current",
+        completion_index=1,
+    ),
 )
 MULTI_DECLARATIONS = (
-    CheckDeclaration("check:target:one", "owner:target:one"),
-    CheckDeclaration("check:target:two", "owner:target:two", ("check:target:one",)),
+    SINGLE_DECLARATIONS[0],
+    CheckDeclaration(
+        "check:target:two",
+        "semantic:target:two",
+        "owner:target:two",
+        "unit:target",
+        "target",
+        "subject:target:two",
+        ("check:target:one",),
+    ),
 )
 MULTI_RESULTS = (
-    CheckResult("check:target:one", "owner:target:one", "sha256:request-current", completion_index=1),
-    CheckResult("check:target:two", "owner:target:two", "sha256:request-current", completion_index=2),
+    SINGLE_RESULTS[0],
+    CheckResult(
+        "check:target:two",
+        "semantic:target:two",
+        "owner:target:two",
+        "unit:target",
+        "target",
+        "subject:target:two",
+        "sha256:request-current",
+        completion_index=2,
+    ),
 )
 SHARED_OWNER_DECLARATIONS = (
-    CheckDeclaration("check:target:one", "owner:target:shared"),
-    CheckDeclaration("check:target:two", "owner:target:shared"),
+    replace(MULTI_DECLARATIONS[0], execution_owner_id="owner:target:shared"),
+    replace(MULTI_DECLARATIONS[1], execution_owner_id="owner:target:shared", depends_on_check_ids=()),
 )
 SHARED_OWNER_RESULTS = (
-    CheckResult("check:target:one", "owner:target:shared", "sha256:request-current", completion_index=1),
-    CheckResult("check:target:two", "owner:target:shared", "sha256:request-current", completion_index=1),
+    replace(MULTI_RESULTS[0], execution_owner_id="owner:target:shared"),
+    replace(MULTI_RESULTS[1], execution_owner_id="owner:target:shared", completion_index=1),
 )
 
 
@@ -92,6 +138,7 @@ class SupervisionCase:
     """One immutable observation of a target skill's declared checks and results."""
 
     case_name: str
+    maintenance_unit_id: str = "unit:target"
     request_fingerprint: str = "sha256:request-current"
     declared_checks: tuple[CheckDeclaration, ...] = MULTI_DECLARATIONS
     frozen_checks: tuple[CheckDeclaration, ...] = MULTI_DECLARATIONS
@@ -199,6 +246,8 @@ def _has_dependency_cycle(declarations: tuple[CheckDeclaration, ...]) -> bool:
 def _inventory_findings(case: SupervisionCase) -> tuple[str, ...]:
     check_ids = tuple(row.check_id for row in case.declared_checks)
     findings: list[str] = []
+    if not case.maintenance_unit_id:
+        findings.append("maintenance_unit_id_missing")
     if not case.request_fingerprint:
         findings.append("request_fingerprint_missing")
     if not case.declared_checks:
@@ -217,8 +266,23 @@ def _inventory_findings(case: SupervisionCase) -> tuple[str, ...]:
 def _ownership_findings(case: SupervisionCase) -> tuple[str, ...]:
     declared_ids = {row.check_id for row in case.declared_checks}
     findings: list[str] = []
+    if any(not row.semantic_check_id.strip() for row in case.declared_checks):
+        findings.append("semantic_check_id_missing")
     if any(not row.execution_owner_id.strip() for row in case.declared_checks):
         findings.append("execution_owner_missing")
+    if any(not row.maintenance_unit_id.strip() for row in case.declared_checks):
+        findings.append("declared_maintenance_unit_missing")
+    if any(row.maintenance_unit_id != case.maintenance_unit_id for row in case.declared_checks):
+        findings.append("declared_maintenance_unit_mismatch")
+    if any(not row.member_skill_id.strip() for row in case.declared_checks):
+        findings.append("member_skill_id_missing")
+    if any(not row.evidence_subject_id.strip() for row in case.declared_checks):
+        findings.append("evidence_subject_id_missing")
+    semantic_subject_pairs = tuple(
+        (row.semantic_check_id, row.evidence_subject_id) for row in case.declared_checks
+    )
+    if len(semantic_subject_pairs) != len(set(semantic_subject_pairs)):
+        findings.append("semantic_responsibility_duplicated")
     if any(
         dependency_id not in declared_ids
         for row in case.declared_checks
@@ -246,6 +310,16 @@ def _receipt_findings(case: SupervisionCase) -> tuple[str, ...]:
             continue
         if row.execution_owner_id != declaration.execution_owner_id:
             findings.append("check_result_owner_mismatch")
+        if row.semantic_check_id != declaration.semantic_check_id:
+            findings.append("check_result_semantic_check_mismatch")
+        if row.maintenance_unit_id != case.maintenance_unit_id:
+            findings.append("cross_unit_check_result")
+        if row.maintenance_unit_id != declaration.maintenance_unit_id:
+            findings.append("check_result_unit_mismatch")
+        if row.member_skill_id != declaration.member_skill_id:
+            findings.append("check_result_member_mismatch")
+        if row.evidence_subject_id != declaration.evidence_subject_id:
+            findings.append("check_result_subject_mismatch")
         if row.request_fingerprint != case.request_fingerprint:
             findings.append("check_result_request_mismatch")
         if not row.current:
@@ -277,7 +351,7 @@ class FreezeDeclaredCheckInventory:
 
     name = "FreezeDeclaredCheckInventory"
     accepted_input_type = SupervisionCase
-    reads = ("request_fingerprint", "declared_checks", "frozen_checks")
+    reads = ("maintenance_unit_id", "request_fingerprint", "declared_checks", "frozen_checks")
     writes = ("phase", "case", "inventory_status", "findings", "accepted_findings")
     idempotency = "one exact declaration inventory has one frozen representation"
 
@@ -298,7 +372,7 @@ class ResolveDeclaredOwnersAndDependencies:
 
     name = "ResolveDeclaredOwnersAndDependencies"
     accepted_input_type = SupervisionCase
-    reads = ("inventory_status", "declared_checks")
+    reads = ("inventory_status", "maintenance_unit_id", "declared_checks")
     writes = ("phase", "ownership_status", "findings", "accepted_findings")
     idempotency = "one frozen inventory yields one owner and dependency graph"
 
@@ -319,7 +393,7 @@ class AdmitExactTerminalResults:
 
     name = "AdmitExactTerminalResults"
     accepted_input_type = SupervisionCase
-    reads = ("ownership_status", "results", "request_fingerprint")
+    reads = ("ownership_status", "maintenance_unit_id", "results", "request_fingerprint")
     writes = ("phase", "receipt_status", "findings", "accepted_findings")
     idempotency = "an immutable terminal result has one check, owner, request, and status identity"
 
@@ -397,19 +471,30 @@ GOOD_SHARED_OWNER = SupervisionCase(
 )
 
 KNOWN_BAD_SPECS = (
+    KnownBadSpec("maintenance_unit_id_missing", "inventory", {"maintenance_unit_id": ""}),
     KnownBadSpec("request_fingerprint_missing", "inventory", {"request_fingerprint": ""}),
     KnownBadSpec("declared_check_inventory_empty", "inventory", {"declared_checks": (), "frozen_checks": (), "results": ()}),
     KnownBadSpec("declared_check_id_duplicated", "inventory", {"declared_checks": (MULTI_DECLARATIONS[0], MULTI_DECLARATIONS[0]), "frozen_checks": (MULTI_DECLARATIONS[0], MULTI_DECLARATIONS[0])}),
-    KnownBadSpec("declared_check_id_missing", "inventory", {"declared_checks": (CheckDeclaration("", "owner:target:one"),), "frozen_checks": (CheckDeclaration("", "owner:target:one"),), "results": ()}),
+    KnownBadSpec("declared_check_id_missing", "inventory", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], check_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], check_id=""),), "results": ()}),
     KnownBadSpec("frozen_check_inventory_drift", "inventory", {"frozen_checks": SINGLE_DECLARATIONS}),
     KnownBadSpec("check_name_semantics_interpreted", "inventory", {"check_names_interpreted_by_supervisor": True}),
-    KnownBadSpec("execution_owner_missing", "ownership", {"declared_checks": (CheckDeclaration("check:target:one", ""),), "frozen_checks": (CheckDeclaration("check:target:one", ""),), "results": ()}),
-    KnownBadSpec("unknown_check_dependency", "ownership", {"declared_checks": (CheckDeclaration("check:target:one", "owner:target:one", ("check:missing",)),), "frozen_checks": (CheckDeclaration("check:target:one", "owner:target:one", ("check:missing",)),), "results": SINGLE_RESULTS}),
-    KnownBadSpec("self_check_dependency", "ownership", {"declared_checks": (CheckDeclaration("check:target:one", "owner:target:one", ("check:target:one",)),), "frozen_checks": (CheckDeclaration("check:target:one", "owner:target:one", ("check:target:one",)),), "results": SINGLE_RESULTS}),
-    KnownBadSpec("cyclic_check_dependency", "ownership", {"declared_checks": (CheckDeclaration("check:target:one", "owner:target:one", ("check:target:two",)), CheckDeclaration("check:target:two", "owner:target:two", ("check:target:one",))), "frozen_checks": (CheckDeclaration("check:target:one", "owner:target:one", ("check:target:two",)), CheckDeclaration("check:target:two", "owner:target:two", ("check:target:one",)))}),
+    KnownBadSpec("semantic_check_id_missing", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], semantic_check_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], semantic_check_id=""),), "results": ()}),
+    KnownBadSpec("execution_owner_missing", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], execution_owner_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], execution_owner_id=""),), "results": ()}),
+    KnownBadSpec("declared_maintenance_unit_missing", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], maintenance_unit_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], maintenance_unit_id=""),), "results": ()}),
+    KnownBadSpec("declared_maintenance_unit_mismatch", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], maintenance_unit_id="unit:foreign"),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], maintenance_unit_id="unit:foreign"),), "results": ()}),
+    KnownBadSpec("member_skill_id_missing", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], member_skill_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], member_skill_id=""),), "results": ()}),
+    KnownBadSpec("evidence_subject_id_missing", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], evidence_subject_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], evidence_subject_id=""),), "results": ()}),
+    KnownBadSpec("semantic_responsibility_duplicated", "ownership", {"declared_checks": (MULTI_DECLARATIONS[0], replace(MULTI_DECLARATIONS[1], semantic_check_id=MULTI_DECLARATIONS[0].semantic_check_id, evidence_subject_id=MULTI_DECLARATIONS[0].evidence_subject_id)), "frozen_checks": (MULTI_DECLARATIONS[0], replace(MULTI_DECLARATIONS[1], semantic_check_id=MULTI_DECLARATIONS[0].semantic_check_id, evidence_subject_id=MULTI_DECLARATIONS[0].evidence_subject_id))}),
+    KnownBadSpec("unknown_check_dependency", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], depends_on_check_ids=("check:missing",)),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], depends_on_check_ids=("check:missing",)),), "results": SINGLE_RESULTS}),
+    KnownBadSpec("self_check_dependency", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], depends_on_check_ids=("check:target:one",)),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], depends_on_check_ids=("check:target:one",)),), "results": SINGLE_RESULTS}),
+    KnownBadSpec("cyclic_check_dependency", "ownership", {"declared_checks": (replace(MULTI_DECLARATIONS[0], depends_on_check_ids=("check:target:two",)), MULTI_DECLARATIONS[1]), "frozen_checks": (replace(MULTI_DECLARATIONS[0], depends_on_check_ids=("check:target:two",)), MULTI_DECLARATIONS[1])}),
     KnownBadSpec("check_result_duplicated", "receipt", {"results": (MULTI_RESULTS[0], MULTI_RESULTS[0], MULTI_RESULTS[1])}),
-    KnownBadSpec("undeclared_check_result", "receipt", {"results": MULTI_RESULTS + (CheckResult("check:target:extra", "owner:target:extra", "sha256:request-current", completion_index=3),)}),
+    KnownBadSpec("undeclared_check_result", "receipt", {"results": MULTI_RESULTS + (replace(MULTI_RESULTS[1], check_id="check:target:extra", semantic_check_id="semantic:target:extra", execution_owner_id="owner:target:extra", completion_index=3),)}),
     KnownBadSpec("check_result_owner_mismatch", "receipt", {"results": (replace(MULTI_RESULTS[0], execution_owner_id="owner:wrong"), MULTI_RESULTS[1])}),
+    KnownBadSpec("check_result_semantic_check_mismatch", "receipt", {"results": (replace(MULTI_RESULTS[0], semantic_check_id="semantic:wrong"), MULTI_RESULTS[1])}),
+    KnownBadSpec("cross_unit_check_result", "receipt", {"results": (replace(MULTI_RESULTS[0], maintenance_unit_id="unit:foreign"), MULTI_RESULTS[1])}),
+    KnownBadSpec("check_result_member_mismatch", "receipt", {"results": (replace(MULTI_RESULTS[0], member_skill_id="foreign"), MULTI_RESULTS[1])}),
+    KnownBadSpec("check_result_subject_mismatch", "receipt", {"results": (replace(MULTI_RESULTS[0], evidence_subject_id="subject:foreign"), MULTI_RESULTS[1])}),
     KnownBadSpec("check_result_request_mismatch", "receipt", {"results": (replace(MULTI_RESULTS[0], request_fingerprint="sha256:wrong"), MULTI_RESULTS[1])}),
     KnownBadSpec("check_result_stale", "receipt", {"results": (replace(MULTI_RESULTS[0], current=False), MULTI_RESULTS[1])}),
     KnownBadSpec("check_result_nonterminal", "receipt", {"results": (replace(MULTI_RESULTS[0], terminal=False), MULTI_RESULTS[1])}),
@@ -630,9 +715,9 @@ def model_summary() -> dict[str, Any]:
         "known_bad_count": len(KNOWN_BAD_SPECS),
         "known_bad_families": known_bad_family_inventory(),
         "fixed_workflow": [
-            "freeze exact declared check inventory",
-            "resolve one owner and valid dependencies per check",
-            "admit current terminal results for the same request",
+            "freeze exact declared check inventory inside one maintenance unit",
+            "resolve one semantic subject, owner, and same-unit dependency graph per check",
+            "admit current terminal results for the same unit, subject, and request",
             "reconcile every declared check before closure",
         ],
         "claim_boundary": CLAIM_BOUNDARY,

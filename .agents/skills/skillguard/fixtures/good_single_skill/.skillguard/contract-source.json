@@ -1,4 +1,21 @@
 {
+  "repository_role": "skill_maintainer_source",
+  "maintenance_unit_id": "unit:good_single_skill",
+  "member_skill_ids": [
+    "good_single_skill"
+  ],
+  "consumer_projection": {
+    "projection_id": "projection:consumer-distribution",
+    "prohibited_path_prefixes": [
+      ".skillguard/"
+    ],
+    "prohibited_prompt_tokens": [
+      "SkillGuard",
+      ".skillguard",
+      "skillguard.py"
+    ],
+    "release_manifest_path": "consumer-release.json"
+  },
   "artifacts": [],
   "checks": [
     {
@@ -6,6 +23,9 @@
         "scripts/run_checks.py"
       ],
       "check_id": "check:generated-current",
+      "maintenance_unit_id": "unit:good_single_skill",
+      "member_skill_id": "good_single_skill",
+      "evidence_subject_id": "subject:good_single_skill:generated-current",
       "command": "python",
       "covers_obligation_ids": [
         "obligation:generated-current-check"

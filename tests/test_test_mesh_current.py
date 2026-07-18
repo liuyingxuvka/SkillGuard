@@ -218,7 +218,7 @@ class CurrentTestMeshTests(unittest.TestCase):
             ["owner:intake"], second["reused_after_freeze_owner_ids"]
         )
 
-    def test_shared_owner_executes_once_and_preserves_every_check_projection(self) -> None:
+    def test_distinct_semantic_checks_cannot_share_one_execution_owner(self) -> None:
         shared = {
             "kind": "command",
             "command": sys.executable,
@@ -226,48 +226,24 @@ class CurrentTestMeshTests(unittest.TestCase):
             "expected": {"exit_code": 0},
             "execution_owner_id": "owner:shared",
         }
-        self._claim_checks(
-            [
-                {
-                    **shared,
-                    "check_id": "check:intake",
-                    "covers_obligation_ids": ["obligation:intake"],
-                },
-                {
-                    **shared,
-                    "check_id": "check:review",
-                    "covers_obligation_ids": ["obligation:review"],
-                },
-            ],
-            name="shared-owner",
-        )
-        frozen_plan = self._plan()
-        self.assertEqual("passed", frozen_plan["status"])
-        self.assertEqual(["owner:shared"], frozen_plan["will_execute_owner_ids"])
-        self.assertEqual(
-            ["check:intake", "check:review"],
-            frozen_plan["owner_plans"][0]["check_ids"],
-        )
-        first = self._run_frozen_owners(frozen_plan)
-        second = self._run_frozen_owners(frozen_plan)
-        self.assertEqual("passed", first["status"])
-        self.assertEqual(1, first["execution_count"])
-        self.assertEqual("passed", second["status"])
-        self.assertEqual(0, second["execution_count"])
-        self.assertEqual(
-            ["check:intake", "check:review"],
-            first["owner_results"][0]["check_ids"],
-        )
-        aggregation = self._plan(
-            mode="aggregation_only", frozen_plan=frozen_plan
-        )
-        self.assertEqual("passed", aggregation["status"])
-        self.assertEqual(
-            ["check:intake", "check:review"],
-            aggregation["child_receipts"][0]["check_ids"],
-        )
+        with self.assertRaises(AssertionError):
+            self._claim_checks(
+                [
+                    {
+                        **shared,
+                        "check_id": "check:intake",
+                        "covers_obligation_ids": ["obligation:intake"],
+                    },
+                    {
+                        **shared,
+                        "check_id": "check:review",
+                        "covers_obligation_ids": ["obligation:review"],
+                    },
+                ],
+                name="shared-owner",
+            )
 
-    def test_shared_owner_projection_omission_blocks_before_execution(self) -> None:
+    def test_shared_owner_rejection_happens_before_execution(self) -> None:
         shared = {
             "kind": "command",
             "command": sys.executable,
@@ -275,30 +251,16 @@ class CurrentTestMeshTests(unittest.TestCase):
             "expected": {"exit_code": 0},
             "execution_owner_id": "owner:shared",
         }
-        self._claim_checks(
-            [
-                {**shared, "check_id": "check:intake", "covers_obligation_ids": ["obligation:intake"]},
-                {**shared, "check_id": "check:review", "covers_obligation_ids": ["obligation:review"]},
-            ],
-            name="shared-owner-omission",
-        )
-        frozen_plan = deepcopy(self._plan())
-        frozen_plan["owner_plans"][0]["check_ids"] = ["check:intake"]
-        frozen_plan["owner_plans"][0]["check_projections"] = frozen_plan[
-            "owner_plans"
-        ][0]["check_projections"][:1]
-        frozen_plan["plan_hash"] = test_mesh_module._current_plan_hash(
-            frozen_plan
-        )
         with patch.object(test_mesh_module, "get_or_execute_check") as execute:
-            report = self._run_frozen_owners(frozen_plan)
-        self.assertEqual("blocked", report["status"])
-        self.assertEqual(0, report["execution_count"])
+            with self.assertRaises(AssertionError):
+                self._claim_checks(
+                    [
+                        {**shared, "check_id": "check:intake", "covers_obligation_ids": ["obligation:intake"]},
+                        {**shared, "check_id": "check:review", "covers_obligation_ids": ["obligation:review"]},
+                    ],
+                    name="shared-owner-omission",
+                )
         execute.assert_not_called()
-        self.assertEqual(
-            ["current_test_mesh_frozen_owner_plan_stale:owner:shared"],
-            report["findings"],
-        )
 
     def test_post_launch_persistence_error_preserves_process_count(self) -> None:
         marker = self.root / "post-launch-process-ran.txt"
@@ -420,24 +382,26 @@ class CurrentTestMeshTests(unittest.TestCase):
             self.assertEqual("passed", replay["status"])
             self.assertEqual(0, replay["execution_count"])
 
-            projection = project_current_test_mesh_aggregation_to_openspec_receipt(
-                self.repository,
-                self.owner_root,
-                aggregation["aggregation_ref"],
-                evidence_root=self.repository / "work" / "verification" / "long-read",
-                evidence_root_token="SKILLGUARD_EVIDENCE",
-                provider_id="skillguard",
-                work_package_id="fixture-long-read",
-                check_id="check.fixture.long-read",
-                semantic_check_id="semantic.fixture.long-read",
-                execution_id="execution.fixture.long-read.current",
-                coverage_ids=("req.fixture.long-read",),
-                validation_obligation_ids=("req.fixture.long-read",),
-                source_paths=("test-mesh.json",),
-                toolchain_fingerprint=frozen_plan["toolchain_identity_hash"],
-            )
-            self.assertEqual("passed", projection["status"])
-            self.assertEqual(0, projection["execution_count"])
+            with self.assertRaisesRegex(
+                ValueError,
+                "external_provider_receipt_bridge_forbidden",
+            ):
+                project_current_test_mesh_aggregation_to_openspec_receipt(
+                    self.repository,
+                    self.owner_root,
+                    aggregation["aggregation_ref"],
+                    evidence_root=self.repository / "work" / "verification" / "long-read",
+                    evidence_root_token="SKILLGUARD_EVIDENCE",
+                    provider_id="skillguard",
+                    work_package_id="fixture-long-read",
+                    check_id="check.fixture.long-read",
+                    semantic_check_id="semantic.fixture.long-read",
+                    execution_id="execution.fixture.long-read.current",
+                    coverage_ids=("req.fixture.long-read",),
+                    validation_obligation_ids=("req.fixture.long-read",),
+                    source_paths=("test-mesh.json",),
+                    toolchain_fingerprint=frozen_plan["toolchain_identity_hash"],
+                )
         finally:
             self.owner_root = original_owner_root
             shutil.rmtree(filesystem_path(long_root))
@@ -543,66 +507,34 @@ class CurrentTestMeshTests(unittest.TestCase):
         self.assertEqual(0, replay["execution_count"])
         self.assertFalse(hasattr(test_mesh_module, "subprocess"))
 
-    def test_openspec_projection_replays_parent_and_launches_zero_owners(self) -> None:
+    def test_external_provider_receipt_projection_is_rejected(self) -> None:
         frozen_plan = self._plan()
         self._execute_owner()
         aggregation = self._plan(
             mode="aggregation_only", frozen_plan=frozen_plan
         )
         evidence_root = self.repository / "work" / "verification" / "final"
-        projection = project_current_test_mesh_aggregation_to_openspec_receipt(
-            self.repository,
-            self.owner_root,
-            aggregation["aggregation_ref"],
-            evidence_root=evidence_root,
-            evidence_root_token="SKILLGUARD_EVIDENCE",
-            provider_id="skillguard",
-            work_package_id="fixture-change",
-            check_id="check.fixture.final-parent",
-            semantic_check_id="semantic.fixture.final-parent",
-            execution_id="execution.fixture.final-parent.current",
-            coverage_ids=("req.fixture",),
-            validation_obligation_ids=("req.fixture",),
-            source_paths=("test-mesh.json",),
-            toolchain_fingerprint=frozen_plan["toolchain_identity_hash"],
-        )
-        self.assertEqual("passed", projection["status"])
-        self.assertEqual(0, projection["execution_count"])
-        pointer = json.loads(
-            (evidence_root / "portable/fixture-change/ref.json").read_text(
-                encoding="utf-8"
+        with self.assertRaisesRegex(
+            ValueError,
+            "external_provider_receipt_bridge_forbidden",
+        ):
+            project_current_test_mesh_aggregation_to_openspec_receipt(
+                self.repository,
+                self.owner_root,
+                aggregation["aggregation_ref"],
+                evidence_root=evidence_root,
+                evidence_root_token="SKILLGUARD_EVIDENCE",
+                provider_id="skillguard",
+                work_package_id="fixture-change",
+                check_id="check.fixture.final-parent",
+                semantic_check_id="semantic.fixture.final-parent",
+                execution_id="execution.fixture.final-parent.current",
+                coverage_ids=("req.fixture",),
+                validation_obligation_ids=("req.fixture",),
+                source_paths=("test-mesh.json",),
+                toolchain_fingerprint=frozen_plan["toolchain_identity_hash"],
             )
-        )
-        self.assertEqual("portable-receipt-ref.v1", pointer["schema_version"])
-        self.assertEqual(["req.fixture"], pointer["coverage_ids"])
-        self.assertEqual(
-            [
-                "check_id",
-                "coverage_ids",
-                "envelope_fingerprint",
-                "envelope_ref",
-                "execution_id",
-                "protocol_version",
-                "provider_id",
-                "receipt_fingerprint",
-                "receipt_id",
-                "root_token",
-                "schema_version",
-                "semantic_check_id",
-                "work_package_id",
-            ],
-            sorted(pointer),
-        )
-        envelope_relative = pointer["envelope_ref"].split(">/", 1)[1]
-        envelope = json.loads(
-            (evidence_root / envelope_relative).read_text(encoding="utf-8")
-        )
-        self.assertEqual(
-            "portable-receipt-envelope.v1", envelope["schema_version"]
-        )
-        self.assertEqual(["req.fixture"], envelope["coverage_ids"])
-        self.assertEqual({}, envelope["child_receipt_hashes"])
-        self.assertEqual([], envelope["child_receipt_refs"])
+        self.assertFalse(evidence_root.exists())
         self.assertFalse(hasattr(test_mesh_module, "subprocess"))
 
     def test_portable_hash_matches_openspec_locale_order_for_skill_paths(self) -> None:
@@ -642,7 +574,7 @@ class CurrentTestMeshTests(unittest.TestCase):
             _portable_receipt_hash(payload),
         )
 
-    def test_openspec_projection_rejects_non_ascii_source_path(self) -> None:
+    def test_external_provider_bridge_rejects_before_source_path_handling(self) -> None:
         frozen_plan = self._plan()
         self._execute_owner()
         aggregation = self._plan(
@@ -650,30 +582,28 @@ class CurrentTestMeshTests(unittest.TestCase):
         )
         (self.repository / "技能.md").write_text("source", encoding="utf-8")
         evidence_root = self.repository / "work" / "verification" / "final"
-        projection = project_current_test_mesh_aggregation_to_openspec_receipt(
-            self.repository,
-            self.owner_root,
-            aggregation["aggregation_ref"],
-            evidence_root=evidence_root,
-            evidence_root_token="SKILLGUARD_EVIDENCE",
-            provider_id="skillguard",
-            work_package_id="fixture-change",
-            check_id="check.fixture.final-parent",
-            semantic_check_id="semantic.fixture.final-parent",
-            execution_id="execution.fixture.final-parent.current",
-            coverage_ids=("req.fixture",),
-            validation_obligation_ids=("req.fixture",),
-            source_paths=("技能.md",),
-            toolchain_fingerprint=frozen_plan["toolchain_identity_hash"],
-        )
-        self.assertEqual("blocked", projection["status"])
-        self.assertEqual(0, projection["execution_count"])
-        self.assertIn(
-            "openspec_projection_source_path_non_ascii_unsupported:技能.md",
-            projection["findings"],
-        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "external_provider_receipt_bridge_forbidden",
+        ):
+            project_current_test_mesh_aggregation_to_openspec_receipt(
+                self.repository,
+                self.owner_root,
+                aggregation["aggregation_ref"],
+                evidence_root=evidence_root,
+                evidence_root_token="SKILLGUARD_EVIDENCE",
+                provider_id="skillguard",
+                work_package_id="fixture-change",
+                check_id="check.fixture.final-parent",
+                semantic_check_id="semantic.fixture.final-parent",
+                execution_id="execution.fixture.final-parent.current",
+                coverage_ids=("req.fixture",),
+                validation_obligation_ids=("req.fixture",),
+                source_paths=("技能.md",),
+                toolchain_fingerprint=frozen_plan["toolchain_identity_hash"],
+            )
 
-    def test_openspec_projection_rejects_stale_parent_without_writes(self) -> None:
+    def test_external_provider_bridge_rejects_stale_parent_without_writes(self) -> None:
         frozen_plan = self._plan()
         self._execute_owner()
         aggregation = self._plan(
@@ -682,24 +612,26 @@ class CurrentTestMeshTests(unittest.TestCase):
         reference = dict(aggregation["aggregation_ref"])
         reference["content_hash"] = "sha256:" + "f" * 64
         evidence_root = self.repository / "work" / "verification" / "final"
-        projection = project_current_test_mesh_aggregation_to_openspec_receipt(
-            self.repository,
-            self.owner_root,
-            reference,
-            evidence_root=evidence_root,
-            evidence_root_token="SKILLGUARD_EVIDENCE",
-            provider_id="skillguard",
-            work_package_id="fixture-change",
-            check_id="check.fixture.final-parent",
-            semantic_check_id="semantic.fixture.final-parent",
-            execution_id="execution.fixture.final-parent.current",
-            coverage_ids=("req.fixture",),
-            validation_obligation_ids=("req.fixture",),
-            source_paths=("test-mesh.json",),
-            toolchain_fingerprint=frozen_plan["toolchain_identity_hash"],
-        )
-        self.assertEqual("blocked", projection["status"])
-        self.assertEqual(0, projection["execution_count"])
+        with self.assertRaisesRegex(
+            ValueError,
+            "external_provider_receipt_bridge_forbidden",
+        ):
+            project_current_test_mesh_aggregation_to_openspec_receipt(
+                self.repository,
+                self.owner_root,
+                reference,
+                evidence_root=evidence_root,
+                evidence_root_token="SKILLGUARD_EVIDENCE",
+                provider_id="skillguard",
+                work_package_id="fixture-change",
+                check_id="check.fixture.final-parent",
+                semantic_check_id="semantic.fixture.final-parent",
+                execution_id="execution.fixture.final-parent.current",
+                coverage_ids=("req.fixture",),
+                validation_obligation_ids=("req.fixture",),
+                source_paths=("test-mesh.json",),
+                toolchain_fingerprint=frozen_plan["toolchain_identity_hash"],
+            )
         self.assertFalse(evidence_root.exists())
         self.assertFalse(hasattr(test_mesh_module, "subprocess"))
 

@@ -3,33 +3,35 @@
 <!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->
 ## SkillGuard Global Router
 
-- Use the SkillGuard global router registry only for skill-selection, skill-maintenance, prompt/process, or SkillGuard-family routing claims when it is present; do not make it a mandatory pre-execution gate for every skill invocation.
-- If the registry or this managed block is missing or stale, run `skillguard.py refresh-global-router` before making a global skill-routing claim.
-- Handoff order: select the target skill from the registry when selection help is needed and read its `SKILL.md`; a current route uses `.skillguard/contract-source.json`, `.skillguard/compiled-contract.json`, and the exact `.skillguard/check-manifest.json`. Every non-current authority is `blocked` and has no alternate success route.
-- Do not let this global router replace a target skill's own hard gates, checks, evidence requirements, or closure boundary.
+- This is a private maintainer-computer routing projection. Use it only when selecting, maintaining, checking, installing, or releasing explicitly registered SkillGuard-maintained skill sources.
+- Do not use this registry as a pre-execution gate for ordinary domain use of an installed skill. A graduated consumer skill works from its own `SKILL.md`, scripts, references, assets, and target-owned checks without SkillGuard.
+- A current registry entry points to an author-side source whose `.skillguard/contract-source.json`, `.skillguard/compiled-contract.json`, and exact `.skillguard/check-manifest.json` are maintenance evidence. Those files stay in the maintainer source and must not be copied into the consumer distribution.
+- External OpenSpec is outside this registry and outside SkillGuard maintenance authority.
+- If the private registry or this managed block is stale, refresh it only from explicit author-side `--skill-root` inputs. Never infer maintenance membership by scanning ordinary installed consumer skills.
 
-### Generic Declared-Check Supervision
-- Freeze the target skill's exact declared-check inventory and require one current immutable terminal-success receipt for every declared check under its exact owner and request identity. Do not classify targets, infer domain semantics, or require any particular check pattern.
-- SkillGuard validates current identities, inventory equality, execution ownership, dependencies, receipt freshness, provider readiness, and fixed `enforced` closure consumption. The target skill remains the sole authority for domain meaning, fixtures, oracles, native findings, and claim boundaries.
-- A target may declare one check or several checks. SkillGuard supervises both through the same fixed workflow and never invents a purpose contract, counterexample pair, family category, domain route, or quality mode.
+### Author-Side Graduation Boundary
+- Each maintenance unit declares its own members, obligations, semantic checks, evidence subjects, and completion/depth criteria.
+- SkillGuard checks that the unit's claims are sufficiently deep and fully evidenced. It does not move its receipts, run store, router state, Portfolio state, or maintenance contract into the graduated consumer.
+- Different maintenance units never share, import, project, or reuse check receipts. Similar commands are not proof of shared responsibility; semantic overlap is a boundary defect to split, merge, or retire at the author source.
 
 ### Validation Execution Ownership
 - policy_id: `skillguard.validation_execution_ownership.current`
-- Creating, updating, directly rewriting a non-current target, installing/synchronizing, or releasing a maintained skill requires SkillGuard maintenance supervision; no migration or compatibility route exists.
+- Creating, updating, directly rewriting, installing/synchronizing, or releasing an explicitly registered maintained skill source requires SkillGuard author-side supervision; no migration or compatibility route exists.
 - Covered skill maintenance uses direct current replacement. Do not add a compatibility reader, fallback, migration or upgrade command, converter, alias, renewal path, dual manifest, or parallel authority. An ordinary software historical reader is allowed only when an explicit requirement names the old document/data/interface and FlowGuard records its bounded owner and claim boundary.
-- Ordinary use of an already-installed skill for its domain work does not start SkillGuard maintenance or validation.
-- SkillGuard supervises the frozen owner plan, receipts, affected-only revalidation, installation projection, and closure; the target skill retains its domain actions, judgment, and native-check authority.
-- Before multi-skill validation starts, freeze one task-level validation plan in the existing verification contract or TestMesh: list every exact check, covered obligation and evidence domain, dependency/order, persistent receipt root, and exactly one primary execution owner; missing, duplicate, or cyclic ownership blocks execution.
-- Before executing a listed check, resolve its exact owner receipt from the frozen execution identity and inputs. Reuse only a current immutable terminal-success receipt; consumer skills verify and project that receipt and must not carry or rerun the owner's command.
+- Ordinary use of an installed consumer skill for its domain work does not start SkillGuard maintenance or validation and must not require SkillGuard files, imports, commands, receipts, or router state.
+- SkillGuard supervises the author-side frozen owner plan, receipts, affected-only revalidation, clean consumer projection, and closure; the target skill retains its domain actions, judgment, and native-check authority.
+- Before validating one maintenance unit, freeze its unit id, member ids, exact semantic checks, evidence subjects, covered obligations/domains, dependency order, private receipt root, and exactly one execution owner per check; missing, duplicate, foreign-unit, or cyclic ownership blocks execution.
+- Reuse one immutable terminal-success receipt only inside the same maintenance unit when unit, member, evidence subject, semantic check, owner, request, inputs, dependencies, toolchain, and environment are all exact. A different unit must execute and own its own evidence even when command text and inputs look identical.
+- Consumer distributions contain no SkillGuard receipt reference or execution-owner projection. They run their target-owned checks directly when their own workflow requires them.
 - Compile the complete maintained inventory into exact content components before validation. A change invalidates only owners and projections that explicitly consume its changed component; an unmapped or ambiguous file blocks instead of falling back to run-all.
 - Treat maintained test, code, contract, configuration, toolchain, and policy changes as freshness inputs only through those exact component edges. Reports, receipts, progress logs, checkboxes, and other runtime outputs are evidence outputs and must not refresh source authority or trigger their own validation.
 - Installation consumes only the frozen `projection:installation`; source-only tests, fixtures, models, and notes do not make an installation stale. A read-only installation currentness check never launches smoke or another validation owner.
 - Treat `--resume` as an execution command that may run missing owners; it is never a read-only receipt audit, and a receipt consumer must not invoke it.
-- Start exactly one final full validation only after source, toolchain, and impact-plan identities are frozen, under one explicit execution owner; later consumers project its immutable parent receipt and never launch another equivalent full run.
+- Start exactly one final full validation for the maintenance unit only after its source, toolchain, and impact-plan identities are frozen, under one explicit execution owner. Other maintenance units and consumers do not consume that parent receipt.
 - After any launcher timeout, cancellation, or interruption, confirm the entire descendant process tree count is zero before accepting evidence or starting another owner; `cleanup-unconfirmed` results are invalid and non-reusable.
 - Never use a Windows Scheduled Task, background resume, or unattended retry script to run full validation or resume a mutable worktree.
 - router_skill_id: skillguard-global-router
-- registry_hash: sha256:5e3a12b72fca86e28a275bfb13139338aeabdf6c2f2e529866c017be12cf81c1
+- registry_hash: sha256:3c1096afcffbd3ee4e24b660a1a2b3f52aa8ade6ffe6da8a3dce9674184590b4
 - registry_path: .agents/skills/skillguard/fixtures/global_router/workspace/global_router/global_registry.json
 
 ## Validated Template Pack Selection
@@ -62,25 +64,8 @@
 - global_router_selects_domain_template: false
 
 ### Current Route Index
-- `flowguard-agent-workflow-rehearsal` -> .agents/skills/flowguard-agent-workflow-rehearsal/SKILL.md (default_route=route:agent_workflow_rehearsal, integration=native-integrated)
-- `flowguard-architecture-reduction` -> .agents/skills/flowguard-architecture-reduction/SKILL.md (default_route=route:architecture_reduction, integration=native-integrated)
-- `flowguard-behavior-commitment-ledger` -> .agents/skills/flowguard-behavior-commitment-ledger/SKILL.md (default_route=route:behavior_commitment_ledger, integration=native-integrated)
-- `flowguard-code-structure-recommendation` -> .agents/skills/flowguard-code-structure-recommendation/SKILL.md (default_route=route:code_structure_recommendation, integration=native-integrated)
-- `flowguard-contract-exhaustion-mesh` -> .agents/skills/flowguard-contract-exhaustion-mesh/SKILL.md (default_route=route:contract_exhaustion_mesh, integration=native-integrated)
-- `flowguard-development-process-flow` -> .agents/skills/flowguard-development-process-flow/SKILL.md (default_route=route:development_process_flow, integration=native-integrated)
-- `flowguard-existing-model-preflight` -> .agents/skills/flowguard-existing-model-preflight/SKILL.md (default_route=route:existing_model_preflight, integration=native-integrated)
-- `flowguard-field-lifecycle-mesh` -> .agents/skills/flowguard-field-lifecycle-mesh/SKILL.md (default_route=route:field_lifecycle_mesh, integration=native-integrated)
-- `flowguard-model-mesh` -> .agents/skills/flowguard-model-mesh/SKILL.md (default_route=route:model_mesh_maintenance, integration=native-integrated)
-- `flowguard-model-miss-review` -> .agents/skills/flowguard-model-miss-review/SKILL.md (default_route=route:model_miss_review, integration=native-integrated)
-- `flowguard-model-test-alignment` -> .agents/skills/flowguard-model-test-alignment/SKILL.md (default_route=route:model_test_alignment, integration=native-integrated)
-- `flowguard-model-topology-hazard-review` -> .agents/skills/flowguard-model-topology-hazard-review/SKILL.md (default_route=route:model_topology_hazard_review, integration=native-integrated)
-- `flowguard-plan-detailing-compiler` -> .agents/skills/flowguard-plan-detailing-compiler/SKILL.md (default_route=route:plan_detailing_compiler, integration=native-integrated)
-- `flowguard-structure-mesh` -> .agents/skills/flowguard-structure-mesh/SKILL.md (default_route=route:structure_mesh_maintenance, integration=native-integrated)
-- `flowguard-test-mesh` -> .agents/skills/flowguard-test-mesh/SKILL.md (default_route=route:test_mesh_maintenance, integration=native-integrated)
-- `flowguard-ui-flow-structure` -> .agents/skills/flowguard-ui-flow-structure/SKILL.md (default_route=route:ui_flow_structure, integration=native-integrated)
-- `model-first-function-flow` -> .agents/skills/model-first-function-flow/SKILL.md (default_route=route:model_first_function_flow, integration=native-integrated)
 - `skillguard` -> .agents/skills/skillguard/SKILL.md (default_route=route:static-audit, integration=native-integrated)
-- `skillguard-global-router` -> .agents/skills/skillguard-global-router/SKILL.md (default_route=route:scan-global-skills, integration=native-integrated)
+- `skillguard-global-router` -> .agents/skills/skillguard-global-router/SKILL.md (default_route=route:refresh-global-router, integration=native-integrated)
 
-Claim boundary: this block is a routing projection only. It does not prove runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, code-contract validation, release readiness, or future AI behavior without separate current evidence.
+Claim boundary: this private author-side block helps route maintenance work only. It neither governs consumer runtime nor proves checker execution, fixture coverage, tests, publication, release readiness, or future AI behavior without separate current evidence.
 <!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->

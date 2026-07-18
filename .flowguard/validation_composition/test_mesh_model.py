@@ -1,9 +1,9 @@
 """TestMesh design for impact-plan-derived immutable owner receipts.
 
-The three child rows below are abstract receipt partitions, not commands owned
-by TestMesh.  Production TestMesh selects the concrete execution owners from
-the compiler-generated impact graph and only plans or aggregates their
-already-issued receipts.
+The three child rows below are abstract same-maintenance-unit receipt
+partitions, not commands owned by TestMesh. Production TestMesh selects the
+concrete execution owners from that unit's compiler-generated impact graph and
+only plans or aggregates that unit's already-issued receipts.
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from flowguard import (
 
 
 SOURCE_MODEL_ID = "skillguard.validation_composition.current"
-SOURCE_MODEL_PATH = ".flowguard/validation_composition/model.py"
+SOURCE_MODEL_PATH = ".flowguard/validation_composition/validation_composition_model.py"
 PARENT_MESH_ID = "skillguard-component-impact-regression-mesh"
 INVENTORY_REVISION = "skillguard-testmesh-current:component-owner-projections"
 
@@ -56,7 +56,7 @@ PROJECTION_PARTITIONS = (
     "component-installation-and-parity",
     "exact-portfolio-impact",
     "router-and-managed-prompt-projection",
-    "read-only-openspec-consumption",
+    "external-provider-receipt-exclusion",
     "current-only-runtime",
 )
 ALL_PARTITIONS = IMPACT_PARTITIONS + EXECUTION_PARTITIONS + PROJECTION_PARTITIONS
@@ -187,7 +187,7 @@ def build_test_mesh() -> TestMeshPlan:
             state_owner_fields=tuple(f"{suite_id}_current" for suite_id in CURRENT_SUITE_IDS),
             side_effect_owner_fields=("no_shared_validation_side_effects",),
             source_model_path=SOURCE_MODEL_PATH,
-            rationale="the impact graph derives exact current owners; the public runner may resolve only the immutable plan's execute partition through the existing single-flight owner authority, while aggregation references direct immutable owner receipts and never substitutes parent-level evidence for a missing child",
+            rationale="one maintenance unit's impact graph derives exact current owners; its runner may resolve only the immutable plan's execute partition through same-unit single-flight, while aggregation references only that unit's immutable owner receipts and never substitutes parent-level or foreign-unit evidence for a missing child",
         ),
         required_evidence_tier=EVIDENCE_ABSTRACT_GREEN,
         require_proof_artifacts=True,

@@ -1,6 +1,6 @@
 {
   "title": "SkillGuard Suite Contract",
-  "description": "Record-family schema for a generic suite contract covering purpose, inventory, routing, dependencies, shared evidence, one current identity, validation, ownership, and status. This schema defines record shape only; it does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
+  "description": "Record-family schema for a generic suite contract covering purpose, inventory, routing, dependencies, independent child evidence, one current identity, validation, ownership, and status. Each child owns its evidence; this schema defines record shape only and does not claim runtime checker execution, fixture coverage, CLI checks, tests, suite automation, package publication, or code-contract validation.",
   "type": "object",
   "required": [
     "schema_version",
@@ -11,7 +11,7 @@
     "included_skills",
     "routing",
     "dependencies",
-    "shared_evidence_rules",
+    "independent_evidence_rules",
     "current_identity",
     "validation_layers",
     "maintenance_ownership",
@@ -20,7 +20,7 @@
   "properties": {
     "schema_version": {
       "type": "string",
-      "const": "skillguard.suite_contract.v1"
+      "const": "skillguard.suite_contract.v2"
     },
     "suite_name": {
       "type": "string"
@@ -150,8 +150,9 @@
         "additionalProperties": false
       }
     },
-    "shared_evidence_rules": {
+    "independent_evidence_rules": {
       "type": "array",
+      "minItems": 1,
       "items": {
         "type": "string"
       }

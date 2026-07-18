@@ -1,27 +1,62 @@
-# Single-skill target installation
+# Standalone consumer installation
 
-Use this route only for a maintained target skill other than the SkillGuard self-install cohort.
+This transaction installs one graduated target skill without installing
+SkillGuard into that skill.
 
-1. Compile the current contract. Its content-impact plan must contain one repository-relative `member_root_path` and one exact `projection:installation`.
-2. Choose a new isolated stage whose final directory name equals the validated manifest `skill_id`.
-3. Prepare and verify without activation:
+## Prepare
 
-   `python scripts/skillguard_target_install.py --repository-root <repo> --skill-root <repo/member_root_path> --stage-root <isolated-stage/skill-id> --codex-home <CODEX_HOME> --prepare`
+```text
+python scripts/skillguard_consumer_install.py \
+  --repository-root <author-repository> \
+  --skill-root <author-repository/member-root> \
+  --stage-root <isolated-stage/skill-id> \
+  --codex-home <CODEX_HOME> \
+  --prepare
+```
 
-4. Activate only after the returned stage verification is current:
+Preparation builds the target-owned consumer projection and audits it before
+activation.
 
-   `python scripts/skillguard_target_install.py --repository-root <repo> --skill-root <repo/member_root_path> --stage-root <isolated-stage/skill-id> --codex-home <CODEX_HOME> --activate`
+The staged tree must not contain:
 
-   The same invocation may use `--prepare --activate` when the stage does not yet exist.
+- `.skillguard/**`;
+- SkillGuard imports or command instructions;
+- SkillGuard receipt/run/router/Portfolio references;
+- author-only tests, fixtures, models, plans, or maintenance notes;
+- runtime hidden under `.skillguard/runtime`.
 
-5. Run target-native installed checks separately through their frozen execution owners. Installation itself never executes target repository commands.
+## Activate
 
-6. Recover an interrupted target transaction with:
+```text
+python scripts/skillguard_consumer_install.py \
+  --repository-root <author-repository> \
+  --skill-root <author-repository/member-root> \
+  --stage-root <isolated-stage/skill-id> \
+  --codex-home <CODEX_HOME> \
+  --activate
+```
 
-   `python scripts/skillguard_target_install.py --codex-home <CODEX_HOME> --skill-id <skill-id> --recover`
+Activation uses one target-owned release identity and a transactional backup.
+The installed `consumer-release.json` names only the target skill and its
+files; it contains no SkillGuard contract hash, maintenance unit id, or author
+receipt.
 
-7. Roll back only the current committed target HEAD with:
+## Recover or roll back
 
-   `python scripts/skillguard_target_install.py --codex-home <CODEX_HOME> --skill-id <skill-id> --rollback <target-install-id>`
+```text
+python scripts/skillguard_consumer_install.py \
+  --codex-home <CODEX_HOME> \
+  --skill-id <skill-id> \
+  --recover
 
-The target transaction domain is separate from `scripts/skillguard_install.py`. It must not write or reuse the SkillGuard self-install `install-transactions/HEAD.json`, self-install receipts, global-router cohort, or self smoke plan. A target receipt proves exact local activation and rollback boundaries only; it does not prove semantic behavior, release readiness, GitHub publication, or future AI behavior.
+python scripts/skillguard_consumer_install.py \
+  --codex-home <CODEX_HOME> \
+  --skill-id <skill-id> \
+  --rollback <transaction-id>
+```
+
+## Claim boundary
+
+This workflow proves the installed tree equals the audited clean consumer
+projection. It does not prove the target's domain task succeeded, publication
+occurred, or SkillGuard exists on the consumer machine.

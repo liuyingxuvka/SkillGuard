@@ -259,6 +259,34 @@ class PortfolioProductionRevalidationTests(unittest.TestCase):
                 }
                 self.assertIn(expected, codes)
 
+    def test_parent_or_foreign_member_binding_cannot_prove_expected_member(self) -> None:
+        for supplied_member in ("suite-parent", "member-two"):
+            with self.subTest(supplied_member=supplied_member):
+                binding = _binding()
+                binding["member_skill_id"] = supplied_member
+                binding["target_skill_id"] = supplied_member
+                binding["binding_hash"] = canonical_hash(
+                    {
+                        key: value
+                        for key, value in binding.items()
+                        if key != "binding_hash"
+                    }
+                )
+                findings = replay_portfolio_production_revalidation_binding(
+                    binding,
+                    expected_member_skill_id="member-one",
+                    expected_member_skill_path="member-one",
+                    expected_source_fingerprint=HASH,
+                    expected_member_contract_hash=HASH,
+                    expected_member_manifest_hash=HASH,
+                    member_repository_root=Path("repository/member-one"),
+                    workspace_root=Path("workspace"),
+                )
+                self.assertIn(
+                    "portfolio_production_wrong_member",
+                    {finding["code"] for finding in findings},
+                )
+
     def test_missing_terminal_or_installation_blocks_instead_of_using_capability_jobs(self) -> None:
         for field, expected in (
             ("native_terminal", "portfolio_production_native_terminal_missing"),
@@ -500,10 +528,9 @@ class PortfolioProductionRevalidationTests(unittest.TestCase):
 
         def graduate(*_args, **kwargs):
             observed["context"] = kwargs["verified_installation_context"]
-            observed["roots"] = kwargs["portfolio_target_repository_roots"]
-            observed["root_identity_matches"] = Path(
-                kwargs["portfolio_target_repository_roots"]["member-skill"]
-            ).samefile(repository)
+            observed["has_foreign_roots"] = (
+                "portfolio_target_repository_roots" in kwargs
+            )
             return {"status": "current"}, {}, {
                 "receipt_id": "graduation:one",
                 "receipt_hash": HASH,
@@ -560,7 +587,7 @@ class PortfolioProductionRevalidationTests(unittest.TestCase):
         self.assertEqual("assembled", result["status"])
         self.assertEqual(1, load_bindings.call_count)
         self.assertIs(context, observed["context"])
-        self.assertTrue(observed["root_identity_matches"])
+        self.assertFalse(observed["has_foreign_roots"])
 
     def test_capture_public_api_writes_only_verifier_derived_binding(self) -> None:
         identity = {

@@ -54,7 +54,8 @@ class CurrentRuntimeAuthorityModelTests(unittest.TestCase):
                 "converter_presence_blocks",
                 "direct_replacement_can_activate",
                 "partial_replacement_cannot_activate",
-                "consumer_authority_divergence_blocks",
+                "independent_consumer_builds_may_differ",
+                "consumer_skillguard_projection_blocks",
                 "authority_claim_overreach_blocks",
             }.issubset(names)
         )
@@ -95,6 +96,10 @@ class CurrentRuntimeAuthorityModelTests(unittest.TestCase):
         self.assertEqual(
             "direct_current_maintenance_only",
             summary["replacement_mode"],
+        )
+        self.assertEqual(
+            ["blocked", "clean"],
+            summary["consumer_distribution_decisions"],
         )
         self.assertNotIn("migration", json.dumps(summary).casefold())
         self.assertNotIn("renew", json.dumps(summary).casefold())

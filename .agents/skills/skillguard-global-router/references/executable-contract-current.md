@@ -1,30 +1,31 @@
-# Global Router Executable Contract
+# Global Router Author Contract
 
-Read this reference when running or maintaining the router's one current
-contract. The contract supervises the existing SkillGuard CLI; it never
-implements a second scanner, registry builder, prompt installer, route selector,
-converter, or fallback reader.
+Read this reference only while maintaining SkillGuard source repositories. The
+router is a private author tool: it inventories maintained source skills,
+builds one current registry, validates that registry, and refreshes the private
+author prompt. It is not copied into graduated consumer skills or ordinary
+business projects.
 
-## Function and route map
+## Public author command map
 
-| Function | Contract route | Native owner |
+| Author operation | Contract route | SkillGuard command |
 | --- | --- | --- |
-| Scan skill roots | `route:scan-global-skills` | `scan-global-skills` |
-| Build registry | `route:build-global-registry` | `build-global-registry` |
-| Check registry | `route:check-global-registry` | `check-global-registry` |
-| Render prompt projection | `route:render-global-prompt` | `render-global-prompt` |
-| Install managed prompt | `route:install-global-prompt` | `install-global-prompt` |
-| Check managed prompt | `route:check-global-prompt` | `check-global-prompt` |
-| Resolve and hand off | `route:resolve-global-skill` | `resolve-global-skill` |
-| End-to-end refresh | `route:refresh-global-router` | `refresh-global-router` |
+| Scan explicit source roots | `route:scan-global-skills` | `scan-global-skills` |
+| Build the private registry | `route:build-global-registry` | `build-global-registry` |
+| Check the private registry | `route:check-global-registry` | `check-global-registry` |
+| Refresh all private projections | `route:refresh-global-router` | `refresh-global-router` |
 
-Every selected function also enters `route:shared-supervision`, which runs the
-current FlowGuard child model and native positive/negative router fixtures.
+Prompt rendering, prompt installation, prompt checking, and route resolution
+are internal steps of the composite refresh. They are deliberately not public
+commands. The refresh must receive explicitly intended author source roots; it
+must not discover installed consumer skills as an alternate authority.
 
-## Work-package layout
+Every selected operation also enters `route:author-supervision`, which runs the
+current FlowGuard child model and the router's positive and negative checks.
 
-Pass a task workspace as the current supervisor's `target_root`. The applicable
-native action writes its outputs under this portable layout:
+## Private work-package layout
+
+The author-side target root may contain:
 
 ```text
 target_root/
@@ -35,21 +36,23 @@ target_root/
     ├── global_registry.json
     ├── global_prompt_projection.json
     ├── registry_check.json
-    ├── prompt_check.json
-    ├── route_resolution.json
     └── refresh_report.json
 ```
 
-Only files declared by the selected route are required. The end-to-end refresh
-route requires the scan, registry, projection, AGENTS prompt, and refresh
-report. Keep private or machine-specific scan roots inside the task work
-package; do not copy them into tracked skill files.
+This layout is maintenance evidence. None of it belongs in a consumer skill
+distribution. Machine-specific scan roots remain inside the private work
+package and are never copied into tracked consumer files.
 
 ## Evidence boundary
 
-- Record a witnessed action for every task-specific CLI invocation that scans, writes, installs, or resolves against the supplied work package.
-- The router declares its command-surface and FlowGuard-model checks in the current contract. SkillGuard freezes that exact inventory and requires one current immutable terminal-success receipt for each declared check.
-- SkillGuard does not treat the router as a special target category, infer route meaning from check names, or require a paired validation pattern. Router-domain expectations remain inside the router's own model and native checks.
-- Let the native check adapter re-run registry freshness, prompt freshness, and the fixed router smoke handoff. The adapter must block unless the registry points at the exact current `.skillguard/compiled-contract.json` and `.skillguard/check-manifest.json` pair.
-- Any former authority shape is rejected. Ordinary maintenance rewrites the target directly into the current source/compiled/manifest trio; the router has no migration, conversion, or fallback success path.
-- A passing router contract does not execute the selected target skill or prove publication, a different machine's installed state, or future AI behavior.
+- Every checked skill comes from an explicitly supplied
+  `skill_maintainer_source` root.
+- The current registry may point to author-side contract and manifest evidence,
+  but a graduated consumer receives neither those files nor a registry lookup.
+- Each maintenance unit owns its checks and receipts. Another unit cannot reuse
+  them, even when a command happens to be textually identical.
+- The composite refresh may update the maintainer computer's managed
+  `AGENTS.md` block. Ordinary skill use never starts that maintenance action.
+- No retired standalone prompt or resolver command is a valid route.
+- A passing author-router contract does not execute a consumer skill, prove
+  publication, prove another machine's state, or guarantee future AI behavior.

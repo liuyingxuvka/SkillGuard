@@ -306,6 +306,32 @@ def _validate_current_trio(
                 "contract source, compiled contract, and manifest must agree",
             )
         )
+    unit_ids = (
+        source.get("maintenance_unit_id"),
+        contract.get("maintenance_unit_id"),
+        manifest.get("maintenance_unit_id"),
+    )
+    if not unit_ids[0] or len(set(unit_ids)) != 1:
+        findings.append(
+            AuthorityFinding(
+                "current_maintenance_unit_identity_mismatch",
+                "$.maintenance_unit_id",
+                "contract source, compiled contract, and manifest must agree",
+            )
+        )
+    member_sets = (
+        tuple(source.get("member_skill_ids", ())),
+        tuple(contract.get("member_skill_ids", ())),
+        tuple(manifest.get("member_skill_ids", ())),
+    )
+    if not member_sets[0] or len(set(member_sets)) != 1:
+        findings.append(
+            AuthorityFinding(
+                "current_member_skill_identity_mismatch",
+                "$.member_skill_ids",
+                "contract source, compiled contract, and manifest must agree",
+            )
+        )
 
     contract_seed = dict(contract)
     contract_seed.pop("contract_hash", None)

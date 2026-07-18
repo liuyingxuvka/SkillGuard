@@ -1,4 +1,4 @@
-"""Private portfolio registry, impact propagation, reuse, and graduation gates."""
+"""Private independent-unit portfolio registry, impact, and graduation gates."""
 
 from __future__ import annotations
 
@@ -44,8 +44,6 @@ PORTFOLIO_REGISTRY_SCHEMA = "skillguard.portfolio_registry.v2"
 PORTFOLIO_SCOPE_SCHEMA = "skillguard.portfolio_scope_manifest.v1"
 GUARD_CHANGE_SCHEMA = "skillguard.guard_change.v2"
 GRADUATION_EVIDENCE_SCHEMA = "skillguard.portfolio_graduation_evidence.v2"
-REUSE_REQUEST_SCHEMA = "skillguard.test_result_reuse_request.v2"
-REUSE_TICKET_SCHEMA = "skillguard.test_result_reuse_ticket.v2"
 PORTFOLIO_RECEIPT_SCHEMA = "skillguard.portfolio_graduation_receipt.v2"
 PORTFOLIO_JOB_EVIDENCE_SCHEMA = "skillguard.portfolio_job_evidence_record.v2"
 PORTFOLIO_JOB_PLAN_SCHEMA = "skillguard.portfolio_job_plan.v1"
@@ -117,9 +115,6 @@ DEFAULT_REQUIRED_JOB_CLASS_IDS = (
 )
 EVIDENCE_CLASSES = frozenset({"hard", "witnessed", "judged"})
 TARGET_KINDS = frozenset({"single_skill", "skill_suite"})
-NON_REUSABLE_GUARD_FEATURE_TAGS = frozenset(
-    {"route", "receipt", "schema", "closure", "portfolio", "runtime"}
-)
 JOB_CLASS_EXPECTED_OUTCOMES = {
     "positive": "closed",
     "invalid_input": "expected_rejection_observed",
@@ -385,7 +380,6 @@ def _normalized_member_revalidation_statuses(
     allowed_fields = {
         "graduation_status",
         "pending_guard_change_id",
-        "reuse_ticket_absent",
     }
     for raw_member_id, raw_status in value.items():
         member_id = str(raw_member_id).strip()
@@ -404,14 +398,12 @@ def _normalized_member_revalidation_statuses(
         if (
             raw_status.get("graduation_status") != "revalidation_required"
             or not pending_change_id
-            or raw_status.get("reuse_ticket_absent") is not True
         ):
             findings.append(f"member_revalidation_status_invalid:{member_id}")
             continue
         normalized[member_id] = {
             "graduation_status": "revalidation_required",
             "pending_guard_change_id": pending_change_id,
-            "reuse_ticket_absent": True,
         }
     return dict(sorted(normalized.items())), findings
 
@@ -4484,12 +4476,6 @@ def _full_receipt_payload_findings(
     return findings
 
 
-def _ticket_hash(ticket: Mapping[str, Any]) -> str:
-    payload = dict(ticket)
-    payload.pop("ticket_hash", None)
-    return canonical_hash(payload)
-
-
 def _guard_change_record_hash(change: Mapping[str, Any]) -> str:
     payload = dict(change)
     payload.pop("change_hash", None)
@@ -4573,8 +4559,6 @@ def build_current_portfolio_registry(
                     target.get("required_job_class_ids", [])
                 ),
                 "unresolved_failure_ids": [],
-                "reuse_ticket": None,
-                "reuse_ticket_chain": [],
             }
             repository = target.get("repository")
             if isinstance(repository, Mapping):
@@ -5272,11 +5256,13 @@ def validate_registry(
                     )
             if _unique_string_list(entry.get("unresolved_failure_ids", [])) is None:
                 findings.append(_finding("unresolved_failure_ids_invalid", skill_id=skill_id))
-            reuse_chain = entry.get("reuse_ticket_chain", [])
-            if not isinstance(reuse_chain, list) or any(
-                not isinstance(row, Mapping) for row in reuse_chain
-            ):
-                findings.append(_finding("reuse_ticket_chain_invalid", skill_id=skill_id))
+            if "reuse_ticket" in entry or "reuse_ticket_chain" in entry:
+                findings.append(
+                    _finding(
+                        "portfolio_cross_unit_reuse_surface_forbidden",
+                        skill_id=skill_id,
+                    )
+                )
             required_job_classes = _unique_string_list(
                 entry.get("required_job_class_ids", list(DEFAULT_REQUIRED_JOB_CLASS_IDS))
             )
@@ -5603,107 +5589,6 @@ def _full_receipt_is_current(
     return _same_guard(receipt.get("guard_runtime"), active_guard)
 
 
-def _reuse_ticket_is_current(
-    entry: Mapping[str, Any],
-    active_guard: Mapping[str, Any],
-    guard_change_history: Sequence[Mapping[str, Any]] = (),
-    *,
-    evidence_root: Path | None,
-    registry_id: str,
-    scope_manifest_id: str,
-    scope_manifest_hash: str,
-    target_repository_root: Path | None = None,
-    installation_context_holder: list[object] | None = None,
-) -> bool:
-    source = entry.get("canonical_source")
-    ticket = entry.get("reuse_ticket")
-    if not isinstance(ticket, Mapping) or not isinstance(source, Mapping):
-        return False
-    chain_value = entry.get("reuse_ticket_chain")
-    if chain_value is None:
-        chain: list[Mapping[str, Any]] = [ticket]
-    elif not isinstance(chain_value, list) or not chain_value:
-        return False
-    else:
-        chain = [row for row in chain_value if isinstance(row, Mapping)]
-        if len(chain) != len(chain_value) or dict(chain[-1]) != dict(ticket):
-            return False
-    old_receipt = entry.get("full_run_receipt")
-    if not _full_receipt_identity_complete(old_receipt):
-        return False
-    assert isinstance(old_receipt, Mapping)
-    if not _full_receipt_is_current(
-        entry,
-        old_receipt.get("guard_runtime", {}),
-        evidence_root=evidence_root,
-        registry_id=registry_id,
-        scope_manifest_id=scope_manifest_id,
-        scope_manifest_hash=scope_manifest_hash,
-        target_repository_root=target_repository_root,
-        installation_context_holder=installation_context_holder,
-    ):
-        return False
-    identity = _receipt_identity(old_receipt)
-    proof_hash = str(old_receipt.get("receipt_hash", ""))
-    proof_kind = "full_run_receipt"
-    proof_guard: Mapping[str, Any] = old_receipt.get("guard_runtime", {})
-    consumed = set(str(item) for item in entry.get("consumed_guard_feature_tags", []))
-    seen_ticket_ids: set[str] = set()
-    for chain_ticket in chain:
-        ticket_id = str(chain_ticket.get("ticket_id", ""))
-        if (
-            chain_ticket.get("schema_version") != REUSE_TICKET_SCHEMA
-            or chain_ticket.get("status") != "current"
-            or chain_ticket.get("ticket_hash") != _ticket_hash(chain_ticket)
-            or not ticket_id
-            or ticket_id in seen_ticket_ids
-            or chain_ticket.get("skill_id") != entry.get("skill_id")
-            or chain_ticket.get("registry_id") != registry_id
-            or chain_ticket.get("scope_manifest_id") != scope_manifest_id
-            or chain_ticket.get("scope_manifest_hash") != scope_manifest_hash
-            or chain_ticket.get("broad_semantic_change") is not False
-            or chain_ticket.get("previous_proof_kind") != proof_kind
-            or chain_ticket.get("previous_proof_hash") != proof_hash
-            or not _same_guard(chain_ticket.get("from_guard"), proof_guard)
-            or not _identity_ok(chain_ticket.get("identity"))
-            or _receipt_identity(chain_ticket.get("identity", {})) != identity
-            or not _timestamp_ok(chain_ticket.get("issued_at"))
-        ):
-            return False
-        seen_ticket_ids.add(ticket_id)
-        affected_tags = _unique_string_list(chain_ticket.get("affected_feature_tags"))
-        if (
-            affected_tags is None
-            or consumed & set(affected_tags)
-            or set(affected_tags) & NON_REUSABLE_GUARD_FEATURE_TAGS
-        ):
-            return False
-        history_match = next(
-            (
-                change
-                for change in guard_change_history
-                if change.get("change_id") == chain_ticket.get("change_id")
-                and _same_guard(change.get("guard_before"), chain_ticket.get("from_guard"))
-                and _same_guard(change.get("guard_after"), chain_ticket.get("to_guard"))
-                and change.get("broad_semantic_change") is False
-                and sorted(change.get("affected_feature_tags", []))
-                == sorted(affected_tags)
-            ),
-            None,
-        )
-        if history_match is None:
-            return False
-        proof_hash = str(chain_ticket.get("ticket_hash", ""))
-        proof_kind = "reuse_ticket"
-        proof_guard = chain_ticket.get("to_guard", {})
-    if not _same_guard(proof_guard, active_guard):
-        return False
-    return (
-        identity.get("source_fingerprint") == source.get("source_fingerprint")
-        and identity.get("contract_hash") == entry.get("contract_hash")
-    )
-
-
 def entry_is_current(
     entry: Mapping[str, Any],
     active_guard: Mapping[str, Any],
@@ -5725,17 +5610,6 @@ def entry_is_current(
             _full_receipt_is_current(
                 entry,
                 active_guard,
-                evidence_root=evidence_root,
-                registry_id=registry_id,
-                scope_manifest_id=scope_manifest_id,
-                scope_manifest_hash=scope_manifest_hash,
-                target_repository_root=target_repository_root,
-                installation_context_holder=installation_context_holder,
-            )
-            or _reuse_ticket_is_current(
-                entry,
-                active_guard,
-                guard_change_history,
                 evidence_root=evidence_root,
                 registry_id=registry_id,
                 scope_manifest_id=scope_manifest_id,
@@ -5852,18 +5726,8 @@ def entry_currentness_findings(
             )
         if not _same_guard(receipt.get("guard_runtime"), active_guard):
             reasons.append("full_run_receipt_guard_mismatch")
-    if entry.get("reuse_ticket") is not None and not _reuse_ticket_is_current(
-        entry,
-        active_guard,
-        guard_change_history,
-        evidence_root=evidence_root,
-        registry_id=registry_id,
-        scope_manifest_id=scope_manifest_id,
-        scope_manifest_hash=scope_manifest_hash,
-        target_repository_root=target_repository_root,
-        installation_context_holder=installation_context_holder,
-    ):
-        reasons.append("reuse_ticket_chain_invalid_or_stale")
+    if "reuse_ticket" in entry or "reuse_ticket_chain" in entry:
+        reasons.append("portfolio_cross_unit_reuse_surface_forbidden")
     return sorted(set(reasons)) or ["current_proof_invalid_or_stale"]
 
 
@@ -5971,14 +5835,6 @@ def audit_portfolio(
                 blockers.append(
                     _finding("candidate_capability_inventory_incomplete", skill_id=candidate_skill_id)
                 )
-            candidate_order = int(candidate["order"])
-            for prior in active_entries:
-                if int(prior["order"]) < candidate_order and not current_by_skill_id.get(
-                    str(prior.get("skill_id", "")), False
-                ):
-                    blockers.append(
-                        _finding("prior_graduate_not_current", skill_id=str(prior.get("skill_id", "")))
-                    )
             if mode == "candidate-graduation" and not current_by_skill_id.get(
                 candidate_skill_id, False
             ):
@@ -6241,7 +6097,6 @@ def apply_guard_change(
         intersection = sorted(consumed & affected_tags)
         prior_status = graduation_status
         entry["graduation_status"] = "revalidation_required"
-        entry["reuse_ticket"] = None
         entry["revalidation_reason"] = "changed_component_edge"
         entry["pending_guard_change_id"] = str(change["change_id"])
         required_members = required_member_ids_by_suite.get(suite_id, [])
@@ -6256,7 +6111,6 @@ def apply_guard_change(
                 current_member_status = {
                     "graduation_status": "revalidation_required",
                     "pending_guard_change_id": str(change["change_id"]),
-                    "reuse_ticket_absent": True,
                 }
                 existing_member_statuses[member_id] = current_member_status
                 invalidated_member_ids.append(member_id)
@@ -6347,281 +6201,6 @@ def apply_guard_change(
             ),
         },
         updated,
-    )
-
-
-def issue_reuse_ticket(
-    registry: object,
-    request: object,
-    *,
-    content_impact_plan: object,
-    evidence_root: Path | None = None,
-    target_repository_root: Path | None = None,
-) -> tuple[dict[str, Any], dict[str, Any] | None, dict[str, Any] | None]:
-    findings = validate_registry(registry, evidence_root=evidence_root)
-    if not isinstance(request, Mapping):
-        findings.append(_finding("reuse_request_not_object"))
-    elif request.get("schema_version") != REUSE_REQUEST_SCHEMA:
-        findings.append(_finding("reuse_request_schema_unsupported"))
-    if (
-        not findings
-        and isinstance(registry, Mapping)
-        and isinstance(request, Mapping)
-        and _matching_committed_transaction(
-            registry, request, mutation_kind="reuse_ticket"
-        )
-        is not None
-    ):
-        existing_entry = next(
-            (
-                row
-                for row in registry.get("entries", [])
-                if isinstance(row, Mapping)
-                and row.get("skill_id") == request.get("skill_id")
-            ),
-            None,
-        )
-        existing_ticket = (
-            existing_entry.get("reuse_ticket")
-            if isinstance(existing_entry, Mapping)
-            else None
-        )
-        if (
-            isinstance(existing_ticket, Mapping)
-            and existing_ticket.get("transaction_id") == request.get("transaction_id")
-        ):
-            return (
-                {
-                    "artifact_type": "skillguard_reuse_ticket_result",
-                    "status": "already_committed",
-                    "skill_id": str(request.get("skill_id", "")),
-                    "ticket_id": str(existing_ticket.get("ticket_id", "")),
-                    "ticket_hash": str(existing_ticket.get("ticket_hash", "")),
-                    "transaction_id": str(request.get("transaction_id", "")),
-                    "claim_boundary": "Idempotent retry returned the already committed reuse ticket without another mutation.",
-                },
-                copy.deepcopy(dict(registry)),
-                copy.deepcopy(dict(existing_ticket)),
-            )
-    if isinstance(registry, Mapping) and isinstance(request, Mapping):
-        findings.extend(_mutation_precondition_findings(registry, request))
-    if findings or not isinstance(registry, Mapping) or not isinstance(request, Mapping):
-        return ({"artifact_type": "skillguard_reuse_ticket_result", "status": "blocked", "blockers": findings}, None, None)
-
-    skill_id = str(request.get("skill_id", ""))
-    entries = [entry for entry in registry["entries"] if isinstance(entry, Mapping)]
-    entry = next((item for item in entries if item.get("skill_id") == skill_id), None)
-    change = request.get("guard_change")
-    previous = request.get("previous_result")
-    current = request.get("current_identity")
-    blockers: list[dict[str, str]] = []
-    if entry is None:
-        blockers.append(_finding("reuse_skill_missing", skill_id=skill_id))
-    if validate_guard_change(
-        change, content_impact_plan=content_impact_plan
-    ):
-        blockers.append(_finding("reuse_guard_change_invalid", skill_id=skill_id))
-    if not _identity_ok(previous) or not _identity_ok(current):
-        blockers.append(_finding("reuse_identity_invalid", skill_id=skill_id))
-    if blockers or entry is None or not isinstance(change, Mapping) or not isinstance(previous, Mapping) or not isinstance(current, Mapping):
-        return ({"artifact_type": "skillguard_reuse_ticket_result", "status": "blocked", "blockers": blockers}, None, None)
-    target_kind, skill_path, skill_paths, topology_findings = (
-        _target_source_configuration(entry, skill_id=skill_id)
-    )
-    blockers.extend(topology_findings)
-    target_identity: dict[str, Any] | None = None
-    if target_repository_root is None:
-        blockers.append(_finding("reuse_target_repository_required", skill_id=skill_id))
-    else:
-        target_identity, identity_findings = derive_target_identity(
-            target_repository_root,
-            skill_root_relative=skill_path,
-            expected_skill_id=skill_id,
-            guard_runtime=change.get("guard_after", {}),
-            target_kind=target_kind,
-            skill_root_relatives=skill_paths,
-        )
-        blockers.extend(identity_findings)
-    if entry.get("lifecycle") not in ACTIVE_LIFECYCLES:
-        blockers.append(_finding("reuse_skill_not_active", skill_id=skill_id))
-    if entry.get("graduation_status") != "revalidation_required":
-        blockers.append(_finding("reuse_target_not_revalidation_required", skill_id=skill_id))
-    if entry.get("pending_guard_change_id") != change.get("change_id"):
-        blockers.append(_finding("reuse_pending_change_mismatch", skill_id=skill_id))
-    if entry.get("member_revalidation_statuses"):
-        blockers.append(
-            _finding(
-                "reuse_forbidden_with_member_revalidation",
-                skill_id=skill_id,
-            )
-        )
-    required_targets, required_members, _required_impact, _scope_findings = (
-        _derive_guard_change_scope(change, content_impact_plan)
-        if isinstance(change, Mapping)
-        else ([], {}, [], [])
-    )
-    if skill_id in set(required_targets) | set(required_members):
-        blockers.append(
-            _finding(
-                "reuse_forbidden_for_changed_component_edge",
-                skill_id=skill_id,
-            )
-        )
-    affected_feature_tags = set(str(item) for item in change.get("affected_feature_tags", []))
-    if affected_feature_tags & NON_REUSABLE_GUARD_FEATURE_TAGS:
-        blockers.append(_finding("reuse_forbidden_for_core_semantic_change", skill_id=skill_id))
-    consumed = set(str(item) for item in entry.get("consumed_guard_feature_tags", []))
-    if consumed & set(str(item) for item in change.get("affected_feature_tags", [])):
-        blockers.append(_finding("reuse_affected_feature_intersection", skill_id=skill_id))
-    if not _same_guard(change.get("guard_after"), registry.get("active_guard")):
-        blockers.append(_finding("reuse_guard_after_not_active", skill_id=skill_id))
-    history = [row for row in registry.get("guard_change_history", []) if isinstance(row, Mapping)]
-    history_match = next(
-        (
-            row
-            for row in history
-            if row.get("change_id") == change.get("change_id")
-            and _same_guard(row.get("guard_before"), change.get("guard_before"))
-            and _same_guard(row.get("guard_after"), change.get("guard_after"))
-            and row.get("broad_semantic_change") == change.get("broad_semantic_change")
-            and sorted(row.get("affected_feature_tags", []))
-            == sorted(change.get("affected_feature_tags", []))
-            and sorted(row.get("required_target_ids", []))
-            == sorted(change.get("required_target_ids", []))
-            and _normalized_required_member_ids_by_suite(
-                row.get("required_member_ids_by_suite")
-            )[0]
-            == _normalized_required_member_ids_by_suite(
-                change.get("required_member_ids_by_suite")
-            )[0]
-        ),
-        None,
-    )
-    if history_match is None:
-        blockers.append(_finding("reuse_guard_change_not_registered", skill_id=skill_id))
-    old_receipt = entry.get("full_run_receipt")
-    chain_value = entry.get("reuse_ticket_chain", [])
-    if not isinstance(chain_value, list) or any(
-        not isinstance(row, Mapping) for row in chain_value
-    ):
-        blockers.append(_finding("reuse_ticket_chain_invalid", skill_id=skill_id))
-        chain: list[Mapping[str, Any]] = []
-    else:
-        chain = [row for row in chain_value if isinstance(row, Mapping)]
-    if not _full_receipt_identity_complete(old_receipt):
-        blockers.append(_finding("reuse_previous_receipt_incomplete", skill_id=skill_id))
-    if not isinstance(old_receipt, Mapping) or _receipt_identity(old_receipt) != _receipt_identity(previous):
-        blockers.append(_finding("reuse_previous_result_not_registered", skill_id=skill_id))
-    if not isinstance(old_receipt, Mapping) or not old_receipt.get("completed_at"):
-        blockers.append(_finding("reuse_previous_completion_missing", skill_id=skill_id))
-    if isinstance(old_receipt, Mapping) and not _full_receipt_is_current(
-        entry,
-        old_receipt.get("guard_runtime", {}),
-        evidence_root=evidence_root,
-        registry_id=str(registry.get("registry_id", "")),
-        scope_manifest_id=str(registry.get("scope_manifest_id", "")),
-        scope_manifest_hash=str(registry.get("scope_manifest_hash", "")),
-        target_repository_root=target_repository_root,
-    ):
-        blockers.append(_finding("reuse_previous_receipt_not_current", skill_id=skill_id))
-    previous_proof_kind = "full_run_receipt"
-    previous_proof_hash = (
-        str(old_receipt.get("receipt_hash", "")) if isinstance(old_receipt, Mapping) else ""
-    )
-    previous_proof_guard = (
-        old_receipt.get("guard_runtime", {}) if isinstance(old_receipt, Mapping) else {}
-    )
-    if chain:
-        prior_entry = copy.deepcopy(dict(entry))
-        prior_entry["reuse_ticket"] = copy.deepcopy(dict(chain[-1]))
-        if not _reuse_ticket_is_current(
-            prior_entry,
-            change.get("guard_before", {}),
-            history,
-            evidence_root=evidence_root,
-            registry_id=str(registry.get("registry_id", "")),
-            scope_manifest_id=str(registry.get("scope_manifest_id", "")),
-            scope_manifest_hash=str(registry.get("scope_manifest_hash", "")),
-            target_repository_root=target_repository_root,
-        ):
-            blockers.append(_finding("reuse_previous_ticket_chain_not_current", skill_id=skill_id))
-        previous_proof_kind = "reuse_ticket"
-        previous_proof_hash = str(chain[-1].get("ticket_hash", ""))
-        previous_proof_guard = chain[-1].get("to_guard", {})
-    if _receipt_identity(previous) != _receipt_identity(current):
-        blockers.append(_finding("reuse_identity_changed", skill_id=skill_id))
-    if target_identity is not None and isinstance(old_receipt, Mapping):
-        verifier_identity = _receipt_identity(old_receipt)
-        verifier_identity["source_fingerprint"] = str(target_identity["source_fingerprint"])
-        verifier_identity["contract_hash"] = str(target_identity["contract_hash"])
-        if _receipt_identity(current) != verifier_identity:
-            blockers.append(_finding("reuse_current_identity_not_verifier_derived", skill_id=skill_id))
-    if not _same_guard(change.get("guard_before"), previous_proof_guard):
-        blockers.append(_finding("reuse_guard_before_not_previous_proof", skill_id=skill_id))
-    if blockers:
-        return ({"artifact_type": "skillguard_reuse_ticket_result", "status": "blocked", "blockers": blockers}, None, None)
-
-    assert isinstance(old_receipt, Mapping)
-    ticket: dict[str, Any] = {
-        "schema_version": REUSE_TICKET_SCHEMA,
-        "ticket_id": f"reuse-{canonical_hash(request)[:20].lower()}",
-        "transaction_id": str(request["transaction_id"]),
-        "skill_id": skill_id,
-        "status": "current",
-        "change_id": change["change_id"],
-        "from_guard": dict(change["guard_before"]),
-        "to_guard": dict(change["guard_after"]),
-        "affected_feature_tags": sorted(str(item) for item in change["affected_feature_tags"]),
-        "broad_semantic_change": False,
-        "identity": _receipt_identity(current),
-        "registry_id": str(registry.get("registry_id", "")),
-        "scope_manifest_id": str(registry.get("scope_manifest_id", "")),
-        "scope_manifest_hash": str(registry.get("scope_manifest_hash", "")),
-        "base_registry_revision": int(registry.get("revision", 0)),
-        "base_registry_hash": str(registry.get("registry_hash", "")),
-        "previous_full_receipt_hash": str(old_receipt.get("receipt_hash", "")),
-        "previous_proof_kind": previous_proof_kind,
-        "previous_proof_hash": previous_proof_hash,
-        "target_identity_receipt_id": str(target_identity.get("receipt_id", "")) if target_identity else "",
-        "target_identity_receipt_hash": str(target_identity.get("receipt_hash", "")) if target_identity else "",
-        # Anchor issuance to the already committed Guard-change transaction so
-        # retrying the same request against the same base registry is
-        # byte-for-byte idempotent instead of minting a new proof each time.
-        "issued_at": str(history_match.get("recorded_at", "")),
-        "claim_boundary": "Reuse proves only unchanged registered identity and non-intersection with the named non-broad Guard change.",
-    }
-    ticket["ticket_hash"] = _ticket_hash(ticket)
-    updated = copy.deepcopy(dict(registry))
-    updated["previous_registry_hash"] = str(registry.get("registry_hash", ""))
-    updated["revision"] = int(registry.get("revision", 0)) + 1
-    updated_entry = next(item for item in updated["entries"] if item.get("skill_id") == skill_id)
-    updated_entry.setdefault("reuse_ticket_chain", []).append(ticket)
-    updated_entry["reuse_ticket"] = ticket
-    updated_entry["graduation_status"] = "current"
-    updated_entry["last_revalidation"] = ticket["issued_at"]
-    updated_entry.pop("revalidation_reason", None)
-    updated_entry.pop("pending_guard_change_id", None)
-    updated["updated_at"] = ticket["issued_at"]
-    _append_registry_transaction(
-        updated,
-        registry,
-        request,
-        mutation_kind="reuse_ticket",
-        committed_at=str(ticket["issued_at"]),
-        artifact_hashes=(str(ticket["ticket_hash"]),),
-    )
-    _refresh_registry_hash(updated)
-    return (
-        {
-            "artifact_type": "skillguard_reuse_ticket_result",
-            "status": "issued",
-            "skill_id": skill_id,
-            "ticket_id": ticket["ticket_id"],
-            "ticket_hash": ticket["ticket_hash"],
-            "claim_boundary": ticket["claim_boundary"],
-        },
-        updated,
-        ticket,
     )
 
 
@@ -7475,13 +7054,6 @@ def graduate_portfolio_target(
     blockers: list[dict[str, str]] = []
     active_guard = registry["active_guard"]
     assert isinstance(active_guard, Mapping)
-    currentness_repository_roots = dict(
-        portfolio_target_repository_roots or {}
-    )
-    if target_repository_root is not None:
-        currentness_repository_roots.setdefault(
-            skill_id, target_repository_root
-        )
     target_kind, skill_path, skill_paths, topology_findings = (
         _target_source_configuration(entry, skill_id=skill_id)
     )
@@ -7677,32 +7249,6 @@ def graduate_portfolio_target(
                     )
                 )
 
-    if entry is not None:
-        candidate_order = int(entry["order"])
-        installation_context_holder = (
-            [verified_installation_context]
-            if verified_installation_context is not None
-            else []
-        )
-        guard_change_history = [
-            row for row in registry.get("guard_change_history", []) if isinstance(row, Mapping)
-        ]
-        for prior in entries:
-            if prior.get("lifecycle") in ACTIVE_LIFECYCLES and int(prior["order"]) < candidate_order:
-                if not entry_is_current(
-                    prior,
-                    active_guard,
-                    guard_change_history,
-                    evidence_root=evidence_root,
-                    registry_id=str(registry.get("registry_id", "")),
-                    scope_manifest_id=str(registry.get("scope_manifest_id", "")),
-                    scope_manifest_hash=str(registry.get("scope_manifest_hash", "")),
-                    target_repository_root=currentness_repository_roots.get(
-                        str(prior.get("skill_id", ""))
-                    ),
-                    installation_context_holder=installation_context_holder,
-                ):
-                    blockers.append(_finding("prior_graduate_not_current", skill_id=str(prior.get("skill_id", ""))))
     if blockers or entry is None:
         return (
             {
@@ -7741,8 +7287,6 @@ def graduate_portfolio_target(
     updated_entry["production_revalidation_fingerprint"] = str(
         receipt.get("production_revalidation_fingerprint", "")
     )
-    updated_entry["reuse_ticket"] = None
-    updated_entry["reuse_ticket_chain"] = []
     updated_entry["graduation_status"] = "current"
     updated_entry["failure_classification"] = None
     updated_entry["last_revalidation"] = str(receipt["completed_at"])
@@ -7752,29 +7296,6 @@ def graduate_portfolio_target(
     updated["updated_at"] = str(receipt["completed_at"])
     intended_entry_state_hash = canonical_hash(updated_entry)
 
-    prior_evidence = []
-    for prior in entries:
-        if prior.get("lifecycle") in ACTIVE_LIFECYCLES and int(prior["order"]) < int(entry["order"]):
-            proof = prior.get("reuse_ticket") or prior.get("full_run_receipt") or {}
-            proof_identity = (
-                proof.get("identity")
-                if isinstance(proof.get("identity"), Mapping)
-                else proof
-            )
-            prior_evidence.append(
-                {
-                    "skill_id": prior["skill_id"],
-                    "proof_kind": (
-                        "reuse_ticket" if proof.get("ticket_id") else "full_run_receipt"
-                    ),
-                    "proof_id": str(proof.get("ticket_id") or proof.get("receipt_id") or ""),
-                    "proof_hash": str(proof.get("ticket_hash") or proof.get("receipt_hash") or ""),
-                    "guard_runtime": dict(proof.get("to_guard") or proof.get("guard_runtime") or {}),
-                    "source_fingerprint": str(proof_identity.get("source_fingerprint", "")),
-                    "contract_hash": str(proof_identity.get("contract_hash", "")),
-                    "coverage_fingerprint": str(proof_identity.get("coverage_fingerprint", "")),
-                }
-            )
     target_identity = {
         "target_kind": str(identity["target_kind"]),
         "skill_paths": list(identity["skill_paths"]),
@@ -7837,11 +7358,12 @@ def graduate_portfolio_target(
         "full_run_receipt_hash": str(receipt.get("receipt_hash", "")),
         "full_run_result_hash": str(receipt.get("result_hash", "")),
         "intended_entry_state_hash": intended_entry_state_hash,
-        "prior_evidence": prior_evidence,
+        "prior_evidence": [],
         "issued_at": updated["updated_at"],
         "claim_boundary": (
-            "This receipt proves the named target and every prior active portfolio entry had current full evidence or "
-            "a valid reuse ticket under the exact active Guard identity at issuance."
+            "This receipt proves only the named maintenance unit had complete "
+            "current evidence under the exact active Guard identity at issuance. "
+            "It consumes no proof from another maintenance unit."
         ),
     }
     receipt_payload["receipt_hash"] = canonical_hash(receipt_payload)
@@ -7862,7 +7384,7 @@ def graduate_portfolio_target(
             "skill_id": skill_id,
             "receipt_id": receipt_payload["receipt_id"],
             "receipt_hash": receipt_payload["receipt_hash"],
-            "prior_evidence_count": len(prior_evidence),
+            "prior_evidence_count": 0,
             "claim_boundary": receipt_payload["claim_boundary"],
         },
         updated,

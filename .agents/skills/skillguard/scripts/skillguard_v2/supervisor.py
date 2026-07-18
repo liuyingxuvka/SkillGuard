@@ -10,6 +10,10 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .artifact_validators import WITNESS_KINDS, validate_artifact
+from .author_context import (
+    AuthorContextError,
+    validate_author_maintenance_context,
+)
 from .check_runner import (
     get_or_execute_check,
     hard_evidence_from_check,
@@ -155,7 +159,6 @@ _DEPTH_OBSERVATION_FIELDS = frozenset(
         "contribution_id",
         "contribution",
         "contribution_range_id",
-        "shared_evidence_rationale",
     }
 )
 
@@ -446,6 +449,58 @@ def _load_or_compile_runtime_pair(
     return contract, manifest
 
 
+def _preview_runtime_pair(
+    skill_root: Path,
+    repository_root: Path,
+    compiled_contract: Mapping[str, Any] | None,
+    check_manifest: Mapping[str, Any] | None,
+) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+    """Resolve a candidate current pair without writing compiler outputs."""
+
+    if (compiled_contract is None) != (check_manifest is None):
+        raise SupervisorError(
+            "compiled_runtime_pair_incomplete",
+            "compiled_contract and check_manifest must be supplied together",
+        )
+    if compiled_contract is not None:
+        assert check_manifest is not None
+        return compiled_contract, check_manifest
+    if _is_installed_projection_root(skill_root):
+        control = skill_root / ".skillguard"
+        return (
+            _load_current_runtime_object(
+                control / "compiled-contract.json",
+                "installed_compiled_contract_unreadable",
+            ),
+            _load_current_runtime_object(
+                control / "check-manifest.json",
+                "installed_check_manifest_unreadable",
+            ),
+        )
+    compiled = compile_skill_contract(
+        skill_root,
+        repository_root=repository_root,
+        write=False,
+    )
+    preview_only_findings = {
+        str(finding.code)
+        for finding in compiled.findings
+    }
+    generated_parity_only = preview_only_findings.issubset(
+        {"generated_file_missing", "stale_generated_contract"}
+    )
+    if (
+        compiled.compiled_contract is None
+        or compiled.check_manifest is None
+        or not generated_parity_only
+    ):
+        raise SupervisorError(
+            "contract_preview_failed",
+            json.dumps(compiled.to_dict(), sort_keys=True),
+        )
+    return compiled.compiled_contract, compiled.check_manifest
+
+
 def _current_fingerprints(
     contract: Mapping[str, Any],
     request: Mapping[str, Any],
@@ -618,10 +673,6 @@ def supervise_contract_run(
     skill_root = skill_root.resolve()
     target_root = target_root.resolve()
     repository_root = repository_root.resolve()
-    persistent_owner_root = resolve_owner_evidence_root(
-        repository_root,
-        owner_evidence_root,
-    )
     request_packet = packet.get("request", {})
     if not isinstance(request_packet, Mapping):
         raise SupervisorError("request_packet_invalid", "request must be an object")
@@ -632,11 +683,42 @@ def supervise_contract_run(
     supervision_mode = str(packet.get("supervision_mode", "close"))
     profiles = tuple(str(item) for item in packet.get("profiles", ["enforced"]))
 
+    preview_contract, _preview_manifest = _preview_runtime_pair(
+        skill_root,
+        repository_root,
+        compiled_contract,
+        check_manifest,
+    )
+    effective_run_state_root = (
+        run_state_root
+        if run_state_root is not None
+        else repository_root / "work" / "skillguard" / "run-state"
+    )
+    effective_owner_evidence_root = (
+        owner_evidence_root
+        if owner_evidence_root is not None
+        else repository_root / "work" / "verification" / "owner-evidence"
+    )
+    try:
+        author_context = validate_author_maintenance_context(
+            contract=preview_contract,
+            skill_root=skill_root,
+            target_root=target_root,
+            author_repository_root=repository_root,
+            run_state_root=effective_run_state_root,
+            owner_evidence_root=effective_owner_evidence_root,
+        )
+    except AuthorContextError as exc:
+        raise SupervisorError(exc.code, exc.message) from exc
     contract, manifest = _load_or_compile_runtime_pair(
         skill_root,
         repository_root,
         compiled_contract,
         check_manifest,
+    )
+    persistent_owner_root = resolve_owner_evidence_root(
+        repository_root,
+        author_context.owner_evidence_root,
     )
     if "target_input_paths" in request:
         try:
@@ -670,7 +752,7 @@ def supervise_contract_run(
     claim = claim_run(
         contract,
         request,
-        (run_state_root or target_root).resolve(),
+        author_context.run_state_root,
         decision,
         check_manifest=manifest,
         claim_snapshots=claim_snapshots,

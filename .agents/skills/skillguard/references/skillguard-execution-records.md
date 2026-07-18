@@ -51,21 +51,22 @@ This reference defines the one current execution-record boundary shared by manif
 - Persist a failed attempt as diagnostic execution history but never publish it to the canonical success slot. A retry receives a new execution id; a source or target-input change blocks as stale instead of reusing or silently replacing prior authority.
 - Exclude `.sg-runtime`, run results, diagnostics, progress, receipts, locks, and test output from source authority. Those outputs may change without changing the execution key, while declared implementation, model, contract, check, or target-input changes must stale it.
 
-## Read-only parent receipt consumption
+## Read-only same-unit aggregation
 
 - The canonical ownership policy is `skillguard.validation_execution_ownership.current` and is rendered only from `validation_execution_policy.py`.
-- Before multi-skill validation, freeze the exact checks in the existing verification contract or TestMesh, including each covered obligation/evidence domain, dependency order, persistent receipt root, and one primary execution owner. Missing, duplicate, or cyclic ownership blocks before execution.
-- A consumer resolves the exact current owner receipt from the frozen execution identity and inputs. It verifies or projects that receipt and never carries or reruns the owner's command.
+- Before validation, freeze one maintenance unit's exact checks in the existing verification contract or TestMesh, including member, evidence subject, semantic check, covered obligation/evidence domain, dependency order, persistent private receipt root, and one execution owner per check. Missing, duplicate, foreign-unit, or cyclic ownership blocks before execution.
+- An author-side same-unit aggregator resolves the exact current owner receipt from the frozen execution identity and inputs. A consumer distribution carries neither that receipt nor the owner's command.
 - Maintained inputs invalidate only affected receipts. Reports, receipts, progress logs, and other runtime outputs stay outside source authority and cannot trigger the check that produced them.
-- Create one frozen TestMesh aggregation after the planned owner receipts exist. OpenSpec and other downstream consumers use only `--replay-aggregation-ref` with its exact portable reference.
-- Full aggregation in an external maintained repository binds the single current canonical SkillGuard source with `--canonical-skillguard-root`. Aggregation, replay, and OpenSpec projection re-check that same source against the active installation receipt; a missing or different source blocks, and no fallback source is discovered.
+- Create one frozen TestMesh aggregation after this maintenance unit's planned owner receipts exist. Only author-side checks in the same unit may replay that aggregation; another unit must own its own checks and evidence.
+- Full aggregation in an external maintained author repository binds the single current canonical SkillGuard source with `--canonical-skillguard-root`. Aggregation and replay re-check that same author source against the active SkillGuard installation receipt; a missing or different source blocks, and no fallback source is discovered.
 - The replay path never invokes execution, resume, repair, uncovered-owner completion, or receipt backfill. A missing, partial, stale, foreign, tampered, or identity-incomplete aggregation/child authority returns failed.
-- A `full` aggregation carries exactly one current installation binding plus one independently current global-prompt binding. Both are projections outside child execution and neither can be manufactured from a child receipt.
-- Do not use an OpenSpec runner `--resume` option as a receipt auditor; a runner allowed to fill missing checks is an executor and therefore violates the single-parent ownership boundary.
+- A final full aggregation may bind the unit's clean consumer installation projection when installation is in scope. The private global prompt is author routing state, not a child proof or consumer requirement.
+- Do not expose an execution-capable `--resume` path as a receipt auditor. A runner allowed to fill missing checks is an executor and must remain inside the owning maintenance unit.
+- Official OpenSpec may be read as requirements context, but it is never a receipt consumer, execution owner, cache/session bridge, or SkillGuard maintenance target.
 - Start full validation only after the source and toolchain identities are frozen, under one explicit execution owner.
 - After a launcher timeout, cancellation, or interruption, confirm that the entire descendant process tree count is zero before accepting evidence or starting another owner. A `cleanup-unconfirmed` result is invalid and non-reusable.
 - Do not use a Windows Scheduled Task, background resume, or unattended retry script to run full validation or resume a mutable worktree.
 
 ## Privacy and display boundary
 
-Persistent execution records use path tokens, relative locators, command tokens, hashes, and redacted diagnostic text. Runtime path displays may help a maintainer distinguish the canonical source, private working root, and installed copy, but they default to home-redacted display and remain stderr-only private diagnostics. Neither form proves that an install, release, GitHub operation, or remote CI run occurred.
+Persistent execution records use path tokens, relative locators, command tokens, hashes, and redacted diagnostic text. They stay in the author-maintenance evidence root and never enter a consumer skill or ordinary project. Runtime path displays may help a maintainer distinguish the canonical source, private working root, and installed copy, but they default to home-redacted display and remain stderr-only private diagnostics. Neither form proves that an install, release, GitHub operation, or remote CI run occurred.

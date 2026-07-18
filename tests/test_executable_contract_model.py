@@ -49,7 +49,7 @@ class ExecutableContractModelTests(unittest.TestCase):
             "hidden_failure_blocks",
             "former_authority_residual_blocks",
             "non_enforced_closure_blocks",
-            "stale_prior_graduate_blocks",
+            "missing_unit_evidence_blocks",
             "parallel_domain_executor_blocks",
             "contract_only_depth_blocks_closure",
             "duplicate_generic_evidence_blocks",
@@ -63,7 +63,7 @@ class ExecutableContractModelTests(unittest.TestCase):
             "external_binding_fallback_blocks",
             "external_reference_member_fallback_blocks",
             "standalone_member_path_mismatch_blocks",
-            "missing_project_adoption_blocks_maintenance_closure",
+            "missing_author_adoption_blocks_maintenance_closure",
         }
         self.assertTrue(expected.issubset(scenario_names))
 
@@ -97,7 +97,7 @@ class ExecutableContractModelTests(unittest.TestCase):
             "case:guard:changed-same-run",
             "case:loop:no-delta",
             "case:loop:over-bound",
-            "case:portfolio:prior-stale",
+            "case:portfolio:unit-evidence-stale",
         }
         self.assertTrue(expected.issubset(case_ids))
 
@@ -116,7 +116,7 @@ class ExecutableContractModelTests(unittest.TestCase):
             "deep_audit",
             "global_router_handoff",
             "audit_provenance",
-            "adopt_project",
+            "adopt_author_repository",
         }
         self.assertTrue(required.issubset(functions))
         routes = {row["route_id"]: row for row in export["routes"]}

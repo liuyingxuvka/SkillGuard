@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare, verify, activate, recover, or roll back one maintained skill."""
+"""Prepare, verify, activate, recover, or roll back one clean consumer skill."""
 
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ def main(argv: list[str] | None = None) -> int:
         {
             "status": status,
             "reports": reports,
-            "claim_boundary": "The target installer copies and activates only the exact current installation projection; it executes no target-native command.",
+            "claim_boundary": "The consumer installer copies and activates only target-owned files from the exact consumer-distribution projection; it carries no author-control state and executes no target-native command.",
         }
     )
     return 0 if status == "passed" else 1

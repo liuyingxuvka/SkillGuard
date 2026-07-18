@@ -10,7 +10,6 @@ from pathlib import Path
 from skillguard_utils import emit_json
 from skillguard_v2.test_mesh import (
     execute_test_mesh,
-    project_current_test_mesh_aggregation_to_openspec_receipt,
     replay_current_test_mesh_aggregation,
 )
 
@@ -22,13 +21,6 @@ def main(argv: list[str] | None = None) -> int:
     action.add_argument(
         "--replay-aggregation-ref",
         help="Read-only replay of one current aggregation reference JSON file.",
-    )
-    action.add_argument(
-        "--project-openspec-receipt",
-        help=(
-            "Read-only replay one current aggregation reference and project it "
-            "into OpenSpec's existing portable receipt wire."
-        ),
     )
     parser.add_argument("--repository-root", default=".")
     parser.add_argument(
@@ -58,21 +50,6 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument("--global-prompt-codex-home")
-    parser.add_argument("--openspec-evidence-root")
-    parser.add_argument(
-        "--openspec-evidence-root-token", default="SKILLGUARD_EVIDENCE"
-    )
-    parser.add_argument("--provider-id")
-    parser.add_argument("--work-package-id")
-    parser.add_argument("--check-id")
-    parser.add_argument("--semantic-check-id")
-    parser.add_argument("--execution-id")
-    parser.add_argument("--coverage", action="append", default=[])
-    parser.add_argument(
-        "--validation-obligation", action="append", default=[]
-    )
-    parser.add_argument("--source-path", action="append", default=[])
-    parser.add_argument("--toolchain-fingerprint")
     args = parser.parse_args(argv)
 
     repository_root = Path(args.repository_root).resolve()
@@ -101,63 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         else None
     )
 
-    if args.project_openspec_receipt:
-        forbidden = any(
-            (
-                args.run_root,
-                args.skill_root,
-                args.target_root,
-                args.frozen_plan,
-                args.freeze_identity,
-                args.full_admission_reason,
-                args.installation_receipt_root,
-            )
-        ) or args.mode != "plan_only"
-        if forbidden:
-            parser.error(
-                "--project-openspec-receipt is a zero-execution projection and "
-                "rejects planning, execution, freeze, and installation options"
-            )
-        required = {
-            "--openspec-evidence-root": args.openspec_evidence_root,
-            "--provider-id": args.provider_id,
-            "--work-package-id": args.work_package_id,
-            "--check-id": args.check_id,
-            "--semantic-check-id": args.semantic_check_id,
-            "--execution-id": args.execution_id,
-            "--toolchain-fingerprint": args.toolchain_fingerprint,
-        }
-        missing = [name for name, value in required.items() if not value]
-        if missing or not args.coverage or not args.validation_obligation or not args.source_path:
-            parser.error(
-                "--project-openspec-receipt requires "
-                + ", ".join(missing)
-                + (", --coverage, --validation-obligation, and --source-path" if not missing else " plus --coverage, --validation-obligation, and --source-path")
-            )
-        reference = json.loads(
-            repository_path(args.project_openspec_receipt).read_text(
-                encoding="utf-8"
-            )
-        )
-        report = project_current_test_mesh_aggregation_to_openspec_receipt(
-            repository_root,
-            owner_root,
-            reference,
-            evidence_root=repository_path(args.openspec_evidence_root),
-            evidence_root_token=args.openspec_evidence_root_token,
-            provider_id=args.provider_id,
-            work_package_id=args.work_package_id,
-            check_id=args.check_id,
-            semantic_check_id=args.semantic_check_id,
-            execution_id=args.execution_id,
-            coverage_ids=args.coverage,
-            validation_obligation_ids=args.validation_obligation,
-            source_paths=args.source_path,
-            toolchain_fingerprint=args.toolchain_fingerprint,
-            canonical_skillguard_root=canonical_skillguard_root,
-            global_prompt_codex_home=prompt_home,
-        )
-    elif args.replay_aggregation_ref:
+    if args.replay_aggregation_ref:
         forbidden = any(
             (
                 args.run_root,

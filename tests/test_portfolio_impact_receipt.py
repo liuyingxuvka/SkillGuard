@@ -10,11 +10,9 @@ from unittest.mock import patch
 from _skillguard_v2_runtime_fixture import SCRIPT_ROOT  # noqa: F401
 from skillguard_v2.contract_compiler import canonical_hash
 from skillguard_v2.portfolio import (
-    REUSE_REQUEST_SCHEMA,
     _clear_member_revalidation_state,
     apply_guard_change,
     atomic_write_json,
-    issue_reuse_ticket,
     portfolio_registry_hash,
     validate_registry,
 )
@@ -140,7 +138,6 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
             member_id: {
                 "graduation_status": "revalidation_required",
                 "pending_guard_change_id": self.change["change_id"],
-                "reuse_ticket_absent": True,
             }
             for member_id in self.chaos_members
         }
@@ -163,7 +160,6 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
                         if target_id in self.invalidated_top_level_ids
                         else {}
                     ),
-                    "reuse_ticket": None,
                     **(
                         {"member_revalidation_statuses": member_statuses}
                         if target_id == self.chaos_suite_id
@@ -299,17 +295,13 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
             report["blockers"],
         )
 
-    def test_registry_reuse_or_tamper_blocks(self) -> None:
+    def test_registry_cross_unit_reuse_surface_or_tamper_blocks(self) -> None:
         changed = copy.deepcopy(self.registry)
         changed["entries"][0]["reuse_ticket"] = {"ticket_id": "forbidden"}
         atomic_write_json(self.registry_path, changed)
         report = self._verify()
         self.assertEqual("blocked", report["status"])
         self.assertIn("portfolio_impact_registry_hash_mismatch", report["blockers"])
-        self.assertIn(
-            "portfolio_impact_reuse_not_cleared:logicguard-suite",
-            report["blockers"],
-        )
 
     def test_receipt_bytes_tamper_blocks(self) -> None:
         head = json.loads((self.receipt_root / "HEAD.json").read_text(encoding="utf-8"))
@@ -391,7 +383,6 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
                         }
                         for member_index, member_id in enumerate(members)
                     ],
-                    "reuse_ticket": None,
                 }
             )
         registry: dict[str, object] = {
@@ -407,7 +398,7 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
         registry["registry_hash"] = portfolio_registry_hash(registry)
         return registry
 
-    def test_apply_persists_members_and_reuse_cannot_bypass(self) -> None:
+    def test_apply_persists_only_affected_member_revalidation(self) -> None:
         registry = self._minimal_apply_registry()
         prior_statuses = {
             entry["skill_id"]: entry["graduation_status"]
@@ -442,7 +433,8 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
             for row in updated["entries"]
             if row["skill_id"] == self.unrelated_active_target
         )
-        self.assertIsNone(unrelated["reuse_ticket"])
+        self.assertNotIn("reuse_ticket", unrelated)
+        self.assertNotIn("reuse_ticket_chain", unrelated)
         self.assertNotIn("pending_guard_change_id", unrelated)
         suite = next(
             row
@@ -457,36 +449,16 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
             sorted(self.chaos_members), result["invalidated_member_ids"]
         )
 
-        identity = {
-            "source_fingerprint": "1" * 64,
-            "contract_hash": "2" * 64,
-            "command_fingerprint": "3" * 64,
-            "environment_fingerprint": "4" * 64,
-            "coverage_fingerprint": "5" * 64,
-        }
-        reuse_request = {
-            "schema_version": REUSE_REQUEST_SCHEMA,
-            "transaction_id": "tx:member-reuse-forbidden",
-            "expected_registry_revision": updated["revision"],
-            "base_registry_hash": updated["registry_hash"],
-            "skill_id": self.chaos_suite_id,
-            "guard_change": change,
-            "previous_result": identity,
-            "current_identity": identity,
-        }
-        with patch(
-            "skillguard_v2.portfolio.validate_registry", return_value=[]
-        ):
-            reuse, _updated, _ticket = issue_reuse_ticket(
-                updated,
-                reuse_request,
-                content_impact_plan=self.content_impact_plan,
-            )
-        blocker_codes = {
-            row["code"] for row in reuse.get("blockers", [])
-        }
+        injected = copy.deepcopy(updated)
+        target = next(
+            row
+            for row in injected["entries"]
+            if row["skill_id"] == self.chaos_suite_id
+        )
+        target["reuse_ticket"] = {"ticket_id": "foreign-proof"}
+        blocker_codes = {row["code"] for row in validate_registry(injected)}
         self.assertIn(
-            "reuse_forbidden_with_member_revalidation", blocker_codes
+            "portfolio_cross_unit_reuse_surface_forbidden", blocker_codes
         )
 
     def test_registry_validator_rejects_current_suite_hiding_member_state(self) -> None:
@@ -501,7 +473,6 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
             self.chaos_members[0]: {
                 "graduation_status": "revalidation_required",
                 "pending_guard_change_id": self.change["change_id"],
-                "reuse_ticket_absent": True,
             }
         }
         codes = {row["code"] for row in validate_registry(registry)}
@@ -513,7 +484,6 @@ class PortfolioImpactReceiptTests(unittest.TestCase):
                 member_id: {
                     "graduation_status": "revalidation_required",
                     "pending_guard_change_id": self.change["change_id"],
-                    "reuse_ticket_absent": True,
                 }
                 for member_id in self.chaos_members
             }

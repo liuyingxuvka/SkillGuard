@@ -78,7 +78,7 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.control.mkdir(parents=True)
         self.model_dir.mkdir(parents=True)
         (self.skill / "SKILL.md").write_text(
-            "---\nname: fixture-skill\ndescription: Fixture for SkillGuard V2 compiler tests.\n---\n# Fixture\n",
+            "---\nname: fixture-skill\ndescription: Standalone fixture for contract compiler tests.\n---\n# Fixture\n",
             encoding="utf-8",
         )
         self.export = copy.deepcopy(self.base_export)
@@ -227,6 +227,11 @@ class ContractCompilerV2Tests(unittest.TestCase):
             checks.append(
                 {
                     "check_id": check_id,
+                    "semantic_check_id": check_id,
+                    "maintenance_unit_id": "unit:fixture-skill",
+                    "member_skill_id": "fixture-skill",
+                    "evidence_subject_id": f"subject:fixture-skill:{check_id}",
+                    "execution_owner_id": f"owner:fixture-skill:{check_id}",
                     "kind": "model_assertion",
                     "evidence_class": "hard",
                     "covers_obligation_ids": [obligation_id],
@@ -246,6 +251,11 @@ class ContractCompilerV2Tests(unittest.TestCase):
             checks.append(
                 {
                     "check_id": check_id,
+                    "semantic_check_id": check_id,
+                    "maintenance_unit_id": "unit:fixture-skill",
+                    "member_skill_id": "fixture-skill",
+                    "evidence_subject_id": f"subject:fixture-skill:{check_id}",
+                    "execution_owner_id": f"owner:fixture-skill:{check_id}",
                     "kind": "model_assertion",
                     "evidence_class": "hard",
                     "covers_obligation_ids": [obligation_id],
@@ -256,6 +266,19 @@ class ContractCompilerV2Tests(unittest.TestCase):
         return {
             "schema_version": BINDING_SOURCE_SCHEMA,
             "skill_id": "fixture-skill",
+            "repository_role": "skill_maintainer_source",
+            "maintenance_unit_id": "unit:fixture-skill",
+            "member_skill_ids": ["fixture-skill"],
+            "consumer_projection": {
+                "projection_id": "projection:consumer-distribution",
+                "prohibited_path_prefixes": [".skillguard/"],
+                "prohibited_prompt_tokens": [
+                    "SkillGuard",
+                    ".skillguard",
+                    "skillguard.py",
+                ],
+                "release_manifest_path": "consumer-release.json",
+            },
             "model_id": model["model_id"],
             "model_path": ".flowguard/skill_contract_model.py",
             "confirmed": True,
@@ -302,6 +325,10 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.binding["checks"].append(
             {
                 "check_id": check_id,
+                "semantic_check_id": check_id,
+                "maintenance_unit_id": "unit:fixture-skill",
+                "member_skill_id": "fixture-skill",
+                "evidence_subject_id": f"subject:fixture-skill:{check_id}",
                 "kind": "model_assertion",
                 "evidence_class": "hard",
                 "covers_obligation_ids": [obligation["obligation_id"]],
@@ -805,7 +832,7 @@ class ContractCompilerV2Tests(unittest.TestCase):
             "check_behavior_field_unknown", {row.code for row in result.findings}
         )
 
-    def test_duplicate_commands_share_one_execution_owner_but_keep_check_projections(self) -> None:
+    def test_distinct_semantic_checks_keep_distinct_execution_owners_and_projections(self) -> None:
         result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
 
         self.assertTrue(result.ok, result.to_dict())
@@ -815,7 +842,10 @@ class ContractCompilerV2Tests(unittest.TestCase):
             if row["kind"] == "model_assertion"
         ]
         self.assertGreater(len(model_checks), 1)
-        self.assertEqual(1, len({row["execution_owner_id"] for row in model_checks}))
+        self.assertEqual(
+            len(model_checks),
+            len({row["execution_owner_id"] for row in model_checks}),
+        )
         self.assertEqual(
             len(model_checks),
             len({row["projection_declaration_hash"] for row in model_checks}),
@@ -1552,6 +1582,11 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.binding["checks"].append(
             {
                 "check_id": "check:orphan",
+                "semantic_check_id": "check:orphan",
+                "maintenance_unit_id": "unit:fixture-skill",
+                "member_skill_id": "fixture-skill",
+                "evidence_subject_id": "subject:fixture-skill:check:orphan",
+                "execution_owner_id": "owner:fixture-skill:check:orphan",
                 "kind": "model_assertion",
                 "evidence_class": "hard",
                 "covers_obligation_ids": [self.export["obligations"][0]["obligation_id"]],
