@@ -186,7 +186,6 @@ REQUIRED_SKILL_SECTIONS = (
     "Required Workflow",
     "Hard Gates",
     "Output Requirements",
-    "SkillGuard Maintenance",
 )
 OUTPUT_REQUIREMENT_TERMS = {
     "evidence": ("evidence",),

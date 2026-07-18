@@ -56,6 +56,7 @@ class CurrentRuntimeAuthorityModelTests(unittest.TestCase):
                 "partial_replacement_cannot_activate",
                 "independent_consumer_builds_may_differ",
                 "consumer_skillguard_projection_blocks",
+                "consumer_author_maintenance_section_blocks",
                 "authority_claim_overreach_blocks",
             }.issubset(names)
         )

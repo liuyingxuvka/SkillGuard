@@ -115,6 +115,7 @@ class CurrentAuthorityCase:
     consumer_carries_authority_decision: bool = False
     consumer_contains_skillguard_control_files: bool = False
     consumer_contains_skillguard_prompt: bool = False
+    consumer_contains_skillguard_maintenance_section: bool = False
     consumer_contains_skillguard_receipt: bool = False
     consumer_contains_router_state: bool = False
     authority_claimed: bool = True
@@ -314,13 +315,14 @@ def consumer_distributions_are_independent(
             state.consumer_carries_authority_decision,
             state.consumer_contains_skillguard_control_files,
             state.consumer_contains_skillguard_prompt,
+            state.consumer_contains_skillguard_maintenance_section,
             state.consumer_contains_skillguard_receipt,
             state.consumer_contains_router_state,
         )
     ):
         return _fail(
             "consumer_distributions_are_independent",
-            "a consumer cannot carry SkillGuard authority, control files, prompt, receipts, or router state",
+            "a consumer cannot carry SkillGuard authority, control files, author-maintenance sections, prompts, receipts, or router state",
         )
     return _pass()
 
@@ -540,6 +542,18 @@ SCENARIOS = (
         _violation(
             "a consumer cannot carry the author system",
             "consumer_skillguard_projection_blocks",
+            "consumer_distributions_are_independent",
+        ),
+    ),
+    _scenario(
+        replace(
+            GOOD_CASE,
+            case_name="consumer_author_maintenance_section_blocks",
+            consumer_contains_skillguard_maintenance_section=True,
+        ),
+        _violation(
+            "a consumer entrypoint cannot carry an author-maintenance section",
+            "consumer_author_maintenance_section_blocks",
             "consumer_distributions_are_independent",
         ),
     ),

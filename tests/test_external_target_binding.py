@@ -122,6 +122,80 @@ def test_external_nested_contract_and_static_checks_share_canonical_binding(
     assert str(repository) not in serialized
 
 
+def test_consumer_clean_skill_passes_without_author_maintenance_section(
+    tmp_path: Path,
+) -> None:
+    repository, target = _nested_current_target(tmp_path)
+    skill_path = target / "SKILL.md"
+    skill_path.write_text(
+        """---
+name: good_single_skill
+description: Validate one bounded example artifact using its native checks.
+---
+
+# Good Single Skill
+
+## Purpose
+
+Validate one bounded example artifact.
+
+## Entrypoint Scope
+
+This entrypoint owns only the example validation request.
+
+## Local Material Routing
+
+Use the files and native checks declared by this target.
+
+## Entrypoint Acceptance Map
+
+Accept a readable example, validate it, and return a terminal result.
+
+## Use When
+
+Use this skill for the bounded example-validation request.
+
+## Do Not Use When
+
+Do not use it for unrelated tasks or unsupported claims.
+
+## Required Workflow
+
+1. Read the requested example.
+2. Run the declared native check.
+3. Stop on a failed or blocked result.
+
+## Hard Gates
+
+Missing input, failed validation, or incomplete evidence blocks completion.
+
+## Output Requirements
+
+Report evidence, failures, blockers, skipped checks, residual risk, and the
+claim boundary.
+""",
+        encoding="utf-8",
+    )
+    result = compile_skill_contract(
+        target,
+        repository_root=repository,
+        write=True,
+    )
+    assert result.ok, result.to_dict()
+
+    code, report = _run(
+        "check-skill",
+        "--repository-root",
+        str(repository),
+        "--target",
+        "skills/good_single_skill",
+    )
+
+    assert code == 0, report
+    assert report["decision"] == "pass"
+    assert "SkillGuard Maintenance" not in skill_path.read_text(encoding="utf-8")
+
+
 def test_standalone_dot_remains_one_repository_member_binding(tmp_path: Path) -> None:
     target = tmp_path / "good_single_skill"
     shutil.copytree(FIXTURE, target)

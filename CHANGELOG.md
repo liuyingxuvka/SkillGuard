@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.4 - 2026-07-18
+
+- Fixed `check-skill` so its required target sections are exclusively
+  target-owned consumer instructions; the author-only `SkillGuard Maintenance`
+  heading is no longer required in graduated entrypoints.
+- Kept author currentness on the exact contract trio and author repository
+  policy, with no conditional section mode, fallback, or compatibility route.
+- Extended the current-runtime-authority FlowGuard model and external-target
+  regression coverage to block author-maintenance instructions in consumer
+  prompts while accepting clean consumer skills.
+
 ## v0.3.3 - 2026-07-16
 
 - **BREAKING:** Separated private author maintenance from clean consumer
