@@ -4,24 +4,24 @@ Recorded before production implementation. This is identity evidence, not a comp
 
 ## Canonical repositories
 
-- SkillGuard implementation baseline: `C:\skillguard-template-integration-20260717`
+- SkillGuard implementation baseline: `<SKILLGUARD_REPOSITORY>`
   - branch: `codex/validated-template-pack-integration-current`
   - frozen pre-change revision: `aa9d7ec92212bc93057d607a8dd0350e46d71dba`
   - upstream at freeze: `origin/master`
 - FlowGuard:
-  - root: `C:\Users\liu_y\Documents\FlowGuard`
+  - root: `<FLOWGUARD_REPOSITORY>`
   - branch: `main`
   - frozen pre-change revision: `6ffe98ac241759e2656cc127080e553d47d3c33c`
 
 ## Protected SkillGuard worktrees
 
-- `C:\Users\liu_y\Documents\SkillGuard_20260614\SkillGuard`
+- `<HISTORICAL_SKILLGUARD_CHECKOUT>`
   - revision `0a51cde80fb894f315dcc9bb51557a523d4fbf26`
   - user/peer changes in `.flowguard/adoption_log.jsonl` and `docs/flowguard_adoption_log.md`
-- `C:\Users\liu_y\Documents\SkillGuard_20260614\worktrees\target-neutral-route-branches`
+- `<HISTORICAL_SKILLGUARD_WORKTREE>`
   - revision `ab92d6c5829504d48c358fb04263469d2ee822ab`
   - uncommitted Global Router, TestMesh, version, and release work
-- `C:\sgv2-skillguard-20260710`
+- `<HISTORICAL_SKILLGUARD_V2_CHECKOUT>`
   - revision `3528d73f0c866a316ff3234be499978fcd77ad3a`
 - Detached/release worktrees remain registered and are not cleanup targets.
 

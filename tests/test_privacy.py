@@ -69,6 +69,27 @@ class PrivacyTests(unittest.TestCase):
         self.assertIn("github_token", serialized)
         self.assertIn("machine_specific_absolute_path", serialized)
 
+    def test_generic_windows_and_posix_machine_paths_are_blocked(self) -> None:
+        leak = self.workspace / "generic-paths.txt"
+        windows_path = "D:" + chr(92) + "private-work" + chr(92) + "report.json"
+        posix_path = "/" + "home/private-user/report.json"
+        leak.write_text(
+            f"windows={windows_path}\nposix={posix_path}\n",
+            encoding="utf-8",
+        )
+        report = audit_public_export(
+            ROOT,
+            self.policy,
+            candidate_paths=[self._relative(leak)],
+        )
+        self.assertEqual("blocked", report["status"])
+        findings = [
+            row
+            for row in report["findings"]
+            if row["code"] == "machine_specific_absolute_path"
+        ]
+        self.assertEqual([1, 2], [row["line"] for row in findings])
+
     def test_runtime_state_and_private_extensions_block(self) -> None:
         runtime = ROOT / ".skillguard" / "runs" / "privacy-fixture.log"
         runtime.parent.mkdir(parents=True, exist_ok=True)

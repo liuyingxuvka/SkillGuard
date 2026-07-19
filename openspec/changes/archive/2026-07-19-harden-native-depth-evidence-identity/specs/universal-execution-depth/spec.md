@@ -11,6 +11,14 @@ Every non-trivial supervised run MUST produce an immutable target-local receipt 
 - **WHEN** a functional input, contract, check command, owner, toolchain, runtime, or required installed projection changes
 - **THEN** replay SHALL classify only affected receipts and consumers as stale
 
+#### Scenario: One target-input role changes
+- **WHEN** one owner-scoped target-input role changes and all unrelated owner inputs remain identical
+- **THEN** replay SHALL stale only the owner or owners that explicitly consume that role plus genuine semantic receipt dependants
+
+#### Scenario: Attempt identity changes
+- **WHEN** only the claimed run ID, run-root path, step ID, timestamp, parent profile, or aggregation identity changes
+- **THEN** the exact current owner receipt SHALL remain reusable
+
 ### Requirement: Declared checks, not universal test categories
 SkillGuard SHALL require completion of the target's declared checks and SHALL NOT require every target to declare a purpose contract, counterexample, positive/shallow pair, semantic universe, or native finding.
 
@@ -57,3 +65,34 @@ Installation MUST use the current transactional whole-tree projection with verif
 #### Scenario: Partial installed sync
 - **WHEN** only selected files are copied into the installed tree
 - **THEN** installation parity SHALL fail
+
+### Requirement: Final full execution begins only after frozen admission
+A final full validation MUST have one current frozen source/toolchain/impact-plan identity and complete required target inputs before the first owner process launches.
+
+#### Scenario: Caller labels mutable work as final
+- **WHEN** the request claims final or release scope while any frozen identity or required target-input role is absent, stale, or mutable
+- **THEN** planning SHALL block with zero owner executions
+
+#### Scenario: Frozen final plan is current
+- **WHEN** every final-admission input is current and the reason is licensed by the changed component graph
+- **THEN** exactly one final execution owner MAY execute missing owners and reuse exact current owner receipts
+
+### Requirement: Release tag does not repeat the regression suite
+The exact release commit MUST pass the ordinary branch-push regression suite before tagging. A later tag push MUST verify tag, version, and commit identity without launching the test or model suite again.
+
+#### Scenario: Validated release commit is tagged
+- **WHEN** the exact branch commit has passed the required GitHub CI jobs and its matching `v<VERSION>` tag is pushed
+- **THEN** tag CI SHALL execute only the release-identity check
+- **AND** full, focused, installation, and model regression jobs SHALL remain not scheduled for that tag ref
+
+## REMOVED Requirements
+
+### Requirement: Target-neutral depth profile
+
+### Requirement: Unique evidence contribution
+
+### Requirement: Honest depth status
+
+### Requirement: Calibration before enforcement
+
+### Requirement: Closure consumes execution depth

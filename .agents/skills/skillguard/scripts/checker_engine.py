@@ -3019,6 +3019,7 @@ def global_registry_current_route_failures(
     registry: dict[str, Any],
     *,
     codex_home: str | None = None,
+    skill_roots: list[str] | None = None,
 ) -> tuple[list[str], list[str]]:
     """Rebuild only the current route projection for a supplied registry.
 
@@ -3027,7 +3028,11 @@ def global_registry_current_route_failures(
     an unchanged current route or managed prompt stale.
     """
 
-    roots, blockers = registry_roots_for_check(registry, [], codex_home)
+    roots, blockers = registry_roots_for_check(
+        registry,
+        list(skill_roots or []),
+        codex_home,
+    )
     if blockers:
         return [], blockers
     current = build_global_registry_payload(roots)

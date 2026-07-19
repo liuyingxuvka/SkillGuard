@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   v2-focused:
+    if: ${{ github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/') }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,10 +23,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.56.0"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.58.4"
       - run: python -m pytest tests/test_contract_compiler_v2.py tests/test_installation.py -q
 
   clean-installed-layout:
+    if: ${{ github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/') }}
     strategy:
       fail-fast: false
       matrix:
@@ -37,10 +39,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.56.0"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.58.4"
       - run: python .agents/skills/skillguard/scripts/skillguard_install.py --canonical-skill-root .agents/skills/skillguard --stage-root .install-smoke/.codex/skills/skillguard --prepare
 
   full-current-suite:
+    if: ${{ github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/') }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -48,5 +51,20 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.56.0"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.58.4"
       - run: python -m pytest -q
+
+  tag-release-identity:
+    if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify exact version tag and commit
+        shell: bash
+        run: |
+          version="$(tr -d '\r\n' < VERSION)"
+          test "${GITHUB_REF_TYPE}" = "tag"
+          test "${GITHUB_REF_NAME}" = "v${version}"
+          test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "${GITHUB_REF_NAME}")"

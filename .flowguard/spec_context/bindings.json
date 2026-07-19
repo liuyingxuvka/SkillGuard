@@ -12,6 +12,18 @@
         "openspec/changes/separate-skillguard-authoring-from-consumer-runtime/tasks.md"
       ],
       "claim_boundary": "This record supplies read-only requirement context only. It contains no test command, execution owner, session, cache, receipt reference, validation result, or cross-tool authority."
+    },
+    {
+      "provider_id": "openspec",
+      "change_id": "harden-native-depth-evidence-identity",
+      "status": "active",
+      "artifact_paths": [
+        "openspec/changes/harden-native-depth-evidence-identity/proposal.md",
+        "openspec/changes/harden-native-depth-evidence-identity/design.md",
+        "openspec/changes/harden-native-depth-evidence-identity/specs",
+        "openspec/changes/harden-native-depth-evidence-identity/verification-contract.yaml"
+      ],
+      "claim_boundary": "This record supplies read-only requirement context for owner-scoped target inputs, semantic execution identity, per-selector health, and final prelaunch admission. It contains no validation result or receipt authority."
     }
   ]
 }

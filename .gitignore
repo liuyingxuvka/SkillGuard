@@ -18,6 +18,7 @@ dist/
 # Test and coverage outputs
 .pytest_cache/
 .coverage
+.agents/skills/.flowguard-skill-suite-ownership.json
 .coverage.*
 coverage.xml
 htmlcov/

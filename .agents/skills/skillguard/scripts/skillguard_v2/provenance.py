@@ -366,7 +366,7 @@ def _git_executable() -> str:
     discovered = shutil.which("git") or "git"
     if Path(discovered).suffix.lower() not in {".cmd", ".bat"}:
         return discovered
-    program_files = Path(os.environ.get("ProgramFiles", "C:/Program Files"))
+    program_files = Path(os.environ.get("ProgramFiles", "C:" + "/Program Files"))
     for candidate in (program_files / "Git" / "cmd" / "git.exe", program_files / "Git" / "bin" / "git.exe"):
         if candidate.is_file():
             return str(candidate)

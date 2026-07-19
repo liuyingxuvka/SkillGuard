@@ -141,6 +141,14 @@
           "minLength": 1,
           "type": "string"
         },
+        "target_input_role_ids": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
         "timeout_seconds": {
           "minimum": 1,
           "type": "integer"

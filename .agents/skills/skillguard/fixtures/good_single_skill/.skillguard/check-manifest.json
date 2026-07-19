@@ -1,5 +1,5 @@
 {
-  "check_declarations_hash": "F11C0F119B02CC0A1C0B8C97A5B5F2D14D365E2CEE021C72132A45D29D21F073",
+  "check_declarations_hash": "E03AB2202CA0B40A17A72610054C91372D9A1E8ACE84DD6AAE572750FF690DE8",
   "checks": [
     {
       "args": [
@@ -36,10 +36,11 @@
       "kind": "command",
       "maintenance_unit_id": "unit:good_single_skill",
       "member_skill_id": "good_single_skill",
-      "owner_declaration_hash": "sha256:4c5d661e2506105246327fe423ad2f8862824bb8d10551ae0db701cd6b795755",
+      "owner_declaration_hash": "sha256:5884bfcf099897403c5617c51453d8c56b82f78f13318dbb77c32547d222baee",
       "owner_input_projection_hash": "sha256:3db28f6614f9b6cab0dc19c6b1fe6b899b5a46871563e6517cc9ec62818522ff",
       "projection_declaration_hash": "sha256:7b060eaf3392c00f9a1b70cbd95c86d21ae7b391944d4d4c15d8cfd8524d8c8b",
       "semantic_check_id": "semantic:good_single_skill:generated-current",
+      "target_input_role_ids": [],
       "timeout_seconds": 30
     }
   ],
@@ -155,7 +156,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:5bdfc1197646f0c2794f85aa98fb1a1ce711da48b230d9567b187de916f36e51",
+    "impact_graph_hash": "sha256:920b48245fa1bc581f5df1d987cf461f8b4cba07d3576b353a0e2ba3dc579b03",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -214,8 +215,9 @@
             "path": "scripts/run_checks.py"
           }
         ],
-        "owner_declaration_hash": "sha256:4c5d661e2506105246327fe423ad2f8862824bb8d10551ae0db701cd6b795755",
-        "owner_input_projection_hash": "sha256:3db28f6614f9b6cab0dc19c6b1fe6b899b5a46871563e6517cc9ec62818522ff"
+        "owner_declaration_hash": "sha256:5884bfcf099897403c5617c51453d8c56b82f78f13318dbb77c32547d222baee",
+        "owner_input_projection_hash": "sha256:3db28f6614f9b6cab0dc19c6b1fe6b899b5a46871563e6517cc9ec62818522ff",
+        "target_input_role_ids": []
       }
     ],
     "policy_id": "skillguard.content_impact_policy.current",
@@ -283,9 +285,9 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "87193C5F2CD5D638E598421F3AB9A801EBE9B3D77734813FBC916A0066C378E5",
+  "contract_hash": "6B31EF339F659B48264446D04E7D0AA8EDD61B68CBD58D1E15B992DC6A683AD6",
   "maintenance_unit_id": "unit:good_single_skill",
-  "manifest_hash": "4845009DF53636BBCAFA4969E980C45C91E2A2A0799D7B2584EEFA1234D5C3A3",
+  "manifest_hash": "14F76DF7E875F264B6305AA5CD8F202451F244555543CC3A744D4B42116AACBF",
   "member_skill_ids": [
     "good_single_skill"
   ],

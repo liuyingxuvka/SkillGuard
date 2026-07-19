@@ -1,6 +1,6 @@
 # SkillGuard README Model Evidence
 
-This file records the LogicGuard-backed capability model used for the `v0.3.4`
+This file records the LogicGuard-backed capability model used for the `v0.3.5`
 source README. It is README synthesis evidence only. It does not replace
 SkillGuard or FlowGuard checks, package publication, GitHub release
 confirmation, or future AI behavior validation.
@@ -13,7 +13,7 @@ confirmation, or future AI behavior validation.
   compiler, author supervisor, TestMesh, Portfolio, consumer distribution,
   installer, privacy/provenance checks, FlowGuard models, schemas, fixtures,
   tests, and CI workflow definition.
-- release/version facts: current source version is `v0.3.4`; `VERSION`,
+- release/version facts: current source version is `v0.3.5`; `VERSION`,
   `pyproject.toml`, README, changelog, and release notes must agree before a tag
   or GitHub Release claim.
 - authority facts: the `.skillguard` contract trio is author-maintenance

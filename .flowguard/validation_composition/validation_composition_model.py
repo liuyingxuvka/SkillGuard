@@ -223,6 +223,19 @@ class ValidationCase:
         ("owner.router", "component.prompt"),
     )
     owner_dependency_edges: tuple[tuple[str, str], ...] = ()
+    owner_target_input_roles: tuple[tuple[str, str], ...] = (
+        ("owner.runtime", "target.role.runtime"),
+        ("owner.tests", "target.role.tests"),
+        ("owner.router", "target.role.router"),
+    )
+    supplied_target_input_role_ids: tuple[str, ...] = (
+        "target.role.runtime",
+        "target.role.tests",
+        "target.role.router",
+    )
+    changed_target_input_role_ids: tuple[str, ...] = ()
+    unmatched_owner_selector_ids: tuple[str, ...] = ()
+    order_only_dependency_edges: tuple[tuple[str, str], ...] = ()
     portfolio_target_edges: tuple[tuple[str, str], ...] = (
         ("component.runtime", "target.skillguard"),
     )
@@ -273,6 +286,7 @@ class ValidationCase:
     owner_identity_includes_parent_hash: bool = False
     owner_identity_includes_whole_inventory: bool = False
     owner_identity_includes_broad_subtree: bool = False
+    owner_identity_includes_attempt_metadata: bool = False
 
     # Parent and evidence-domain boundaries.
     parent_schema_version: str = CURRENT_PARENT_SCHEMA
@@ -308,6 +322,7 @@ class ValidationCase:
     force_router_refresh: bool = False
     force_portfolio_target_ids: tuple[str, ...] = ()
     force_full_admitted: bool = False
+    force_execute_before_full_admission: bool = False
     force_accept_invalid_receipt: bool = False
     force_hide_not_run: bool = False
     force_parent_consume_old_receipt: bool = False
@@ -390,6 +405,14 @@ def _graph_gaps(case: ValidationCase) -> tuple[str, ...]:
     gaps.extend(f"unmapped:{path}" for path in case.unmapped_paths)
     gaps.extend(f"ambiguous:{path}" for path in case.ambiguous_role_paths)
     gaps.extend(f"duplicate-owner:{owner_id}" for owner_id in case.duplicate_owner_ids)
+    gaps.extend(
+        f"owner-selector-unmatched:{selector_id}"
+        for selector_id in case.unmatched_owner_selector_ids
+    )
+    gaps.extend(
+        f"order-only-dependency-must-not-consume-receipt:{owner_id}:{dependency_id}"
+        for owner_id, dependency_id in case.order_only_dependency_edges
+    )
     if not case.maintenance_unit_id:
         gaps.append("maintenance-unit-missing")
     if not case.author_context_explicit:
@@ -442,6 +465,14 @@ def _graph_gaps(case: ValidationCase) -> tuple[str, ...]:
             gaps.append(f"owner-without-input:{owner_id}")
         if owner_units.get(owner_id) != case.maintenance_unit_id:
             gaps.append(f"owner-outside-maintenance-unit:{owner_id}")
+    supplied_target_roles = set(case.supplied_target_input_role_ids)
+    for owner_id, role_id in case.owner_target_input_roles:
+        if owner_id not in owner_set:
+            gaps.append(f"target-input-role-owner-unknown:{owner_id}:{role_id}")
+        if not role_id:
+            gaps.append(f"target-input-role-id-missing:{owner_id}")
+        elif role_id not in supplied_target_roles:
+            gaps.append(f"target-input-role-not-supplied:{owner_id}:{role_id}")
     for component_id in case.router_projection_component_ids:
         if component_id not in component_set:
             gaps.append(f"invalid-router-projection-edge:{component_id}")
@@ -457,6 +488,12 @@ def _affected_owner_ids(case: ValidationCase) -> tuple[str, ...]:
         for component_id, owner_id in case.component_consumers
         if component_id in changed
     }
+    changed_target_roles = set(case.changed_target_input_role_ids)
+    affected.update(
+        owner_id
+        for owner_id, role_id in case.owner_target_input_roles
+        if role_id in changed_target_roles
+    )
     # owner -> dependency means owner consumes dependency receipt. A dependency
     # change therefore stales the consuming owner as well.
     changed_any = True
@@ -489,6 +526,11 @@ def _owner_key(case: ValidationCase, owner_id: str) -> str:
         for candidate_owner, dependency_id in case.owner_dependency_edges
         if candidate_owner == owner_id
     )
+    target_input_roles = tuple(
+        role_id
+        for candidate_owner, role_id in case.owner_target_input_roles
+        if candidate_owner == owner_id
+    )
     return _sha(
         {
             "maintenance_unit_id": case.maintenance_unit_id,
@@ -498,6 +540,7 @@ def _owner_key(case: ValidationCase, owner_id: str) -> str:
             "owner_input_projection": "current" if case.owner_input_projections_current else "stale",
             "dependency_receipts": dependencies,
             "dependency_current": case.dependency_receipts_current,
+            "target_input_roles": target_input_roles,
             "toolchain_current": case.toolchain_current,
             "environment_current": case.environment_current,
             "evidence_domain_id": DOMAIN_SOURCE,
@@ -755,6 +798,7 @@ class DeriveAffectedPlan:
             and case.source_frozen
             and case.toolchain_frozen
             and case.full_execution_owner_count == 1
+            and not _graph_gaps(case)
         )
         if case.force_full_admitted:
             full_admitted = True
@@ -763,7 +807,11 @@ class DeriveAffectedPlan:
             and (case.parent_declaration_changed or case.consumer_projection_changed)
             and not executable
         )
-        plan_pass = case.validation_plan_frozen and case.plan_source_current
+        plan_pass = (
+            case.validation_plan_frozen
+            and case.plan_source_current
+            and (case.validation_scope != "full" or full_admitted)
+        )
         plan_payload = {
             "impact_graph_hash": state.impact_graph_hash,
             "changed_component_ids": case.changed_component_ids,
@@ -873,6 +921,25 @@ class ExecuteStaleOwners:
     idempotency = "a current owner receipt suppresses execution and an invalid owner affects only its dependency closure"
 
     def apply(self, case: ValidationCase, state: ValidationState) -> tuple[FunctionResult, ...]:
+        if (
+            case.validation_scope == "full"
+            and not state.full_admitted
+            and case.force_execute_before_full_admission
+        ):
+            return _result(
+                case,
+                replace(
+                    state,
+                    phase=6,
+                    execution_status=STATUS_BLOCKED,
+                    proof_kind=PROOF_NOT_RUN,
+                    executed_owner_ids=state.will_execute_owner_ids,
+                    process_started_owner_ids=state.will_execute_owner_ids,
+                    execution_count=len(state.will_execute_owner_ids),
+                ),
+                "owners-illegally-started",
+                "fault injection started owner processes before final full admission",
+            )
         if state.plan_status != STATUS_PASS or state.owner_receipt_status == STATUS_BLOCKED:
             not_run = () if case.force_hide_not_run else state.selected_owner_ids
             return _result(
@@ -1161,11 +1228,12 @@ def owner_identity_is_semantic_and_persistent(state: ValidationState, _trace: ob
     case = state.case
     if (
         case.owner_identity_includes_run_id
+        or case.owner_identity_includes_attempt_metadata
         or case.owner_identity_includes_parent_hash
         or case.owner_identity_includes_whole_inventory
         or case.owner_identity_includes_broad_subtree
     ):
-        return _fail("owner_identity_is_semantic_and_persistent", "run, step, parent, whole-contract, whole-manifest, whole-inventory, and broad-subtree metadata cannot enter an owner key")
+        return _fail("owner_identity_is_semantic_and_persistent", "run, attempt, step, parent, whole-contract, whole-manifest, whole-inventory, and broad-subtree metadata cannot enter an owner key")
     if not case.persistent_receipt_root:
         return _fail("owner_identity_is_semantic_and_persistent", "owner success heads and single-flight locks require one persistent evidence root")
     if state.will_reuse_owner_ids and state.receipt_rejection_reasons:
@@ -1229,6 +1297,11 @@ def full_admission_is_explicit_and_frozen(state: ValidationState, _trace: object
             return _fail("full_admission_is_explicit_and_frozen", "focused, installation, fixture, parent, or uncertainty changes cannot silently become full")
         return _pass()
     reasons = set(case.full_admission_reason_codes)
+    if not state.full_admitted and state.process_started_owner_ids:
+        return _fail(
+            "full_admission_is_explicit_and_frozen",
+            "a blocked final full request must start zero owner processes",
+        )
     exact = (
         bool(reasons)
         and reasons.issubset(ALLOWED_FULL_REASONS)
@@ -1404,6 +1477,12 @@ GOOD_TEST_ONLY = replace(
     GOOD_DIRECT,
     case_name="good-test-only-no-install",
     changed_component_ids=("component.tests",),
+)
+GOOD_TARGET_ROLE_ONLY = replace(
+    GOOD_DIRECT,
+    case_name="good-target-role-change-selects-only-consuming-owner",
+    changed_component_ids=(),
+    changed_target_input_role_ids=("target.role.tests",),
 )
 GOOD_SUBTREE_OVERRIDE = replace(
     GOOD_TEST_ONLY,
@@ -1687,6 +1766,45 @@ SCENARIOS = (
         "owner dependencies cannot cycle",
     ),
     _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-one-owner-selector-unmatched",
+            unmatched_owner_selector_ids=("owner.runtime:selector.2",),
+            force_graph_accept_gap=True,
+        ),
+        "impact_graph_is_complete_and_acyclic",
+        "every declared selector must match independently; a union match cannot hide one empty selector",
+    ),
+    _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-order-only-edge-consumes-receipt",
+            order_only_dependency_edges=(("owner.tests", "owner.runtime"),),
+            force_graph_accept_gap=True,
+        ),
+        "impact_graph_is_complete_and_acyclic",
+        "depends_on is reserved for semantic receipt consumption rather than scheduling order",
+    ),
+    _bad(
+        replace(
+            GOOD_TARGET_ROLE_ONLY,
+            case_name="bad-target-role-change-reruns-unrelated-owner",
+            force_execute_owner_ids=("owner.runtime",),
+        ),
+        "affected_plan_is_exact_and_frozen",
+        "one target input role change cannot rerun a non-consuming owner",
+    ),
+    _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-required-target-role-missing",
+            supplied_target_input_role_ids=("target.role.tests", "target.role.router"),
+            force_graph_accept_gap=True,
+        ),
+        "impact_graph_is_complete_and_acyclic",
+        "a selected owner cannot start without every declared target input role",
+    ),
+    _bad(
         replace(GOOD_DIRECT, case_name="bad-validation-plan-not-frozen", validation_plan_frozen=False),
         "affected_plan_is_exact_and_frozen",
         "execution cannot discover or rewrite its plan while running",
@@ -1737,6 +1855,15 @@ SCENARIOS = (
         "run id changes must not destroy cross-run receipt reuse",
     ),
     _bad(
+        replace(
+            GOOD_REUSE,
+            case_name="bad-attempt-metadata-in-owner-key",
+            owner_identity_includes_attempt_metadata=True,
+        ),
+        "owner_identity_is_semantic_and_persistent",
+        "attempt and retry metadata must not destroy reusable semantic identity",
+    ),
+    _bad(
         replace(GOOD_DIRECT, case_name="bad-parent-hash-in-owner-key", owner_identity_includes_parent_hash=True),
         "owner_identity_is_semantic_and_persistent",
         "parent aggregation identity cannot enter a child execution key",
@@ -1779,6 +1906,16 @@ SCENARIOS = (
         replace(GOOD_FULL, case_name="bad-full-has-two-execution-owners", full_execution_owner_count=2, force_full_admitted=True),
         "full_admission_is_explicit_and_frozen",
         "two full owners create duplicate execution and competing evidence",
+    ),
+    _bad(
+        replace(
+            GOOD_FULL,
+            case_name="bad-full-missing-target-role-starts-owner",
+            supplied_target_input_role_ids=("target.role.tests", "target.role.router"),
+            force_execute_before_full_admission=True,
+        ),
+        "full_admission_is_explicit_and_frozen",
+        "incomplete final admission must block before the first owner process starts",
     ),
     _bad(
         replace(GOOD_DIRECT, case_name="bad-old-wire-auto-accepted", parent_schema_version="skillguard.test_mesh_result.retired", legacy_success_route_enabled=True),

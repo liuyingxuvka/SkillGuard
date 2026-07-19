@@ -49,6 +49,8 @@ GRAPH_HEALTH_FIELDS = (
     "field:impact_graph.ambiguous_role_paths",
     "field:impact_graph.duplicate_owner_ids",
     "field:impact_graph.owner_cycles",
+    "field:impact_graph.unmatched_owner_selector_ids",
+    "field:impact_graph.order_only_dependency_edges",
 )
 OWNER_FIELDS = (
     "field:execution_owner.execution_owner_id",
@@ -58,6 +60,7 @@ OWNER_FIELDS = (
     "field:execution_owner.evidence_subject_id",
     "field:execution_owner.input_selectors",
     "field:execution_owner.depends_on_check_ids",
+    "field:execution_owner.target_input_role_ids",
     "field:execution_owner.evidence_domain_id",
     "field:execution_owner.owner_declaration_hash",
     "field:execution_owner.input_component_ids",
@@ -76,6 +79,8 @@ PLAN_FIELDS = (
     "field:affected_plan.plan_hash",
     "field:affected_plan.owner_check_ids",
     "field:affected_plan.owner_check_projections",
+    "field:affected_plan.target_input_role_fingerprints",
+    "field:affected_plan.semantic_launch_plan_fingerprint",
 )
 OWNER_EXECUTION_RESULT_FIELDS = (
     "field:owner_execution_result.plan_hash",
@@ -96,6 +101,8 @@ RECEIPT_FIELDS = (
     "field:owner_receipt.member_skill_id",
     "field:owner_receipt.evidence_subject_id",
     "field:owner_receipt.dependency_receipt_ids",
+    "field:owner_receipt.target_input_fingerprint",
+    "field:owner_receipt.target_input_role_fingerprints",
     "field:owner_receipt.stdout_sidecar_ref",
     "field:owner_receipt.stderr_sidecar_ref",
     "field:owner_receipt.result_sidecar_ref",
@@ -133,6 +140,7 @@ EXECUTION_POLICY_FIELDS = (
     "field:execution_policy.cleanup_confirmed_zero",
     "field:execution_policy.unattended_mutable_worktree_mode",
     "field:execution_policy.current_protocol_only",
+    "field:execution_policy.progress_outputs_excluded_from_freshness",
 )
 EXTERNAL_TARGET_BINDING_FIELDS = (
     "field:external_target_binding.canonical_repository_root",

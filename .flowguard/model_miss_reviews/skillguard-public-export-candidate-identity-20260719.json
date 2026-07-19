@@ -1,0 +1,60 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-public-export-candidate-identity-20260719",
+  "status": "repair_validated_final_closure",
+  "observed_failure": {
+    "surface": "final SkillGuard TestMesh owner owner:self:public-export-privacy",
+    "prior_local_claim": "the affected-only plan bound every owner to every functional input consumed by its command",
+    "observed_result": "44 owners passed, but the privacy owner found machine-specific absolute paths in a tracked OpenSpec evidence file that was absent from the privacy owner's semantic input components",
+    "failure_code": "public_export_candidate_inventory_not_bound_to_owner_identity"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "obligation:provenance",
+    "owner": "provenance-audit-v2 / owner:self:public-export-privacy",
+    "miss_type": "evidence_overclaimed",
+    "error_signature": "privacy command scans tracked and unignored-untracked candidates beyond its declared semantic input set",
+    "affected_feature_tags": [
+      "skillguard",
+      "testmesh",
+      "affected-only",
+      "public-export",
+      "privacy",
+      "provenance"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "the privacy command dynamically enumerated the complete Git public candidate set, while its owner identity consumed only installation-copy components, the facade script, and .gitignore",
+    "would_have_failed_if": "the model and regression matrix had changed or added one public candidate outside the installation projection and asserted that only the privacy owner became stale",
+    "new_model_item": "the exact public candidate membership and bytes are one owner-scoped target-input role consumed only by owner:self:public-export-privacy",
+    "owner_code_contract": "git_public_candidates -> self-host target-input role -> frozen TestMesh owner identity -> privacy command -> immutable owner receipt"
+  },
+  "generalized_repair": {
+    "rule": "derive the request role and privacy scan from one candidate enumeration, bind the complete role only to the privacy owner, and reject generic machine-local absolute paths",
+    "observed_regression": "the historical OpenSpec evidence paths are replaced by portable repository tokens and the current public export scan passes",
+    "same_class_regression": "adding, removing, or changing a public candidate changes the privacy role fingerprint while unrelated owners remain reusable through the existing owner-scoped target-input model",
+    "negative_boundary": "do not hash the public candidate role into every owner, do not broaden an unmapped change to run-all, and do not add a second candidate reader or fallback scan"
+  },
+  "required_revalidation": [
+    "focused privacy path and candidate enumeration regressions",
+    "self-host public-export role projection regression",
+    "compiled owner declaration and TestMesh affected-plan regression",
+    "declared-check-supervision and validation-composition FlowGuard checks",
+    "transactional SkillGuard reinstall and installed currentness",
+    "affected-only frozen owner execution and parent aggregation"
+  ],
+  "revalidation_evidence": {
+    "focused_regressions": "132 tests and 19 subtests passed across privacy, self-host role projection, release workflow, verification-contract, launch-plan, compiler, single-flight, and current TestMesh scopes.",
+    "flowguard_models": "declared-check-supervision and validation-composition executable models both exited 0 on the repaired source.",
+    "public_export": "716 current tracked and unignored-untracked candidates passed with zero privacy findings.",
+    "installation": "transaction install-f519af17b4bc465e8aaa69e2726ecc4a passed stage verification, two-member activation, installed parity, current runtime authority, contract checks, command smoke, self-check, check-skill, and runtime import; current installation verification receipt installation-82bdedf38c58b9d2e4d51aa1 was captured and replay-verified.",
+    "global_router": "39 explicit author roots refreshed transactionally with registry sha256:16f62118f1d1c65f0e92bf150ba512a1ad89e7bc7b832e8531a1c234a41cbc63 and no implicit installed-skill scan.",
+    "final_frozen_plan": "full plan sha256:5c819cab50d1f3859ffdfd7ea97d2c4181644f35bca4ba38a699271705a57ac6 selected 46 owners, reused 21 exact terminal-success receipts, and executed only 25 genuinely affected or dependent owners.",
+    "final_owner_execution": "all 25 planned owners passed under the one retained supervised process; 21 planned reuse receipts were verified, zero owners failed or remained not run, and the complete descendant process count was confirmed zero.",
+    "final_aggregation": "pre-archive aggregation sha256:d5e0148a997dc22dbad8a6c7bd04a13d6f4f0ec5ef8b6735b6f35942376f3ab6 bound all 46 child receipts, the current installation identity, and the 39-root global prompt projection with execution_count 0; read-only replay passed with execution_count 0.",
+    "postarchive_affected_only": "after main-spec synchronization and OpenSpec archival, frozen plan sha256:b365ad2922c073bc39740d1fc980e0df8a26c0d9fc0abafa62251bab5f2621aa reused 45 exact receipts and executed only owner:self:public-export-privacy; aggregation sha256:5a674ca30c0aed385038a1ceface16bf7dcf55d9dbc4cec33eeec886670b4d92 bound 46 children and replayed with execution_count 0.",
+    "openspec": "all 45 tasks completed, strict validation passed, the delta specs were synchronized without retaining retired depth requirements, and the change was archived as 2026-07-19-harden-native-depth-evidence-identity.",
+    "predictive_kb_postflight": "structured mistake-first observation 669cc6be-7eec-4bac-8dab-3aaeb89b58d2 reached terminal success for candidate-inventory identity, Windows python process-family cleanup, measured long-check timeouts, and branch-versus-tag release ownership."
+  },
+  "claim_boundary": "The repair is current for the exact frozen local source, toolchain, target-input, installed SkillGuard projection, 39-root global router, synchronized main specs, archived OpenSpec change, 46-owner parent aggregation, and zero-execution replay. Git publication, tag, release, and remote CI remain separate release evidence."
+}

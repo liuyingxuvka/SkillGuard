@@ -19,6 +19,7 @@ from .check_runner import (
     CheckRunnerError,
     check_toolchain_identity,
     get_or_execute_check,
+    inspect_check_prelaunch_admission,
     inspect_current_owner_execution,
     inspect_current_owner_input_projection,
     inspect_owner_receipt_history,
@@ -184,7 +185,9 @@ def _portable_relative_path(value: object) -> Path | None:
 
 
 def _load_global_prompt_currentness_binding(
-    *, codex_home: Path | None = None
+    *,
+    codex_home: Path | None = None,
+    skill_roots: Sequence[Path] | None = None,
 ) -> dict[str, Any]:
     """Validate, but never refresh, the global registry and prompt projection."""
 
@@ -255,7 +258,9 @@ def _load_global_prompt_currentness_binding(
             + ",".join(sorted(integrity_failures))
         )
     route_failures, route_blockers = global_registry_current_route_failures(
-        registry, codex_home=str(home)
+        registry,
+        codex_home=str(home),
+        skill_roots=[str(path.resolve()) for path in (skill_roots or ())],
     )
     if route_failures or route_blockers:
         raise ExecutionRecordError(
@@ -364,7 +369,10 @@ def _load_global_prompt_currentness_binding(
 
 
 def _replay_global_prompt_currentness_binding(
-    value: object, *, codex_home: Path | None = None
+    value: object,
+    *,
+    codex_home: Path | None = None,
+    skill_roots: Sequence[Path] | None = None,
 ) -> list[str]:
     if not isinstance(value, list) or len(value) != 1:
         return ["global_prompt_typed_domain_binding_missing_or_duplicated"]
@@ -383,7 +391,10 @@ def _replay_global_prompt_currentness_binding(
     ):
         return ["global_prompt_typed_domain_binding_hash_invalid"]
     try:
-        current = _load_global_prompt_currentness_binding(codex_home=codex_home)
+        current = _load_global_prompt_currentness_binding(
+            codex_home=codex_home,
+            skill_roots=skill_roots,
+        )
     except ExecutionRecordError as exc:
         return [f"global_prompt_currentness_replay_failed:{exc}"]
     return [
@@ -1009,6 +1020,26 @@ def _compile_current_test_mesh_plan(
                 str(check.get("execution_owner_id", "")), []
             ).append(check)
 
+    prelaunch_by_owner: dict[str, dict[str, Any]] = {}
+    try:
+        for owner in owners:
+            owner_id = str(owner["execution_owner_id"])
+            owner_checks = sorted(
+                checks_by_owner.get(owner_id, []),
+                key=lambda row: str(row.get("check_id", "")),
+            )
+            check, _check_ids, _projections, _toolchain = (
+                _exact_owner_check_projection(owner, owner_checks)
+            )
+            prelaunch_by_owner[owner_id] = inspect_check_prelaunch_admission(
+                check,
+                target_root=target_root,
+                repository_root=repository_root,
+                run_root=run_root,
+            )
+    except (CheckRunnerError, ValueError, OSError) as exc:
+        return _blocked_current_plan(profile_id, [str(exc)])
+
     reusable_receipts: dict[str, Mapping[str, Any]] = {}
     owner_plans: list[dict[str, Any]] = []
     reusable: list[str] = []
@@ -1119,6 +1150,26 @@ def _compile_current_test_mesh_plan(
                     "depends_on_owner_ids": dependency_ids,
                     "evidence_domain_id": str(
                         owner.get("evidence_domain_id", "")
+                    ),
+                    "target_input_role_ids": list(
+                        prelaunch_by_owner[owner_id][
+                            "target_input_role_ids"
+                        ]
+                    ),
+                    "target_input_role_fingerprints": dict(
+                        prelaunch_by_owner[owner_id][
+                            "target_input_role_fingerprints"
+                        ]
+                    ),
+                    "target_input_fingerprint": str(
+                        prelaunch_by_owner[owner_id][
+                            "target_input_fingerprint"
+                        ]
+                    ),
+                    "semantic_launch_plan_fingerprint": str(
+                        prelaunch_by_owner[owner_id][
+                            "semantic_launch_plan_fingerprint"
+                        ]
                     ),
                     **toolchain,
                     "decision": decision,
@@ -1278,6 +1329,44 @@ def _validate_frozen_current_plan(
     if selected_owner_ids != list(frozen_plan.get("selected_owner_ids", [])):
         raise ValueError("current_test_mesh_frozen_owner_selection_stale")
     impact_plan = contract["content_impact_plan"]
+    full_required = bool(_profile.get("full_admission_required", False))
+    if frozen_plan.get("full_admission_required") is not full_required:
+        raise ValueError(
+            "current_test_mesh_frozen_full_admission_requirement_stale"
+        )
+    if full_required:
+        frozen_reason = str(
+            frozen_plan.get("full_admission_reason", "")
+        )
+        derived_reasons = _derived_full_admission_reasons(
+            impact_plan,
+            {
+                str(value)
+                for value in frozen_plan.get(
+                    "changed_component_ids", []
+                )
+            },
+            set(selected_owner_ids),
+            frozen_reason,
+        )
+        if (
+            not frozen_reason
+            or frozen_reason not in derived_reasons
+            or frozen_reason
+            not in {
+                str(value)
+                for value in frozen_plan.get(
+                    "full_required_reason_codes", []
+                )
+            }
+        ):
+            raise ValueError(
+                "current_test_mesh_frozen_full_admission_reason_stale"
+            )
+    elif frozen_plan.get("full_admission_reason") not in {"", None}:
+        raise ValueError(
+            "current_test_mesh_frozen_nonfull_reason_present"
+        )
     checks_by_owner_rows: dict[str, list[Mapping[str, Any]]] = {}
     for check in check_manifest.get("checks", []):
         if isinstance(check, Mapping):
@@ -1336,6 +1425,12 @@ def _validate_frozen_current_plan(
         check, check_ids, check_projections, toolchain = (
             _exact_owner_check_projection(owner, owner_checks)
         )
+        prelaunch = inspect_check_prelaunch_admission(
+            check,
+            target_root=target_root,
+            repository_root=repository_root,
+            run_root=run_root,
+        )
         checks_by_owner[owner_id] = check
         owner_plan = plan_by_owner[owner_id]
         current_input = inspect_current_owner_input_projection(
@@ -1367,6 +1462,18 @@ def _validate_frozen_current_plan(
             ],
             "evidence_domain_id": str(
                 owner.get("evidence_domain_id", "")
+            ),
+            "target_input_role_ids": list(
+                prelaunch["target_input_role_ids"]
+            ),
+            "target_input_role_fingerprints": dict(
+                prelaunch["target_input_role_fingerprints"]
+            ),
+            "target_input_fingerprint": str(
+                prelaunch["target_input_fingerprint"]
+            ),
+            "semantic_launch_plan_fingerprint": str(
+                prelaunch["semantic_launch_plan_fingerprint"]
             ),
             "toolchain_fingerprint": str(
                 toolchain["toolchain_fingerprint"]
@@ -1435,14 +1542,25 @@ def _validate_frozen_current_plan(
 def _check_step_id(
     contract: Mapping[str, Any], check_id: str
 ) -> str:
-    candidates: set[str] = set()
-    declared_steps = {
+    """Return the canonical run-store step for one semantic check owner.
+
+    A single semantic check owner may be projected into several workflow steps.
+    The owner still executes once because step identity is run-store placement,
+    not part of the semantic execution key.  Preserve contract declaration
+    order and use the first directly bound non-terminal step as the sole
+    canonical placement.  Obligation ownership is consulted only when the
+    check has no direct step binding.
+    """
+
+    declared_steps = [
         str(row.get("step_id", ""))
         for row in contract.get("steps", [])
         if isinstance(row, Mapping)
         and str(row.get("step_id", ""))
         and not str(row.get("terminal_kind", ""))
-    }
+    ]
+    declared_step_set = set(declared_steps)
+    candidates: list[str] = []
     for step in contract.get("steps", []):
         if not isinstance(step, Mapping):
             continue
@@ -1452,8 +1570,11 @@ def _check_step_id(
             and check_id
             in {str(value) for value in binding.get("check_ids", [])}
         ):
-            candidates.add(str(step.get("step_id", "")))
+            candidate = str(step.get("step_id", ""))
+            if candidate and candidate not in candidates:
+                candidates.append(candidate)
     if not candidates:
+        obligation_candidates: set[str] = set()
         for obligation in contract.get("obligations", []):
             if (
                 isinstance(obligation, Mapping)
@@ -1463,17 +1584,21 @@ def _check_step_id(
                     for value in obligation.get("required_check_ids", [])
                 }
             ):
-                candidates.update(
+                obligation_candidates.update(
                     str(value)
                     for value in obligation.get("owner_step_ids", [])
-                    if str(value) in declared_steps
+                    if str(value) in declared_step_set
                 )
-    candidates.discard("")
-    if len(candidates) != 1:
+        candidates = [
+            step_id
+            for step_id in declared_steps
+            if step_id in obligation_candidates
+        ]
+    if not candidates:
         raise ValueError(
             f"current_test_mesh_owner_check_step_invalid:{check_id}"
         )
-    return next(iter(candidates))
+    return candidates[0]
 
 
 def _blocked_owner_execution(
@@ -2066,6 +2191,7 @@ def replay_current_test_mesh_aggregation(
     canonical_skillguard_root: Path | None = None,
     verified_installation_context: VerifiedInstallationContext | None = None,
     global_prompt_codex_home: Path | None = None,
+    global_prompt_skill_roots: Sequence[Path] | None = None,
 ) -> Mapping[str, Any]:
     findings: list[str] = []
     required_ref_fields = {
@@ -2151,6 +2277,7 @@ def replay_current_test_mesh_aggregation(
                 _replay_global_prompt_currentness_binding(
                     typed_bindings,
                     codex_home=global_prompt_codex_home,
+                    skill_roots=global_prompt_skill_roots,
                 )
             )
         elif installation_binding is not None or typed_bindings not in ([], None):
@@ -2698,6 +2825,7 @@ def execute_test_mesh(
     canonical_skillguard_root: Path | None = None,
     verified_installation_context: VerifiedInstallationContext | None = None,
     global_prompt_codex_home: Path | None = None,
+    global_prompt_skill_roots: Sequence[Path] | None = None,
 ) -> dict[str, Any]:
     repository_root = canonical_filesystem_path(repository_root)
     try:
@@ -2750,6 +2878,7 @@ def execute_test_mesh(
         or canonical_skillguard_root
         or verified_installation_context
         or global_prompt_codex_home
+        or global_prompt_skill_roots
     )
     if mode == "owner_execution_only" and binding_options_supplied:
         return _blocked_owner_execution(
@@ -2913,7 +3042,8 @@ def execute_test_mesh(
                     ),
                 )
                 prompt_binding = _load_global_prompt_currentness_binding(
-                    codex_home=global_prompt_codex_home
+                    codex_home=global_prompt_codex_home,
+                    skill_roots=global_prompt_skill_roots,
                 )
             except (ExecutionRecordError, OSError) as exc:
                 return {

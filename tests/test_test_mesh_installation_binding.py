@@ -603,16 +603,30 @@ class TestMeshInstallationBindingTests(unittest.TestCase):
                 return_value=([], []),
             ),
         )
-        with patches[0], patches[1], patches[2], patches[3]:
+        external_author_root = self.repository / "external-author"
+        with (
+            patches[0],
+            patches[1] as route_currentness,
+            patches[2],
+            patches[3],
+        ):
             first = _load_global_prompt_currentness_binding(
-                codex_home=self.codex_home
+                codex_home=self.codex_home,
+                skill_roots=[external_author_root],
             )
             agents_path.write_text(
                 "different unmanaged prose\n" + managed_block,
                 encoding="utf-8",
             )
             second = _load_global_prompt_currentness_binding(
-                codex_home=self.codex_home
+                codex_home=self.codex_home,
+                skill_roots=[external_author_root],
+            )
+        self.assertEqual(2, route_currentness.call_count)
+        for call in route_currentness.call_args_list:
+            self.assertEqual(
+                [str(external_author_root.resolve())],
+                call.kwargs["skill_roots"],
             )
         self.assertEqual(first, second)
         self.assertEqual(

@@ -250,6 +250,7 @@ SOURCE_CHECK_FIELDS = frozenset(
         "native_route_id",
         "semantic_check_id",
         "timeout_seconds",
+        "target_input_role_ids",
         "applicable",
     }
 )
@@ -1297,6 +1298,20 @@ def validate_binding_source(payload: object) -> tuple[SchemaFinding, ...]:
                         str(row.get("check_id", "")),
                     )
                 )
+        if "target_input_role_ids" in row:
+            roles = _string_list(
+                row.get("target_input_role_ids"),
+                f"$.checks[{index}].target_input_role_ids",
+                findings,
+            )
+            if len(roles) != len(set(roles)):
+                findings.append(
+                    _finding(
+                        "target_input_role_duplicate",
+                        f"$.checks[{index}].target_input_role_ids",
+                        str(row.get("check_id", "")),
+                    )
+                )
         if "evidence_domain_id" in row:
             _required_text(row, "evidence_domain_id", f"$.checks[{index}]", findings)
     for index, row in enumerate(artifacts):
@@ -1825,6 +1840,7 @@ def _validate_content_impact_plan(
                 "input_component_ids",
                 "owner_input_projection_hash",
                 "depends_on_owner_ids",
+                "target_input_role_ids",
                 "evidence_domain_id",
             }
         )
@@ -1837,6 +1853,19 @@ def _validate_content_impact_plan(
         dependencies = _string_list(
             row.get("depends_on_owner_ids"), f"{row_path}.depends_on_owner_ids", findings
         )
+        target_input_role_ids = _string_list(
+            row.get("target_input_role_ids"),
+            f"{row_path}.target_input_role_ids",
+            findings,
+        )
+        if len(target_input_role_ids) != len(set(target_input_role_ids)):
+            findings.append(
+                _finding(
+                    "content_owner_target_input_role_duplicate",
+                    f"{row_path}.target_input_role_ids",
+                    owner_id,
+                )
+            )
         _validate_input_selectors(row.get("input_selectors"), f"{row_path}.input_selectors", findings)
         _required_text(row, "evidence_domain_id", row_path, findings)
         owner_declaration_hash = _require_wire_hash(
@@ -1891,6 +1920,9 @@ def _validate_content_impact_plan(
                     key: check[key] for key in OWNER_BEHAVIOR_FIELDS if key in check
                 },
                 "input_selectors": list(check.get("input_selectors", [])),
+                "target_input_role_ids": list(
+                    check.get("target_input_role_ids", [])
+                ),
                 "evidence_domain_id": str(check.get("evidence_domain_id", "")),
                 "impact_policy_id": str(plan.get("policy_id", "")),
             }
@@ -2229,6 +2261,11 @@ def _validate_content_impact_plan(
                 _required_text(check, key, row_path, findings)
         _validate_input_selectors(check.get("input_selectors"), f"{row_path}.input_selectors", findings)
         _string_list(check.get("input_component_ids"), f"{row_path}.input_component_ids", findings)
+        _string_list(
+            check.get("target_input_role_ids"),
+            f"{row_path}.target_input_role_ids",
+            findings,
+        )
 
 
 def validate_compiled_contract(payload: object) -> tuple[SchemaFinding, ...]:

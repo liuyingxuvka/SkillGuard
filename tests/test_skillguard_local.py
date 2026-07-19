@@ -1161,6 +1161,28 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assertEqual(blockers, [])
             self.assertEqual([skills_root.resolve(), plugin_root.resolve()], roots)
 
+    def test_global_registry_currentness_accepts_explicit_external_author_roots(self) -> None:
+        with tempfile.TemporaryDirectory(
+            prefix="skillguard-external-author-root-",
+            dir=REPO_ROOT.parent,
+        ) as temporary:
+            external_root = Path(temporary)
+            current = {"registry_hash": "sha256:" + "a" * 64}
+            with patch(
+                "checker_engine.build_global_registry_payload",
+                return_value=current,
+            ) as rebuild:
+                failures, blockers = (
+                    checker_engine.global_registry_current_route_failures(
+                        current,
+                        codex_home=str(REPO_ROOT / ".codex"),
+                        skill_roots=[str(external_root)],
+                    )
+                )
+            self.assertEqual([], failures)
+            self.assertEqual([], blockers)
+            rebuild.assert_called_once_with([external_root.resolve()])
+
     def test_global_registry_hash_is_stable_between_installed_cli_and_test_mesh_contexts(self) -> None:
         with tempfile.TemporaryDirectory(prefix="skillguard-global-router-context-", dir=REPO_ROOT) as tmp:
             workspace = Path(tmp)

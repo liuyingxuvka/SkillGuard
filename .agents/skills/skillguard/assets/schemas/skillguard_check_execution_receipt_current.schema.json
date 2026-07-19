@@ -4,7 +4,7 @@
   "title": "SkillGuard current reusable owner execution receipt",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "maintenance_unit_id", "member_skill_id", "evidence_subject_id", "semantic_check_id", "execution_owner_id", "execution_key", "owner_declaration_hash", "owner_input_projection_hash", "input_components", "dependency_receipts", "target_input_fingerprint", "toolchain_fingerprint", "execution_environment_fingerprint", "evidence_domain_id", "impact_policy_id", "status", "sidecars", "claim_boundary", "receipt_id", "receipt_hash"],
+  "required": ["schema_version", "maintenance_unit_id", "member_skill_id", "evidence_subject_id", "semantic_check_id", "execution_owner_id", "execution_key", "owner_declaration_hash", "owner_input_projection_hash", "input_components", "dependency_receipts", "target_input_fingerprint", "target_input_role_fingerprints", "toolchain_fingerprint", "execution_environment_fingerprint", "evidence_domain_id", "impact_policy_id", "status", "sidecars", "claim_boundary", "receipt_id", "receipt_hash"],
   "properties": {
     "schema_version": {"const": "skillguard.check_execution_receipt.current"},
     "maintenance_unit_id": {"type": "string", "minLength": 1},
@@ -43,6 +43,11 @@
       }
     },
     "target_input_fingerprint": {"type": "string", "pattern": "^(?:|sha256:[0-9a-f]{64})$"},
+    "target_input_role_fingerprints": {
+      "type": "object",
+      "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"},
+      "additionalProperties": {"$ref": "#/$defs/hash"}
+    },
     "toolchain_fingerprint": {"$ref": "#/$defs/hash"},
     "execution_environment_fingerprint": {"$ref": "#/$defs/hash"},
     "evidence_domain_id": {"type": "string"},

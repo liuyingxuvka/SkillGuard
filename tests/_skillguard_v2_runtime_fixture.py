@@ -34,6 +34,7 @@ def _current_checks_and_plan(
         )
         check.setdefault("input_component_ids", [])
         check.setdefault("depends_on_check_ids", [])
+        check.setdefault("target_input_role_ids", [])
         check.setdefault("evidence_domain_id", "validation")
         check.setdefault(
             "owner_declaration_hash",
@@ -45,6 +46,9 @@ def _current_checks_and_plan(
                         if key in check
                     },
                     "input_selectors": list(check["input_selectors"]),
+                    "target_input_role_ids": list(
+                        check["target_input_role_ids"]
+                    ),
                     "evidence_domain_id": str(check["evidence_domain_id"]),
                     "impact_policy_id": "skillguard.content_impact_policy.current",
                 }
@@ -89,6 +93,9 @@ def _current_checks_and_plan(
                     check["owner_input_projection_hash"]
                 ),
                 "depends_on_owner_ids": [],
+                "target_input_role_ids": list(
+                    check.get("target_input_role_ids", [])
+                ),
                 "evidence_domain_id": str(check["evidence_domain_id"]),
             },
         )

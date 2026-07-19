@@ -23,6 +23,7 @@ from .closure import close_run, verify_closure
 from .contract_compiler import canonical_hash, canonical_json_bytes, compile_skill_contract
 from .evidence_policy import required_evidence_class
 from .execution_depth import issue_target_execution_receipt
+from .privacy import git_public_candidates
 from .receipts import fingerprint_value, issue_receipt
 from .route_runtime import select_routes
 from .runtime_fingerprint import guard_execution_runtime_fingerprint
@@ -36,7 +37,7 @@ from .step_runtime import (
     reopen_step,
     replay_run,
 )
-from .target_inputs import fingerprint_target_inputs
+from .target_inputs import fingerprint_target_input_roles, fingerprint_target_inputs
 
 
 ProgressCallback = Callable[[Mapping[str, Any]], None]
@@ -114,6 +115,7 @@ def _current_fingerprints(
     *,
     repository_root: Path | None = None,
     target_input_paths: Sequence[str] = (),
+    target_input_roles: Mapping[str, Sequence[str]] | None = None,
 ) -> Mapping[str, Mapping[str, str]]:
     sources = contract.get("source_fingerprints", {})
     fingerprints: dict[str, Mapping[str, str]] = {
@@ -144,6 +146,14 @@ def _current_fingerprints(
         fingerprints["target_inputs"] = fingerprint_value(
             fingerprint_target_inputs(repository_root, target_input_paths)
         )
+    if repository_root is not None and target_input_roles:
+        for role_id, inventory in sorted(
+            fingerprint_target_input_roles(
+                repository_root,
+                target_input_roles,
+            ).items()
+        ):
+            fingerprints[f"target_role:{role_id}"] = fingerprint_value(inventory)
     return fingerprints
 
 
@@ -589,6 +599,13 @@ def _self_host_request(
         repository_root,
         target_input_paths,
     )
+    public_export_role_id = "repository.public_export_candidates"
+    target_input_roles = fingerprint_target_input_roles(
+        repository_root,
+        {
+            public_export_role_id: git_public_candidates(repository_root),
+        },
+    )
     return {
         "request": "SkillGuard current self-maintenance enforced verification",
         "route_ids": list(route_ids),
@@ -601,6 +618,10 @@ def _self_host_request(
         ],
         "target_input_paths": list(target_inputs["paths"]),
         "target_input_fingerprint": str(target_inputs["fingerprint"]),
+        "target_input_roles": {
+            role_id: list(inventory["paths"])
+            for role_id, inventory in sorted(target_input_roles.items())
+        },
     }
 
 
@@ -634,6 +655,10 @@ def run_current_verifier(
     route_ids = [str(row["route_id"]) for row in contract["routes"]]
     request = _self_host_request(repository_root, route_ids)
     target_input_paths = list(request["target_input_paths"])
+    target_input_roles = {
+        str(role_id): list(paths)
+        for role_id, paths in request["target_input_roles"].items()
+    }
     decision = select_routes(contract, request)
     if not decision.ok:
         raise SelfHostError("self_host_route_blocked", json.dumps(decision.to_dict(), sort_keys=True))
@@ -652,6 +677,7 @@ def run_current_verifier(
         contract,
         repository_root=repository_root,
         target_input_paths=target_input_paths,
+        target_input_roles=target_input_roles,
     )
     check_index = {
         str(row["check_id"]): row
@@ -923,6 +949,7 @@ def run_current_verifier(
         contract,
         repository_root=repository_root,
         target_input_paths=target_input_paths,
+        target_input_roles=target_input_roles,
     )
     if isinstance(contract.get("depth_profile"), Mapping):
         depth_receipt = issue_target_execution_receipt(

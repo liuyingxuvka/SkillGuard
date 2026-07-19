@@ -608,6 +608,60 @@ class ContractCompilerV2Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "content_projection_hash_mismatch"):
             current_content_projection(stale_policy, "projection:installation")
 
+    def test_each_explicit_owner_selector_must_match_independently(self) -> None:
+        check = self.binding["checks"][0]
+        check["input_selectors"] = [
+            {"kind": "role", "role": "runtime_source"},
+            {
+                "kind": "path",
+                "path": ".agents/skills/fixture-skill/does-not-exist.py",
+            },
+        ]
+        self._write_binding(self.binding)
+
+        result = compile_skill_contract(
+            self.skill, repository_root=self.repo, write=False
+        )
+
+        self.assertFalse(result.ok)
+        selector_findings = [
+            finding
+            for finding in result.findings
+            if finding.code == "owner_input_selector_empty"
+        ]
+        self.assertEqual(1, len(selector_findings))
+        self.assertIn("input_selectors[", selector_findings[0].path)
+
+    def test_target_input_roles_compile_into_exact_owner_declaration(self) -> None:
+        check = self.binding["checks"][0]
+        check["target_input_role_ids"] = ["target.role.input-authority"]
+        self._write_binding(self.binding)
+
+        result = compile_skill_contract(
+            self.skill, repository_root=self.repo, write=True
+        )
+
+        self.assertTrue(result.ok, result.to_dict())
+        compiled_check = next(
+            row
+            for row in result.compiled_contract["checks"]
+            if row["check_id"] == check["check_id"]
+        )
+        owner = next(
+            row
+            for row in result.compiled_contract["content_impact_plan"]["owners"]
+            if row["execution_owner_id"]
+            == compiled_check["execution_owner_id"]
+        )
+        self.assertEqual(
+            ["target.role.input-authority"],
+            compiled_check["target_input_role_ids"],
+        )
+        self.assertEqual(
+            compiled_check["target_input_role_ids"],
+            owner["target_input_role_ids"],
+        )
+
     def test_portfolio_target_edge_is_explicit_and_component_scoped(self) -> None:
         runtime_path = self.implementation.relative_to(self.repo).as_posix()
         self.binding["portfolio_target_edges"] = [

@@ -17,6 +17,21 @@ SECRET_PATTERNS = (
     ("credential_assignment", re.compile(r"(?i)\b(?:api[_-]?key|access[_-]?token|secret|password)\b\s*[:=]\s*['\"]?[^\s'\"]{8,}")),
     ("github_token", re.compile(r"\b(?:ghp|github_pat)_[A-Za-z0-9_]{20,}\b")),
 )
+MACHINE_PATH_PATTERNS = (
+    re.compile(r"(?<![A-Za-z0-9_])[A-Za-z]:[\\/][^\s`\"'<>]*"),
+    re.compile(
+        r"(?<!\\)\\\\(?!\\)[A-Za-z0-9._-]+\\[A-Za-z0-9$._-]+"
+        r"(?:\\[^\s`\"'<>]+)*"
+    ),
+    re.compile(
+        r"(?<![A-Za-z0-9:])/(?:Users|home|tmp|private/var|Volumes)"
+        r"/[^\s/`\"'<>]+(?:/[^\s`\"'<>]*)?"
+    ),
+    re.compile(
+        r"(?<![A-Za-z0-9:])/mnt/[A-Za-z]/[^\s/`\"'<>]+"
+        r"(?:/[^\s`\"'<>]*)?"
+    ),
+)
 
 
 def public_path_token(path: Path, repository_root: Path, installed_root: Path | None = None) -> str:
@@ -59,6 +74,8 @@ def _line_findings(path_text: str, text: str, sensitive_literals: Iterable[str])
             if pattern.search(line):
                 findings.append({"code": code, "path": path_text, "line": line_number})
         if any(literal in line for literal in normalized_literals):
+            findings.append({"code": "machine_specific_absolute_path", "path": path_text, "line": line_number})
+        elif any(pattern.search(line) for pattern in MACHINE_PATH_PATTERNS):
             findings.append({"code": "machine_specific_absolute_path", "path": path_text, "line": line_number})
     return findings
 

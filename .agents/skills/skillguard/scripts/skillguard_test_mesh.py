@@ -50,6 +50,16 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     parser.add_argument("--global-prompt-codex-home")
+    parser.add_argument(
+        "--global-prompt-skill-root",
+        action="append",
+        default=[],
+        help=(
+            "Explicit author-side maintained skill root used to re-check the "
+            "private global registry during full aggregation or read-only replay. "
+            "Repeat for every registered root."
+        ),
+    )
     args = parser.parse_args(argv)
 
     repository_root = Path(args.repository_root).resolve()
@@ -77,6 +87,9 @@ def main(argv: list[str] | None = None) -> int:
         if args.canonical_skillguard_root
         else None
     )
+    global_prompt_skill_roots = [
+        repository_path(value) for value in args.global_prompt_skill_root
+    ]
 
     if args.replay_aggregation_ref:
         forbidden = any(
@@ -103,6 +116,7 @@ def main(argv: list[str] | None = None) -> int:
             repository_root=repository_root,
             canonical_skillguard_root=canonical_skillguard_root,
             global_prompt_codex_home=prompt_home,
+            global_prompt_skill_roots=global_prompt_skill_roots,
         )
     else:
         if not args.run_root or not args.skill_root or not args.target_root:
@@ -117,6 +131,7 @@ def main(argv: list[str] | None = None) -> int:
             args.installation_receipt_root
             or canonical_skillguard_root
             or prompt_home
+            or global_prompt_skill_roots
         ):
             parser.error(
                 f"{args.mode} rejects installation, canonical-source, and prompt bindings"
@@ -127,7 +142,11 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(
                 "owner-execution mode rejects planning and freeze inputs"
             )
-        if (args.installation_receipt_root or canonical_skillguard_root) and (
+        if (
+            args.installation_receipt_root
+            or canonical_skillguard_root
+            or global_prompt_skill_roots
+        ) and (
             args.profile != "full" or args.mode != "aggregation_only"
         ):
             parser.error(
@@ -170,6 +189,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             canonical_skillguard_root=canonical_skillguard_root,
             global_prompt_codex_home=prompt_home,
+            global_prompt_skill_roots=global_prompt_skill_roots,
         )
     emit_json(report)
     return 0 if report["status"] == "passed" else 1

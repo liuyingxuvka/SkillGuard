@@ -1,5 +1,5 @@
 {
-  "check_declarations_hash": "2509F43A9ECE1AEAB30BCE76264ECFFD9D2A1F1E7B301AA2F575F0C8D39694F8",
+  "check_declarations_hash": "108ABB047BBC4EAD374A5E888977B6D0F976453B4D02953ED9668D724BA2F89C",
   "checks": [
     {
       "args": [
@@ -34,10 +34,11 @@
       "kind": "model_assertion",
       "maintenance_unit_id": "unit:skillguard-global-router",
       "member_skill_id": "skillguard-global-router",
-      "owner_declaration_hash": "sha256:201fdb7fdb457f3f23ee8ca9bf5cbad171ac651126a5f06aa8d447ac670014b6",
+      "owner_declaration_hash": "sha256:d50dae9646d62d809e308a5b7de438ae296a3023b5932c4c2ee810f3c0fcbf9a",
       "owner_input_projection_hash": "sha256:a656e85f68e7471c05ec2e4745373969e90a261ac3ffad14c43a85042911a522",
       "projection_declaration_hash": "sha256:a5b719e92afe70505d082259f18bd67b9bd5be6c033042a547e5ca866355c7ca",
       "semantic_check_id": "semantic:router:flowguard-model",
+      "target_input_role_ids": [],
       "timeout_seconds": 60
     },
     {
@@ -73,19 +74,16 @@
         {
           "kind": "path",
           "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
-        },
-        {
-          "kind": "path",
-          "path": ".agents/skills/skillguard/scripts/checker_engine.py"
         }
       ],
       "kind": "command",
       "maintenance_unit_id": "unit:skillguard-global-router",
       "member_skill_id": "skillguard-global-router",
-      "owner_declaration_hash": "sha256:68d3720fb4d792f3cb7f302ff1fc6771520a435fd6be4dad18284af7b067f4b7",
+      "owner_declaration_hash": "sha256:811e56ea0af2479f8c87143874f7a5f6a2d5de9f16d41318504da20c9d647705",
       "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb",
       "projection_declaration_hash": "sha256:2636bf8bfd29b2bcc4bbadbb8b0285acd4e6eaf39259904ad51261aba9c42dd8",
       "semantic_check_id": "semantic:router:command-surface",
+      "target_input_role_ids": [],
       "timeout_seconds": 60
     },
     {
@@ -104,9 +102,7 @@
         "obligation:scan-global-skills"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:router:command-surface"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router-author-functional",
       "evidence_subject_id": "subject:skillguard-global-router:author-scan",
@@ -126,10 +122,11 @@
       "kind": "native",
       "maintenance_unit_id": "unit:skillguard-global-router",
       "member_skill_id": "skillguard-global-router",
-      "owner_declaration_hash": "sha256:90c51980c5b065386b84ea9304a622cc29386a2d88dec7f2ae16eba996cabf75",
+      "owner_declaration_hash": "sha256:190ea19d212651781846be035253e62009c5c7ef4569bcca686f3aafc16e1cc8",
       "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb",
       "projection_declaration_hash": "sha256:30672e4275934da892589e7e6ae76465ae0f6614a8e7718b7f18fd0b418f233e",
       "semantic_check_id": "semantic:router:scan-work-package",
+      "target_input_role_ids": [],
       "timeout_seconds": 180
     },
     {
@@ -149,9 +146,7 @@
         "obligation:check-global-registry"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:router:command-surface"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router-author-functional",
       "evidence_subject_id": "subject:skillguard-global-router:author-registry",
@@ -171,10 +166,11 @@
       "kind": "native",
       "maintenance_unit_id": "unit:skillguard-global-router",
       "member_skill_id": "skillguard-global-router",
-      "owner_declaration_hash": "sha256:42533b69a7b5ee0dd31a4ecb7efaf8aaf7785f8a86b1d5d49715152ed1fe6b79",
+      "owner_declaration_hash": "sha256:ca649d607b74d1bef9609f9c03021ae94b1f18c1763cb7ed59549ed26d0349a1",
       "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb",
       "projection_declaration_hash": "sha256:8964be3de0295285039ff940e208aa39b673291a9e374090a6a332bf6edbc3a8",
       "semantic_check_id": "semantic:router:registry-work-package",
+      "target_input_role_ids": [],
       "timeout_seconds": 180
     },
     {
@@ -193,9 +189,7 @@
         "obligation:refresh-global-router"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:router:command-surface"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router-author-functional",
       "evidence_subject_id": "subject:skillguard-global-router:author-refresh",
@@ -215,10 +209,11 @@
       "kind": "native",
       "maintenance_unit_id": "unit:skillguard-global-router",
       "member_skill_id": "skillguard-global-router",
-      "owner_declaration_hash": "sha256:7580c149ea4731eb61ded0dcb4e2d6203720fd87953568522b7ee1ab9f68c04e",
+      "owner_declaration_hash": "sha256:18e9b7b4389cabf5cf031c36dede8ad662c452bc6240ea552c01e48193ab439f",
       "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb",
       "projection_declaration_hash": "sha256:75dcb0356c3330296dcfd7e96a882b967a220786dc23e3e11029d0294b716534",
       "semantic_check_id": "semantic:router:refresh-work-package",
+      "target_input_role_ids": [],
       "timeout_seconds": 180
     }
   ],
@@ -300,7 +295,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:contract_schema"
         ],
-        "component_hash": "sha256:5c9185646e3eecf218792ba763cdf5d1eb51f26e1bf5b666f7486abdad201b3d",
+        "component_hash": "sha256:b03578f52a80ff4a260aeb1fc705148d0bf4db5e59133174ed9122b60f65bb3a",
         "component_id": "component:contract_schema:76f4bbe801029f81",
         "consumer_ids": [
           "projection:contract-compile",
@@ -380,11 +375,11 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:11e9641c5cefa496120abc33713325475bd3aa6ae14a339eb7ab309e06392809",
+    "impact_graph_hash": "sha256:ca56539f314f99bca63d4fa3ce1cdae01f913a195bfa78750b70857d7d715fef",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
-        "content_hash": "sha256:e99618f275a1099191aab926ac945c3fcb861f91df78d6cbfda2aaada0ea4f17",
+        "content_hash": "sha256:791a70377c78266132440c05ec914c266dfaf6ee2dc9a830066fb4f9d8b1e767",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard-global-router/.skillguard/contract-source.json",
         "role": "contract_schema"
@@ -418,7 +413,7 @@
         "role": "documentation_model"
       }
     ],
-    "inventory_hash": "sha256:34b9d2111f0b2a4dd7273a949347df85cce785890c380d4816b9267fb285371f",
+    "inventory_hash": "sha256:2e697ee652dba6aaf655d9b7e0d760a32e9dc70488651ae860b3c5f8d6ff8c1d",
     "member_root_path": ".agents/skills/skillguard-global-router",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -439,14 +434,11 @@
           {
             "kind": "path",
             "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
-          },
-          {
-            "kind": "path",
-            "path": ".agents/skills/skillguard/scripts/checker_engine.py"
           }
         ],
-        "owner_declaration_hash": "sha256:68d3720fb4d792f3cb7f302ff1fc6771520a435fd6be4dad18284af7b067f4b7",
-        "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb"
+        "owner_declaration_hash": "sha256:811e56ea0af2479f8c87143874f7a5f6a2d5de9f16d41318504da20c9d647705",
+        "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb",
+        "target_input_role_ids": []
       },
       {
         "check_ids": [
@@ -464,16 +456,15 @@
             "path": ".agents/skills/skillguard-global-router/scripts/skillguard_global_router_contract_model.py"
           }
         ],
-        "owner_declaration_hash": "sha256:201fdb7fdb457f3f23ee8ca9bf5cbad171ac651126a5f06aa8d447ac670014b6",
-        "owner_input_projection_hash": "sha256:a656e85f68e7471c05ec2e4745373969e90a261ac3ffad14c43a85042911a522"
+        "owner_declaration_hash": "sha256:d50dae9646d62d809e308a5b7de438ae296a3023b5932c4c2ee810f3c0fcbf9a",
+        "owner_input_projection_hash": "sha256:a656e85f68e7471c05ec2e4745373969e90a261ac3ffad14c43a85042911a522",
+        "target_input_role_ids": []
       },
       {
         "check_ids": [
           "check:router:refresh-work-package"
         ],
-        "depends_on_owner_ids": [
-          "owner:router:command-surface"
-        ],
+        "depends_on_owner_ids": [],
         "evidence_domain_id": "skillguard:global-router-author-functional",
         "execution_owner_id": "owner:router:refresh-work-package",
         "input_component_ids": [
@@ -485,16 +476,15 @@
             "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
           }
         ],
-        "owner_declaration_hash": "sha256:7580c149ea4731eb61ded0dcb4e2d6203720fd87953568522b7ee1ab9f68c04e",
-        "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb"
+        "owner_declaration_hash": "sha256:18e9b7b4389cabf5cf031c36dede8ad662c452bc6240ea552c01e48193ab439f",
+        "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb",
+        "target_input_role_ids": []
       },
       {
         "check_ids": [
           "check:router:registry-work-package"
         ],
-        "depends_on_owner_ids": [
-          "owner:router:command-surface"
-        ],
+        "depends_on_owner_ids": [],
         "evidence_domain_id": "skillguard:global-router-author-functional",
         "execution_owner_id": "owner:router:registry-work-package",
         "input_component_ids": [
@@ -506,16 +496,15 @@
             "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
           }
         ],
-        "owner_declaration_hash": "sha256:42533b69a7b5ee0dd31a4ecb7efaf8aaf7785f8a86b1d5d49715152ed1fe6b79",
-        "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb"
+        "owner_declaration_hash": "sha256:ca649d607b74d1bef9609f9c03021ae94b1f18c1763cb7ed59549ed26d0349a1",
+        "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb",
+        "target_input_role_ids": []
       },
       {
         "check_ids": [
           "check:router:scan-work-package"
         ],
-        "depends_on_owner_ids": [
-          "owner:router:command-surface"
-        ],
+        "depends_on_owner_ids": [],
         "evidence_domain_id": "skillguard:global-router-author-functional",
         "execution_owner_id": "owner:router:scan-work-package",
         "input_component_ids": [
@@ -527,8 +516,9 @@
             "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
           }
         ],
-        "owner_declaration_hash": "sha256:90c51980c5b065386b84ea9304a622cc29386a2d88dec7f2ae16eba996cabf75",
-        "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb"
+        "owner_declaration_hash": "sha256:190ea19d212651781846be035253e62009c5c7ef4569bcca686f3aafc16e1cc8",
+        "owner_input_projection_hash": "sha256:8649d9f0072d917fc9d9b22720ebcf8739e99dd15269969e58583c06d86af9eb",
+        "target_input_role_ids": []
       }
     ],
     "policy_id": "skillguard.content_impact_policy.current",
@@ -536,14 +526,14 @@
     "projection_consumers": [
       {
         "consumer_id": "projection:contract-compile",
-        "consumer_projection_hash": "sha256:40e7babca4624f9a3f3dd2a56508a18b2c98fcf04299a98b8a86fde45c0725e8",
+        "consumer_projection_hash": "sha256:a2bc34305ca28ab5c6501e611967b8234ea02ac4ad7e807150609cb09acaf8be",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
           "component:contract_schema:76f4bbe801029f81",
           "component:documentation_model:08c69f953871b1a6"
         ],
-        "input_projection_hash": "sha256:ea6304e1d4dcaf13078325c140f316af0a77e7c943deb595f3b21c1a5677b136",
+        "input_projection_hash": "sha256:4e2023fe86f78cab1349d67cf11845c07bf7f3260e4e61e85ff7446f805912f4",
         "kind": "contract_compile",
         "projection_declaration_hash": "sha256:583f25459c26c01b02ff46d538b19eaf8c58b1aad5359c3d5a5285236dfddd0d"
       },
@@ -559,7 +549,7 @@
       },
       {
         "consumer_id": "projection:installation",
-        "consumer_projection_hash": "sha256:51bb307ae059d862cdb8b399f45bc5a7812f0dfff045086fa019035d5513a1e3",
+        "consumer_projection_hash": "sha256:169dba3ac4d80b14ababe189346f0eacc56a564ed3fd23058f74fd80a48d0f53",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
@@ -568,7 +558,7 @@
           "component:documentation_model:6466c47961246656",
           "component:runtime_source:cc57ba44bdd74735"
         ],
-        "input_projection_hash": "sha256:27fbd61f91a40f243e713c983621c62f862a78871151da361d998054355670d9",
+        "input_projection_hash": "sha256:49ec34199ce6cf328794a54e34b0cec2c87d332774a957e8af0e4a656d13600e",
         "kind": "installation",
         "projection_declaration_hash": "sha256:dfa20c17681909adcbf639fa832b3c2508c6eec4c2ee45de9e897990fbd5db2e"
       },
@@ -596,9 +586,9 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "2A0C68870D6FC794BF167A25A643F9FEDFFFE0F349070CDA130E1FB3C3803468",
+  "contract_hash": "7F71F9EC57ADEEE1647BF3D2AC6B521B190B65B9EC1F03282AE4131F2A99968D",
   "maintenance_unit_id": "unit:skillguard-global-router",
-  "manifest_hash": "5815001C9EFE836ABCD2A2558500F8491F194B7D628A00F5343B3E90FC870467",
+  "manifest_hash": "02C21DF31371D374846D721D7A3F13C1B7B82E627DA3563A5F7770CCEBDF8A47",
   "member_skill_ids": [
     "skillguard-global-router"
   ],
@@ -606,7 +596,7 @@
   "schema_version": "skillguard.check_manifest.v2",
   "skill_id": "skillguard-global-router",
   "source_fingerprints": {
-    "binding": "E99618F275A1099191AAB926AC945C3FCB861F91DF78D6CBFDA2AAADA0EA4F17",
+    "binding": "791A70377C78266132440C05EC914C266DFAF6EE2DC9A830066FB4F9D8B1E767",
     "entrypoint": "EBC5AD5D362901258CE0A96A63FFA0747F8A3B6CA54332959BDC3C508D551C37",
     "implementation:.agents/skills/skillguard-global-router/SKILL.md": "EBC5AD5D362901258CE0A96A63FFA0747F8A3B6CA54332959BDC3C508D551C37",
     "implementation:.agents/skills/skillguard-global-router/references": "46871A25C106379B5CDA879E326290EB312BEAA48120341E11442061861B2C7F",

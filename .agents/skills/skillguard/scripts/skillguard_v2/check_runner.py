@@ -918,38 +918,139 @@ def _wire_target_input_fingerprint(value: object) -> str:
     return "sha256:" + text.lower()
 
 
-def _run_bound_output_component(
+def _semantic_launch_plan_fingerprint(
     declared: Mapping[str, Any],
-    run: Mapping[str, Any],
-) -> dict[str, str] | None:
-    """Bind checks that read from or write evidence into the current run.
+    launch_plan: ResolvedLaunchPlan,
+) -> str:
+    """Hash executable launch meaning without run-local expanded paths.
 
-    A command that receives ``{{run_root}}`` can read request/run state even
-    when it does not emit a depth-specific envelope.  Reusing its owner receipt
-    across a different request would therefore be unsound.
+    ``run_root`` is an output location.  Its physical path, along with other
+    per-run root expansions, must not turn an otherwise identical owner into a
+    new semantic execution.
     """
 
-    raw_args = declared.get("args", [])
-    reads_run_root = (
-        isinstance(raw_args, Sequence)
-        and not isinstance(raw_args, (str, bytes))
-        and any(str(value) == "{{run_root}}" for value in raw_args)
+    record = launch_plan.record
+    return wire_hash(
+        {
+            "policy_id": "skillguard.semantic_launch_plan.current",
+            "command": str(declared.get("command", "")),
+            "declared_args": list(declared.get("args", [])),
+            "cwd_token": str(declared.get("cwd_token", "target_root")),
+            "cwd_relative": str(declared.get("cwd_relative", ".")),
+            "adapter": str(record.get("adapter", "")),
+            "resolved_program_identity": str(
+                record.get("resolved_program_identity", "")
+            ),
+            "resolved_interpreter_identity": str(
+                record.get("interpreter_identity", "")
+            ),
+            "platform": str(record.get("platform", "")),
+            "environment_fingerprint": str(
+                record.get("environment_fingerprint", "")
+            ),
+        }
     )
-    if not reads_run_root:
-        return None
+
+
+def _target_input_identity(
+    declared: Mapping[str, Any],
+    run: Mapping[str, Any],
+    target_root: Path,
+) -> tuple[str, dict[str, str]]:
+    request = run.get("request", {})
+    if not isinstance(request, Mapping):
+        raise CheckRunnerError("check_run_request_invalid", str(target_root))
+    target_input_fingerprint = str(
+        request.get("target_input_fingerprint", "")
+    )
+    target_input_paths = request.get("target_input_paths")
+    if target_input_paths is not None:
+        current_target_inputs = fingerprint_target_inputs(
+            target_root, target_input_paths
+        )
+        if (
+            current_target_inputs.get("fingerprint")
+            != target_input_fingerprint
+        ):
+            raise CheckRunnerError(
+                "check_target_input_authority_stale",
+                str(declared.get("check_id", "")),
+            )
+    required_role_ids = sorted(
+        str(value) for value in declared.get("target_input_role_ids", [])
+    )
+    target_input_roles = request.get("target_input_roles")
+    if required_role_ids and not isinstance(target_input_roles, Mapping):
+        raise CheckRunnerError(
+            "check_target_input_roles_missing",
+            str(declared.get("check_id", "")),
+        )
+    role_fingerprints: dict[str, str] = {}
+    if target_input_roles is not None:
+        current_role_inputs = fingerprint_target_input_roles(
+            target_root, target_input_roles
+        )
+        missing_role_ids = sorted(
+            set(required_role_ids) - set(current_role_inputs)
+        )
+        if missing_role_ids:
+            raise CheckRunnerError(
+                "check_target_input_roles_missing",
+                ",".join(missing_role_ids),
+            )
+        required_role_set = set(required_role_ids)
+        role_fingerprints = {
+            role: _wire_target_input_fingerprint(
+                fingerprint_value(inventory)["raw"]
+            )
+            for role, inventory in sorted(current_role_inputs.items())
+            if role in required_role_set
+        }
+    return (
+        _wire_target_input_fingerprint(target_input_fingerprint),
+        role_fingerprints,
+    )
+
+
+def inspect_check_prelaunch_admission(
+    check: Mapping[str, Any],
+    *,
+    target_root: Path,
+    repository_root: Path,
+    run_root: Path,
+) -> dict[str, Any]:
+    """Validate all owner-local inputs without reading or starting receipts."""
+
+    declared, _manifest = _declared_check_for_run(run_root, check)
+    run = load_run(run_root)
+    contract = load_contract_snapshot(run_root)
+    _plan, owner = _content_impact_owner(contract, declared)
+    declared_role_ids = sorted(
+        str(value) for value in declared.get("target_input_role_ids", [])
+    )
+    owner_role_ids = sorted(
+        str(value) for value in owner.get("target_input_role_ids", [])
+    )
+    if declared_role_ids != owner_role_ids:
+        raise CheckRunnerError(
+            "check_target_input_owner_roles_mismatch",
+            str(declared.get("check_id", "")),
+        )
+    universal_fingerprint, role_fingerprints = _target_input_identity(
+        declared, run, target_root
+    )
+    launch_plan, *_details = _resolve_check_launch_plan(
+        declared,
+        target_root=target_root,
+        repository_root=repository_root,
+        run_root=run_root,
+    )
     return {
-        "component_id": "component:run_bound_output_context",
-        "component_hash": wire_hash(
-            {
-                "policy_id": "skillguard.run_bound_output.current",
-                "run_id": str(run.get("run_id", "")),
-                "contract_hash": str(run.get("contract_hash", "")),
-                "check_manifest_hash": str(run.get("check_manifest_hash", "")),
-                "check_declarations_hash": str(
-                    run.get("check_declarations_hash", "")
-                ),
-                "request_fingerprint": str(run.get("request_fingerprint", "")),
-            }
+        "target_input_fingerprint": universal_fingerprint,
+        "target_input_role_ids": declared_role_ids,
+        "target_input_role_fingerprints": role_fingerprints,
+        "semantic_launch_plan_fingerprint": (
+            _semantic_launch_plan_fingerprint(declared, launch_plan)
         ),
     }
 
@@ -1068,9 +1169,6 @@ def _check_execution_identity(
         owner=owner,
     )
     owner_input_components = list(owner_input["components"])
-    run_bound_component = _run_bound_output_component(declared, run)
-    if run_bound_component is not None:
-        owner_input_components.append(run_bound_component)
     installed_component = _installed_runtime_input_component(
         declared,
         plan=plan,
@@ -1126,29 +1224,10 @@ def _check_execution_identity(
                 "receipt_hash": str(receipt.get("receipt_hash", "")),
             }
         )
-    request = run.get("request", {})
-    if not isinstance(request, Mapping):
-        raise CheckRunnerError("check_run_request_invalid", str(run_root))
-    target_input_fingerprint = str(request.get("target_input_fingerprint", ""))
-    target_input_paths = request.get("target_input_paths")
-    if target_input_paths is not None:
-        current_target_inputs = fingerprint_target_inputs(
-            target_root, target_input_paths
-        )
-        if current_target_inputs.get("fingerprint") != target_input_fingerprint:
-            raise CheckRunnerError(
-                "check_target_input_authority_stale", str(declared.get("check_id", ""))
-            )
-    target_input_role_fingerprints: dict[str, str] = {}
-    target_input_roles = request.get("target_input_roles")
-    if target_input_roles is not None:
-        current_role_inputs = fingerprint_target_input_roles(
-            target_root, target_input_roles
-        )
-        target_input_role_fingerprints = {
-            role: str(fingerprint_value(inventory)["raw"])
-            for role, inventory in sorted(current_role_inputs.items())
-        }
+    (
+        target_input_fingerprint,
+        target_input_role_fingerprints,
+    ) = _target_input_identity(declared, run, target_root)
     toolchain_identity = check_toolchain_identity(declared)
     launch_plan, *_launch_details = _resolve_check_launch_plan(
         declared,
@@ -1165,13 +1244,11 @@ def _check_execution_identity(
         "owner_declaration_hash": str(owner.get("owner_declaration_hash", "")),
         "owner_input_projection_hash": owner_input_projection_hash,
         "dependency_receipts": dependency_identities,
-        "target_input_fingerprint": _wire_target_input_fingerprint(
-            target_input_fingerprint
-        ),
+        "target_input_fingerprint": target_input_fingerprint,
         "target_input_role_fingerprints": target_input_role_fingerprints,
         **toolchain_identity,
-        "launch_plan_fingerprint": str(
-            launch_plan.record.get("launch_plan_fingerprint", "")
+        "launch_plan_fingerprint": _semantic_launch_plan_fingerprint(
+            declared, launch_plan
         ),
         "resolved_program_identity": str(
             launch_plan.record.get("resolved_program_identity", "")
@@ -1261,6 +1338,9 @@ def _receipt_identity_payload(receipt: Mapping[str, Any]) -> dict[str, Any]:
         "target_input_fingerprint": str(
             receipt.get("target_input_fingerprint", "")
         ),
+        "target_input_role_fingerprints": dict(
+            receipt.get("target_input_role_fingerprints", {})
+        ),
         "toolchain_fingerprint": str(receipt.get("toolchain_fingerprint", "")),
         "execution_environment_fingerprint": str(
             receipt.get("execution_environment_fingerprint", "")
@@ -1295,6 +1375,7 @@ def _validate_owner_receipt(
         "input_components",
         "dependency_receipts",
         "target_input_fingerprint",
+        "target_input_role_fingerprints",
         "toolchain_fingerprint",
         "execution_environment_fingerprint",
         "evidence_domain_id",
@@ -1358,6 +1439,18 @@ def _validate_owner_receipt(
     ) is None:
         raise CheckRunnerError(
             "check_execution_receipt_invalid", "target_input_fingerprint"
+        )
+    target_input_role_fingerprints = receipt.get(
+        "target_input_role_fingerprints"
+    )
+    if not isinstance(target_input_role_fingerprints, Mapping) or any(
+        not str(role_id)
+        or re.fullmatch(WIRE_HASH_PATTERN, str(fingerprint)) is None
+        for role_id, fingerprint in target_input_role_fingerprints.items()
+    ):
+        raise CheckRunnerError(
+            "check_execution_receipt_invalid",
+            "target_input_role_fingerprints",
         )
     input_components = receipt.get("input_components")
     if (
@@ -1589,6 +1682,7 @@ def _load_canonical_success(
                 "owner_input_projection_hash",
                 "dependency_receipts",
                 "target_input_fingerprint",
+                "target_input_role_fingerprints",
                 "toolchain_fingerprint",
                 "execution_environment_fingerprint",
                 "evidence_domain_id",
@@ -1775,6 +1869,9 @@ def _write_canonical_success(
         "dependency_receipts": list(identity["dependency_receipts"]),
         "target_input_fingerprint": str(
             identity["target_input_fingerprint"]
+        ),
+        "target_input_role_fingerprints": dict(
+            identity["target_input_role_fingerprints"]
         ),
         "toolchain_fingerprint": str(identity["toolchain_fingerprint"]),
         "execution_environment_fingerprint": str(

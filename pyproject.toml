@@ -1,6 +1,6 @@
 [project]
 name = "skillguard"
-version = "0.3.4"
+version = "0.3.5"
 description = "A local runtime-contract and maintenance framework for Codex skills."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -28,6 +28,6 @@ packages = ["skillguard_v2"]
 package-dir = { "" = ".agents/skills/skillguard/scripts" }
 
 [tool.skillguard.repository]
-baseline_version = "0.3.4"
+baseline_version = "0.3.5"
 implementation_status = "local-cli-dispatch-runtime-contract"
 public_claim_boundary = "One current local dispatch and generic declared-check supervision runtime, target-owned checks, immutable current receipts, portable project adoption, affected/full TestMesh, staged whole-tree install/rollback, privacy/provenance checks, and self-host evidence exist. SkillGuard does not invent target purpose contracts, domain semantics, counterexamples, calibration pairs, or quality modes. Former shapes are rejection-only and have no compatibility or fallback route. Target-domain correctness, packaged CLI distribution, hosted service behavior, binary artifacts, remote CI execution, GitHub publication, and future AI correctness remain separate claims."

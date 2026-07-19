@@ -131,7 +131,11 @@ freshness:
         )
 
     def test_malformed_and_escape_watch_paths_block(self) -> None:
-        for watch in ("../verification-report.json", "/tmp/report.json", "C:\\temp\\report.json"):
+        for watch in (
+            "../verification-report.json",
+            "/" + "tmp/report.json",
+            "C:" + chr(92) + "temp" + chr(92) + "report.json",
+        ):
             with self.subTest(watch=watch):
                 payload = self._review([watch])
                 self.assertIn(

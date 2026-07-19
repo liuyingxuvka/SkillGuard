@@ -37,13 +37,14 @@
     "wire_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "compiled_check": {
       "type": "object",
-      "required": ["check_id", "semantic_check_id", "kind", "evidence_class", "covers_obligation_ids", "execution_owner_id", "input_selectors", "depends_on_check_ids", "evidence_domain_id", "owner_declaration_hash", "input_component_ids", "owner_input_projection_hash", "projection_declaration_hash"],
+      "required": ["check_id", "semantic_check_id", "kind", "evidence_class", "covers_obligation_ids", "execution_owner_id", "input_selectors", "depends_on_check_ids", "target_input_role_ids", "evidence_domain_id", "owner_declaration_hash", "input_component_ids", "owner_input_projection_hash", "projection_declaration_hash"],
       "properties": {
         "check_id": {"type": "string", "minLength": 1},
         "semantic_check_id": {"type": "string", "minLength": 1},
         "execution_owner_id": {"type": "string", "minLength": 1},
         "input_selectors": {"type": "array", "minItems": 1},
         "depends_on_check_ids": {"type": "array", "uniqueItems": true},
+        "target_input_role_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
         "evidence_domain_id": {"type": "string", "minLength": 1},
         "owner_declaration_hash": {"$ref": "#/$defs/wire_hash"},
         "input_component_ids": {"type": "array", "minItems": 1, "uniqueItems": true},

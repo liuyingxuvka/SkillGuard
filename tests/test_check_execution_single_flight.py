@@ -17,9 +17,9 @@ from _skillguard_v2_runtime_fixture import (  # noqa: F401
 )
 from skillguard_v2.check_runner import (
     CheckRunnerError,
-    _run_bound_output_component,
     check_toolchain_identity,
     get_or_execute_check,
+    inspect_current_owner_execution,
     load_owner_receipt_from_projection,
 )
 from skillguard_v2.contract_compiler import (
@@ -34,49 +34,6 @@ from skillguard_v2.run_store import claim_run
 
 
 class CheckExecutionSingleFlightTests(unittest.TestCase):
-    def test_only_declared_run_root_inputs_receive_a_run_component(self) -> None:
-        first_run = {
-            "run_id": "run-one",
-            "contract_hash": "A" * 64,
-            "check_manifest_hash": "B" * 64,
-            "check_declarations_hash": "C" * 64,
-            "request_fingerprint": "D" * 64,
-        }
-        second_run = {**first_run, "run_id": "run-two"}
-
-        self.assertIsNone(
-            _run_bound_output_component(
-                {"check_id": "check:portable"}, first_run
-            )
-        )
-        run_reader_first = _run_bound_output_component(
-            {"args": ["reader.py", "{{run_root}}"]}, first_run
-        )
-        run_reader_second = _run_bound_output_component(
-            {"args": ["reader.py", "{{run_root}}"]}, second_run
-        )
-        self.assertIsNotNone(run_reader_first)
-        self.assertIsNotNone(run_reader_second)
-        self.assertNotEqual(
-            run_reader_first["component_hash"],
-            run_reader_second["component_hash"],
-        )
-        for retired_field in (
-            "depth_evidence_output",
-            "calibration_evidence_output",
-        ):
-            self.assertIsNone(
-                _run_bound_output_component(
-                    {
-                        retired_field: {
-                            "path_token": "run_root",
-                            "relative_path": "out.json",
-                        }
-                    },
-                    first_run,
-                )
-            )
-
     def test_toolchain_identity_returns_both_current_hashes(self) -> None:
         identity = check_toolchain_identity({"command": sys.executable})
 
@@ -168,6 +125,9 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
                         if key in check_row
                     },
                     "input_selectors": check_row["input_selectors"],
+                    "target_input_role_ids": check_row[
+                        "target_input_role_ids"
+                    ],
                     "evidence_domain_id": check_row["evidence_domain_id"],
                     "impact_policy_id": "skillguard.content_impact_policy.current",
                 }
@@ -374,10 +334,7 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
         self.assertEqual("owner:single-flight", receipt["execution_owner_id"])
         self.assertRegex(receipt["execution_key"], r"^sha256:[0-9a-f]{64}$")
         self.assertRegex(receipt["receipt_id"], r"^sha256:[0-9a-f]{64}$")
-        self.assertEqual(
-            ["component:run_bound_output_context"],
-            [row["component_id"] for row in receipt["input_components"]],
-        )
+        self.assertEqual([], receipt["input_components"])
         self.assertEqual(
             wire_hash(receipt["input_components"]),
             receipt["owner_input_projection_hash"],
@@ -443,7 +400,13 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
             "check_id": "check:cross-run",
             "kind": "command",
             "command": sys.executable,
-            "args": ["-c", script, "{{repository_root}}", counter],
+            "args": [
+                "-c",
+                script,
+                "{{repository_root}}",
+                counter,
+                "{{run_root}}",
+            ],
             "expected": {"exit_code": 0},
             "covers_obligation_ids": ["obligation:intake"],
         }
@@ -463,6 +426,144 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
         self.assertEqual(
             first["execution_receipt"]["receipt_id"],
             second["execution_receipt"]["receipt_id"],
+        )
+
+    def test_target_input_role_change_invalidates_only_its_owner(self) -> None:
+        target = self.root / "role-target"
+        target.mkdir()
+        target.joinpath("one.txt").write_text("one-v1", encoding="utf-8")
+        target.joinpath("two.txt").write_text("two-v1", encoding="utf-8")
+        counters = {
+            "check:role-one": "role-one-counter.txt",
+            "check:role-two": "role-two-counter.txt",
+        }
+        script = (
+            "import pathlib,sys; p=pathlib.Path(sys.argv[1])/sys.argv[2]; "
+            "n=int(p.read_text())+1 if p.exists() else 1; p.write_text(str(n))"
+        )
+        checks = [
+            {
+                "check_id": check_id,
+                "kind": "command",
+                "command": sys.executable,
+                "args": [
+                    "-c",
+                    script,
+                    "{{repository_root}}",
+                    counter,
+                ],
+                "expected": {"exit_code": 0},
+                "target_input_role_ids": [role_id],
+            }
+            for check_id, counter, role_id in (
+                (
+                    "check:role-one",
+                    counters["check:role-one"],
+                    "target.role.one",
+                ),
+                (
+                    "check:role-two",
+                    counters["check:role-two"],
+                    "target.role.two",
+                ),
+            )
+        ]
+        contract, manifest = runtime_contract_with_checks(checks)
+        request = {
+            "function_ids": ["analyze"],
+            "write_targets": ["out"],
+            "request": "role-scoped target inputs",
+            "target_input_roles": {
+                "target.role.one": ["one.txt"],
+                "target.role.two": ["two.txt"],
+            },
+        }
+        decision = select_routes(contract, request)
+
+        first_claim = claim_run(
+            contract,
+            request,
+            target,
+            decision,
+            check_manifest=manifest,
+        )
+        self.assertTrue(first_claim.ok, first_claim.to_dict())
+        assert first_claim.run_root is not None
+        first_results = {
+            check["check_id"]: self._run(
+                check,
+                first_claim.run_root,
+                target_root=target,
+            )
+            for check in manifest["checks"]
+        }
+        target.joinpath("one.txt").write_text("one-v2", encoding="utf-8")
+        second_claim = claim_run(
+            contract,
+            request,
+            target,
+            decision,
+            check_manifest=manifest,
+        )
+        self.assertTrue(second_claim.ok, second_claim.to_dict())
+        assert second_claim.run_root is not None
+        role_two_check = next(
+            check
+            for check in manifest["checks"]
+            if check["check_id"] == "check:role-two"
+        )
+        role_two_inspection = inspect_current_owner_execution(
+            role_two_check,
+            skill_root=self.skill_root,
+            target_root=target,
+            repository_root=self.repository_root,
+            run_root=second_claim.run_root,
+        )
+        self.assertEqual(
+            "reuse_owner_receipt",
+            role_two_inspection["disposition"],
+            role_two_inspection,
+        )
+        second_results = {
+            check["check_id"]: self._run(
+                check,
+                second_claim.run_root,
+                target_root=target,
+            )
+            for check in manifest["checks"]
+        }
+
+        self.assertEqual(
+            "executed_terminal_success",
+            second_results["check:role-one"]["disposition"],
+        )
+        self.assertEqual(
+            "reused_terminal_success",
+            second_results["check:role-two"]["disposition"],
+        )
+        self.assertEqual(
+            {"target.role.one"},
+            set(
+                first_results["check:role-one"]["execution_receipt"][
+                    "target_input_role_fingerprints"
+                ]
+            ),
+        )
+        self.assertEqual(
+            {"target.role.two"},
+            set(
+                second_results["check:role-two"]["execution_receipt"][
+                    "target_input_role_fingerprints"
+                ]
+            ),
+        )
+        self.assertEqual(
+            "2",
+            (self.repository_root / counters["check:role-one"]).read_text(),
+        )
+        self.assertEqual(
+            "1",
+            (self.repository_root / counters["check:role-two"]).read_text(),
         )
 
     def test_distinct_semantic_checks_do_not_reuse_one_owner_receipt(self) -> None:

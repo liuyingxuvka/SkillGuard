@@ -59,6 +59,9 @@ class CheckDeclaration:
     member_skill_id: str
     evidence_subject_id: str
     depends_on_check_ids: tuple[str, ...] = ()
+    target_input_role_ids: tuple[str, ...] = ()
+    selector_match_counts: tuple[int, ...] = (1,)
+    order_only_check_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -143,6 +146,8 @@ class SupervisionCase:
     declared_checks: tuple[CheckDeclaration, ...] = MULTI_DECLARATIONS
     frozen_checks: tuple[CheckDeclaration, ...] = MULTI_DECLARATIONS
     results: tuple[CheckResult, ...] = MULTI_RESULTS
+    supplied_target_input_role_ids: tuple[str, ...] = ()
+    request_identity_includes_attempt_metadata: bool = False
     check_names_interpreted_by_supervisor: bool = False
     force_accept_findings: bool = False
 
@@ -260,6 +265,8 @@ def _inventory_findings(case: SupervisionCase) -> tuple[str, ...]:
         findings.append("frozen_check_inventory_drift")
     if case.check_names_interpreted_by_supervisor:
         findings.append("check_name_semantics_interpreted")
+    if case.request_identity_includes_attempt_metadata:
+        findings.append("request_identity_includes_attempt_metadata")
     return tuple(findings)
 
 
@@ -293,6 +300,28 @@ def _ownership_findings(case: SupervisionCase) -> tuple[str, ...]:
         findings.append("self_check_dependency")
     if _has_dependency_cycle(case.declared_checks):
         findings.append("cyclic_check_dependency")
+    supplied_roles = set(case.supplied_target_input_role_ids)
+    if any(
+        role_id not in supplied_roles
+        for row in case.declared_checks
+        for role_id in row.target_input_role_ids
+    ):
+        findings.append("target_input_role_not_supplied")
+    if any(
+        count <= 0
+        for row in case.declared_checks
+        for count in row.selector_match_counts
+    ):
+        findings.append("target_path_selector_unmatched")
+    if any(row.order_only_check_ids for row in case.declared_checks):
+        findings.append("order_only_dependency_declared_as_receipt_dependency")
+    owner_role_sets: dict[str, set[tuple[str, ...]]] = {}
+    for row in case.declared_checks:
+        owner_role_sets.setdefault(row.execution_owner_id, set()).add(
+            tuple(row.target_input_role_ids)
+        )
+    if any(len(role_sets) > 1 for role_sets in owner_role_sets.values()):
+        findings.append("shared_owner_target_input_roles_mismatch")
     return tuple(dict.fromkeys(findings))
 
 
@@ -478,6 +507,7 @@ KNOWN_BAD_SPECS = (
     KnownBadSpec("declared_check_id_missing", "inventory", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], check_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], check_id=""),), "results": ()}),
     KnownBadSpec("frozen_check_inventory_drift", "inventory", {"frozen_checks": SINGLE_DECLARATIONS}),
     KnownBadSpec("check_name_semantics_interpreted", "inventory", {"check_names_interpreted_by_supervisor": True}),
+    KnownBadSpec("request_identity_includes_attempt_metadata", "inventory", {"request_identity_includes_attempt_metadata": True}),
     KnownBadSpec("semantic_check_id_missing", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], semantic_check_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], semantic_check_id=""),), "results": ()}),
     KnownBadSpec("execution_owner_missing", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], execution_owner_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], execution_owner_id=""),), "results": ()}),
     KnownBadSpec("declared_maintenance_unit_missing", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], maintenance_unit_id=""),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], maintenance_unit_id=""),), "results": ()}),
@@ -488,6 +518,10 @@ KNOWN_BAD_SPECS = (
     KnownBadSpec("unknown_check_dependency", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], depends_on_check_ids=("check:missing",)),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], depends_on_check_ids=("check:missing",)),), "results": SINGLE_RESULTS}),
     KnownBadSpec("self_check_dependency", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], depends_on_check_ids=("check:target:one",)),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], depends_on_check_ids=("check:target:one",)),), "results": SINGLE_RESULTS}),
     KnownBadSpec("cyclic_check_dependency", "ownership", {"declared_checks": (replace(MULTI_DECLARATIONS[0], depends_on_check_ids=("check:target:two",)), MULTI_DECLARATIONS[1]), "frozen_checks": (replace(MULTI_DECLARATIONS[0], depends_on_check_ids=("check:target:two",)), MULTI_DECLARATIONS[1])}),
+    KnownBadSpec("target_input_role_not_supplied", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], target_input_role_ids=("target.role.one",)),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], target_input_role_ids=("target.role.one",)),), "results": SINGLE_RESULTS}),
+    KnownBadSpec("target_path_selector_unmatched", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], selector_match_counts=(1, 0)),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], selector_match_counts=(1, 0)),), "results": SINGLE_RESULTS}),
+    KnownBadSpec("order_only_dependency_declared_as_receipt_dependency", "ownership", {"declared_checks": (replace(SINGLE_DECLARATIONS[0], order_only_check_ids=("check:target:two",)),), "frozen_checks": (replace(SINGLE_DECLARATIONS[0], order_only_check_ids=("check:target:two",)),), "results": SINGLE_RESULTS}),
+    KnownBadSpec("shared_owner_target_input_roles_mismatch", "ownership", {"declared_checks": (replace(SHARED_OWNER_DECLARATIONS[0], target_input_role_ids=("target.role.one",)), replace(SHARED_OWNER_DECLARATIONS[1], target_input_role_ids=("target.role.two",))), "frozen_checks": (replace(SHARED_OWNER_DECLARATIONS[0], target_input_role_ids=("target.role.one",)), replace(SHARED_OWNER_DECLARATIONS[1], target_input_role_ids=("target.role.two",))), "results": SHARED_OWNER_RESULTS, "supplied_target_input_role_ids": ("target.role.one", "target.role.two")}),
     KnownBadSpec("check_result_duplicated", "receipt", {"results": (MULTI_RESULTS[0], MULTI_RESULTS[0], MULTI_RESULTS[1])}),
     KnownBadSpec("undeclared_check_result", "receipt", {"results": MULTI_RESULTS + (replace(MULTI_RESULTS[1], check_id="check:target:extra", semantic_check_id="semantic:target:extra", execution_owner_id="owner:target:extra", completion_index=3),)}),
     KnownBadSpec("check_result_owner_mismatch", "receipt", {"results": (replace(MULTI_RESULTS[0], execution_owner_id="owner:wrong"), MULTI_RESULTS[1])}),

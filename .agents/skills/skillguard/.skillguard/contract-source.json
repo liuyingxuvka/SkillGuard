@@ -116,9 +116,7 @@
         "obligation:static-audit"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:inventory-static-surface"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:static-audit",
       "evidence_subject_id": "subject:skillguard:check:self:run-native-static-checks",
@@ -138,14 +136,6 @@
         {
           "kind": "path",
           "path": ".agents/skills/skillguard/.skillguard/contract-source.json"
-        },
-        {
-          "kind": "path",
-          "path": ".agents/skills/skillguard/.skillguard/compiled-contract.json"
-        },
-        {
-          "kind": "path",
-          "path": ".agents/skills/skillguard/.skillguard/check-manifest.json"
         }
       ],
       "kind": "command",
@@ -213,10 +203,7 @@
         "obligation:deep-audit"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:compile-generated-contract",
-        "check:self:freeze-declared-check-inventory"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
       "evidence_subject_id": "subject:skillguard:check:self:run-declared-checks",
@@ -232,14 +219,6 @@
         {
           "kind": "path",
           "path": ".agents/skills/skillguard/.skillguard/contract-source.json"
-        },
-        {
-          "kind": "path",
-          "path": ".agents/skills/skillguard/.skillguard/compiled-contract.json"
-        },
-        {
-          "kind": "path",
-          "path": ".agents/skills/skillguard/.skillguard/check-manifest.json"
         }
       ],
       "kind": "command",
@@ -290,9 +269,7 @@
         "obligation:unique-depth-evidence"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:run-declared-checks"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
       "evidence_subject_id": "subject:skillguard:check:self:declared-check-runtime",
@@ -331,9 +308,7 @@
         "obligation:depth-native-authority"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:run-declared-checks"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
       "evidence_subject_id": "subject:skillguard:check:self:declared-check-supervision-model",
@@ -460,9 +435,7 @@
         "obligation:model-authority"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:validate-binding"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
       "evidence_subject_id": "subject:skillguard:check:self:compile-generated-contract",
@@ -519,9 +492,7 @@
         "obligation:model-authority"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:compile-generated-contract"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
       "evidence_subject_id": "subject:skillguard:check:self:verify-generated-parity",
@@ -557,9 +528,7 @@
         "obligation:model-authority"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:compile-generated-contract"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
       "evidence_subject_id": "subject:skillguard:check:self:test-mesh-fast",
@@ -705,11 +674,7 @@
         "obligation:guard-run-identity"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:obligation:no-former-authority-success",
-        "check:self:packet-consumption",
-        "check:self:select-function-route"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:guard-run-identity",
@@ -744,11 +709,7 @@
         "obligation:failed-lock-recovery"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:obligation:no-former-authority-success",
-        "check:self:packet-consumption",
-        "check:self:select-function-route"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:failed-lock-recovery",
@@ -1111,9 +1072,7 @@
         "obligation:author-repository-adoption"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:install-author-repository-adoption"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:author-repository-adoption",
       "evidence_subject_id": "subject:skillguard:check:self:audit-author-repository-adoption",
@@ -1133,10 +1092,6 @@
         {
           "kind": "path",
           "path": ".agents/skills/skillguard/assets/schemas/skillguard_project_adoption_v1.schema.json"
-        },
-        {
-          "kind": "path",
-          "path": ".skillguard/project.json"
         },
         {
           "kind": "path",
@@ -1282,9 +1237,7 @@
         "obligation:provenance"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:resolve-canonical-source"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
       "evidence_subject_id": "subject:skillguard:check:self:installed-provenance",
@@ -1295,10 +1248,6 @@
       "input_selectors": [
         {
           "install_disposition": "copy",
-          "kind": "install_disposition"
-        },
-        {
-          "install_disposition": "generate",
           "kind": "install_disposition"
         },
         {
@@ -1351,10 +1300,7 @@
         "obligation:provenance"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:compare-installed-and-repository",
-        "check:self:installed-provenance"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
       "evidence_subject_id": "subject:skillguard:check:self:installation-safety",
@@ -1380,6 +1326,43 @@
     },
     {
       "args": [
+        "-m",
+        "pytest",
+        "tests/test_release_workflow.py",
+        "-q"
+      ],
+      "check_id": "check:self:release-workflow-policy",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:provenance"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:installation-and-release",
+      "evidence_subject_id": "subject:skillguard:check:self:release-workflow-policy",
+      "execution_owner_id": "owner:self:release-workflow-policy",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_release_workflow.py"
+        }
+      ],
+      "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:release-workflow-policy",
+      "timeout_seconds": 60
+    },
+    {
+      "args": [
         ".agents/skills/skillguard/scripts/skillguard_privacy.py",
         "--repository-root",
         "."
@@ -1390,10 +1373,7 @@
         "obligation:provenance"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:compare-installed-and-repository",
-        "check:self:installed-provenance"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
       "evidence_subject_id": "subject:skillguard:check:self:public-export-privacy",
@@ -1404,10 +1384,6 @@
       "input_selectors": [
         {
           "install_disposition": "copy",
-          "kind": "install_disposition"
-        },
-        {
-          "install_disposition": "generate",
           "kind": "install_disposition"
         },
         {
@@ -1423,6 +1399,9 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "semantic_check_id": "check:self:public-export-privacy",
+      "target_input_role_ids": [
+        "repository.public_export_candidates"
+      ],
       "timeout_seconds": 180
     },
     {
@@ -1534,9 +1513,7 @@
         "obligation:template-harvest"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:self:template-lifecycle-model-v1"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:template-supervision",
       "evidence_subject_id": "subject:skillguard:check:self:template-protocol-v1",
@@ -1708,6 +1685,9 @@
     "target_skill_id": "skillguard"
   },
   "implementation_paths": [
+    "AGENTS.md",
+    ".gitignore",
+    ".github/workflows/ci.yml",
     ".agents/skills/skillguard/SKILL.md",
     ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
     ".agents/skills/skillguard/scripts/skillguard_v2",
@@ -1779,6 +1759,7 @@
     "tests/test_test_mesh_legacy_rejection.py",
     "tests/test_conditional_noop_closure_v2.py",
     "tests/test_contract_compiler_v2.py",
+    "tests/test_release_workflow.py",
     "tests/test_validation_execution_policy_projection.py",
     ".agents/skills/skillguard/.skillguard/template_lifecycle_model.py",
     ".flowguard/development_process_flow/skillguard_template_lifecycle_model.py",
@@ -2343,6 +2324,7 @@
       "check_ids": [
         "check:self:verify-release-provenance",
         "check:self:installation-safety",
+        "check:self:release-workflow-policy",
         "check:self:public-export-privacy"
       ],
       "output_artifact_ids": [],

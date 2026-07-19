@@ -62,6 +62,46 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             target_inputs["fingerprint"],
             request["target_input_fingerprint"],
         )
+        public_candidates = self_host.git_public_candidates(ROOT)
+        self.assertEqual(
+            public_candidates,
+            request["target_input_roles"]["repository.public_export_candidates"],
+        )
+        role_inputs = self_host.fingerprint_target_input_roles(
+            ROOT,
+            request["target_input_roles"],
+        )
+        self.assertEqual(
+            public_candidates,
+            role_inputs["repository.public_export_candidates"]["paths"],
+        )
+
+    def test_public_export_role_is_declared_only_by_the_privacy_owner(self) -> None:
+        compiled = compile_skill_contract(
+            ROOT / ".agents" / "skills" / "skillguard",
+            repository_root=ROOT,
+            write=False,
+        )
+        self.assertTrue(compiled.ok, compiled.to_dict())
+        assert compiled.check_manifest is not None
+        role_id = "repository.public_export_candidates"
+        consumers = [
+            (
+                row["check_id"],
+                row["execution_owner_id"],
+            )
+            for row in compiled.check_manifest["checks"]
+            if role_id in row.get("target_input_role_ids", [])
+        ]
+        self.assertEqual(
+            [
+                (
+                    "check:self:public-export-privacy",
+                    "owner:self:public-export-privacy",
+                )
+            ],
+            consumers,
+        )
 
     def test_failed_step_reopens_only_after_exact_owner_identity_changes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

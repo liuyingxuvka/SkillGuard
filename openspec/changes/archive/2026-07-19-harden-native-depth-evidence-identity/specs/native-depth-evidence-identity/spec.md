@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Exact declared-check execution identity
 SkillGuard MUST accept a check result only when the exact target, contract, owner, route, check, run, covered target-declared obligations, request, inputs, immutable receipt, observation locator when declared, and evidence domain agree across the compiled contract, execution record, replay, consumer, and closure.
@@ -25,6 +25,52 @@ SkillGuard MUST reconcile the complete target-declared required check inventory.
 #### Scenario: Result is undeclared
 - **WHEN** a result names a check outside the frozen manifest
 - **THEN** SkillGuard SHALL reject it and SHALL NOT expand the denominator after execution
+
+### Requirement: Owner-scoped target input identity
+SkillGuard MUST bind each task-data target-input role only to the exact execution owner whose declared checks consume that role. An explicitly universal target input MAY bind every selected owner, but a role-scoped input MUST NOT change an unrelated owner execution key.
+
+#### Scenario: One owner consumes one fixture role
+- **WHEN** a request supplies a `native-depth-fixture` role and only the native-depth check declares that role
+- **THEN** only the native-depth owner semantic key SHALL include that role fingerprint
+- **AND** every unrelated current owner receipt SHALL remain reusable
+
+#### Scenario: Shared owner role declarations disagree
+- **WHEN** checks compiled into one execution owner declare different target-input role sets
+- **THEN** compilation or planning SHALL block before execution instead of broadening the owner inputs
+
+#### Scenario: Declared target role is missing
+- **WHEN** an owner declares a target-input role that the frozen request does not supply
+- **THEN** final admission SHALL block with the missing role and SHALL launch zero owner processes
+
+#### Scenario: Public-export candidate inventory changes
+- **WHEN** a tracked or unignored-untracked public candidate is added, removed, or changes bytes
+- **THEN** the exact `repository.public_export_candidates` role fingerprint SHALL change and stale `owner:self:public-export-privacy`
+- **AND** unrelated owners SHALL remain reusable unless their own declared components or semantic dependencies changed
+- **AND** the privacy command SHALL scan the same normalized candidate inventory used to construct the role, with no alternate inventory or fallback path
+
+### Requirement: Semantic owner identity excludes attempt identity
+SkillGuard MUST keep `run_id`, `step_id`, run-root path, timestamps, parent profile, aggregation identity, and output locations outside the reusable owner semantic execution key.
+
+#### Scenario: Equivalent request is claimed in a new run
+- **WHEN** owner declaration, maintained components, owner-scoped target inputs, semantic dependencies, toolchain, environment, evidence domain, and impact policy are unchanged but `run_id` differs
+- **THEN** SkillGuard SHALL reuse the exact current terminal-success owner receipt and SHALL launch zero owner processes
+
+#### Scenario: Check receives run root for output
+- **WHEN** a check receives `{{run_root}}` only as its target-owned output location
+- **THEN** the run-root path and run ID SHALL remain attempt metadata
+- **AND** any task data read by the check MUST already be present in declared request or target-input identity
+
+### Requirement: Every owner selector resolves independently
+Every explicit `path` or `subtree` owner input selector MUST match at least one current maintained-inventory row before the compiled contract is admitted.
+
+#### Scenario: One selector matches and one selector is missing
+- **WHEN** an owner declares several selectors and only a subset resolves
+- **THEN** compilation SHALL block and name every unresolved selector
+- **AND** the matching union SHALL NOT hide the missing authority
+
+#### Scenario: Unknown path is introduced
+- **WHEN** a maintained source path has no unambiguous component and owner/projection mapping
+- **THEN** impact planning SHALL block and SHALL NOT fall back to run-all
 
 ### Requirement: Target retains domain authority
 SkillGuard MUST NOT require, create, or interpret a target-domain purpose contract, protected failure set, semantic-obligation universe, native finding, or Guard-style counterexample. The target skill remains the only owner of test meaning and domain judgment.
@@ -79,6 +125,7 @@ Declared branch closure, transactional installation, exact installed parity, aff
 #### Scenario: Full receipt is consumed
 - **WHEN** the frozen final validation owner emits one current full parent receipt
 - **THEN** OpenSpec and later consumers SHALL replay that receipt without rerunning the owner
+- **AND** updating task checkboxes, progress logs, reports, or receipt pointers SHALL NOT invalidate that receipt
 
 #### Scenario: Frozen TestMesh plan resolves missing owners
 - **WHEN** `plan_only` emits one immutable current plan and its public owner runner consumes that exact plan
@@ -97,3 +144,13 @@ Declared branch closure, transactional installation, exact installed parity, aff
 #### Scenario: Background run has no terminal artifact
 - **WHEN** only PID, heartbeat, progress, or a running log exists
 - **THEN** SkillGuard SHALL treat it as liveness only and SHALL NOT count it as pass evidence
+
+#### Scenario: Final gate is requested before freeze
+- **WHEN** a full/final/release request lacks current source, toolchain, impact-plan, dependency, selector-health, or required target-input identity
+- **THEN** SkillGuard SHALL reject final admission before any owner process starts
+- **AND** a caller-supplied label such as `explicit_release_gate` SHALL NOT override the missing evidence
+
+#### Scenario: Dependency is order-only
+- **WHEN** a check is ordered after another check but does not consume its immutable receipt
+- **THEN** it SHALL NOT declare `depends_on_check_ids`
+- **AND** the ordering MAY remain in the development-process model or final aggregation without propagating owner freshness

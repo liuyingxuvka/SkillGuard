@@ -49,9 +49,23 @@
 - [x] 7.3 Transactionally prepare and activate the canonical SkillGuard tree, verify rollback safety and exact installed parity.
 - [x] 7.4 Run only the affected frozen-runner, schema, and FlowGuard model checks for this repair; do not start another final full owner.
 
-## 8. Final frozen verification
+## 8. Repair owner-scoped freshness and final admission
 
-- [x] 8.1 Freeze repository, contract, manifest, environment, installation, and runtime fingerprints.
-- [ ] 8.2 After every maintained Guard-family source, installation projection, and global-router projection is frozen, execute exactly one final full TestMesh owner in the foreground; it must produce terminal artifacts, and any interruption requires confirmed descendant cleanup before retry. The earlier parent receipt is historical because later installation/router projection changes correctly invalidated it.
-- [ ] 8.3 Replay the resulting current immutable full parent receipt; OpenSpec verification must consume it without executing another full owner.
-- [ ] 8.4 Run strict OpenSpec validation, project audit, installed-currentness checks, and predictive-KB postflight.
+- [x] 8.1 Extend the existing validation-composition and declared-check-supervision models with owner-scoped target-input roles, attempt/semantic identity separation, per-selector health, order-only dependency rejection, and final pre-launch admission cases.
+- [x] 8.2 Compile each check's exact `target_input_role_ids` into its execution owner; bind only selected role fingerprints to that owner while retaining explicitly universal target inputs as universal.
+- [x] 8.3 Remove run ID and run-root path from the semantic owner key; keep the run root output-only and require all task-data reads through declared request or target-input identity.
+- [x] 8.4 Require every explicit owner selector to match independently and report each unresolved selector before planning.
+- [x] 8.5 Reject incomplete full/final/release admission before any owner launch, including a request that supplies `explicit_release_gate` without complete frozen identities and target inputs.
+- [x] 8.6 Run only focused compiler, check-runner, TestMesh, schema, and FlowGuard regressions proving cross-run zero-process reuse, one-role/one-owner invalidation, selector fail-closed behavior, and pre-launch final blocking.
+- [x] 8.7 Recompile and transactionally install the affected SkillGuard projection, then run plan-only currentness checks without starting an additional full owner.
+- [x] 8.8 Record the failed public-export final owner as a FlowGuard `evidence_overclaimed` model miss and bind the generalized candidate-inventory case to its existing provenance commitment.
+- [x] 8.9 Bind `owner:self:public-export-privacy` to the exact `repository.public_export_candidates` role, reject generic machine-local absolute paths, and sanitize historical evidence to portable tokens.
+- [x] 8.10 Make branch-push CI the one regression gate and add a tag-only version/commit identity job with no pytest or model execution.
+- [x] 8.11 Run only focused privacy, self-host role, release-workflow, compiler, TestMesh, and affected FlowGuard checks; recompile and transactionally reinstall the changed SkillGuard projection.
+
+## 9. Final frozen verification
+
+- [x] 9.1 Freeze repository, contract, manifest, environment, installation, target-input, impact-plan, and runtime fingerprints after every maintained Guard-family source and global-router projection is stable.
+- [x] 9.2 Under the one active supervised execution owner, reuse every exact terminal-success owner receipt and execute only the genuinely affected/new owner partition; it must produce terminal artifacts, and any interruption requires confirmed descendant cleanup before another owner starts. The earlier failed parent remains historical, while its 44 exact successful child receipts remain reusable where their semantic identities are unchanged.
+- [x] 9.3 Replay the resulting current immutable full parent receipt; OpenSpec verification must consume it without executing another full owner.
+- [x] 9.4 Run strict OpenSpec validation, project audit, installed-currentness checks, and predictive-KB postflight.

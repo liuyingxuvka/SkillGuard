@@ -58,10 +58,6 @@
         {
           "kind": "path",
           "path": ".agents/skills/skillguard-global-router/scripts/check_global_router_contract.py"
-        },
-        {
-          "kind": "path",
-          "path": ".agents/skills/skillguard/scripts/checker_engine.py"
         }
       ],
       "kind": "command",
@@ -87,9 +83,7 @@
         "obligation:scan-global-skills"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:router:command-surface"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router-author-functional",
       "execution_owner_id": "owner:router:scan-work-package",
@@ -126,9 +120,7 @@
         "obligation:check-global-registry"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:router:command-surface"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router-author-functional",
       "execution_owner_id": "owner:router:registry-work-package",
@@ -164,9 +156,7 @@
         "obligation:refresh-global-router"
       ],
       "cwd_token": "repository_root",
-      "depends_on_check_ids": [
-        "check:router:command-surface"
-      ],
+      "depends_on_check_ids": [],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router-author-functional",
       "execution_owner_id": "owner:router:refresh-work-package",

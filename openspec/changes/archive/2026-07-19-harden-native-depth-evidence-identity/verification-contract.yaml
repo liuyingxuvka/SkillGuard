@@ -13,6 +13,21 @@ obligations:
     claim: Every required target-declared check has one owner and one visible current terminal disposition.
     required: true
     evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.owner-scoped-target-inputs
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Owner-scoped target input identity"
+    claim: Each target-input role contributes only to the semantic key of the exact owner that declares it, while explicitly universal target inputs remain universal.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.semantic-attempt-separation
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Semantic owner identity excludes attempt identity"
+    claim: Run and output-location identity remain attempt metadata, so a new run with unchanged semantic inputs reuses the current owner receipt with zero process launch.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.native.selector-health
+    source: "specs/native-depth-evidence-identity/spec.md#Requirement: Every owner selector resolves independently"
+    claim: Every explicit owner selector resolves independently and any unresolved path or subtree blocks instead of being hidden by another match or broadening to run-all.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
   - id: req.native.target-domain-authority
     source: "specs/native-depth-evidence-identity/spec.md#Requirement: Target retains domain authority"
     claim: SkillGuard does not require or interpret Guard-specific purpose, protected-failure, semantic-obligation, native-finding, or counterexample fields.
@@ -63,6 +78,11 @@ obligations:
     claim: Transactional installation and exact installed parity remain current.
     required: true
     evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.final-prelaunch-admission
+    source: "specs/universal-execution-depth/spec.md#Requirement: Final full execution begins only after frozen admission"
+    claim: A final full request with incomplete source, toolchain, impact-plan, selector, dependency, or target-input identity blocks before any owner process launches.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
   - id: req.depth.full-mesh-consumption
     source: "specs/native-depth-evidence-identity/spec.md#Requirement: Existing branch, installation, and receipt-consumer gates remain current"
     claim: One frozen full validation owner emits one immutable parent receipt and OpenSpec consumes it read-only.
@@ -71,6 +91,11 @@ obligations:
   - id: req.depth.frozen-owner-runner
     source: "specs/native-depth-evidence-identity/spec.md#Requirement: Existing branch, installation, and receipt-consumer gates remain current"
     claim: The public TestMesh owner runner validates one immutable plan, preserves every semantic check projection for a shared owner, resolves only its will_execute partition through existing single-flight owners, truthfully counts post-launch failures, and leaves that same plan available for aggregation.
+    required: true
+    evidence: [check.native.consume-full-mesh-receipt]
+  - id: req.depth.release-tag-no-regression
+    source: "specs/universal-execution-depth/spec.md#Requirement: Release tag does not repeat the regression suite"
+    claim: The release commit runs the regression suite once on branch push, while tag CI verifies only exact tag, version, and commit identity.
     required: true
     evidence: [check.native.consume-full-mesh-receipt]
 checks:
@@ -87,13 +112,12 @@ checks:
     validation_scope: full
     snapshot_policy: frozen
     required: true
-    covers: [req.native.exact-identity, req.native.complete-inventory, req.native.target-domain-authority, req.native.no-purpose-mode, req.native.observation-locator, req.native.evidence-domains, req.native.retired-fields, req.depth.current-receipt, req.depth.no-universal-test-category, req.depth.no-hidden-gaps, req.depth.native-route-preserved, req.depth.installed-parity, req.depth.full-mesh-consumption, req.depth.frozen-owner-runner]
+    covers: [req.native.exact-identity, req.native.complete-inventory, req.native.owner-scoped-target-inputs, req.native.semantic-attempt-separation, req.native.selector-health, req.native.target-domain-authority, req.native.no-purpose-mode, req.native.observation-locator, req.native.evidence-domains, req.native.retired-fields, req.depth.current-receipt, req.depth.no-universal-test-category, req.depth.no-hidden-gaps, req.depth.native-route-preserved, req.depth.installed-parity, req.depth.final-prelaunch-admission, req.depth.full-mesh-consumption, req.depth.frozen-owner-runner, req.depth.release-tag-no-regression]
     expected: {exit_code: 0}
 freshness:
   watch:
     - openspec/changes/harden-native-depth-evidence-identity/proposal.md
     - openspec/changes/harden-native-depth-evidence-identity/design.md
-    - openspec/changes/harden-native-depth-evidence-identity/tasks.md
     - openspec/changes/harden-native-depth-evidence-identity/specs/**/*.md
     - openspec/changes/harden-native-depth-evidence-identity/verification-contract.yaml
     - .agents/skills/skillguard/SKILL.md
@@ -112,3 +136,7 @@ freshness:
     - tests/test_installation_verification_receipt.py
     - tests/test_test_mesh_current.py
     - tests/test_test_mesh_installation_binding.py
+    - tests/test_privacy.py
+    - tests/test_skillguard_self_host_v2.py
+    - tests/test_release_workflow.py
+    - .github/workflows/ci.yml

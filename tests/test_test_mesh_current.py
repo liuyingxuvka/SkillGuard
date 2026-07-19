@@ -128,6 +128,22 @@ class CurrentTestMeshTests(unittest.TestCase):
             **kwargs,
         )
 
+    def test_shared_semantic_check_uses_first_declared_step_for_run_store(self) -> None:
+        contract = json.loads(
+            (self.run_root / "contract.json").read_text(encoding="utf-8")
+        )
+        first_step = deepcopy(contract["steps"][0])
+        second_step = deepcopy(first_step)
+        second_step["step_id"] = "step:second-shared-projection"
+        contract["steps"].insert(1, second_step)
+
+        self.assertEqual(
+            first_step["step_id"],
+            test_mesh_module._check_step_id(
+                contract, self.check["check_id"]
+            ),
+        )
+
     def _execute_owner(self):
         return get_or_execute_check(
             self.check,
@@ -139,20 +155,28 @@ class CurrentTestMeshTests(unittest.TestCase):
             owner_evidence_root=self.owner_root,
         )
 
-    def _claim_checks(self, checks, *, name: str) -> None:
+    def _claim_checks(
+        self,
+        checks,
+        *,
+        name: str,
+        request_overrides: dict[str, object] | None = None,
+    ) -> None:
         self.target = self.root / f"target-{name}"
         self.skill = self.repository / f"skill-{name}"
         self.target.mkdir()
         self.skill.mkdir()
         contract, manifest = runtime_contract_with_checks(checks)
         decision = select_routes(contract, {"function_ids": ["analyze"]})
+        request = {
+            "function_ids": ["analyze"],
+            "write_targets": ["out"],
+            "request": name,
+            **dict(request_overrides or {}),
+        }
         claim = claim_run(
             contract,
-            {
-                "function_ids": ["analyze"],
-                "write_targets": ["out"],
-                "request": name,
-            },
+            request,
             self.target,
             decision,
             check_manifest=manifest,
@@ -161,6 +185,63 @@ class CurrentTestMeshTests(unittest.TestCase):
         assert claim.run_root is not None
         self.run_root = claim.run_root
         self.check = manifest["checks"][0]
+
+    def test_missing_selected_target_role_blocks_before_any_owner_launch(
+        self,
+    ) -> None:
+        self._claim_checks(
+            [
+                {
+                    "check_id": "check:intake",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": ["-c", "print('intake')"],
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:intake"],
+                    "target_input_role_ids": ["target.role.missing"],
+                },
+                {
+                    "check_id": "check:downstream",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": ["-c", "print('downstream')"],
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:review"],
+                    "depends_on_check_ids": ["check:intake"],
+                    "target_input_role_ids": ["target.role.downstream"],
+                },
+            ],
+            name="missing-downstream-role",
+            request_overrides={
+                "target_input_roles": {
+                    "target.role.supplied": ["intake.txt"],
+                }
+            },
+        )
+        self.target.joinpath("intake.txt").write_text(
+            "intake", encoding="utf-8"
+        )
+        plan = self._plan(
+            "full",
+            full_admission_reason="explicit_release_gate",
+            freeze_identity={
+                "source_identity_hash": "sha256:not-admitted",
+                "toolchain_identity_hash": "sha256:not-admitted",
+                "owner_plan_hash": "sha256:not-admitted",
+            },
+        )
+        self.assertEqual("blocked", plan["status"])
+        self.assertEqual(0, plan["execution_count"])
+        self.assertTrue(
+            any(
+                "check_target_input_roles_missing" in finding
+                for finding in plan["findings"]
+            ),
+            plan,
+        )
+        execution = self._run_frozen_owners(plan)
+        self.assertEqual("blocked", execution["status"])
+        self.assertEqual(0, execution["execution_count"])
 
     def _run_frozen_owners(self, frozen_plan):
         return self._plan(

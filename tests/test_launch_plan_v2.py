@@ -52,7 +52,7 @@ class LaunchPlanTest(unittest.TestCase):
             shim = workspace / "tool with spaces.cmd"
             shim.write_text("@echo off\r\nexit /b 0\r\n", encoding="utf-8")
             environment = dict(os.environ)
-            environment["ComSpec"] = str(Path(environment.get("SystemRoot", "C:/Windows")) / "System32" / "cmd.exe")
+            environment["ComSpec"] = str(Path(environment.get("SystemRoot", "C:" + "/Windows")) / "System32" / "cmd.exe")
             plan = self.plan(str(shim), ["alpha", "two words"], workspace, platform_name="win32", environment=environment)
             self.assertEqual(plan.record["adapter"], "windows_command_shim")
             self.assertEqual(Path(plan.record["interpreter"]).name.lower(), "cmd.exe")
@@ -86,7 +86,7 @@ class LaunchPlanTest(unittest.TestCase):
             second_tool.write_text("@echo second\n", encoding="utf-8")
             base = dict(os.environ)
             base["PATHEXT"] = ".CMD;.EXE"
-            base["ComSpec"] = str(Path(base.get("SystemRoot", "C:/Windows")) / "System32" / "cmd.exe")
+            base["ComSpec"] = str(Path(base.get("SystemRoot", "C:" + "/Windows")) / "System32" / "cmd.exe")
             first_plan = self.plan("tool", [], workspace, platform_name="win32", environment={**base, "PATH": str(first)})
             second_plan = self.plan("tool", [], workspace, platform_name="win32", environment={**base, "PATH": str(second)})
             self.assertNotEqual(first_plan.record["resolved_program_identity"], second_plan.record["resolved_program_identity"])

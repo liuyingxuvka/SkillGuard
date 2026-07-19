@@ -89,6 +89,7 @@ CHECK_SOURCE_FIELDS = frozenset(
         "native_route_id",
         "semantic_check_id",
         "timeout_seconds",
+        "target_input_role_ids",
         "applicable",
     }
 )
@@ -879,12 +880,40 @@ def _build_content_impact_plan(
                     str(check.get("check_id", "")),
                 )
             )
+        target_input_role_ids = sorted(
+            {
+                str(value).strip()
+                for value in check.get("target_input_role_ids", [])
+                if str(value).strip()
+            }
+        )
+        if not isinstance(check.get("target_input_role_ids", []), list):
+            findings.append(
+                SchemaFinding(
+                    "target_input_role_ids_invalid",
+                    f"$.checks[{index}].target_input_role_ids",
+                    "must be an array",
+                )
+            )
+            target_input_role_ids = []
+        elif len(target_input_role_ids) != len(
+            check.get("target_input_role_ids", [])
+        ):
+            findings.append(
+                SchemaFinding(
+                    "target_input_role_ids_duplicate_or_invalid",
+                    f"$.checks[{index}].target_input_role_ids",
+                    str(check.get("check_id", "")),
+                )
+            )
+        check["target_input_role_ids"] = target_input_role_ids
         evidence_domain_id = str(
             check.get("evidence_domain_id") or "validation"
         )
         owner_declaration = {
             "behavior": _check_behavior_declaration(check),
             "input_selectors": selectors,
+            "target_input_role_ids": target_input_role_ids,
             "evidence_domain_id": evidence_domain_id,
             "impact_policy_id": policy["policy_id"],
         }
@@ -901,19 +930,25 @@ def _build_content_impact_plan(
             conflicting_owner_ids.add(owner_id)
         else:
             owner_declarations.setdefault(owner_id, owner_declaration)
-        matched = {
-            path
-            for path, row in inventory_index.items()
-            if any(_selector_matches(selector, row) for selector in selectors)
-        }
-        if not matched:
-            findings.append(
-                SchemaFinding(
-                    "owner_input_selector_empty",
-                    f"$.checks[{index}].input_selectors",
-                    str(check.get("check_id", "")),
+        matched: set[str] = set()
+        for selector_index, selector in enumerate(selectors):
+            selector_matches = {
+                path
+                for path, row in inventory_index.items()
+                if _selector_matches(selector, row)
+            }
+            if not selector_matches:
+                findings.append(
+                    SchemaFinding(
+                        "owner_input_selector_empty",
+                        f"$.checks[{index}].input_selectors[{selector_index}]",
+                        (
+                            f"{check.get('check_id', '')}:"
+                            f"{json.dumps(selector, sort_keys=True)}"
+                        ),
+                    )
                 )
-            )
+            matched.update(selector_matches)
         matched = _dependency_closure(matched, import_graph)
         owner_selector_paths.setdefault(owner_id, set()).update(matched)
         owner_check_ids.setdefault(owner_id, set()).add(str(check.get("check_id", "")))
@@ -1192,6 +1227,9 @@ def _build_content_impact_plan(
                     ]
                 ),
                 "depends_on_owner_ids": dependencies,
+                "target_input_role_ids": list(
+                    owner_declarations[owner_id]["target_input_role_ids"]
+                ),
                 "evidence_domain_id": owner_declarations[owner_id]["evidence_domain_id"],
             }
         )
