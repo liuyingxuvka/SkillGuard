@@ -47,5 +47,5 @@ def test_tag_job_is_receipt_only_and_binds_version_to_commit() -> None:
 
 def test_ci_uses_current_flowguard_release() -> None:
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    assert workflow.count("FlowGuard.git@v0.58.4") == 3
+    assert workflow.count("FlowGuard.git@v0.58.5") == 3
     assert "FlowGuard.git@v0.56.0" not in workflow
