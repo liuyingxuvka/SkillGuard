@@ -64,10 +64,11 @@ environment/evidence_domain identity
 Same-unit, same-check, same-input requests may single-flight. A foreign-unit dependency or receipt is rejected even when its command and hashes match. Duplicate semantic ownership across units is a boundary-audit failure requiring split, merge, or retirement.
 
 Text source identity is checkout-portable. Files whose maintained format is
-text, including JSON Lines evidence fixtures, are hashed after line-ending
-normalization so Windows CRLF and Linux LF checkouts of the same Git content
-produce one component identity. Binary material remains byte-exact. This is a
-single canonical identity rule, not an alternate reader or compatibility path.
+text, including JSON Lines evidence fixtures and the declared extensionless
+`VERSION` release authority, are hashed after line-ending normalization so
+Windows CRLF and Linux LF checkouts of the same Git content produce one
+component identity. Binary material remains byte-exact. This is a single
+canonical identity rule, not an alternate reader or compatibility path.
 
 Alternative considered: keep one task-level multi-skill owner plan. Rejected because it makes receipt sharing an architectural default and hides duplicate responsibilities.
 

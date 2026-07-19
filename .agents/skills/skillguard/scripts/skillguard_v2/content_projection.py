@@ -35,7 +35,7 @@ TEXT_SOURCE_SUFFIXES = frozenset(
         ".template",
     }
 )
-TEXT_SOURCE_NAMES = frozenset({".gitignore", ".gitattributes"})
+TEXT_SOURCE_NAMES = frozenset({".gitignore", ".gitattributes", "VERSION"})
 MARKDOWN_CHECKBOX_STATE_POLICY_ID = "markdown-checkbox-state-v1"
 
 

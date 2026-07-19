@@ -1719,6 +1719,15 @@ SCENARIOS = (
     _bad(
         replace(
             GOOD_DIRECT,
+            case_name="bad-extensionless-version-line-endings-split-source-identity",
+            canonical_text_identity_portable=False,
+        ),
+        "portable_boundary_is_fail_closed",
+        "the extensionless VERSION text authority cannot acquire different component identities from CRLF versus LF checkout projection",
+    ),
+    _bad(
+        replace(
+            GOOD_DIRECT,
             case_name="bad-binary-identity-normalizes-bytes",
             binary_identity_byte_exact=False,
         ),

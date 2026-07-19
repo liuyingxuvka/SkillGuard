@@ -5,7 +5,7 @@
   "observed_failure": {
     "surface": "cross-platform contract compilation and final self-host execution",
     "prior_local_claim": "the v0.3.5 candidate had one portable source identity and affected-only validation began before any owner executed",
-    "observed_result": "JSON Lines fixtures had different Windows and Linux hashes, the public self-host command executed declared owners before TestMesh froze an affected plan, and an operator-side process-name check briefly started a duplicate background owner before its complete descendant tree was terminated and verified absent",
+    "observed_result": "JSON Lines fixtures and the extensionless VERSION release source had different Windows and Linux hashes, the public self-host command executed declared owners before TestMesh froze an affected plan, and an operator-side process-name check briefly started a duplicate background owner before its complete descendant tree was terminated and verified absent",
     "failure_code": "portable_text_identity_and_execution_order_not_single_authority"
   },
   "classification": {
@@ -17,6 +17,7 @@
     "affected_feature_tags": [
       "skillguard",
       "jsonl",
+      "version-file",
       "cross-platform",
       "self-host",
       "affected-only",
@@ -25,19 +26,19 @@
     ]
   },
   "root_cause_backpropagation": {
-    "supported_cause": "JSON Lines was omitted from the canonical text suffix set; self-host combined claim creation with direct check execution; and the background operator initially inspected only one Python process name instead of the Windows process tree and command line",
-    "would_have_failed_if": "the model had required every maintained text suffix to prove LF/CRLF identity, required a zero-execution claim before TestMesh planning, and required process-tree identity rather than executable-name identity before any second launch",
-    "new_model_item": "canonical text identity covers JSON Lines; the public self-host path is claim-only; TestMesh alone executes will_execute owners; a background owner is identified and cleaned up by its complete descendant process tree",
+    "supported_cause": "JSON Lines and the extensionless VERSION release source were omitted from the canonical text identity inventory; self-host combined claim creation with direct check execution; and the background operator initially inspected only one Python process name instead of the Windows process tree and command line",
+    "would_have_failed_if": "the model had required every maintained text suffix and declared extensionless text source to prove LF/CRLF identity, required a zero-execution claim before TestMesh planning, and required process-tree identity rather than executable-name identity before any second launch",
+    "new_model_item": "canonical text identity covers JSON Lines and the extensionless VERSION authority; the public self-host path is claim-only; TestMesh alone executes will_execute owners; a background owner is identified and cleaned up by its complete descendant process tree",
     "owner_code_contract": "claim current run with zero owners -> freeze exact TestMesh plan -> execute exactly will_execute owners once -> confirm zero descendants -> aggregate immutable receipts read-only"
   },
   "generalized_repair": {
-    "rule": "normalize line endings for declared maintained text formats only, keep binary files byte-exact, expose no public pre-plan execution route, and never infer background-owner uniqueness from one process executable name",
+    "rule": "normalize line endings for declared maintained text suffixes and explicit extensionless text authorities only, keep binary files byte-exact, expose no public pre-plan execution route, and never infer background-owner uniqueness from one process executable name",
     "observed_regression": "LF and CRLF JSON Lines compile to one source identity, self-host claim reports execution_count zero, and the final frozen owner run completed 46 of 46 owners with zero failed or not-run owners",
     "same_class_regression": "binary normalization remains rejected, direct self-host execution is unavailable, the duplicate launcher tree was terminated with zero remaining descendants, and the post-router plan reused all 46 receipts with execution_count zero",
     "negative_boundary": "do not add a compatibility reader, alternate self-host command, fallback launcher, Scheduled Task, unattended retry, or run-all reaction to an unmapped change"
   },
   "required_revalidation": [
-    "JSON Lines LF/CRLF and binary byte-exact compiler regressions",
+    "JSON Lines and extensionless VERSION LF/CRLF plus binary byte-exact compiler regressions",
     "claim-only zero-execution self-host regression",
     "FlowGuard validation-composition scenarios and known-bad cases",
     "OpenSpec strict validation",

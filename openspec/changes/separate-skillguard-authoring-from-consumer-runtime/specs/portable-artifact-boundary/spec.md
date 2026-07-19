@@ -25,11 +25,16 @@ Live workspaces, caches, locks, run records, bootstrap outputs, receipts, test r
 ### Requirement: Checkout-portable text identity
 SkillGuard SHALL derive one canonical content identity for maintained text
 sources across supported checkout line endings. JSON Lines files used as
-maintained fixtures or evidence inputs SHALL be treated as text; binary files
-SHALL remain byte-exact.
+maintained fixtures or evidence inputs and the declared extensionless `VERSION`
+release authority SHALL be treated as text; binary files SHALL remain
+byte-exact.
 
 #### Scenario: Windows and Linux checkouts contain the same JSON Lines source
 - **WHEN** one checkout uses CRLF and another uses LF for the same `.jsonl` records
+- **THEN** both checkouts SHALL produce the same component, impact-plan, contract, and manifest identities
+
+#### Scenario: Windows and Linux checkouts contain the same extensionless version source
+- **WHEN** one checkout uses CRLF and another uses LF for the same extensionless `VERSION` authority
 - **THEN** both checkouts SHALL produce the same component, impact-plan, contract, and manifest identities
 
 #### Scenario: Binary bytes differ

@@ -125,6 +125,15 @@ class ContractCompilerV2Tests(unittest.TestCase):
             source_file_hash(right_jsonl),
         )
 
+        left_version = left / "VERSION"
+        right_version = right / "VERSION"
+        left_version.write_bytes(b"0.3.5\n")
+        right_version.write_bytes(b"0.3.5\r\n")
+        self.assertEqual(
+            source_file_hash(left_version),
+            source_file_hash(right_version),
+        )
+
     def test_single_file_fingerprint_uses_shared_portable_policy(self) -> None:
         cache_file = self.repo / ".pytest_cache" / "state.json"
         cache_file.parent.mkdir(parents=True)
