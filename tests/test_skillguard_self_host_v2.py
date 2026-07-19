@@ -23,6 +23,7 @@ from skillguard_v2.self_host import (  # noqa: E402
     _reopen_failed_steps_after_owner_input_change,
     _self_host_request,
     _select_ready_step_by_owner_dependencies,
+    claim_current_self_host_run,
     validate_self_host_long_check_timeout_budgets,
     validate_self_host_test_mesh_boundary,
 )
@@ -352,10 +353,46 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             self.assertTrue(coverage)
 
     def test_self_host_exposes_only_the_current_verifier(self) -> None:
+        self.assertTrue(callable(self_host.claim_current_self_host_run))
         self.assertTrue(callable(self_host.run_current_verifier))
         self.assertTrue(callable(self_host.run_self_host_bootstrap))
         self.assertFalse(hasattr(self_host, "run_frozen_old_verifier"))
         self.assertFalse(hasattr(self_host, "run_new_verifier"))
+
+    def test_self_host_claim_launches_zero_owners_before_test_mesh_plan(self) -> None:
+        repository_root = ROOT
+        run_root = repository_root / "work" / "verification" / "run-current"
+        context = self_host.SelfHostClaimContext(
+            repository_root=repository_root,
+            persistent_owner_root=repository_root / "work" / "verification" / "owners",
+            skill_root=repository_root / ".agents" / "skills" / "skillguard",
+            contract={
+                "contract_hash": "sha256:" + "1" * 64,
+                "content_impact_plan": {
+                    "inventory_hash": "sha256:" + "2" * 64,
+                    "impact_graph_hash": "sha256:" + "3" * 64,
+                },
+            },
+            manifest={"manifest_hash": "sha256:" + "4" * 64},
+            test_mesh_boundary_checks=(),
+            long_check_timeout_budget_checks=(),
+            request={},
+            target_input_paths=(),
+            target_input_roles={},
+            claim=SimpleNamespace(run_id="run-current"),
+            run_root=run_root,
+        )
+        with patch.object(
+            self_host,
+            "_prepare_current_self_host_claim",
+            return_value=context,
+        ):
+            report = claim_current_self_host_run(repository_root)
+
+        self.assertEqual("passed", report["status"])
+        self.assertEqual(0, report["execution_count"])
+        self.assertEqual("freeze_test_mesh_plan", report["next_action"])
+        self.assertIn("launches zero", report["claim_boundary"])
 
     def test_real_test_mesh_uses_one_native_owner_without_nested_execution(self) -> None:
         manifest_path = (

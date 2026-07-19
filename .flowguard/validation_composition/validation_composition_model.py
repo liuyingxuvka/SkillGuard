@@ -174,6 +174,8 @@ class ValidationCase:
     progress_checkbox_in_test_identity: bool = False
     ordinary_report_written_into_source: bool = False
     installed_projection_recompiled_as_source: bool = False
+    canonical_text_identity_portable: bool = True
+    binary_identity_byte_exact: bool = True
     declared_regular_file_count: int = 12
     inventoried_regular_file_count: int = 12
     declared_non_python_count: int = 7
@@ -264,6 +266,7 @@ class ValidationCase:
     full_admission_reason_codes: tuple[str, ...] = ()
     validation_plan_frozen: bool = True
     plan_source_current: bool = True
+    owner_started_before_affected_plan: bool = False
     source_frozen: bool = True
     toolchain_frozen: bool = True
     full_execution_owner_count: int = 1
@@ -1152,6 +1155,16 @@ def portable_boundary_is_fail_closed(state: ValidationState, _trace: object) -> 
             "portable_boundary_is_fail_closed",
             "ordinary projects must reject SkillGuard state before any write",
         )
+    if not case.canonical_text_identity_portable:
+        return _fail(
+            "portable_boundary_is_fail_closed",
+            "maintained text must have one canonical identity across checkout line endings",
+        )
+    if not case.binary_identity_byte_exact:
+        return _fail(
+            "portable_boundary_is_fail_closed",
+            "maintained binary identity must remain byte-exact",
+        )
     return _pass()
 
 
@@ -1189,6 +1202,11 @@ def affected_plan_is_exact_and_frozen(state: ValidationState, _trace: object) ->
     expected_selected = _selected_owner_ids(case)
     if state.plan_status != STATUS_PASS or not state.plan_hash or not case.validation_plan_frozen or not case.plan_source_current:
         return _fail("affected_plan_is_exact_and_frozen", "owner execution must start from one current frozen plan")
+    if case.owner_started_before_affected_plan:
+        return _fail(
+            "affected_plan_is_exact_and_frozen",
+            "self-host claim must launch zero owners until TestMesh freezes the affected plan",
+        )
     if state.selected_owner_ids != expected_selected:
         return _fail("affected_plan_is_exact_and_frozen", "selected owners must be derived from changed component and dependency edges")
     if set(state.will_execute_owner_ids) & set(state.will_reuse_owner_ids):
@@ -1690,6 +1708,24 @@ SCENARIOS = (
         "ordinary validation reports must be written only to a runtime evidence root or stdout",
     ),
     _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-jsonl-line-endings-split-source-identity",
+            canonical_text_identity_portable=False,
+        ),
+        "portable_boundary_is_fail_closed",
+        "JSON Lines text cannot acquire different component identities from CRLF versus LF checkout projection",
+    ),
+    _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-binary-identity-normalizes-bytes",
+            binary_identity_byte_exact=False,
+        ),
+        "portable_boundary_is_fail_closed",
+        "binary source identity cannot normalize or discard byte differences",
+    ),
+    _bad(
         replace(GOOD_DIRECT, case_name="bad-python-only-inventory", force_inventory_ignore_non_python=True),
         "inventory_is_complete_but_not_owner_identity",
         "the omission inventory cannot drop JSON, schema, prompt, or model inputs",
@@ -1808,6 +1844,15 @@ SCENARIOS = (
         replace(GOOD_DIRECT, case_name="bad-validation-plan-not-frozen", validation_plan_frozen=False),
         "affected_plan_is_exact_and_frozen",
         "execution cannot discover or rewrite its plan while running",
+    ),
+    _bad(
+        replace(
+            GOOD_DIRECT,
+            case_name="bad-self-host-executes-before-affected-plan",
+            owner_started_before_affected_plan=True,
+        ),
+        "affected_plan_is_exact_and_frozen",
+        "self-host must claim first and leave all owner execution to the frozen TestMesh plan",
     ),
     _bad(
         replace(GOOD_DIRECT, case_name="bad-unrelated-sibling-executed", force_execute_owner_ids=("owner.tests",)),

@@ -83,6 +83,22 @@ class SelfHostError(RuntimeError):
         return f"{self.code}: {self.message}"
 
 
+@dataclass(frozen=True)
+class SelfHostClaimContext:
+    repository_root: Path
+    persistent_owner_root: Path
+    skill_root: Path
+    contract: Mapping[str, Any]
+    manifest: Mapping[str, Any]
+    test_mesh_boundary_checks: tuple[Mapping[str, Any], ...]
+    long_check_timeout_budget_checks: tuple[Mapping[str, Any], ...]
+    request: Mapping[str, Any]
+    target_input_paths: tuple[str, ...]
+    target_input_roles: Mapping[str, tuple[str, ...]]
+    claim: Any
+    run_root: Path
+
+
 def _load_json(path: Path) -> Mapping[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, Mapping):
@@ -625,14 +641,13 @@ def _self_host_request(
     }
 
 
-def run_current_verifier(
+def _prepare_current_self_host_claim(
     repository_root: Path,
     *,
-    profiles: Sequence[str] = ("enforced",),
-    progress_callback: ProgressCallback | None = _stderr_progress,
-    heartbeat_interval_seconds: float = 5.0,
     owner_evidence_root: Path | None = None,
-) -> Mapping[str, Any]:
+) -> SelfHostClaimContext:
+    """Compile and claim one current self-host run without executing a check."""
+
     repository_root = repository_root.resolve()
     persistent_owner_root = resolve_owner_evidence_root(
         repository_root,
@@ -640,9 +655,20 @@ def run_current_verifier(
         or repository_root / "work" / "verification" / "owner-evidence",
     )
     skill_root = repository_root / ".agents" / "skills" / "skillguard"
-    compile_result = compile_skill_contract(skill_root, repository_root=repository_root, write=True)
-    if not compile_result.ok or compile_result.compiled_contract is None or compile_result.check_manifest is None:
-        raise SelfHostError("self_compile_failed", json.dumps(compile_result.to_dict(), sort_keys=True))
+    compile_result = compile_skill_contract(
+        skill_root,
+        repository_root=repository_root,
+        write=True,
+    )
+    if (
+        not compile_result.ok
+        or compile_result.compiled_contract is None
+        or compile_result.check_manifest is None
+    ):
+        raise SelfHostError(
+            "self_compile_failed",
+            json.dumps(compile_result.to_dict(), sort_keys=True),
+        )
     contract = compile_result.compiled_contract
     manifest = compile_result.check_manifest
     test_mesh_boundary_checks = validate_self_host_test_mesh_boundary(
@@ -654,14 +680,17 @@ def run_current_verifier(
     )
     route_ids = [str(row["route_id"]) for row in contract["routes"]]
     request = _self_host_request(repository_root, route_ids)
-    target_input_paths = list(request["target_input_paths"])
+    target_input_paths = tuple(str(value) for value in request["target_input_paths"])
     target_input_roles = {
-        str(role_id): list(paths)
+        str(role_id): tuple(str(value) for value in paths)
         for role_id, paths in request["target_input_roles"].items()
     }
     decision = select_routes(contract, request)
     if not decision.ok:
-        raise SelfHostError("self_host_route_blocked", json.dumps(decision.to_dict(), sort_keys=True))
+        raise SelfHostError(
+            "self_host_route_blocked",
+            json.dumps(decision.to_dict(), sort_keys=True),
+        )
     claim = claim_run(
         contract,
         request,
@@ -671,8 +700,90 @@ def run_current_verifier(
         guard_runtime_identity=guard_execution_runtime_fingerprint(),
     )
     if not claim.ok or claim.run_root is None:
-        raise SelfHostError("self_host_claim_blocked", json.dumps(claim.to_dict(), sort_keys=True))
-    run_root = claim.run_root
+        raise SelfHostError(
+            "self_host_claim_blocked",
+            json.dumps(claim.to_dict(), sort_keys=True),
+        )
+    return SelfHostClaimContext(
+        repository_root=repository_root,
+        persistent_owner_root=persistent_owner_root,
+        skill_root=skill_root,
+        contract=contract,
+        manifest=manifest,
+        test_mesh_boundary_checks=test_mesh_boundary_checks,
+        long_check_timeout_budget_checks=long_check_timeout_budget_checks,
+        request=request,
+        target_input_paths=target_input_paths,
+        target_input_roles=target_input_roles,
+        claim=claim,
+        run_root=claim.run_root,
+    )
+
+
+def claim_current_self_host_run(
+    repository_root: Path,
+    *,
+    owner_evidence_root: Path | None = None,
+) -> Mapping[str, Any]:
+    """Create the sole current TestMesh planning input and launch zero checks."""
+
+    context = _prepare_current_self_host_claim(
+        repository_root,
+        owner_evidence_root=owner_evidence_root,
+    )
+    impact_plan = context.contract.get("content_impact_plan", {})
+    report: dict[str, Any] = {
+        "schema_version": "skillguard.self_host_claim.current",
+        "artifact_type": "skillguard_self_host_claim",
+        "status": "passed",
+        "run_id": context.claim.run_id,
+        "run_root": context.run_root.relative_to(context.repository_root).as_posix(),
+        "contract_hash": context.contract["contract_hash"],
+        "manifest_hash": context.manifest["manifest_hash"],
+        "source_identity_hash": str(impact_plan.get("inventory_hash", "")),
+        "owner_plan_hash": str(impact_plan.get("impact_graph_hash", "")),
+        "execution_count": 0,
+        "next_action": "freeze_test_mesh_plan",
+        "test_mesh_boundary_checks": list(context.test_mesh_boundary_checks),
+        "long_check_timeout_budget_checks": list(
+            context.long_check_timeout_budget_checks
+        ),
+        "claim_boundary": (
+            "This claim creates the current author run identity for TestMesh "
+            "planning and launches zero validation owners. It is not validation, "
+            "closure, installation, or release evidence."
+        ),
+    }
+    report["report_hash"] = canonical_hash(report)
+    return report
+
+
+def run_current_verifier(
+    repository_root: Path,
+    *,
+    profiles: Sequence[str] = ("enforced",),
+    progress_callback: ProgressCallback | None = _stderr_progress,
+    heartbeat_interval_seconds: float = 5.0,
+    owner_evidence_root: Path | None = None,
+) -> Mapping[str, Any]:
+    context = _prepare_current_self_host_claim(
+        repository_root,
+        owner_evidence_root=owner_evidence_root,
+    )
+    repository_root = context.repository_root
+    persistent_owner_root = context.persistent_owner_root
+    skill_root = context.skill_root
+    contract = context.contract
+    manifest = context.manifest
+    test_mesh_boundary_checks = context.test_mesh_boundary_checks
+    long_check_timeout_budget_checks = context.long_check_timeout_budget_checks
+    target_input_paths = list(context.target_input_paths)
+    target_input_roles = {
+        role_id: list(paths)
+        for role_id, paths in context.target_input_roles.items()
+    }
+    claim = context.claim
+    run_root = context.run_root
     fingerprints = _current_fingerprints(
         contract,
         repository_root=repository_root,

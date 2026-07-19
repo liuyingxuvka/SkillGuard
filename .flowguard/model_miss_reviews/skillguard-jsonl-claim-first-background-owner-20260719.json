@@ -1,0 +1,83 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-jsonl-claim-first-background-owner-20260719",
+  "status": "repair_validated_for_release_gate",
+  "observed_failure": {
+    "surface": "cross-platform contract compilation and final self-host execution",
+    "prior_local_claim": "the v0.3.5 candidate had one portable source identity and affected-only validation began before any owner executed",
+    "observed_result": "JSON Lines fixtures had different Windows and Linux hashes, the public self-host command executed declared owners before TestMesh froze an affected plan, and an operator-side process-name check briefly started a duplicate background owner before its complete descendant tree was terminated and verified absent",
+    "failure_code": "portable_text_identity_and_execution_order_not_single_authority"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "skillguard.validation_execution_ownership.current",
+    "owner": "content projection, self-host claim boundary, and supervised background launcher",
+    "miss_type": "code_boundary_mismatch",
+    "error_signature": "clean Linux contract hash differs from Windows, or an owner process starts before the frozen affected plan, or process liveness is checked through one executable name only",
+    "affected_feature_tags": [
+      "skillguard",
+      "jsonl",
+      "cross-platform",
+      "self-host",
+      "affected-only",
+      "background-owner",
+      "process-tree"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "JSON Lines was omitted from the canonical text suffix set; self-host combined claim creation with direct check execution; and the background operator initially inspected only one Python process name instead of the Windows process tree and command line",
+    "would_have_failed_if": "the model had required every maintained text suffix to prove LF/CRLF identity, required a zero-execution claim before TestMesh planning, and required process-tree identity rather than executable-name identity before any second launch",
+    "new_model_item": "canonical text identity covers JSON Lines; the public self-host path is claim-only; TestMesh alone executes will_execute owners; a background owner is identified and cleaned up by its complete descendant process tree",
+    "owner_code_contract": "claim current run with zero owners -> freeze exact TestMesh plan -> execute exactly will_execute owners once -> confirm zero descendants -> aggregate immutable receipts read-only"
+  },
+  "generalized_repair": {
+    "rule": "normalize line endings for declared maintained text formats only, keep binary files byte-exact, expose no public pre-plan execution route, and never infer background-owner uniqueness from one process executable name",
+    "observed_regression": "LF and CRLF JSON Lines compile to one source identity, self-host claim reports execution_count zero, and the final frozen owner run completed 46 of 46 owners with zero failed or not-run owners",
+    "same_class_regression": "binary normalization remains rejected, direct self-host execution is unavailable, the duplicate launcher tree was terminated with zero remaining descendants, and the post-router plan reused all 46 receipts with execution_count zero",
+    "negative_boundary": "do not add a compatibility reader, alternate self-host command, fallback launcher, Scheduled Task, unattended retry, or run-all reaction to an unmapped change"
+  },
+  "required_revalidation": [
+    "JSON Lines LF/CRLF and binary byte-exact compiler regressions",
+    "claim-only zero-execution self-host regression",
+    "FlowGuard validation-composition scenarios and known-bad cases",
+    "OpenSpec strict validation",
+    "one frozen final TestMesh owner execution",
+    "transactional installed currentness and installation receipt replay",
+    "global-router refresh followed by receipt-only aggregation and read-only replay",
+    "clean Ubuntu and Windows GitHub Actions before v0.3.5 release"
+  ],
+  "revalidation_evidence": {
+    "focused_tests": {
+      "status": "pass",
+      "result": "69 passed and 7 subtests passed",
+      "subjects": [
+        "contract compiler portable JSON Lines identity",
+        "claim-only self-host zero-execution boundary"
+      ]
+    },
+    "flowguard_model": {
+      "status": "pass",
+      "subjects": [
+        "canonical_text_identity_portable",
+        "binary_identity_byte_exact",
+        "owner_started_before_affected_plan"
+      ]
+    },
+    "final_owner_execution": {
+      "status": "pass",
+      "plan_hash": "sha256:1952bf4ee80fb518fc634a2a4aa0c8a9938732c56e5bdde878ec367d3c3bfdd4",
+      "executed_owner_count": 46,
+      "failed_owner_count": 0,
+      "not_run_owner_count": 0
+    },
+    "post_router_aggregation": {
+      "status": "pass",
+      "plan_hash": "sha256:1c0e286b0824aed9e7e4e2ef7b6d3ab8e863699e4bf935bbfbdcb2285937e426",
+      "reused_owner_count": 46,
+      "executed_owner_count": 0,
+      "aggregation_id": "sha256:a5fc28a0e54e6227609cc1ac1c70e9bfb2c223c85c80ff7bf61841b5cf859bb6",
+      "read_only_replay_status": "passed"
+    }
+  },
+  "claim_boundary": "This review validates the portable text identity, claim-first execution order, supervised process-tree cleanup, frozen full owner execution, installed binding, current global router, receipt-only aggregation, and read-only replay. Branch CI, immutable tag, GitHub Release, and unrelated maintenance units remain separate exact-commit gates."
+}

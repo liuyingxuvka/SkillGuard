@@ -31,8 +31,8 @@ COMMITMENT_ROWS = (
         "commitment:content-impact-graph-is-authoritative",
         "intent:content-impact-graph-is-authoritative",
         "maintained SkillGuard content or a validation declaration changes",
-        "the compiler assigns every maintained file one semantic role, one installation disposition, and an exact consumer set, then proves owner uniqueness and dependency acyclicity",
-        "unmapped, ambiguous, duplicate-owner, invalid-edge, or cyclic rows block before any validation owner starts and never broaden to full",
+        "the compiler assigns every maintained file one semantic role, one installation disposition, one checkout-portable text or byte-exact binary identity, and an exact consumer set, then proves owner uniqueness and dependency acyclicity",
+        "unmapped, ambiguous, cross-platform text-identity split, binary-byte collapse, duplicate-owner, invalid-edge, or cyclic rows block before any validation owner starts and never broaden to full",
         ("impact_graph_status", "impact_graph_hash", "impact_graph_gaps"),
     ),
     (
@@ -100,8 +100,8 @@ COMMITMENT_ROWS = (
         "commitment:execution-lifecycle-is-controlled",
         "intent:execution-lifecycle-is-controlled",
         "a frozen TestMesh plan is handed to the public owner runner, or an owner process is started, interrupted, timed out, cancelled, or considered for unattended retry",
-        "the runner verifies planned reuse read-only and sends only will_execute owners to the existing single-flight authority; only terminal success with complete sidecars enters the persistent success head, and interrupted launchers prove zero descendants before another owner starts",
-        "failed attempts, cleanup-unconfirmed state, Scheduled Tasks, background resume, and unattended mutable-worktree retry cannot become reusable evidence",
+        "self-host first claims the current run with zero executions; the runner then verifies planned reuse read-only and sends only will_execute owners from the frozen TestMesh plan to the existing single-flight authority; only terminal success with complete sidecars enters the persistent success head, and interrupted launchers prove zero descendants before another owner starts",
+        "pre-plan owner execution, failed attempts, cleanup-unconfirmed state, Scheduled Tasks, background resume, and unattended mutable-worktree retry cannot become reusable evidence",
         ("execution_status", "executed_owner_ids", "interrupted_launcher_cleanup_confirmed_zero"),
     ),
 )

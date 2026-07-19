@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from skillguard_utils import emit_json
-from skillguard_v2.self_host import SelfHostError, run_self_host_bootstrap
+from skillguard_v2.self_host import SelfHostError, claim_current_self_host_run
 
 
 SELF_HOST_CLI_TERMINAL_SCHEMA = "skillguard.self_host_cli_terminal.v1"
@@ -51,12 +51,22 @@ def _exception_terminal(exc: Exception) -> Mapping[str, Any]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="skillguard_self_host.py")
     parser.add_argument("--repository-root", default=".")
+    parser.add_argument(
+        "--claim-only",
+        action="store_true",
+        help=(
+            "Create the current self-host run identity for TestMesh planning "
+            "without executing validation owners."
+        ),
+    )
     args = parser.parse_args(argv)
-    try:
-        result = run_self_host_bootstrap(
-            Path(args.repository_root),
-            profiles=("enforced",),
+    if not args.claim_only:
+        parser.error(
+            "--claim-only is required; owner execution belongs only to the "
+            "frozen TestMesh owner-execution stage"
         )
+    try:
+        result = claim_current_self_host_run(Path(args.repository_root))
     except Exception as exc:
         result = _exception_terminal(exc)
     emit_json(result)

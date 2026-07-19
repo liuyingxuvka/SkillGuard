@@ -63,6 +63,12 @@ environment/evidence_domain identity
 
 Same-unit, same-check, same-input requests may single-flight. A foreign-unit dependency or receipt is rejected even when its command and hashes match. Duplicate semantic ownership across units is a boundary-audit failure requiring split, merge, or retirement.
 
+Text source identity is checkout-portable. Files whose maintained format is
+text, including JSON Lines evidence fixtures, are hashed after line-ending
+normalization so Windows CRLF and Linux LF checkouts of the same Git content
+produce one component identity. Binary material remains byte-exact. This is a
+single canonical identity rule, not an alternate reader or compatibility path.
+
 Alternative considered: keep one task-level multi-skill owner plan. Rejected because it makes receipt sharing an architectural default and hides duplicate responsibilities.
 
 ### 3. Author runtime state requires an explicit author root
@@ -74,6 +80,12 @@ Project adoption is replaced by explicit maintainer-repository adoption. The man
 ### 4. TestMesh and Portfolio are narrowed, not discarded
 
 TestMesh retains frozen plans, dependency ordering, same-unit single-flight, immutable aggregation, timeout cleanup, and affected-only revalidation. OpenSpec receipt projection and cross-unit parent proof are removed.
+
+The sole self-host release path is ordered as claim, plan, owner execution,
+installation when the frozen projection requires it, aggregation, and
+read-only replay. Claiming compiles and records the current run identity but
+launches zero owners. Direct CLI execution before the affected plan is not a
+second success route.
 
 Portfolio becomes a private independent scorecard:
 

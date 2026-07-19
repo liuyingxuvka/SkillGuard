@@ -101,3 +101,4 @@
 - [x] 12.4 Freeze source, toolchain, check inventory, impact plan, installation projections, and exactly one final full execution owner.
 - [x] 12.5 Run the final full model, test, installation, consumer-isolation, official-provider, and project-zero-write validation once.
 - [x] 12.6 Run a requirement-by-requirement completion audit, preserve skipped or blocked evidence, and update all OpenSpec task checkboxes only from current proof.
+- [x] 12.7 Normalize JSON Lines source hashing across CRLF/LF checkouts, replace the pre-plan direct self-host CLI with claim-only execution, add cross-platform and zero-execution regressions, recompile the sole current contract pair, and close one affected-only plus frozen final validation.

@@ -31,6 +31,7 @@ TEXT_SOURCE_SUFFIXES = frozenset(
         ".html",
         ".css",
         ".js",
+        ".jsonl",
         ".template",
     }
 )

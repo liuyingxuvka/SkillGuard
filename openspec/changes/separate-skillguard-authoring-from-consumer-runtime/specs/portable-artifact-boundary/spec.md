@@ -22,6 +22,20 @@ Live workspaces, caches, locks, run records, bootstrap outputs, receipts, test r
 - **WHEN** a maintainer run writes locks, runs, or receipts
 - **THEN** those files SHALL remain under the explicit author evidence root and SHALL NOT make the target consumer projection stale
 
+### Requirement: Checkout-portable text identity
+SkillGuard SHALL derive one canonical content identity for maintained text
+sources across supported checkout line endings. JSON Lines files used as
+maintained fixtures or evidence inputs SHALL be treated as text; binary files
+SHALL remain byte-exact.
+
+#### Scenario: Windows and Linux checkouts contain the same JSON Lines source
+- **WHEN** one checkout uses CRLF and another uses LF for the same `.jsonl` records
+- **THEN** both checkouts SHALL produce the same component, impact-plan, contract, and manifest identities
+
+#### Scenario: Binary bytes differ
+- **WHEN** a maintained binary input differs by one byte
+- **THEN** its content identity SHALL differ and only graph-connected owners and projections SHALL become stale
+
 ### Requirement: Maintained content is classified into semantic components
 Every maintained leaf SHALL have one semantic role and explicit membership in zero or more named projections. A target-domain file hidden under an author-control prefix SHALL block consumer construction until it moves to a target-owned namespace.
 

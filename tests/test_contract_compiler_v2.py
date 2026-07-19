@@ -114,6 +114,17 @@ class ContractCompilerV2Tests(unittest.TestCase):
             source_file_hash(right_template),
         )
 
+        left_jsonl = left / "receipt.jsonl"
+        right_jsonl = right / "receipt.jsonl"
+        left_jsonl.write_bytes(b'{"status":"pass"}\n{"status":"blocked"}\n')
+        right_jsonl.write_bytes(
+            b'{"status":"pass"}\r\n{"status":"blocked"}\r\n'
+        )
+        self.assertEqual(
+            source_file_hash(left_jsonl),
+            source_file_hash(right_jsonl),
+        )
+
     def test_single_file_fingerprint_uses_shared_portable_policy(self) -> None:
         cache_file = self.repo / ".pytest_cache" / "state.json"
         cache_file.parent.mkdir(parents=True)
