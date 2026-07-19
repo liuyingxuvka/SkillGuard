@@ -49,7 +49,8 @@ class ProvenanceTests(unittest.TestCase):
             self.assertEqual(expected, normalize_remote_identity(remote))
 
     def test_project_version_uses_the_declared_current_python_runtime(self) -> None:
-        self.assertEqual("0.3.4", project_version(ROOT / "pyproject.toml"))
+        expected = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+        self.assertEqual(expected, project_version(ROOT / "pyproject.toml"))
 
     def test_complete_source_manifest_detects_missing_changed_and_unexpected_files(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

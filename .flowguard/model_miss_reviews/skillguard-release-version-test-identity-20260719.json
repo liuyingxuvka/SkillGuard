@@ -1,0 +1,69 @@
+{
+  "schema_version": "flowguard.model_miss_review.v1",
+  "review_id": "skillguard-release-version-test-identity-20260719",
+  "status": "repair_validated_for_release_gate",
+  "observed_failure": {
+    "surface": "GitHub branch CI full-current-suite",
+    "prior_local_claim": "the v0.3.5 release source was frozen and release-current",
+    "observed_result": "544 tests passed, 2 skipped, and one provenance test failed because its expected project version remained 0.3.4 while pyproject.toml declared 0.3.5",
+    "failure_code": "release_version_assertion_not_bound_to_version_bump"
+  },
+  "classification": {
+    "behavior_plane": "development_process",
+    "commitment_id": "obligation:release-identity",
+    "owner": "provenance test / branch CI full-current-suite",
+    "miss_type": "affected_input_not_selected",
+    "error_signature": "release version changed without updating the exact current-version assertion",
+    "affected_feature_tags": [
+      "skillguard",
+      "release",
+      "version",
+      "provenance",
+      "affected-only",
+      "ci"
+    ]
+  },
+  "root_cause_backpropagation": {
+    "supported_cause": "VERSION and pyproject.toml were neither declared inputs of the installed-provenance owner nor isolated from the default runtime-source Portfolio consumers, while the provenance test duplicated 0.3.4 as a third hard-coded value",
+    "would_have_failed_if": "the release model had required VERSION and pyproject.toml to form one source-only contract component consumed exactly by installed-provenance and had compared those two authorities without a duplicated literal",
+    "new_model_item": "VERSION and pyproject.toml form one release-version contract component; installed-provenance is its only validation consumer, and Portfolio, installation, and router projections do not consume it",
+    "owner_code_contract": "VERSION or pyproject.toml change -> installed-provenance invalidation -> focused provenance test -> one stable branch full-current-suite -> receipt-only tag identity gate"
+  },
+  "generalized_repair": {
+    "rule": "a release version edit must keep VERSION equal to pyproject.toml; the impact compiler must select installed-provenance and no Portfolio, installation, or router consumer for that isolated component",
+    "observed_regression": "the focused VERSION-to-pyproject provenance test and the real-contract consumer-mapping regression both pass",
+    "same_class_regression": "a future mismatch fails installed-provenance, while a matching version-only bump leaves unrelated Portfolio and installation projections reusable",
+    "negative_boundary": "do not rerun unrelated owners, do not create a third version authority, and do not add a compatibility or fallback version reader"
+  },
+  "required_revalidation": [
+    "focused project-version provenance test",
+    "affected-only frozen owner execution for the one-time impact-graph repair",
+    "public-export privacy owner for the new tracked review",
+    "single branch CI full-current-suite",
+    "receipt-only tag identity workflow"
+  ],
+  "revalidation_evidence": {
+    "compile_report": {
+      "status": "pass",
+      "contract_hash": "A4D47F724C6C3101B7670B3E7957FC675B13A8235908196F56F53F7B8FCD3A4A",
+      "manifest_hash": "0054A9E9B66990563E89546EB67BAB49AEA66D886426118DEE3B2979D6A4818F"
+    },
+    "focused_tests": {
+      "status": "pass",
+      "result": "2 passed",
+      "subjects": [
+        "VERSION equals pyproject.toml project.version",
+        "release-version component is source-only contract_schema and consumed exactly by owner:self:installed-provenance"
+      ]
+    },
+    "affected_plan": {
+      "status": "pass",
+      "plan_hash": "sha256:5b9e82dd7851bb267c13639284056f6a1f66c8f4ff4d35d00c02bfb75a1b7dd4",
+      "selected_owner_count": 46,
+      "reused_owner_count": 32,
+      "executed_owner_count": 14,
+      "note": "This one-time contract-graph repair necessarily refreshes graph consumers; the new mapping regression proves a later version-only edit selects only installed-provenance."
+    }
+  },
+  "claim_boundary": "This review validates the repair model and focused regression before publication. Installation parity, the stable branch full suite, receipt-only tag identity, and GitHub Release remain separate exact-commit closure gates."
+}

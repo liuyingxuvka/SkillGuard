@@ -662,6 +662,44 @@ class ContractCompilerV2Tests(unittest.TestCase):
             owner["target_input_role_ids"],
         )
 
+    def test_real_self_provenance_owner_binds_release_version_sources(self) -> None:
+        result = compile_skill_contract(
+            ROOT / ".agents" / "skills" / "skillguard",
+            repository_root=ROOT,
+            write=False,
+        )
+        self.assertTrue(result.ok, result.to_dict())
+        assert result.check_manifest is not None
+        check = next(
+            row
+            for row in result.check_manifest["checks"]
+            if row["check_id"] == "check:self:installed-provenance"
+        )
+        path_selectors = {
+            row["path"]
+            for row in check["input_selectors"]
+            if row["kind"] == "path"
+        }
+        self.assertEqual(
+            {
+                ".agents/skills/skillguard/scripts/skillguard_provenance.py",
+                "VERSION",
+                "pyproject.toml",
+            },
+            path_selectors,
+        )
+        version_component = next(
+            row
+            for row in result.compiled_contract["content_impact_plan"]["components"]
+            if row["member_paths"] == ["VERSION", "pyproject.toml"]
+        )
+        self.assertEqual("contract_schema", version_component["role"])
+        self.assertEqual("source_only", version_component["install_disposition"])
+        self.assertEqual(
+            ["owner:self:installed-provenance"],
+            version_component["consumer_ids"],
+        )
+
     def test_portfolio_target_edge_is_explicit_and_component_scoped(self) -> None:
         runtime_path = self.implementation.relative_to(self.repo).as_posix()
         self.binding["portfolio_target_edges"] = [

@@ -1253,6 +1253,14 @@
         {
           "kind": "path",
           "path": ".agents/skills/skillguard/scripts/skillguard_provenance.py"
+        },
+        {
+          "kind": "path",
+          "path": "VERSION"
+        },
+        {
+          "kind": "path",
+          "path": "pyproject.toml"
         }
       ],
       "kind": "command",
@@ -1629,7 +1637,20 @@
     "policy_id": "skillguard.content_impact_policy.current",
     "unknown_mapping_disposition": "block"
   },
-  "content_role_overrides": [],
+  "content_role_overrides": [
+    {
+      "install_disposition": "source_only",
+      "path": "VERSION",
+      "reason": "release-version contract input",
+      "role": "contract_schema"
+    },
+    {
+      "install_disposition": "source_only",
+      "path": "pyproject.toml",
+      "reason": "release-version contract input",
+      "role": "contract_schema"
+    }
+  ],
   "default_route_id": "route:static-audit",
   "depth_profile": {
     "claim_boundary": "SkillGuard freezes and reconciles the target skill's own declared checks. The target skill alone owns domain purpose, failure classes, oracles, fixtures, and depth meaning.",
@@ -1777,7 +1798,9 @@
     "tests/test_template_fragments_v2.py",
     "tests/test_template_packs_v2.py",
     "tests/test_template_profiles_v2.py",
-    "tests/test_template_prompts_v2.py"
+    "tests/test_template_prompts_v2.py",
+    "VERSION",
+    "pyproject.toml"
   ],
   "integration_mode": "native-integrated",
   "judgment_rubrics": [],
