@@ -8,7 +8,7 @@
 - Split order-only dependencies from semantic receipt dependencies and reject order-only edges in execution identity.
 - Added one complete pre-launch final-admission gate covering frozen source, toolchain, impact plan, selectors, dependencies, target inputs, installation, and unique execution ownership before the first owner starts.
 - Removed OpenSpec task-checkbox progress from final verification freshness, eliminating the pass-then-checkmark-then-rerun loop.
-- Upgraded the project adoption record and managed FlowGuard policy to 0.58.4, preserving one current route with no fallback, alias, compatibility reader, or parallel authority.
+- Upgraded the project adoption record, CI toolchain, and managed FlowGuard policy to 0.58.5, preserving one current route with no fallback, alias, compatibility reader, or parallel authority.
 - Bound the public-export privacy owner to the exact current Git candidate inventory, expanded machine-local absolute-path rejection, and kept unrelated owner receipts reusable.
 - Made branch-push CI the single regression gate and changed tag CI to a receipt-only version/tag/commit identity check.
 
