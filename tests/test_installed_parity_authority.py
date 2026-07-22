@@ -97,6 +97,9 @@ class InstalledParityAuthorityTests(unittest.TestCase):
         control.joinpath("check-manifest.json").write_bytes(
             canonical_json_bytes(self.check_manifest)
         )
+        control.joinpath("contract-source.json").write_bytes(
+            (SKILL_ROOT / ".skillguard" / "contract-source.json").read_bytes()
+        )
         for relative in installation_member_paths(self.canonical):
             source = self.canonical / Path(*relative.split("/"))
             destination = self.installed / Path(*relative.split("/"))

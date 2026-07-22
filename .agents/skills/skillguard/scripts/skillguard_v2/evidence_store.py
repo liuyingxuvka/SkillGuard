@@ -211,12 +211,14 @@ def _contained_path(
 
 
 def _durable_mkdir(path: Path, root: Path) -> None:
+    canonical_root = _canonical_root(root)
+    canonical_path = Path(path).resolve(strict=False)
     try:
-        path.resolve(strict=False).relative_to(root)
+        canonical_path.relative_to(canonical_root)
     except ValueError as exc:
         raise EvidenceStoreError("evidence_directory_escape") from exc
     missing: list[Path] = []
-    cursor = path
+    cursor = canonical_path
     while not _path_exists(cursor):
         missing.append(cursor)
         cursor = cursor.parent
@@ -861,7 +863,8 @@ def verify_compressed_stream(
 ) -> VerifiedStreamObject:
     """Verify both identities and optionally stream the logical bytes to output."""
 
-    root = _canonical_root(owner_evidence_root)
+    declared_root = Path(owner_evidence_root)
+    root = _canonical_root(declared_root)
     if set(reference) != _STREAM_REFERENCE_FIELDS:
         raise EvidenceStoreError("compressed_stream_reference_shape_invalid")
     if reference.get("path_token") != OWNER_EVIDENCE_PATH_TOKEN:
@@ -889,7 +892,8 @@ def verify_compressed_stream(
         raise EvidenceStoreError(
             "logical_byte_limit_exceeded", str(max_logical_bytes)
         )
-    path = _contained_path(root, reference.get("relative_path"))
+    relative = _portable_relative_path(reference.get("relative_path"))
+    path = _contained_path(root, relative.as_posix())
     expected_name = f"{storage_hash.removeprefix('sha256:')}.gz"
     if path.name != expected_name:
         raise EvidenceStoreError("compressed_stream_storage_path_invalid")
@@ -933,7 +937,10 @@ def verify_compressed_stream(
     if observed_logical_hash != logical_hash:
         raise EvidenceStoreError("compressed_stream_logical_hash_mismatch")
     return VerifiedStreamObject(
-        object_path=path,
+        # Keep the caller's spelling (including a Windows 8.3 alias) in the
+        # public result while all containment and content checks use the one
+        # canonical filesystem identity above.
+        object_path=declared_root.joinpath(*relative.parts),
         logical_content_hash=logical_hash,
         logical_byte_count=logical_count,
         storage_content_hash=storage_hash,
