@@ -7,7 +7,8 @@ description: "Use when authoring, maintaining, checking, graduating, installing,
 
 ## Purpose
 
-SkillGuard is the school and graduation exam for other skills.
+SkillGuard is the author-side auditor and graduation-evidence supervisor for
+other skills.
 
 On the maintainer computer it helps each explicitly covered skill state:
 
@@ -17,9 +18,13 @@ On the maintainer computer it helps each explicitly covered skill state:
 - how deep execution must go;
 - which target-owned checks prove those claims.
 
-SkillGuard then checks that the declarations, execution, evidence, and closure
-agree. When the skill graduates, SkillGuard builds a clean standalone consumer
-distribution. The graduated skill must work without SkillGuard.
+The target skill owns those declarations, including what completeness and
+depth mean for its domain. SkillGuard checks only that the target's exact
+declarations, execution, evidence, and closure agree; it does not decide that
+the declaration should be deeper, invent a missing domain check, or reinterpret
+the target result. When the skill graduates, SkillGuard builds a clean
+standalone consumer distribution. The graduated skill must work without
+SkillGuard.
 
 SkillGuard is not a shared runtime, a universal project plugin, or a receipt
 service for unrelated skills.
@@ -64,6 +69,9 @@ It must not:
 - Use `scripts/skillguard_supervise.py` with explicit author run-state and
   evidence roots.
 - Use `scripts/skillguard_test_mesh.py` for one unit's frozen check plan.
+- Use `evidence-audit` and `evidence-gc-plan` for read-only evidence lifecycle
+  inspection; use `evidence-gc-apply` only to quarantine an exact current plan,
+  and `evidence-gc-purge` only for the separately authorized exact quarantine.
 - Use `scripts/skillguard_consumer_install.py` for a clean standalone consumer
   installation.
 - Use the `maintainer-adopt` and `maintainer-audit` author commands only for
@@ -78,7 +86,8 @@ It must not:
   skills, and the exact current contract trio.
 - `unit-checked`: every member's semantic checks have current evidence under
   that same unit and exact full identity.
-- `graduated`: the unit has complete/deep evidence and a clean consumer
+- `graduated`: the unit satisfies its own declared completeness/depth evidence
+  and a clean consumer
   projection audit passes.
 - `installed-current`: the clean consumer projection was transactionally
   activated and matches its target-owned release identity.
@@ -92,7 +101,8 @@ No prose-only assertion turns a state into `current`.
 Use this skill when the user asks to:
 
 - create or maintain a skill's author-side promise/contract;
-- check whether a declared capability was fully and deeply executed;
+- check whether a capability satisfied the target's own declared completion
+  and depth criteria;
 - add, remove, rename, split, merge, or retire a maintained skill or
   maintenance unit;
 - run affected-only or final validation for one maintained unit;
@@ -138,7 +148,9 @@ owner. Do not build shared proof.
 
    Every check belongs to exactly one member and one maintenance unit. Different
    units may not depend on, import, project, or reuse one another's receipts.
-   Similar commands do not create a shared owner.
+   Similar commands do not create a shared owner. Several same-unit semantic
+   checks may share one producer only when the target explicitly declares the
+   same execution owner and every producer behavior/input identity agrees.
 
 4. Compile the author-side contract.
 
@@ -155,10 +167,11 @@ owner. Do not build shared proof.
 
 6. Resolve exact same-unit evidence.
 
-   A terminal-success receipt may be reused only when maintenance unit, member,
-   evidence subject, semantic check, owner, request, inputs, dependencies,
-   toolchain, environment, and policy identities all match. Otherwise execute
-   the unit's own check.
+   A producer terminal-success receipt may be reused only when maintenance
+   unit, member, owner, request, inputs, dependencies, toolchain, environment,
+   and policy identities all match. Each consuming semantic check must also
+   match its exact target-declared evidence-subject and projection identity.
+   Otherwise execute the unit's own producer.
 
 7. Execute and close.
 
@@ -199,12 +212,25 @@ owner. Do not build shared proof.
     current, whether the consumer distribution is clean, and what remains
     blocked.
 
+13. Maintain persistent evidence explicitly.
+
+    Keep one canonical owner-evidence store per maintenance unit. Complete
+    stdout/stderr are deterministic compressed sidecars with separate logical
+    and storage identities; receipts expose only bounded diagnostics. Audit and
+    GC planning are read-only. Apply quarantines only exact unreachable
+    candidates from a current plan. Purge acts only on that quarantine after
+    current and release-pinned replay remains valid. Ordinary validation may
+    clean only its own unpublished temporary captures and never silently
+    purges persistent evidence.
+
 ## Maintenance Unit and Evidence Rules
 
 - One maintenance unit may contain one skill or a deliberately inseparable
   suite.
 - Each member has its own semantic check ids and evidence subjects.
-- Same-unit single-flight is allowed only under the exact full identity.
+- Same-unit single-flight is allowed only under one explicit target-declared
+  producer and its exact full producer/projection identities; command
+  similarity alone is irrelevant.
 - Cross-unit receipt consumption is always forbidden.
 - Unrelated units stay current after a change that has no component edge to
   them; they need neither rerun nor a “reuse ticket.”
@@ -258,6 +284,9 @@ It must not contain:
   author source is established.
 - timeout/cancellation without zero descendants confirmed: evidence invalid.
 - final full validation before source/toolchain/plan freeze: invalid.
+- more than one writable evidence authority for a maintenance unit: block.
+- stale GC plan, reachable candidate, active-store purge target, or failed
+  current/release-pin replay: zero deletion.
 
 ## Output Requirements
 

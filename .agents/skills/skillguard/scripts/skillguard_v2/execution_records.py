@@ -891,6 +891,27 @@ def release_process_tree_containment(
             if handle is None:
                 raise OSError(0, "missing Windows job handle")
             job_handle = wintypes.HANDLE(handle)
+            before_information = BASIC_ACCOUNTING_INFORMATION()
+            before_returned = wintypes.DWORD()
+            if not query_job(
+                job_handle,
+                1,
+                ctypes.byref(before_information),
+                ctypes.sizeof(before_information),
+                ctypes.byref(before_returned),
+            ):
+                raise OSError(
+                    ctypes.get_last_error(), "QueryInformationJobObject"
+                )
+            active_processes_before = int(
+                before_information.active_processes
+            )
+            facts["cleanup_confirmation_method"] = (
+                "windows_job_active_process_query"
+            )
+            facts["descendant_count_before"] = max(
+                0, active_processes_before - 1
+            )
             # TerminateJobObject is used even when the direct child already
             # exited: a successful parent must not leave grandchildren alive.
             if not terminate_job(job_handle, 0xE0000001):
@@ -920,6 +941,10 @@ def release_process_tree_containment(
             facts["cleanup_confirmed"] = bool(
                 facts["termination_succeeded"] and active_processes == 0
             )
+            facts["descendant_count_after"] = max(
+                0, int(active_processes or 0)
+            )
+            facts["remaining_descendant_pids"] = []
             facts["termination_method"] = "windows_job_terminate_and_query"
             if active_processes != 0:
                 facts["termination_error_kind"] = "job_processes_still_active"

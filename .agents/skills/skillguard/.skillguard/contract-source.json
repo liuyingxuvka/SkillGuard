@@ -90,7 +90,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:static-audit",
       "evidence_subject_id": "subject:skillguard:check:self:inventory-static-surface",
-      "execution_owner_id": "owner:self:inventory-static-surface",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -155,7 +155,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:static-audit",
       "evidence_subject_id": "subject:skillguard:check:self:issue-static-audit-receipt",
-      "execution_owner_id": "owner:self:issue-static-audit-receipt",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -177,7 +177,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
       "evidence_subject_id": "subject:skillguard:check:self:freeze-declared-check-inventory",
-      "execution_owner_id": "owner:self:freeze-declared-check-inventory",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -239,7 +239,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:execution-depth",
       "evidence_subject_id": "subject:skillguard:check:self:reconcile-declared-check-results",
-      "execution_owner_id": "owner:self:reconcile-declared-check-results",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -409,7 +409,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:contract-and-validation-plan",
       "evidence_subject_id": "subject:skillguard:check:self:validate-binding",
-      "execution_owner_id": "owner:self:validate-binding",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -510,7 +510,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "semantic_check_id": "check:self:verify-generated-parity",
-      "timeout_seconds": 180
+      "timeout_seconds": 600
     },
     {
       "args": [
@@ -585,7 +585,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:select-function-route",
-      "execution_owner_id": "owner:self:select-function-route",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -646,7 +646,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:claim-run",
-      "execution_owner_id": "owner:self:claim-run",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -742,7 +742,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:next-ready-step",
-      "execution_owner_id": "owner:self:next-ready-step",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -766,7 +766,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:record-step-event",
-      "execution_owner_id": "owner:self:record-step-event",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -838,7 +838,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:issue-step-receipt",
-      "execution_owner_id": "owner:self:issue-step-receipt",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -906,7 +906,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:issue-closure-receipt",
-      "execution_owner_id": "owner:self:issue-closure-receipt",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -928,7 +928,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:portfolio-impact",
       "evidence_subject_id": "subject:skillguard:check:self:scan-maintenance-unit-freshness",
-      "execution_owner_id": "owner:self:scan-maintenance-unit-freshness",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -952,7 +952,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:portfolio-impact",
       "evidence_subject_id": "subject:skillguard:check:self:validate-maintenance-unit-evidence",
-      "execution_owner_id": "owner:self:validate-maintenance-unit-evidence",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -976,7 +976,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:portfolio-impact",
       "evidence_subject_id": "subject:skillguard:check:self:issue-portfolio-receipt",
-      "execution_owner_id": "owner:self:issue-portfolio-receipt",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -998,7 +998,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:author-repository-adoption",
       "evidence_subject_id": "subject:skillguard:check:self:inspect-author-repository-adoption",
-      "execution_owner_id": "owner:self:inspect-author-repository-adoption",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1022,7 +1022,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:author-repository-adoption",
       "evidence_subject_id": "subject:skillguard:check:self:render-managed-project-prompt",
-      "execution_owner_id": "owner:self:render-managed-project-prompt",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1046,7 +1046,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:author-repository-adoption",
       "evidence_subject_id": "subject:skillguard:check:self:install-author-repository-adoption",
-      "execution_owner_id": "owner:self:install-author-repository-adoption",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1113,7 +1113,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router",
       "evidence_subject_id": "subject:skillguard:check:self:refresh-global-router",
-      "execution_owner_id": "owner:self:refresh-global-router",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1137,7 +1137,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router",
       "evidence_subject_id": "subject:skillguard:check:self:check-global-registry-and-prompt",
-      "execution_owner_id": "owner:self:check-global-registry-and-prompt",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1161,7 +1161,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:global-router",
       "evidence_subject_id": "subject:skillguard:check:self:verify-target-handoff",
-      "execution_owner_id": "owner:self:verify-target-handoff",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1183,7 +1183,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
       "evidence_subject_id": "subject:skillguard:check:self:resolve-canonical-source",
-      "execution_owner_id": "owner:self:resolve-canonical-source",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1207,7 +1207,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
       "evidence_subject_id": "subject:skillguard:check:self:compare-installed-and-repository",
-      "execution_owner_id": "owner:self:compare-installed-and-repository",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1281,7 +1281,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
       "evidence_subject_id": "subject:skillguard:check:self:verify-release-provenance",
-      "execution_owner_id": "owner:self:verify-release-provenance",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1330,7 +1330,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "semantic_check_id": "check:self:installation-safety",
-      "timeout_seconds": 900
+      "timeout_seconds": 3000
     },
     {
       "args": [
@@ -1423,7 +1423,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:obligation:loop-liveness",
-      "execution_owner_id": "owner:self:obligation:loop-liveness",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",
@@ -1445,7 +1445,7 @@
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:runtime-and-closure",
       "evidence_subject_id": "subject:skillguard:check:self:obligation:no-former-authority-success",
-      "execution_owner_id": "owner:self:obligation:no-former-authority-success",
+      "execution_owner_id": "owner:self:flowguard-contract-model",
       "input_selectors": [
         {
           "kind": "path",

@@ -54,10 +54,9 @@ GRAPH_HEALTH_FIELDS = (
 )
 OWNER_FIELDS = (
     "field:execution_owner.execution_owner_id",
-    "field:execution_owner.semantic_check_id",
     "field:execution_owner.maintenance_unit_id",
     "field:execution_owner.member_skill_id",
-    "field:execution_owner.evidence_subject_id",
+    "field:execution_owner.check_ids",
     "field:execution_owner.input_selectors",
     "field:execution_owner.depends_on_check_ids",
     "field:execution_owner.target_input_role_ids",
@@ -65,6 +64,14 @@ OWNER_FIELDS = (
     "field:execution_owner.owner_declaration_hash",
     "field:execution_owner.input_component_ids",
     "field:execution_owner.owner_input_projection_hash",
+)
+CHECK_PROJECTION_FIELDS = (
+    "field:check_projection.check_id",
+    "field:check_projection.semantic_check_id",
+    "field:check_projection.evidence_subject_id",
+    "field:check_projection.covers_obligation_ids",
+    "field:check_projection.evidence_class",
+    "field:check_projection.projection_declaration_hash",
 )
 PLAN_FIELDS = (
     "field:affected_plan.changed_component_ids",
@@ -99,7 +106,6 @@ RECEIPT_FIELDS = (
     "field:owner_receipt.receipt_id",
     "field:owner_receipt.maintenance_unit_id",
     "field:owner_receipt.member_skill_id",
-    "field:owner_receipt.evidence_subject_id",
     "field:owner_receipt.dependency_receipt_ids",
     "field:owner_receipt.target_input_fingerprint",
     "field:owner_receipt.target_input_role_fingerprints",
@@ -109,6 +115,33 @@ RECEIPT_FIELDS = (
     "field:owner_receipt.termination_sidecar_ref",
     "field:owner_receipt.attempt_id",
     "field:owner_receipt.disposition",
+)
+STREAM_OBJECT_FIELDS = (
+    "field:stream_object.logical_content_hash",
+    "field:stream_object.logical_byte_count",
+    "field:stream_object.logical_media_type",
+    "field:stream_object.storage_content_hash",
+    "field:stream_object.storage_byte_count",
+    "field:stream_object.storage_encoding",
+    "field:stream_object.storage_media_type",
+)
+EVIDENCE_LIFECYCLE_FIELDS = (
+    "field:evidence_lifecycle.evidence_root_identity",
+    "field:evidence_lifecycle.current_head_authority_hash",
+    "field:evidence_lifecycle.current_aggregation_authority_hash",
+    "field:evidence_lifecycle.active_writer_marker_hash",
+    "field:evidence_lifecycle.lifecycle_barrier_identity",
+    "field:evidence_lifecycle.inventory_snapshot_hash",
+    "field:evidence_lifecycle.root_refs",
+    "field:evidence_lifecycle.reachable_object_ids",
+    "field:evidence_lifecycle.candidate_object_ids",
+    "field:evidence_lifecycle.lifecycle_state",
+    "field:evidence_lifecycle.plan_hash",
+    "field:evidence_lifecycle.quarantine_ref",
+    "field:evidence_lifecycle.operation_id",
+    "field:evidence_lifecycle.journal_item_status",
+    "field:evidence_lifecycle.apply_receipt_hash",
+    "field:evidence_lifecycle.purge_receipt_hash",
 )
 AGGREGATION_FIELDS = (
     "field:parent_aggregation.maintenance_unit_id",
@@ -157,9 +190,12 @@ ALL_FIELDS = (
     + COMPONENT_FIELDS
     + GRAPH_HEALTH_FIELDS
     + OWNER_FIELDS
+    + CHECK_PROJECTION_FIELDS
     + PLAN_FIELDS
     + OWNER_EXECUTION_RESULT_FIELDS
     + RECEIPT_FIELDS
+    + STREAM_OBJECT_FIELDS
+    + EVIDENCE_LIFECYCLE_FIELDS
     + AGGREGATION_FIELDS
     + PROJECTION_FIELDS
     + DOMAIN_FIELDS
@@ -172,10 +208,13 @@ GROUPS = (
     ("source-inventory", INVENTORY_FIELDS, "complete omission-detection inventory that is not an owner key"),
     ("content-component", COMPONENT_FIELDS, "semantic roles, installation disposition, members, hashes, and consumers"),
     ("impact-graph", GRAPH_HEALTH_FIELDS, "fail-closed graph health and deterministic identity"),
-    ("execution-owner", OWNER_FIELDS, "exact maintenance-unit owner, semantic check, member, subject, selectors, dependencies, and input projection"),
+    ("execution-owner", OWNER_FIELDS, "exact maintenance-unit producer owner, members, selectors, dependencies, and input projection"),
+    ("check-projection", CHECK_PROJECTION_FIELDS, "target-declared semantic checks projected from an explicit producer without entering producer identity"),
     ("affected-plan", PLAN_FIELDS, "frozen reuse, execution, aggregation, install, router, Portfolio, and full decisions"),
     ("owner-execution-result", OWNER_EXECUTION_RESULT_FIELDS, "exact frozen-plan resolution with visible reuse, execution, failure, and not-run outcomes"),
     ("owner-receipt", RECEIPT_FIELDS, "same-unit cross-run terminal-success identity with four complete sidecars"),
+    ("stream-object", STREAM_OBJECT_FIELDS, "deterministic compressed stream storage with separate logical and physical identities"),
+    ("evidence-lifecycle", EVIDENCE_LIFECYCLE_FIELDS, "reachability roots, read-only planning, quarantine-first apply, and separately authorized purge"),
     ("parent-aggregation", AGGREGATION_FIELDS, "same-unit immutable child refs and independent aggregation identity"),
     ("external-projection", PROJECTION_FIELDS, "consumer distribution, parity, Portfolio summary, private router, and author-prompt projections"),
     ("evidence-domain", DOMAIN_FIELDS, "author source, owner, aggregation, and distribution-gate evidence separation"),

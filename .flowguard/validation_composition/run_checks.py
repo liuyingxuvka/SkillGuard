@@ -16,6 +16,7 @@ from flowguard import (
     review_development_process_flow,
     review_field_lifecycle,
     review_hierarchical_mesh,
+    review_structure_mesh,
     review_test_mesh,
 )
 
@@ -37,6 +38,7 @@ from test_mesh_model import (
     build_bad_parent_level_reuse_mesh,
     build_test_mesh,
 )
+from structure_mesh_model import build_bad_structure_mesh, build_structure_mesh
 from validation_composition_model import (
     ALLOWED_FULL_REASONS,
     BLOCKS,
@@ -64,6 +66,7 @@ EVIDENCE_IDS = {
     "test_mesh": "evidence:model:validation-composition-testmesh-current",
     "field_lifecycle": "evidence:model:validation-composition-fields-current",
     "development_process": "evidence:model:validation-composition-process-current",
+    "structure_mesh": "evidence:model:validation-composition-structure-current",
     "retired_shape_rejection_fixture": RETIREMENT_EVIDENCE_ID,
     "execution_depth_sibling": DEPTH_EVIDENCE_ID,
 }
@@ -130,6 +133,8 @@ def run_all() -> tuple[bool, dict[str, Any]]:
     field_lifecycle = review_field_lifecycle(build_field_lifecycle())
     process = review_development_process_flow(build_development_process())
     process_bad = review_development_process_flow(build_bad_out_of_order_process())
+    structure = review_structure_mesh(build_structure_mesh())
+    structure_bad = review_structure_mesh(build_bad_structure_mesh())
     manifest_alignment = _repository_manifest_alignment()
 
     field_obligations = field_lifecycle_to_model_obligations(field_lifecycle)
@@ -185,6 +190,21 @@ def run_all() -> tuple[bool, dict[str, Any]]:
         "bad-portable-ref-root-drift",
         "bad-skill-runtime-compatibility-branch",
         "bad-unapproved-software-compatibility",
+        "bad-command-similarity-infers-producer",
+        "bad-semantic-projection-enters-producer-key",
+        "bad-two-owner-evidence-stores",
+        "bad-all-historical-heads-remain-current",
+        "bad-all-historical-aggregations-remain-current",
+        "bad-external-binding-becomes-evidence-authority",
+        "bad-gc-races-active-writer",
+        "bad-compressed-stream-logical-hash",
+        "bad-gc-plan-writes-store",
+        "bad-stale-gc-plan-applied",
+        "bad-gc-moves-release-pin",
+        "bad-purge-active-store",
+        "bad-lifecycle-journal-unbounded-retry",
+        "bad-lifecycle-resume-new-owner",
+        "bad-validation-silently-purges",
     }
     current_mesh = build_test_mesh()
     positive = {
@@ -198,6 +218,7 @@ def run_all() -> tuple[bool, dict[str, Any]]:
         "test_mesh_review": test_mesh.ok,
         "field_lifecycle_review": field_lifecycle.ok,
         "development_process_review": process.ok,
+        "structure_mesh_review": structure.ok,
         "field_obligation_projection_complete": len(field_obligations) == len(ALL_FIELDS),
         "field_contract_projection_complete": len(field_contracts) == len(ALL_FIELDS),
         "function_blocks_use_input_state_set_contract": all("x" in block.__doc__ and "Set(" in block.__doc__ for block in BLOCKS),
@@ -216,6 +237,7 @@ def run_all() -> tuple[bool, dict[str, Any]]:
         "stale_child_reattachment_rejected": not hierarchy_bad.ok,
         "parent_level_reuse_cannot_hide_missing_owner": not test_mesh_bad.ok,
         "unknown_process_dependency_rejected": not process_bad.ok,
+        "duplicate_evidence_store_structure_rejected": not structure_bad.ok,
         "component_scope_known_bads_complete": required_scope_known_bads.issubset(known_bad_scenario_ids),
         "receipt_identity_known_bads_complete": required_receipt_known_bads.issubset(known_bad_scenario_ids),
         "execution_lifecycle_known_bads_complete": required_lifecycle_known_bads.issubset(known_bad_scenario_ids),
@@ -258,12 +280,14 @@ def run_all() -> tuple[bool, dict[str, Any]]:
             "test_mesh_review": _dict(test_mesh),
             "field_lifecycle_review": _dict(field_lifecycle),
             "development_process_review": _dict(process),
+            "structure_mesh_review": _dict(structure),
         },
         "expected_bad_reports": {
             "nonterminating_loop": _dict(loop_bad),
             "stale_reattachment": _dict(hierarchy_bad),
             "parent_level_reuse": _dict(test_mesh_bad),
             "out_of_order_process": _dict(process_bad),
+            "duplicate_evidence_store_structure": _dict(structure_bad),
         },
         "skipped_checks": skipped_checks,
         "residual_risk": [

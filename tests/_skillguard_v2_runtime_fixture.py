@@ -49,7 +49,6 @@ def _current_checks_and_plan(
                     "target_input_role_ids": list(
                         check["target_input_role_ids"]
                     ),
-                    "evidence_domain_id": str(check["evidence_domain_id"]),
                     "impact_policy_id": "skillguard.content_impact_policy.current",
                 }
             ),
@@ -59,6 +58,7 @@ def _current_checks_and_plan(
             "check_id": check_id,
             "semantic_check_id": str(check["semantic_check_id"]),
             "execution_owner_id": str(check["execution_owner_id"]),
+            "evidence_domain_id": str(check["evidence_domain_id"]),
             "covers_obligation_ids": sorted(
                 str(value) for value in check.get("covers_obligation_ids", [])
             ),
@@ -96,7 +96,6 @@ def _current_checks_and_plan(
                 "target_input_role_ids": list(
                     check.get("target_input_role_ids", [])
                 ),
-                "evidence_domain_id": str(check["evidence_domain_id"]),
             },
         )
         row["check_ids"] = sorted(
@@ -110,6 +109,7 @@ def _current_checks_and_plan(
             "check_id": str(check["check_id"]),
             "semantic_check_id": str(check["semantic_check_id"]),
             "execution_owner_id": str(check["execution_owner_id"]),
+            "evidence_domain_id": str(check["evidence_domain_id"]),
             "covers_obligation_ids": sorted(
                 str(value) for value in check.get("covers_obligation_ids", [])
             ),

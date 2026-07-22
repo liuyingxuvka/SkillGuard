@@ -23,6 +23,10 @@ SPEC_PATH = (
     "openspec/changes/separate-skillguard-authoring-from-consumer-runtime/specs/"
     "composable-validation-evidence/spec.md"
 )
+LIFECYCLE_SPEC_PATH = (
+    "openspec/changes/add-bounded-evidence-lifecycle/specs/"
+    "bounded-evidence-lifecycle/spec.md"
+)
 RUNNER_PATH = ".flowguard/validation_composition/run_checks.py"
 
 
@@ -104,6 +108,22 @@ COMMITMENT_ROWS = (
         "pre-plan owner execution, failed attempts, cleanup-unconfirmed state, Scheduled Tasks, background resume, and unattended mutable-worktree retry cannot become reusable evidence",
         ("execution_status", "executed_owner_ids", "interrupted_launcher_cleanup_confirmed_zero"),
     ),
+    (
+        "commitment:producer-sharing-is-target-declared",
+        "intent:producer-sharing-is-target-declared",
+        "several target-declared semantic checks may be satisfied by one native producer execution",
+        "the compiler preserves every semantic projection and shares execution only when the target explicitly declares one same-unit owner whose producer behavior and inputs agree exactly",
+        "command, argument, filename, label, or output similarity never authorizes implicit sharing, and SkillGuard never invents or deepens target semantics",
+        ("owner_execution_keys", "owner_receipt_ids", "closure_status"),
+    ),
+    (
+        "commitment:evidence-lifecycle-is-bounded",
+        "intent:evidence-lifecycle-is-bounded",
+        "immutable execution streams are persisted, replayed, audited, quarantined, or considered for purge",
+        "one maintenance-unit evidence store preserves complete streams as deterministic compressed objects with separate logical and storage identities, selects one exact current head per producer and one exact current aggregation per unit/member/profile, keeps typed installation and global-prompt bindings outside its internal graph, coordinates active writers through a short lifecycle barrier, classifies reachability from explicit roots, quarantines exact unreachable objects before separately authorized purge, and resumes an interrupted destructive step through the same durable operation journal",
+        "historical heads are not current by directory membership; audit and planning write nothing; stale plans move nothing; active writers block collection; current, failed-diagnostic, historical-referenced, installation-pinned, and release-pinned evidence cannot be collected; normal validation purges nothing persistent",
+        ("owner_receipt_ids", "receipt_rejection_reasons", "closure_status"),
+    ),
 )
 
 
@@ -112,6 +132,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
     intent_ids = tuple(row[1] for row in COMMITMENT_ROWS)
     source_ids = (
         "surface:validation-composition-spec",
+        "surface:bounded-evidence-lifecycle-spec",
         "surface:validation-composition-model",
         "surface:validation-composition-checks",
     )
@@ -151,6 +172,16 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         ),
         BehaviorSourceSurface(
             source_ids[1],
+            surface_kind=BCL_SOURCE_OPENSPEC,
+            source_ref=LIFECYCLE_SPEC_PATH,
+            commitment_ids=commitment_ids,
+            business_intent_ids=intent_ids,
+            owner=MODEL_ID,
+            validation_boundary="approved explicit-producer and bounded evidence lifecycle requirements",
+            rationale="the current OpenSpec change extends the existing validation-composition authority",
+        ),
+        BehaviorSourceSurface(
+            source_ids[2],
             surface_kind=BCL_SOURCE_CODE,
             source_ref=MODEL_PATH,
             commitment_ids=commitment_ids,
@@ -160,7 +191,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             rationale="the existing validation-composition model remains the single abstract owner",
         ),
         BehaviorSourceSurface(
-            source_ids[2],
+            source_ids[3],
             surface_kind=BCL_SOURCE_TEST,
             source_ref=RUNNER_PATH,
             commitment_ids=commitment_ids,

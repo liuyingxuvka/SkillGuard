@@ -17,6 +17,13 @@ python scripts/skillguard_consumer_install.py \
 Preparation builds the target-owned consumer projection and audits it before
 activation.
 
+Installation currentness is derived only from the target's exact
+`projection:installation`. Source-only tests, fixtures, models, workflows,
+reports, author receipts, and their fingerprints do not stale the installed
+consumer projection. Required installed smoke runs with Python bytecode
+disabled, and a stage containing `.pyc`, `.pyo`, or `__pycache__` residue is
+not current.
+
 The staged tree must not contain:
 
 - `.skillguard/**`;

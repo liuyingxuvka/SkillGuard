@@ -128,7 +128,6 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
                     "target_input_role_ids": check_row[
                         "target_input_role_ids"
                     ],
-                    "evidence_domain_id": check_row["evidence_domain_id"],
                     "impact_policy_id": "skillguard.content_impact_policy.current",
                 }
             )
@@ -355,7 +354,7 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
         )["result"]
         for kind in ("stdout", "stderr"):
             self.assertEqual(
-                receipt["sidecars"][kind]["content_hash"],
+                receipt["sidecars"][kind]["logical_content_hash"],
                 result_sidecar[f"{kind}_content_hash"],
             )
             self.assertNotIn(f"{kind}_hash", result_sidecar)
@@ -566,7 +565,7 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
             (self.repository_root / counters["check:role-two"]).read_text(),
         )
 
-    def test_distinct_semantic_checks_do_not_reuse_one_owner_receipt(self) -> None:
+    def test_explicit_owner_projects_one_receipt_to_distinct_semantic_checks(self) -> None:
         counter = "projection-counter.txt"
         script = (
             "import pathlib,sys; p=pathlib.Path(sys.argv[1])/sys.argv[2]; "
@@ -599,12 +598,16 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
             first_check["projection_declaration_hash"],
             second_check["projection_declaration_hash"],
         )
-        self.assertNotEqual(
+        self.assertEqual(
             first["execution_receipt"]["receipt_id"],
             second["execution_receipt"]["receipt_id"],
         )
-        self.assertEqual("executed_terminal_success", second["disposition"])
-        self.assertEqual("2", (self.repository_root / counter).read_text())
+        self.assertEqual(
+            first["execution_receipt"]["execution_key"],
+            second["execution_receipt"]["execution_key"],
+        )
+        self.assertEqual("reused_terminal_success", second["disposition"])
+        self.assertEqual("1", (self.repository_root / counter).read_text())
 
     def test_identical_checks_in_different_units_keep_independent_receipts(self) -> None:
         counter = "cross-unit-counter.txt"
@@ -626,6 +629,7 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
             ],
             "expected": {"exit_code": 0},
             "covers_obligation_ids": ["obligation:intake"],
+            "execution_owner_id": "owner:projection",
         }
         first_target = self.root / "unit-one-target"
         second_target = self.root / "unit-two-target"
@@ -827,9 +831,9 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
         self.assertEqual("executed_terminal_success", replacement["disposition"])
         self.assertEqual("2", (self.repository_root / counter).read_text())
         self.assertNotEqual(
-            stdout_ref["content_hash"],
+            stdout_ref["logical_content_hash"],
             replacement["execution_receipt"]["sidecars"]["stdout"][
-                "content_hash"
+                "logical_content_hash"
             ],
         )
 
@@ -839,14 +843,14 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
         child = (
             "import os,pathlib,sys,time; "
             "pathlib.Path(sys.argv[1]).write_text(str(os.getpid())); "
-            "time.sleep(1.5); pathlib.Path(sys.argv[2]).write_text('escaped')"
+            "time.sleep(5); pathlib.Path(sys.argv[2]).write_text('escaped')"
         )
         parent = (
             "import pathlib,subprocess,sys,time; "
             "root=pathlib.Path(sys.argv[1]); "
             "ready=root/sys.argv[2]; terminal=root/sys.argv[3]; "
             "ready.parent.mkdir(parents=True,exist_ok=True); "
-            "time.sleep(0.15); "
+            "time.sleep(0.05); "
             "subprocess.Popen([sys.executable,'-c',sys.argv[4],str(ready),str(terminal)]); "
             "deadline=time.monotonic()+5; "
             "\nwhile not ready.exists() and time.monotonic()<deadline: time.sleep(0.01)\n"
@@ -865,7 +869,7 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
                     escaped,
                     child,
                 ],
-                "timeout_seconds": 0.75,
+                "timeout_seconds": 2.0,
                 "expected": {"exit_code": 0},
             }
         )
@@ -875,6 +879,19 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
         attempt = result["record"]["result"]
         self.assertEqual("timeout", attempt["reason"])
         self.assertTrue(attempt["cleanup_confirmed"])
+        self.assertEqual(
+            "windows_job_active_process_query",
+            attempt["cleanup_confirmation_method"],
+        )
+        self.assertGreaterEqual(attempt["descendant_count_before"], 1)
+        self.assertEqual(0, attempt["descendant_count_after"])
+        self.assertEqual(
+            "durable_immutable", attempt["timeout_receipt_write_status"]
+        )
+        self.assertTrue(attempt["timeout_receipt_id"].startswith("timeout-"))
+        self.assertTrue(
+            (run_root / attempt["timeout_receipt_ref"]).is_file()
+        )
         ready_path = self.repository_root / ready
         self.assertTrue(ready_path.is_file())
         child_pid = int(ready_path.read_text(encoding="utf-8"))

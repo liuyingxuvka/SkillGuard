@@ -280,6 +280,16 @@ class CurrentTestMeshTests(unittest.TestCase):
         self.assertEqual("passed", aggregation["status"])
         self.assertEqual(0, aggregation["execution_count"])
         self.assertEqual(1, len(aggregation["child_receipts"]))
+        current_aggregation_authorities = list(
+            (self.owner_root / "lifecycle" / "current-aggregations").glob("*.json")
+        )
+        self.assertEqual(1, len(current_aggregation_authorities))
+        authority = json.loads(
+            current_aggregation_authorities[0].read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            aggregation["aggregation_ref"], authority["aggregation_ref"]
+        )
         replay = replay_current_test_mesh_aggregation(
             self.owner_root,
             aggregation["aggregation_ref"],
@@ -299,7 +309,7 @@ class CurrentTestMeshTests(unittest.TestCase):
             ["owner:intake"], second["reused_after_freeze_owner_ids"]
         )
 
-    def test_distinct_semantic_checks_cannot_share_one_execution_owner(self) -> None:
+    def test_distinct_semantic_checks_explicitly_share_one_execution_owner(self) -> None:
         shared = {
             "kind": "command",
             "command": sys.executable,
@@ -307,24 +317,54 @@ class CurrentTestMeshTests(unittest.TestCase):
             "expected": {"exit_code": 0},
             "execution_owner_id": "owner:shared",
         }
-        with self.assertRaises(AssertionError):
-            self._claim_checks(
-                [
-                    {
-                        **shared,
-                        "check_id": "check:intake",
-                        "covers_obligation_ids": ["obligation:intake"],
-                    },
-                    {
-                        **shared,
-                        "check_id": "check:review",
-                        "covers_obligation_ids": ["obligation:review"],
-                    },
-                ],
-                name="shared-owner",
-            )
+        self._claim_checks(
+            [
+                {
+                    **shared,
+                    "check_id": "check:intake",
+                    "covers_obligation_ids": ["obligation:intake"],
+                },
+                {
+                    **shared,
+                    "check_id": "check:review",
+                    "covers_obligation_ids": ["obligation:review"],
+                },
+            ],
+            name="shared-owner",
+        )
 
-    def test_shared_owner_rejection_happens_before_execution(self) -> None:
+        frozen_plan = self._plan()
+        self.assertEqual("passed", frozen_plan["status"], frozen_plan)
+        self.assertEqual(["owner:shared"], frozen_plan["selected_owner_ids"])
+        self.assertEqual(["owner:shared"], frozen_plan["will_execute_owner_ids"])
+        owner_plan = frozen_plan["owner_plans"][0]
+        self.assertEqual(
+            ["check:intake", "check:review"], owner_plan["check_ids"]
+        )
+        self.assertEqual(
+            ["check:intake", "check:review"],
+            [row["check_id"] for row in owner_plan["check_projections"]],
+        )
+        self.assertEqual(
+            2,
+            len(
+                {
+                    row["projection_declaration_hash"]
+                    for row in owner_plan["check_projections"]
+                }
+            ),
+        )
+
+        execution = self._run_frozen_owners(frozen_plan)
+        self.assertEqual("passed", execution["status"], execution)
+        self.assertEqual(1, execution["execution_count"])
+        self.assertEqual(["owner:shared"], execution["executed_owner_ids"])
+        self.assertEqual(
+            ["check:intake", "check:review"],
+            execution["owner_results"][0]["check_ids"],
+        )
+
+    def test_mismatched_shared_owner_rejection_happens_before_execution(self) -> None:
         shared = {
             "kind": "command",
             "command": sys.executable,
@@ -337,7 +377,12 @@ class CurrentTestMeshTests(unittest.TestCase):
                 self._claim_checks(
                     [
                         {**shared, "check_id": "check:intake", "covers_obligation_ids": ["obligation:intake"]},
-                        {**shared, "check_id": "check:review", "covers_obligation_ids": ["obligation:review"]},
+                        {
+                            **shared,
+                            "check_id": "check:review",
+                            "covers_obligation_ids": ["obligation:review"],
+                            "timeout_seconds": 31,
+                        },
                     ],
                     name="shared-owner-omission",
                 )

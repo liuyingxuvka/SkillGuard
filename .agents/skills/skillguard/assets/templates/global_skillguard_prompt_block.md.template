@@ -9,7 +9,7 @@
 
 ### Author-Side Graduation Boundary
 - Each maintenance unit declares its own members, obligations, semantic checks, evidence subjects, and completion/depth criteria.
-- SkillGuard checks that the unit's claims are sufficiently deep and fully evidenced. It does not move its receipts, run store, router state, Portfolio state, or maintenance contract into the graduated consumer.
+- SkillGuard checks that the unit executed and evidenced the exact completion/depth criteria the target itself declared. It never decides that those criteria should be deeper, invents a target-domain check, or reinterprets the target's result. It does not move its receipts, run store, router state, Portfolio state, or maintenance contract into the graduated consumer.
 - Different maintenance units never share, import, project, or reuse check receipts. Similar commands are not proof of shared responsibility; semantic overlap is a boundary defect to split, merge, or retire at the author source.
 
 ### Validation Execution Ownership

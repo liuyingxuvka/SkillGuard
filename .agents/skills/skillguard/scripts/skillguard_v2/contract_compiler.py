@@ -96,8 +96,6 @@ CHECK_SOURCE_FIELDS = frozenset(
 OWNER_BEHAVIOR_FIELDS = (
     "maintenance_unit_id",
     "member_skill_id",
-    "evidence_subject_id",
-    "semantic_check_id",
     "kind",
     "command",
     "args",
@@ -395,6 +393,12 @@ def _install_disposition(path: str, skill_root_relative: str, role: str) -> str:
     name = PurePosixPath(relative).name
     if name in _DERIVED_AUTHORITY_FILES and relative.startswith(".skillguard/"):
         return "generate"
+    if relative == ".skillguard/contract-source.json":
+        # The author contract remains available in the installed maintainer
+        # tool, but its source-only check/model fingerprints do not define
+        # consumer-runtime currentness.  Installation copies it explicitly as
+        # a runtime-authority document outside projection:installation.
+        return "source_only"
     if role in {"test_dev", "fixture_reference"}:
         return "source_only"
     if relative == "SKILL.md" or relative.startswith(
@@ -817,7 +821,6 @@ def _build_content_impact_plan(
     policy.setdefault("full_admission_reason_codes", list(FULL_ADMISSION_REASON_CODES))
 
     prepared_checks: list[dict[str, Any]] = []
-    signature_owner: dict[str, str] = {}
     owner_declarations: dict[str, dict[str, Any]] = {}
     owner_selector_paths: dict[str, set[str]] = {}
     owner_check_ids: dict[str, set[str]] = {}
@@ -907,6 +910,7 @@ def _build_content_impact_plan(
                 )
             )
         check["target_input_role_ids"] = target_input_role_ids
+        check["depends_on_check_ids"] = list(_source_check_dependencies(check))
         evidence_domain_id = str(
             check.get("evidence_domain_id") or "validation"
         )
@@ -914,18 +918,13 @@ def _build_content_impact_plan(
             "behavior": _check_behavior_declaration(check),
             "input_selectors": selectors,
             "target_input_role_ids": target_input_role_ids,
-            "evidence_domain_id": evidence_domain_id,
             "impact_policy_id": policy["policy_id"],
         }
         declaration_signature = wire_hash(owner_declaration)
         explicit_owner = str(check.get("execution_owner_id", "")).strip()
-        if explicit_owner:
-            owner_id = explicit_owner
-        else:
-            owner_id = signature_owner.setdefault(
-                declaration_signature,
-                "owner:" + str(check.get("check_id", "")).removeprefix("check:"),
-            )
+        owner_id = explicit_owner or (
+            "owner:" + str(check.get("check_id", "")).removeprefix("check:")
+        )
         if owner_id in owner_declarations and owner_declarations[owner_id] != owner_declaration:
             conflicting_owner_ids.add(owner_id)
         else:
@@ -1230,7 +1229,6 @@ def _build_content_impact_plan(
                 "target_input_role_ids": list(
                     owner_declarations[owner_id]["target_input_role_ids"]
                 ),
-                "evidence_domain_id": owner_declarations[owner_id]["evidence_domain_id"],
             }
         )
     owner_index = {str(row["execution_owner_id"]): row for row in owners}
@@ -1244,6 +1242,7 @@ def _build_content_impact_plan(
             "check_id": str(check.get("check_id", "")),
             "semantic_check_id": str(check.get("semantic_check_id", "")),
             "execution_owner_id": str(check.get("execution_owner_id", "")),
+            "evidence_domain_id": str(check.get("evidence_domain_id", "")),
             "covers_obligation_ids": sorted(
                 {str(value) for value in check.get("covers_obligation_ids", [])}
             ),

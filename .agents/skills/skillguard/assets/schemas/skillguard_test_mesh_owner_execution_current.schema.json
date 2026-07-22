@@ -58,10 +58,14 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["check_id", "semantic_check_id", "projection_declaration_hash"],
+        "required": ["maintenance_unit_id", "member_skill_id", "evidence_subject_id", "check_id", "semantic_check_id", "evidence_domain_id", "projection_declaration_hash"],
         "properties": {
+          "maintenance_unit_id": {"type": "string", "minLength": 1},
+          "member_skill_id": {"type": "string", "minLength": 1},
+          "evidence_subject_id": {"type": "string", "minLength": 1},
           "check_id": {"type": "string", "minLength": 1},
           "semantic_check_id": {"type": "string", "minLength": 1},
+          "evidence_domain_id": {"type": "string", "minLength": 1},
           "projection_declaration_hash": {"$ref": "#/$defs/hash"}
         }
       }

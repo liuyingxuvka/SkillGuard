@@ -450,6 +450,19 @@ class InstallationTests(unittest.TestCase):
             self.assertTrue(
                 _hardened_activation_receipt_historical_integrity(first_record)
             )
+            with mock.patch.object(
+                installation_module,
+                "_installed_smoke_evidence_complete",
+                return_value=False,
+            ):
+                self.assertFalse(
+                    installation_module._activation_receipt_active_current(first_record)
+                )
+                self.assertTrue(
+                    installation_module._activation_receipt_active_replacement_eligible(
+                        first_record
+                    )
+                )
             detached_history = copy.deepcopy(first_record)
             for member_id, member in detached_history["members"].items():
                 member["active_root"] = str(root / "no-longer-live" / member_id)
@@ -458,6 +471,24 @@ class InstallationTests(unittest.TestCase):
             )
             recovery = recover_incomplete_installations(codex_home)
             self.assertEqual("passed", recovery["status"], recovery)
+
+            first_receipt_path = Path(first_record["activation_receipt_path"])
+            first_receipt = json.loads(first_receipt_path.read_text(encoding="utf-8"))
+            first_receipt["status"] = "tampered-history"
+            first_receipt_path.write_text(
+                json.dumps(first_receipt, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+            recovery_with_damaged_history = recover_incomplete_installations(codex_home)
+            self.assertEqual(
+                "passed",
+                recovery_with_damaged_history["status"],
+                recovery_with_damaged_history,
+            )
+            self.assertEqual(
+                [f"non_head_committed_receipt_invalid:{first['transaction_id']}"],
+                recovery_with_damaged_history["historical_evidence_issues"],
+            )
 
     def test_source_upgrade_preserves_the_current_committed_head_until_replacement(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -10,7 +10,8 @@ The plan declares:
 - one `maintenance_unit_id`;
 - the unit's member skills;
 - every semantic check and evidence subject;
-- one execution owner per check;
+- exactly one execution owner per check, while one explicitly declared
+  same-unit producer may own several distinct semantic projections;
 - covered obligations and evidence domains;
 - dependency order;
 - exact source, configuration, toolchain, and environment inputs;
@@ -19,7 +20,10 @@ The plan declares:
 - one private owner-receipt root.
 
 A foreign-unit owner, dependency, or receipt blocks the plan. Duplicate
-semantic ownership is a boundary defect, not a reason to share evidence.
+semantic ownership across maintenance units is a boundary defect, not a reason
+to share evidence. Inside one unit, producer sharing is valid only when the
+target explicitly assigns the same execution owner and the producer
+declarations agree exactly.
 
 ## Execution ownership
 
@@ -35,6 +39,11 @@ receipts.
 Same-unit single-flight is allowed only when the full execution identity is
 identical. A check in another maintenance unit always owns and produces its
 own evidence, even when command text, input hashes, or tools match.
+
+The compiler and planner never infer sharing from equal commands. The frozen
+owner row retains every exact check id and projection hash; the runner executes
+the producer at most once, and aggregation projects each semantic check
+separately.
 
 ## Affected-only invalidation
 

@@ -56,13 +56,27 @@ terminal and current declared-check evidence.
 - `skip` is legal only for a model-declared optional step after its condition
   and verifier evidence pass.
 
-Every declared check identity includes maintenance unit, member, evidence
-subject, semantic check, execution owner, request, inputs, dependencies,
-toolchain, environment, and evidence domain.
+Every declared check projection includes maintenance unit, member, evidence
+subject, semantic check, execution owner, covered obligations, and evidence
+domain. Its producer receipt separately binds the owner, request, inputs,
+dependencies, toolchain, environment, and policy. Keeping these identities
+separate lets one explicitly declared same-unit producer satisfy several exact
+semantic projections without making the projections interchangeable.
 
 One exact terminal-success receipt may be reused only inside the same
 maintenance unit under that complete identity. A foreign-unit receipt or
 dependency blocks before process launch and cannot be projected into closure.
+
+SkillGuard never infers producer sharing from command, argument, name, or
+output similarity and never decides that a target's declared capability should
+be deeper. The target skill owns those declarations; the supervisor verifies
+their exact execution and evidence only.
+
+The unit has one canonical owner-evidence root. Complete streams are stored as
+deterministic compressed objects with separate logical and storage hashes.
+`evidence-audit` and `evidence-gc-plan` are read-only; apply quarantines an
+exact current plan, and purge is a separate quarantine-only operation gated by
+current and release-pinned replay.
 
 ## Execution and cleanup
 

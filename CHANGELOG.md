@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.4.0 - 2026-07-22
+
+- **BREAKING:** Replaced raw stdout/stderr evidence blobs with deterministic streaming gzip objects that preserve separate logical-content and physical-storage identities and reject corrupt or over-budget decompression.
+- **BREAKING:** Separated reusable producer execution identity from semantic check projections. Similar commands never share evidence implicitly; only a target-declared common execution owner may serve several checks, while each check keeps its own subject, evidence domain, obligations, and projection hash.
+- Added one canonical per-unit evidence authority with current-head pointers, active-writer coordination, reachability audit, snapshot-bound collection plans, quarantine-first apply, and separately gated purge receipts.
+- Added read-only `evidence-audit` and `evidence-gc-plan` commands plus explicit `evidence-gc-apply` and `evidence-gc-purge` mutation boundaries.
+- Added bounded Windows retry for mutable lifecycle-journal publication and same-operation recovery when deletion completed before the post-delete journal update.
+- Kept target sovereignty explicit: SkillGuard verifies only the completion/depth criteria and native checks declared by the target; it does not decide that a skill should be deeper, invent a domain check, or reinterpret a native result.
+- Restricted installed currentness to the frozen installation projection, blocked installed Python bytecode residue, and made installed smoke checks run without writing `__pycache__` files.
+- Updated the FlowGuard validation-composition model, Behavior Commitment Ledger, FieldLifecycleMesh, TestMesh, DevelopmentProcessFlow, schemas, documentation, and regression suite for the bounded evidence lifecycle.
+
 ## v0.3.5 - 2026-07-19
 
 - Bound each execution owner only to its declared target-input role fingerprints, while retaining explicitly universal inputs as universal; changing one role now invalidates only its consuming owner.

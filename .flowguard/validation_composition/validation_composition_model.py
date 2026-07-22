@@ -291,6 +291,30 @@ class ValidationCase:
     owner_identity_includes_broad_subtree: bool = False
     owner_identity_includes_attempt_metadata: bool = False
 
+    # Target-declared producer projections and bounded evidence lifecycle.
+    producer_sharing_explicit: bool = True
+    producer_projection_set_exact: bool = True
+    producer_identity_includes_semantic_projection: bool = False
+    canonical_evidence_store_count: int = 1
+    current_head_authority_exact: bool = True
+    current_aggregation_authority_exact: bool = True
+    historical_aggregations_implicitly_rooted: bool = False
+    external_domain_bindings_traversed_by_evidence_store: bool = False
+    lifecycle_barrier_coordinates_writers: bool = True
+    stream_storage_encoding: str = "gzip"
+    stream_storage_hash_matches: bool = True
+    stream_logical_hash_matches: bool = True
+    stream_decompression_within_budget: bool = True
+    lifecycle_audit_write_count: int = 0
+    lifecycle_plan_write_count: int = 0
+    lifecycle_plan_snapshot_current: bool = True
+    lifecycle_apply_moves_reachable: bool = False
+    lifecycle_purge_targets_active_store: bool = False
+    lifecycle_journal_retry_bounded: bool = True
+    lifecycle_resume_same_operation: bool = True
+    current_and_release_pins_replay: bool = True
+    normal_validation_purges_persistent_evidence: bool = False
+
     # Parent and evidence-domain boundaries.
     parent_schema_version: str = CURRENT_PARENT_SCHEMA
     legacy_success_route_enabled: bool = False
@@ -1448,6 +1472,63 @@ def production_roots_preserve_roles(state: ValidationState, _trace: object) -> I
     return _pass()
 
 
+def evidence_lifecycle_is_bounded_and_target_declared(
+    state: ValidationState, _trace: object
+) -> InvariantResult:
+    if state.phase < 8 or state.case is None:
+        return _pass()
+    case = state.case
+    violations: list[str] = []
+    if not case.producer_sharing_explicit:
+        violations.append("producer sharing was inferred rather than target-declared")
+    if not case.producer_projection_set_exact:
+        violations.append("producer projection set is incomplete or ambiguous")
+    if case.producer_identity_includes_semantic_projection:
+        violations.append("semantic projection leaked into producer identity")
+    if case.canonical_evidence_store_count != 1:
+        violations.append("maintenance unit does not resolve one evidence store")
+    if not case.current_head_authority_exact:
+        violations.append("historical heads remained current without one exact owner authority")
+    if not case.current_aggregation_authority_exact:
+        violations.append("the unit/member/profile has no singular current aggregation authority")
+    if case.historical_aggregations_implicitly_rooted:
+        violations.append("historical aggregations remained current by directory membership")
+    if case.external_domain_bindings_traversed_by_evidence_store:
+        violations.append("typed external-domain bindings became internal evidence authority")
+    if not case.lifecycle_barrier_coordinates_writers:
+        violations.append("evidence writers and lifecycle mutation can race")
+    if case.stream_storage_encoding != "gzip":
+        violations.append("stream evidence is not in the current compressed format")
+    if not case.stream_storage_hash_matches:
+        violations.append("compressed storage identity mismatch")
+    if not case.stream_logical_hash_matches:
+        violations.append("decompressed logical identity mismatch")
+    if not case.stream_decompression_within_budget:
+        violations.append("stream decompression exceeded its declared budget")
+    if case.lifecycle_audit_write_count or case.lifecycle_plan_write_count:
+        violations.append("audit or planning mutated the evidence store")
+    if not case.lifecycle_plan_snapshot_current:
+        violations.append("a stale lifecycle plan was accepted")
+    if case.lifecycle_apply_moves_reachable:
+        violations.append("apply moved reachable evidence")
+    if case.lifecycle_purge_targets_active_store:
+        violations.append("purge targeted active evidence rather than quarantine")
+    if not case.lifecycle_journal_retry_bounded:
+        violations.append("mutable lifecycle journal retry is unbounded")
+    if not case.lifecycle_resume_same_operation:
+        violations.append("interrupted lifecycle mutation started another operation owner")
+    if not case.current_and_release_pins_replay:
+        violations.append("current or release-pinned receipt failed replay")
+    if case.normal_validation_purges_persistent_evidence:
+        violations.append("normal validation silently purged persistent evidence")
+    if violations:
+        return _fail(
+            "evidence_lifecycle_is_bounded_and_target_declared",
+            "; ".join(violations),
+        )
+    return _pass()
+
+
 INVARIANTS = (
     Invariant("portable_boundary_is_fail_closed", "Runtime evidence, unsafe paths, and self-refreshing outputs block before planning.", portable_boundary_is_fail_closed),
     Invariant("inventory_is_complete_but_not_owner_identity", "The complete inventory prevents omissions without invalidating every owner.", inventory_is_complete_but_not_owner_identity),
@@ -1464,6 +1545,11 @@ INVARIANTS = (
     Invariant("receipt_consumers_are_read_only", "Only same-unit parent aggregation may reference receipts; external and foreign-unit consumers are forbidden.", receipt_consumers_are_read_only),
     Invariant("interrupted_or_unattended_execution_is_not_evidence", "Interrupted descendants and unattended mutable retries cannot yield evidence.", interrupted_or_unattended_execution_is_not_evidence),
     Invariant("production_roots_preserve_roles", "Source, target snapshot, evidence, and portable refs keep stable roles.", production_roots_preserve_roles),
+    Invariant(
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "Producer sharing is explicit and evidence is compressed, reachable, quarantined before purge, and replayable.",
+        evidence_lifecycle_is_bounded_and_target_declared,
+    ),
 )
 
 
@@ -2055,6 +2141,81 @@ SCENARIOS = (
         replace(GOOD_DIRECT, case_name="bad-portable-ref-root-drift", production_ref_root_consistent=False),
         "production_roots_preserve_roles",
         "portable refs must be produced and replayed against one root identity",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-command-similarity-infers-producer", producer_sharing_explicit=False),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "command similarity cannot authorize shared producer execution",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-semantic-projection-enters-producer-key", producer_identity_includes_semantic_projection=True),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "semantic projections remain distinct while producer identity remains reusable",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-two-owner-evidence-stores", canonical_evidence_store_count=2),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "one maintenance unit cannot have competing writable evidence stores",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-all-historical-heads-remain-current", current_head_authority_exact=False),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "one mutable per-owner authority selects the exact current head",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-all-historical-aggregations-remain-current", historical_aggregations_implicitly_rooted=True),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "one mutable unit/member/profile authority selects the exact current aggregation",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-external-binding-becomes-evidence-authority", external_domain_bindings_traversed_by_evidence_store=True),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "typed installation and global-prompt bindings remain external to the owner-evidence graph",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-gc-races-active-writer", lifecycle_barrier_coordinates_writers=False),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "a short lifecycle barrier and active-writer marker prevent collection races",
+    ),
+    _bad(
+        replace(GOOD_REUSE, case_name="bad-compressed-stream-logical-hash", stream_logical_hash_matches=False),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "compressed storage cannot hide a logical evidence mismatch",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-gc-plan-writes-store", lifecycle_plan_write_count=1),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "audit and collection planning remain read-only",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-stale-gc-plan-applied", lifecycle_plan_snapshot_current=False),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "a stale plan must perform zero evidence moves",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-gc-moves-release-pin", lifecycle_apply_moves_reachable=True),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "reachable or pinned evidence cannot enter quarantine",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-purge-active-store", lifecycle_purge_targets_active_store=True),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "purge may target only exact quarantine objects",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-lifecycle-journal-unbounded-retry", lifecycle_journal_retry_bounded=False),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "a mutable journal may retry only its atomic publish step within a bounded budget",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-lifecycle-resume-new-owner", lifecycle_resume_same_operation=False),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "an interrupted destructive step resumes the same deterministic operation identity",
+    ),
+    _bad(
+        replace(GOOD_DIRECT, case_name="bad-validation-silently-purges", normal_validation_purges_persistent_evidence=True),
+        "evidence_lifecycle_is_bounded_and_target_declared",
+        "ordinary validation can clean only its own unpublished temporary captures",
     ),
 )
 

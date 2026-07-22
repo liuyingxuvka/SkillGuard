@@ -48,6 +48,7 @@ from skillguard_v2.global_router_transaction import (
     GlobalRouterTransactionError,
     apply_global_router_transaction,
 )
+from skillguard_v2.evidence_store_cli import EVIDENCE_STORE_COMMANDS
 from skillguard_v2.portfolio_cli import PORTFOLIO_COMMANDS
 from skillguard_v2.portable_content import (
     RUNTIME,
@@ -679,13 +680,13 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
         "route_node_id": "check-depth",
         "command_family": "check-depth",
         "responsibility": "checker",
-        "next_step": "Run check-depth when a target skill contract must prove source-specific obligations, current run evidence, and non-parallel route binding.",
+        "next_step": "Run check-depth when a target skill contract must verify its own declared obligations, check inventory, current run evidence, and route binding.",
         "status": "current",
-        "hints": ("check-depth", "deep-contract-check", "source-requirement-check", "non-parallel-route-proof"),
+        "hints": ("check-depth", "declared-contract-check", "source-requirement-check", "non-parallel-route-proof"),
         "keywords": (
             "check depth",
-            "deep contract",
-            "shallow contract",
+            "declared contract",
+            "declared check evidence",
             "source requirements",
             "acceptance obligations",
             "skill specific checks",
@@ -1923,7 +1924,7 @@ def check_contract(argv: list[str]) -> int:
 
 
 def check_depth(argv: list[str]) -> int:
-    parser = JsonArgumentParser(prog="skillguard.py check-depth", description="Check deep target-specific coverage under the single current authority.")
+    parser = JsonArgumentParser(prog="skillguard.py check-depth", description="Check the target's own declared verification inventory under the single current authority without inventing domain criteria.")
     parser.add_argument("--target", required=True, help="Target skill directory.")
     parser.add_argument("--target-root", help="Explicit root for read-only external target checks.")
     parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
@@ -2008,7 +2009,7 @@ def check_depth(argv: list[str]) -> int:
         payload["target_contract_hash"] = str(contract.get("contract_hash", ""))
         payload["manifest_hash"] = str(manifest.get("manifest_hash", ""))
         payload["contract_source_sha256"] = file_sha256(current_source)
-        payload["depth_classification"] = "contract-depth-pass" if not failures else "shallow-contract"
+        payload["depth_classification"] = "declared-contract-current" if not failures else "declared-contract-incomplete"
         payload["coverage_rows"] = coverage_rows
         payload["checks"] = [
             {
@@ -2020,7 +2021,7 @@ def check_depth(argv: list[str]) -> int:
             },
             {
                 "check_id": "check-depth:current-profile",
-                "name": "Universal execution-depth profile",
+                "name": "Target-declared execution-evidence profile",
                 "required": True,
                 "status": "pass" if isinstance(depth_profile, dict) and not failures else "fail",
                 "summary": "Checked native-route authority, exact declared-check inventory, execution ownership, receipt reconciliation, and closure bindings.",
@@ -2039,8 +2040,8 @@ def check_depth(argv: list[str]) -> int:
         payload["blockers"] = []
         payload["decision"] = "pass" if not failures else "fail"
         payload["claim_boundary"] = (
-            "A check-depth pass proves the sole current contract/profile depth and native-route bindings only. "
-            "It does not prove that target work ran deeply; that requires a current target execution-depth receipt consumed by closure."
+            "A check-depth pass proves only that the sole current contract preserves the target's own declared profile, check inventory, and native-route bindings. "
+            "It does not judge whether the target should declare more, and it does not prove execution; that requires a current target-declared execution receipt consumed by closure."
         )
         return write_and_exit(payload, args.output)
     raise SkillGuardCliError(
@@ -10606,6 +10607,14 @@ def checker_command_required_checks(command_name: str) -> list[str]:
 
 
 def checker_command_output_schema(command_name: str) -> str:
+    evidence_lifecycle_schemas = {
+        "evidence-audit": "skillguard.evidence_audit.current",
+        "evidence-gc-plan": "skillguard.evidence_gc_plan.current",
+        "evidence-gc-apply": "skillguard.evidence_gc_apply_receipt.current",
+        "evidence-gc-purge": "skillguard.evidence_gc_purge_receipt.current",
+    }
+    if command_name in evidence_lifecycle_schemas:
+        return evidence_lifecycle_schemas[command_name]
     if command_name == "build-current-portfolio-registry":
         return "skillguard.portfolio_registry.v2"
     if command_name == "review-checker-change":
@@ -13711,6 +13720,10 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "check-runtime-authority": "Resolve one target's current-or-blocked runtime authority.",
     "maintainer-adopt": "Adopt an explicit skill-authoring repository with an author-only prompt and manifest.",
     "maintainer-audit": "Audit the author-only repository prompt, manifest, maintenance units, routes, and repository link.",
+    "evidence-audit": "Read and classify one canonical owner-evidence store without writing to it.",
+    "evidence-gc-plan": "Produce a read-only, snapshot-bound plan for unreachable evidence objects.",
+    "evidence-gc-apply": "Quarantine only the exact candidates in one unchanged current evidence plan.",
+    "evidence-gc-purge": "Permanently remove only grace-qualified objects from an exact quarantine receipt.",
     "build-current-portfolio-registry": "Directly replace portfolio authority from one reviewed hash-valid current scope without reading or migrating a prior registry.",
     "audit-portfolio": "Audit private portfolio structure, current Guard runtime identity, child evidence currentness, and prior-skill visibility.",
     "mark-portfolio-impact": "Invalidate current portfolio evidence after a declared Guard change without silently preserving old green status.",
@@ -13724,7 +13737,7 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "graduate-portfolio": "Graduate one maintenance unit only from that unit's complete current evidence; no other unit's proof is consumed.",
     "check-json-schema": "Check one JSON file against an explicit local schema file.",
     "check-contract": "Check a target work contract for schema, hash, references, scripts, and closure-rule readiness.",
-    "check-depth": "Check target-specific deep contract coverage against source requirements, checks, run records, and closure blockers.",
+    "check-depth": "Check the target's own declared contract, check inventory, run evidence bindings, and closure blockers without inventing domain criteria.",
     "check-readme-release": "Check README release gates for bilingual mirror, hero provenance, current-version model artifacts, public boundary, and version consistency.",
     "init-target": "Create missing target .skillguard directories without rewriting existing files.",
     "init-suite": "Create missing suite-level .skillguard directories without rewriting existing files.",
@@ -13761,6 +13774,7 @@ COMMANDS: dict[str, CommandHandler] = {
     "check-runtime-authority": check_runtime_authority,
     "maintainer-adopt": maintainer_adopt_command,
     "maintainer-audit": maintainer_audit_command,
+    **EVIDENCE_STORE_COMMANDS,
     **PORTFOLIO_COMMANDS,
     "check-json-schema": check_json_schema,
     "check-contract": check_contract,

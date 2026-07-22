@@ -33,6 +33,7 @@ from .execution_records import (
     durable_write_immutable_json,
     filesystem_path,
 )
+from .evidence_store import publish_current_aggregation_authority
 from .installation_receipt import (
     VerifiedInstallationContext,
     load_verified_installation_context,
@@ -753,7 +754,6 @@ def _exact_owner_check_projection(
     ):
         raise ValueError(f"current_test_mesh_owner_check_projection_mismatch:{owner_id}")
     owner_declaration_hash = str(owner.get("owner_declaration_hash", ""))
-    evidence_domain_id = str(owner.get("evidence_domain_id", ""))
     projections: list[dict[str, str]] = []
     toolchain: dict[str, str] | None = None
     for check_id in declared_check_ids:
@@ -764,6 +764,7 @@ def _exact_owner_check_projection(
             "evidence_subject_id": str(check.get("evidence_subject_id", "")),
             "check_id": check_id,
             "semantic_check_id": str(check.get("semantic_check_id", "")),
+            "evidence_domain_id": str(check.get("evidence_domain_id", "")),
             "projection_declaration_hash": str(
                 check.get("projection_declaration_hash", "")
             ),
@@ -771,11 +772,11 @@ def _exact_owner_check_projection(
         if (
             check.get("execution_owner_id") != owner_id
             or check.get("owner_declaration_hash") != owner_declaration_hash
-            or str(check.get("evidence_domain_id", "")) != evidence_domain_id
             or not projection["maintenance_unit_id"]
             or not projection["member_skill_id"]
             or not projection["evidence_subject_id"]
             or not projection["semantic_check_id"]
+            or not projection["evidence_domain_id"]
             or not re.fullmatch(
                 r"sha256:[0-9a-f]{64}",
                 projection["projection_declaration_hash"],
@@ -1148,9 +1149,6 @@ def _compile_current_test_mesh_plan(
                     ),
                     "input_components": list(current_input["components"]),
                     "depends_on_owner_ids": dependency_ids,
-                    "evidence_domain_id": str(
-                        owner.get("evidence_domain_id", "")
-                    ),
                     "target_input_role_ids": list(
                         prelaunch_by_owner[owner_id][
                             "target_input_role_ids"
@@ -1460,9 +1458,6 @@ def _validate_frozen_current_plan(
                 str(value)
                 for value in owner.get("depends_on_owner_ids", [])
             ],
-            "evidence_domain_id": str(
-                owner.get("evidence_domain_id", "")
-            ),
             "target_input_role_ids": list(
                 prelaunch["target_input_role_ids"]
             ),
@@ -2171,6 +2166,10 @@ def _aggregate_frozen_current_test_mesh(
         / f"{content_hash.split(':', 1)[1]}.json"
     )
     durable_write_immutable_json(persistent_root / relative, aggregation)
+    publish_current_aggregation_authority(
+        persistent_root,
+        persistent_root / relative,
+    )
     aggregation["aggregation_ref"] = {
         "path_token": "owner_evidence_root",
         "relative_path": relative.as_posix(),
@@ -2335,6 +2334,7 @@ def replay_current_test_mesh_aggregation(
                         "evidence_subject_id",
                         "check_id",
                         "semantic_check_id",
+                        "evidence_domain_id",
                         "projection_declaration_hash",
                     }
                     for row in check_projections

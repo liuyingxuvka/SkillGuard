@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillguard_evidence_gc_apply_receipt_current.schema.json",
+  "title": "SkillGuard current evidence quarantine apply receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_id", "status", "apply_id", "owner_evidence_root", "plan_hash", "inventory_snapshot_hash", "quarantine_root", "applied_at", "items", "journal_ref", "claim_boundary", "receipt_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.evidence_gc_apply_receipt.current"},
+    "policy_id": {"const": "skillguard.evidence_lifecycle.current"},
+    "status": {"const": "applied"},
+    "apply_id": {"type": "string", "pattern": "^evidence-apply-[a-f0-9]{24}$"},
+    "owner_evidence_root": {"$ref": "#/$defs/rootIdentity"},
+    "plan_hash": {"$ref": "#/$defs/hash"},
+    "inventory_snapshot_hash": {"$ref": "#/$defs/hash"},
+    "quarantine_root": {"$ref": "#/$defs/pathRef"},
+    "applied_at": {"type": "string", "format": "date-time"},
+    "items": {"type": "array", "items": {"$ref": "#/$defs/item"}},
+    "journal_ref": {"$ref": "#/$defs/jsonRef"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "receipt_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "relativePath": {"type": "string", "minLength": 1, "pattern": "^(?![/\\\\])(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"},
+    "rootIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_token", "identity_hash"],
+      "properties": {
+        "path_token": {"const": "owner_evidence_root"},
+        "identity_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "pathRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_token", "relative_path"],
+      "properties": {
+        "path_token": {"const": "owner_evidence_root"},
+        "relative_path": {"$ref": "#/$defs/relativePath"}
+      }
+    },
+    "jsonRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_token", "relative_path", "content_hash", "media_type", "byte_count"],
+      "properties": {
+        "path_token": {"const": "owner_evidence_root"},
+        "relative_path": {"$ref": "#/$defs/relativePath"},
+        "content_hash": {"$ref": "#/$defs/hash"},
+        "media_type": {"const": "application/json"},
+        "byte_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_relative_path", "quarantine_relative_path", "content_hash", "byte_count", "disposition"],
+      "properties": {
+        "source_relative_path": {"$ref": "#/$defs/relativePath"},
+        "quarantine_relative_path": {"$ref": "#/$defs/relativePath"},
+        "content_hash": {"$ref": "#/$defs/hash"},
+        "byte_count": {"type": "integer", "minimum": 0},
+        "disposition": {"enum": ["quarantined", "recovered"]}
+      }
+    }
+  }
+}

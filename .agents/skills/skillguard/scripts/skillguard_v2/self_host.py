@@ -66,10 +66,10 @@ SELF_HOST_LONG_CHECK_TIMEOUT_POLICIES: Mapping[str, Mapping[str, Any]] = {
             "tests/test_installation_verification_receipt.py",
             "-q",
         ),
-        "measurement_samples_seconds": (352.834, 563.984),
-        "measured_elapsed_seconds": 563.984,
-        "measured_ceiling_seconds": 600.0,
-        "runtime_variance_grace_seconds": 120.0,
+        "measurement_samples_seconds": (352.834, 563.984, 900.157),
+        "measured_elapsed_seconds": 900.157,
+        "measured_ceiling_seconds": 2400.0,
+        "runtime_variance_grace_seconds": 300.0,
     },
 }
 

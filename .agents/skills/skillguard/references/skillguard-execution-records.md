@@ -26,7 +26,7 @@ This reference defines the one current execution-record boundary shared by manif
 ## Frozen affected plan and aggregation
 
 - TestMesh `plan_only` reads the compiled component graph and persistent owner-receipt pool. It records exact changed components, reusable owners, owners that still require execution, installation/router/Portfolio projections, and any derived full-admission reason. It launches and writes nothing.
-- The declared owner runner—not TestMesh—executes only `will_execute_owner_ids`. Each successful owner publishes one immutable receipt with complete stdout, stderr, result, and termination sidecars.
+- The declared owner runner—not TestMesh—executes only `will_execute_owner_ids`. Each successful producer publishes one immutable receipt with complete stdout, stderr, result, and termination sidecars. Several semantic checks consume that producer only when their exact projections were explicitly frozen under the same owner.
 - TestMesh `aggregation_only` accepts the byte-exact frozen plan and references the matching owner receipts. A parent/profile-only change may create a new aggregation identity without changing or reissuing child receipts.
 - Read-only replay resolves the aggregation reference and every child receipt. Missing or tampered evidence blocks; replay never executes, resumes, repairs, or backfills an owner.
 
@@ -39,14 +39,14 @@ This reference defines the one current execution-record boundary shared by manif
 
 ## Durable immutable owner binding
 
-- The receipt binds one exact owner declaration, input-component projection, semantically consumed dependency receipts, explicitly universal target inputs, only that owner's declared target-input role fingerprints, command/toolchain, environment/verifier, and evidence domain. Run id, run-root path, step, timestamp, parent profile, progress state, and display text are attempt or aggregation metadata, not semantic freshness inputs.
+- The producer receipt binds one exact owner declaration, input-component projection, semantically consumed dependency receipts, explicitly universal target inputs, only that owner's declared target-input role fingerprints, command/toolchain, and environment/verifier. Evidence subject, semantic check, evidence domain, covered obligations, and projection hash remain in each target-declared consumer projection rather than the reusable producer key. Run id, run-root path, step, timestamp, parent profile, progress state, and display text are attempt or aggregation metadata, not semantic freshness inputs.
 - Receipt ids and hashes are derived from canonical content. File creation is durable and no-replace; an existing different payload is a collision, while the exact same immutable payload is idempotent.
 - Loading revalidates the schema, artifact type, policy, owner fields and hash, command token, terminal fields, receipt id/hash, safe relative locator, and filename. Supplying a different expected owner rejects cross-owner replay.
 - A timeout receipt proves only the exact failed execution boundary. Closure still requires the declared successful check or suite evidence after diagnosis and an authorized retry or resume.
 
 ## Single-flight check execution
 
-- Treat `semantic_check_id` as the stable declared check meaning, `execution_key` as the exact owner declaration/input/dependency/toolchain/environment identity, and `execution_id` as one concrete attempt. Never substitute one for another.
+- Treat `semantic_check_id` as one stable declared projection, `execution_key` as the exact producer owner/input/dependency/toolchain/environment identity, and `execution_id` as one concrete attempt. Never substitute one for another, and never infer a shared producer from command similarity.
 - Serialize each owner identity across runs. Reuse only a complete immutable `terminal_success` receipt whose key, sidecars, source components, target inputs, dependencies, and toolchain all replay exactly.
 - Persist a failed attempt as diagnostic execution history but never publish it to the canonical success slot. A retry receives a new execution id; a source or target-input change blocks as stale instead of reusing or silently replacing prior authority.
 - Exclude `.sg-runtime`, run results, diagnostics, progress, receipts, locks, and test output from source authority. Those outputs may change without changing the execution key, while declared implementation, model, contract, check, or target-input changes must stale it.
@@ -70,3 +70,14 @@ This reference defines the one current execution-record boundary shared by manif
 ## Privacy and display boundary
 
 Persistent execution records use path tokens, relative locators, command tokens, hashes, and redacted diagnostic text. They stay in the author-maintenance evidence root and never enter a consumer skill or ordinary project. Runtime path displays may help a maintainer distinguish the canonical source, private working root, and installed copy, but they default to home-redacted display and remain stderr-only private diagnostics. Neither form proves that an install, release, GitHub operation, or remote CI run occurred.
+
+## Compressed streams and lifecycle
+
+- Stdout and stderr references bind the original logical hash/length and the deterministic gzip storage hash/length. Replay verifies containment and storage bytes before bounded decompression and then verifies the logical identity. There is no uncompressed compatibility reader or alternate success path.
+- Receipts keep bounded redacted head/tail diagnostics for ordinary review; diagnostic text never substitutes for the complete compressed sidecar.
+- `evidence-audit` classifies objects from exact current-head and current-aggregation authorities, active attempts, closure refs, failure diagnostics, and explicit installation/release/history pins. A new TestMesh aggregation atomically replaces only its unit/member/profile authority; older immutable aggregations are historical objects, not roots by directory membership.
+- Installation and global-prompt bindings inside a validated TestMesh aggregation remain typed external-domain identities. The owner-evidence collector neither traverses nor owns those `codex_home` paths; the aggregation/replay verifier retains their currentness authority. The same foreign token anywhere outside those exact typed fields blocks lifecycle mutation.
+- Old uncompressed stream references are never replayed as current evidence. A legacy stream reachable from a current authority blocks; an unreachable legacy receipt and stream are eligible only for exact quarantine/purge disposition with no compatibility reader.
+- `evidence-gc-plan` prints a canonical read-only plan bound to the exact store inventory. `evidence-gc-apply` rechecks it and moves only named unreachable objects into quarantine. `evidence-gc-purge` accepts only the exact completed quarantine receipt after grace and current/release-pin replay gates pass.
+- Apply and purge use one durable mutable journal per deterministic operation identity. Each destructive step records `prepared` before mutation and `deleted` after it; a Windows sharing or access hold receives only bounded atomic-publish retries, and an interrupted invocation resumes that same journal instead of starting another cleanup owner.
+- Normal validation cleans only unpublished temporary captures from its own attempt. It never performs persistent collection or purge as a hidden side effect.

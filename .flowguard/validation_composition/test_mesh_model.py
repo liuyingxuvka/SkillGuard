@@ -46,11 +46,18 @@ IMPACT_PARTITIONS = (
 )
 EXECUTION_PARTITIONS = (
     "semantic-execution-key",
+    "explicit-producer-check-projections",
     "persistent-owner-receipt",
-    "four-sidecar-replay",
+    "compressed-four-sidecar-replay",
     "cross-run-single-flight",
     "process-tree-cleanup",
     "aggregation-only",
+    "evidence-reachability-audit",
+    "exact-current-head-authority",
+    "active-writer-barrier-race",
+    "quarantine-before-purge",
+    "same-operation-journal-recovery",
+    "release-pin-replay",
 )
 PROJECTION_PARTITIONS = (
     "component-installation-and-parity",

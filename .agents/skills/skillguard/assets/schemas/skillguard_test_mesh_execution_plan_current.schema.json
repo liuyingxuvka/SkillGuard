@@ -29,7 +29,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["execution_owner_id", "primary_check_id", "check_ids", "check_projections", "owner_declaration_hash", "owner_input_projection_hash", "input_components", "depends_on_owner_ids", "evidence_domain_id", "target_input_fingerprint", "target_input_role_ids", "target_input_role_fingerprints", "semantic_launch_plan_fingerprint", "toolchain_fingerprint", "execution_environment_fingerprint", "decision", "reason", "reusable_receipt"],
+        "required": ["execution_owner_id", "primary_check_id", "check_ids", "check_projections", "owner_declaration_hash", "owner_input_projection_hash", "input_components", "depends_on_owner_ids", "target_input_fingerprint", "target_input_role_ids", "target_input_role_fingerprints", "semantic_launch_plan_fingerprint", "toolchain_fingerprint", "execution_environment_fingerprint", "decision", "reason", "reusable_receipt"],
         "properties": {
           "execution_owner_id": {"type": "string", "minLength": 1},
           "primary_check_id": {"type": "string", "minLength": 1},
@@ -51,7 +51,6 @@
             "uniqueItems": true
           },
           "depends_on_owner_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
-          "evidence_domain_id": {"type": "string"},
           "target_input_fingerprint": {"type": "string", "pattern": "^(?:|sha256:[0-9a-f]{64})$"},
           "target_input_role_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
           "target_input_role_fingerprints": {
@@ -102,10 +101,14 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["check_id", "semantic_check_id", "projection_declaration_hash"],
+        "required": ["maintenance_unit_id", "member_skill_id", "evidence_subject_id", "check_id", "semantic_check_id", "evidence_domain_id", "projection_declaration_hash"],
         "properties": {
+          "maintenance_unit_id": {"type": "string", "minLength": 1},
+          "member_skill_id": {"type": "string", "minLength": 1},
+          "evidence_subject_id": {"type": "string", "minLength": 1},
           "check_id": {"type": "string", "minLength": 1},
           "semantic_check_id": {"type": "string", "minLength": 1},
+          "evidence_domain_id": {"type": "string", "minLength": 1},
           "projection_declaration_hash": {"$ref": "#/$defs/hash"}
         }
       }

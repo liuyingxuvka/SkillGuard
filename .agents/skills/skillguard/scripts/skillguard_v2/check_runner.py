@@ -33,7 +33,6 @@ from .execution_records import (
     attach_process_tree_containment,
     command_fingerprint,
     command_token,
-    durable_copy_immutable_stream,
     durable_write_immutable_json,
     execution_single_flight_lock,
     filesystem_path,
@@ -51,6 +50,14 @@ from .launch_plan import (
     ResolvedLaunchPlan,
     launch_plan_fingerprint,
     resolve_launch_plan,
+)
+from .evidence_store import (
+    DEFAULT_MAX_LOGICAL_BYTES,
+    EvidenceStoreError,
+    active_evidence_writer,
+    persist_compressed_stream,
+    publish_current_head_authority,
+    verify_compressed_stream,
 )
 from .run_store import (
     load_check_manifest_snapshot,
@@ -251,7 +258,10 @@ def _resolve_check_launch_plan(
 def _capture_file(handle: BinaryIO) -> tuple[str, str, bool, int, int]:
     handle.seek(0)
     digest = hashlib.sha256()
-    captured = bytearray()
+    head_budget = MAX_CAPTURE_BYTES // 2
+    tail_budget = MAX_CAPTURE_BYTES - head_budget
+    captured_head = bytearray()
+    captured_tail = bytearray()
     total = 0
     while True:
         chunk = handle.read(64 * 1024)
@@ -259,14 +269,25 @@ def _capture_file(handle: BinaryIO) -> tuple[str, str, bool, int, int]:
             break
         total += len(chunk)
         digest.update(chunk)
-        if len(captured) < MAX_CAPTURE_BYTES:
-            captured.extend(chunk[: MAX_CAPTURE_BYTES - len(captured)])
+        if len(captured_head) < head_budget:
+            captured_head.extend(chunk[: head_budget - len(captured_head)])
+        captured_tail.extend(chunk)
+        if len(captured_tail) > tail_budget:
+            del captured_tail[: len(captured_tail) - tail_budget]
+    truncated = total > MAX_CAPTURE_BYTES
+    if truncated:
+        marker = b"\n...[SkillGuard bounded diagnostic gap]...\n"
+        captured = bytes(captured_head) + marker + bytes(captured_tail)
+    else:
+        captured = bytes(captured_head)
+        if len(captured) < total:
+            captured += bytes(captured_tail[-(total - len(captured)) :])
     return (
-        bytes(captured).decode("utf-8", errors="replace"),
+        captured.decode("utf-8", errors="replace"),
         "sha256:" + digest.hexdigest(),
-        total > MAX_CAPTURE_BYTES,
+        truncated,
         total,
-        len(captured),
+        min(total, MAX_CAPTURE_BYTES),
     )
 
 
@@ -309,29 +330,17 @@ def _persist_stream_sidecar(
     *,
     media_type: str,
 ) -> dict[str, Any]:
-    handle.seek(0)
-    digest = hashlib.sha256()
-    byte_count = 0
-    while True:
-        chunk = handle.read(64 * 1024)
-        if not chunk:
-            break
-        byte_count += len(chunk)
-        digest.update(chunk)
-    content_hash = "sha256:" + digest.hexdigest()
-    relative_path = _blob_relative_path(content_hash, "bin")
-    durable_copy_immutable_stream(
-        owner_evidence_root / relative_path,
-        handle,
-        expected_content_hash=content_hash,
-    )
-    return {
-        "path_token": OWNER_EVIDENCE_PATH_TOKEN,
-        "relative_path": relative_path.as_posix(),
-        "content_hash": content_hash,
-        "media_type": media_type,
-        "byte_count": byte_count,
-    }
+    try:
+        return persist_compressed_stream(
+            owner_evidence_root,
+            handle,
+            logical_media_type=media_type,
+            max_logical_bytes=DEFAULT_MAX_LOGICAL_BYTES,
+        )
+    except EvidenceStoreError as exc:
+        raise CheckRunnerError(
+            "check_execution_sidecar_persist_failed", str(exc)
+        ) from exc
 
 
 def _persist_json_sidecar(
@@ -744,7 +753,6 @@ def _content_impact_owner(
     for field in (
         "owner_declaration_hash",
         "owner_input_projection_hash",
-        "evidence_domain_id",
     ):
         if str(check.get(field, "")) != str(owner.get(field, "")):
             raise CheckRunnerError("check_execution_owner_binding_mismatch", field)
@@ -1189,10 +1197,6 @@ def _check_execution_identity(
         )
     maintenance_unit_id = str(declared.get("maintenance_unit_id", ""))
     member_skill_id = str(declared.get("member_skill_id", ""))
-    evidence_subject_id = str(declared.get("evidence_subject_id", ""))
-    semantic_check_id = str(
-        declared.get("semantic_check_id") or declared.get("check_id", "")
-    )
     if (
         run.get("maintenance_unit_id") != maintenance_unit_id
         or contract.get("maintenance_unit_id") != maintenance_unit_id
@@ -1217,8 +1221,6 @@ def _check_execution_identity(
             {
                 "maintenance_unit_id": str(receipt.get("maintenance_unit_id", "")),
                 "member_skill_id": str(receipt.get("member_skill_id", "")),
-                "evidence_subject_id": str(receipt.get("evidence_subject_id", "")),
-                "semantic_check_id": str(receipt.get("semantic_check_id", "")),
                 "execution_owner_id": dependency_owner_id,
                 "receipt_id": str(receipt.get("receipt_id", "")),
                 "receipt_hash": str(receipt.get("receipt_hash", "")),
@@ -1238,8 +1240,6 @@ def _check_execution_identity(
     semantic_identity = {
         "maintenance_unit_id": maintenance_unit_id,
         "member_skill_id": member_skill_id,
-        "evidence_subject_id": evidence_subject_id,
-        "semantic_check_id": semantic_check_id,
         "execution_owner_id": str(owner.get("execution_owner_id", "")),
         "owner_declaration_hash": str(owner.get("owner_declaration_hash", "")),
         "owner_input_projection_hash": owner_input_projection_hash,
@@ -1256,7 +1256,6 @@ def _check_execution_identity(
         "resolved_interpreter_identity": str(
             launch_plan.record.get("interpreter_identity", "")
         ),
-        "evidence_domain_id": str(owner.get("evidence_domain_id", "")),
         "impact_policy_id": str(plan.get("policy_id", "")),
     }
     return {
@@ -1325,8 +1324,6 @@ def _receipt_identity_payload(receipt: Mapping[str, Any]) -> dict[str, Any]:
         "schema_version": str(receipt.get("schema_version", "")),
         "maintenance_unit_id": str(receipt.get("maintenance_unit_id", "")),
         "member_skill_id": str(receipt.get("member_skill_id", "")),
-        "evidence_subject_id": str(receipt.get("evidence_subject_id", "")),
-        "semantic_check_id": str(receipt.get("semantic_check_id", "")),
         "execution_owner_id": str(receipt.get("execution_owner_id", "")),
         "execution_key": str(receipt.get("execution_key", "")),
         "owner_declaration_hash": str(receipt.get("owner_declaration_hash", "")),
@@ -1345,7 +1342,6 @@ def _receipt_identity_payload(receipt: Mapping[str, Any]) -> dict[str, Any]:
         "execution_environment_fingerprint": str(
             receipt.get("execution_environment_fingerprint", "")
         ),
-        "evidence_domain_id": str(receipt.get("evidence_domain_id", "")),
         "impact_policy_id": str(receipt.get("impact_policy_id", "")),
         "status": str(receipt.get("status", "")),
         "sidecars": dict(receipt.get("sidecars", {})),
@@ -1359,15 +1355,11 @@ def _validate_owner_receipt(
     expected_owner_id: str | None = None,
     expected_maintenance_unit_id: str | None = None,
     expected_member_skill_id: str | None = None,
-    expected_evidence_subject_id: str | None = None,
-    expected_semantic_check_id: str | None = None,
 ) -> dict[str, Mapping[str, Any]]:
     required = {
         "schema_version",
         "maintenance_unit_id",
         "member_skill_id",
-        "evidence_subject_id",
-        "semantic_check_id",
         "execution_owner_id",
         "execution_key",
         "owner_declaration_hash",
@@ -1378,7 +1370,6 @@ def _validate_owner_receipt(
         "target_input_role_fingerprints",
         "toolchain_fingerprint",
         "execution_environment_fingerprint",
-        "evidence_domain_id",
         "impact_policy_id",
         "status",
         "sidecars",
@@ -1401,8 +1392,6 @@ def _validate_owner_receipt(
     expected_identities = {
         "maintenance_unit_id": expected_maintenance_unit_id,
         "member_skill_id": expected_member_skill_id,
-        "evidence_subject_id": expected_evidence_subject_id,
-        "semantic_check_id": expected_semantic_check_id,
     }
     for field, expected in expected_identities.items():
         actual = str(receipt.get(field, ""))
@@ -1507,8 +1496,6 @@ def _validate_owner_receipt(
         if not isinstance(dependency, Mapping) or set(dependency) != {
             "maintenance_unit_id",
             "member_skill_id",
-            "evidence_subject_id",
-            "semantic_check_id",
             "execution_owner_id",
             "receipt_id",
             "receipt_hash",
@@ -1540,6 +1527,18 @@ def _validate_owner_receipt(
             raise CheckRunnerError(
                 "check_execution_receipt_invalid", f"{kind}_sidecar_ref"
             )
+        if kind in {"stdout", "stderr"}:
+            try:
+                verify_compressed_stream(
+                    owner_evidence_root,
+                    reference,
+                    max_logical_bytes=DEFAULT_MAX_LOGICAL_BYTES,
+                )
+            except EvidenceStoreError as exc:
+                raise CheckRunnerError(
+                    "check_execution_sidecar_invalid", f"{kind}:{exc}"
+                ) from exc
+            continue
         path = _resolve_owner_ref(
             owner_evidence_root,
             reference,
@@ -1578,7 +1577,9 @@ def _validate_owner_receipt(
         )
     for kind in ("stdout", "stderr"):
         observed_content_hash = str(result_payload.get(f"{kind}_content_hash", ""))
-        expected_content_hash = str(sidecars[kind].get("content_hash", ""))
+        expected_content_hash = str(
+            sidecars[kind].get("logical_content_hash", "")
+        )
         if observed_content_hash != expected_content_hash:
             raise CheckRunnerError(
                 "check_execution_sidecar_invalid", f"{kind}:result_content_hash"
@@ -1617,8 +1618,6 @@ def _load_canonical_success(
         "schema_version",
         "maintenance_unit_id",
         "member_skill_id",
-        "evidence_subject_id",
-        "semantic_check_id",
         "execution_owner_id",
         "execution_key",
         "receipt_id",
@@ -1635,12 +1634,7 @@ def _load_canonical_success(
         raise CheckRunnerError("check_execution_head_invalid", "execution_key")
     if head.get("execution_owner_id") != identity.get("execution_owner_id"):
         raise CheckRunnerError("check_execution_head_invalid", "execution_owner_id")
-    for field in (
-        "maintenance_unit_id",
-        "member_skill_id",
-        "evidence_subject_id",
-        "semantic_check_id",
-    ):
+    for field in ("maintenance_unit_id", "member_skill_id"):
         if head.get(field) != identity.get(field):
             raise CheckRunnerError("check_execution_head_invalid", field)
     receipt_ref = head.get("receipt_ref", {})
@@ -1660,8 +1654,6 @@ def _load_canonical_success(
         expected_owner_id=str(identity["execution_owner_id"]),
         expected_maintenance_unit_id=str(identity["maintenance_unit_id"]),
         expected_member_skill_id=str(identity["member_skill_id"]),
-        expected_evidence_subject_id=str(identity["evidence_subject_id"]),
-        expected_semantic_check_id=str(identity["semantic_check_id"]),
     )
     if (
         receipt.get("receipt_id") != head.get("receipt_id")
@@ -1674,8 +1666,6 @@ def _load_canonical_success(
             for field in (
                 "maintenance_unit_id",
                 "member_skill_id",
-                "evidence_subject_id",
-                "semantic_check_id",
                 "execution_owner_id",
                 "execution_key",
                 "owner_declaration_hash",
@@ -1685,7 +1675,6 @@ def _load_canonical_success(
                 "target_input_role_fingerprints",
                 "toolchain_fingerprint",
                 "execution_environment_fingerprint",
-                "evidence_domain_id",
                 "impact_policy_id",
             )
         )
@@ -1777,8 +1766,6 @@ def inspect_owner_receipt_history(
         "schema_version",
         "maintenance_unit_id",
         "member_skill_id",
-        "evidence_subject_id",
-        "semantic_check_id",
         "execution_owner_id",
         "execution_key",
         "receipt_id",
@@ -1857,8 +1844,6 @@ def _write_canonical_success(
         "schema_version": CHECK_EXECUTION_RECEIPT_SCHEMA,
         "maintenance_unit_id": str(identity["maintenance_unit_id"]),
         "member_skill_id": str(identity["member_skill_id"]),
-        "evidence_subject_id": str(identity["evidence_subject_id"]),
-        "semantic_check_id": str(identity["semantic_check_id"]),
         "execution_owner_id": str(identity["execution_owner_id"]),
         "execution_key": str(identity["execution_key"]),
         "owner_declaration_hash": str(identity["owner_declaration_hash"]),
@@ -1877,7 +1862,6 @@ def _write_canonical_success(
         "execution_environment_fingerprint": str(
             identity["execution_environment_fingerprint"]
         ),
-        "evidence_domain_id": str(identity["evidence_domain_id"]),
         "impact_policy_id": str(identity["impact_policy_id"]),
         "status": "passed",
         "sidecars": sidecars,
@@ -1896,8 +1880,6 @@ def _write_canonical_success(
         "schema_version": CHECK_EXECUTION_HEAD_SCHEMA,
         "maintenance_unit_id": str(identity["maintenance_unit_id"]),
         "member_skill_id": str(identity["member_skill_id"]),
-        "evidence_subject_id": str(identity["evidence_subject_id"]),
-        "semantic_check_id": str(identity["semantic_check_id"]),
         "execution_owner_id": str(identity["execution_owner_id"]),
         "execution_key": str(identity["execution_key"]),
         "receipt_id": str(receipt["receipt_id"]),
@@ -2004,7 +1986,14 @@ def _quarantine_corrupt_success(
                 continue
             if not candidate.is_file():
                 continue
-            expected = str(reference.get("content_hash", ""))
+            expected = str(
+                reference.get(
+                    "storage_content_hash"
+                    if str(kind) in {"stdout", "stderr"}
+                    else "content_hash",
+                    "",
+                )
+            )
             try:
                 actual = _wire_bytes_hash(candidate.read_bytes())
             except OSError:
@@ -2159,10 +2148,24 @@ def get_or_execute_check(
         owner_evidence_root=persistent_root,
         dependency_receipts=dependency_receipts,
     )
+    lifecycle_attempt_id = "attempt-" + uuid.uuid4().hex
     try:
-        with execution_single_flight_lock(
-            persistent_root,
-            str(tentative_identity["execution_key"]),
+        with (
+            execution_single_flight_lock(
+                persistent_root,
+                str(tentative_identity["execution_key"]),
+            ),
+            active_evidence_writer(
+                persistent_root,
+                maintenance_unit_id=str(
+                    tentative_identity["maintenance_unit_id"]
+                ),
+                member_skill_id=str(tentative_identity["member_skill_id"]),
+                execution_owner_id=str(
+                    tentative_identity["execution_owner_id"]
+                ),
+                attempt_id=lifecycle_attempt_id,
+            ),
         ):
             identity = _check_execution_identity(
                 declared,
@@ -2193,6 +2196,13 @@ def get_or_execute_check(
                 current = None
             if current is not None:
                 receipt, sidecars = current
+                publish_current_head_authority(
+                    persistent_root,
+                    _canonical_success_slot(
+                        persistent_root,
+                        execution_key=str(identity["execution_key"]),
+                    ),
+                )
                 raw = _projection_result_from_receipt(
                     declared,
                     _manifest,
@@ -2255,6 +2265,13 @@ def get_or_execute_check(
                 receipt = _write_canonical_success(
                     persistent_root, identity, raw
                 )
+                publish_current_head_authority(
+                    persistent_root,
+                    _canonical_success_slot(
+                        persistent_root,
+                        execution_key=str(identity["execution_key"]),
+                    ),
+                )
                 raw.update(
                     {
                         "execution_disposition": "executed_terminal_success",
@@ -2281,6 +2298,8 @@ def get_or_execute_check(
                 "execution_receipt_ref": None,
             }
     except ExecutionRecordError as exc:
+        raise CheckRunnerError(exc.code, exc.detail, semantic_check_id) from exc
+    except EvidenceStoreError as exc:
         raise CheckRunnerError(exc.code, exc.detail, semantic_check_id) from exc
 
 
@@ -2784,6 +2803,19 @@ def execute_check(
                 "retry_action": "diagnose duration/output, then retry the same manifest-bound check",
                 "terminal_kind": "timeout",
                 **dict(termination_facts),
+                "cleanup_confirmed": bool(result["cleanup_confirmed"]),
+                "cleanup_confirmation_method": str(
+                    result["cleanup_confirmation_method"]
+                ),
+                "descendant_count_before": int(
+                    result["descendant_count_before"]
+                ),
+                "descendant_count_after": int(
+                    result["descendant_count_after"]
+                ),
+                "remaining_descendant_pids": list(
+                    result["remaining_descendant_pids"]
+                ),
                 "claim_boundary": "This private runtime receipt proves timeout facts only; it is not passing evidence.",
             }
         try:
@@ -2794,7 +2826,11 @@ def execute_check(
             )
         except (ExecutionRecordError, OSError) as exc:
             result["timeout_receipt_write_status"] = "failed"
-            result["timeout_receipt_error_kind"] = type(exc).__name__
+            result["timeout_receipt_error_kind"] = (
+                str(exc)
+                if isinstance(exc, ExecutionRecordError)
+                else type(exc).__name__
+            )
         else:
             result["timeout_receipt_write_status"] = str(
                 timeout_receipt["receipt_write_status"]
@@ -3047,12 +3083,6 @@ def load_owner_receipt_from_projection(
         ),
         expected_member_skill_id=str(
             projection_record.get("member_skill_id", "")
-        ),
-        expected_evidence_subject_id=str(
-            projection_record.get("evidence_subject_id", "")
-        ),
-        expected_semantic_check_id=str(
-            projection_record.get("semantic_check_id", "")
         ),
     )
     if (

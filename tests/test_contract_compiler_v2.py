@@ -944,7 +944,12 @@ class ContractCompilerV2Tests(unittest.TestCase):
             "check_behavior_field_unknown", {row.code for row in result.findings}
         )
 
-    def test_distinct_semantic_checks_keep_distinct_execution_owners_and_projections(self) -> None:
+    def test_equal_model_assertions_without_explicit_owner_keep_distinct_execution_owners_and_projections(self) -> None:
+        for check in self.binding["checks"]:
+            if check["kind"] == "model_assertion":
+                check.pop("execution_owner_id")
+        self._write_binding(self.binding)
+
         result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
 
         self.assertTrue(result.ok, result.to_dict())
@@ -961,6 +966,106 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.assertEqual(
             len(model_checks),
             len({row["projection_declaration_hash"] for row in model_checks}),
+        )
+
+    def test_explicit_shared_execution_owner_keeps_distinct_semantic_projections(self) -> None:
+        left, right = self.binding["checks"][:2]
+        shared_owner_id = "owner:fixture-skill:shared-model-producer"
+        left["execution_owner_id"] = shared_owner_id
+        right["execution_owner_id"] = shared_owner_id
+        left["evidence_domain_id"] = "domain:left-semantic-projection"
+        right["evidence_domain_id"] = "domain:right-semantic-projection"
+        self._write_binding(self.binding)
+
+        result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
+
+        self.assertTrue(result.ok, result.to_dict())
+        shared_checks = [
+            row
+            for row in result.check_manifest["checks"]
+            if row["check_id"] in {left["check_id"], right["check_id"]}
+        ]
+        self.assertEqual(2, len(shared_checks))
+        self.assertEqual(
+            {shared_owner_id},
+            {row["execution_owner_id"] for row in shared_checks},
+        )
+        self.assertEqual(
+            1,
+            len({row["owner_declaration_hash"] for row in shared_checks}),
+        )
+        self.assertEqual(
+            2,
+            len({row["projection_declaration_hash"] for row in shared_checks}),
+        )
+        owner = next(
+            row
+            for row in result.check_manifest["content_impact_plan"]["owners"]
+            if row["execution_owner_id"] == shared_owner_id
+        )
+        self.assertEqual(
+            sorted([left["check_id"], right["check_id"]]),
+            owner["check_ids"],
+        )
+        self.assertNotIn("evidence_domain_id", owner)
+        projections = {
+            row["check_id"]: row
+            for row in result.check_manifest["content_impact_plan"]["check_projections"]
+            if row["check_id"] in {left["check_id"], right["check_id"]}
+        }
+        self.assertEqual(
+            {
+                left["check_id"]: "domain:left-semantic-projection",
+                right["check_id"]: "domain:right-semantic-projection",
+            },
+            {
+                check_id: row["evidence_domain_id"]
+                for check_id, row in projections.items()
+            },
+        )
+
+    def test_explicit_shared_execution_owner_requires_exact_producer_declaration(self) -> None:
+        left, right = self.binding["checks"][:2]
+        left["execution_owner_id"] = "owner:fixture-skill:shared-model-producer"
+        right["execution_owner_id"] = left["execution_owner_id"]
+        right["timeout_seconds"] = int(left["timeout_seconds"]) + 1
+        self._write_binding(self.binding)
+
+        result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
+
+        self.assertFalse(result.ok)
+        self.assertIn(
+            "content_impact_graph_unhealthy",
+            {finding.code for finding in result.findings},
+        )
+
+    def test_explicit_shared_execution_owner_unions_semantic_dependencies(self) -> None:
+        left, right, dependency = self.binding["checks"][:3]
+        left["execution_owner_id"] = "owner:fixture-skill:shared-model-producer"
+        right["execution_owner_id"] = left["execution_owner_id"]
+        right["depends_on_check_ids"] = [dependency["check_id"]]
+        self._write_binding(self.binding)
+
+        result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
+
+        self.assertTrue(result.ok, result.to_dict())
+        owner = next(
+            row
+            for row in result.check_manifest["content_impact_plan"]["owners"]
+            if row["execution_owner_id"] == left["execution_owner_id"]
+        )
+        self.assertEqual(
+            [dependency["execution_owner_id"]],
+            owner["depends_on_owner_ids"],
+        )
+        shared_checks = [
+            row
+            for row in result.check_manifest["checks"]
+            if row["check_id"] in {left["check_id"], right["check_id"]}
+        ]
+        self.assertEqual(
+            1,
+            len({row["owner_declaration_hash"] for row in shared_checks}),
         )
 
     def test_projection_only_coverage_change_preserves_owner_identity(self) -> None:

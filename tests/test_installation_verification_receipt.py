@@ -104,6 +104,7 @@ class InstallationVerificationReceiptTests(unittest.TestCase):
             "installed:self-check",
             "installed:check-skill",
             "installed:runtime-import",
+            "installed:no-bytecode-residue",
         ]
         recorded = {
             "status": "passed",

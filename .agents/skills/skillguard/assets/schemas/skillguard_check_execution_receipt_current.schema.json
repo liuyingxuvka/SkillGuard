@@ -4,13 +4,11 @@
   "title": "SkillGuard current reusable owner execution receipt",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "maintenance_unit_id", "member_skill_id", "evidence_subject_id", "semantic_check_id", "execution_owner_id", "execution_key", "owner_declaration_hash", "owner_input_projection_hash", "input_components", "dependency_receipts", "target_input_fingerprint", "target_input_role_fingerprints", "toolchain_fingerprint", "execution_environment_fingerprint", "evidence_domain_id", "impact_policy_id", "status", "sidecars", "claim_boundary", "receipt_id", "receipt_hash"],
+  "required": ["schema_version", "maintenance_unit_id", "member_skill_id", "execution_owner_id", "execution_key", "owner_declaration_hash", "owner_input_projection_hash", "input_components", "dependency_receipts", "target_input_fingerprint", "target_input_role_fingerprints", "toolchain_fingerprint", "execution_environment_fingerprint", "impact_policy_id", "status", "sidecars", "claim_boundary", "receipt_id", "receipt_hash"],
   "properties": {
     "schema_version": {"const": "skillguard.check_execution_receipt.current"},
     "maintenance_unit_id": {"type": "string", "minLength": 1},
     "member_skill_id": {"type": "string", "minLength": 1},
-    "evidence_subject_id": {"type": "string", "minLength": 1},
-    "semantic_check_id": {"type": "string", "minLength": 1},
     "execution_owner_id": {"type": "string", "minLength": 1},
     "execution_key": {"$ref": "#/$defs/hash"},
     "owner_declaration_hash": {"$ref": "#/$defs/hash"},
@@ -34,8 +32,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["execution_owner_id", "receipt_id", "receipt_hash"],
+        "required": ["maintenance_unit_id", "member_skill_id", "execution_owner_id", "receipt_id", "receipt_hash"],
         "properties": {
+          "maintenance_unit_id": {"type": "string", "minLength": 1},
+          "member_skill_id": {"type": "string", "minLength": 1},
           "execution_owner_id": {"type": "string", "minLength": 1},
           "receipt_id": {"$ref": "#/$defs/hash"},
           "receipt_hash": {"$ref": "#/$defs/hash"}
@@ -50,7 +50,6 @@
     },
     "toolchain_fingerprint": {"$ref": "#/$defs/hash"},
     "execution_environment_fingerprint": {"$ref": "#/$defs/hash"},
-    "evidence_domain_id": {"type": "string"},
     "impact_policy_id": {"type": "string", "minLength": 1},
     "status": {"const": "passed"},
     "sidecars": {
@@ -58,8 +57,8 @@
       "additionalProperties": false,
       "required": ["stdout", "stderr", "result", "termination"],
       "properties": {
-        "stdout": {"$ref": "#/$defs/contentRef"},
-        "stderr": {"$ref": "#/$defs/contentRef"},
+        "stdout": {"$ref": "#/$defs/compressedStreamRef"},
+        "stderr": {"$ref": "#/$defs/compressedStreamRef"},
         "result": {"$ref": "#/$defs/contentRef"},
         "termination": {"$ref": "#/$defs/contentRef"}
       }
@@ -78,8 +77,24 @@
         "path_token": {"const": "owner_evidence_root"},
         "relative_path": {"type": "string", "minLength": 1},
         "content_hash": {"$ref": "#/$defs/hash"},
-        "media_type": {"enum": ["application/json", "application/octet-stream"]},
+        "media_type": {"const": "application/json"},
         "byte_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "compressedStreamRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_token", "relative_path", "logical_content_hash", "logical_byte_count", "logical_media_type", "storage_content_hash", "storage_byte_count", "storage_encoding", "storage_media_type"],
+      "properties": {
+        "path_token": {"const": "owner_evidence_root"},
+        "relative_path": {"type": "string", "minLength": 1},
+        "logical_content_hash": {"$ref": "#/$defs/hash"},
+        "logical_byte_count": {"type": "integer", "minimum": 0},
+        "logical_media_type": {"const": "application/octet-stream"},
+        "storage_content_hash": {"$ref": "#/$defs/hash"},
+        "storage_byte_count": {"type": "integer", "minimum": 0},
+        "storage_encoding": {"const": "gzip"},
+        "storage_media_type": {"const": "application/gzip"}
       }
     }
   }

@@ -65,6 +65,7 @@ TERMINAL_TRANSACTION_STATUSES = frozenset(
 )
 INSTALLATION_PROJECTION_SCHEMA = "skillguard.installation_projection.current"
 GENERATED_INSTALL_AUTHORITIES = (
+    ".skillguard/contract-source.json",
     ".skillguard/check-manifest.json",
     ".skillguard/compiled-contract.json",
 )
@@ -815,6 +816,7 @@ def _installed_smoke_evidence_complete(
         "installed:self-check",
         "installed:check-skill",
         "installed:runtime-import",
+        "installed:no-bytecode-residue",
     }
     if not isinstance(value, dict):
         return False
@@ -960,7 +962,90 @@ def _hardened_activation_receipt_historical_integrity(
         receipt is not None
         and record.get("status") == "committed"
         and record.get("phase") == "committed"
-        and _hardened_activation_receipt_stored_integrity(record, receipt)
+        and _historical_activation_receipt_stored_integrity(record, receipt)
+    )
+
+
+def _historical_activation_receipt_stored_integrity(
+    record: dict[str, Any],
+    receipt: dict[str, Any],
+) -> bool:
+    """Validate immutable receipt bindings without replaying today's policy.
+
+    A non-HEAD committed transaction is historical evidence, not current install
+    authority.  Its hashes and recorded member identities must remain internally
+    consistent, but a later SkillGuard release may legitimately strengthen smoke
+    checks or comparison fields.  Replaying those new completeness rules against
+    old terminal evidence would make an unrelated forward install impossible.
+    """
+
+    expected_hash = canonical_hash(
+        {key: value for key, value in receipt.items() if key != "receipt_hash"}
+    )
+    member_order = record.get("member_order")
+    members = record.get("members")
+    if (
+        receipt.get("schema_version") != "skillguard.install_activation_receipt.v1"
+        or receipt.get("artifact_type") != "skillguard_install_activation_receipt"
+        or not TRANSACTION_ID_PATTERN.fullmatch(str(record.get("transaction_id", "")))
+        or receipt.get("transaction_id") != record.get("transaction_id")
+        or receipt.get("status") != "activation_verified"
+        or receipt.get("receipt_hash") != expected_hash
+        or record.get("activation_receipt_hash") != expected_hash
+        or receipt.get("journal_hash")
+        != record.get("activation_verification_journal_hash")
+        or receipt.get("stage_verification_hash")
+        != canonical_hash(record.get("stage_verification", {}))
+        or receipt.get("post_activation_smoke_hash")
+        != canonical_hash(record.get("post_activation_smoke", {}))
+        or receipt.get("post_activation_member_comparisons_hash")
+        != canonical_hash(record.get("post_activation_member_comparisons", {}))
+        or receipt.get("rollback_disposition") != "not_required"
+        or record.get("rollback_disposition") != "not_required"
+        or member_order != ["skillguard", GLOBAL_ROUTER_MEMBER]
+        or not isinstance(members, dict)
+        or set(members) != set(member_order)
+        or receipt.get("installed_member_ids") != member_order
+    ):
+        return False
+    required_fields = {
+        "backup_root",
+        "canonical_identity",
+        "stage_identity",
+        "previous_identity",
+        "backup_identity",
+        "installed_identity",
+        "canonical_installation_projection",
+        "stage_installation_projection",
+        "installed_installation_projection",
+    }
+    if any(
+        not isinstance(members.get(member_id), dict)
+        or not required_fields.issubset(members[member_id])
+        for member_id in member_order
+    ):
+        return False
+    if receipt.get("backup_roots") != {
+        member_id: members[member_id]["backup_root"] for member_id in member_order
+    }:
+        return False
+    expected_fields = {
+        "canonical_identities": "canonical_identity",
+        "stage_identities": "stage_identity",
+        "previous_identities": "previous_identity",
+        "backup_identities": "backup_identity",
+        "installed_identities": "installed_identity",
+        "canonical_installation_projections": "canonical_installation_projection",
+        "stage_installation_projections": "stage_installation_projection",
+        "installed_installation_projections": "installed_installation_projection",
+    }
+    return all(
+        receipt.get(receipt_field)
+        == {
+            member_id: members[member_id][member_field]
+            for member_id in member_order
+        }
+        for receipt_field, member_field in expected_fields.items()
     )
 
 
@@ -1039,7 +1124,7 @@ def _activation_receipt_active_replacement_eligible(
     """
 
     receipt = _activation_receipt_payload(record)
-    if receipt is None or not _hardened_activation_receipt_stored_integrity(
+    if receipt is None or not _historical_activation_receipt_stored_integrity(
         record, receipt
     ):
         return False
@@ -1637,9 +1722,12 @@ def _run(command: list[str], cwd: Path, timeout: float) -> dict[str, Any]:
         mode="w+b"
     ) as stderr_file:
         try:
+            environment = os.environ.copy()
+            environment["PYTHONDONTWRITEBYTECODE"] = "1"
             process = subprocess.Popen(
                 command,
                 cwd=cwd,
+                env=environment,
                 stdin=subprocess.DEVNULL,
                 stdout=stdout_file,
                 stderr=stderr_file,
@@ -1717,6 +1805,7 @@ def _installed_smoke_plan(
             "check_id": f"installed:runtime-authority:{member_id}",
             "command": [
                 sys.executable,
+                "-B",
                 "-c",
                 (
                     "import json, sys; from pathlib import Path; "
@@ -1734,6 +1823,7 @@ def _installed_smoke_plan(
             "check_id": f"installed:check-contract:{member_id}",
             "command": [
                 sys.executable,
+                "-B",
                 str(script),
                 "check-contract",
                 "--repository-root",
@@ -1746,20 +1836,21 @@ def _installed_smoke_plan(
     ] + [
         {
             "check_id": "installed:commands",
-            "command": [sys.executable, str(script), "commands"],
+            "command": [sys.executable, "-B", str(script), "commands"],
         },
         {
             "check_id": "installed:self-check",
-            "command": [sys.executable, str(script), "self-check", "--target", relative_skill],
+            "command": [sys.executable, "-B", str(script), "self-check", "--target", relative_skill],
         },
         {
             "check_id": "installed:check-skill",
-            "command": [sys.executable, str(script), "check-skill", "--target", relative_skill],
+            "command": [sys.executable, "-B", str(script), "check-skill", "--target", relative_skill],
         },
         {
             "check_id": "installed:runtime-import",
             "command": [
                 sys.executable,
+                "-B",
                 "-c",
                 (
                     "import sys; "
@@ -1767,6 +1858,20 @@ def _installed_smoke_plan(
                     "from skillguard_v2.runtime_fingerprint import "
                     f"{runtime_fingerprint_function}; "
                     f"assert {runtime_fingerprint_function}()['file_count'] >= 1"
+                ),
+            ],
+        },
+        {
+            "check_id": "installed:no-bytecode-residue",
+            "command": [
+                sys.executable,
+                "-B",
+                "-c",
+                (
+                    "from pathlib import Path; "
+                    f"roots={[str(root) for _member, root in installed_members]!r}; "
+                    "bad=[p for root in roots for p in Path(root).rglob('*') if p.name == '__pycache__' or p.suffix in {'.pyc','.pyo'}]; "
+                    "assert not bad, [str(p) for p in bad[:20]]"
                 ),
             ],
         },
@@ -2337,6 +2442,7 @@ def _recover_incomplete_installations_locked(
 
     plans: list[tuple[int, str, str, str]] = []
     former_terminal_record_ids: list[str] = []
+    historical_evidence_issues: list[str] = []
     for transaction_id, record in records.items():
         status = str(record.get("status", ""))
         generation = int(record.get("generation", 0))
@@ -2414,7 +2520,9 @@ def _recover_incomplete_installations_locked(
             if head_id != transaction_id:
                 if _hardened_activation_receipt_historical_integrity(record):
                     continue
-                blockers.append(f"non_head_committed_receipt_invalid:{transaction_id}")
+                historical_evidence_issues.append(
+                    f"non_head_committed_receipt_invalid:{transaction_id}"
+                )
                 continue
             if _activation_receipt_active_recoverable(record):
                 continue
@@ -2521,6 +2629,7 @@ def _recover_incomplete_installations_locked(
         "status": "blocked" if blockers else "recovered" if recovered_ids else "passed",
         "recovered_transaction_ids": recovered_ids,
         "former_terminal_record_ids": sorted(former_terminal_record_ids),
+        "historical_evidence_issues": sorted(historical_evidence_issues),
         "reports": reports,
         "blockers": blockers,
         "claim_boundary": (

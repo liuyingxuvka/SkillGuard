@@ -266,8 +266,6 @@ COMPILED_CHECK_FIELDS = SOURCE_CHECK_FIELDS | frozenset(
 OWNER_BEHAVIOR_FIELDS = (
     "maintenance_unit_id",
     "member_skill_id",
-    "evidence_subject_id",
-    "semantic_check_id",
     "kind",
     "command",
     "args",
@@ -1234,9 +1232,10 @@ def validate_binding_source(payload: object) -> tuple[SchemaFinding, ...]:
             "maintenance_unit_id",
             "member_skill_id",
             "evidence_subject_id",
-            "execution_owner_id",
         ):
             _required_text(row, identity_field, check_path, findings)
+        if "execution_owner_id" in row:
+            _required_text(row, "execution_owner_id", check_path, findings)
         if row.get("maintenance_unit_id") != root.get("maintenance_unit_id"):
             findings.append(
                 _finding(
@@ -1841,7 +1840,6 @@ def _validate_content_impact_plan(
                 "owner_input_projection_hash",
                 "depends_on_owner_ids",
                 "target_input_role_ids",
-                "evidence_domain_id",
             }
         )
         if unknown_row:
@@ -1867,7 +1865,6 @@ def _validate_content_impact_plan(
                 )
             )
         _validate_input_selectors(row.get("input_selectors"), f"{row_path}.input_selectors", findings)
-        _required_text(row, "evidence_domain_id", row_path, findings)
         owner_declaration_hash = _require_wire_hash(
             row, "owner_declaration_hash", row_path, findings
         )
@@ -1923,7 +1920,6 @@ def _validate_content_impact_plan(
                 "target_input_role_ids": list(
                     check.get("target_input_role_ids", [])
                 ),
-                "evidence_domain_id": str(check.get("evidence_domain_id", "")),
                 "impact_policy_id": str(plan.get("policy_id", "")),
             }
             expected_owner_hash = _wire_hash(declaration)
@@ -1959,9 +1955,11 @@ def _validate_content_impact_plan(
             "check_id": str(row.get("check_id", "")),
             "semantic_check_id": str(row.get("semantic_check_id", "")),
             "execution_owner_id": str(row.get("execution_owner_id", "")),
+            "evidence_domain_id": str(row.get("evidence_domain_id", "")),
             "covers_obligation_ids": list(row.get("covers_obligation_ids", [])),
             "evidence_class": str(row.get("evidence_class", "")),
         }
+        _required_text(row, "evidence_domain_id", row_path, findings)
         if projection_hash and projection_hash != _wire_hash(declaration):
             findings.append(
                 _finding(

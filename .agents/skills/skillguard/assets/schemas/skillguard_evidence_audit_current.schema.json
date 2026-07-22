@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillguard_evidence_audit_current.schema.json",
+  "title": "SkillGuard current read-only evidence-store audit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "policy_id", "status", "owner_evidence_root", "inventory_snapshot_hash", "inventory", "roots", "findings", "counts", "collectible_byte_count", "claim_boundary", "audit_hash"],
+  "properties": {
+    "schema_version": {"const": "skillguard.evidence_audit.current"},
+    "policy_id": {"const": "skillguard.evidence_lifecycle.current"},
+    "status": {"enum": ["passed", "blocked"]},
+    "owner_evidence_root": {"$ref": "#/$defs/rootIdentity"},
+    "inventory_snapshot_hash": {"$ref": "#/$defs/hash"},
+    "inventory": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/inventoryRow"}
+    },
+    "roots": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/rootRow"}
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["corrupt_or_ambiguous", "current", "active", "release_pinned", "installation_pinned", "failed_diagnostic", "historical_referenced", "quarantined_corrupt", "temporary", "orphan"],
+      "properties": {
+        "corrupt_or_ambiguous": {"type": "integer", "minimum": 0},
+        "current": {"type": "integer", "minimum": 0},
+        "active": {"type": "integer", "minimum": 0},
+        "release_pinned": {"type": "integer", "minimum": 0},
+        "installation_pinned": {"type": "integer", "minimum": 0},
+        "failed_diagnostic": {"type": "integer", "minimum": 0},
+        "historical_referenced": {"type": "integer", "minimum": 0},
+        "quarantined_corrupt": {"type": "integer", "minimum": 0},
+        "temporary": {"type": "integer", "minimum": 0},
+        "orphan": {"type": "integer", "minimum": 0}
+      }
+    },
+    "collectible_byte_count": {"type": "integer", "minimum": 0},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "audit_hash": {"$ref": "#/$defs/hash"}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "relativePath": {"type": "string", "minLength": 1, "pattern": "^(?![/\\\\])(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"},
+    "classification": {"enum": ["corrupt_or_ambiguous", "current", "active", "release_pinned", "installation_pinned", "failed_diagnostic", "historical_referenced", "quarantined_corrupt", "temporary", "orphan"]},
+    "rootKind": {"enum": ["current_head_authority", "closure", "aggregation", "active_attempt", "active_writer", "release_pin", "installation_pin", "failed_diagnostic", "historical_pin", "quarantined_corrupt"]},
+    "rootIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_token", "identity_hash"],
+      "properties": {
+        "path_token": {"const": "owner_evidence_root"},
+        "identity_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "inventoryRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "byte_count", "content_hash", "classification", "root_kinds", "referenced_by"],
+      "properties": {
+        "relative_path": {"$ref": "#/$defs/relativePath"},
+        "byte_count": {"type": "integer", "minimum": 0},
+        "content_hash": {"$ref": "#/$defs/hash"},
+        "classification": {"$ref": "#/$defs/classification"},
+        "root_kinds": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/rootKind"}},
+        "referenced_by": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/relativePath"}}
+      }
+    },
+    "rootRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "root_kind"],
+      "properties": {
+        "relative_path": {"$ref": "#/$defs/relativePath"},
+        "root_kind": {"$ref": "#/$defs/rootKind"}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "relative_path", "detail"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["blocker", "warning"]},
+        "relative_path": {"type": "string"},
+        "detail": {"type": "string"}
+      }
+    }
+  }
+}
