@@ -1,5 +1,5 @@
 {
-  "check_declarations_hash": "6EE29FA0420D2D138CF67EA519808054B156EE143D1EF09F7C82100E82AD5DBE",
+  "check_declarations_hash": "89545102DADA5B4D8F5AC43E43279BEADC63F7C0FAC20AFAE523F7ED182027C6",
   "checks": [
     {
       "args": [
@@ -1500,7 +1500,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:7157b983082870f310b93c874dd9673745ef048c96f36720b7deb836090f6125",
-      "owner_input_projection_hash": "sha256:5f6bb24c748ff8d62ae4626abcd12caf422458883caff732a57994a5d6048852",
+      "owner_input_projection_hash": "sha256:357d73d667ff4b6505d802ce2598e092864eb2a105bb8157cb7a075f61395137",
       "projection_declaration_hash": "sha256:096ccd42e54e8e6e77b90e1af08fbe5cc9c536a96319f22e3929d3b97b71d095",
       "semantic_check_id": "check:self:audit-author-repository-adoption",
       "target_input_role_ids": [],
@@ -1779,7 +1779,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:a29a9d8eacb125dcf6fb0a1f876b4b4ceda9fd85dd3151b548cf39a2d27bd85b",
-      "owner_input_projection_hash": "sha256:f13047b9c50f380486c572efa3d26c2bc720a25368f5b6e877f4f62237599825",
+      "owner_input_projection_hash": "sha256:f8db559fe277c280d10eebd62e78672d6cbfe9aa5897500a42a3cbf2ea73445d",
       "projection_declaration_hash": "sha256:9ba7fa6926cfe3cd8e03c9b3705098aee8b64a983a936695151204bd129da3be",
       "semantic_check_id": "check:self:installed-provenance",
       "target_input_role_ids": [],
@@ -2992,7 +2992,7 @@
         "classification_rule_ids": [
           "reviewed_override:path:release-version contract input"
         ],
-        "component_hash": "sha256:dbdb17b89711b6a7d4da1d789ea1e0714915b944db3099a62aaced539d30b54d",
+        "component_hash": "sha256:9ef0f086df744069b7cfae6ed365535a414b38ebdeb28e5d0c12ead82f7fb74f",
         "component_id": "component:contract_schema:4f16c9c79e806fbe",
         "consumer_ids": [
           "owner:self:installed-provenance"
@@ -3089,7 +3089,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:documentation_model"
         ],
-        "component_hash": "sha256:0684ff7d7e62f4a21c6083cba5ac875d3c3bec98e2fe5626f97e5edaee896238",
+        "component_hash": "sha256:8224983a689f6c40a08ca47661c3d1c05aa3a0e3ee57324507103994d778a454",
         "component_id": "component:documentation_model:d0ab5262afe4c22d",
         "consumer_ids": [
           "owner:self:audit-author-repository-adoption"
@@ -4139,7 +4139,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:6aded1109545df42b72cfea7870803010f96116a1ba4223aa77f289f59950a07",
+    "impact_graph_hash": "sha256:5cd5e4e4ecd682a4bbdd9a85b0e7b3dc2643699651fca6735d2e3def0fb06438",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -6460,21 +6460,21 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
-        "content_hash": "sha256:fb49f62f48ad3803ef73bbd4b686c231f03d940f9a3185bd0be1e6e350ae8611",
+        "content_hash": "sha256:5a3fb0a2707c5152969b0eebec6815fd8662e49782414a33ccf57303a6bab881",
         "install_disposition": "source_only",
         "path": "AGENTS.md",
         "role": "documentation_model"
       },
       {
         "classification_rule_id": "reviewed_override:path:release-version contract input",
-        "content_hash": "sha256:40b8eb4000a913a7791090535f291d3d369874162a89ef3c9e3d4e887a1b9e79",
+        "content_hash": "sha256:f62184cee8787f2f6941c82041a5725d4edc9aa293ebe5dbf664406e82ec1fe1",
         "install_disposition": "source_only",
         "path": "VERSION",
         "role": "contract_schema"
       },
       {
         "classification_rule_id": "reviewed_override:path:release-version contract input",
-        "content_hash": "sha256:768abb7f15affa1c171dc692bb042f41c59d2e05e5329518d58547c316e69446",
+        "content_hash": "sha256:a23c6e42d29e570c39cfa98ab84e401a71bab24b1a8a2b7e0f8f69522215c916",
         "install_disposition": "source_only",
         "path": "pyproject.toml",
         "role": "contract_schema"
@@ -6662,7 +6662,7 @@
         "role": "test_dev"
       }
     ],
-    "inventory_hash": "sha256:73b78fc89b351508fb56a49f2db1eabb25f5b336b39248f57c5875962cf06f67",
+    "inventory_hash": "sha256:94fa8b36a502155480ee4f3744d53832448a2e30a871466e0e8614ef8a380b4f",
     "member_root_path": ".agents/skills/skillguard",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -6711,7 +6711,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:7157b983082870f310b93c874dd9673745ef048c96f36720b7deb836090f6125",
-        "owner_input_projection_hash": "sha256:5f6bb24c748ff8d62ae4626abcd12caf422458883caff732a57994a5d6048852",
+        "owner_input_projection_hash": "sha256:357d73d667ff4b6505d802ce2598e092864eb2a105bb8157cb7a075f61395137",
         "target_input_role_ids": []
       },
       {
@@ -7040,7 +7040,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:a29a9d8eacb125dcf6fb0a1f876b4b4ceda9fd85dd3151b548cf39a2d27bd85b",
-        "owner_input_projection_hash": "sha256:f13047b9c50f380486c572efa3d26c2bc720a25368f5b6e877f4f62237599825",
+        "owner_input_projection_hash": "sha256:f8db559fe277c280d10eebd62e78672d6cbfe9aa5897500a42a3cbf2ea73445d",
         "target_input_role_ids": []
       },
       {
@@ -7745,9 +7745,9 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "A17BEB1D78A1AB3263E03C9C8F1EAA547C074E13AE3FCD2BD09BFBA3506B8B4E",
+  "contract_hash": "743581DAB0F8927055CBA7A21A1988CE1B9DD8D605E0AD2C3430E04D40DA570D",
   "maintenance_unit_id": "unit:skillguard",
-  "manifest_hash": "2D38585CB8D1E3998FE2D7EF6E099DC4B2391689E15E1B320AEAAB2E61F36B20",
+  "manifest_hash": "3013FF620ACFFE36743C765F10E58029DE0E23FD47268F5050FFB3C082A8095A",
   "member_skill_ids": [
     "skillguard"
   ],
@@ -7854,9 +7854,9 @@
     "implementation:.flowguard/validation_composition": "F0987FDA636046FE4D4B48BAE31BE5AA7BE18640EA60924DEE0EBD389B195C73",
     "implementation:.github/workflows/ci.yml": "221F197FF2D41655ED9CC40F0A1029C1944D2C925F62F245B2BE09D5065FB7E9",
     "implementation:.gitignore": "67A8D5185AC3954510D33CC07A6D21222013ED551C706830657736DD20F6EC3C",
-    "implementation:AGENTS.md": "FB49F62F48AD3803EF73BBD4B686C231F03D940F9A3185BD0BE1E6E350AE8611",
-    "implementation:VERSION": "40B8EB4000A913A7791090535F291D3D369874162A89EF3C9E3D4E887A1B9E79",
-    "implementation:pyproject.toml": "768ABB7F15AFFA1C171DC692BB042F41C59D2E05E5329518D58547C316E69446",
+    "implementation:AGENTS.md": "5A3FB0A2707C5152969B0EEBEC6815FD8662E49782414A33CCF57303A6BAB881",
+    "implementation:VERSION": "F62184CEE8787F2F6941C82041A5725D4EDC9AA293EBE5DBF664406E82EC1FE1",
+    "implementation:pyproject.toml": "A23C6E42D29E570C39CFA98AB84E401A71BAB24B1A8A2B7E0F8F69522215C916",
     "implementation:tests/test_conditional_noop_closure_v2.py": "2254E76A1AA5FE74308C5A0E49D6209B7E624A71F9E1319D4E453882E22FDE51",
     "implementation:tests/test_contract_compiler_v2.py": "32DA67E9D9D4E71784D283C63CBD9C5BCDC9FF8F8F468B567307700353FEB8FE",
     "implementation:tests/test_installation_verification_receipt.py": "48CDA71A2A5619EDE036DC980781CE241B3F83B4A371288F7CD93FBEA2E10388",

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.1 - 2026-07-22
+
+- Reconciled the public source, Python package metadata, installed maintainer skill, and FlowGuard 0.59.0 project record so a maintainer computer no longer reports the retired 0.3.3 package identity while executing the current 0.4 runtime.
+- Applied the v0.4 bounded-evidence lifecycle as the required fleet-maintenance baseline: target skills keep their own declared checks and domain depth, while SkillGuard owns compressed immutable streams, exact reachability, quarantine-first cleanup, and bounded diagnostics only.
+- Documented the rollout boundary for large maintenance campaigns: use one canonical evidence store per unit, isolated disposable run/stage roots, exact current/release pins, and no cross-unit receipt reuse or hidden persistent cleanup.
+- Kept consumer distributions independent and source-only; this patch adds no SkillGuard runtime dependency, domain evaluator, compatibility reader, or fallback path to maintained skills.
+
 ## v0.4.0 - 2026-07-22
 
 - **BREAKING:** Replaced raw stdout/stderr evidence blobs with deterministic streaming gzip objects that preserve separate logical-content and physical-storage identities and reject corrupt or over-budget decompression.
