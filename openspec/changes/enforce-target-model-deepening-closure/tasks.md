@@ -11,13 +11,13 @@
 - [x] 2.1 Add compiler tests for missing, unknown, and non-native designated check ids.
 - [x] 2.2 Add runtime tests for current pass, not-run, failed, skipped, stale, wrong-request, wrong-owner, and self-report-only cases.
 - [x] 2.3 Replace the abstract-Boolean-only native check with the real runtime test owner.
-- [ ] 2.4 Run contract compiler, execution-depth, assurance diagnostics, model alignment, and consumer-distribution tests.
+- [x] 2.4 Run contract compiler, execution-depth, assurance diagnostics, model alignment, and consumer-distribution tests.
 
 ## 3. Local installation and closure
 
 - [x] 3.1 Compile the authoritative contract and check-manifest after source freeze.
-- [ ] 3.2 Run one current target-owned producer execution and consume its immutable terminal receipt.
-- [ ] 3.3 Stage and verify the clean target-owned consumer projection.
-- [ ] 3.4 Activate local SkillGuard installation transactionally and check currentness.
-- [ ] 3.5 Run one frozen author-side final validation and verify closure identity.
+- [x] 3.2 Run one current target-owned producer execution and consume its immutable terminal receipt.
+- [x] 3.3 Stage and verify the clean target-owned consumer projection.
+- [x] 3.4 Activate local SkillGuard installation transactionally and check currentness.
+- [x] 3.5 Run one frozen author-side final validation and verify closure identity.
 - [ ] 3.6 Update version/changelog, commit, tag, push, and create the GitHub release after all gates pass.
