@@ -1,5 +1,5 @@
 {
-  "check_declarations_hash": "573A37BB254E420637468748EFFD412C72E7BB4E9FC4023A1036A50DD65EE8EA",
+  "check_declarations_hash": "CD73142836F2E010B450AE1D2BA14C2DD74ECC9C53A7BC3A5CBB408A7246016E",
   "checks": [
     {
       "args": [
@@ -1998,7 +1998,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:17db803584fd724299de72f81f6513e28fd205ad1e01fe10df65faebfca31fad",
-      "owner_input_projection_hash": "sha256:7fa9426fd589ae9a1afe7013bae7f989163e382e443767e8a96c525811c2f27f",
+      "owner_input_projection_hash": "sha256:0cf5a89a34b130dc0e72a1f6b5c894cc0a953613c0cd4a4b98d2d509412bab56",
       "projection_declaration_hash": "sha256:de6350f16a511f246e2dd0a426b2b6970d8af270b5d42efdbf1c0b785920bef0",
       "semantic_check_id": "check:self:public-export-privacy",
       "target_input_role_ids": [
@@ -4125,7 +4125,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:93cee02d2581bc2bf8d8b38421383d8564d5cb6b4116a8557bb1375f97e59182",
+        "component_hash": "sha256:be64467fb941199e3103b9170e4db7e4d7979f1871727d04c0103fd9dd0fa4ad",
         "component_id": "component:runtime_source:e65a04d807e9bc94",
         "consumer_ids": [
           "owner:self:public-export-privacy",
@@ -4363,7 +4363,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:6c74659ed2e76f46ea504214760d0009aeb50aa946a117987bf05f9e3a4c7bca",
+    "impact_graph_hash": "sha256:7dcb2654572e02a261e02b6254418fb07fb60c6601b775747dcf704aec6c15da",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -6733,7 +6733,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:67a8d5185ac3954510d33cc07a6d21222013ed551c706830657736dd20f6ec3c",
+        "content_hash": "sha256:c15088fa231237909b8f284fb45a827204b312c7b9a013d61bc2fb37631a6a1d",
         "install_disposition": "source_only",
         "path": ".gitignore",
         "role": "runtime_source"
@@ -6956,7 +6956,7 @@
         "role": "test_dev"
       }
     ],
-    "inventory_hash": "sha256:1df493088a5842ba96f21590a8fbc6ab77f53b70018462b8c54b5c76f299a4b0",
+    "inventory_hash": "sha256:3678d41bf5c7736e2566f254e1992d34d8a2e7b02fb33dcaec4fa143a0b73782",
     "member_root_path": ".agents/skills/skillguard",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -7523,7 +7523,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:17db803584fd724299de72f81f6513e28fd205ad1e01fe10df65faebfca31fad",
-        "owner_input_projection_hash": "sha256:7fa9426fd589ae9a1afe7013bae7f989163e382e443767e8a96c525811c2f27f",
+        "owner_input_projection_hash": "sha256:0cf5a89a34b130dc0e72a1f6b5c894cc0a953613c0cd4a4b98d2d509412bab56",
         "target_input_role_ids": [
           "repository.public_export_candidates"
         ]
@@ -8129,9 +8129,9 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "35DF3269DC3B6435D1480492A36750624AD73D6BDB74874A5D58BA9D76CD1545",
+  "contract_hash": "13CB9770097AEEF678495A4AB9C954965273BD20429B84EF946789A30A374179",
   "maintenance_unit_id": "unit:skillguard",
-  "manifest_hash": "12C0C23CF898D5F941468F30DF6268D9B9F3F08A08F03B73DAB6CB117C9F1A83",
+  "manifest_hash": "6FDD08E4C7279EFFA7B3C61A6362AD84A085D83344814A46E72E8E9758C56DB6",
   "member_skill_ids": [
     "skillguard"
   ],
@@ -8245,7 +8245,7 @@
     "implementation:.flowguard/model-regression-manifest.json": "FECF793AF7EC8325E4021DBC57DE88DF615EE4719612D6B44D1984DD6246B814",
     "implementation:.flowguard/validation_composition": "C8AEAC41CEF4B8BC8B81ACF71F2B630626BA8F7781E9CB92B2AE049B8996D2E0",
     "implementation:.github/workflows/ci.yml": "43A92CC53A1FF947AE3272273708B07C7F4F62D32F446D57D059AE88E509D8A9",
-    "implementation:.gitignore": "67A8D5185AC3954510D33CC07A6D21222013ED551C706830657736DD20F6EC3C",
+    "implementation:.gitignore": "C15088FA231237909B8F284FB45A827204B312C7B9A013D61BC2FB37631A6A1D",
     "implementation:AGENTS.md": "544133B353D516D662CB31C7B6DE7F48D86EDDE488B71EB185D58FDE16F5C4BE",
     "implementation:VERSION": "A0AD50640139A524F86591157145BF1D4674EA9C065BFEA21558F0F7B04430C8",
     "implementation:pyproject.toml": "A22D737BD9A9665307007899F3995B5EFE9AF5AB01032D87CC6C1FF578C73489",

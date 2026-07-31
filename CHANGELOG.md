@@ -7,6 +7,7 @@
 - Added target-owned mutation-adequacy projection. Operators, oracle, applicability, equivalent-mutant disposition, threshold, and native result remain target declarations; missing evidence is `not_run`, while incomplete, stale, foreign, or invalid evidence stays blocked.
 - Rejected diagnostic next actions that remove, relax, auto-scope, or otherwise weaken obligations, and added current-only schemas, CLI coverage, prompt/reference guidance, self-mutations, FlowGuard scenarios, behavior commitments, contract-exhaustion cases, and focused regressions.
 - Repaired the released v0.4.2 documentation baseline by recording its missing changelog entry, updating FlowGuard source-inventory modeling and CI pins to the current 0.65.1 release, enabling long Git paths before CI clones that dependency, and preserving source, installation, Git, and publication identities as separate claims.
+- Classified `.flowguard/evidence/` as private runtime evidence so machine-specific model receipts remain locally reviewable without entering public-export candidates or release privacy scans.
 
 ## v0.4.2 - 2026-07-23
 

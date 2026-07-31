@@ -35,6 +35,7 @@ htmlcov/
 *.log
 logs/
 /work/
+/.flowguard/evidence/
 /.agents/skills/skillguard/work/
 openspec/**/run-artifacts/
 openspec/**/verification-receipts/
