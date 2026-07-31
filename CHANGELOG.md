@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.5.1 - 2026-07-31
+
+- Synchronized the FlowGuard project adoption record, all three branch-CI dependency pins, and the workflow-policy regression on the immutable FlowGuard `v0.66.0` release.
+- Refreshed deterministic SkillGuard contract/manifest authority and the three-model observed authority after the provider toolchain change.
+- Preserved `v0.5.0` as an immutable feature-release identity and moved the changed installed projection to the distinct `v0.5.1` patch identity.
+
 ## v0.5.0 - 2026-07-30
 
 - Added a read-only assurance-diagnostics route over the one current compiled contract, exact check manifest, impact graph, supplied receipts, and hashed closure evaluation; the report preserves the source closure terminal and never executes or resumes an owner.
