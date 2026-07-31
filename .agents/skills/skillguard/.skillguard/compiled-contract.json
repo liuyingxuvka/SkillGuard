@@ -80,7 +80,7 @@
       ]
     }
   ],
-  "check_declarations_hash": "AD56867DAF1ACA296306246E618B72F846E6B73524B73DDCBF66CD871C6E5D03",
+  "check_declarations_hash": "CA3578857E899A4EE7959DD0D29B277EEEE3D4BEDA15F793215A83E99EC1A41C",
   "checks": [
     {
       "args": [
@@ -2003,7 +2003,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:0ae17c8afacdd82f193acd757524b77e957d575c0c6301c32d4405deafd05613",
-      "owner_input_projection_hash": "sha256:1c661a551693f6d825dd187e36ce137406badd67eb32a29deeee6153cef1a782",
+      "owner_input_projection_hash": "sha256:c364a11cc38f5deeada017d501b70cfd812b4115c89437ba4a42df8916185f3c",
       "projection_declaration_hash": "sha256:2797e205a2dde2b0ed717aec0c93b17272af0aa0a57f31a5b2a783178aacc65f",
       "semantic_check_id": "check:self:release-workflow-policy",
       "target_input_role_ids": [],
@@ -4376,7 +4376,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:test_dev"
         ],
-        "component_hash": "sha256:311f5866791e3ad96ae45bf5e442bc47fe74fdfc584eb021644209acffd5a439",
+        "component_hash": "sha256:0c91e57c364bcf0ee9e3d0584b2f8c7d453e6e52e6ce90e8cd22b086de83484d",
         "component_id": "component:test_dev:bec8fc34fd82c7bd",
         "consumer_ids": [
           "owner:self:release-workflow-policy"
@@ -4474,7 +4474,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:d4d506dd40095e840d0c45456f03b25d11e183396b0db58c298a8038f01d8d4f",
+    "impact_graph_hash": "sha256:f66340bb6f0b26e59f840b4c50b61dba5fc3c5aa91f5f20044670cf4b153dc89",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -6977,7 +6977,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
-        "content_hash": "sha256:4118e83879eaa929b0256172dda193a0a6c60a469c0fd4e5b30d517466370c3f",
+        "content_hash": "sha256:9996594f1f5a3e90c092f58eedaaa2ad3cecb97316a7b8161fd0860159a81db2",
         "install_disposition": "source_only",
         "path": "tests/test_release_workflow.py",
         "role": "test_dev"
@@ -7067,7 +7067,7 @@
         "role": "test_dev"
       }
     ],
-    "inventory_hash": "sha256:2cc7d7b5f40d202f1f081d601225b2d411cb3986510a0ce24febcb21d05c40ad",
+    "inventory_hash": "sha256:7ed97fc0f4cfde6a8bc54985468ec9f43e6c1c1e0e3b3dadd426d3b8e618e941",
     "member_root_path": ".agents/skills/skillguard",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -7660,7 +7660,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:0ae17c8afacdd82f193acd757524b77e957d575c0c6301c32d4405deafd05613",
-        "owner_input_projection_hash": "sha256:1c661a551693f6d825dd187e36ce137406badd67eb32a29deeee6153cef1a782",
+        "owner_input_projection_hash": "sha256:c364a11cc38f5deeada017d501b70cfd812b4115c89437ba4a42df8916185f3c",
         "target_input_role_ids": []
       },
       {
@@ -8240,7 +8240,7 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "D964624F50FC191D1AB5A1738A08E75E951A823383C46C38B2DE1EA18D02F00D",
+  "contract_hash": "95A73AA7E9E4F30E847F2CB2EB924B54FB94228E899E00A9A3D37F21B1A73466",
   "depth_profile": {
     "claim_boundary": "SkillGuard freezes and reconciles the target skill's own declared checks. The target skill alone owns domain purpose, failure classes, oracles, fixtures, and depth meaning.",
     "enforcement_level": "enforced",
@@ -9359,7 +9359,7 @@
     "implementation:tests/test_contract_compiler_v2.py": "32DA67E9D9D4E71784D283C63CBD9C5BCDC9FF8F8F468B567307700353FEB8FE",
     "implementation:tests/test_installation_verification_receipt.py": "48CDA71A2A5619EDE036DC980781CE241B3F83B4A371288F7CD93FBEA2E10388",
     "implementation:tests/test_portfolio_production_revalidation.py": "5BC256BAE8FBB56E5AD2544B790B1749AEEDEA9F9E89F0AFCD3559489A5F05A2",
-    "implementation:tests/test_release_workflow.py": "4118E83879EAA929B0256172DDA193A0A6C60A469C0FD4E5B30D517466370C3F",
+    "implementation:tests/test_release_workflow.py": "9996594F1F5A3E90C092F58EEDAAA2AD3CECB97316A7B8161FD0860159A81DB2",
     "implementation:tests/test_template_adapters_v2.py": "C9C23066AF54C21BE7DD878AB1269AA47F6BCC904F39926A3F6E832E39FEA8B6",
     "implementation:tests/test_template_fragments_v2.py": "3A415464122C13686485B9F1866CAE6A815FFA689A19E1A6E7F086FAF938327F",
     "implementation:tests/test_template_packs_v2.py": "E4CF15AC9FA63949AFF37873B6A2F6F26E052ED305D1FAE725D929BD55684DFB",

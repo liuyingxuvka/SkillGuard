@@ -15,12 +15,12 @@ require_model_update_for_behavior_changes = true
 
 [model_authority]
 system_id = "flowguard"
-observed_snapshot_path = ".flowguard/model-mesh/snapshots/df3d5b92f8eaae48277224505dc26ae45f5a8fdb9c4a06e2aa977d0c4eb990db.json"
-observed_snapshot_fingerprint = "sha256:df3d5b92f8eaae48277224505dc26ae45f5a8fdb9c4a06e2aa977d0c4eb990db"
-subject_revision = "source-inventory:217f9f985e43dca7cc06bec3105a170c2a483e6052b1a26e679a40d2b35003cc"
+observed_snapshot_path = ".flowguard/model-mesh/snapshots/1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a.json"
+observed_snapshot_fingerprint = "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a"
+subject_revision = "source-inventory:ae5ea68d3afc4cf7365db2b63c49854bf4aaddb96a77a996289160856423dca2"
 coverage_status = "complete_within_declared_boundary"
-generation = 1
-accepted_revision_set_fingerprint = "sha256:e66f818a36cf5493f7920b24085c9819578979d09b8b40154ef63aaaaed23af2"
-previous_snapshot_fingerprint = ""
-activation_receipt_fingerprint = "sha256:e66f818a36cf5493f7920b24085c9819578979d09b8b40154ef63aaaaed23af2"
-head_fingerprint = "sha256:83f992537ae03d029f0161acc7ee6cdff91fa0e15bce157b74585420bc13e152"
+generation = 2
+accepted_revision_set_fingerprint = "sha256:3bfd327524aa216d4861c0a3ec36f7f0aad6f147e42f8838cd81dbcf219bf51d"
+previous_snapshot_fingerprint = "sha256:df3d5b92f8eaae48277224505dc26ae45f5a8fdb9c4a06e2aa977d0c4eb990db"
+activation_receipt_fingerprint = "sha256:d0a534f9dc9e063671b540fd3ea870739f62e772f83a9303dc54a91fe11d2a87"
+head_fingerprint = "sha256:fdaef47fb325b8c1de01befe1e3be687aa0bb84322cca78556d56cb260eb4e9b"

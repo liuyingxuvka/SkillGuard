@@ -1,0 +1,196 @@
+{
+  "added_ids": [],
+  "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+  "affected_closure_ids": [
+    "coverage:universe",
+    "model_instance:model:development_process_flow",
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow",
+    "parent_closure:purpose:development_process_flow",
+    "parent_closure:system:flowguard:model-regression-manifest",
+    "system_property:subject_revision"
+  ],
+  "affected_edge_ids": [
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow"
+  ],
+  "affected_owner_bindings": [
+    {
+      "affected_id": "coverage:universe",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "model_instance:model:development_process_flow",
+      "owner_route": "model_test_alignment"
+    },
+    {
+      "affected_id": "model_relation:relation:model-realizes-purpose:development_process_flow",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "model_relation:relation:system-contains:development_process_flow",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "parent_closure:purpose:development_process_flow",
+      "owner_route": "model_test_alignment"
+    },
+    {
+      "affected_id": "parent_closure:system:flowguard:model-regression-manifest",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "system_property:subject_revision",
+      "owner_route": "model_mesh_maintenance"
+    }
+  ],
+  "base_snapshot_fingerprint": "sha256:df3d5b92f8eaae48277224505dc26ae45f5a8fdb9c4a06e2aa977d0c4eb990db",
+  "candidate_snapshot_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+  "changed_commitment_ids": [],
+  "changed_contract_ids": [],
+  "changed_coverage_ids": [
+    "coverage:universe"
+  ],
+  "changed_field_ids": [],
+  "changed_gap_ids": [],
+  "changed_owner_artifact_ids": [],
+  "changed_relation_ids": [
+    "relation:model-realizes-purpose:development_process_flow",
+    "relation:system-contains:development_process_flow"
+  ],
+  "changed_root_ids": [],
+  "changed_side_effect_ids": [],
+  "changed_source_surface_ids": [],
+  "changed_system_property_ids": [
+    "system_property:subject_revision"
+  ],
+  "changed_test_ids": [],
+  "completed_evidence_refs": [
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+      "covered_affected_ids": [
+        "coverage:universe",
+        "model_relation:relation:model-realizes-purpose:development_process_flow",
+        "model_relation:relation:system-contains:development_process_flow",
+        "parent_closure:system:flowguard:model-regression-manifest",
+        "system_property:subject_revision"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:0cf33f1f65ee0ab5309182e48e34e9c7fe6e8ffd698578bc43a336da8e0738e6",
+      "obligation_ids": [
+        "obligation:model-revision:model_mesh_maintenance"
+      ],
+      "owner_route": "model_mesh_maintenance",
+      "receipt_fingerprint": "sha256:0e470f5bf212f719b438313c3194f4ed86832d0723150bb68c85457e1924c7c0",
+      "receipt_id": "receipt:skillguard-v0.5.0-assurance-baseline:0e470f5bf212f719:1",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "pass",
+      "subject_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+      "toolchain_fingerprint": "sha256:f39903695cb122011e7b67fe7f263b74b5a189c05245b6db849e16017c2b8769"
+    },
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+      "covered_affected_ids": [
+        "model_instance:model:development_process_flow",
+        "parent_closure:purpose:development_process_flow"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:0cf33f1f65ee0ab5309182e48e34e9c7fe6e8ffd698578bc43a336da8e0738e6",
+      "obligation_ids": [
+        "obligation:model-revision:model_test_alignment"
+      ],
+      "owner_route": "model_test_alignment",
+      "receipt_fingerprint": "sha256:0e470f5bf212f719b438313c3194f4ed86832d0723150bb68c85457e1924c7c0",
+      "receipt_id": "receipt:skillguard-v0.5.0-assurance-baseline:0e470f5bf212f719:2",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "pass",
+      "subject_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+      "toolchain_fingerprint": "sha256:f39903695cb122011e7b67fe7f263b74b5a189c05245b6db849e16017c2b8769"
+    }
+  ],
+  "decision_reason": "The exact three-model SkillGuard owner closure passed full-tier regression after refreshing assurance diagnostics and release baselines.",
+  "evidence_complete": true,
+  "expected_head_fingerprint": "sha256:83f992537ae03d029f0161acc7ee6cdff91fa0e15bce157b74585420bc13e152",
+  "fingerprint": "sha256:3bfd327524aa216d4861c0a3ec36f7f0aad6f147e42f8838cd81dbcf219bf51d",
+  "fingerprint_changed_ids": [
+    "coverage:universe",
+    "model_instance:model:development_process_flow",
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow"
+  ],
+  "implementation_bundle_fingerprint": "",
+  "members": [
+    {
+      "base_instance_fingerprint": "sha256:3a69fd88ef6c6b7de3444a09face949520a92acf9a729ae1a73189fc1a098f89",
+      "candidate_instance_fingerprint": "sha256:24915b62bbf1705688e842c6e789796f22157b18e9e6ce1b0c3cbc9b6b9a45b2",
+      "changed_element_ids": [
+        "model_instance:model:development_process_flow"
+      ],
+      "member_id": "development_process_flow",
+      "operation": "replace",
+      "schema": "flowguard.model_revision_member.v1"
+    }
+  ],
+  "originating_activation_receipt_fingerprint": "",
+  "originating_revision_set_fingerprint": "",
+  "prediction_replay_refs": [],
+  "removal_dispositions": [],
+  "removed_ids": [],
+  "required_evidence_refs": [
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+      "covered_affected_ids": [
+        "coverage:universe",
+        "model_relation:relation:model-realizes-purpose:development_process_flow",
+        "model_relation:relation:system-contains:development_process_flow",
+        "parent_closure:system:flowguard:model-regression-manifest",
+        "system_property:subject_revision"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:0cf33f1f65ee0ab5309182e48e34e9c7fe6e8ffd698578bc43a336da8e0738e6",
+      "obligation_ids": [
+        "obligation:model-revision:model_mesh_maintenance"
+      ],
+      "owner_route": "model_mesh_maintenance",
+      "receipt_fingerprint": "sha256:0e470f5bf212f719b438313c3194f4ed86832d0723150bb68c85457e1924c7c0",
+      "receipt_id": "receipt:skillguard-v0.5.0-assurance-baseline:0e470f5bf212f719:1",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "required",
+      "subject_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+      "toolchain_fingerprint": "sha256:f39903695cb122011e7b67fe7f263b74b5a189c05245b6db849e16017c2b8769"
+    },
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+      "covered_affected_ids": [
+        "model_instance:model:development_process_flow",
+        "parent_closure:purpose:development_process_flow"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:0cf33f1f65ee0ab5309182e48e34e9c7fe6e8ffd698578bc43a336da8e0738e6",
+      "obligation_ids": [
+        "obligation:model-revision:model_test_alignment"
+      ],
+      "owner_route": "model_test_alignment",
+      "receipt_fingerprint": "sha256:0e470f5bf212f719b438313c3194f4ed86832d0723150bb68c85457e1924c7c0",
+      "receipt_id": "receipt:skillguard-v0.5.0-assurance-baseline:0e470f5bf212f719:2",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "required",
+      "subject_fingerprint": "sha256:1f7c2f168d188c119b588a1bbcf7d3349278a1706b23687e36ff6dcbcd99b45a",
+      "toolchain_fingerprint": "sha256:f39903695cb122011e7b67fe7f263b74b5a189c05245b6db849e16017c2b8769"
+    }
+  ],
+  "revision_set_id": "revision:skillguard-v0.5.0-assurance-baseline:0e470f5bf212f719",
+  "rollback_contract_fingerprint": "",
+  "schema": "flowguard.model_revision_set.v2",
+  "snapshot_diff_fingerprint": "sha256:cb038166f0c60bc1755e859a413672e6678092f3dddab18850e42e1239e66267",
+  "status": "accepted",
+  "task_id": "task:refresh-skillguard-assurance-and-release-baselines"
+}

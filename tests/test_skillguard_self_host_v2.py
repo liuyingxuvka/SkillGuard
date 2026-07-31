@@ -273,7 +273,21 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
         self.assertTrue(result.ok, result.to_dict())
         contract = result.compiled_contract
         manifest = result.check_manifest
-        self.assertEqual(41, sum(1 for row in contract["steps"] if not row["terminal_kind"]))
+        self.assertEqual(44, sum(1 for row in contract["steps"] if not row["terminal_kind"]))
+        assurance_step_ids = {
+            row["step_id"]
+            for row in contract["steps"]
+            if row["route_id"] == "route:assurance-diagnostics"
+            and not row["terminal_kind"]
+        }
+        self.assertEqual(
+            {
+                "step:validate-assurance-authorities",
+                "step:derive-blocker-basis",
+                "step:project-target-mutation-result",
+            },
+            assurance_step_ids,
+        )
         template_step_ids = {
             row["step_id"]
             for row in contract["steps"]
