@@ -64,13 +64,17 @@ class ExecutableContractModelTests(unittest.TestCase):
             "external_reference_member_fallback_blocks",
             "standalone_member_path_mismatch_blocks",
             "missing_author_adoption_blocks_maintenance_closure",
+            "stale_assurance_authority_blocks",
+            "diagnostic_closure_override_blocks",
+            "diagnostic_weakening_blocks",
+            "foreign_mutation_authority_blocks",
         }
         self.assertTrue(expected.issubset(scenario_names))
 
     def test_behavior_commitment_ledger_passes(self) -> None:
         report = self.model.run_governance_reviews()["behavior_commitment_ledger"]
         self.assertTrue(report.ok, report.format_text())
-        self.assertEqual(8, len(self.model.build_behavior_commitment_ledger().commitments))
+        self.assertEqual(9, len(self.model.build_behavior_commitment_ledger().commitments))
 
     def test_primary_path_authority_passes(self) -> None:
         report = self.model.run_governance_reviews()["primary_path_authority"]
@@ -98,13 +102,17 @@ class ExecutableContractModelTests(unittest.TestCase):
             "case:loop:no-delta",
             "case:loop:over-bound",
             "case:portfolio:unit-evidence-stale",
+            "case:diagnostics:stale-authority",
+            "case:diagnostics:closure-override",
+            "case:diagnostics:foreign-mutation",
+            "case:diagnostics:obligation-weakening",
         }
         self.assertTrue(expected.issubset(case_ids))
 
     def test_model_test_alignment_passes(self) -> None:
         report = self.model.run_governance_reviews()["model_test_alignment"]
         self.assertTrue(report.ok, report.format_text())
-        self.assertEqual(21, len(self.model.build_model_test_alignment_plan().obligations))
+        self.assertEqual(22, len(self.model.build_model_test_alignment_plan().obligations))
 
     def test_self_host_functions_have_distinct_routes_and_terminals(self) -> None:
         export = self.model.export_contract_model()
@@ -117,6 +125,7 @@ class ExecutableContractModelTests(unittest.TestCase):
             "global_router_handoff",
             "audit_provenance",
             "adopt_author_repository",
+            "diagnose_assurance",
         }
         self.assertTrue(required.issubset(functions))
         routes = {row["route_id"]: row for row in export["routes"]}

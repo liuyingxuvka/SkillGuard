@@ -10,7 +10,7 @@
 </p>
 <!-- README HERO END -->
 
-Current release: `v0.4.2` (source-only; validation evidence and publication status remain separate claims)
+Current release: `v0.5.0` (source-only; validation evidence and publication status remain separate claims)
 
 English comes first; the second half is a full Chinese mirror.
 
@@ -44,6 +44,7 @@ Receipt reuse is narrowly local: the same maintenance unit may single-flight one
 | Author adoption | Mark only an explicit skill-authoring repository with a private maintainer prompt and `.skillguard/author-project.json`. |
 | Contract compilation | Compile one current author contract and exact check manifest from the maintained source. |
 | Declared verification | Compare target-declared promises with target-owned checks, current execution evidence, and bounded closure claims without inventing domain criteria. |
+| Assurance diagnostics | Explain a supplied current closure with a dependency-aware subset-minimal blocker basis and project target-owned mutation evidence without executing, resuming, weakening obligations, or changing closure. |
 | Maintenance-unit isolation | Bind checks and receipts to unit, member, subject, semantic responsibility, owner, inputs, dependencies, toolchain, and environment. |
 | TestMesh | Freeze same-unit validation plans, order dependencies, preserve immutable evidence, and keep skipped/not-run gaps visible. |
 | Portfolio | Aggregate independent maintenance-unit statuses and audit semantic overlap without transferring proof. |
@@ -61,7 +62,7 @@ SkillGuard currently ships as source plus a local Python dispatcher. It is not a
 | --- | --- |
 | Skill entrypoint | `.agents/skills/skillguard/SKILL.md` |
 | Local dispatcher | `.agents/skills/skillguard/scripts/skillguard.py` |
-| Source version | `0.4.2` |
+| Source version | `0.5.0` |
 | Author control root | `.skillguard/**` inside explicit maintainer sources only |
 | Consumer projection | Target-owned files plus `consumer-release.json`; no SkillGuard dependency |
 | Ordinary project behavior | Zero SkillGuard writes |
@@ -81,7 +82,7 @@ The current public commands are:
 - discovery and author routing: `commands`, `route-task`, `inventory`, `scan-global-skills`, `build-global-registry`, `check-global-registry`, `refresh-global-router`;
 - planning and generation: `plan-skill`, `generate-skill`, `generate-suite`;
 - author repository and contract work: `maintainer-adopt`, `maintainer-audit`, `check-runtime-authority`, `check-json-schema`, `check-contract`, `check-depth`, `init-target`, `init-suite`, `mark`, `check-skill`, `check-suite`, `check-suite-map`, `check-suite-contract`;
-- fixtures and evidence review: `check-fixture-manifest`, `fixture-test`, `detect-stale-evidence`, `review-checker-change`, `check-maintenance-record`, `check-ai-judgment`, `check-report`, `check-workflow-report`, `make-closure`, `evidence-audit`, `evidence-gc-plan`, `evidence-gc-apply`, `evidence-gc-purge`;
+- fixtures and evidence review: `assurance-diagnostics`, `check-fixture-manifest`, `fixture-test`, `detect-stale-evidence`, `review-checker-change`, `check-maintenance-record`, `check-ai-judgment`, `check-report`, `check-workflow-report`, `make-closure`, `evidence-audit`, `evidence-gc-plan`, `evidence-gc-apply`, `evidence-gc-purge`;
 - independent Portfolio maintenance: `build-current-portfolio-registry`, `audit-portfolio`, `mark-portfolio-impact`, `verify-portfolio-impact-receipt`, `prepare-portfolio-run`, `execute-portfolio-run`, `capture-portfolio-production-revalidation`, `assemble-portfolio-run`, `graduate-portfolio`;
 - installation evidence: `capture-installation-receipt`, `verify-installation-receipt`;
 - repository gates: `check-readme-release`, `self-check`, `write-report`.
@@ -131,6 +132,10 @@ Edit the current contract source and target-native checks in the maintainer repo
 
 Freeze one maintenance unit, its members, semantic checks, dependencies, and evidence roots. Reuse only an exact same-unit success identity. Run one final full owner after the unit's source and toolchain are stable.
 
+### Explain A Blocked Closure
+
+Run `assurance-diagnostics` only on the exact current compiled contract, check manifest, impact graph, receipts, and hashed closure evaluation. It reports a dependency-aware blocker basis and an unchanged target-native mutation result. A successful diagnostic command means the explanation was derived; it never means the source closure passed, and it cannot execute a missing owner or propose deleting or relaxing an obligation.
+
 ### Maintain Global Skill Routing
 
 ```powershell
@@ -147,7 +152,7 @@ Portfolio records one status per independent maintenance unit. A change stales o
 ### Adopt Or Audit A Skill Repository
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.4.2
+python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.5.0
 python .agents/skills/skillguard/scripts/skillguard.py maintainer-audit --root <author-repository>
 ```
 
@@ -240,6 +245,7 @@ SkillGuard 是一个只在技能维护端使用的维护与毕业证据系统。
 | 作者仓库接入 | 只为明确的技能作者仓库写入私有维护提示和 `.skillguard/author-project.json`。 |
 | 合同编译 | 从维护源码生成唯一当前作者合同和精确检查清单。 |
 | 声明核验 | 对照目标自己声明的技能承诺、原生检查、当前执行证据和有限结论，不发明领域标准。 |
+| 保障诊断 | 只读解释一份已经存在的当前 closure，给出考虑依赖关系的子集最小阻断依据，并原样投影目标自己声明的 mutation 结果；不执行、不恢复、不削弱义务，也不改变 closure。 |
 | 维护单元隔离 | 用单元、成员、主体、语义职责、负责人、输入、依赖、工具链和环境绑定检查与收据。 |
 | TestMesh | 冻结单元内的验证计划和依赖顺序，保留不可变证据，并显示跳过或未运行。 |
 | Portfolio | 汇总相互独立的维护单元状态，检查语义重叠，但不传递证明。 |
@@ -256,7 +262,7 @@ SkillGuard 目前以源码和本地 Python 调度器的形式存在，不是托�
 | --- | --- |
 | 技能入口 | `.agents/skills/skillguard/SKILL.md` |
 | 本地调度器 | `.agents/skills/skillguard/scripts/skillguard.py` |
-| 源码版本 | `0.4.2` |
+| 源码版本 | `0.5.0` |
 | 作者控制目录 | 只存在于明确维护源码里的 `.skillguard/**` |
 | 消费者投影 | 目标自己的文件和 `consumer-release.json`，不依赖 SkillGuard |
 | 普通项目 | SkillGuard 零写入 |
@@ -314,6 +320,10 @@ python .agents/skills/skillguard/scripts/skillguard.py commands
 ### 管理一次当前技能运行
 
 冻结一个维护单元、它的成员、语义检查、依赖和证据根。只允许完全相同的单元内成功身份复用。源码和工具链稳定以后，只运行一次最终完整负责人。
+
+### 解释一个被阻断的 closure
+
+只有在当前编译合同、精确检查清单、影响图、收据和带哈希的 closure 评估身份完全一致时，才使用 `assurance-diagnostics`。它只生成考虑依赖关系的阻断依据和目标原生 mutation 结果投影。命令成功只说明“解释生成成功”，不代表原 closure 已通过；它不会替缺失负责人执行或恢复，也会拒绝删除、放松或自动缩小义务。
 
 ### 维护全局技能路由
 

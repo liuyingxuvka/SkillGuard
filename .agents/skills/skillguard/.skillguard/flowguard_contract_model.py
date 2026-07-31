@@ -20,8 +20,9 @@ Run from an installed SkillGuard root:
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterable, Sequence
 
@@ -35,7 +36,11 @@ from flowguard import (
     BCL_SCOPE_ROUTINE,
     BCL_PLANE_AGENT_OPERATION,
     BCL_SOURCE_CODE,
-    BCL_SOURCE_OPENSPEC,
+    BCL_SOURCE_AUTHORITY_NORMATIVE,
+    BCL_SOURCE_AUTHORITY_OBSERVED,
+    BCL_SOURCE_AUTHORITY_SUPPORTING,
+    BCL_SOURCE_FRESHNESS_CURRENT,
+    BCL_SOURCE_WORK_CONTEXT,
     BCL_SOURCE_TEST,
     BehaviorCommitment,
     BehaviorCommitmentLedger,
@@ -134,6 +139,13 @@ class ExecutableContractCase:
     repository_relative_reference_fallback_used: bool = False
     standalone_member_root_path_current: bool = True
     author_repository_adoption_current: bool = True
+    assurance_diagnostics_requested: bool = True
+    assurance_diagnostics_authorities_current: bool = True
+    assurance_diagnostics_read_only: bool = True
+    assurance_diagnostics_preserve_closure: bool = True
+    assurance_diagnostics_minimality_exact: bool = True
+    mutation_evidence_target_owned: bool = True
+    diagnostic_weakening_requested: bool = False
 
 
 @dataclass(frozen=True)
@@ -192,6 +204,13 @@ class ExecutableContractState:
     repository_relative_reference_fallback_used: bool = False
     standalone_member_root_path_current: bool = False
     author_repository_adoption_current: bool = False
+    assurance_diagnostics_requested: bool = False
+    assurance_diagnostics_authorities_current: bool = False
+    assurance_diagnostics_read_only: bool = False
+    assurance_diagnostics_preserve_closure: bool = False
+    assurance_diagnostics_minimality_exact: bool = False
+    mutation_evidence_target_owned: bool = False
+    diagnostic_weakening_requested: bool = False
 
 
 class EvaluateExecutableContract:
@@ -569,6 +588,44 @@ def author_repositories_keep_skillguard_maintenance_private(
     return _pass()
 
 
+def assurance_diagnostics_preserve_authority(
+    state: ExecutableContractState, _trace: object
+) -> InvariantResult:
+    """Diagnostics explain current authority without becoming authority."""
+
+    if _empty(state) or not state.assurance_diagnostics_requested:
+        return _pass()
+    if not state.assurance_diagnostics_authorities_current:
+        return _fail(
+            "assurance_diagnostics_preserve_authority",
+            "diagnostics require current exact contract, manifest, impact, receipt, and closure identities",
+        )
+    if (
+        not state.assurance_diagnostics_read_only
+        or not state.assurance_diagnostics_preserve_closure
+    ):
+        return _fail(
+            "assurance_diagnostics_preserve_authority",
+            "diagnostics cannot execute, resume, issue closure, or change the supplied terminal",
+        )
+    if not state.assurance_diagnostics_minimality_exact:
+        return _fail(
+            "assurance_diagnostics_preserve_authority",
+            "bounded computation cannot claim subset minimality or minimum cardinality",
+        )
+    if not state.mutation_evidence_target_owned:
+        return _fail(
+            "assurance_diagnostics_preserve_authority",
+            "mutation operators, oracle, applicability, equivalent disposition, threshold, and result remain target-owned",
+        )
+    if state.diagnostic_weakening_requested:
+        return _fail(
+            "assurance_diagnostics_preserve_authority",
+            "diagnostics reject obligation removal, relaxation, auto-scoping, or claim weakening",
+        )
+    return _pass()
+
+
 def static_audit_is_current(state: ExecutableContractState, trace: object) -> InvariantResult:
     """Self-host contract owner for current static-audit evidence."""
 
@@ -688,6 +745,11 @@ INVARIANTS = (
         "author_repositories_keep_skillguard_maintenance_private",
         "Explicit author repositories keep a current private maintainer prompt and manifest.",
         author_repositories_keep_skillguard_maintenance_private,
+    ),
+    Invariant(
+        "assurance_diagnostics_preserve_authority",
+        "Assurance diagnostics remain read-only explanations over current closure authority.",
+        assurance_diagnostics_preserve_authority,
     ),
 )
 
@@ -867,6 +929,54 @@ SCENARIOS = (
         "The fixed enforced closure cannot be replaced or weakened.",
         ExecutableContractCase("non_enforced_closure", enforced_closure_exact=False),
         _violation("closure is not exact", "closure_consumes_current_exact_receipts"),
+    ),
+    _scenario(
+        "stale_assurance_authority_blocks",
+        "Diagnostics cannot explain a mixed or stale authority set as current.",
+        ExecutableContractCase(
+            "stale_assurance_authority",
+            assurance_diagnostics_authorities_current=False,
+        ),
+        _violation(
+            "diagnostic authority stale",
+            "assurance_diagnostics_preserve_authority",
+        ),
+    ),
+    _scenario(
+        "diagnostic_closure_override_blocks",
+        "A diagnostic projection cannot turn itself into another closure path.",
+        ExecutableContractCase(
+            "diagnostic_closure_override",
+            assurance_diagnostics_preserve_closure=False,
+        ),
+        _violation(
+            "diagnostic changed closure",
+            "assurance_diagnostics_preserve_authority",
+        ),
+    ),
+    _scenario(
+        "diagnostic_weakening_blocks",
+        "A diagnostic next action cannot remove, relax, or auto-scope an obligation.",
+        ExecutableContractCase(
+            "diagnostic_weakening",
+            diagnostic_weakening_requested=True,
+        ),
+        _violation(
+            "diagnostic weakening requested",
+            "assurance_diagnostics_preserve_authority",
+        ),
+    ),
+    _scenario(
+        "foreign_mutation_authority_blocks",
+        "SkillGuard cannot invent or reinterpret a target's mutation semantics.",
+        ExecutableContractCase(
+            "foreign_mutation_authority",
+            mutation_evidence_target_owned=False,
+        ),
+        _violation(
+            "mutation evidence not target owned",
+            "assurance_diagnostics_preserve_authority",
+        ),
     ),
     _scenario(
         "missing_unit_evidence_blocks",
@@ -1079,6 +1189,12 @@ def export_contract_model() -> dict[str, object]:
             "route_ids": ["route:derive-closure"],
         },
         {
+            "function_id": "diagnose_assurance",
+            "business_intent": "explain current assurance blockers",
+            "owner_id": "assurance-diagnostics-v1",
+            "route_ids": ["route:assurance-diagnostics"],
+        },
+        {
             "function_id": "graduate_portfolio",
             "business_intent": "graduate skill portfolio",
             "owner_id": "portfolio-runtime-v2",
@@ -1247,6 +1363,22 @@ def export_contract_model() -> dict[str, object]:
             "handoffs": [],
         },
         {
+            "route_id": "route:assurance-diagnostics",
+            "function_id": "diagnose_assurance",
+            "owner_id": "assurance-diagnostics-v1",
+            "start_step_id": "step:validate-assurance-authorities",
+            "step_ids": [
+                "step:validate-assurance-authorities",
+                "step:derive-blocker-basis",
+                "step:project-target-mutation-result",
+                "terminal:assurance-explained",
+                "terminal:assurance-diagnostics-blocked",
+            ],
+            "success_terminal_step_id": "terminal:assurance-explained",
+            "blocked_terminal_step_id": "terminal:assurance-diagnostics-blocked",
+            "handoffs": [],
+        },
+        {
             "route_id": "route:portfolio-graduation",
             "function_id": "graduate_portfolio",
             "owner_id": "portfolio-runtime-v2",
@@ -1364,6 +1496,11 @@ def export_contract_model() -> dict[str, object]:
         step("step:issue-closure-receipt", "route:derive-closure", "closure-runtime-v2", "receipt", ("step:check-run-closure",)),
         step("terminal:run-closed", "route:derive-closure", "closure-runtime-v2", "terminal", ("step:issue-closure-receipt",), terminal_kind="success"),
         step("terminal:closure-blocked", "route:derive-closure", "closure-runtime-v2", "terminal", terminal_kind="blocked"),
+        step("step:validate-assurance-authorities", "route:assurance-diagnostics", "assurance-diagnostics-v1", "validator"),
+        step("step:derive-blocker-basis", "route:assurance-diagnostics", "assurance-diagnostics-v1", "projection", ("step:validate-assurance-authorities",)),
+        step("step:project-target-mutation-result", "route:assurance-diagnostics", "assurance-diagnostics-v1", "projection", ("step:validate-assurance-authorities",)),
+        step("terminal:assurance-explained", "route:assurance-diagnostics", "assurance-diagnostics-v1", "terminal", ("step:derive-blocker-basis", "step:project-target-mutation-result"), terminal_kind="success"),
+        step("terminal:assurance-diagnostics-blocked", "route:assurance-diagnostics", "assurance-diagnostics-v1", "terminal", terminal_kind="blocked"),
         step("step:scan-maintenance-unit-freshness", "route:portfolio-graduation", "portfolio-runtime-v2", "validator"),
         step("step:validate-maintenance-unit-evidence", "route:portfolio-graduation", "portfolio-runtime-v2", "native", ("step:scan-maintenance-unit-freshness",)),
         step("step:issue-portfolio-receipt", "route:portfolio-graduation", "portfolio-runtime-v2", "receipt", ("step:validate-maintenance-unit-evidence",)),
@@ -1400,6 +1537,7 @@ def export_contract_model() -> dict[str, object]:
         ("obligation:durable-resume", "resume_uses_durable_events", ["step:record-step-event", "step:next-ready-step"]),
         ("obligation:loop-liveness", "loops_require_progress_and_a_finite_bound", ["step:record-step-event"]),
         ("obligation:exact-closure", "closure_consumes_current_exact_receipts", ["step:check-run-closure", "step:issue-closure-receipt"]),
+        ("obligation:assurance-diagnostics", "assurance_diagnostics_preserve_authority", ["step:validate-assurance-authorities", "step:derive-blocker-basis", "step:project-target-mutation-result"]),
         ("obligation:no-former-authority-success", "failures_and_former_authority_cannot_hide", ["step:select-function-route", "step:check-run-closure"]),
         ("obligation:portfolio-freshness", "maintenance_unit_graduation_uses_only_unit_evidence", ["step:scan-maintenance-unit-freshness", "step:validate-maintenance-unit-evidence", "step:issue-portfolio-receipt"]),
         ("obligation:depth-native-authority", "depth_profile_preserves_native_authority", ["step:freeze-declared-check-inventory", "step:reconcile-declared-check-results"]),
@@ -1513,7 +1651,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             "any former surface, converter, fallback reader, or alternate success path blocks broad confidence",
             "supervise target skill task",
             "claimed-run-v2",
-            ("surface:run-spec", "surface:executable-model"),
+            ("surface:current-authority-spec", "surface:executable-model"),
         ),
         (
             "commitment:portfolio-revalidates-after-guard-change",
@@ -1545,6 +1683,16 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             "author-repository-adoption-current",
             ("surface:author-repository-adoption-spec", "surface:executable-model"),
         ),
+        (
+            "commitment:assurance-diagnostics-preserve-authority",
+            BCL_COMMITMENT_WORKFLOW,
+            "a maintainer requests an explanation of an existing current closure",
+            "a read-only dependency-aware blocker basis and unchanged target mutation result are projected from exact current identities",
+            "stale or mismatched authority, bounded-overclaim, foreign mutation judgment, or obligation weakening blocks diagnostics without changing closure",
+            "explain current assurance blockers",
+            "assurance-diagnostics-v1",
+            ("surface:assurance-diagnostics-spec", "surface:executable-model"),
+        ),
     )
     commitments = tuple(
         BehaviorCommitment(
@@ -1574,7 +1722,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
     base_surfaces = (
         BehaviorSourceSurface(
             "surface:compilation-spec",
-            surface_kind=BCL_SOURCE_OPENSPEC,
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
             source_ref="openspec/changes/build-executable-skill-contract-runtime/specs/executable-skill-contract-compilation/spec.md",
             commitment_ids=("commitment:compile-model-contract",),
             business_intent_ids=("intent:compile-model-contract",),
@@ -1585,18 +1733,29 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         ),
         BehaviorSourceSurface(
             "surface:run-spec",
-            surface_kind=BCL_SOURCE_OPENSPEC,
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
             source_ref="openspec/changes/build-executable-skill-contract-runtime/specs/claimed-skill-run-runtime/spec.md",
-            commitment_ids=("commitment:claim-every-run", "commitment:current-authority-only"),
-            business_intent_ids=("intent:claim-every-run", "intent:current-authority-only"),
+            commitment_ids=("commitment:claim-every-run",),
+            business_intent_ids=("intent:claim-every-run",),
             primary_path_id="claimed-run-v2",
             owner=MODEL_ID,
             validation_boundary="approved claimed-run requirements",
             rationale="defines task claiming, transitions, resume, skip, and loop behavior",
         ),
         BehaviorSourceSurface(
+            "surface:current-authority-spec",
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
+            source_ref="openspec/changes/build-executable-skill-contract-runtime/specs/claimed-skill-run-runtime/spec.md",
+            commitment_ids=("commitment:current-authority-only",),
+            business_intent_ids=("intent:current-authority-only",),
+            primary_path_id="claimed-run-v2",
+            owner=MODEL_ID,
+            validation_boundary="approved singular current-authority requirements",
+            rationale="defines direct current replacement and former-authority rejection",
+        ),
+        BehaviorSourceSurface(
             "surface:evidence-spec",
-            surface_kind=BCL_SOURCE_OPENSPEC,
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
             source_ref="openspec/changes/build-executable-skill-contract-runtime/specs/skill-evidence-receipts/spec.md",
             commitment_ids=("commitment:verifier-owned-evidence",),
             business_intent_ids=("intent:verifier-owned-evidence",),
@@ -1607,7 +1766,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         ),
         BehaviorSourceSurface(
             "surface:closure-spec",
-            surface_kind=BCL_SOURCE_OPENSPEC,
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
             source_ref="openspec/changes/harden-native-depth-evidence-identity/specs/universal-execution-depth/spec.md",
             commitment_ids=("commitment:exact-functional-closure",),
             business_intent_ids=("intent:exact-functional-closure",),
@@ -1618,7 +1777,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         ),
         BehaviorSourceSurface(
             "surface:portfolio-spec",
-            surface_kind=BCL_SOURCE_OPENSPEC,
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
             source_ref="openspec/changes/harden-native-depth-evidence-identity/specs/universal-execution-depth/spec.md",
             commitment_ids=("commitment:portfolio-revalidates-after-guard-change",),
             business_intent_ids=("intent:portfolio-revalidates-after-guard-change",),
@@ -1629,7 +1788,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         ),
         BehaviorSourceSurface(
             "surface:execution-depth-spec",
-            surface_kind=BCL_SOURCE_OPENSPEC,
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
             source_ref="openspec/changes/harden-native-depth-evidence-identity/specs/universal-execution-depth/spec.md",
             commitment_ids=("commitment:execution-depth-before-broad-closure",),
             business_intent_ids=("intent:execution-depth-before-broad-closure",),
@@ -1640,7 +1799,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         ),
         BehaviorSourceSurface(
             "surface:author-repository-adoption-spec",
-            surface_kind=BCL_SOURCE_OPENSPEC,
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
             source_ref="openspec/changes/harden-native-depth-evidence-identity/specs/universal-execution-depth/spec.md",
             commitment_ids=("commitment:author-repository-adoption-is-private",),
             business_intent_ids=("intent:author-repository-adoption-is-private",),
@@ -1648,6 +1807,21 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             owner=MODEL_ID,
             validation_boundary="approved author-repository adoption requirements",
             rationale="defines the private maintainer prompt, author manifest, and consumer exclusion boundary",
+        ),
+        BehaviorSourceSurface(
+            "surface:assurance-diagnostics-spec",
+            surface_kind=BCL_SOURCE_WORK_CONTEXT,
+            source_ref="openspec/changes/add-skillguard-assurance-diagnostics/specs/skillguard-assurance-diagnostics/spec.md",
+            commitment_ids=(
+                "commitment:assurance-diagnostics-preserve-authority",
+            ),
+            business_intent_ids=(
+                "intent:assurance-diagnostics-preserve-authority",
+            ),
+            primary_path_id="assurance-diagnostics-v1",
+            owner=MODEL_ID,
+            validation_boundary="approved read-only assurance diagnostic requirements",
+            rationale="defines blocker minimality, target-owned mutation evidence, and the no-weakening boundary",
         ),
     )
     model_surfaces = tuple(
@@ -1683,7 +1857,61 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         )
         for row in commitment_rows
     )
-    surfaces = (*base_surfaces, *model_surfaces, *test_surfaces)
+    source_inventory_revision = "skillguard-v2-assurance-diagnostics-v1"
+    discovery_evidence_id = (
+        "inventory:skillguard-v2-assurance-diagnostics-v1"
+    )
+    def bind_source_identity(
+        surface: BehaviorSourceSurface,
+    ) -> BehaviorSourceSurface:
+        digest = (
+            "sha256:"
+            + hashlib.sha256(
+                (
+                    f"{surface.surface_id}|{surface.source_ref}|"
+                    f"{','.join(surface.commitment_ids)}"
+                ).encode("utf-8")
+                ).hexdigest()
+        )
+        semantics_digest = (
+            "sha256:"
+            + hashlib.sha256(
+                ",".join(surface.commitment_ids).encode("utf-8")
+            ).hexdigest()
+        )
+        return replace(
+            surface,
+            source_system_id="skillguard-author-source",
+            native_artifact_id=surface.source_ref,
+            content_fingerprint=digest,
+            inventory_revision=source_inventory_revision,
+            discovery_evidence_ids=(discovery_evidence_id,),
+            declared_semantics_fingerprint=semantics_digest,
+            source_authority_role=(
+                BCL_SOURCE_AUTHORITY_NORMATIVE
+                if surface.surface_kind == BCL_SOURCE_WORK_CONTEXT
+                else BCL_SOURCE_AUTHORITY_OBSERVED
+                if surface.surface_kind == BCL_SOURCE_CODE
+                else BCL_SOURCE_AUTHORITY_SUPPORTING
+            ),
+            freshness_state=BCL_SOURCE_FRESHNESS_CURRENT,
+        )
+
+    surfaces = tuple(
+        bind_source_identity(surface)
+        for surface in (*base_surfaces, *model_surfaces, *test_surfaces)
+    )
+    source_inventory_fingerprint = (
+        "sha256:"
+        + hashlib.sha256(
+            "\n".join(
+                f"{surface.surface_id}|{surface.content_fingerprint}"
+                for surface in sorted(
+                    surfaces, key=lambda item: item.surface_id
+                )
+            ).encode("utf-8")
+        ).hexdigest()
+    )
     return BehaviorCommitmentLedger(
         "skillguard-v2-behavior-ledger",
         project_boundary="SkillGuard executable-contract runtime and portfolio feedback loop",
@@ -1691,6 +1919,16 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         commitments=commitments,
         source_surfaces=surfaces,
         expected_commitment_ids=tuple(commitment.commitment_id for commitment in commitments),
+        expected_business_intent_ids=tuple(
+            commitment.business_intent_id for commitment in commitments
+        ),
+        expected_source_surface_ids=tuple(
+            surface.surface_id for surface in surfaces
+        ),
+        source_inventory_revision=source_inventory_revision,
+        source_inventory_fingerprint=source_inventory_fingerprint,
+        source_inventory_evidence_ids=(discovery_evidence_id,),
+        require_complete_source_inventory=True,
         claim_scope=BCL_SCOPE_ROUTINE,
         change_mode=BCL_CHANGE_BOOTSTRAP_LEDGER,
         require_current_evidence=False,
@@ -1754,6 +1992,15 @@ def build_primary_path_authority_plan() -> PrimaryPathAuthorityPlan:
             owner_model_id=MODEL_ID,
             owner_code_contract_id="contract:author-repository-adoption-current",
             expected_terminal="author_repository_adopted_or_visible_blocker",
+            failure_policy="fail_closed",
+        ),
+        PrimaryPathContract(
+            "assurance-diagnostics-v1",
+            business_intent="explain current assurance blockers",
+            primary_entrypoint_id="skillguard.assurance-diagnostics",
+            owner_model_id=MODEL_ID,
+            owner_code_contract_id="contract:assurance-diagnostics-v1",
+            expected_terminal="explanation_or_visible_input_blocker",
             failure_policy="fail_closed",
         ),
     )
@@ -1850,6 +2097,22 @@ def build_contract_exhaustion_plan() -> ContractExhaustionPlan:
             mutation_types=("unknown_enum", "malformed_input"),
             description="step and parent receipt currentness",
         ),
+        ContractDimension(
+            "assurance_diagnostics",
+            "projection",
+            source_route="model_first_function_flow",
+            owner_model_id=MODEL_ID,
+            values=(
+                "read_only_current",
+                "stale_authority",
+                "closure_override",
+                "bounded_overclaim",
+                "foreign_mutation_judgment",
+                "obligation_weakening",
+            ),
+            mutation_types=("unknown_enum", "malformed_input"),
+            description="read-only assurance diagnostic and mutation-ownership boundary",
+        ),
     )
     block_oracle = ContractOracle(
         "oracle:block-before-close",
@@ -1884,6 +2147,10 @@ def build_contract_exhaustion_plan() -> ContractExhaustionPlan:
         ContractMutationCase("case:loop:no-delta", "loop_progress", "no_progress", oracle_id=block_oracle.oracle_id, input_delta={"progress_changed": False, "reentries": 1}, expected_status="blocked", required_test_cell_id="test:model:no-delta"),
         ContractMutationCase("case:loop:over-bound", "loop_progress", "out_of_range", oracle_id=block_oracle.oracle_id, input_delta={"reentries": 4, "max_reentries": 3}, expected_status="blocked", required_test_cell_id="test:model:over-bound"),
         ContractMutationCase("case:portfolio:unit-evidence-stale", "receipt_freshness", "stale", oracle_id=stale_oracle.oracle_id, input_delta={"maintenance_unit_evidence": "stale"}, expected_status="revalidation_required", required_test_cell_id="test:model:portfolio-unit-evidence-stale"),
+        ContractMutationCase("case:diagnostics:stale-authority", "assurance_diagnostics", "stale_authority", oracle_id=block_oracle.oracle_id, input_delta={"authority_identity": "stale"}, expected_status="blocked", required_test_cell_id="test:model:diagnostics-stale-authority"),
+        ContractMutationCase("case:diagnostics:closure-override", "assurance_diagnostics", "closure_override", oracle_id=block_oracle.oracle_id, input_delta={"closure_status_preserved": False}, expected_status="blocked", required_test_cell_id="test:model:diagnostics-closure-override"),
+        ContractMutationCase("case:diagnostics:foreign-mutation", "assurance_diagnostics", "foreign_mutation_judgment", oracle_id=block_oracle.oracle_id, input_delta={"mutation_owner": "skillguard"}, expected_status="blocked", required_test_cell_id="test:model:diagnostics-foreign-mutation"),
+        ContractMutationCase("case:diagnostics:obligation-weakening", "assurance_diagnostics", "obligation_weakening", oracle_id=block_oracle.oracle_id, input_delta={"next_action": "remove_obligation"}, expected_status="blocked", required_test_cell_id="test:model:diagnostics-obligation-weakening"),
     )
     return ContractExhaustionPlan(
         "skillguard-v2-contract-exhaustion",
@@ -1968,6 +2235,7 @@ def build_model_test_alignment_plan() -> ModelTestAlignmentPlan:
         ("obligation:execution-depth-closure", "closure consumes a current passing execution-depth receipt", "execution_depth_is_current_and_consumed", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:unique-depth-evidence", "unrelated depth obligations need unique evidence contribution", "evidence_contribution_is_unique", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:author-repository-adoption", "explicit author repositories preserve private current SkillGuard maintainer guidance", "author_repositories_keep_skillguard_maintenance_private", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
+        ("obligation:assurance-diagnostics", "assurance diagnostics preserve closure and target authority", "assurance_diagnostics_preserve_authority", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:global-router-handoff", "global routing preserves one typed handoff", "global_router_handoff_is_current", "test_self_host_functions_have_distinct_routes_and_terminals", "test_known_bad_scenarios_are_required"),
         ("obligation:provenance", "canonical installed repository and release provenance stay distinct", "provenance_is_non_downgrade", "test_self_host_functions_have_distinct_routes_and_terminals", "test_known_bad_scenarios_are_required"),
     )

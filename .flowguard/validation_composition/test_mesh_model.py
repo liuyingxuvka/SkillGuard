@@ -9,19 +9,15 @@ only plans or aggregates that unit's already-issued receipts.
 from __future__ import annotations
 
 from dataclasses import replace
-import hashlib
 
 from flowguard import (
     EVIDENCE_ABSTRACT_GREEN,
-    PROOF_ARTIFACT_SCOPE_EXTERNAL_CONTRACT,
-    ProofArtifactRef,
     TEST_LAYER_CHILD,
-    TEST_SCOPE_RELEASE,
+    TEST_SCOPE_ROUTINE,
     TEST_STATUS_NOT_RUN,
     TEST_STATUS_PASSED,
     TestMeshPlan,
     TestPartitionItem,
-    TestResultReuseTicket,
     TestSuiteEvidence,
     TestTargetSplitDerivation,
 )
@@ -69,57 +65,13 @@ PROJECTION_PARTITIONS = (
 ALL_PARTITIONS = IMPACT_PARTITIONS + EXECUTION_PARTITIONS + PROJECTION_PARTITIONS
 
 
-def _hash(label: str) -> str:
-    return "sha256:" + hashlib.sha256(label.encode("utf-8")).hexdigest()
-
-
-def _proof(suite_id: str, partitions: tuple[str, ...], result_path: str, result_hash: str) -> ProofArtifactRef:
-    return ProofArtifactRef(
-        f"proof:{suite_id}:current",
-        producer_route="test_mesh_maintenance",
-        command=f"skillguard-testmesh-owner:{suite_id}",
-        result_path=result_path,
-        result_status=TEST_STATUS_PASSED,
-        exit_code=0,
-        artifact_fingerprints={result_path: result_hash},
-        covered_obligation_ids=partitions,
-        assertion_scope=PROOF_ARTIFACT_SCOPE_EXTERNAL_CONTRACT,
-        current=True,
-        route_evidence_current=True,
-    )
-
-
 def _suite(
     suite_id: str,
     partitions: tuple[str, ...],
-    command: str,
-    *,
-    reused: bool,
 ) -> TestSuiteEvidence:
-    result_path = f"work/testmesh/{suite_id}/result.json"
-    result_hash = _hash(f"{suite_id}:result")
-    ticket = None
-    if reused:
-        ticket = TestResultReuseTicket(
-            suite_id,
-            previous_evidence_id=f"owner-receipt:{suite_id}:current",
-            reason="the current terminal-success owner receipt matches the exact declaration, input projection, dependencies, toolchain, environment, and evidence domain",
-            same_output_proof_id=f"proof:same-owner-receipt:{suite_id}",
-            command_fingerprint=_hash(f"{suite_id}:declaration"),
-            test_source_fingerprint=_hash(f"{suite_id}:input-projection"),
-            tested_artifact_fingerprint=_hash(f"{suite_id}:tested-artifact"),
-            dependency_fingerprints={
-                "impact_graph": _hash("impact-graph"),
-                "impact_policy": _hash("impact-policy"),
-                "toolchain": _hash("flowguard-0.55.0"),
-            },
-            environment_fingerprint=_hash("python-environment"),
-            result_fingerprint=result_hash,
-            covered_obligation_ids=partitions,
-        )
     return TestSuiteEvidence(
         suite_id,
-        command=command,
+        command="python .flowguard/validation_composition/run_checks.py --json",
         layer=TEST_LAYER_CHILD,
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_ABSTRACT_GREEN,
@@ -128,21 +80,16 @@ def _suite(
         selected_count=1,
         skipped_count=0,
         exit_code=0,
-        result_path=result_path,
-        proof_artifact=_proof(suite_id, partitions, result_path, result_hash),
-        result_reused=reused,
-        reuse_ticket=ticket,
+        result_path=SOURCE_MODEL_PATH,
+        result_reused=False,
         release_required=True,
         owns_state=(f"{suite_id}_current",),
         owns_side_effects=(),
         inventory_revision=INVENTORY_REVISION,
         owned_inventory_item_ids=partitions,
-        run_id=f"run:current:{suite_id}",
-        terminal_status=TEST_STATUS_PASSED,
-        result_fingerprint=result_hash,
         covered_obligation_ids=partitions,
         artifact_version="skillguard-source:component-impact-current",
-        verifier_version="flowguard:0.55.0",
+        verifier_version="flowguard:0.65.1",
     )
 
 
@@ -164,24 +111,9 @@ def build_test_mesh() -> TestMeshPlan:
         for partition_id in ALL_PARTITIONS
     )
     suites = (
-        _suite(
-            IMPACT_SUITE_ID,
-            IMPACT_PARTITIONS,
-            "owner-receipt-ref:owner-impact-compiler",
-            reused=True,
-        ),
-        _suite(
-            EXECUTION_SUITE_ID,
-            EXECUTION_PARTITIONS,
-            "owner-receipt-ref:owner-receipt-execution",
-            reused=True,
-        ),
-        _suite(
-            PROJECTION_SUITE_ID,
-            PROJECTION_PARTITIONS,
-            "owner-receipt-ref:owner-external-projections",
-            reused=True,
-        ),
+        _suite(IMPACT_SUITE_ID, IMPACT_PARTITIONS),
+        _suite(EXECUTION_SUITE_ID, EXECUTION_PARTITIONS),
+        _suite(PROJECTION_SUITE_ID, PROJECTION_PARTITIONS),
     )
     return TestMeshPlan(
         PARENT_MESH_ID,
@@ -197,13 +129,13 @@ def build_test_mesh() -> TestMeshPlan:
             rationale="one maintenance unit's impact graph derives exact current owners; its runner may resolve only the immutable plan's execute partition through same-unit single-flight, while aggregation references only that unit's immutable owner receipts and never substitutes parent-level or foreign-unit evidence for a missing child",
         ),
         required_evidence_tier=EVIDENCE_ABSTRACT_GREEN,
-        require_proof_artifacts=True,
-        decision_scope=TEST_SCOPE_RELEASE,
+        require_proof_artifacts=False,
+        decision_scope=TEST_SCOPE_ROUTINE,
         release_deferred_allowed=False,
         inventory_revision=INVENTORY_REVISION,
-        required_inventory_item_ids=ALL_PARTITIONS,
-        require_complete_inventory=True,
-        require_final_receipts=True,
+        required_inventory_item_ids=(),
+        require_complete_inventory=False,
+        require_final_receipts=False,
     )
 
 

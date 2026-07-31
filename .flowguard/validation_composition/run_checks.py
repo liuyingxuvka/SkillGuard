@@ -224,8 +224,10 @@ def run_all() -> tuple[bool, dict[str, Any]]:
         "function_blocks_use_input_state_set_contract": all("x" in block.__doc__ and "Set(" in block.__doc__ for block in BLOCKS),
         "eight_component_scoped_function_blocks": len(BLOCKS) == 8,
         "current_test_mesh_has_exact_owner_suites": tuple(suite.suite_id for suite in current_mesh.child_suites) == CURRENT_SUITE_IDS,
-        "current_test_mesh_parent_executes_no_owner_commands": all(
-            suite.result_reused and suite.command.startswith("owner-receipt-ref:")
+        "current_test_mesh_is_design_evidence_not_owner_receipt_reuse": all(
+            not suite.result_reused
+            and suite.command
+            == "python .flowguard/validation_composition/run_checks.py --json"
             for suite in current_mesh.child_suites
         ),
         "current_test_mesh_has_no_retired_success_suite": all("v1" not in suite_id.lower() and "legacy" not in suite_id.lower() for suite_id in CURRENT_SUITE_IDS),

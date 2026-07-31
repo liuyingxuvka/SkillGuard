@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillguard_assurance_diagnostics_report_v1.schema.json",
+  "title": "SkillGuard Assurance Diagnostics Report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "projection_kind",
+    "source_closure_status",
+    "closure_status_preserved",
+    "closure_licensed",
+    "authority_identities",
+    "blocker_basis",
+    "all_blocker_atoms",
+    "proposed_next_action_results",
+    "mutation_adequacy",
+    "claim_boundary",
+    "report_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "skillguard.assurance_diagnostics_report.v1"
+    },
+    "projection_kind": {
+      "const": "read_only_non_authoritative"
+    },
+    "source_closure_status": {
+      "type": "string"
+    },
+    "closure_status_preserved": {
+      "const": true
+    },
+    "closure_licensed": {
+      "const": false
+    },
+    "authority_identities": {
+      "type": "object"
+    },
+    "blocker_basis": {
+      "type": "object"
+    },
+    "all_blocker_atoms": {
+      "type": "array"
+    },
+    "proposed_next_action_results": {
+      "type": "array"
+    },
+    "mutation_adequacy": {
+      "type": "object"
+    },
+    "claim_boundary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "report_hash": {
+      "type": "string",
+      "pattern": "^[0-9A-F]{64}$"
+    }
+  }
+}

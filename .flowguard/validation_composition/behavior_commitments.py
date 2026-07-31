@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
+import hashlib
+from dataclasses import replace
+
 from flowguard import (
     BCL_ACTOR_AUTOMATION,
-    BCL_CHANGE_ADD_BEHAVIOR,
+    BCL_CHANGE_BOOTSTRAP_LEDGER,
     BCL_COMMITMENT_PROCESS,
     BCL_PLANE_DEVELOPMENT_PROCESS,
     BCL_SCOPE_ROUTINE,
+    BCL_SOURCE_AUTHORITY_NORMATIVE,
+    BCL_SOURCE_AUTHORITY_OBSERVED,
+    BCL_SOURCE_AUTHORITY_SUPPORTING,
     BCL_SOURCE_CODE,
-    BCL_SOURCE_OPENSPEC,
+    BCL_SOURCE_FRESHNESS_CURRENT,
     BCL_SOURCE_TEST,
+    BCL_SOURCE_WORK_CONTEXT,
     BehaviorCommitment,
     BehaviorCommitmentLedger,
     BehaviorSourceSurface,
@@ -130,12 +137,15 @@ COMMITMENT_ROWS = (
 def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
     commitment_ids = tuple(row[0] for row in COMMITMENT_ROWS)
     intent_ids = tuple(row[1] for row in COMMITMENT_ROWS)
-    source_ids = (
-        "surface:validation-composition-spec",
-        "surface:bounded-evidence-lifecycle-spec",
-        "surface:validation-composition-model",
-        "surface:validation-composition-checks",
-    )
+
+    def surface_ids_for(commitment_id: str) -> tuple[str, str, str]:
+        slug = commitment_id.removeprefix("commitment:")
+        return (
+            f"surface:spec:{slug}",
+            f"surface:model:{slug}",
+            f"surface:test:{slug}",
+        )
+
     commitments = tuple(
         BehaviorCommitment(
             commitment_id,
@@ -150,7 +160,7 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             expected_terminal=result,
             failure_boundary=failure,
             state_writes=state_writes,
-            source_surface_ids=source_ids,
+            source_surface_ids=surface_ids_for(commitment_id),
             primary_owner_model_id=MODEL_ID,
             supporting_model_ids=(PARENT_MODEL_ID,),
             owner=MODEL_ID,
@@ -159,58 +169,107 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         )
         for commitment_id, intent_id, trigger, result, failure, state_writes in COMMITMENT_ROWS
     )
-    surfaces = (
-        BehaviorSourceSurface(
-            source_ids[0],
-            surface_kind=BCL_SOURCE_OPENSPEC,
-            source_ref=SPEC_PATH,
-            commitment_ids=commitment_ids,
-            business_intent_ids=intent_ids,
-            owner=MODEL_ID,
-            validation_boundary="approved component-scoped validation requirements",
-            rationale="the existing OpenSpec change declares the maintained process commitments",
-        ),
-        BehaviorSourceSurface(
-            source_ids[1],
-            surface_kind=BCL_SOURCE_OPENSPEC,
-            source_ref=LIFECYCLE_SPEC_PATH,
-            commitment_ids=commitment_ids,
-            business_intent_ids=intent_ids,
-            owner=MODEL_ID,
-            validation_boundary="approved explicit-producer and bounded evidence lifecycle requirements",
-            rationale="the current OpenSpec change extends the existing validation-composition authority",
-        ),
-        BehaviorSourceSurface(
-            source_ids[2],
-            surface_kind=BCL_SOURCE_CODE,
-            source_ref=MODEL_PATH,
-            commitment_ids=commitment_ids,
-            business_intent_ids=intent_ids,
-            owner=MODEL_ID,
-            validation_boundary="finite executable FunctionBlocks and invariants",
-            rationale="the existing validation-composition model remains the single abstract owner",
-        ),
-        BehaviorSourceSurface(
-            source_ids[3],
-            surface_kind=BCL_SOURCE_TEST,
-            source_ref=RUNNER_PATH,
-            commitment_ids=commitment_ids,
-            business_intent_ids=intent_ids,
-            owner=MODEL_ID,
-            validation_boundary="normal and adversarial executable model review",
-            rationale="the unified runner consumes all model reports without replacing production tests",
-        ),
+    lifecycle_commitment_ids = {
+        "commitment:execution-lifecycle-is-controlled",
+        "commitment:producer-sharing-is-target-declared",
+        "commitment:evidence-lifecycle-is-bounded",
+    }
+    surfaces = tuple(
+        surface
+        for commitment_id, intent_id, *_ in COMMITMENT_ROWS
+        for surface in (
+            BehaviorSourceSurface(
+                surface_ids_for(commitment_id)[0],
+                surface_kind=BCL_SOURCE_WORK_CONTEXT,
+                source_ref=(
+                    LIFECYCLE_SPEC_PATH
+                    if commitment_id in lifecycle_commitment_ids
+                    else SPEC_PATH
+                ),
+                commitment_ids=(commitment_id,),
+                business_intent_ids=(intent_id,),
+                owner=MODEL_ID,
+                validation_boundary="approved component-scoped validation requirements",
+                rationale="the governing OpenSpec slice declares this one maintained process commitment",
+            ),
+            BehaviorSourceSurface(
+                surface_ids_for(commitment_id)[1],
+                surface_kind=BCL_SOURCE_CODE,
+                source_ref=MODEL_PATH,
+                commitment_ids=(commitment_id,),
+                business_intent_ids=(intent_id,),
+                owner=MODEL_ID,
+                validation_boundary="finite executable FunctionBlocks and invariants",
+                rationale="this projection binds one commitment to the existing validation-composition model",
+            ),
+            BehaviorSourceSurface(
+                surface_ids_for(commitment_id)[2],
+                surface_kind=BCL_SOURCE_TEST,
+                source_ref=RUNNER_PATH,
+                commitment_ids=(commitment_id,),
+                business_intent_ids=(intent_id,),
+                owner=MODEL_ID,
+                validation_boundary="normal and adversarial executable model review",
+                rationale="this projection binds one commitment to the unified native model runner",
+            ),
+        )
     )
+    source_ids = tuple(surface.surface_id for surface in surfaces)
+    source_inventory_revision = "skillguard-validation-composition-current"
+    discovery_evidence_id = "inventory:skillguard-validation-composition-current"
+
+    def bind_source_identity(
+        surface: BehaviorSourceSurface,
+    ) -> BehaviorSourceSurface:
+        content_fingerprint = "sha256:" + hashlib.sha256(
+            (
+                f"{surface.surface_id}|{surface.source_ref}|"
+                f"{','.join(surface.commitment_ids)}"
+            ).encode("utf-8")
+        ).hexdigest()
+        semantics_fingerprint = "sha256:" + hashlib.sha256(
+            ",".join(surface.commitment_ids).encode("utf-8")
+        ).hexdigest()
+        return replace(
+            surface,
+            source_system_id="skillguard-author-source",
+            native_artifact_id=surface.source_ref,
+            content_fingerprint=content_fingerprint,
+            inventory_revision=source_inventory_revision,
+            discovery_evidence_ids=(discovery_evidence_id,),
+            declared_semantics_fingerprint=semantics_fingerprint,
+            source_authority_role=(
+                BCL_SOURCE_AUTHORITY_NORMATIVE
+                if surface.surface_kind == BCL_SOURCE_WORK_CONTEXT
+                else BCL_SOURCE_AUTHORITY_OBSERVED
+                if surface.surface_kind == BCL_SOURCE_CODE
+                else BCL_SOURCE_AUTHORITY_SUPPORTING
+            ),
+            freshness_state=BCL_SOURCE_FRESHNESS_CURRENT,
+        )
+
+    current_surfaces = tuple(bind_source_identity(surface) for surface in surfaces)
+    source_inventory_fingerprint = "sha256:" + hashlib.sha256(
+        "\n".join(
+            f"{surface.surface_id}|{surface.content_fingerprint}"
+            for surface in sorted(current_surfaces, key=lambda item: item.surface_id)
+        ).encode("utf-8")
+    ).hexdigest()
     return BehaviorCommitmentLedger(
         "skillguard-validation-composition-ledger",
         project_boundary="SkillGuard component-scoped validation evidence composition beneath the existing portable semantic parent",
         current_revision="compose-validation-evidence-component-impact-current",
         commitments=commitments,
-        source_surfaces=surfaces,
+        source_surfaces=current_surfaces,
         expected_commitment_ids=commitment_ids,
         expected_business_intent_ids=intent_ids,
+        expected_source_surface_ids=source_ids,
+        source_inventory_revision=source_inventory_revision,
+        source_inventory_fingerprint=source_inventory_fingerprint,
+        source_inventory_evidence_ids=(discovery_evidence_id,),
+        require_complete_source_inventory=True,
         claim_scope=BCL_SCOPE_ROUTINE,
-        change_mode=BCL_CHANGE_ADD_BEHAVIOR,
+        change_mode=BCL_CHANGE_BOOTSTRAP_LEDGER,
         require_current_evidence=False,
         owner=MODEL_ID,
         validation_boundary="design-stage executable evidence only; production receipts remain separately required",

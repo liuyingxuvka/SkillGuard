@@ -1,6 +1,6 @@
 # SkillGuard README Model Evidence
 
-This file records the LogicGuard-backed capability model used for the `v0.4.1`
+This file records the LogicGuard-backed capability model used for the `v0.5.0`
 source README. It is README synthesis evidence only. It does not replace
 SkillGuard or FlowGuard checks, package publication, GitHub release
 confirmation, or future AI behavior validation.
@@ -13,7 +13,7 @@ confirmation, or future AI behavior validation.
   compiler, author supervisor, TestMesh, Portfolio, consumer distribution,
   installer, privacy/provenance checks, FlowGuard models, schemas, fixtures,
   tests, and CI workflow definition.
-- release/version facts: current source version is `v0.4.1`; `VERSION`,
+- release/version facts: current source version is `v0.5.0`; `VERSION`,
   `pyproject.toml`, README, changelog, and release notes must agree before a tag
   or GitHub Release claim.
 - authority facts: the `.skillguard` contract trio is author-maintenance
@@ -46,6 +46,9 @@ consumer projection that excludes every SkillGuard control surface.
 
 - current author schema, compiler, supervisor, receipt, TestMesh, Portfolio,
   consumer distribution, installation, privacy, and project-adoption source;
+- current assurance-diagnostics source, schemas, CLI, FlowGuard scenarios, and
+  tests proving read-only closure preservation, exact minimality language,
+  target-owned mutation projection, and obligation-weakening rejection;
 - `.flowguard` declared-check, validation-composition, executable-contract,
   runtime-authority, Portfolio, template, router, and process models;
 - positive and known-bad model scenarios for author boundaries, unit evidence
@@ -98,6 +101,7 @@ retired. Otherwise each unit owns and proves its own distinct promise.
 | Official OpenSpec remains external. | Local injection made official skills depend on SkillGuard. | Restore official package skills and allow read-only FlowGuard spec context only. | Provider-exclusion tests, FlowGuard SpecContext model, directory parity checks. | No receipt, session, cache, or execution-owner bridge exists. | OpenSpec upgrades independently. | Read-only context does not prove execution. | FlowGuard still owns its models and tests. |
 | Installation is staged and reversible. | Cleanup can delete user changes or target runtime. | Preflight hidden runtime, stage and audit, activate transactionally, preserve conflicts, roll back. | Installation code and rollback/conflict tests. | Only owned hash-current files are withdrawn automatically. | Migration is safer. | Not a packaged installer product. | Modified conflicts require explicit resolution. |
 | README claims are evidence-bound. | Documentation can overstate release readiness. | Check bilingual mirror, hero provenance, version, model evidence, commands, privacy, and conservative wording. | README gate and current files. | Required public facts and limits are mechanically checked. | Attractive but bounded documentation. | Does not publish anything. | Publication remains separate. |
+| Assurance diagnostics preserve authority. | A concise explanation can accidentally become a second closure or domain judge. | Consume exact current identities, derive only a deletion-proven blocker basis, preserve the closure terminal, and copy target-owned mutation status unchanged. | Current schemas, runtime, CLI, FlowGuard scenarios, self-mutations, and focused tests. | The diagnostic report has no execution, receipt, weakening, or closure-licensing action. | Maintainers see the smallest proven explanation without losing the original evidence boundary. | Bounded computation reports incomplete; ordinary tests never imply mutation adequacy. | The target still decides mutation operators, oracle, applicability, equivalent mutants, threshold, and result. |
 
 ## Narrative Structure Plan
 
@@ -126,7 +130,7 @@ retired. Otherwise each unit owns and proves its own distinct promise.
 - migration risk: target-domain runtime under `.skillguard/runtime` must move
   and pass parity before cleanup; unknown canonical sources block destructive
   withdrawal.
-- maturity: SkillGuard remains a `0.3.x` source-level project.
+- maturity: SkillGuard remains a `0.5.x` source-level project.
 - privacy risks: public and consumer artifacts must exclude private installed
   inventories, absolute paths, credentials, author receipts, and task text.
 

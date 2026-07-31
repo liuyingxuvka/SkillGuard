@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.5.0 - 2026-07-30
+
+- Added a read-only assurance-diagnostics route over the one current compiled contract, exact check manifest, impact graph, supplied receipts, and hashed closure evaluation; the report preserves the source closure terminal and never executes or resumes an owner.
+- Added deterministic dependency-aware deletion-minimal blocker bases with per-atom necessity witnesses, explicit `subset_minimal` versus `bounded_incomplete` language, and no minimum-cardinality claim without exhaustive proof.
+- Added target-owned mutation-adequacy projection. Operators, oracle, applicability, equivalent-mutant disposition, threshold, and native result remain target declarations; missing evidence is `not_run`, while incomplete, stale, foreign, or invalid evidence stays blocked.
+- Rejected diagnostic next actions that remove, relax, auto-scope, or otherwise weaken obligations, and added current-only schemas, CLI coverage, prompt/reference guidance, self-mutations, FlowGuard scenarios, behavior commitments, contract-exhaustion cases, and focused regressions.
+- Repaired the released v0.4.2 documentation baseline by recording its missing changelog entry, updating FlowGuard source-inventory modeling and CI pins to the current 0.65.1 release, and preserving source, installation, Git, and publication identities as separate claims.
+
+## v0.4.2 - 2026-07-23
+
+- Added target-owned validated template-pack selection, instance, validation, installation, rollback, and harvest supervision while keeping the selected target Guard as the sole domain route, builder, validator, and semantic owner.
+- Kept template selection and instance receipts as author-side planning and validation evidence only; they do not enter consumer distributions or independently license target closure.
+- Preserved the v0.4 bounded evidence lifecycle, same-unit execution ownership, zero compatibility/fallback policy, and independent release/publication claim boundary.
+
 ## v0.4.1 - 2026-07-22
 
 - Reconciled the public source, Python package metadata, installed maintainer skill, and FlowGuard 0.59.0 project record so a maintainer computer no longer reports the retired 0.3.3 package identity while executing the current 0.4 runtime.

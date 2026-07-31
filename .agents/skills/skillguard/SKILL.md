@@ -58,6 +58,9 @@ It must not:
   supervision run.
 - Read `references/skillguard-execution-depth.md` for completion and depth
   evidence.
+- Read `references/skillguard-assurance-diagnostics.md` when the user needs a
+  read-only explanation of blocked closure or a projection of target-declared
+  mutation evidence.
 - Read `references/skillguard-test-mesh.md` for planning and executing the
   checks owned by one maintenance unit.
 - Read `references/skillguard-portfolio.md` for the private inventory of
@@ -112,6 +115,8 @@ Use this skill when the user asks to:
   responsibilities or tests;
 - maintain SkillGuard's private Portfolio or maintainer routing registry;
 - repair an author repository's SkillGuard maintenance instructions.
+- explain which current blockers keep one closure closed or blocked without
+  executing, resuming, or weakening the target's obligations.
 
 ## Do Not Use When
 
@@ -157,6 +162,13 @@ owner. Do not build shared proof.
    Compile the exact current source into the compiled contract and check
    manifest. Former formats are rejection-only; there is no converter,
    fallback, dual reader, or compatibility success route.
+
+   When a current closure already exists, `assurance-diagnostics` may derive a
+   dependency-aware subset-minimal blocker basis from the exact compiled
+   contract, check manifest, impact graph, receipts, and closure assessment.
+   The diagnostic report is read-only. It cannot issue a receipt, change the
+   closure terminal, run or resume a missing owner, or remove, relax, or
+   auto-scope an obligation.
 
 5. Freeze the unit's validation plan.
 
@@ -287,6 +299,10 @@ It must not contain:
 - more than one writable evidence authority for a maintenance unit: block.
 - stale GC plan, reachable candidate, active-store purge target, or failed
   current/release-pin replay: zero deletion.
+- diagnostic input with a former schema, mismatched authority identity, or
+  stale/foreign mutation receipt: block the projection; never infer success.
+- proposed diagnostic action that removes, relaxes, scopes, or weakens an
+  obligation: reject.
 
 ## Output Requirements
 
@@ -303,6 +319,9 @@ Every result states:
 - residual risk;
 - a claim boundary that distinguishes author-side proof from consumer runtime
   behavior.
+- when assurance diagnostics were requested: source closure status, exact
+  authority fingerprints, blocker-basis completeness, necessity witnesses,
+  and the unchanged target-owned mutation result.
 
 ## SkillGuard Maintenance
 

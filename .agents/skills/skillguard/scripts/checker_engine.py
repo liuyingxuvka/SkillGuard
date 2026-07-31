@@ -38,6 +38,7 @@ from skillguard_v2.contract_compiler import (
     canonical_hash,
     compile_skill_contract,
 )
+from skillguard_v2.assurance_diagnostics import derive_assurance_diagnostics
 from skillguard_v2.content_projection import (
     current_content_projection_from_files,
     impact_file_hash,
@@ -11564,6 +11565,75 @@ def commands(argv: list[str]) -> int:
     return write_and_exit(payload, args.output)
 
 
+def assurance_diagnostics(argv: list[str]) -> int:
+    parser = JsonArgumentParser(
+        prog="skillguard.py assurance-diagnostics",
+        description=(
+            "Derive a read-only blocker basis and target-owned mutation projection "
+            "from supplied current SkillGuard authorities."
+        ),
+    )
+    parser.add_argument(
+        "--input",
+        required=True,
+        help="Current assurance diagnostic input JSON under the repository root.",
+    )
+    parser.add_argument(
+        "--output",
+        default="-",
+        help="Output report path under the skill root, or '-' for stdout.",
+    )
+    args = parser.parse_args(argv)
+    input_path = ensure_under_root(args.input)
+    source = load_json(input_path)
+    if not isinstance(source, Mapping):
+        raise ValueError("assurance diagnostic input must be a JSON object")
+    report = derive_assurance_diagnostics(source)
+    payload = base_result(
+        "assurance-diagnostics", public_relative_path(input_path)
+    )
+    payload["decision"] = "pass"
+    payload["diagnostics"] = report
+    payload["checks"] = [
+        {
+            "check_id": "assurance-diagnostics:current-authorities",
+            "name": "Current authority identities",
+            "required": True,
+            "status": "pass",
+            "summary": (
+                "Validated the current compiled contract, check manifest, "
+                "impact graph binding, and closure assessment identity."
+            ),
+        },
+        {
+            "check_id": "assurance-diagnostics:read-only-projection",
+            "name": "Read-only diagnostic projection",
+            "required": True,
+            "status": "pass",
+            "summary": (
+                "Derived explanatory blocker and mutation projections without "
+                "executing an owner or changing closure."
+            ),
+        },
+    ]
+    payload["evidence"] = [
+        {
+            "evidence_id": "assurance-diagnostics-input",
+            "kind": "current_authority_projection",
+            "fresh": True,
+            "summary": (
+                "Consumed the exact authority fingerprints listed in the "
+                "diagnostic report."
+            ),
+            "source_path": public_relative_path(input_path),
+        }
+    ]
+    payload["blockers"] = []
+    payload["failures"] = []
+    payload["claim_boundary"] = report["claim_boundary"]
+    return write_and_exit(payload, args.output)
+
+
 def check_suite_map(argv: list[str]) -> int:
     return check_json_record("check-suite-map", argv, "skillguard_suite_map.schema.json")
 
@@ -13708,6 +13778,7 @@ CommandHandler = Callable[[list[str]], int]
 
 COMMAND_SUMMARIES: dict[str, str] = {
     "commands": "List command dispatch targets.",
+    "assurance-diagnostics": "Explain current closure blockers and project target-owned mutation evidence without executing or changing authority.",
     "route-task": "Route one task request to a current SkillGuard command family.",
     "inventory": "Generate a repository inventory record.",
     "plan-skill": "Convert a skill idea JSON file into a no-write Skill Blueprint preview.",
@@ -13762,6 +13833,7 @@ COMMAND_SUMMARIES: dict[str, str] = {
 
 COMMANDS: dict[str, CommandHandler] = {
     "commands": commands,
+    "assurance-diagnostics": assurance_diagnostics,
     "route-task": route_task,
     "inventory": inventory,
     "plan-skill": plan_skill,

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "skillguard_assurance_diagnostic_input_v1.schema.json",
+  "title": "SkillGuard Assurance Diagnostic Input v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "compiled_contract",
+    "check_manifest",
+    "closure_report",
+    "receipts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "skillguard.assurance_diagnostic_input.v1"
+    },
+    "compiled_contract": {
+      "type": "object"
+    },
+    "check_manifest": {
+      "type": "object"
+    },
+    "closure_report": {
+      "type": "object"
+    },
+    "receipts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "evaluation_budget": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "proposed_next_actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "mutation_contract": {
+      "type": "object"
+    },
+    "mutation_receipt": {
+      "type": "object"
+    }
+  }
+}
