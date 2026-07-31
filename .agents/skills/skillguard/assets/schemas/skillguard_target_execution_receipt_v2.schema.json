@@ -8,7 +8,7 @@
     "schema_version", "receipt_id", "sequence", "receipt_hash", "run_id",
     "target_skill_id", "contract_hash", "profile_id", "profile_fingerprint",
     "integration_mode", "native_owner_id", "native_route_ids", "native_check_ids",
-    "request_fingerprint", "declared_check_inventory", "declared_check_results",
+    "request_fingerprint", "declared_check_inventory", "declared_check_results", "model_deepening_result",
     "unresolved_check_ids", "evidence_domain", "scheduled_production_identity",
     "status", "enforcement_decision", "dimension_results", "coverage_universe_results",
     "obligation_results", "evidence_contributions", "provider_runtime_audit",
@@ -35,6 +35,25 @@
     "request_fingerprint": {"$ref": "#/$defs/hash"},
     "declared_check_inventory": {"type": "object"},
     "declared_check_results": {"type": "array", "items": {"type": "object"}},
+    "model_deepening_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required", "check_id", "execution_owner_id", "request_fingerprint",
+        "disposition", "current", "receipt_id", "receipt_hash", "status"
+      ],
+      "properties": {
+        "required": {"type": "boolean"},
+        "check_id": {"type": "string"},
+        "execution_owner_id": {"type": "string"},
+        "request_fingerprint": {"type": "string"},
+        "disposition": {"type": "string"},
+        "current": {"type": "boolean"},
+        "receipt_id": {"type": "string"},
+        "receipt_hash": {"type": "string"},
+        "status": {"enum": ["passed", "blocked", "not_declared", "not_run"]}
+      }
+    },
     "unresolved_check_ids": {"$ref": "#/$defs/ids"},
     "evidence_domain": {"enum": ["fixture_validation", "capability_validation", "scheduled_production"]},
     "scheduled_production_identity": {"type": "object"},

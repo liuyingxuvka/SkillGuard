@@ -88,6 +88,7 @@ DEPTH_PROFILE_FIELDS = frozenset(
         "native_owner_id",
         "native_route_ids",
         "native_check_ids",
+        "model_deepening_check_id",
         "native_route_absent_confirmed",
         "skillguard_adds_domain_route",
         "enforcement_level",
@@ -105,6 +106,19 @@ DEPTH_CONTRIBUTION_RANGE_FIELDS = frozenset(
         "obligation_ids",
         "universe_id",
         "native_observation_locator",
+    }
+)
+MODEL_DEEPENING_RESULT_FIELDS = frozenset(
+    {
+        "required",
+        "check_id",
+        "execution_owner_id",
+        "request_fingerprint",
+        "disposition",
+        "current",
+        "receipt_id",
+        "receipt_hash",
+        "status",
     }
 )
 CONTENT_ROLES = frozenset(
@@ -1384,6 +1398,24 @@ def validate_depth_profile(payload: object, *, path: str = "$") -> tuple[SchemaF
         findings.append(_finding("depth_native_route_duplicate", f"{path}.native_route_ids", "route ids must be unique"))
     if len(check_ids) != len(set(check_ids)) or not check_ids:
         findings.append(_finding("depth_native_check_inventory_invalid", f"{path}.native_check_ids", "a non-empty unique declared-check inventory is required"))
+    model_deepening_check_id = str(root.get("model_deepening_check_id", "")).strip()
+    if "model_deepening_check_id" in root:
+        if not model_deepening_check_id:
+            findings.append(
+                _finding(
+                    "depth_model_deepening_check_id_invalid",
+                    f"{path}.model_deepening_check_id",
+                    "a non-empty declared target check id is required",
+                )
+            )
+        elif model_deepening_check_id not in set(check_ids):
+            findings.append(
+                _finding(
+                    "depth_model_deepening_check_not_native",
+                    f"{path}.model_deepening_check_id",
+                    model_deepening_check_id,
+                )
+            )
     if integration_mode == "native-integrated" and not route_ids:
         findings.append(_finding("depth_native_route_missing", f"{path}.native_route_ids", "the target-native route must remain declared"))
     if root.get("skillguard_adds_domain_route") is not False:
@@ -1491,6 +1523,7 @@ RUNTIME_REQUIRED_FIELDS: Mapping[str, tuple[str, ...]] = {
         "native_owner_id",
         "native_route_ids",
         "native_check_ids",
+        "model_deepening_result",
         "request_fingerprint",
         "declared_check_inventory",
         "declared_check_results",
@@ -1592,8 +1625,125 @@ def validate_runtime_payload(payload: object, expected_schema: str) -> tuple[Sch
         inventory = _mapping(root.get("declared_check_inventory"), "$.declared_check_inventory", findings)
         if inventory.get("schema_version") != "skillguard.declared_check_inventory.current":
             findings.append(_finding("declared_check_inventory_schema_invalid", "$.declared_check_inventory.schema_version", str(inventory.get("schema_version", ""))))
-        _rows(root.get("declared_check_results"), "$.declared_check_results", findings)
+        declared_results = _rows(root.get("declared_check_results"), "$.declared_check_results", findings)
         _string_list(root.get("unresolved_check_ids"), "$.unresolved_check_ids", findings)
+        deepening = _mapping(
+            root.get("model_deepening_result"),
+            "$.model_deepening_result",
+            findings,
+        )
+        unknown_deepening = sorted(set(deepening) - MODEL_DEEPENING_RESULT_FIELDS)
+        if unknown_deepening:
+            findings.append(
+                _finding(
+                    "model_deepening_result_unknown_field",
+                    "$.model_deepening_result",
+                    ",".join(unknown_deepening),
+                )
+            )
+        for key in MODEL_DEEPENING_RESULT_FIELDS:
+            if key not in deepening:
+                findings.append(
+                    _finding(
+                        "model_deepening_result_required_field_missing",
+                        f"$.model_deepening_result.{key}",
+                        key,
+                    )
+                )
+        if deepening.get("required") is True:
+            check_id = str(deepening.get("check_id", ""))
+            owner_id = str(deepening.get("execution_owner_id", ""))
+            receipt_id = str(deepening.get("receipt_id", ""))
+            receipt_hash = str(deepening.get("receipt_hash", ""))
+            if check_id not in {
+                str(item) for item in root.get("native_check_ids", [])
+            }:
+                findings.append(
+                    _finding(
+                        "model_deepening_result_check_not_native",
+                        "$.model_deepening_result.check_id",
+                        check_id,
+                    )
+                )
+            if not owner_id:
+                findings.append(
+                    _finding(
+                        "model_deepening_result_owner_missing",
+                        "$.model_deepening_result.execution_owner_id",
+                        owner_id,
+                    )
+                )
+            if deepening.get("request_fingerprint") != request_fingerprint:
+                findings.append(
+                    _finding(
+                        "model_deepening_result_request_mismatch",
+                        "$.model_deepening_result.request_fingerprint",
+                        str(deepening.get("request_fingerprint", "")),
+                    )
+                )
+            if (
+                deepening.get("disposition") != "passed"
+                or deepening.get("current") is not True
+                or deepening.get("status") != "passed"
+                or not receipt_id
+                or SHA256_RE.fullmatch(receipt_hash) is None
+            ):
+                findings.append(
+                    _finding(
+                        "model_deepening_result_not_current_terminal_success",
+                        "$.model_deepening_result",
+                        check_id,
+                    )
+                )
+            matching_results = [
+                row
+                for row in declared_results
+                if row.get("check_id") == check_id
+            ]
+            if len(matching_results) != 1 or any(
+                matching_results[0].get(field) != deepening.get(field)
+                for field in (
+                    "check_id",
+                    "execution_owner_id",
+                    "disposition",
+                    "current",
+                    "receipt_id",
+                    "receipt_hash",
+                )
+            ):
+                findings.append(
+                    _finding(
+                        "model_deepening_result_declared_projection_mismatch",
+                        "$.model_deepening_result",
+                        check_id,
+                    )
+                )
+        elif deepening.get("required") is False:
+            if (
+                deepening.get("check_id") != ""
+                or deepening.get("execution_owner_id") != ""
+                or deepening.get("request_fingerprint") != request_fingerprint
+                or deepening.get("disposition") != "not_declared"
+                or deepening.get("current") is not False
+                or deepening.get("receipt_id") != ""
+                or deepening.get("receipt_hash") != ""
+                or deepening.get("status") != "not_declared"
+            ):
+                findings.append(
+                    _finding(
+                        "model_deepening_not_declared_projection_invalid",
+                        "$.model_deepening_result",
+                        "undeclared projections must carry no producer identity",
+                    )
+                )
+        else:
+            findings.append(
+                _finding(
+                    "model_deepening_result_required_invalid",
+                    "$.model_deepening_result.required",
+                    str(deepening.get("required")),
+                )
+            )
     return tuple(findings)
 
 

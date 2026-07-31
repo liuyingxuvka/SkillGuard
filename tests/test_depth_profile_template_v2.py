@@ -55,6 +55,9 @@ class DepthProfileTemplateV2Tests(unittest.TestCase):
             [row["check_id"] for row in declarations],
             profile["native_check_ids"],
         )
+        self.assertIn(
+            profile["model_deepening_check_id"], profile["native_check_ids"]
+        )
         self.assertEqual(
             list(RUNTIME_CAPABILITY_IDS),
             profile["provider_runtime"]["required_capability_ids"],

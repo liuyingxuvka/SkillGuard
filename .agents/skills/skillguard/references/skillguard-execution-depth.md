@@ -8,7 +8,7 @@ It does not decide what the target should protect, which domain failures matter,
 
 There is no optional, advisory, bypass, family-specific, or target-category mode.
 
-1. Read the target's current `depth_profile` and exact `native_check_ids`.
+1. Read the target's current `depth_profile`, exact `native_check_ids`, and any explicitly designated `model_deepening_check_id`.
 2. Freeze one maintenance-unit inventory containing every member, semantic check, evidence subject, execution owner, evidence domain, and dependency.
 3. Execute each owner once or reuse one immutable current terminal-success receipt only inside the same unit with the same complete execution identity and inputs.
 4. Reconcile the frozen inventory against results by exact check id, owner id, request fingerprint, disposition, freshness, receipt id, and receipt hash.
@@ -16,12 +16,13 @@ There is no optional, advisory, bypass, family-specific, or target-category mode
 6. Issue one declared-check execution receipt only when the unresolved-check set is empty and the enrolled provider runtime is current.
 7. Require the requested closure to consume that exact receipt.
 
-For a maintained target with an iterative model-deepening workflow, the frozen
-inventory must also contain the target's own model-closure check. The target
-owns the prediction, falsifier, gap, and iteration semantics; SkillGuard only
-reconciles the opaque terminal receipt and its freshness. Self-report,
-addressable gaps, stale receipts, and no-progress results cannot satisfy the
-declared check.
+For a maintained target with an iterative model-deepening workflow, the profile
+designates one target-owned check already present in the frozen inventory.
+SkillGuard emits a separate typed projection of the exact current producer
+receipt and rejects missing, wrong-owner, wrong-request, stale, non-terminal,
+or non-passing evidence. The target owns prediction, falsifier, gap, progress,
+and iteration semantics. SkillGuard never derives those meanings from prose or
+from the check's name.
 
 ## Target ownership boundary
 
@@ -41,6 +42,7 @@ The current profile is `skillguard.depth_profile.v2` and permits only:
 
 - target, profile, integration, native owner, and native route identity;
 - a non-empty exact `native_check_ids` inventory;
+- an optional `model_deepening_check_id` that, when declared, must name one check in that exact inventory;
 - fixed `enforcement_level: enforced` and `skillguard_adds_domain_route: false`;
 - closure profiles that must consume the receipt;
 - enrolled provider runtime identity, capabilities, and readiness check ids;
@@ -53,6 +55,11 @@ Former target-domain policy fields and any target classification are invalid cur
 `CONTRACT_DEPTH_PASS` means the declared inventory is structurally valid and bound to known current checks and owners. It does not prove execution.
 
 `EXECUTION_DEPTH_PASS` means every frozen declared check has exactly one current terminal-success result for the same maintenance unit, member, evidence subject, semantic check, request, and runtime, with an immutable receipt identity and no unresolved check. It does not prove claims beyond the target's own check boundaries.
+
+When `model_deepening_check_id` is present, the receipt also contains a
+`model_deepening_result` projection. Replay checks that this projection equals
+the declared result and its frozen owner; changing a Boolean or writing a
+second narrative cannot make the gate pass.
 
 This receipt is author-maintenance evidence. It is not copied into the
 graduated consumer and is not a consumer runtime prerequisite.

@@ -79,6 +79,7 @@ class DepthEvaluation:
     evidence_contributions: tuple[Mapping[str, Any], ...]
     provider_runtime_audit: Mapping[str, Any]
     declared_check_results: tuple[Mapping[str, Any], ...]
+    model_deepening_result: Mapping[str, Any]
     unresolved_check_ids: tuple[str, ...]
     uncovered_obligation_ids: tuple[str, ...]
     blockers: tuple[str, ...]
@@ -107,6 +108,7 @@ class DepthEvaluation:
             "declared_check_results": [
                 dict(row) for row in self.declared_check_results
             ],
+            "model_deepening_result": dict(self.model_deepening_result),
             "unresolved_check_ids": list(self.unresolved_check_ids),
             "uncovered_obligation_ids": list(self.uncovered_obligation_ids),
             "blockers": list(self.blockers),
@@ -127,6 +129,17 @@ def _empty_evaluation(status: str, blocker: str) -> DepthEvaluation:
         evidence_contributions=(),
         provider_runtime_audit={"status": "not_run", "blockers": [blocker]},
         declared_check_results=(),
+        model_deepening_result={
+            "required": False,
+            "check_id": "",
+            "execution_owner_id": "",
+            "request_fingerprint": "",
+            "disposition": "not_run",
+            "current": False,
+            "receipt_id": "",
+            "receipt_hash": "",
+            "status": "not_run",
+        },
         unresolved_check_ids=(),
         uncovered_obligation_ids=(),
         blockers=(blocker,),
@@ -212,6 +225,53 @@ def evaluate_execution_depth(
     unresolved_check_ids = tuple(
         sorted(str(item) for item in reconciliation.get("unresolved_check_ids", []))
     )
+    model_deepening_check_id = str(profile.get("model_deepening_check_id", ""))
+    model_deepening_result: dict[str, Any] = {
+        "required": bool(model_deepening_check_id),
+        "check_id": model_deepening_check_id,
+        "execution_owner_id": "",
+        "request_fingerprint": str(reconciliation.get("request_fingerprint", "")),
+        "disposition": "not_declared" if not model_deepening_check_id else "not_run",
+        "current": False,
+        "receipt_id": "",
+        "receipt_hash": "",
+        "status": "not_declared" if not model_deepening_check_id else "blocked",
+    }
+    if model_deepening_check_id:
+        candidates = [
+            dict(row)
+            for row in reconciliation.get("check_results", [])
+            if isinstance(row, Mapping)
+            and str(row.get("check_id", "")) == model_deepening_check_id
+        ]
+        if len(candidates) != 1:
+            blockers.append(
+                f"model_deepening_result_count_invalid:{model_deepening_check_id}:{len(candidates)}"
+            )
+        else:
+            selected = candidates[0]
+            model_deepening_result.update(
+                {
+                    "execution_owner_id": str(selected.get("execution_owner_id", "")),
+                    "disposition": str(selected.get("disposition", "")) or "blocked",
+                    "current": selected.get("current") is True,
+                    "receipt_id": str(selected.get("receipt_id", "")),
+                    "receipt_hash": str(selected.get("receipt_hash", "")),
+                }
+            )
+            exact = (
+                model_deepening_result["disposition"] == "passed"
+                and model_deepening_result["current"] is True
+                and bool(model_deepening_result["execution_owner_id"])
+                and bool(model_deepening_result["request_fingerprint"])
+                and bool(model_deepening_result["receipt_id"])
+                and len(model_deepening_result["receipt_hash"]) == 64
+            )
+            model_deepening_result["status"] = "passed" if exact else "blocked"
+            if not exact:
+                blockers.append(
+                    f"model_deepening_receipt_not_current_terminal_success:{model_deepening_check_id}"
+                )
 
     provider = context.get("provider_runtime_audit", {})
     provider_runtime_audit = (
@@ -260,6 +320,7 @@ def evaluate_execution_depth(
         declared_check_results=tuple(
             dict(row) for row in reconciliation.get("check_results", [])
         ),
+        model_deepening_result=model_deepening_result,
         unresolved_check_ids=unresolved_check_ids,
         uncovered_obligation_ids=uncovered,
         blockers=tuple(blockers),
@@ -276,6 +337,64 @@ def evaluate_execution_depth(
 
 def _depth_receipts_root(run_root: Path) -> Path:
     return filesystem_path(run_root / "depth-receipts")
+
+
+def _model_deepening_projection_blocker(
+    receipt: Mapping[str, Any], profile: Mapping[str, Any]
+) -> str:
+    """Return a blocker when a designated deepening projection is not exact."""
+
+    check_id = str(profile.get("model_deepening_check_id", ""))
+    if not check_id:
+        return ""
+    result = receipt.get("model_deepening_result", {})
+    if not isinstance(result, Mapping):
+        return "model_deepening_result_missing"
+    if result.get("required") is not True or result.get("check_id") != check_id:
+        return "model_deepening_result_check_mismatch"
+    if (
+        result.get("status") != "passed"
+        or result.get("disposition") != "passed"
+        or result.get("current") is not True
+        or not str(result.get("execution_owner_id", ""))
+        or not str(result.get("receipt_id", ""))
+        or len(str(result.get("receipt_hash", ""))) != 64
+    ):
+        return "model_deepening_result_not_current_terminal_success"
+    if result.get("request_fingerprint") != receipt.get("request_fingerprint"):
+        return "model_deepening_result_request_mismatch"
+    inventory = receipt.get("declared_check_inventory", {})
+    inventory_rows = (
+        inventory.get("checks", []) if isinstance(inventory, Mapping) else []
+    )
+    declarations = [
+        row
+        for row in inventory_rows
+        if isinstance(row, Mapping) and row.get("check_id") == check_id
+    ]
+    if len(declarations) != 1:
+        return "model_deepening_inventory_owner_missing"
+    if result.get("execution_owner_id") != declarations[0].get("execution_owner_id"):
+        return "model_deepening_execution_owner_mismatch"
+    result_rows = receipt.get("declared_check_results", [])
+    matches = [
+        row
+        for row in result_rows
+        if isinstance(row, Mapping) and row.get("check_id") == check_id
+    ]
+    if len(matches) != 1:
+        return "model_deepening_declared_result_missing"
+    for field in (
+        "check_id",
+        "execution_owner_id",
+        "disposition",
+        "current",
+        "receipt_id",
+        "receipt_hash",
+    ):
+        if result.get(field) != matches[0].get(field):
+            return f"model_deepening_declared_result_mismatch:{field}"
+    return ""
 
 
 def load_target_execution_receipts(run_root: Path) -> tuple[Mapping[str, Any], ...]:
@@ -488,6 +607,7 @@ def issue_target_execution_receipt(
         "request_fingerprint": request_fingerprint,
         "declared_check_inventory": inventory,
         "declared_check_results": [dict(row) for row in evaluation.declared_check_results],
+        "model_deepening_result": dict(evaluation.model_deepening_result),
         "unresolved_check_ids": list(evaluation.unresolved_check_ids),
         "evidence_domain": evidence_domain,
         "scheduled_production_identity": scheduled,
@@ -618,6 +738,10 @@ def evaluate_depth_receipt_gate(
         status, detail = STALE, "active runtime identity changed"
     elif receipt.get("root_role_bindings") != current_bindings:
         status, detail = STALE, "repository/target role binding changed"
+    elif model_deepening_blocker := _model_deepening_projection_blocker(
+        receipt, profile
+    ):
+        status, detail = SHALLOW_BLOCKED, model_deepening_blocker
     elif receipt.get("unresolved_check_ids"):
         status, detail = SHALLOW_BLOCKED, "declared checks remain unresolved"
     else:
@@ -641,6 +765,11 @@ def evaluate_depth_receipt_gate(
         "root_role_bindings": current_bindings,
         "root_role_bindings_hash": str(current_bindings["binding_hash"]),
         "uncovered_obligation_ids": list(receipt.get("uncovered_obligation_ids", [])),
+        "model_deepening_result": dict(
+            receipt.get("model_deepening_result", {})
+            if isinstance(receipt.get("model_deepening_result", {}), Mapping)
+            else {}
+        ),
         "unresolved_check_ids": list(receipt.get("unresolved_check_ids", [])),
         "blockers": list(receipt.get("blockers", [])),
     }

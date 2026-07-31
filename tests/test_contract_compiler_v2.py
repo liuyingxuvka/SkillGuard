@@ -369,6 +369,7 @@ class ContractCompilerV2Tests(unittest.TestCase):
             "native_owner_id": "fixture-native-owner",
             "native_route_ids": [route_id],
             "native_check_ids": [check_id],
+            "model_deepening_check_id": check_id,
             "skillguard_adds_domain_route": False,
             "enforcement_level": "enforced",
             "required_closure_profiles": ["enforced"],
@@ -401,6 +402,7 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.assertTrue(result.ok, result.to_dict())
         compiled_profile = result.compiled_contract["depth_profile"]
         self.assertEqual([check_id], compiled_profile["native_check_ids"])
+        self.assertEqual(check_id, compiled_profile["model_deepening_check_id"])
         self.assertEqual("enforced", compiled_profile["enforcement_level"])
         for retired_field in (
             "purpose_contract_policy",
@@ -460,6 +462,44 @@ class ContractCompilerV2Tests(unittest.TestCase):
 
         self.assertIn(
             "depth_native_check_dependency_outside_inventory",
+            {row.code for row in result.findings},
+        )
+
+    def test_depth_profile_rejects_model_deepening_check_outside_native_inventory(self) -> None:
+        self._attach_depth_profile()
+        self.binding["depth_profile"]["model_deepening_check_id"] = (
+            "check:not-declared"
+        )
+        self._write_binding(self.binding)
+
+        result = compile_skill_contract(
+            self.skill,
+            repository_root=self.repo,
+            write=False,
+        )
+
+        self.assertIn(
+            "depth_model_deepening_check_not_native",
+            {row.code for row in result.findings},
+        )
+
+    def test_depth_profile_rejects_foreign_member_model_deepening_check(self) -> None:
+        check_id = self._attach_depth_profile()
+        selected = next(
+            row for row in self.binding["checks"] if row["check_id"] == check_id
+        )
+        self.binding["member_skill_ids"].append("other-skill")
+        selected["member_skill_id"] = "other-skill"
+        self._write_binding(self.binding)
+
+        result = compile_skill_contract(
+            self.skill,
+            repository_root=self.repo,
+            write=False,
+        )
+
+        self.assertIn(
+            "depth_model_deepening_check_foreign_member",
             {row.code for row in result.findings},
         )
 

@@ -119,12 +119,14 @@ class ExecutableContractCase:
     depth_profile_present: bool = True
     depth_profile_target_neutral: bool = True
     target_native_deepening_check_declared: bool = True
+    target_native_deepening_check_in_inventory: bool = True
+    target_native_deepening_owner_exact: bool = True
+    target_native_deepening_request_exact: bool = True
     target_native_deepening_receipt_current: bool = True
     target_native_deepening_terminal: bool = True
-    target_open_addressable_gaps: bool = False
-    target_progressed: bool = True
-    target_iteration_bounded: bool = True
-    target_self_report_only: bool = False
+    target_native_deepening_disposition_passed: bool = True
+    target_native_deepening_receipt_identity_present: bool = True
+    target_native_deepening_projection_matches_result: bool = True
     native_route_preserved: bool = True
     parallel_domain_executor: bool = False
     unique_evidence_contribution: bool = True
@@ -191,12 +193,14 @@ class ExecutableContractState:
     depth_profile_present: bool = False
     depth_profile_target_neutral: bool = False
     target_native_deepening_check_declared: bool = False
+    target_native_deepening_check_in_inventory: bool = False
+    target_native_deepening_owner_exact: bool = False
+    target_native_deepening_request_exact: bool = False
     target_native_deepening_receipt_current: bool = False
     target_native_deepening_terminal: bool = False
-    target_open_addressable_gaps: bool = False
-    target_progressed: bool = False
-    target_iteration_bounded: bool = False
-    target_self_report_only: bool = False
+    target_native_deepening_disposition_passed: bool = False
+    target_native_deepening_receipt_identity_present: bool = False
+    target_native_deepening_projection_matches_result: bool = False
     native_route_preserved: bool = False
     parallel_domain_executor: bool = False
     unique_evidence_contribution: bool = False
@@ -606,11 +610,7 @@ def target_native_deepening_is_current(
     state: ExecutableContractState,
     _trace: object,
 ) -> InvariantResult:
-    """Require opaque target-owned iterative closure evidence.
-
-    SkillGuard checks only declaration, freshness, terminality, and the
-    target's own gap/progress fields. It never interprets domain semantics.
-    """
+    """Require an exact projection of opaque target-owned closure evidence."""
 
     if _empty(state) or not state.closure_requested:
         return _pass()
@@ -618,6 +618,21 @@ def target_native_deepening_is_current(
         return _fail(
             "target_native_deepening_is_current",
             "the maintained target must declare one native iterative model-closure check",
+        )
+    if not state.target_native_deepening_check_in_inventory:
+        return _fail(
+            "target_native_deepening_is_current",
+            "the designated model-deepening check is outside the frozen native inventory",
+        )
+    if not state.target_native_deepening_owner_exact:
+        return _fail(
+            "target_native_deepening_is_current",
+            "the model-deepening result was produced by a different execution owner",
+        )
+    if not state.target_native_deepening_request_exact:
+        return _fail(
+            "target_native_deepening_is_current",
+            "the model-deepening result belongs to a different request",
         )
     if not state.target_native_deepening_receipt_current:
         return _fail(
@@ -629,25 +644,20 @@ def target_native_deepening_is_current(
             "target_native_deepening_is_current",
             "target-native iterative evidence is not terminal",
         )
-    if state.target_open_addressable_gaps:
+    if not state.target_native_deepening_disposition_passed:
         return _fail(
             "target_native_deepening_is_current",
-            "addressable target gaps remain open; SkillGuard cannot graduate the task",
+            "the target-owned model-deepening check did not pass",
         )
-    if not state.target_progressed:
+    if not state.target_native_deepening_receipt_identity_present:
         return _fail(
             "target_native_deepening_is_current",
-            "the target iteration made no measurable progress",
+            "the target-owned result has no immutable producer receipt identity",
         )
-    if not state.target_iteration_bounded:
+    if not state.target_native_deepening_projection_matches_result:
         return _fail(
             "target_native_deepening_is_current",
-            "target iteration has no valid finite bound",
-        )
-    if state.target_self_report_only:
-        return _fail(
-            "target_native_deepening_is_current",
-            "a self-reported understanding statement is not native evidence",
+            "the typed model-deepening projection differs from the declared check result",
         )
     return _pass()
 
@@ -879,21 +889,33 @@ SCENARIOS = (
         _violation("target native receipt stale", "target_native_deepening_is_current"),
     ),
     _scenario(
-        "target_native_open_gap_blocks",
-        "An addressable target gap remains visible instead of becoming a prose closure.",
-        ExecutableContractCase("target_native_open_gap", target_open_addressable_gaps=True),
-        _violation("target native gap open", "target_native_deepening_is_current"),
+        "target_native_failed_result_blocks",
+        "A target-owned failure remains visible without SkillGuard reinterpreting its domain reason.",
+        ExecutableContractCase("target_native_failed_result", target_native_deepening_disposition_passed=False),
+        _violation("target native result failed", "target_native_deepening_is_current"),
     ),
     _scenario(
-        "target_native_no_progress_blocks",
-        "A target iteration without progress cannot graduate.",
-        ExecutableContractCase("target_native_no_progress", target_progressed=False),
-        _violation("target native no progress", "target_native_deepening_is_current"),
+        "target_native_wrong_owner_blocks",
+        "A passing result from a foreign execution owner cannot graduate the target.",
+        ExecutableContractCase("target_native_wrong_owner", target_native_deepening_owner_exact=False),
+        _violation("target native wrong owner", "target_native_deepening_is_current"),
+    ),
+    _scenario(
+        "target_native_wrong_request_blocks",
+        "A result from another request cannot graduate the current target.",
+        ExecutableContractCase("target_native_wrong_request", target_native_deepening_request_exact=False),
+        _violation("target native wrong request", "target_native_deepening_is_current"),
+    ),
+    _scenario(
+        "target_native_projection_mismatch_blocks",
+        "A typed projection that differs from the reconciled declared result cannot graduate.",
+        ExecutableContractCase("target_native_projection_mismatch", target_native_deepening_projection_matches_result=False),
+        _violation("target native projection mismatch", "target_native_deepening_is_current"),
     ),
     _scenario(
         "target_native_self_report_blocks",
-        "A self-reported understanding level is not evidence of model closure.",
-        ExecutableContractCase("target_native_self_report", target_self_report_only=True),
+        "A self-reported understanding statement has no immutable producer receipt identity.",
+        ExecutableContractCase("target_native_self_report", target_native_deepening_receipt_identity_present=False),
         _violation("target native self report", "target_native_deepening_is_current"),
     ),
     _scenario(

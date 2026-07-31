@@ -192,13 +192,14 @@ owner. Do not build shared proof.
    checks plus fixed enforced closure. Skipped, failed, stale, timed-out,
    cancelled, cleanup-unconfirmed, or non-terminal evidence blocks.
 
-   For maintained targets that perform task-local model deepening, one of
-   those target-owned checks must cover the iterative closure itself. SkillGuard
-   consumes its receipt opaquely and verifies only that the check is declared,
-   current, terminal, finite, and free of addressable gaps. A self-reported
-   understanding level, an open gap, stale evidence, or a no-progress
-   iteration remains a blocker; SkillGuard never decides what the target's
-   domain model means.
+   For maintained targets that perform task-local model deepening,
+   `depth_profile.model_deepening_check_id` must name one check in that exact
+   target-owned inventory. SkillGuard projects that check's immutable result
+   separately and verifies its check id, owner id, request fingerprint,
+   currentness, terminal disposition, receipt id, and receipt hash. The target
+   check—not SkillGuard—decides whether predictions, falsifiers, iterations,
+   progress, and addressable gaps satisfy the domain closure rule. A caller
+   statement that it understood the task never substitutes for the receipt.
 
 8. Build the consumer distribution.
 

@@ -21,6 +21,7 @@
     "native_check_ids": [
       "check:REPLACE_TARGET_DECLARED_CHECK"
     ],
+    "model_deepening_check_id": "check:REPLACE_TARGET_DECLARED_CHECK",
     "skillguard_adds_domain_route": false,
     "enforcement_level": "enforced",
     "required_closure_profiles": [

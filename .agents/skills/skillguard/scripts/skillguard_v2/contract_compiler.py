@@ -1433,6 +1433,27 @@ def _cross_validate(
                             f"{check_id}:{dependency_id}",
                         )
                     )
+            model_deepening_check_id = str(
+                depth_profile.get("model_deepening_check_id", "")
+            )
+            if model_deepening_check_id:
+                model_deepening_check = check_index.get(model_deepening_check_id)
+                if model_deepening_check is None:
+                    findings.append(
+                        SchemaFinding(
+                            "depth_model_deepening_check_unknown",
+                            "$.depth_profile.model_deepening_check_id",
+                            model_deepening_check_id,
+                        )
+                    )
+                elif model_deepening_check.get("member_skill_id") != binding.get("skill_id"):
+                    findings.append(
+                        SchemaFinding(
+                            "depth_model_deepening_check_foreign_member",
+                            "$.depth_profile.model_deepening_check_id",
+                            model_deepening_check_id,
+                        )
+                    )
             provider_runtime = depth_profile.get("provider_runtime", {})
             if isinstance(provider_runtime, Mapping):
                 for check_id in provider_runtime.get("readiness_check_ids", []):

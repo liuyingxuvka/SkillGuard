@@ -10,7 +10,7 @@
 </p>
 <!-- README HERO END -->
 
-Current release: `v0.6.0` (source-only; validation evidence and publication status remain separate claims)
+Current release: `v0.7.0` (source-only; validation evidence and publication status remain separate claims)
 
 English comes first; the second half is a full Chinese mirror.
 
@@ -34,6 +34,13 @@ The boundary is equally important. SkillGuard is the school and graduation exam,
 `CONTRACT_DEPTH_PASS` means the author contract declares the target's exact native owner, routes, obligations, and checks. `EXECUTION_DEPTH_PASS` means every frozen required check has a current terminal-success receipt for the exact maintenance unit, member, evidence subject, semantic check, owner, request, inputs, dependencies, toolchain, and environment.
 
 Contract presence alone is never execution proof. Missing, failed, skipped, stale, timed-out, cancelled, cleanup-unconfirmed, and not-run checks remain visible blockers.
+
+For a target that declares `model_deepening_check_id`, passing unrelated checks
+is also insufficient. The execution receipt separately binds that exact
+target-owned check to its frozen owner, request, currentness, terminal result,
+receipt id, and receipt hash. SkillGuard does not interpret the target's model;
+it only prevents a prose claim or substituted receipt from standing in for the
+real check.
 
 Receipt reuse is narrowly local: the same maintenance unit may single-flight one exact identical check request. A different unit must execute and own its own evidence. Consumer skills carry neither those receipts nor a receipt lookup rule.
 
@@ -62,7 +69,7 @@ SkillGuard currently ships as source plus a local Python dispatcher. It is not a
 | --- | --- |
 | Skill entrypoint | `.agents/skills/skillguard/SKILL.md` |
 | Local dispatcher | `.agents/skills/skillguard/scripts/skillguard.py` |
-| Source version | `0.6.0` |
+| Source version | `0.7.0` |
 | Author control root | `.skillguard/**` inside explicit maintainer sources only |
 | Consumer projection | Target-owned files plus `consumer-release.json`; no SkillGuard dependency |
 | Ordinary project behavior | Zero SkillGuard writes |
@@ -152,7 +159,7 @@ Portfolio records one status per independent maintenance unit. A change stales o
 ### Adopt Or Audit A Skill Repository
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.6.0
+python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.7.0
 python .agents/skills/skillguard/scripts/skillguard.py maintainer-audit --root <author-repository>
 ```
 
@@ -262,7 +269,7 @@ SkillGuard 目前以源码和本地 Python 调度器的形式存在，不是托�
 | --- | --- |
 | 技能入口 | `.agents/skills/skillguard/SKILL.md` |
 | 本地调度器 | `.agents/skills/skillguard/scripts/skillguard.py` |
-| 源码版本 | `0.6.0` |
+| 源码版本 | `0.7.0` |
 | 作者控制目录 | 只存在于明确维护源码里的 `.skillguard/**` |
 | 消费者投影 | 目标自己的文件和 `consumer-release.json`，不依赖 SkillGuard |
 | 普通项目 | SkillGuard 零写入 |

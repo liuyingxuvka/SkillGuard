@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.7.0 - 2026-07-31
+
+- Added an explicit target-owned `model_deepening_check_id` binding to the
+  current depth profile and compiler, without giving SkillGuard domain
+  interpretation authority.
+- Added a typed model-deepening projection to current execution receipts and
+  fail-closed replay checks for missing, stale, non-terminal, wrong-request,
+  wrong-owner, mismatched, or identity-free producer evidence.
+- Replaced the former abstract-Boolean-only self check with runtime receipt,
+  schema, compiler, and known-bad validation while retaining the FlowGuard
+  model as a design constraint rather than execution proof.
+
 ## v0.6.0 - 2026-07-31
 
 - Added domain-neutral supervision for target-owned iterative model-closure

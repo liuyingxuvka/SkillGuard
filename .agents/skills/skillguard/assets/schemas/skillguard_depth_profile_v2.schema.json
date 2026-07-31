@@ -27,6 +27,7 @@
     "native_owner_id": {"$ref": "#/$defs/text"},
     "native_route_ids": {"$ref": "#/$defs/ids"},
     "native_check_ids": {"$ref": "#/$defs/nonempty_ids"},
+    "model_deepening_check_id": {"$ref": "#/$defs/text"},
     "native_route_absent_confirmed": {"type": "boolean"},
     "skillguard_adds_domain_route": {"const": false},
     "enforcement_level": {"const": "enforced"},

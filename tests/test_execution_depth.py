@@ -16,6 +16,7 @@ from skillguard_v2.execution_depth import (  # noqa: E402
     EXECUTION_DEPTH_PASS,
     SHALLOW_BLOCKED,
     _execution_runtime_identity,
+    _model_deepening_projection_blocker,
     evaluate_execution_depth,
     profile_fingerprint,
 )
@@ -23,8 +24,10 @@ from skillguard_v2.execution_depth import (  # noqa: E402
 
 def declared_check_profile(
     native_check_ids: tuple[str, ...] = ("check:intake",),
+    *,
+    model_deepening_check_id: str | None = None,
 ) -> dict[str, object]:
-    return {
+    profile: dict[str, object] = {
         "schema_version": "skillguard.depth_profile.v2",
         "profile_id": "fixture-declared-check-supervision",
         "target_skill_id": "runtime-fixture",
@@ -51,23 +54,40 @@ def declared_check_profile(
             "The receipt proves only the target's own declared checks."
         ),
     }
+    if model_deepening_check_id is not None:
+        profile["model_deepening_check_id"] = model_deepening_check_id
+    return profile
 
 
-def _context(*, passed: bool = True) -> dict[str, object]:
+def _context(
+    *,
+    passed: bool = True,
+    current: bool | None = None,
+    owner_id: str = "owner:intake",
+    request_fingerprint: str = "B" * 64,
+    receipt_id: str | None = None,
+    receipt_hash: str | None = None,
+) -> dict[str, object]:
+    is_current = passed if current is None else current
     blockers = [] if passed else ["declared_check_not_run:check:intake"]
     return {
         "run_started": True,
         "current": True,
         "declared_check_reconciliation": {
             "status": "passed" if passed else "blocked",
+            "request_fingerprint": request_fingerprint,
             "check_results": [
                 {
                     "check_id": "check:intake",
-                    "execution_owner_id": "owner:intake",
+                    "execution_owner_id": owner_id,
                     "disposition": "passed" if passed else "not_run",
-                    "current": passed,
-                    "receipt_id": "receipt:intake" if passed else "",
-                    "receipt_hash": "A" * 64 if passed else "",
+                    "current": is_current,
+                    "receipt_id": (
+                        "receipt:intake" if passed else ""
+                    ) if receipt_id is None else receipt_id,
+                    "receipt_hash": (
+                        "A" * 64 if passed else ""
+                    ) if receipt_hash is None else receipt_hash,
                 }
             ],
             "unresolved_check_ids": [] if passed else ["check:intake"],
@@ -115,6 +135,119 @@ class ExecutionDepthTests(unittest.TestCase):
         profile["enforcement_level"] = "optional"
         with self.assertRaises(Exception):
             profile_fingerprint(profile)
+
+    def test_designated_model_deepening_check_projects_exact_current_receipt(self) -> None:
+        result = evaluate_execution_depth(
+            declared_check_profile(model_deepening_check_id="check:intake"),
+            (),
+            context=_context(passed=True),
+        )
+        self.assertEqual(EXECUTION_DEPTH_PASS, result.status)
+        self.assertEqual(
+            {
+                "required": True,
+                "check_id": "check:intake",
+                "execution_owner_id": "owner:intake",
+                "request_fingerprint": "B" * 64,
+                "disposition": "passed",
+                "current": True,
+                "receipt_id": "receipt:intake",
+                "receipt_hash": "A" * 64,
+                "status": "passed",
+            },
+            result.model_deepening_result,
+        )
+
+    def test_designated_model_deepening_check_missing_result_blocks(self) -> None:
+        context = _context(passed=True)
+        context["declared_check_reconciliation"]["check_results"] = []
+        result = evaluate_execution_depth(
+            declared_check_profile(model_deepening_check_id="check:intake"),
+            (),
+            context=context,
+        )
+        self.assertEqual(SHALLOW_BLOCKED, result.status)
+        self.assertEqual("blocked", result.model_deepening_result["status"])
+
+    def test_designated_model_deepening_check_stale_receipt_blocks(self) -> None:
+        context = _context(passed=True, current=False)
+        context["declared_check_reconciliation"]["status"] = "blocked"
+        context["declared_check_reconciliation"]["blockers"] = [
+            "declared_check_stale:check:intake"
+        ]
+        result = evaluate_execution_depth(
+            declared_check_profile(model_deepening_check_id="check:intake"),
+            (),
+            context=context,
+        )
+        self.assertEqual(SHALLOW_BLOCKED, result.status)
+        self.assertFalse(result.model_deepening_result["current"])
+
+    def test_designated_model_deepening_check_self_report_without_receipt_blocks(self) -> None:
+        context = _context(
+            passed=True,
+            receipt_id="",
+            receipt_hash="",
+        )
+        context["caller_reports_understanding"] = True
+        result = evaluate_execution_depth(
+            declared_check_profile(model_deepening_check_id="check:intake"),
+            (),
+            context=context,
+        )
+        self.assertEqual(SHALLOW_BLOCKED, result.status)
+        self.assertEqual("blocked", result.model_deepening_result["status"])
+
+    def test_designated_check_must_be_in_native_inventory(self) -> None:
+        profile = declared_check_profile(model_deepening_check_id="check:other")
+        with self.assertRaises(Exception):
+            profile_fingerprint(profile)
+
+    def test_profiles_without_designated_lane_do_not_claim_model_deepening(self) -> None:
+        result = evaluate_execution_depth(
+            declared_check_profile(), (), context=_context(passed=True)
+        )
+        self.assertEqual(EXECUTION_DEPTH_PASS, result.status)
+        self.assertEqual("not_declared", result.model_deepening_result["status"])
+
+    def test_replay_rejects_forged_model_deepening_projection(self) -> None:
+        profile = declared_check_profile(
+            model_deepening_check_id="check:intake"
+        )
+        row = {
+            "check_id": "check:intake",
+            "execution_owner_id": "owner:intake",
+            "disposition": "passed",
+            "current": True,
+            "receipt_id": "receipt:intake",
+            "receipt_hash": "A" * 64,
+        }
+        receipt = {
+            "request_fingerprint": "B" * 64,
+            "declared_check_inventory": {
+                "checks": [
+                    {
+                        "check_id": "check:intake",
+                        "execution_owner_id": "owner:intake",
+                    }
+                ]
+            },
+            "declared_check_results": [row],
+            "model_deepening_result": {
+                "required": True,
+                **row,
+                "request_fingerprint": "B" * 64,
+                "status": "passed",
+            },
+        }
+        self.assertEqual(
+            "", _model_deepening_projection_blocker(receipt, profile)
+        )
+        receipt["model_deepening_result"]["execution_owner_id"] = "owner:foreign"
+        self.assertEqual(
+            "model_deepening_execution_owner_mismatch",
+            _model_deepening_projection_blocker(receipt, profile),
+        )
 
 
 if __name__ == "__main__":

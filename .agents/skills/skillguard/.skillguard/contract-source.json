@@ -1660,7 +1660,11 @@
     },
     {
       "args": [
-        ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        "-m",
+        "pytest",
+        "tests/test_execution_depth.py",
+        "tests/test_executable_contract_model.py",
+        "-q"
       ],
       "check_id": "check:self:target-native-deepening-closure",
       "command": "python",
@@ -1686,6 +1690,22 @@
         {
           "kind": "path",
           "path": "tests/test_executable_contract_model.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/contract_schema.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/contract_compiler.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/execution_depth.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_execution_depth.py"
         }
       ],
       "kind": "command",
@@ -1793,6 +1813,7 @@
       "check:self:assurance-diagnostics",
       "check:self:target-native-deepening-closure"
     ],
+    "model_deepening_check_id": "check:self:target-native-deepening-closure",
     "native_owner_id": "skillguard",
     "native_route_ids": [
       "route:deep-audit",
@@ -1998,7 +2019,7 @@
     },
     {
       "binding_id": "native-check:target-native-deepening-closure",
-      "evidence_source": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
+      "evidence_source": "tests/test_execution_depth.py",
       "native_check_id": "check:self:target-native-deepening-closure",
       "required": true
     }

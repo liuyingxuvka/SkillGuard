@@ -243,6 +243,17 @@ class ConditionalNoopClosureV2Tests(unittest.TestCase):
             "request_fingerprint": run["request_fingerprint"],
             "declared_check_inventory": inventory,
             "declared_check_results": [check_result],
+            "model_deepening_result": {
+                "required": False,
+                "check_id": "",
+                "execution_owner_id": "",
+                "request_fingerprint": run["request_fingerprint"],
+                "disposition": "not_declared",
+                "current": False,
+                "receipt_id": "",
+                "receipt_hash": "",
+                "status": "not_declared",
+            },
             "unresolved_check_ids": [],
             "evidence_domain": evidence_domain,
             "scheduled_production_identity": (
