@@ -13,5 +13,5 @@
 ## 3. Closure
 
 - [x] 3.1 Run focused diagnostics, mutation, closure-authority, and stale/foreign receipt regressions.
-- [ ] 3.2 Freeze and run one final full validation, then sync installed author-side projection and router if its route projection changed.
-- [ ] 3.3 Update README/changelog/version and publish v0.5.0.
+- [x] 3.2 Freeze and run one final full validation, then sync installed author-side projection and router if its route projection changed.
+- [x] 3.3 Update README/changelog/version and publish v0.5.0.

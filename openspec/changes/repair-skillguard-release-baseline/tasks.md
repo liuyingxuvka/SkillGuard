@@ -6,6 +6,6 @@
 
 ## 2. Validation and patch release
 
-- [ ] 2.1 Run the failed branch CI-equivalent checks and focused currentness gates.
-- [ ] 2.2 Freeze and run one full SkillGuard validation.
-- [ ] 2.3 Close these repairs inside the single v0.5.0 version/tag/release identity; no intermediate v0.4.3 authority is created.
+- [x] 2.1 Run the failed branch CI-equivalent checks and focused currentness gates.
+- [x] 2.2 Freeze and run one full SkillGuard validation.
+- [x] 2.3 Close these repairs inside the single v0.5.0 version/tag/release identity; no intermediate v0.4.3 authority is created.
