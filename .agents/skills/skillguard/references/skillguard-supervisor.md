@@ -63,6 +63,12 @@ dependencies, toolchain, environment, and policy. Keeping these identities
 separate lets one explicitly declared same-unit producer satisfy several exact
 semantic projections without making the projections interchangeable.
 
+When the target declares an iterative model-closure check, that check remains
+target-owned. The supervisor verifies its exact current terminal receipt and
+does not inspect or reinterpret the domain model; self-reported understanding,
+open addressable gaps, stale receipts, and no-progress iterations remain
+non-terminal evidence.
+
 One exact terminal-success receipt may be reused only inside the same
 maintenance unit under that complete identity. A foreign-unit receipt or
 dependency blocks before process launch and cannot be projected into closure.

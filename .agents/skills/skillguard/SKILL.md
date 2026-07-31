@@ -192,6 +192,14 @@ owner. Do not build shared proof.
    checks plus fixed enforced closure. Skipped, failed, stale, timed-out,
    cancelled, cleanup-unconfirmed, or non-terminal evidence blocks.
 
+   For maintained targets that perform task-local model deepening, one of
+   those target-owned checks must cover the iterative closure itself. SkillGuard
+   consumes its receipt opaquely and verifies only that the check is declared,
+   current, terminal, finite, and free of addressable gaps. A self-reported
+   understanding level, an open gap, stale evidence, or a no-progress
+   iteration remains a blocker; SkillGuard never decides what the target's
+   domain model means.
+
 8. Build the consumer distribution.
 
    Include only target-owned runtime material. Exclude the complete private

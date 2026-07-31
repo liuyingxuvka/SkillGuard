@@ -10,7 +10,7 @@
 </p>
 <!-- README HERO END -->
 
-Current release: `v0.5.1` (source-only; validation evidence and publication status remain separate claims)
+Current release: `v0.6.0` (source-only; validation evidence and publication status remain separate claims)
 
 English comes first; the second half is a full Chinese mirror.
 
@@ -62,7 +62,7 @@ SkillGuard currently ships as source plus a local Python dispatcher. It is not a
 | --- | --- |
 | Skill entrypoint | `.agents/skills/skillguard/SKILL.md` |
 | Local dispatcher | `.agents/skills/skillguard/scripts/skillguard.py` |
-| Source version | `0.5.1` |
+| Source version | `0.6.0` |
 | Author control root | `.skillguard/**` inside explicit maintainer sources only |
 | Consumer projection | Target-owned files plus `consumer-release.json`; no SkillGuard dependency |
 | Ordinary project behavior | Zero SkillGuard writes |
@@ -152,7 +152,7 @@ Portfolio records one status per independent maintenance unit. A change stales o
 ### Adopt Or Audit A Skill Repository
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.5.1
+python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.6.0
 python .agents/skills/skillguard/scripts/skillguard.py maintainer-audit --root <author-repository>
 ```
 
@@ -262,7 +262,7 @@ SkillGuard 目前以源码和本地 Python 调度器的形式存在，不是托�
 | --- | --- |
 | 技能入口 | `.agents/skills/skillguard/SKILL.md` |
 | 本地调度器 | `.agents/skills/skillguard/scripts/skillguard.py` |
-| 源码版本 | `0.5.1` |
+| 源码版本 | `0.6.0` |
 | 作者控制目录 | 只存在于明确维护源码里的 `.skillguard/**` |
 | 消费者投影 | 目标自己的文件和 `consumer-release.json`，不依赖 SkillGuard |
 | 普通项目 | SkillGuard 零写入 |

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.0 - 2026-07-31
+
+- Added domain-neutral supervision for target-owned iterative model-closure
+  checks, including stale, open-gap, no-progress, and self-report blockers.
+- Kept target semantics opaque while binding the new check into the current
+  contract, manifest, model, and closure profile.
+
 ## v0.5.1 - 2026-07-31
 
 - Synchronized the FlowGuard project adoption record, all three branch-CI dependency pins, and the workflow-policy regression on the immutable FlowGuard `v0.66.0` release.

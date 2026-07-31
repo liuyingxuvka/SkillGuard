@@ -33,6 +33,11 @@ class ExecutableContractModelTests(unittest.TestCase):
         scenario_names = {scenario.name for scenario in self.model.SCENARIOS}
         expected = {
             "missing_model_blocks",
+            "target_native_check_missing_blocks",
+            "target_native_receipt_stale_blocks",
+            "target_native_open_gap_blocks",
+            "target_native_no_progress_blocks",
+            "target_native_self_report_blocks",
             "untyped_route_blocks",
             "unknown_packet_field_blocks",
             "guard_change_same_run_blocks",
@@ -112,7 +117,7 @@ class ExecutableContractModelTests(unittest.TestCase):
     def test_model_test_alignment_passes(self) -> None:
         report = self.model.run_governance_reviews()["model_test_alignment"]
         self.assertTrue(report.ok, report.format_text())
-        self.assertEqual(22, len(self.model.build_model_test_alignment_plan().obligations))
+        self.assertEqual(23, len(self.model.build_model_test_alignment_plan().obligations))
 
     def test_self_host_functions_have_distinct_routes_and_terminals(self) -> None:
         export = self.model.export_contract_model()

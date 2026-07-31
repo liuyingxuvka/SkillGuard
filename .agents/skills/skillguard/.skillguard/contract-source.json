@@ -1657,6 +1657,42 @@
       "member_skill_id": "skillguard",
       "semantic_check_id": "check:self:assurance-diagnostics",
       "timeout_seconds": 180
+    },
+    {
+      "args": [
+        ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+      ],
+      "check_id": "check:self:target-native-deepening-closure",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:target-native-deepening-closure"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [
+        "check:self:load-model-export"
+      ],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:target-native-deepening",
+      "evidence_subject_id": "subject:skillguard:check:self:target-native-deepening-closure",
+      "execution_owner_id": "owner:self:target-native-deepening-closure",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_executable_contract_model.py"
+        }
+      ],
+      "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:target-native-deepening-closure",
+      "timeout_seconds": 180
     }
   ],
   "claim_boundary": "This binding covers SkillGuard self-maintenance through one enforced declared-check workflow. Publication, installation, and release claims still require their own listed checks inside that same workflow.",
@@ -1676,6 +1712,7 @@
         "obligation:exact-closure",
         "obligation:no-former-authority-success",
         "obligation:depth-native-authority",
+        "obligation:target-native-deepening-closure",
         "obligation:execution-depth-closure",
         "obligation:unique-depth-evidence",
         "obligation:author-repository-adoption",
@@ -1753,7 +1790,8 @@
       "check:self:validation-composition-model",
       "check:self:template-lifecycle-model-v1",
       "check:self:template-protocol-v1",
-      "check:self:assurance-diagnostics"
+      "check:self:assurance-diagnostics",
+      "check:self:target-native-deepening-closure"
     ],
     "native_owner_id": "skillguard",
     "native_route_ids": [
@@ -1956,6 +1994,12 @@
       "binding_id": "native-check:assurance-diagnostics",
       "evidence_source": ".agents/skills/skillguard/scripts/skillguard_v2/assurance_diagnostics.py",
       "native_check_id": "check:self:assurance-diagnostics",
+      "required": true
+    },
+    {
+      "binding_id": "native-check:target-native-deepening-closure",
+      "evidence_source": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
+      "native_check_id": "check:self:target-native-deepening-closure",
       "required": true
     }
   ],
@@ -2612,6 +2656,17 @@
       ],
       "output_artifact_ids": [],
       "step_id": "step:project-target-mutation-result"
+    },
+    {
+      "action": {
+        "kind": "native",
+        "summary": "Consume the target-owned iterative model-closure check without interpreting its domain semantics."
+      },
+      "check_ids": [
+        "check:self:target-native-deepening-closure"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:target-native-deepening-closure"
     }
   ],
   "supervision_fragment_refs": [

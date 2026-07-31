@@ -16,6 +16,13 @@ There is no optional, advisory, bypass, family-specific, or target-category mode
 6. Issue one declared-check execution receipt only when the unresolved-check set is empty and the enrolled provider runtime is current.
 7. Require the requested closure to consume that exact receipt.
 
+For a maintained target with an iterative model-deepening workflow, the frozen
+inventory must also contain the target's own model-closure check. The target
+owns the prediction, falsifier, gap, and iteration semantics; SkillGuard only
+reconciles the opaque terminal receipt and its freshness. Self-report,
+addressable gaps, stale receipts, and no-progress results cannot satisfy the
+declared check.
+
 ## Target ownership boundary
 
 A target may declare one check or many checks. SkillGuard treats both shapes identically.

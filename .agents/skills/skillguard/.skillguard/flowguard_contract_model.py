@@ -118,6 +118,13 @@ class ExecutableContractCase:
     maintenance_unit_evidence_current: bool = True
     depth_profile_present: bool = True
     depth_profile_target_neutral: bool = True
+    target_native_deepening_check_declared: bool = True
+    target_native_deepening_receipt_current: bool = True
+    target_native_deepening_terminal: bool = True
+    target_open_addressable_gaps: bool = False
+    target_progressed: bool = True
+    target_iteration_bounded: bool = True
+    target_self_report_only: bool = False
     native_route_preserved: bool = True
     parallel_domain_executor: bool = False
     unique_evidence_contribution: bool = True
@@ -183,6 +190,13 @@ class ExecutableContractState:
     maintenance_unit_evidence_current: bool = False
     depth_profile_present: bool = False
     depth_profile_target_neutral: bool = False
+    target_native_deepening_check_declared: bool = False
+    target_native_deepening_receipt_current: bool = False
+    target_native_deepening_terminal: bool = False
+    target_open_addressable_gaps: bool = False
+    target_progressed: bool = False
+    target_iteration_bounded: bool = False
+    target_self_report_only: bool = False
     native_route_preserved: bool = False
     parallel_domain_executor: bool = False
     unique_evidence_contribution: bool = False
@@ -588,6 +602,56 @@ def author_repositories_keep_skillguard_maintenance_private(
     return _pass()
 
 
+def target_native_deepening_is_current(
+    state: ExecutableContractState,
+    _trace: object,
+) -> InvariantResult:
+    """Require opaque target-owned iterative closure evidence.
+
+    SkillGuard checks only declaration, freshness, terminality, and the
+    target's own gap/progress fields. It never interprets domain semantics.
+    """
+
+    if _empty(state) or not state.closure_requested:
+        return _pass()
+    if not state.target_native_deepening_check_declared:
+        return _fail(
+            "target_native_deepening_is_current",
+            "the maintained target must declare one native iterative model-closure check",
+        )
+    if not state.target_native_deepening_receipt_current:
+        return _fail(
+            "target_native_deepening_is_current",
+            "the target-native iterative closure receipt is stale or not bound to current inputs",
+        )
+    if not state.target_native_deepening_terminal:
+        return _fail(
+            "target_native_deepening_is_current",
+            "target-native iterative evidence is not terminal",
+        )
+    if state.target_open_addressable_gaps:
+        return _fail(
+            "target_native_deepening_is_current",
+            "addressable target gaps remain open; SkillGuard cannot graduate the task",
+        )
+    if not state.target_progressed:
+        return _fail(
+            "target_native_deepening_is_current",
+            "the target iteration made no measurable progress",
+        )
+    if not state.target_iteration_bounded:
+        return _fail(
+            "target_native_deepening_is_current",
+            "target iteration has no valid finite bound",
+        )
+    if state.target_self_report_only:
+        return _fail(
+            "target_native_deepening_is_current",
+            "a self-reported understanding statement is not native evidence",
+        )
+    return _pass()
+
+
 def assurance_diagnostics_preserve_authority(
     state: ExecutableContractState, _trace: object
 ) -> InvariantResult:
@@ -732,6 +796,11 @@ INVARIANTS = (
         execution_depth_is_current_and_consumed,
     ),
     Invariant(
+        "target_native_deepening_is_current",
+        "Target-native iterative model closure is current, terminal, and gap-free.",
+        target_native_deepening_is_current,
+    ),
+    Invariant(
         "evidence_contribution_is_unique",
         "Unrelated obligations need independently attributable target evidence.",
         evidence_contribution_is_unique,
@@ -791,6 +860,42 @@ GOOD_CASE = ExecutableContractCase("good_contract_run")
 
 SCENARIOS = (
     _scenario("good_run_passes", "A fully evidenced run closes safely.", GOOD_CASE, _ok("good run", GOOD_CASE.case_name)),
+    _scenario(
+        "target_native_deepening_passes",
+        "A current target-owned iterative closure receipt is accepted without SkillGuard interpreting its domain.",
+        ExecutableContractCase("target_native_deepening_good"),
+        _ok("target-native deepening", "target_native_deepening_good"),
+    ),
+    _scenario(
+        "target_native_check_missing_blocks",
+        "A target without a declared native iterative closure check cannot graduate.",
+        ExecutableContractCase("target_native_check_missing", target_native_deepening_check_declared=False),
+        _violation("target native check missing", "target_native_deepening_is_current"),
+    ),
+    _scenario(
+        "target_native_receipt_stale_blocks",
+        "A stale target-native iterative receipt cannot support closure.",
+        ExecutableContractCase("target_native_receipt_stale", target_native_deepening_receipt_current=False),
+        _violation("target native receipt stale", "target_native_deepening_is_current"),
+    ),
+    _scenario(
+        "target_native_open_gap_blocks",
+        "An addressable target gap remains visible instead of becoming a prose closure.",
+        ExecutableContractCase("target_native_open_gap", target_open_addressable_gaps=True),
+        _violation("target native gap open", "target_native_deepening_is_current"),
+    ),
+    _scenario(
+        "target_native_no_progress_blocks",
+        "A target iteration without progress cannot graduate.",
+        ExecutableContractCase("target_native_no_progress", target_progressed=False),
+        _violation("target native no progress", "target_native_deepening_is_current"),
+    ),
+    _scenario(
+        "target_native_self_report_blocks",
+        "A self-reported understanding level is not evidence of model closure.",
+        ExecutableContractCase("target_native_self_report", target_self_report_only=True),
+        _violation("target native self report", "target_native_deepening_is_current"),
+    ),
     _scenario(
         "missing_model_blocks",
         "Prompt prose without a current FlowGuard model cannot compile for release.",
@@ -1354,6 +1459,7 @@ def export_contract_model() -> dict[str, object]:
             "start_step_id": "step:check-run-closure",
             "step_ids": [
                 "step:check-run-closure",
+                "step:target-native-deepening-closure",
                 "step:issue-closure-receipt",
                 "terminal:run-closed",
                 "terminal:closure-blocked",
@@ -1493,6 +1599,7 @@ def export_contract_model() -> dict[str, object]:
         step("terminal:evidence-accepted", "route:verify-evidence", "evidence-runtime-v2", "terminal", ("step:issue-step-receipt",), terminal_kind="success"),
         step("terminal:evidence-rejected", "route:verify-evidence", "evidence-runtime-v2", "terminal", terminal_kind="blocked"),
         step("step:check-run-closure", "route:derive-closure", "closure-runtime-v2", "verifier"),
+        step("step:target-native-deepening-closure", "route:derive-closure", "closure-runtime-v2", "native", ("step:check-run-closure",)),
         step("step:issue-closure-receipt", "route:derive-closure", "closure-runtime-v2", "receipt", ("step:check-run-closure",)),
         step("terminal:run-closed", "route:derive-closure", "closure-runtime-v2", "terminal", ("step:issue-closure-receipt",), terminal_kind="success"),
         step("terminal:closure-blocked", "route:derive-closure", "closure-runtime-v2", "terminal", terminal_kind="blocked"),
@@ -1541,6 +1648,7 @@ def export_contract_model() -> dict[str, object]:
         ("obligation:no-former-authority-success", "failures_and_former_authority_cannot_hide", ["step:select-function-route", "step:check-run-closure"]),
         ("obligation:portfolio-freshness", "maintenance_unit_graduation_uses_only_unit_evidence", ["step:scan-maintenance-unit-freshness", "step:validate-maintenance-unit-evidence", "step:issue-portfolio-receipt"]),
         ("obligation:depth-native-authority", "depth_profile_preserves_native_authority", ["step:freeze-declared-check-inventory", "step:reconcile-declared-check-results"]),
+        ("obligation:target-native-deepening-closure", "target_native_deepening_is_current", ["step:reconcile-declared-check-results", "step:check-run-closure"]),
         ("obligation:execution-depth-closure", "execution_depth_is_current_and_consumed", ["step:reconcile-declared-check-results", "step:check-run-closure", "step:issue-closure-receipt"]),
         ("obligation:unique-depth-evidence", "evidence_contribution_is_unique", ["step:reconcile-declared-check-results", "step:validate-step-evidence"]),
         ("obligation:author-repository-adoption", "author_repositories_keep_skillguard_maintenance_private", ["step:inspect-author-repository-adoption", "step:render-managed-project-prompt", "step:install-author-repository-adoption", "step:audit-author-repository-adoption"]),
@@ -2232,6 +2340,7 @@ def build_model_test_alignment_plan() -> ModelTestAlignmentPlan:
         ("obligation:no-former-authority-success", "failures and former authority residuals stay visible", "failures_and_former_authority_cannot_hide", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:portfolio-freshness", "each maintenance unit graduates from its own current evidence", "maintenance_unit_graduation_uses_only_unit_evidence", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:depth-native-authority", "depth profiles preserve the target's native owner", "depth_profile_preserves_native_authority", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
+        ("obligation:target-native-deepening-closure", "target-native iterative closure is current and gap-free", "target_native_deepening_is_current", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:execution-depth-closure", "closure consumes a current passing execution-depth receipt", "execution_depth_is_current_and_consumed", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:unique-depth-evidence", "unrelated depth obligations need unique evidence contribution", "evidence_contribution_is_unique", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:author-repository-adoption", "explicit author repositories preserve private current SkillGuard maintainer guidance", "author_repositories_keep_skillguard_maintenance_private", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
