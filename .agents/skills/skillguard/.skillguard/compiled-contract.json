@@ -80,7 +80,7 @@
       ]
     }
   ],
-  "check_declarations_hash": "048C552F706BC1BA009E8743FCE4AE66B7EEDE2960AE5BEB7F4C8AF9253E87F5",
+  "check_declarations_hash": "D701351DD2E6EA5E095FE0A1C20BD83BECC51D441AA6DC9EF1EB59CB84C4BBDD",
   "checks": [
     {
       "args": [
@@ -1578,7 +1578,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:7157b983082870f310b93c874dd9673745ef048c96f36720b7deb836090f6125",
-      "owner_input_projection_hash": "sha256:374e42531fdd8acf7a0469066859d73f3f9f00ea29502dc50f4002d755f61963",
+      "owner_input_projection_hash": "sha256:fda4fee50f8165842414628535aa7ab9a1f94592807e01deaa7cdfd820551c78",
       "projection_declaration_hash": "sha256:096ccd42e54e8e6e77b90e1af08fbe5cc9c536a96319f22e3929d3b97b71d095",
       "semantic_check_id": "check:self:audit-author-repository-adoption",
       "target_input_role_ids": [],
@@ -3491,7 +3491,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:documentation_model"
         ],
-        "component_hash": "sha256:b7e3dc5d754f598d339d6cbd102dc8609c3936b36c01ddd876190fc8804fba62",
+        "component_hash": "sha256:63957951cc82526b37c62177de959bc85ea0f7ffe8cd25b8dd7373fc2df29a33",
         "component_id": "component:documentation_model:d0ab5262afe4c22d",
         "consumer_ids": [
           "owner:self:audit-author-repository-adoption"
@@ -4556,7 +4556,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:49cc8fe45fb0df6233eee790f4c8a9858c97878ddaef1f7ea55cb6558c8f8929",
+    "impact_graph_hash": "sha256:6ad5118a87a5b949383435253a933073679cf15ddc6b0494951e2d1ca7aec856",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -6933,7 +6933,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
-        "content_hash": "sha256:e00a142f980e080623a8e8eec7dfa7c7e6ed85e2251ea828ac21b6a3a98557d3",
+        "content_hash": "sha256:d030a8b03f4a9c58142bb794170745618d17481d38861edb4a12bd0b99f2fb1c",
         "install_disposition": "source_only",
         "path": "AGENTS.md",
         "role": "documentation_model"
@@ -7156,7 +7156,7 @@
         "role": "test_dev"
       }
     ],
-    "inventory_hash": "sha256:71fa159d2c034e7f4b52994c5764f5fa82a18b0325ad4603d6a375cdeda1dd47",
+    "inventory_hash": "sha256:d33c5f0b5a573c05f403388c296227b7a7821ed362a084f80d0f2c6a9fb668e5",
     "member_root_path": ".agents/skills/skillguard",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -7287,7 +7287,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:7157b983082870f310b93c874dd9673745ef048c96f36720b7deb836090f6125",
-        "owner_input_projection_hash": "sha256:374e42531fdd8acf7a0469066859d73f3f9f00ea29502dc50f4002d755f61963",
+        "owner_input_projection_hash": "sha256:fda4fee50f8165842414628535aa7ab9a1f94592807e01deaa7cdfd820551c78",
         "target_input_role_ids": []
       },
       {
@@ -8362,7 +8362,7 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "83CDD51276BEEAAC145B2E6F16880F04188092EC454D9C4D4AFFF6A09479F96F",
+  "contract_hash": "D7BF5CDA3F3F10EEA6396A5566E09FE21AE3323303DEDA414A963F780CE7B716",
   "depth_profile": {
     "claim_boundary": "SkillGuard freezes and reconciles the target skill's own declared checks. The target skill alone owns domain purpose, failure classes, oracles, fixtures, and depth meaning.",
     "enforcement_level": "enforced",
@@ -9491,7 +9491,7 @@
     "implementation:.flowguard/validation_composition": "C8AEAC41CEF4B8BC8B81ACF71F2B630626BA8F7781E9CB92B2AE049B8996D2E0",
     "implementation:.github/workflows/ci.yml": "6F969F2937E613F7214340B241356C4AEF2D6AC56CF9EB72B5E02950C430E4DD",
     "implementation:.gitignore": "C15088FA231237909B8F284FB45A827204B312C7B9A013D61BC2FB37631A6A1D",
-    "implementation:AGENTS.md": "E00A142F980E080623A8E8EEC7DFA7C7E6ED85E2251EA828AC21B6A3A98557D3",
+    "implementation:AGENTS.md": "D030A8B03F4A9C58142BB794170745618D17481D38861EDB4A12BD0B99F2FB1C",
     "implementation:VERSION": "967D9AFB101346667166F2E76E81910BC190488D7D41D50CA0072E9D92F00E32",
     "implementation:pyproject.toml": "F79B3DDD7682EC7238BCAFD692D37D9A40B5F7158C7E07F226B90A9A8F07948A",
     "implementation:tests/test_assurance_diagnostics.py": "8140CD5B596C5FC9A3298E19460A4FE94953E46E2ACA9B8679CFD7AC0BECAD2E",
