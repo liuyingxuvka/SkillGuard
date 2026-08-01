@@ -519,27 +519,14 @@ def render_prompt_block(
         ),
         key=lambda item: (str(item.get("skill_path", "")), str(item.get("skill_id", ""))),
     )
-    route_lines: list[str] = []
-    for item in route_rows[:120]:
-        entrypoint = (
-            item.get("route_entrypoint")
-            if isinstance(item.get("route_entrypoint"), Mapping)
-            else {}
-        )
-        default_route = str(entrypoint.get("default_route_id") or "")
-        mode = str(entrypoint.get("integration_mode") or "")
-        route_lines.append(
-            f"- `{item.get('skill_id')}` -> {item.get('skill_file')} "
-            f"(default_route={default_route or 'none'}, integration={mode or 'unknown'})"
-        )
-    if len(route_rows) > 120:
-        route_lines.append(
-            f"- ... {len(route_rows) - 120} additional current route(s) are in the registry JSON."
-        )
-    if not route_lines:
-        route_lines.append(
-            "- No current route is available; maintenance routing is blocked until current contracts are installed."
-        )
+    if route_rows:
+        route_lines = [
+            f"- current_registered_source_count: {len(route_rows)}; exact source paths and route identities are read from the registry JSON only when author maintenance is selected."
+        ]
+    else:
+        route_lines = [
+            "- current_registered_source_count: 0; maintenance routing is blocked until current author contracts are registered."
+        ]
     policy = "\n".join([f"- policy_id: `{policy_id}`", *policy_lines])
     block = (
         template.replace("{{validation_execution_policy}}", policy)

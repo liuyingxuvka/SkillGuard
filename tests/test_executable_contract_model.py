@@ -119,7 +119,7 @@ class ExecutableContractModelTests(unittest.TestCase):
     def test_model_test_alignment_passes(self) -> None:
         report = self.model.run_governance_reviews()["model_test_alignment"]
         self.assertTrue(report.ok, report.format_text())
-        self.assertEqual(23, len(self.model.build_model_test_alignment_plan().obligations))
+        self.assertEqual(24, len(self.model.build_model_test_alignment_plan().obligations))
 
     def test_self_host_functions_have_distinct_routes_and_terminals(self) -> None:
         export = self.model.export_contract_model()

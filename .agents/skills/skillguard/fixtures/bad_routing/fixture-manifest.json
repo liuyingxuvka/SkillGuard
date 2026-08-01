@@ -90,12 +90,12 @@
     {
       "fixture_id": "route_task_equal_top_candidates",
       "fixture_type": "negative",
-      "target_rule": "route-task must block equal-scoring top route candidates.",
+      "target_rule": "route-task must block several simultaneously satisfied route predicates.",
       "expected_decision": "block",
       "status": "checked",
       "path": "cases/equal_top_candidates.fixture.json",
       "known_limitations": [
-        "Covers one equal-score check-skill/check-suite candidate pair."
+        "Covers one exact multi-match check-skill/check-suite predicate pair without scoring."
       ]
     },
     {

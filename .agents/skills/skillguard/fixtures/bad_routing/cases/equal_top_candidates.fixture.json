@@ -2,14 +2,14 @@
   "fixture_id": "route_task_equal_top_candidates",
   "target_command": "route-task",
   "expected_decision": "block",
-  "input_surface": "direct-task-with-equal-candidate-scores",
+  "input_surface": "direct-task-with-multiple-predicate-matches",
   "task": "check skill and check suite",
   "no_mutation_paths": [
     "../probes/equal-top-candidates-must-not-exist"
   ],
   "expected_result": {
     "blocker_class": "routing_conflict",
-    "blocker_code": "multiple_equal_route_candidates",
+    "blocker_code": "multiple_route_predicate_matches",
     "conflicting_fields": [
       "$.task"
     ],

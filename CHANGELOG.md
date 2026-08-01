@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.2 - 2026-08-01
+
+- Replaced weighted author-command routing with explicit route ids or exact declared predicate evidence; zero and multiple matches now block visibly.
+- Reduced the always-loaded SkillGuard and global-router prompts to author-only entry shells backed by a generated current route index and conditional references.
+- Moved validated-template lifecycle guidance behind target-declared pointers, with complete target-owned references only for applicable skills.
+- Added entry-loading, prompt-budget, route-capsule, ambiguity, and idempotent target-guidance regressions.
+
 ## v0.7.1 - 2026-07-31
 
 - Updated the self-host contract cardinality regression to include the current

@@ -1,351 +1,141 @@
 ---
 name: skillguard
-description: "Use when authoring, maintaining, checking, graduating, installing, or releasing explicitly registered Codex skills. SkillGuard is author-side supervision, not a consumer runtime dependency."
+description: Use for authoring, maintaining, checking, graduating, installing, or releasing explicitly registered Codex skill sources. SkillGuard supervises author-side contracts and target-owned evidence; it is not a consumer runtime dependency.
 ---
 
 # SkillGuard
 
 ## Purpose
 
-SkillGuard is the author-side auditor and graduation-evidence supervisor for
-other skills.
+SkillGuard supervises maintenance of explicitly registered skill sources. A target skill declares its own promises, completion/depth criteria, native checks, evidence subjects, and clean consumer material. SkillGuard verifies that those exact declarations, execution receipts, projections, and closure agree; it does not invent deeper domain criteria or reinterpret the target's result.
 
-On the maintainer computer it helps each explicitly covered skill state:
-
-- what it promises;
-- what it protects;
-- what “finished” means;
-- how deep execution must go;
-- which target-owned checks prove those claims.
-
-The target skill owns those declarations, including what completeness and
-depth mean for its domain. SkillGuard checks only that the target's exact
-declarations, execution, evidence, and closure agree; it does not decide that
-the declaration should be deeper, invent a missing domain check, or reinterpret
-the target result. When the skill graduates, SkillGuard builds a clean
-standalone consumer distribution. The graduated skill must work without
-SkillGuard.
-
-SkillGuard is not a shared runtime, a universal project plugin, or a receipt
-service for unrelated skills.
+Graduated consumer skills must work from their own `SKILL.md`, scripts, references, assets, and native checks with no SkillGuard dependency.
 
 ## Entrypoint Scope
 
-This entrypoint governs SkillGuard itself and author-side maintenance of
-explicitly registered skill sources.
+Admit a task only when all are explicit:
 
-It may create and consume the private .skillguard author tree only in a source repository whose
-role is `skill_maintainer_source`. It may keep private run state, receipts,
-Portfolio state, and routing state outside target consumer trees.
+- a source repository declares `repository_role: skill_maintainer_source`;
+- one non-empty maintenance unit and exact member skill ids are current;
+- the current contract trio exists: `.skillguard/contract-source.json`, `.skillguard/compiled-contract.json`, `.skillguard/check-manifest.json`;
+- private run-state and evidence roots remain outside the consumer projection;
+- the request is author maintenance, not ordinary domain use of an installed skill.
 
-It must not:
-
-- add `.skillguard` to an ordinary business/project repository;
-- require SkillGuard on a consumer machine;
-- copy SkillGuard contracts, receipts, router state, or Portfolio state into a
-  graduated skill;
-- infer ownership merely because a skill is installed;
-- maintain, wrap, or replace official OpenSpec;
-- let one maintenance unit use another unit's tests or receipts.
-
-## Local Material Routing
-
-- The author-side current contract is exactly
-  `.skillguard/contract-source.json`,
-  `.skillguard/compiled-contract.json`, and
-  `.skillguard/check-manifest.json`.
-- Read `references/skillguard-supervisor.md` for one maintenance-unit
-  supervision run.
-- Read `references/skillguard-execution-depth.md` for completion and depth
-  evidence.
-- Read `references/skillguard-assurance-diagnostics.md` when the user needs a
-  read-only explanation of blocked closure or a projection of target-declared
-  mutation evidence.
-- Read `references/skillguard-test-mesh.md` for planning and executing the
-  checks owned by one maintenance unit.
-- Read `references/skillguard-portfolio.md` for the private inventory of
-  independently maintained units.
-- Read `references/skillguard-project-adoption.md` for author-repository
-  adoption. This route is maintainer-only.
-- Read `references/skillguard-target-installation.md` for clean consumer
-  distribution staging, activation, rollback, and recovery.
-- Use `scripts/skillguard_supervise.py` with explicit author run-state and
-  evidence roots.
-- Use `scripts/skillguard_test_mesh.py` for one unit's frozen check plan.
-- Use `evidence-audit` and `evidence-gc-plan` for read-only evidence lifecycle
-  inspection; use `evidence-gc-apply` only to quarantine an exact current plan,
-  and `evidence-gc-purge` only for the separately authorized exact quarantine.
-- Use `scripts/skillguard_consumer_install.py` for a clean standalone consumer
-  installation.
-- Use the `maintainer-adopt` and `maintainer-audit` author commands only for
-  explicit author repositories.
-- Use the `skillguard-global-router` skill only for the private maintainer
-  routing registry and managed maintainer prompt.
-
-## Entrypoint Acceptance Map
-
-- `author-source-current`: the source declares
-  `repository_role: skill_maintainer_source`, one maintenance unit, its member
-  skills, and the exact current contract trio.
-- `unit-checked`: every member's semantic checks have current evidence under
-  that same unit and exact full identity.
-- `graduated`: the unit satisfies its own declared completeness/depth evidence
-  and a clean consumer
-  projection audit passes.
-- `installed-current`: the clean consumer projection was transactionally
-  activated and matches its target-owned release identity.
-- `blocked`: authority, identity, inventory, dependency, evidence, depth,
-  distribution, or cleanup is incomplete or ambiguous.
-
-No prose-only assertion turns a state into `current`.
+SkillGuard does not maintain official OpenSpec, infer ownership by scanning installed consumers, add `.skillguard` to ordinary projects, or share receipts between maintenance units.
 
 ## Use When
 
-Use this skill when the user asks to:
-
-- create or maintain a skill's author-side promise/contract;
-- check whether a capability satisfied the target's own declared completion
-  and depth criteria;
-- add, remove, rename, split, merge, or retire a maintained skill or
-  maintenance unit;
-- run affected-only or final validation for one maintained unit;
-- prepare, audit, install, synchronize, release, or graduate a maintained
-  skill;
-- inspect whether multiple locally maintained skills have overlapping
-  responsibilities or tests;
-- maintain SkillGuard's private Portfolio or maintainer routing registry;
-- repair an author repository's SkillGuard maintenance instructions.
-- explain which current blockers keep one closure closed or blocked without
-  executing, resuming, or weakening the target's obligations.
+- Creating or changing a registered skill's author contract, prompt, scripts, references, models, checks, installation, or release.
+- Freezing and executing affected-only or final validation for one maintenance unit.
+- Auditing completion/depth evidence, blockers, stale receipts, check ownership, or consumer isolation.
+- Adding, removing, splitting, merging, retiring, graduating, installing, or releasing a maintained skill/unit.
+- Maintaining the private Portfolio or global author-side router.
 
 ## Do Not Use When
 
-Do not start SkillGuard for:
+- An installed consumer skill is simply doing its domain job.
+- A third-party or ordinary project only happens to use a maintained skill.
+- Official OpenSpec is proposing, designing, applying, syncing, or archiving a change.
+- A test or receipt would be imported from another maintenance unit.
+- A target's domain semantics, purpose, protected failures, fixtures, or closure criteria would be invented by SkillGuard.
 
-- ordinary domain use of an already graduated/installed consumer skill;
-- an unrelated project that merely happens to use a maintained skill;
-- official OpenSpec proposal, design, spec, task, apply, sync, or archive work;
-- checking third-party skill conflicts on another person's computer;
-- sharing a test or receipt between maintenance units;
-- treating similar command text as proof that two skills own the same
-  responsibility.
+## Minimum task facts
 
-If two locally maintained skills appear to promise the same semantic behavior,
-stop and repair the boundary: split the promise, merge the units, or retire one
-owner. Do not build shared proof.
+Extract facts with source locations; do not ask the AI whether it understands:
+
+- author repository, maintenance unit, member skill, and current contract identities;
+- requested action/command family and whether it reads or writes;
+- target-owned obligations/checks/evidence subjects and dependencies;
+- source/toolchain/input/environment identities and current receipt status;
+- consumer projection and requested install/release boundary;
+- explicit unavailable authority, cleanup, or external blockers.
+
+Missing facts remain visible. A route is not chosen by a weighted keyword score.
+
+## Entrypoint Acceptance Map
+
+Use the deterministic `route-task` command to evaluate the current registry without loading its complete catalog into the prompt. Read [references/skillguard-route-index.json](references/skillguard-route-index.json) only when auditing the registry projection, investigating a blocked route, or regenerating it.
+
+1. Prefer one explicit current route id/command family.
+2. Otherwise derive typed request facts and evaluate declared positive and forbidden predicates.
+3. Require exactly one matching route for a single command decision. Zero, many, stale, conflicting, missing-input, or forbidden results block with the exact candidate/fact set.
+4. Verify the selected route's read/write authority, first command, next reference, conditional references, and claim boundary.
+5. Load only the returned `load_order` before acting; all `excluded_by_default` material stays unloaded.
+
+Text cues may be recorded as typed source-span evidence, but no cue weight, strongest-score tie-break, failure retry, compatibility alias, or fallback may authorize a route.
+
+Use `route-task` for a deterministic route record. It does not prove the selected command executed or closed:
+
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py route-task --task <public-safe-task> --route-hint <current-route>
+```
+
+## Local Material Routing
+
+- One maintenance-unit supervision and closure: [references/skillguard-supervisor.md](references/skillguard-supervisor.md).
+- Target-owned completion/depth identity: [references/skillguard-execution-depth.md](references/skillguard-execution-depth.md).
+- Large, layered, affected-only, or full validation: [references/skillguard-test-mesh.md](references/skillguard-test-mesh.md).
+- Read-only blocker explanation: [references/skillguard-assurance-diagnostics.md](references/skillguard-assurance-diagnostics.md).
+- Persistent receipt records: [references/skillguard-execution-records.md](references/skillguard-execution-records.md).
+- Private multi-unit inventory/graduation: [references/skillguard-portfolio.md](references/skillguard-portfolio.md).
+- Author repository adoption/audit: [references/skillguard-project-adoption.md](references/skillguard-project-adoption.md).
+- Clean consumer preparation, activation, rollback, recovery, and currentness: [references/skillguard-target-installation.md](references/skillguard-target-installation.md).
+- SkillGuard's own governed maintenance: [references/skillguard-self-host.md](references/skillguard-self-host.md).
+- A target that explicitly declares validated-template-pack support: [references/validated-template-pack.md](references/validated-template-pack.md).
+
+Do not load Portfolio, installation, self-host, template-pack, or release material for an unrelated read-only unit check.
 
 ## Required Workflow
 
-1. Confirm the author boundary before any write.
+1. Establish the author boundary and freeze one maintenance unit.
+2. Compile the direct-current contract source into the compiled contract and exact check manifest. Former formats are rejection-only; there is no converter or dual reader.
+3. Freeze every check, obligation/evidence domain, dependency, subject, private evidence root, and exactly one execution owner.
+4. Reuse a terminal-success receipt only inside the same unit when unit/member/owner/request/inputs/dependencies/toolchain/environment/policy and consumer projection identities are exact.
+5. Execute missing owners under single-flight ownership. Skipped, failed, stale, timed-out, cancelled, cleanup-unconfirmed, or non-terminal evidence blocks.
+6. Require the target's fixed enforced closure and declared model-deepening check when present. The target, not SkillGuard, decides whether its predictions, falsifiers, iterations, gaps, or other domain evidence close.
+7. Build a clean consumer projection containing only target-owned material; audit independence with SkillGuard absent.
+8. Prepare and activate installation transactionally, retaining rollback/recovery; verify installation currentness separately from validation.
+9. Update Portfolio/router state only if affected; they never make another unit current.
+10. Report exact checked, executed, reused, skipped, blocked, consumer, install, Git/tag/release, and residual claim boundaries.
 
-   The target source must declare `skill_maintainer_source`, a non-empty
-   `maintenance_unit_id`, and `member_skill_ids`. The skill root and target
-   root must be inside that author repository. Run-state and evidence roots
-   must be explicit, private, and outside the consumer target.
+## Terminals
 
-2. Freeze one maintenance unit.
+- `current`: exact author source, contract, owner evidence, closure, and requested projection are current within the declared boundary.
+- `blocked`: an authority, identity, inventory, dependency, evidence, depth, distribution, cleanup, or route condition is incomplete or ambiguous.
+- `graduated`: the named unit satisfies its target-owned criteria and its clean standalone consumer audit passes.
+- `installed-current`: one prepared consumer projection was transactionally activated and separately replayed against current target identity.
 
-   Record its unit id, members, promises, obligations, semantic checks,
-   evidence subjects, dependency order, consumer projection, and exclusions.
-   Official OpenSpec belongs in the exclusions, never the managed members.
-
-3. Check semantic boundaries.
-
-   Every check belongs to exactly one member and one maintenance unit. Different
-   units may not depend on, import, project, or reuse one another's receipts.
-   Similar commands do not create a shared owner. Several same-unit semantic
-   checks may share one producer only when the target explicitly declares the
-   same execution owner and every producer behavior/input identity agrees.
-
-4. Compile the author-side contract.
-
-   Compile the exact current source into the compiled contract and check
-   manifest. Former formats are rejection-only; there is no converter,
-   fallback, dual reader, or compatibility success route.
-
-   When a current closure already exists, `assurance-diagnostics` may derive a
-   dependency-aware subset-minimal blocker basis from the exact compiled
-   contract, check manifest, impact graph, receipts, and closure assessment.
-   The diagnostic report is read-only. It cannot issue a receipt, change the
-   closure terminal, run or resume a missing owner, or remove, relax, or
-   auto-scope an obligation.
-
-5. Freeze the unit's validation plan.
-
-   List every exact check, covered obligation/evidence domain, dependencies,
-   persistent private evidence root, and one execution owner. Missing,
-   duplicated, foreign-unit, cyclic, or ambiguous ownership blocks before
-   execution.
-
-6. Resolve exact same-unit evidence.
-
-   A producer terminal-success receipt may be reused only when maintenance
-   unit, member, owner, request, inputs, dependencies, toolchain, environment,
-   and policy identities all match. Each consuming semantic check must also
-   match its exact target-declared evidence-subject and projection identity.
-   Otherwise execute the unit's own producer.
-
-7. Execute and close.
-
-   Execute missing owners, preserve immutable results, confirm process-tree
-   cleanup after timeout/cancellation, and require the target-owned native
-   checks plus fixed enforced closure. Skipped, failed, stale, timed-out,
-   cancelled, cleanup-unconfirmed, or non-terminal evidence blocks.
-
-   For maintained targets that perform task-local model deepening,
-   `depth_profile.model_deepening_check_id` must name one check in that exact
-   target-owned inventory. SkillGuard projects that check's immutable result
-   separately and verifies its check id, owner id, request fingerprint,
-   currentness, terminal disposition, receipt id, and receipt hash. The target
-   check—not SkillGuard—decides whether predictions, falsifiers, iterations,
-   progress, and addressable gaps satisfy the domain closure rule. A caller
-   statement that it understood the task never substitutes for the receipt.
-
-8. Build the consumer distribution.
-
-   Include only target-owned runtime material. Exclude the complete private
-   .skillguard author tree,
-   SkillGuard imports/commands/receipts, router/Portfolio state, and author-only
-   tests, fixtures, models, plans, and notes. Block if target runtime is still
-   hidden under the retired author-runtime location named .skillguard/runtime.
-
-9. Audit independence.
-
-   Verify that the consumer tree can be understood and used from its own
-   `SKILL.md`, scripts, references, assets, and native checks. Missing
-   SkillGuard on the consumer machine must be a valid expected condition.
-
-10. Install or release transactionally.
-
-    Stage the clean projection, verify its target-owned identity, activate it,
-    and retain rollback/recovery. Installation must not create `.skillguard`
-    in the installed skill or any ordinary project.
-
-11. Update private maintenance indexes only when affected.
-
-    Portfolio and the maintainer router may record the unit's author-side
-    status. They cannot make another unit current and cannot export their state
-    to consumers.
-
-12. Report the exact claim boundary.
-
-    State what was checked, what executed, what was skipped, which evidence is
-    current, whether the consumer distribution is clean, and what remains
-    blocked.
-
-13. Maintain persistent evidence explicitly.
-
-    Keep one canonical owner-evidence store per maintenance unit. Complete
-    stdout/stderr are deterministic compressed sidecars with separate logical
-    and storage identities; receipts expose only bounded diagnostics. Audit and
-    GC planning are read-only. Apply quarantines only exact unreachable
-    candidates from a current plan. Purge acts only on that quarantine after
-    current and release-pinned replay remains valid. Ordinary validation may
-    clean only its own unpublished temporary captures and never silently
-    purges persistent evidence.
-
-## Maintenance Unit and Evidence Rules
-
-- One maintenance unit may contain one skill or a deliberately inseparable
-  suite.
-- Each member has its own semantic check ids and evidence subjects.
-- Same-unit single-flight is allowed only under one explicit target-declared
-  producer and its exact full producer/projection identities; command
-  similarity alone is irrelevant.
-- Cross-unit receipt consumption is always forbidden.
-- Unrelated units stay current after a change that has no component edge to
-  them; they need neither rerun nor a “reuse ticket.”
-- Affected units rerun their own checks.
-- Portfolio graduation proves only the named unit. It never cites an earlier
-  unit's result as an authorization condition.
-
-## Official OpenSpec Boundary
-
-OpenSpec is an external requirements provider.
-
-SkillGuard may read a stable OpenSpec proposal/design/spec/tasks/status artifact
-when a maintained skill's author workflow needs requirements context. It must
-not create an OpenSpec receipt bridge, session/cache authority, execution owner,
-SkillGuard contract, or installed dependency. OpenSpec's official skills remain
-official and independent.
-
-## Consumer Distribution Rules
-
-A consumer release is target-owned. Its release identity may include:
-
-- target skill id/version;
-- target-owned file inventory and hashes;
-- target-owned entrypoint/native-check declarations;
-- installation transaction identity.
-
-It must not contain:
-
-- SkillGuard contract or manifest hashes;
-- maintenance unit ids;
-- SkillGuard receipt/run ids;
-- author repository paths;
-- SkillGuard command instructions;
-- global router or Portfolio bindings.
+Progress, a PID, a log, generated prompt text, an old receipt, or prose cannot create a terminal.
 
 ## Hard Gates
 
-- No author role/unit/member binding: no write and no execution.
+- No explicit author role/unit/member/contract trio: no write or validation.
 - No explicit private run/evidence roots: no supervision.
-- No cross-unit dependency or receipt: block.
-- No semantic owner for a check: block.
-- Duplicate semantic ownership across units: repair the boundary first.
-- `.skillguard` in a consumer distribution: block.
-- target runtime under the retired .skillguard/runtime author location: block
-  until moved.
-- SkillGuard import/command/receipt/router/Portfolio reference in a consumer
-  distribution: block.
-- ordinary project adoption/write: block.
-- official OpenSpec enrolled as a maintained target: block.
-- source identity unknown: block destructive withdrawal until the canonical
-  author source is established.
-- timeout/cancellation without zero descendants confirmed: evidence invalid.
-- final full validation before source/toolchain/plan freeze: invalid.
-- more than one writable evidence authority for a maintenance unit: block.
-- stale GC plan, reachable candidate, active-store purge target, or failed
-  current/release-pin replay: zero deletion.
-- diagnostic input with a former schema, mismatched authority identity, or
-  stale/foreign mutation receipt: block the projection; never infer success.
-- proposed diagnostic action that removes, relaxes, scopes, or weakens an
-  obligation: reject.
+- No semantic owner, duplicate owner, foreign-unit dependency/receipt, or cyclic plan: block.
+- No compatibility reader, fallback, migration command, alias, dual manifest, or alternate current authority.
+- No `.skillguard`, SkillGuard command/import/receipt/router/Portfolio state, author path, or author-only fixture/model/test in a consumer projection.
+- No target runtime hidden inside a retired private maintenance-runtime directory.
+- No `--resume` described or used as read-only; it may execute missing owners.
+- No final full validation before source, toolchain, and impact-plan freeze; exactly one owner runs it.
+- After timeout/cancellation, no evidence reuse or new owner until the entire descendant process tree is confirmed zero.
+- No Windows Scheduled Task, unattended retry, or background resume for a mutable full validation.
+- No read-only installation currentness check that launches smoke/validation.
+- No stale GC plan, reachable evidence, active store, failed replay, or unauthorized purge.
+- No template selection by SkillGuard: ask the target for a current native route receipt and target-authored applicability; zero/many/stale/forbidden/field-conflict results block.
+- No installation, source, package/runtime, receipt, router, Git, tag, or GitHub Release identity substituted for another.
 
 ## Output Requirements
 
 Every result states:
 
-- the author repository and maintenance unit/member identities using safe path
-  labels;
-- the route and exact checks considered;
-- evidence and receipt status;
-- failures and blockers;
-- skipped checks with reasons;
-- consumer-distribution audit status;
-- installation/release status when requested;
-- residual risk;
-- a claim boundary that distinguishes author-side proof from consumer runtime
-  behavior.
-- when assurance diagnostics were requested: source closure status, exact
-  authority fingerprints, blocker-basis completeness, necessity witnesses,
-  and the unchanged target-owned mutation result.
+- safe author repository, unit, member, route, and selected reference identities;
+- exact checks/owners/obligations/evidence subjects and their executed/reused/skipped status, including a `skipped_checks` list;
+- immutable receipt/currentness status and cleanup state;
+- target-owned closure/depth result without reinterpretation;
+- clean consumer audit and install state when requested;
+- source/package/router/install/Git/tag/release identities separately;
+- blockers, residual risk, and claim boundary.
 
-## SkillGuard Maintenance
+## SkillGuard self-maintenance
 
-When SkillGuard itself changes:
-
-- update its OpenSpec change artifacts first;
-- update the existing FlowGuard models that own the affected behavior;
-- keep contract source, compiled contract, manifest, implementation, schemas,
-  fixtures, tests, references, router prompt, and installation projection
-  synchronized;
-- run affected validation during development;
-- run one final full validation only after source/toolchain/impact identities
-  are frozen;
-- keep the author-side SkillGuard installation separate from clean consumer
-  installations;
-- never restore retired installed-skill scanning, cross-unit reuse tickets,
-  prior-unit graduation gates, ordinary-project adoption, or OpenSpec receipt
-  bridges.
+For SkillGuard itself, use OpenSpec first, ground the change in current FlowGuard models, keep source/compiled contract/check manifest/runtime/schemas/fixtures/tests/references/router/installation synchronized, run affected checks during development, and run one full self-host validation only after freeze. Never restore installed-skill scanning, cross-unit reuse, prior-unit graduation gates, ordinary-project adoption, or an OpenSpec receipt bridge.

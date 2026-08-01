@@ -657,7 +657,7 @@ Read `references/README.md` before closing.
             "mutually_exclusive_flags",
             "malformed_json",
             "invalid_path_config",
-            "multiple_equal_route_candidates",
+            "multiple_route_predicate_matches",
             "incompatible_route_identifiers",
             "responsibility_route_conflict",
             "incompatible_route_hint",
@@ -1124,23 +1124,24 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             )
 
             managed_prompt = (codex_home / "AGENTS.md").read_text(encoding="utf-8")
-            self.assertIn("private maintainer-computer routing projection", managed_prompt)
+            self.assertIn("## SkillGuard Author Router", managed_prompt)
             self.assertIn(
-                "Do not use this registry as a pre-execution gate for ordinary domain use",
+                "Ordinary use of a graduated consumer skill stays independent",
                 managed_prompt,
             )
             self.assertIn(
-                "Different maintenance units never share, import, project, or reuse check receipts",
+                "Reuse one immutable terminal-success producer receipt only inside the same maintenance unit",
                 managed_prompt,
             )
             self.assertIn(
                 "External OpenSpec is outside this registry",
                 managed_prompt,
             )
-            self.assertIn("## Validated Template Pack Selection", managed_prompt)
-            self.assertIn("## Validated Template Pack Instance", managed_prompt)
-            self.assertIn("## Validated Template Pack Installation", managed_prompt)
-            self.assertIn("global_router_selects_domain_template: false", managed_prompt)
+            self.assertNotIn("## Validated Template Pack Selection", managed_prompt)
+            self.assertNotIn("## Validated Template Pack Instance", managed_prompt)
+            self.assertNotIn("## Validated Template Pack Installation", managed_prompt)
+            self.assertIn("neither selects a domain template", managed_prompt)
+            self.assertIn("current_registered_source_count:", managed_prompt)
             self.assertNotIn("Before using a Codex skill", managed_prompt)
 
     def test_global_registry_check_resolves_codex_scan_roots_from_codex_home(self) -> None:
@@ -1322,7 +1323,7 @@ This LogicGuard-backed capability model is for `v0.1.4`.
         report = run_skillguard("route-task", "--task", "check skill and check suite", expected_exit=1)
         repeat = run_skillguard("route-task", "--task", "check skill and check suite", expected_exit=1)
 
-        conflict = self.assert_route_conflict(report, "multiple_equal_route_candidates")
+        conflict = self.assert_route_conflict(report, "multiple_route_predicate_matches")
         self.assertEqual(report.get("routing_conflict_blockers"), repeat.get("routing_conflict_blockers"))
         self.assertTrue(any("ambiguous" in blocker for blocker in report.get("blockers", [])))
         self.assertGreaterEqual(len(report.get("candidate_routes", [])), 2)

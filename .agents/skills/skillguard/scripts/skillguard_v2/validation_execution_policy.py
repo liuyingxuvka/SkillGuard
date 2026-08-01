@@ -23,10 +23,12 @@ VALIDATION_EXECUTION_POLICY_LINES = (
     "- After any launcher timeout, cancellation, or interruption, confirm the entire descendant process tree count is zero before accepting evidence or starting another owner; `cleanup-unconfirmed` results are invalid and non-reusable.",
     "- Never use a Windows Scheduled Task, background resume, or unattended retry script to run full validation or resume a mutable worktree.",
 )
+GLOBAL_VALIDATION_EXECUTION_POLICY_LINES = VALIDATION_EXECUTION_POLICY_LINES
 
 
 __all__ = [
     "VALIDATION_EXECUTION_POLICY_ID",
     "VALIDATION_EXECUTION_POLICY_LINES",
+    "GLOBAL_VALIDATION_EXECUTION_POLICY_LINES",
     "SKILLGUARD_ACTIVATION_POLICY_LINES",
 ]

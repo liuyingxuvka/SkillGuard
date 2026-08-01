@@ -1,5 +1,5 @@
 {
-  "check_declarations_hash": "EFBD31C23CCC7E36B842BB757C6C7C9F8C53D38F9992B8C6E185ADA286868A8E",
+  "check_declarations_hash": "26A69113D7A8224EA7E853E3DCBAA283DA7A5A8AF5D84AF02803D9C39414B5C9",
   "checks": [
     {
       "args": [
@@ -33,7 +33,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:08d3d6358f2399766edc9b990a32d40e22dfb1ee8290b66f69e94761b7a12034",
       "semantic_check_id": "check:self:inventory-static-surface",
       "target_input_role_ids": [],
@@ -61,20 +61,20 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
         "component:contract_schema:40cd89aa58ea1c61",
-        "component:documentation_model:8f5ef85a40cf1351",
-        "component:prompt_router:765ab5b94730133c",
-        "component:prompt_router:9e670a20d4c5c9d0",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:documentation_model:e28f165f3f9431ee",
+        "component:prompt_router:432a9254b0102fca",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
         "component:runtime_source:a66162aeaede6f42",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
-        "component:runtime_source:e4dba44f29ba9840",
-        "component:runtime_source:e73124d4f22f6a48"
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942"
       ],
       "input_selectors": [
         {
@@ -94,7 +94,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:8177aebfe16ac4a1f03ed8bffc1da41afb51e19ff6a5f5a75fb437c451d1e9f7",
-      "owner_input_projection_hash": "sha256:e895d93356d435b7176a98419b24ffc6f77cd37cac7e30f082c1afd6a42ae157",
+      "owner_input_projection_hash": "sha256:1ad12255429ec6b0c03f1a108bd280e2f524fdb07721558cbb783b774479c77e",
       "projection_declaration_hash": "sha256:955aee528105d0720adad7f34c0def365aa593977618b25d0164ae5fb7ea260a",
       "semantic_check_id": "check:self:run-native-static-checks",
       "target_input_role_ids": [],
@@ -134,7 +134,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:de4fc16b77deac4fda732af3ff56655583d132d44a8d82e20d2fab9bf6f338c1",
       "semantic_check_id": "check:self:issue-static-audit-receipt",
       "target_input_role_ids": [],
@@ -172,7 +172,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:00ca08e76a8de6bcc6d78209573f041c89929a341cb4bed7c486d0b53fd0b7ae",
       "semantic_check_id": "check:self:freeze-declared-check-inventory",
       "target_input_role_ids": [],
@@ -200,19 +200,19 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
         "component:contract_schema:40cd89aa58ea1c61",
-        "component:prompt_router:765ab5b94730133c",
-        "component:prompt_router:9e670a20d4c5c9d0",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:432a9254b0102fca",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
         "component:runtime_source:a66162aeaede6f42",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
-        "component:runtime_source:e4dba44f29ba9840",
-        "component:runtime_source:e73124d4f22f6a48"
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942"
       ],
       "input_selectors": [
         {
@@ -228,7 +228,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:b519fd4714ce3473572e2aa9cb8c9eb5f5c6031a595a8411168694432931f352",
-      "owner_input_projection_hash": "sha256:cab341426a5e529913878a35357dc4b252379339cbde47ca2242d5f4ab4ad818",
+      "owner_input_projection_hash": "sha256:8a612494ef62934cbc56ba3a47de4800b295bb885b4326befdebd3804c2f0382",
       "projection_declaration_hash": "sha256:9f46946ad129718df6609a283c5ba2c19036d9518cc28cef94d6b4816b41938e",
       "semantic_check_id": "check:self:run-declared-checks",
       "target_input_role_ids": [],
@@ -269,7 +269,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:48c9cfad50c774cdc65e672694ce8310b16a563a1d75238a6c3290db28e06c65",
       "semantic_check_id": "check:self:reconcile-declared-check-results",
       "target_input_role_ids": [],
@@ -301,12 +301,12 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:b0f8e383ce54c968",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:1b5c65fd07f5b10d",
         "component:test_dev:6fbc012719063fe1"
       ],
@@ -328,7 +328,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:b7f0c7094ef22b21d9edacd4ef63eb49df308711101bb229bb51fff29350f621",
-      "owner_input_projection_hash": "sha256:8d8d7694048f51b3ef1d9095063492f9103e8bf88fa4ff771036ed8dddaea8b6",
+      "owner_input_projection_hash": "sha256:579b1a6cc7612e87c023eb405c9970b7c9286e497cac6b421eb738f5bd10c67e",
       "projection_declaration_hash": "sha256:520e1f7dc71f52bf0dfbf7c2bfa642b53a6bb0a0c3bc1ec79bc1f2e2049bb6d8",
       "semantic_check_id": "check:self:declared-check-runtime",
       "target_input_role_ids": [],
@@ -409,7 +409,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:3a4f4872456b8663dfa12e6f03a4b9f2adec37368eb6e5341c9a05d55a78fc21",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:360be0a1cdcf413b83440daf94969b82a39ff32d269c160800209692fd0a13fb",
       "semantic_check_id": "check:self:load-model-export",
       "target_input_role_ids": [],
@@ -493,7 +493,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:de953bccda2bae89cbaa09d6cb52839951a30efe6c3e88bd07739acf83883004",
       "semantic_check_id": "check:self:validate-binding",
       "target_input_role_ids": [],
@@ -521,12 +521,12 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
         "component:contract_schema:40cd89aa58ea1c61",
         "component:contract_schema:ae5d0587076f8f1c",
+        "component:contract_schema:ee1b860411020ac5",
         "component:documentation_model:3eedb6967975b8b0",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17"
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:c8f017d6ccf53801"
       ],
       "input_selectors": [
         {
@@ -562,7 +562,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:402b14471143ef83dca20c18a44a56b03ff4c05b9c049566bb1728a84922f1b4",
-      "owner_input_projection_hash": "sha256:dec628be586b73bd30d5d99f44c42b26f2046444701446a004d8db3e4f01143a",
+      "owner_input_projection_hash": "sha256:01a0e5b09a6f97424cace5ea75c8d0969d693c4208e6f3bf730e137f4fa49b7a",
       "projection_declaration_hash": "sha256:4c52d313dd15236ef68be9338f78ba1db05ff1aa9797af0628234f3dda55d204",
       "semantic_check_id": "check:self:compile-generated-contract",
       "target_input_role_ids": [],
@@ -590,14 +590,14 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
-        "component:runtime_source:e4dba44f29ba9840",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:44f30320beb444c5"
       ],
       "input_selectors": [
@@ -610,7 +610,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:2e9c3a4fbb01e9974aa6b0ea374f49f49414a77452520e327e32ea860cf36759",
-      "owner_input_projection_hash": "sha256:7469e36a5abd0600145f76a3e433dea7e746a82f2fbefc325d483b8561894a17",
+      "owner_input_projection_hash": "sha256:eaafd02f30b4f2b8411d652ec12bec34270cdeee3d8d8cfed37cd26abf8d2e6b",
       "projection_declaration_hash": "sha256:06804452d94e1886288b7d747e7ff40b3433ee1d9fcc2321fc4f1acd72cab250",
       "semantic_check_id": "check:self:verify-generated-parity",
       "target_input_role_ids": [],
@@ -642,18 +642,18 @@
       },
       "input_component_ids": [
         "component:contract_schema:171d0283d212da30",
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:prompt_router:9e670a20d4c5c9d0",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:432a9254b0102fca",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
         "component:runtime_source:7c727d9302861ef9",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
-        "component:runtime_source:e4dba44f29ba9840",
-        "component:runtime_source:e73124d4f22f6a48",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:f8ac4c11d569755e"
       ],
       "input_selectors": [
@@ -694,7 +694,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:8d5f782a715e03f16fe94d79accb79770325ed6b3cc050f27aa27c42a5de2e0d",
-      "owner_input_projection_hash": "sha256:a375e45a4bd3c2693d843201a725ac41433dbe77a54e82797d907a4586e766b4",
+      "owner_input_projection_hash": "sha256:6709d7349c7d905e73c87cc44f0914d5fdcb5757f22307911f36066368852bf1",
       "projection_declaration_hash": "sha256:4a17aac580c8e29888cdee9cc744495fb07d4823388f1ddc9921417004de1cda",
       "semantic_check_id": "check:self:test-mesh-fast",
       "target_input_role_ids": [],
@@ -732,11 +732,106 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:3f4b302c9a586f48bc292ebc34352ce6e0040ef171f241add292d3ab8eac6824",
       "semantic_check_id": "check:self:select-function-route",
       "target_input_role_ids": [],
       "timeout_seconds": 30
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
+        "tests/test_author_entry_loading.py",
+        "-q"
+      ],
+      "check_id": "check:self:author-entry-loading",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:route-ownership",
+        "obligation:global-router-handoff",
+        "obligation:template-target-route"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:author-entry-loading",
+      "evidence_subject_id": "subject:skillguard:check:self:author-entry-loading",
+      "execution_owner_id": "owner:self:author-entry-loading",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_component_ids": [
+        "component:contract_schema:ee1b860411020ac5",
+        "component:documentation_model:56464049d16fa962",
+        "component:documentation_model:afc21acd712fccf4",
+        "component:documentation_model:e28f165f3f9431ee",
+        "component:prompt_router:432a9254b0102fca",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:339cd6c5989d27af",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c4be9a7558bcc129",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
+        "component:test_dev:c32e7f81830f8424"
+      ],
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/SKILL.md"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/SKILL.md"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/references/skillguard-route-index.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/references/validated-template-pack.md"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/checker_engine.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/generate_route_index.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/global_router_projection.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/validation_execution_policy.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_author_entry_loading.py"
+        }
+      ],
+      "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "owner_declaration_hash": "sha256:770fdc2b2cf8b6ced2df91a6fd2825f648cbb3d31d0c6c1d36eeb3cd7ce076f8",
+      "owner_input_projection_hash": "sha256:f97859f530acd964aeaf42b55af265905f712934d08eb9dfae4186eb516c7bd6",
+      "projection_declaration_hash": "sha256:99e5b034f8ed88f3e88b6af11c86640cfb11c211d573f44f5805c938301f4c2f",
+      "semantic_check_id": "check:self:author-entry-loading",
+      "target_input_role_ids": [],
+      "timeout_seconds": 120
     },
     {
       "args": [
@@ -762,14 +857,14 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
-        "component:runtime_source:e4dba44f29ba9840",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:44f30320beb444c5"
       ],
       "input_selectors": [
@@ -782,7 +877,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:a874c2d52b1b76159f8d94b7d070aa62549e29fccdbd353f0e3d8ca1e59c833f",
-      "owner_input_projection_hash": "sha256:7469e36a5abd0600145f76a3e433dea7e746a82f2fbefc325d483b8561894a17",
+      "owner_input_projection_hash": "sha256:eaafd02f30b4f2b8411d652ec12bec34270cdeee3d8d8cfed37cd26abf8d2e6b",
       "projection_declaration_hash": "sha256:35a952ba2c1a4e5c245f57cc5b66f05c9d083097c3557ef9c4b762fe7b9d7d15",
       "semantic_check_id": "check:self:packet-consumption",
       "target_input_role_ids": [],
@@ -824,7 +919,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:1ae256155e11d169b611afd39cdeb33cc4c25e8d37fa7e897073b76d8e4248d9",
       "semantic_check_id": "check:self:claim-run",
       "target_input_role_ids": [],
@@ -854,11 +949,11 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:b0f8e383ce54c968",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:10963523ff2a7f85"
       ],
       "input_selectors": [
@@ -871,7 +966,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:326d191d8220c308fe2fb87fbeb68a3a9f819b6434faf09e32c5dbc7aa6a5470",
-      "owner_input_projection_hash": "sha256:dd240e8bdfc15895ef73dac2ee64d79f38ed6dbcec836eebcacaf9bff8448481",
+      "owner_input_projection_hash": "sha256:d196c28ecb305dd2b4e151593361e1152eeef4a5882a118a05c03f3d54613e87",
       "projection_declaration_hash": "sha256:626cbe218d936de0a74ff45706fa51fe98e88159665d201922ebe69d8ebe9e01",
       "semantic_check_id": "check:self:guard-run-identity",
       "target_input_role_ids": [],
@@ -901,11 +996,11 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:b0f8e383ce54c968",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:10963523ff2a7f85"
       ],
       "input_selectors": [
@@ -918,7 +1013,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:93337d615a536be20a10021594e8095571dc74029a262a2fa0be43740a18c59a",
-      "owner_input_projection_hash": "sha256:dd240e8bdfc15895ef73dac2ee64d79f38ed6dbcec836eebcacaf9bff8448481",
+      "owner_input_projection_hash": "sha256:d196c28ecb305dd2b4e151593361e1152eeef4a5882a118a05c03f3d54613e87",
       "projection_declaration_hash": "sha256:fc1a8564d7cd8e9e4a7c184e82754be4cca52851cefdccd8a9c8488d9bc76e23",
       "semantic_check_id": "check:self:failed-lock-recovery",
       "target_input_role_ids": [],
@@ -960,7 +1055,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:0c6a64c1d9fb2912e8531647093ac26b2def71e00a72c7a3a2b4fd3b668af20c",
       "semantic_check_id": "check:self:next-ready-step",
       "target_input_role_ids": [],
@@ -1000,7 +1095,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:95e9c746ecbb032acbe6bfe1d69efe8b24384b71a5bc77bade52890743aad5da",
       "semantic_check_id": "check:self:record-step-event",
       "target_input_role_ids": [],
@@ -1031,10 +1126,10 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:3c9c994b708a616e",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:0e76933c23b8037e"
       ],
       "input_selectors": [
@@ -1059,7 +1154,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:8e3d83152bacd0ce07a2453f14fcbe0369ca691bbb82f8b3c252525e064101e5",
-      "owner_input_projection_hash": "sha256:842c7550269dcc9163ef78f837a626fd62d333b52df57791cfc2549a1fc8e86e",
+      "owner_input_projection_hash": "sha256:bd9241493b6872d630363771786f5e6b0c6bbb7d29b9a983dee624654924465f",
       "projection_declaration_hash": "sha256:baee156d597bd0860347e3bd29ec9b1b8ed353ae61d9236fa53ba00855a1cea4",
       "semantic_check_id": "check:self:validate-step-evidence",
       "target_input_role_ids": [],
@@ -1099,7 +1194,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:bcb830259cba9d85a8fbdbb14b66d5aa8b2b93b07ae348bf40ebd989dc97d728",
       "semantic_check_id": "check:self:issue-step-receipt",
       "target_input_role_ids": [],
@@ -1130,12 +1225,12 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:b0f8e383ce54c968",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:35636250c643eb95"
       ],
       "input_selectors": [
@@ -1156,7 +1251,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:7475bf74fdee67f3a86cf65a8300a7836b4c50bde7c25ef9c0ac8d511c741417",
-      "owner_input_projection_hash": "sha256:b310a4fba382518c8d65512d2fa972ae950e0fce80b70b213902207c3b50ae94",
+      "owner_input_projection_hash": "sha256:2c8cfcb0ace199c3a8947392a2cdc4d4cef89bfb7679a6447050071efadd9a25",
       "projection_declaration_hash": "sha256:113614c2a74e13c1eb4ca564f9ca6128ec48768287d11366d1816436ab5d9cd9",
       "semantic_check_id": "check:self:check-run-closure",
       "target_input_role_ids": [],
@@ -1196,7 +1291,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:78ec8abf8ee74e2fcbe0bf63ba6f373b610a923f515f8cd59d2feeea7d2de613",
       "semantic_check_id": "check:self:issue-closure-receipt",
       "target_input_role_ids": [],
@@ -1234,7 +1329,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:102bdc08f6b65539a122c57a774de337f501d53c58d474bbe3b60a95a47aa39d",
       "semantic_check_id": "check:self:scan-maintenance-unit-freshness",
       "target_input_role_ids": [],
@@ -1274,7 +1369,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:3c2cfe24607a1bfe24d139c4992bef1734ffbf0196edc5323fc53ab336b9da11",
       "semantic_check_id": "check:self:validate-maintenance-unit-evidence",
       "target_input_role_ids": [],
@@ -1314,7 +1409,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:4c72b3c63356ba7808caa783297d3ba6232e8d331bf1ceb722b23c88cf3d66ac",
       "semantic_check_id": "check:self:issue-portfolio-receipt",
       "target_input_role_ids": [],
@@ -1352,7 +1447,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:1a9356a353b9d6dbe1cc80dd869404d688f540ddb267a9e4518d5ba1e96449a4",
       "semantic_check_id": "check:self:inspect-author-repository-adoption",
       "target_input_role_ids": [],
@@ -1392,7 +1487,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:501199b86177957fe260b3e18f2d3d5b59c932743c067fca26f3b58d94b5423a",
       "semantic_check_id": "check:self:render-managed-project-prompt",
       "target_input_role_ids": [],
@@ -1432,7 +1527,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:8f6f02ebee401770dfc573f4484ef9ee4d537f2dedf42eefc3ac73c8e660e9a2",
       "semantic_check_id": "check:self:install-author-repository-adoption",
       "target_input_role_ids": [],
@@ -1460,20 +1555,20 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
         "component:contract_schema:2ccdd176b68f46f4",
+        "component:contract_schema:ee1b860411020ac5",
         "component:documentation_model:d0ab5262afe4c22d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:prompt_router:9e670a20d4c5c9d0",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
+        "component:prompt_router:432a9254b0102fca",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
         "component:runtime_source:a66162aeaede6f42",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
-        "component:runtime_source:e4dba44f29ba9840",
-        "component:runtime_source:e73124d4f22f6a48"
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942"
       ],
       "input_selectors": [
         {
@@ -1497,7 +1592,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:7157b983082870f310b93c874dd9673745ef048c96f36720b7deb836090f6125",
-      "owner_input_projection_hash": "sha256:fda4fee50f8165842414628535aa7ab9a1f94592807e01deaa7cdfd820551c78",
+      "owner_input_projection_hash": "sha256:61e76d0a08e4a47595e8cbc15bbe1eaac41baa9c389a4f3dfefa07e239f8f263",
       "projection_declaration_hash": "sha256:096ccd42e54e8e6e77b90e1af08fbe5cc9c536a96319f22e3929d3b97b71d095",
       "semantic_check_id": "check:self:audit-author-repository-adoption",
       "target_input_role_ids": [],
@@ -1535,7 +1630,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:c4bca53a1d4eeefc4c0944be2c9b065310ef2925496579deb077181d9debdbc3",
       "semantic_check_id": "check:self:refresh-global-router",
       "target_input_role_ids": [],
@@ -1575,7 +1670,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:f396c030a8b5e61e92805ed7f758399bf3770c971d97d5f3fa0c22436bed5633",
       "semantic_check_id": "check:self:check-global-registry-and-prompt",
       "target_input_role_ids": [],
@@ -1615,7 +1710,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:0e2d1f59cff4a8f1b3ed7b267f4c13b3947ad2cd3a31660bf33d6ef4f16872a2",
       "semantic_check_id": "check:self:verify-target-handoff",
       "target_input_role_ids": [],
@@ -1653,7 +1748,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:91fce5c64f2cca48519b37556514d426c9f84eb069d6a6ceac5cc0bac3c1f2ed",
       "semantic_check_id": "check:self:resolve-canonical-source",
       "target_input_role_ids": [],
@@ -1693,7 +1788,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:0e71072a28e0ca079ce731cda37110eeceb90204c978ed8af5c62bd8428a03ca",
       "semantic_check_id": "check:self:compare-installed-and-repository",
       "target_input_role_ids": [],
@@ -1726,34 +1821,36 @@
       },
       "input_component_ids": [
         "component:contract_schema:171d0283d212da30",
-        "component:contract_schema:2afaf38cf75e9a2d",
         "component:contract_schema:2ccdd176b68f46f4",
         "component:contract_schema:4f16c9c79e806fbe",
         "component:contract_schema:6934b5aa56c58e63",
         "component:contract_schema:7b22d659874b24b6",
         "component:contract_schema:a2abdb39519e886c",
         "component:contract_schema:ae5d0587076f8f1c",
+        "component:contract_schema:ee1b860411020ac5",
         "component:documentation_model:0770931ee4b63ac2",
         "component:documentation_model:3eedb6967975b8b0",
         "component:documentation_model:611bf763ba8e27ce",
-        "component:documentation_model:8f5ef85a40cf1351",
+        "component:documentation_model:afc21acd712fccf4",
+        "component:documentation_model:e28f165f3f9431ee",
         "component:documentation_model:e872f156d92b08a7",
+        "component:prompt_router:432a9254b0102fca",
         "component:prompt_router:6bc4e808931dd5dc",
-        "component:prompt_router:765ab5b94730133c",
-        "component:prompt_router:9e670a20d4c5c9d0",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:339cd6c5989d27af",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
         "component:runtime_source:7c727d9302861ef9",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
         "component:runtime_source:a66162aeaede6f42",
         "component:runtime_source:b07a62488e29389c",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c4be9a7558bcc129",
+        "component:runtime_source:c8f017d6ccf53801",
         "component:runtime_source:dd406362f1d28fb7",
-        "component:runtime_source:e4dba44f29ba9840",
-        "component:runtime_source:e73124d4f22f6a48",
-        "component:runtime_source:f4d4a79d8e932b39"
+        "component:runtime_source:fe5eca503316f942"
       ],
       "input_selectors": [
         {
@@ -1777,7 +1874,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:a29a9d8eacb125dcf6fb0a1f876b4b4ceda9fd85dd3151b548cf39a2d27bd85b",
-      "owner_input_projection_hash": "sha256:f9bf1cc3eb6c3ef7fee5b0693765bc8899b3f03ea7aa7376ac9f8adabe908fe7",
+      "owner_input_projection_hash": "sha256:7a8727620bdfb0b99048b1d29fa2fc867c5565ab6c88043788949a60f6f7da2d",
       "projection_declaration_hash": "sha256:9ba7fa6926cfe3cd8e03c9b3705098aee8b64a983a936695151204bd129da3be",
       "semantic_check_id": "check:self:installed-provenance",
       "target_input_role_ids": [],
@@ -1818,7 +1915,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:9461b39d95f78ec1e653ee994376c80e4a6934600c94defb4eb410bf237c23d4",
       "semantic_check_id": "check:self:verify-release-provenance",
       "target_input_role_ids": [],
@@ -1847,14 +1944,14 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:e4dba44f29ba9840",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:5d203b692a80f8f6"
       ],
       "input_selectors": [
@@ -1871,7 +1968,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:4fe2a41022db0aa83823ab387971f13e2a2062e942b7bf66f334bca816c0b57e",
-      "owner_input_projection_hash": "sha256:4d5d5f8e83410131384fcdcfadbb0ff366de22b95b832ede582cdeccf128bf8d",
+      "owner_input_projection_hash": "sha256:89fdd51802f6a7fc98553994d212f24bd7b3fc852e0308d70bbdc7af10205f03",
       "projection_declaration_hash": "sha256:e4c7e2700a343b1397dbd3b9bcd45f501223e9447bac369134b5363f1f9a0d83",
       "semantic_check_id": "check:self:installation-safety",
       "target_input_role_ids": [],
@@ -1944,34 +2041,36 @@
       },
       "input_component_ids": [
         "component:contract_schema:171d0283d212da30",
-        "component:contract_schema:2afaf38cf75e9a2d",
         "component:contract_schema:2ccdd176b68f46f4",
         "component:contract_schema:6934b5aa56c58e63",
         "component:contract_schema:7b22d659874b24b6",
         "component:contract_schema:a2abdb39519e886c",
         "component:contract_schema:ae5d0587076f8f1c",
+        "component:contract_schema:ee1b860411020ac5",
         "component:documentation_model:0770931ee4b63ac2",
         "component:documentation_model:3eedb6967975b8b0",
         "component:documentation_model:611bf763ba8e27ce",
-        "component:documentation_model:8f5ef85a40cf1351",
+        "component:documentation_model:afc21acd712fccf4",
+        "component:documentation_model:e28f165f3f9431ee",
         "component:documentation_model:e872f156d92b08a7",
+        "component:prompt_router:432a9254b0102fca",
         "component:prompt_router:6bc4e808931dd5dc",
-        "component:prompt_router:765ab5b94730133c",
-        "component:prompt_router:9e670a20d4c5c9d0",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:339cd6c5989d27af",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
         "component:runtime_source:7c727d9302861ef9",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
         "component:runtime_source:a66162aeaede6f42",
         "component:runtime_source:b07a62488e29389c",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c4be9a7558bcc129",
+        "component:runtime_source:c8f017d6ccf53801",
         "component:runtime_source:dd406362f1d28fb7",
-        "component:runtime_source:e4dba44f29ba9840",
         "component:runtime_source:e65a04d807e9bc94",
-        "component:runtime_source:e73124d4f22f6a48",
-        "component:runtime_source:f4d4a79d8e932b39"
+        "component:runtime_source:fe5eca503316f942"
       ],
       "input_selectors": [
         {
@@ -1991,7 +2090,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:17db803584fd724299de72f81f6513e28fd205ad1e01fe10df65faebfca31fad",
-      "owner_input_projection_hash": "sha256:3670735f11cc3b8787c320703aaaec0d1a98db945b1327b13fe526bbea36f5f5",
+      "owner_input_projection_hash": "sha256:71e5cf2b36dad40c2cd6aa841f88fe8c5b84d2da0e7e5c85eb0ee9975b601ec1",
       "projection_declaration_hash": "sha256:de6350f16a511f246e2dd0a426b2b6970d8af270b5d42efdbf1c0b785920bef0",
       "semantic_check_id": "check:self:public-export-privacy",
       "target_input_role_ids": [
@@ -2033,7 +2132,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:b3eaf3476036cc85cfc90afeec4ec705d6f9d9e582091901d3dddd58fcc47fa6",
       "semantic_check_id": "check:self:obligation:loop-liveness",
       "target_input_role_ids": [],
@@ -2071,7 +2170,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-      "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+      "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
       "projection_declaration_hash": "sha256:ad6337ba81a2fbb92440360df0c0900de9ce9f7501161e65a53c966b4c1c9f72",
       "semantic_check_id": "check:self:obligation:no-former-authority-success",
       "target_input_role_ids": [],
@@ -2123,7 +2222,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:f693fcb34d1fdb836a377ab3fa8db67e6408bda516d6d997b8dad6b703c36e9a",
-      "owner_input_projection_hash": "sha256:b8e420ea614a0118f5a4014acfb91a6fad964d56ece08bf8137d1ca8d814c870",
+      "owner_input_projection_hash": "sha256:4f1314074ef1c2fe1c0b45c36a1ade19788076931704fb11ffa0beff1a959de6",
       "projection_declaration_hash": "sha256:3a901eef20de2df5e865e455f685124fd4619bc4624996aa9060ba6f2d5def72",
       "semantic_check_id": "check:self:template-lifecycle-model-v1",
       "target_input_role_ids": [],
@@ -2159,18 +2258,18 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
-        "component:prompt_router:765ab5b94730133c",
-        "component:prompt_router:9e670a20d4c5c9d0",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
-        "component:runtime_source:e4dba44f29ba9840",
-        "component:runtime_source:e73124d4f22f6a48",
-        "component:runtime_source:f4d4a79d8e932b39",
+        "component:contract_schema:ee1b860411020ac5",
+        "component:prompt_router:432a9254b0102fca",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c4be9a7558bcc129",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:63ade8e96e96849e"
       ],
       "input_selectors": [
@@ -2219,7 +2318,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:bb47faf302d55531a2873c49f5da2b4e864a758928ea1eaf48a2e94e620f7be5",
-      "owner_input_projection_hash": "sha256:873c97d96e76971970d191be951dcc19c24259cc175ed554d6133254b758957d",
+      "owner_input_projection_hash": "sha256:10c228b0ee079770ecb44f1d7770c497b48cb20e06a5212781f614f5bb485700",
       "projection_declaration_hash": "sha256:f568d927b7ca3cd908a9e1400856a0b92ff4dc549f5e371aadfe073feeb0a59b",
       "semantic_check_id": "check:self:template-protocol-v1",
       "target_input_role_ids": [],
@@ -2250,23 +2349,23 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
         "component:contract_schema:6934b5aa56c58e63",
+        "component:contract_schema:ee1b860411020ac5",
         "component:documentation_model:0494771f3059a65a",
         "component:documentation_model:0770931ee4b63ac2",
         "component:documentation_model:3eedb6967975b8b0",
         "component:documentation_model:4580eb681a0ab17a",
         "component:documentation_model:9cc085071a4d3b13",
-        "component:prompt_router:765ab5b94730133c",
-        "component:prompt_router:9e670a20d4c5c9d0",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:738a6109c83a0a67",
-        "component:runtime_source:b0f8e383ce54c968",
-        "component:runtime_source:c8e2e6e4ab13bc95",
-        "component:runtime_source:e4dba44f29ba9840",
-        "component:runtime_source:e73124d4f22f6a48",
+        "component:prompt_router:432a9254b0102fca",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:6780dc10458ccf54",
+        "component:runtime_source:882029584d929a11",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:a5a69bad13ecbd2c",
+        "component:runtime_source:bd40d195c494ccd5",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:3fb4b5ee74f1b93b",
         "component:test_dev:831d581224e233ff"
       ],
@@ -2324,7 +2423,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:b6261846be11a411e6fe4485657d96c2d23037b2c41606b3c14b117e2afbd315",
-      "owner_input_projection_hash": "sha256:39cd0918af42768a939d246e0ceebb4643b5f46612ba55b1abbdd010823d6d9f",
+      "owner_input_projection_hash": "sha256:c3617a409e044932740f419842db020eb6e22d674d568e09b53e5714ba3d459a",
       "projection_declaration_hash": "sha256:74b3f7b8325fc269cec89b3a5e1b8fa76d9d11bd951fe78029ea18ea5cc3ca95",
       "semantic_check_id": "check:self:assurance-diagnostics",
       "target_input_role_ids": [],
@@ -2355,13 +2454,13 @@
         "exit_code": 0
       },
       "input_component_ids": [
-        "component:contract_schema:2afaf38cf75e9a2d",
+        "component:contract_schema:ee1b860411020ac5",
         "component:documentation_model:3eedb6967975b8b0",
-        "component:prompt_router:765ab5b94730133c",
-        "component:runtime_source:0147cb7516e5eb17",
-        "component:runtime_source:0c348e2e329fdd37",
-        "component:runtime_source:3c9c994b708a616e",
-        "component:runtime_source:b0f8e383ce54c968",
+        "component:prompt_router:6c58b6629b7a202d",
+        "component:runtime_source:4bbbf8f207f3dca8",
+        "component:runtime_source:8d3732b99df36a95",
+        "component:runtime_source:c8f017d6ccf53801",
+        "component:runtime_source:fe5eca503316f942",
         "component:test_dev:1b5c65fd07f5b10d",
         "component:test_dev:831d581224e233ff"
       ],
@@ -2395,7 +2494,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:98b8fac4d2c5b02726145348054b200e3af05867546eeb4ef782f4a50a0991cb",
-      "owner_input_projection_hash": "sha256:f3be23b7b7a3d1a8b06b883736b39cba3b01b343bd871235d14826224169e480",
+      "owner_input_projection_hash": "sha256:f09bae5226e2cfa5c98a5fac483fa5cf53ab34396525529391c346e0238ed994",
       "projection_declaration_hash": "sha256:57510086dea136b8d497db8ec06bc41b2b3c0c35e4aba612512020802b4d329c",
       "semantic_check_id": "check:self:target-native-deepening-closure",
       "target_input_role_ids": [],
@@ -2431,7 +2530,7 @@
     "template_runtime:profile": "sha256:9138f310c20e6c439c3675326956d4355024a759258f4515ae3822581d269765",
     "template_runtime:selector": "sha256:3c26f3d29076ecf51fc3b795a4c497defcabc1488c71f1d36e9bea2f59fb31ba",
     "template_runtime:target_adapter": "sha256:2880c7ef22d9807ecc7f15ad87b4f8729f9fe59a413df16250d3d195460c1ee1",
-    "template_runtime:target_prompt": "sha256:44480233be28e291965b355928f97d3b4906cd3ad3b265034e03581b8801e7b2",
+    "template_runtime:target_prompt": "sha256:afee0fb364e89cf8b1684a5f1d6990b94f37b303427f6ef140874b52b609bdf4",
     "template_schema:launch_plan": "sha256:3fbc899a6a8f4a2f3c4e339321e6c65bd4643f144893304ae21cfc8e611894db",
     "template_schema:profile": "sha256:3902390a13aaa9890a8b231a886472d0bae68e4fbbab2e1bb8246af86f50336f",
     "template_schema:protocol": "sha256:28298581bf11bd73cc439c308311a801e806d416f76da81f3762dd42f72cb83a",
@@ -2607,6 +2706,20 @@
         "execution_owner_id": "owner:self:flowguard-contract-model",
         "projection_declaration_hash": "sha256:3f4b302c9a586f48bc292ebc34352ce6e0040ef171f241add292d3ab8eac6824",
         "semantic_check_id": "check:self:select-function-route"
+      },
+      {
+        "check_id": "check:self:author-entry-loading",
+        "covers_obligation_ids": [
+          "obligation:author-entry-loading",
+          "obligation:global-router-handoff",
+          "obligation:route-ownership",
+          "obligation:template-target-route"
+        ],
+        "evidence_class": "hard",
+        "evidence_domain_id": "skillguard:author-entry-loading",
+        "execution_owner_id": "owner:self:author-entry-loading",
+        "projection_declaration_hash": "sha256:99e5b034f8ed88f3e88b6af11c86640cfb11c211d573f44f5805c938301f4c2f",
+        "semantic_check_id": "check:self:author-entry-loading"
       },
       {
         "check_id": "check:self:packet-consumption",
@@ -2988,10 +3101,11 @@
           "skillguard.content_role_classifier.current:contract_schema"
         ],
         "component_hash": "sha256:766b5d9ab27e39fffb15fb1a529ee0af807afe7ea94672be3e7d678b5ef59edb",
-        "component_id": "component:contract_schema:2afaf38cf75e9a2d",
+        "component_id": "component:contract_schema:ee1b860411020ac5",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:check-run-closure",
           "owner:self:compile-generated-contract",
           "owner:self:declared-check-runtime",
@@ -3191,7 +3305,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:contract_schema"
         ],
-        "component_hash": "sha256:06d27a2c5e43787d4b1b7c6398a8becd06ec84435ea418893418ecd3f461980c",
+        "component_hash": "sha256:cf7fd08abc2da7b8ec7927db1238f114a2f6a7e4ccf63763c7eb5b5e18170b6a",
         "component_id": "component:contract_schema:40cd89aa58ea1c61",
         "consumer_ids": [
           "owner:self:compile-generated-contract",
@@ -3210,7 +3324,7 @@
         "classification_rule_ids": [
           "reviewed_override:path:release-version contract input"
         ],
-        "component_hash": "sha256:730c0f6665b1846724f782e32515d958aba9822dfbbdd9b2534a1a788dabf4f0",
+        "component_hash": "sha256:a0b3cc9b7f9f3d2a54c87b2ab6335f60153c29323323e9906c756f9016731ab7",
         "component_id": "component:contract_schema:4f16c9c79e806fbe",
         "consumer_ids": [
           "owner:self:installed-provenance"
@@ -3226,7 +3340,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:documentation_model"
         ],
-        "component_hash": "sha256:f1e01bad36233bf0eddd400b07e719e93c3eb8b65b4848a0382cd9fdc0fab0c8",
+        "component_hash": "sha256:5e83b4aa60c16f8ac5bbdf4fded082286ab7157660248a18d083c76c38f93ef5",
         "component_id": "component:documentation_model:3eedb6967975b8b0",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
@@ -3268,9 +3382,10 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:documentation_model"
         ],
-        "component_hash": "sha256:3ebe91f821c79b6c6a67b81d919e2b8dcce2e758b645cec913c96deac589990f",
-        "component_id": "component:documentation_model:8f5ef85a40cf1351",
+        "component_hash": "sha256:fee5d03156ddfdcc814cafcbec6a433eff888230b1b5cd3947076f5f8a2020fc",
+        "component_id": "component:documentation_model:e28f165f3f9431ee",
         "consumer_ids": [
+          "owner:self:author-entry-loading",
           "owner:self:installed-provenance",
           "owner:self:public-export-privacy",
           "owner:self:run-native-static-checks",
@@ -3279,6 +3394,24 @@
         "install_disposition": "copy",
         "member_paths": [
           ".agents/skills/skillguard/SKILL.md"
+        ],
+        "role": "documentation_model"
+      },
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:documentation_model"
+        ],
+        "component_hash": "sha256:96505b88f0a1fd4a39e689b4eb75c964a46171d60b5d48c43756bbbfccf5d7a3",
+        "component_id": "component:documentation_model:afc21acd712fccf4",
+        "consumer_ids": [
+          "owner:self:author-entry-loading",
+          "owner:self:installed-provenance",
+          "owner:self:public-export-privacy",
+          "projection:installation"
+        ],
+        "install_disposition": "copy",
+        "member_paths": [
+          ".agents/skills/skillguard/references/validated-template-pack.md"
         ],
         "role": "documentation_model"
       },
@@ -3379,7 +3512,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:documentation_model"
         ],
-        "component_hash": "sha256:63957951cc82526b37c62177de959bc85ea0f7ffe8cd25b8dd7373fc2df29a33",
+        "component_hash": "sha256:166f8aa667ea956951b819a2137dd3e74a53e05b29eddcc3086b0694980f9967",
         "component_id": "component:documentation_model:d0ab5262afe4c22d",
         "consumer_ids": [
           "owner:self:audit-author-repository-adoption"
@@ -3387,6 +3520,21 @@
         "install_disposition": "source_only",
         "member_paths": [
           "AGENTS.md"
+        ],
+        "role": "documentation_model"
+      },
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:documentation_model"
+        ],
+        "component_hash": "sha256:e599346577c69d403d108a7ce4ec1e4df39a89dc534bc5fcd26e0c2ead83f960",
+        "component_id": "component:documentation_model:56464049d16fa962",
+        "consumer_ids": [
+          "owner:self:author-entry-loading"
+        ],
+        "install_disposition": "source_only",
+        "member_paths": [
+          ".agents/skills/skillguard-global-router/SKILL.md"
         ],
         "role": "documentation_model"
       },
@@ -3476,7 +3624,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:fixture_reference"
         ],
-        "component_hash": "sha256:b9a3bc30642a0fc87942bd50e9f01ce16f5ba5da4710c8d4f917298101ffc0d9",
+        "component_hash": "sha256:28ae431aeb22a401a588dd16c5cae838445e0abd33c8cb14361f6660feacbcb3",
         "component_id": "component:fixture_reference:da29b8f2943a0d6a",
         "consumer_ids": [
           "projection:source-maintenance"
@@ -3629,11 +3777,12 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:prompt_router"
         ],
-        "component_hash": "sha256:69e8dddf3c7ea0347acfb6b2817f0ce9fb25f1e562835fe31696aa749ce0bfcc",
-        "component_id": "component:prompt_router:765ab5b94730133c",
+        "component_hash": "sha256:c4fb16566949aee4e8f39c5a0ee6c796eaf4001c74ade5ad35ef7020a5981bac",
+        "component_id": "component:prompt_router:6c58b6629b7a202d",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:check-run-closure",
           "owner:self:compile-generated-contract",
           "owner:self:declared-check-runtime",
@@ -3667,11 +3816,12 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:prompt_router"
         ],
-        "component_hash": "sha256:77c643668937cecf0cffd0a18af4e9ca26e771286c68e513e68f174922ba2837",
-        "component_id": "component:prompt_router:9e670a20d4c5c9d0",
+        "component_hash": "sha256:7f5e97794b351596a0cfe03252931eff3c7413e659c2c2ee467faf73c219de7d",
+        "component_id": "component:prompt_router:432a9254b0102fca",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:installed-provenance",
           "owner:self:public-export-privacy",
           "owner:self:run-declared-checks",
@@ -3693,7 +3843,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:prompt_router"
         ],
-        "component_hash": "sha256:af304ec9158f3af71e2b558eaedf64a50b0d8b42d23fa38a051b1cd91e1f23ac",
+        "component_hash": "sha256:478e19b0daec38b57d95bc8a417ca6042f7b0ef19068be36a312a85582bf44a1",
         "component_id": "component:prompt_router:6bc4e808931dd5dc",
         "consumer_ids": [
           "owner:self:installed-provenance",
@@ -3714,10 +3864,11 @@
           "skillguard.content_role_classifier.current:runtime_source"
         ],
         "component_hash": "sha256:8cce0f525b16ed538f883474a97044fd8be57bd3ec711c5628e4575e6fef831d",
-        "component_id": "component:runtime_source:0147cb7516e5eb17",
+        "component_id": "component:runtime_source:c8f017d6ccf53801",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:check-run-closure",
           "owner:self:compile-generated-contract",
           "owner:self:declared-check-runtime",
@@ -3760,10 +3911,11 @@
           "skillguard.content_role_classifier.current:runtime_source"
         ],
         "component_hash": "sha256:052a397bf77bcc57f258bfcdad6546dbce079054601b301e8fbfd9c432b58407",
-        "component_id": "component:runtime_source:3c9c994b708a616e",
+        "component_id": "component:runtime_source:fe5eca503316f942",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:check-run-closure",
           "owner:self:declared-check-runtime",
           "owner:self:failed-lock-recovery",
@@ -3810,10 +3962,11 @@
           "skillguard.content_role_classifier.current:runtime_source"
         ],
         "component_hash": "sha256:29154c3e02b6e174ceca36c8cf0e681f3b9d49e930da9503d306f9ce48b7a009",
-        "component_id": "component:runtime_source:b0f8e383ce54c968",
+        "component_id": "component:runtime_source:8d3732b99df36a95",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:check-run-closure",
           "owner:self:declared-check-runtime",
           "owner:self:failed-lock-recovery",
@@ -3848,10 +4001,11 @@
           "skillguard.content_role_classifier.current:runtime_source"
         ],
         "component_hash": "sha256:830cba9f84a35fcd51c6918a692f0217668f26e55409c06eb4df124ce7aae270",
-        "component_id": "component:runtime_source:0c348e2e329fdd37",
+        "component_id": "component:runtime_source:4bbbf8f207f3dca8",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:check-run-closure",
           "owner:self:declared-check-runtime",
           "owner:self:installation-safety",
@@ -3893,10 +4047,11 @@
           "skillguard.content_role_classifier.current:runtime_source"
         ],
         "component_hash": "sha256:0bfa4971b720a31c8604c0ed541273fb1e8bb59f98476c5a9f386756f2287ec9",
-        "component_id": "component:runtime_source:e4dba44f29ba9840",
+        "component_id": "component:runtime_source:a5a69bad13ecbd2c",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:installation-safety",
           "owner:self:installed-provenance",
           "owner:self:packet-consumption",
@@ -3927,10 +4082,11 @@
           "skillguard.content_role_classifier.current:runtime_source"
         ],
         "component_hash": "sha256:eabb0f2fea580de47b5fbecf0f797eb9a360c84c329fb9d1d8d218fb55e68500",
-        "component_id": "component:runtime_source:738a6109c83a0a67",
+        "component_id": "component:runtime_source:bd40d195c494ccd5",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:installation-safety",
           "owner:self:installed-provenance",
           "owner:self:public-export-privacy",
@@ -3961,10 +4117,11 @@
           "skillguard.content_role_classifier.current:runtime_source"
         ],
         "component_hash": "sha256:e17cc22f99c3bc89a53250f76786456ddf74d924d397e90a215c7e23e4076c2f",
-        "component_id": "component:runtime_source:c8e2e6e4ab13bc95",
+        "component_id": "component:runtime_source:882029584d929a11",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:installed-provenance",
           "owner:self:packet-consumption",
           "owner:self:public-export-privacy",
@@ -3992,11 +4149,12 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
-        "component_hash": "sha256:b7bbe1101038bb3176c0dea4cdbf96c15afe8356936e87b76a8f9b2c4d9eb076",
-        "component_id": "component:runtime_source:e73124d4f22f6a48",
+        "component_hash": "sha256:65571f5c4b172cd1131c068b2a36b0bf0dcc20be7d7dfda1048e0eab2ea4b9d2",
+        "component_id": "component:runtime_source:6780dc10458ccf54",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
           "owner:self:audit-author-repository-adoption",
+          "owner:self:author-entry-loading",
           "owner:self:installed-provenance",
           "owner:self:public-export-privacy",
           "owner:self:run-declared-checks",
@@ -4052,6 +4210,56 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:runtime_source"
         ],
+        "component_hash": "sha256:807d6ca03f4c756862a51fad65a9137db8e86feb62e6ada2edb097ccc69a7215",
+        "component_id": "component:runtime_source:c4be9a7558bcc129",
+        "consumer_ids": [
+          "owner:self:author-entry-loading",
+          "owner:self:installed-provenance",
+          "owner:self:public-export-privacy",
+          "owner:self:template-protocol-v1",
+          "portfolio-target:khaos-brain-suite",
+          "portfolio-target:logicguard-suite",
+          "portfolio-target:physicsguard-suite",
+          "portfolio-target:sourceguard",
+          "portfolio-target:traceguard-suite",
+          "portfolio-target:worldguard",
+          "projection:installation"
+        ],
+        "install_disposition": "copy",
+        "member_paths": [
+          ".agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py"
+        ],
+        "role": "runtime_source"
+      },
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:runtime_source"
+        ],
+        "component_hash": "sha256:dbe94c22fcd69a50de575b508c611b1423c24783df1cb7454c6b0c7402cd0d41",
+        "component_id": "component:runtime_source:339cd6c5989d27af",
+        "consumer_ids": [
+          "owner:self:author-entry-loading",
+          "owner:self:installed-provenance",
+          "owner:self:public-export-privacy",
+          "portfolio-target:khaos-brain-suite",
+          "portfolio-target:logicguard-suite",
+          "portfolio-target:physicsguard-suite",
+          "portfolio-target:sourceguard",
+          "portfolio-target:traceguard-suite",
+          "portfolio-target:worldguard",
+          "projection:installation"
+        ],
+        "install_disposition": "copy",
+        "member_paths": [
+          ".agents/skills/skillguard/references/skillguard-route-index.json",
+          ".agents/skills/skillguard/scripts/generate_route_index.py"
+        ],
+        "role": "runtime_source"
+      },
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:runtime_source"
+        ],
         "component_hash": "sha256:907ce1cb463e8190ee56d3cbe03bd240653f69c89dab82b5496a015ee3c3c9d1",
         "component_id": "component:runtime_source:b07a62488e29389c",
         "consumer_ids": [
@@ -4069,30 +4277,6 @@
         "install_disposition": "copy",
         "member_paths": [
           ".agents/skills/skillguard/.skillguard/template_lifecycle_model.py"
-        ],
-        "role": "runtime_source"
-      },
-      {
-        "classification_rule_ids": [
-          "skillguard.content_role_classifier.current:runtime_source"
-        ],
-        "component_hash": "sha256:335f0284206675a1d0674abe37d04b306812eb63de0c3f847d42121b04ea10c6",
-        "component_id": "component:runtime_source:f4d4a79d8e932b39",
-        "consumer_ids": [
-          "owner:self:installed-provenance",
-          "owner:self:public-export-privacy",
-          "owner:self:template-protocol-v1",
-          "portfolio-target:khaos-brain-suite",
-          "portfolio-target:logicguard-suite",
-          "portfolio-target:physicsguard-suite",
-          "portfolio-target:sourceguard",
-          "portfolio-target:traceguard-suite",
-          "portfolio-target:worldguard",
-          "projection:installation"
-        ],
-        "install_disposition": "copy",
-        "member_paths": [
-          ".agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py"
         ],
         "role": "runtime_source"
       },
@@ -4232,7 +4416,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:test_dev"
         ],
-        "component_hash": "sha256:b05f166af8ef43b091b37d3d4f8839f91e06471ab25a615a0f8b959bf194ef0f",
+        "component_hash": "sha256:95c2d628d97c3c0777cd6a16b4a20bfb37530641017aba0232ba4ae81f17f2f8",
         "component_id": "component:test_dev:831d581224e233ff",
         "consumer_ids": [
           "owner:self:assurance-diagnostics",
@@ -4241,6 +4425,21 @@
         "install_disposition": "source_only",
         "member_paths": [
           "tests/test_executable_contract_model.py"
+        ],
+        "role": "test_dev"
+      },
+      {
+        "classification_rule_ids": [
+          "skillguard.content_role_classifier.current:test_dev"
+        ],
+        "component_hash": "sha256:2d984e9a2e2bc613bb173712c7ed8e1229858086564375faf315ee3035c7bf5a",
+        "component_id": "component:test_dev:c32e7f81830f8424",
+        "consumer_ids": [
+          "owner:self:author-entry-loading"
+        ],
+        "install_disposition": "source_only",
+        "member_paths": [
+          "tests/test_author_entry_loading.py"
         ],
         "role": "test_dev"
       },
@@ -4361,7 +4560,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:test_dev"
         ],
-        "component_hash": "sha256:4f95652bfd36582337f58f09da7f25706ce6a10d468dfa9c691a845478f55488",
+        "component_hash": "sha256:afdf322255b94a0551f8a9e2a06298f0addcefc22fce0a7f5d53a8da306cb860",
         "component_id": "component:test_dev:63ade8e96e96849e",
         "consumer_ids": [
           "owner:self:template-protocol-v1"
@@ -4444,18 +4643,25 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:7ac988cc18b85936426b2a95d3cb886661ac1370f5b4824564bd7f5ca20fc82c",
+    "impact_graph_hash": "sha256:77db81d9abc237c494ec06a7bdb4014b6a90e1f4824d236bc153c695ee887797",
     "inventory": [
       {
+        "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
+        "content_hash": "sha256:f0f39ed7fb9a31c1b472d1bc3a9567fd5376fa7ac1bc06b677446bdb0f622e1b",
+        "install_disposition": "source_only",
+        "path": ".agents/skills/skillguard-global-router/SKILL.md",
+        "role": "documentation_model"
+      },
+      {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
-        "content_hash": "sha256:3aafa609984f8e45114cc9ea9a86d17f5b5b9a6855557c258886cbabf2439233",
+        "content_hash": "sha256:40be1dc1d95cd3390c8f337d105d1f78e43f09c50ff7e79cae8f95cad52b83ed",
         "install_disposition": "source_only",
         "path": ".agents/skills/skillguard/.skillguard/contract-source.json",
         "role": "contract_schema"
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
-        "content_hash": "sha256:23867be89d4f8f3dd1448211aa4ed8e44eaf6ed43b14bc8911dfa6e9128e1d5d",
+        "content_hash": "sha256:571ae14086664e0c38ecb7ca8bafb4b08755b336d656253f62f796a534a2e25f",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
         "role": "documentation_model"
@@ -4469,7 +4675,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
-        "content_hash": "sha256:2f9f30652a8b931b08697e3de09a862b96327465bb0a920e24e18fb503b438dc",
+        "content_hash": "sha256:9adb4ef75b80c86a672fb2ac1a319063cbf4cc223bc7a54eb53aad0cef3386e9",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/SKILL.md",
         "role": "documentation_model"
@@ -4959,7 +5165,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:prompt_router",
-        "content_hash": "sha256:0b366bfb978bd1bb104d552025b420a17af37de0b0d431856e802cab99a19330",
+        "content_hash": "sha256:b86c31e475a5dd212f6b076920d3aaece5f78d32a3e6df37ff16754473fef533",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/assets/templates/global_skillguard_prompt_block.md.template",
         "role": "prompt_router"
@@ -5078,7 +5284,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:fixture_reference",
-        "content_hash": "sha256:ab319759664c97fadeb5e77db4a788d6819721e54849ba9c90ec888c1241e8b5",
+        "content_hash": "sha256:58464da86dbf20e04f6c9a7ca76401e6a8cbfc4d04e0d9790b5d19462b51e908",
         "install_disposition": "source_only",
         "path": ".agents/skills/skillguard/fixtures/bad_routing/cases/equal_top_candidates.fixture.json",
         "role": "fixture_reference"
@@ -5134,7 +5340,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:fixture_reference",
-        "content_hash": "sha256:68d52a70689c12862148777e8b69460c75bec8bd979ebdcfdfeb8f88fc496ef3",
+        "content_hash": "sha256:d1b5987b64005437940e3026c082021526bf0344011e9cf5d035d04569b6de1b",
         "install_disposition": "source_only",
         "path": ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json",
         "role": "fixture_reference"
@@ -6183,6 +6389,13 @@
         "role": "documentation_model"
       },
       {
+        "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
+        "content_hash": "sha256:3d4056fe23be54decedcf678926f28c3cfc1569aea5ee73295f0f681f5e87b65",
+        "install_disposition": "copy",
+        "path": ".agents/skills/skillguard/references/skillguard-route-index.json",
+        "role": "runtime_source"
+      },
+      {
         "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
         "content_hash": "sha256:46e9d9f9066494e5a80360c3210fe77a4c0fc9a44dfaf83a5ad955f0cf14867c",
         "install_disposition": "copy",
@@ -6211,10 +6424,24 @@
         "role": "documentation_model"
       },
       {
+        "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
+        "content_hash": "sha256:70a59bb6cfcdf083efade10da432fc0e918d0f3cea36d994b84ee35d738f61b0",
+        "install_disposition": "copy",
+        "path": ".agents/skills/skillguard/references/validated-template-pack.md",
+        "role": "documentation_model"
+      },
+      {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:3292f6168150135a14b411a2c983828d753ba66bb4979f27b7d5d9418b88dd8c",
+        "content_hash": "sha256:fba3301b24c21f610b2d92c744a353c3a448742f7b0f633c89a20a10022a8a67",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/checker_engine.py",
+        "role": "runtime_source"
+      },
+      {
+        "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
+        "content_hash": "sha256:d1bc15b7d05805a2288863ff3a73745427e34df1b326d32425ed9aa439c19526",
+        "install_disposition": "copy",
+        "path": ".agents/skills/skillguard/scripts/generate_route_index.py",
         "role": "runtime_source"
       },
       {
@@ -6422,7 +6649,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:prompt_router",
-        "content_hash": "sha256:eb44cb6761dd818d3c47ff0a78b45863e5d80f63d9f0365cd310ab23081e02d6",
+        "content_hash": "sha256:1da8fa69493d3345eee2e55abeb7fed526dfcdef3e0b0c7c825e0e0c3f78e6ad",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/global_router_projection.py",
         "role": "prompt_router"
@@ -6646,7 +6873,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:runtime_source",
-        "content_hash": "sha256:44480233be28e291965b355928f97d3b4906cd3ad3b265034e03581b8801e7b2",
+        "content_hash": "sha256:afee0fb364e89cf8b1684a5f1d6990b94f37b303427f6ef140874b52b609bdf4",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py",
         "role": "runtime_source"
@@ -6660,7 +6887,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:prompt_router",
-        "content_hash": "sha256:fcd4ba0d45c63786cefff98e4ab7efe4ef8b2d9eb00e11b9ebd58aa6a332cd84",
+        "content_hash": "sha256:90f7d6f92e80e3ee2b822747364ac9c8ef65a7d187b8cba29eef30a350b47cbd",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard/scripts/skillguard_v2/validation_execution_policy.py",
         "role": "prompt_router"
@@ -6821,21 +7048,21 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
-        "content_hash": "sha256:d030a8b03f4a9c58142bb794170745618d17481d38861edb4a12bd0b99f2fb1c",
+        "content_hash": "sha256:5627f4c3d0b8040e66c9ed30f818c400eedf5a9ea02f8197397ce16598ae7acf",
         "install_disposition": "source_only",
         "path": "AGENTS.md",
         "role": "documentation_model"
       },
       {
         "classification_rule_id": "reviewed_override:path:release-version contract input",
-        "content_hash": "sha256:902311c7bb38fa1658ff403def6158ee7378fe9d6e2e284fa1c38735c31bd30b",
+        "content_hash": "sha256:d0176718bd214ce8474c06ed61c395ca113fdfc2acdd86d9aa9933b40d9b561e",
         "install_disposition": "source_only",
         "path": "VERSION",
         "role": "contract_schema"
       },
       {
         "classification_rule_id": "reviewed_override:path:release-version contract input",
-        "content_hash": "sha256:c063e40af14d4ff77d4b281a52a67dc6e7198220d2e8682b16b016611b4ae6ef",
+        "content_hash": "sha256:fc220896d36313af658371e0a0a5be5d7380e895377335bb6bf82c5997487359",
         "install_disposition": "source_only",
         "path": "pyproject.toml",
         "role": "contract_schema"
@@ -6852,6 +7079,13 @@
         "content_hash": "sha256:8140cd5b596c5fc9a3298e19460a4fe94953e46e2aca9b8679cfd7ac0becad2e",
         "install_disposition": "source_only",
         "path": "tests/test_assurance_diagnostics.py",
+        "role": "test_dev"
+      },
+      {
+        "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
+        "content_hash": "sha256:7045af8a7ef793e0c21a5812bafbe6fe69c90f0ecd5c14cfa8fbe10ec36f004d",
+        "install_disposition": "source_only",
+        "path": "tests/test_author_entry_loading.py",
         "role": "test_dev"
       },
       {
@@ -6905,7 +7139,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
-        "content_hash": "sha256:1edff0cc0d9de349beb90b73ee01bef0287ec8f27e4afc62e4e6712a9677c837",
+        "content_hash": "sha256:8cba7c84a0b42fc3612a7e8f57abc0880ce7421a3f5084236717a48f6084f309",
         "install_disposition": "source_only",
         "path": "tests/test_executable_contract_model.py",
         "role": "test_dev"
@@ -6996,14 +7230,14 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
-        "content_hash": "sha256:e3a194d82b1b5731d9d1822ebd74cfdc55921824aac4c7f17931445a9d0f9707",
+        "content_hash": "sha256:64e6424484aa57c56202f2ffcf913105dcf2f4d09535ed77c206c74270dab560",
         "install_disposition": "source_only",
         "path": "tests/test_template_profiles_v2.py",
         "role": "test_dev"
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:test_dev",
-        "content_hash": "sha256:e31cf388b586ff2fb807b661c8ba0fe1a4c9d5862aa4fabfd4ba54614b5b318c",
+        "content_hash": "sha256:30990ef60676dd5ddff93e3df04786789e8a27e3fca65f03eadd59869ab53fa7",
         "install_disposition": "source_only",
         "path": "tests/test_template_prompts_v2.py",
         "role": "test_dev"
@@ -7044,7 +7278,7 @@
         "role": "test_dev"
       }
     ],
-    "inventory_hash": "sha256:9cb566f9ba0dbe265dcfedd98ea055fed8536bc9f6e8c0bddba27aac14b9a634",
+    "inventory_hash": "sha256:cb87139821f4bc1d87aa485b4e9d7bdcad52c257c406bdac84a3ad8895023f0d",
     "member_root_path": ".agents/skills/skillguard",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -7060,23 +7294,23 @@
         ],
         "execution_owner_id": "owner:self:assurance-diagnostics",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:6934b5aa56c58e63",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:0494771f3059a65a",
           "component:documentation_model:0770931ee4b63ac2",
           "component:documentation_model:3eedb6967975b8b0",
           "component:documentation_model:4580eb681a0ab17a",
           "component:documentation_model:9cc085071a4d3b13",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
-          "component:runtime_source:e4dba44f29ba9840",
-          "component:runtime_source:e73124d4f22f6a48",
+          "component:prompt_router:432a9254b0102fca",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:3fb4b5ee74f1b93b",
           "component:test_dev:831d581224e233ff"
         ],
@@ -7131,7 +7365,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:b6261846be11a411e6fe4485657d96c2d23037b2c41606b3c14b117e2afbd315",
-        "owner_input_projection_hash": "sha256:39cd0918af42768a939d246e0ceebb4643b5f46612ba55b1abbdd010823d6d9f",
+        "owner_input_projection_hash": "sha256:c3617a409e044932740f419842db020eb6e22d674d568e09b53e5714ba3d459a",
         "target_input_role_ids": []
       },
       {
@@ -7141,20 +7375,20 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:audit-author-repository-adoption",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:2ccdd176b68f46f4",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:d0ab5262afe4c22d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:prompt_router:432a9254b0102fca",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
-          "component:runtime_source:e4dba44f29ba9840",
-          "component:runtime_source:e73124d4f22f6a48"
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942"
         ],
         "input_selectors": [
           {
@@ -7175,7 +7409,78 @@
           }
         ],
         "owner_declaration_hash": "sha256:7157b983082870f310b93c874dd9673745ef048c96f36720b7deb836090f6125",
-        "owner_input_projection_hash": "sha256:fda4fee50f8165842414628535aa7ab9a1f94592807e01deaa7cdfd820551c78",
+        "owner_input_projection_hash": "sha256:61e76d0a08e4a47595e8cbc15bbe1eaac41baa9c389a4f3dfefa07e239f8f263",
+        "target_input_role_ids": []
+      },
+      {
+        "check_ids": [
+          "check:self:author-entry-loading"
+        ],
+        "depends_on_owner_ids": [],
+        "execution_owner_id": "owner:self:author-entry-loading",
+        "input_component_ids": [
+          "component:contract_schema:ee1b860411020ac5",
+          "component:documentation_model:56464049d16fa962",
+          "component:documentation_model:afc21acd712fccf4",
+          "component:documentation_model:e28f165f3f9431ee",
+          "component:prompt_router:432a9254b0102fca",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
+          "component:test_dev:c32e7f81830f8424"
+        ],
+        "input_selectors": [
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard-global-router/SKILL.md"
+          },
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard/SKILL.md"
+          },
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard/references/skillguard-route-index.json"
+          },
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard/references/validated-template-pack.md"
+          },
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard/scripts/checker_engine.py"
+          },
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard/scripts/generate_route_index.py"
+          },
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard/scripts/skillguard_v2/global_router_projection.py"
+          },
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py"
+          },
+          {
+            "kind": "path",
+            "path": ".agents/skills/skillguard/scripts/skillguard_v2/validation_execution_policy.py"
+          },
+          {
+            "kind": "path",
+            "path": "tests/test_author_entry_loading.py"
+          }
+        ],
+        "owner_declaration_hash": "sha256:770fdc2b2cf8b6ced2df91a6fd2825f648cbb3d31d0c6c1d36eeb3cd7ce076f8",
+        "owner_input_projection_hash": "sha256:f97859f530acd964aeaf42b55af265905f712934d08eb9dfae4186eb516c7bd6",
         "target_input_role_ids": []
       },
       {
@@ -7185,12 +7490,12 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:check-run-closure",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:b0f8e383ce54c968",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:35636250c643eb95"
         ],
         "input_selectors": [
@@ -7208,7 +7513,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:7475bf74fdee67f3a86cf65a8300a7836b4c50bde7c25ef9c0ac8d511c741417",
-        "owner_input_projection_hash": "sha256:b310a4fba382518c8d65512d2fa972ae950e0fce80b70b213902207c3b50ae94",
+        "owner_input_projection_hash": "sha256:2c8cfcb0ace199c3a8947392a2cdc4d4cef89bfb7679a6447050071efadd9a25",
         "target_input_role_ids": []
       },
       {
@@ -7218,12 +7523,12 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:compile-generated-contract",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:40cd89aa58ea1c61",
           "component:contract_schema:ae5d0587076f8f1c",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:3eedb6967975b8b0",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17"
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:c8f017d6ccf53801"
         ],
         "input_selectors": [
           {
@@ -7256,7 +7561,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:402b14471143ef83dca20c18a44a56b03ff4c05b9c049566bb1728a84922f1b4",
-        "owner_input_projection_hash": "sha256:dec628be586b73bd30d5d99f44c42b26f2046444701446a004d8db3e4f01143a",
+        "owner_input_projection_hash": "sha256:01a0e5b09a6f97424cace5ea75c8d0969d693c4208e6f3bf730e137f4fa49b7a",
         "target_input_role_ids": []
       },
       {
@@ -7266,12 +7571,12 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:declared-check-runtime",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:b0f8e383ce54c968",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:1b5c65fd07f5b10d",
           "component:test_dev:6fbc012719063fe1"
         ],
@@ -7290,7 +7595,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:b7f0c7094ef22b21d9edacd4ef63eb49df308711101bb229bb51fff29350f621",
-        "owner_input_projection_hash": "sha256:8d8d7694048f51b3ef1d9095063492f9103e8bf88fa4ff771036ed8dddaea8b6",
+        "owner_input_projection_hash": "sha256:579b1a6cc7612e87c023eb405c9970b7c9286e497cac6b421eb738f5bd10c67e",
         "target_input_role_ids": []
       },
       {
@@ -7325,11 +7630,11 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:failed-lock-recovery",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:b0f8e383ce54c968",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:10963523ff2a7f85"
         ],
         "input_selectors": [
@@ -7339,7 +7644,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:93337d615a536be20a10021594e8095571dc74029a262a2fa0be43740a18c59a",
-        "owner_input_projection_hash": "sha256:dd240e8bdfc15895ef73dac2ee64d79f38ed6dbcec836eebcacaf9bff8448481",
+        "owner_input_projection_hash": "sha256:d196c28ecb305dd2b4e151593361e1152eeef4a5882a118a05c03f3d54613e87",
         "target_input_role_ids": []
       },
       {
@@ -7393,7 +7698,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:d9baf14270e6caa410f235b9a043872ab82ef39d1b30aa6417c3153036d96626",
-        "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+        "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
         "target_input_role_ids": []
       },
       {
@@ -7403,11 +7708,11 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:guard-run-identity",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:b0f8e383ce54c968",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:10963523ff2a7f85"
         ],
         "input_selectors": [
@@ -7417,7 +7722,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:326d191d8220c308fe2fb87fbeb68a3a9f819b6434faf09e32c5dbc7aa6a5470",
-        "owner_input_projection_hash": "sha256:dd240e8bdfc15895ef73dac2ee64d79f38ed6dbcec836eebcacaf9bff8448481",
+        "owner_input_projection_hash": "sha256:d196c28ecb305dd2b4e151593361e1152eeef4a5882a118a05c03f3d54613e87",
         "target_input_role_ids": []
       },
       {
@@ -7427,14 +7732,14 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:installation-safety",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:e4dba44f29ba9840",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:5d203b692a80f8f6"
         ],
         "input_selectors": [
@@ -7448,7 +7753,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:4fe2a41022db0aa83823ab387971f13e2a2062e942b7bf66f334bca816c0b57e",
-        "owner_input_projection_hash": "sha256:4d5d5f8e83410131384fcdcfadbb0ff366de22b95b832ede582cdeccf128bf8d",
+        "owner_input_projection_hash": "sha256:89fdd51802f6a7fc98553994d212f24bd7b3fc852e0308d70bbdc7af10205f03",
         "target_input_role_ids": []
       },
       {
@@ -7459,34 +7764,36 @@
         "execution_owner_id": "owner:self:installed-provenance",
         "input_component_ids": [
           "component:contract_schema:171d0283d212da30",
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:2ccdd176b68f46f4",
           "component:contract_schema:4f16c9c79e806fbe",
           "component:contract_schema:6934b5aa56c58e63",
           "component:contract_schema:7b22d659874b24b6",
           "component:contract_schema:a2abdb39519e886c",
           "component:contract_schema:ae5d0587076f8f1c",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:0770931ee4b63ac2",
           "component:documentation_model:3eedb6967975b8b0",
           "component:documentation_model:611bf763ba8e27ce",
-          "component:documentation_model:8f5ef85a40cf1351",
+          "component:documentation_model:afc21acd712fccf4",
+          "component:documentation_model:e28f165f3f9431ee",
           "component:documentation_model:e872f156d92b08a7",
+          "component:prompt_router:432a9254b0102fca",
           "component:prompt_router:6bc4e808931dd5dc",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
         "input_selectors": [
           {
@@ -7507,7 +7814,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:a29a9d8eacb125dcf6fb0a1f876b4b4ceda9fd85dd3151b548cf39a2d27bd85b",
-        "owner_input_projection_hash": "sha256:f9bf1cc3eb6c3ef7fee5b0693765bc8899b3f03ea7aa7376ac9f8adabe908fe7",
+        "owner_input_projection_hash": "sha256:7a8727620bdfb0b99048b1d29fa2fc867c5565ab6c88043788949a60f6f7da2d",
         "target_input_role_ids": []
       },
       {
@@ -7526,7 +7833,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:3a4f4872456b8663dfa12e6f03a4b9f2adec37368eb6e5341c9a05d55a78fc21",
-        "owner_input_projection_hash": "sha256:a9dd6b871fcf85ae3af95097171873cff5c05d0defba030fb54e47e2bac06c8d",
+        "owner_input_projection_hash": "sha256:cba5cd14fbbcb67c6fe4f8c8260702e65ed25957bd7be863fba2272a1a92c31f",
         "target_input_role_ids": []
       },
       {
@@ -7536,14 +7843,14 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:packet-consumption",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
-          "component:runtime_source:e4dba44f29ba9840",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:44f30320beb444c5"
         ],
         "input_selectors": [
@@ -7553,7 +7860,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:a874c2d52b1b76159f8d94b7d070aa62549e29fccdbd353f0e3d8ca1e59c833f",
-        "owner_input_projection_hash": "sha256:7469e36a5abd0600145f76a3e433dea7e746a82f2fbefc325d483b8561894a17",
+        "owner_input_projection_hash": "sha256:eaafd02f30b4f2b8411d652ec12bec34270cdeee3d8d8cfed37cd26abf8d2e6b",
         "target_input_role_ids": []
       },
       {
@@ -7564,34 +7871,36 @@
         "execution_owner_id": "owner:self:public-export-privacy",
         "input_component_ids": [
           "component:contract_schema:171d0283d212da30",
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:2ccdd176b68f46f4",
           "component:contract_schema:6934b5aa56c58e63",
           "component:contract_schema:7b22d659874b24b6",
           "component:contract_schema:a2abdb39519e886c",
           "component:contract_schema:ae5d0587076f8f1c",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:0770931ee4b63ac2",
           "component:documentation_model:3eedb6967975b8b0",
           "component:documentation_model:611bf763ba8e27ce",
-          "component:documentation_model:8f5ef85a40cf1351",
+          "component:documentation_model:afc21acd712fccf4",
+          "component:documentation_model:e28f165f3f9431ee",
           "component:documentation_model:e872f156d92b08a7",
+          "component:prompt_router:432a9254b0102fca",
           "component:prompt_router:6bc4e808931dd5dc",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
           "component:runtime_source:e65a04d807e9bc94",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
         "input_selectors": [
           {
@@ -7608,7 +7917,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:17db803584fd724299de72f81f6513e28fd205ad1e01fe10df65faebfca31fad",
-        "owner_input_projection_hash": "sha256:3670735f11cc3b8787c320703aaaec0d1a98db945b1327b13fe526bbea36f5f5",
+        "owner_input_projection_hash": "sha256:71e5cf2b36dad40c2cd6aa841f88fe8c5b84d2da0e7e5c85eb0ee9975b601ec1",
         "target_input_role_ids": [
           "repository.public_export_candidates"
         ]
@@ -7644,19 +7953,19 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:run-declared-checks",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:40cd89aa58ea1c61",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:432a9254b0102fca",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
-          "component:runtime_source:e4dba44f29ba9840",
-          "component:runtime_source:e73124d4f22f6a48"
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942"
         ],
         "input_selectors": [
           {
@@ -7669,7 +7978,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:b519fd4714ce3473572e2aa9cb8c9eb5f5c6031a595a8411168694432931f352",
-        "owner_input_projection_hash": "sha256:cab341426a5e529913878a35357dc4b252379339cbde47ca2242d5f4ab4ad818",
+        "owner_input_projection_hash": "sha256:8a612494ef62934cbc56ba3a47de4800b295bb885b4326befdebd3804c2f0382",
         "target_input_role_ids": []
       },
       {
@@ -7679,20 +7988,20 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:run-native-static-checks",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:40cd89aa58ea1c61",
-          "component:documentation_model:8f5ef85a40cf1351",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:documentation_model:e28f165f3f9431ee",
+          "component:prompt_router:432a9254b0102fca",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
-          "component:runtime_source:e4dba44f29ba9840",
-          "component:runtime_source:e73124d4f22f6a48"
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942"
         ],
         "input_selectors": [
           {
@@ -7709,7 +8018,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:8177aebfe16ac4a1f03ed8bffc1da41afb51e19ff6a5f5a75fb437c451d1e9f7",
-        "owner_input_projection_hash": "sha256:e895d93356d435b7176a98419b24ffc6f77cd37cac7e30f082c1afd6a42ae157",
+        "owner_input_projection_hash": "sha256:1ad12255429ec6b0c03f1a108bd280e2f524fdb07721558cbb783b774479c77e",
         "target_input_role_ids": []
       },
       {
@@ -7721,13 +8030,13 @@
         ],
         "execution_owner_id": "owner:self:target-native-deepening-closure",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:3eedb6967975b8b0",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:b0f8e383ce54c968",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:1b5c65fd07f5b10d",
           "component:test_dev:831d581224e233ff"
         ],
@@ -7758,7 +8067,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:98b8fac4d2c5b02726145348054b200e3af05867546eeb4ef782f4a50a0991cb",
-        "owner_input_projection_hash": "sha256:f3be23b7b7a3d1a8b06b883736b39cba3b01b343bd871235d14826224169e480",
+        "owner_input_projection_hash": "sha256:f09bae5226e2cfa5c98a5fac483fa5cf53ab34396525529391c346e0238ed994",
         "target_input_role_ids": []
       },
       {
@@ -7787,7 +8096,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:f693fcb34d1fdb836a377ab3fa8db67e6408bda516d6d997b8dad6b703c36e9a",
-        "owner_input_projection_hash": "sha256:b8e420ea614a0118f5a4014acfb91a6fad964d56ece08bf8137d1ca8d814c870",
+        "owner_input_projection_hash": "sha256:4f1314074ef1c2fe1c0b45c36a1ade19788076931704fb11ffa0beff1a959de6",
         "target_input_role_ids": []
       },
       {
@@ -7797,18 +8106,18 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:template-protocol-v1",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
-          "component:runtime_source:e4dba44f29ba9840",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:432a9254b0102fca",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:63ade8e96e96849e"
         ],
         "input_selectors": [
@@ -7854,7 +8163,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:bb47faf302d55531a2873c49f5da2b4e864a758928ea1eaf48a2e94e620f7be5",
-        "owner_input_projection_hash": "sha256:873c97d96e76971970d191be951dcc19c24259cc175ed554d6133254b758957d",
+        "owner_input_projection_hash": "sha256:10c228b0ee079770ecb44f1d7770c497b48cb20e06a5212781f614f5bb485700",
         "target_input_role_ids": []
       },
       {
@@ -7865,18 +8174,18 @@
         "execution_owner_id": "owner:self:test-mesh-fast",
         "input_component_ids": [
           "component:contract_schema:171d0283d212da30",
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:432a9254b0102fca",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
-          "component:runtime_source:e4dba44f29ba9840",
-          "component:runtime_source:e73124d4f22f6a48",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:f8ac4c11d569755e"
         ],
         "input_selectors": [
@@ -7914,7 +8223,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:8d5f782a715e03f16fe94d79accb79770325ed6b3cc050f27aa27c42a5de2e0d",
-        "owner_input_projection_hash": "sha256:a375e45a4bd3c2693d843201a725ac41433dbe77a54e82797d907a4586e766b4",
+        "owner_input_projection_hash": "sha256:6709d7349c7d905e73c87cc44f0914d5fdcb5757f22307911f36066368852bf1",
         "target_input_role_ids": []
       },
       {
@@ -7924,10 +8233,10 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:validate-step-evidence",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:3c9c994b708a616e",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:0e76933c23b8037e"
         ],
         "input_selectors": [
@@ -7949,7 +8258,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:8e3d83152bacd0ce07a2453f14fcbe0369ca691bbb82f8b3c252525e064101e5",
-        "owner_input_projection_hash": "sha256:842c7550269dcc9163ef78f837a626fd62d333b52df57791cfc2549a1fc8e86e",
+        "owner_input_projection_hash": "sha256:bd9241493b6872d630363771786f5e6b0c6bbb7d29b9a983dee624654924465f",
         "target_input_role_ids": []
       },
       {
@@ -7983,14 +8292,14 @@
         "depends_on_owner_ids": [],
         "execution_owner_id": "owner:self:verify-generated-parity",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
-          "component:runtime_source:e4dba44f29ba9840",
+          "component:contract_schema:ee1b860411020ac5",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:44f30320beb444c5"
         ],
         "input_selectors": [
@@ -8000,7 +8309,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:2e9c3a4fbb01e9974aa6b0ea374f49f49414a77452520e327e32ea860cf36759",
-        "owner_input_projection_hash": "sha256:7469e36a5abd0600145f76a3e433dea7e746a82f2fbefc325d483b8561894a17",
+        "owner_input_projection_hash": "sha256:eaafd02f30b4f2b8411d652ec12bec34270cdeee3d8d8cfed37cd26abf8d2e6b",
         "target_input_role_ids": []
       }
     ],
@@ -8008,21 +8317,22 @@
     "portfolio_target_edges": [
       {
         "input_component_ids": [
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
           "component:runtime_source:305242debf65e99c",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
           "component:runtime_source:e65a04d807e9bc94",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
         "member_ids": [
           "kb-dream-pass",
@@ -8035,105 +8345,110 @@
       },
       {
         "input_component_ids": [
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
           "component:runtime_source:305242debf65e99c",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
           "component:runtime_source:e65a04d807e9bc94",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
         "member_ids": [],
         "target_id": "logicguard-suite"
       },
       {
         "input_component_ids": [
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
           "component:runtime_source:305242debf65e99c",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
           "component:runtime_source:e65a04d807e9bc94",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
         "member_ids": [],
         "target_id": "physicsguard-suite"
       },
       {
         "input_component_ids": [
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
           "component:runtime_source:305242debf65e99c",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
           "component:runtime_source:e65a04d807e9bc94",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
         "member_ids": [],
         "target_id": "sourceguard"
       },
       {
         "input_component_ids": [
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
           "component:runtime_source:305242debf65e99c",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
           "component:runtime_source:e65a04d807e9bc94",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
         "member_ids": [],
         "target_id": "traceguard-suite"
       },
       {
         "input_component_ids": [
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
           "component:runtime_source:305242debf65e99c",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
           "component:runtime_source:e65a04d807e9bc94",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
         "member_ids": [],
         "target_id": "worldguard"
@@ -8142,99 +8457,101 @@
     "projection_consumers": [
       {
         "consumer_id": "projection:contract-compile",
-        "consumer_projection_hash": "sha256:c36b1a1023f02e183a61a6fa312a8139e6faeccca431c2a692ccb05360bd806f",
+        "consumer_projection_hash": "sha256:1fa4cca015cd7d2eb19102075d64fee617c29ea7de62f604873c90d5a8c25fda",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:40cd89aa58ea1c61",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:3eedb6967975b8b0",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17"
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:c8f017d6ccf53801"
         ],
-        "input_projection_hash": "sha256:6d4387d914cd6686190755f8f24d075a737dd1018ecacce8376a1a79e53566c0",
+        "input_projection_hash": "sha256:1382fd910178af3b3c423ebc09f75598ce5d336cb26b2405e3e17a7df1714b46",
         "kind": "contract_compile",
-        "projection_declaration_hash": "sha256:af1d007ac7729298ef9b92c2c79c31dd655c768aeeb516b52fc480614416ef6b"
+        "projection_declaration_hash": "sha256:769e2fba4718cae504900bd628957f113bb0fdec47270fd5c9ba76f3f38c3b8f"
       },
       {
         "consumer_id": "projection:global-router",
-        "consumer_projection_hash": "sha256:73fb8feeb56e2eb88288775eabbcd9819acff723aecb416de048e1b24fd923e9",
+        "consumer_projection_hash": "sha256:7701c828924f655eebd916956589a250116c53e1f01179f77a1f52d806a65289",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
+          "component:prompt_router:432a9254b0102fca",
           "component:prompt_router:6bc4e808931dd5dc",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0"
+          "component:prompt_router:6c58b6629b7a202d"
         ],
-        "input_projection_hash": "sha256:febba4ff6aa5b417f7ccd2718e34b488a3d2ff72a2a38ebb4fe4eab3b169fe08",
+        "input_projection_hash": "sha256:6922aac4c22ed6f7fae9bd77a4d3451fcc93eae896b79608418b225b4a6f9041",
         "kind": "global_router",
-        "projection_declaration_hash": "sha256:c36ea1275358a0be09eed9426ebdd7e1c13af46768dc29bab46d3a0d0e84a37f"
+        "projection_declaration_hash": "sha256:7aaf769231aebb0ad5689e93492d0fa33afe6fb60a1aaad73952a24ceacc0f3e"
       },
       {
         "consumer_id": "projection:installation",
-        "consumer_projection_hash": "sha256:702040fda56808f55ba66618c50953c0946197a06003a5b114827a7f5d0240a9",
+        "consumer_projection_hash": "sha256:94ce9f0de926322d451eb8de74b12c46f7361a212bfe4677a9325534ded90fe7",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
           "component:contract_schema:171d0283d212da30",
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:2ccdd176b68f46f4",
           "component:contract_schema:6934b5aa56c58e63",
           "component:contract_schema:7b22d659874b24b6",
           "component:contract_schema:a2abdb39519e886c",
           "component:contract_schema:ae5d0587076f8f1c",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:0770931ee4b63ac2",
           "component:documentation_model:3eedb6967975b8b0",
           "component:documentation_model:611bf763ba8e27ce",
-          "component:documentation_model:8f5ef85a40cf1351",
+          "component:documentation_model:afc21acd712fccf4",
+          "component:documentation_model:e28f165f3f9431ee",
           "component:documentation_model:e872f156d92b08a7",
+          "component:prompt_router:432a9254b0102fca",
           "component:prompt_router:6bc4e808931dd5dc",
-          "component:prompt_router:765ab5b94730133c",
-          "component:prompt_router:9e670a20d4c5c9d0",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:339cd6c5989d27af",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:6780dc10458ccf54",
           "component:runtime_source:7c727d9302861ef9",
+          "component:runtime_source:882029584d929a11",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
           "component:runtime_source:a66162aeaede6f42",
           "component:runtime_source:b07a62488e29389c",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:c8e2e6e4ab13bc95",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c4be9a7558bcc129",
+          "component:runtime_source:c8f017d6ccf53801",
           "component:runtime_source:dd406362f1d28fb7",
-          "component:runtime_source:e4dba44f29ba9840",
-          "component:runtime_source:e73124d4f22f6a48",
-          "component:runtime_source:f4d4a79d8e932b39"
+          "component:runtime_source:fe5eca503316f942"
         ],
-        "input_projection_hash": "sha256:59ca0f33c55049177b1753e181da9b0d92eb1c8e49c1946aae75b7e9dcb874d3",
+        "input_projection_hash": "sha256:046c6de448890a76382fbba72fdc0747922727b1364183ea6b017cc12be56e2a",
         "kind": "installation",
-        "projection_declaration_hash": "sha256:80ecf2dcfdd0f29bff462f31e1b4b6fd783cee428f267a785d93a80e00d02581"
+        "projection_declaration_hash": "sha256:d3e4bf2aa5d6e5e07abfc51dfd41a1807fc6b2ce3f540f5cca18f827e795dc01"
       },
       {
         "consumer_id": "projection:portfolio",
-        "consumer_projection_hash": "sha256:fb31696b91187ad2d3971dab2298646d50fa6f958eaa2711d0d72596d59f0dbd",
+        "consumer_projection_hash": "sha256:08add4bb40530febcfd826fe17b5e2544d0439ca2578d10e2d04c721303f5c74",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
-          "component:contract_schema:2afaf38cf75e9a2d",
           "component:contract_schema:7b22d659874b24b6",
+          "component:contract_schema:ee1b860411020ac5",
           "component:documentation_model:611bf763ba8e27ce",
           "component:fixture_reference:4a3bdc3ba70affa1",
-          "component:prompt_router:765ab5b94730133c",
-          "component:runtime_source:0147cb7516e5eb17",
-          "component:runtime_source:0c348e2e329fdd37",
-          "component:runtime_source:3c9c994b708a616e",
-          "component:runtime_source:738a6109c83a0a67",
-          "component:runtime_source:b0f8e383ce54c968",
-          "component:runtime_source:e4dba44f29ba9840",
+          "component:prompt_router:6c58b6629b7a202d",
+          "component:runtime_source:4bbbf8f207f3dca8",
+          "component:runtime_source:8d3732b99df36a95",
+          "component:runtime_source:a5a69bad13ecbd2c",
+          "component:runtime_source:bd40d195c494ccd5",
+          "component:runtime_source:c8f017d6ccf53801",
+          "component:runtime_source:fe5eca503316f942",
           "component:test_dev:727ef9cfddb1905f"
         ],
-        "input_projection_hash": "sha256:866fe81c0d3743bb1f7e4524e66a343539b39e548f0e0b7f9c17f79fdc4fc7dd",
+        "input_projection_hash": "sha256:bd3fc29c634e0f9bb63d592af45547694e7ce3936faa1ac4659f31e261567118",
         "kind": "portfolio",
-        "projection_declaration_hash": "sha256:7b909e38f4b2038cce06920b0ef3a39da93032e22804e99f21fd35e2c74ce518"
+        "projection_declaration_hash": "sha256:9e1c7b3942c1197e43533443867a6724ca91c420e1619f50c83efeede0cf4892"
       },
       {
         "consumer_id": "projection:source-maintenance",
-        "consumer_projection_hash": "sha256:c3be32d5d0ef4586ab3a9317716e6d31763d7ab1488256355b5646908b9dfb86",
+        "consumer_projection_hash": "sha256:0c19ff0724408a300f804d6f4441f637223e29fab8776cabcd6c14cf50c6c70e",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
@@ -8242,7 +8559,7 @@
           "component:fixture_reference:4a3bdc3ba70affa1",
           "component:fixture_reference:da29b8f2943a0d6a"
         ],
-        "input_projection_hash": "sha256:7fff43c2ebfb39ba443a55d037b8f354d65d2029fdbbf6d78e292d188f766b27",
+        "input_projection_hash": "sha256:a3253ee8116f747391d48d180223ba4db1bccebafd5266ca9f1d25d25dd37bf6",
         "kind": "source_maintenance",
         "projection_declaration_hash": "sha256:9d8af397ffe0d6f1270a5cec00f77e90bff1f0ca18c938d5145e040f2aec5c11"
       }
@@ -8250,9 +8567,9 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "FD9202A4B82E5A828F694444332A2835F575D586C22080C658403F7ACE06DD07",
+  "contract_hash": "757AF8C6BBE13D6B412ED687475EAEE3CD008BEEB1262F30F591967AFFC4DF9E",
   "maintenance_unit_id": "unit:skillguard",
-  "manifest_hash": "39210D18D9FA32D67912A5729A059C131BE3085AC6C2A986C3BCD8FE54724770",
+  "manifest_hash": "1E511F020E37DDA2DB224C4C10C11E94FE5C4B6E1E8F8081D49A70B8C2DE1C5A",
   "member_skill_ids": [
     "skillguard"
   ],
@@ -8260,8 +8577,8 @@
   "schema_version": "skillguard.check_manifest.v2",
   "skill_id": "skillguard",
   "source_fingerprints": {
-    "binding": "3AAFA609984F8E45114CC9EA9A86D17F5B5B9A6855557C258886CBABF2439233",
-    "entrypoint": "2F9F30652A8B931B08697E3DE09A862B96327465BB0A920E24E18FB503B438DC",
+    "binding": "40BE1DC1D95CD3390C8F337D105D1F78E43F09C50FF7E79CAE8F95CAD52B83ED",
+    "entrypoint": "9ADB4EF75B80C86A672FB2AC1A319063CBF4CC223BC7A54EB53AAD0CEF3386E9",
     "fragment:fragment_component:prompt:template-instance-supervision": "sha256:27bfd5710fd1bb41a5df42ead3eb03f3ee251b66c7169985455348ebec3fdefc",
     "fragment:fragment_component:prompt:template-selection-supervision": "sha256:b0b1d5b13ed4b42e515681e19a75f2569389f44843f9f93a75b31e5b5c8df23d",
     "fragment:supervision_fragment:template-instance-supervision": "sha256:b81b2d27b6ef52f277944cf3733ddc0c0ec4035f06a100402e9a62ec382533b1",
@@ -8276,14 +8593,15 @@
     "fragment:template_runtime:profile": "sha256:9138f310c20e6c439c3675326956d4355024a759258f4515ae3822581d269765",
     "fragment:template_runtime:selector": "sha256:3c26f3d29076ecf51fc3b795a4c497defcabc1488c71f1d36e9bea2f59fb31ba",
     "fragment:template_runtime:target_adapter": "sha256:2880c7ef22d9807ecc7f15ad87b4f8729f9fe59a413df16250d3d195460c1ee1",
-    "fragment:template_runtime:target_prompt": "sha256:44480233be28e291965b355928f97d3b4906cd3ad3b265034e03581b8801e7b2",
+    "fragment:template_runtime:target_prompt": "sha256:afee0fb364e89cf8b1684a5f1d6990b94f37b303427f6ef140874b52b609bdf4",
     "fragment:template_schema:launch_plan": "sha256:3fbc899a6a8f4a2f3c4e339321e6c65bd4643f144893304ae21cfc8e611894db",
     "fragment:template_schema:profile": "sha256:3902390a13aaa9890a8b231a886472d0bae68e4fbbab2e1bb8246af86f50336f",
     "fragment:template_schema:protocol": "sha256:28298581bf11bd73cc439c308311a801e806d416f76da81f3762dd42f72cb83a",
     "fragment:template_schema:target_projection": "sha256:c44bf7f9f69d257ba1b9c4405e885bc351a01fb9416f440081965c20f2f2f07f",
-    "implementation:.agents/skills/skillguard/.skillguard/flowguard_contract_model.py": "23867BE89D4F8F3DD1448211AA4ED8E44EAF6ED43B14BC8911DFA6E9128E1D5D",
+    "implementation:.agents/skills/skillguard-global-router/SKILL.md": "F0F39ED7FB9A31C1B472D1BC3A9567FD5376FA7AC1BC06B677446BDB0F622E1B",
+    "implementation:.agents/skills/skillguard/.skillguard/flowguard_contract_model.py": "571AE14086664E0C38ECB7CA8BAFB4B08755B336D656253F62F796A534A2E25F",
     "implementation:.agents/skills/skillguard/.skillguard/template_lifecycle_model.py": "2B39E1FCABA4D6301788724000AA84A6E41CD85357993A3486ABAC865B4C28E3",
-    "implementation:.agents/skills/skillguard/SKILL.md": "2F9F30652A8B931B08697E3DE09A862B96327465BB0A920E24E18FB503B438DC",
+    "implementation:.agents/skills/skillguard/SKILL.md": "9ADB4EF75B80C86A672FB2AC1A319063CBF4CC223BC7A54EB53AAD0CEF3386E9",
     "implementation:.agents/skills/skillguard/assets/contract_fragments": "017BEDD7A5E592E7F755192E5A301958559B306BD5C08FD880188EB0F87FD1A0",
     "implementation:.agents/skills/skillguard/assets/schemas/skillguard_assurance_diagnostic_input_v1.schema.json": "1BD8C3D2AD2B2997FB2A195848C575355FD7455F01608A4738F4FE7980C79616",
     "implementation:.agents/skills/skillguard/assets/schemas/skillguard_assurance_diagnostics_report_v1.schema.json": "CE928B5050BE63D6B1512CDB0B279688421FB832F1EF74FD49CB59151E76572F",
@@ -8323,7 +8641,7 @@
     "implementation:.agents/skills/skillguard/assets/schemas/skillguard_test_mesh_execution_plan_current.schema.json": "05B5392C242644C0FE5BCCBC44B8C11FFB215D2130C229557F8871E4DD904397",
     "implementation:.agents/skills/skillguard/assets/schemas/skillguard_test_mesh_manifest_current.schema.json": "D2CC66929F36EED18F2DBADEDC698F7488AB5FC0D503F07335A8539977D5F7B7",
     "implementation:.agents/skills/skillguard/assets/schemas/skillguard_test_mesh_replay_current.schema.json": "842E969DABCAE380567F593B4B841BEDBF6C1DF346634308413FFC9A822691BA",
-    "implementation:.agents/skills/skillguard/assets/templates": "18B046A7A84CD286B4C556FE5B906640DEFE3B758F0EAD6F8DED4BB792D024AA",
+    "implementation:.agents/skills/skillguard/assets/templates": "958FFEF5760644BA66E6F5A60D597A61B36CBCFF62610E63E73F4276B59AB571",
     "implementation:.agents/skills/skillguard/assets/templates/skillguard_v2_depth_profile.fragment.template.json": "172BA9FCDF121864A8A33820562258A205022241D8E9C961E7B8AD5EE0DE0202",
     "implementation:.agents/skills/skillguard/fixtures/depth_profiles": "7C7F1A3EC030662794577FA70F92DF4D29045F0D67E49BADEBB85E319BE95DC4",
     "implementation:.agents/skills/skillguard/fixtures/generic_project": "7A0CED76CAF0AA8F626311734A6D81289CA373DAEBE79D6DF00362907AAB0DFC",
@@ -8332,8 +8650,11 @@
     "implementation:.agents/skills/skillguard/references/skillguard-execution-depth.md": "7BACF60DE1BC0B48190C7B39C501EB8C0E2FF5CD352F45C0FC6BB5D3B2EA5B24",
     "implementation:.agents/skills/skillguard/references/skillguard-execution-records.md": "6BA55571EBDE0F251C0E2F54B53E6CF9EC89F321DF22B91ED2B1CE7FC06246DA",
     "implementation:.agents/skills/skillguard/references/skillguard-portfolio.md": "D3A6AC17013CC47722FAC2B45A9F9AFD2B40FADAB7EF784F273805376A2C4B96",
+    "implementation:.agents/skills/skillguard/references/skillguard-route-index.json": "3D4056FE23BE54DECEDCF678926F28C3CFC1569AEA5EE73295F0F681F5E87B65",
     "implementation:.agents/skills/skillguard/references/skillguard-supervisor.md": "4E8D7B55BFAB590F4186C8C9E187D4DC51130C673D9F4CF87BB54A1DC52FF2FB",
-    "implementation:.agents/skills/skillguard/scripts/checker_engine.py": "3292F6168150135A14B411A2C983828D753BA66BB4979F27B7D5D9418B88DD8C",
+    "implementation:.agents/skills/skillguard/references/validated-template-pack.md": "70A59BB6CFCDF083EFADE10DA432FC0E918D0F3CEA36D994B84EE35D738F61B0",
+    "implementation:.agents/skills/skillguard/scripts/checker_engine.py": "FBA3301B24C21F610B2D92C744A353C3A448742F7B0F633C89A20A10022A8A67",
+    "implementation:.agents/skills/skillguard/scripts/generate_route_index.py": "D1BC15B7D05805A2288863FF3A73745427E34DF1B326D32425ED9AA439C19526",
     "implementation:.agents/skills/skillguard/scripts/skillguard.py": "F41793A67366E1D098D16A0C563E44EFD77B093C18BD4507267B9F2BAFD815DF",
     "implementation:.agents/skills/skillguard/scripts/skillguard_compile.py": "F02E95610C2E314CFD7F155AF447EE97044C33637A86A452F94E7B9B55F27F2E",
     "implementation:.agents/skills/skillguard/scripts/skillguard_install.py": "87B2C214F7955E6E6C27FD54276346C1DD22C9E58B1381D222275C41A8991866",
@@ -8342,7 +8663,7 @@
     "implementation:.agents/skills/skillguard/scripts/skillguard_self_host.py": "6A8DD3FAFD9C789B67E703367096FB852F9A23317FDB49CC3C7C1AADA3FC62B9",
     "implementation:.agents/skills/skillguard/scripts/skillguard_supervise.py": "B726A137F64D91F75D1968FCCE60E62A5FFD7B97774473FBA8C759665B6EED6A",
     "implementation:.agents/skills/skillguard/scripts/skillguard_test_mesh.py": "4ED832F238FAFDD2FE4B9F0A0A80FAA1982348B71F87B3CD008531B71BA7BF73",
-    "implementation:.agents/skills/skillguard/scripts/skillguard_v2": "395870BB575FBF9737CF174DE1EE695D74C21AF7E1FE22E61C3D1B31252BBF1B",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2": "9477E8756C36312756661BCF1A385E32983ADA8B52BB3F3C3BB0AE5880BB2FF9",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/assurance_diagnostics.py": "D5164C39BE6B59059A3A4BA90A66FC882DC80EA49B6F9EB6C14DBFD9E28EC1FD",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/installation_receipt.py": "D825447329A959BA4AE26F2B7027146A122B9D92FDFB6AF53BD4269694445821",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/portfolio.py": "0D38728ADD24292FE51BD25E70A19890E06FC15A1B0FDA1BC273F8D23270D943",
@@ -8353,9 +8674,9 @@
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/template_fragments.py": "110CD73E77C39FF4A2C7D0EFFFBB4997451B5F490999B1EE2E920D57247F6AF5",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/template_packs.py": "3C26F3D29076ECF51FC3B795A4C497DEFCABC1488C71F1D36E9BEA2F59FB31BA",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/template_profiles.py": "9138F310C20E6C439C3675326956D4355024A759258F4515AE3822581D269765",
-    "implementation:.agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py": "44480233BE28E291965B355928F97D3B4906CD3AD3B265034E03581B8801E7B2",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py": "AFEE0FB364E89CF8B1684A5F1D6990B94F37B303427F6EF140874B52B609BDF4",
     "implementation:.agents/skills/skillguard/scripts/skillguard_v2/test_mesh.py": "6B6FD120EE6E46B6DC4897AE9191F9910D9AA418FA54CA2C56247F735B6FCADB",
-    "implementation:.agents/skills/skillguard/scripts/skillguard_v2/validation_execution_policy.py": "FCD4BA0D45C63786CEFFF98E4AB7EFE4EF8B2D9EB00E11B9EBD58AA6A332CD84",
+    "implementation:.agents/skills/skillguard/scripts/skillguard_v2/validation_execution_policy.py": "90F7D6F92E80E3EE2B822747364AC9C8EF65A7D187B8CBA29EEF30A350B47CBD",
     "implementation:.agents/skills/skillguard/scripts/skillguard_verification_contract_review.py": "101BF1347722A68D469DBF4984F3F7549156E42E7CE1D03E69009BECBA3559A0",
     "implementation:.agents/skills/skillguard/test-mesh.json": "870525A9711277E7DD27A94EB16226C5349A8261618746315E58218FE99FF95C",
     "implementation:.flowguard/declared_check_supervision": "8038B1336AFC889DD0127AF14DCDE53234CB5659075EE4D708D91302258089A5",
@@ -8367,10 +8688,11 @@
     "implementation:.flowguard/validation_composition": "C8AEAC41CEF4B8BC8B81ACF71F2B630626BA8F7781E9CB92B2AE049B8996D2E0",
     "implementation:.github/workflows/ci.yml": "6F969F2937E613F7214340B241356C4AEF2D6AC56CF9EB72B5E02950C430E4DD",
     "implementation:.gitignore": "C15088FA231237909B8F284FB45A827204B312C7B9A013D61BC2FB37631A6A1D",
-    "implementation:AGENTS.md": "D030A8B03F4A9C58142BB794170745618D17481D38861EDB4A12BD0B99F2FB1C",
-    "implementation:VERSION": "902311C7BB38FA1658FF403DEF6158EE7378FE9D6E2E284FA1C38735C31BD30B",
-    "implementation:pyproject.toml": "C063E40AF14D4FF77D4B281A52A67DC6E7198220D2E8682B16B016611B4AE6EF",
+    "implementation:AGENTS.md": "5627F4C3D0B8040E66C9ED30F818C400EEDF5A9EA02F8197397CE16598AE7ACF",
+    "implementation:VERSION": "D0176718BD214CE8474C06ED61C395CA113FDFC2ACDD86D9AA9933B40D9B561E",
+    "implementation:pyproject.toml": "FC220896D36313AF658371E0A0A5BE5D7380E895377335BB6BF82C5997487359",
     "implementation:tests/test_assurance_diagnostics.py": "8140CD5B596C5FC9A3298E19460A4FE94953E46E2ACA9B8679CFD7AC0BECAD2E",
+    "implementation:tests/test_author_entry_loading.py": "7045AF8A7EF793E0C21A5812BAFBE6FE69C90F0ECD5C14CFA8FBE10EC36F004D",
     "implementation:tests/test_conditional_noop_closure_v2.py": "55B07B4C3CA3CB3307EB864D86949E976C67F115E1AA60F22697E6E6AAFA5911",
     "implementation:tests/test_contract_compiler_v2.py": "F77BBDE442E90C1989456BCA9F1D7F17B8110C3604119373CC64CED46C23479F",
     "implementation:tests/test_installation_verification_receipt.py": "48CDA71A2A5619EDE036DC980781CE241B3F83B4A371288F7CD93FBEA2E10388",
@@ -8379,14 +8701,14 @@
     "implementation:tests/test_template_adapters_v2.py": "C9C23066AF54C21BE7DD878AB1269AA47F6BCC904F39926A3F6E832E39FEA8B6",
     "implementation:tests/test_template_fragments_v2.py": "3A415464122C13686485B9F1866CAE6A815FFA689A19E1A6E7F086FAF938327F",
     "implementation:tests/test_template_packs_v2.py": "E4CF15AC9FA63949AFF37873B6A2F6F26E052ED305D1FAE725D929BD55684DFB",
-    "implementation:tests/test_template_profiles_v2.py": "E3A194D82B1B5731D9D1822EBD74CFDC55921824AAC4C7F17931445A9D0F9707",
-    "implementation:tests/test_template_prompts_v2.py": "E31CF388B586FF2FB807B661C8BA0FE1A4C9D5862AA4FABFD4BA54614B5B318C",
+    "implementation:tests/test_template_profiles_v2.py": "64E6424484AA57C56202F2FFCF913105DCF2F4D09535ED77C206C74270DAB560",
+    "implementation:tests/test_template_prompts_v2.py": "30990EF60676DD5DDFF93E3DF04786789E8A27E3FCA65F03EADD59869AB53FA7",
     "implementation:tests/test_test_mesh_installation_binding.py": "B379754B6C94F67EC92FF16FC3BE65384508FDDAD8F028413084DA600F410CC8",
     "implementation:tests/test_test_mesh_legacy_rejection.py": "76DA531798523914263C0957F030E420ADCCC34030E0280AA02C7CF2FC40A5E3",
     "implementation:tests/test_test_mesh_schemas.py": "6FBE63AA37A6E9D1D20359B4666A2757523491EF850B841FEC94B597F3994A54",
     "implementation:tests/test_validation_execution_policy_projection.py": "68765A3C88C0498813E8361A035264A9E517E522CABC9FF05951F7113EEB1C1E",
-    "model": "23867BE89D4F8F3DD1448211AA4ED8E44EAF6ED43B14BC8911DFA6E9128E1D5D",
-    "model_export": "FAD361293F3AC82CD4180B5ACA475A78EC869E9E8AB15AEDC52A06C2AF823344"
+    "model": "571AE14086664E0C38ECB7CA8BAFB4B08755B336D656253F62F796A534A2E25F",
+    "model_export": "3ECF1574ACF7B44DBD6B66F0CFF017C8DF0BD8CBF493A9900DEC556CAFEFB9EF"
   },
   "supervision_fragments": [
     {

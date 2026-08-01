@@ -333,7 +333,7 @@
         "classification_rule_ids": [
           "skillguard.content_role_classifier.current:documentation_model"
         ],
-        "component_hash": "sha256:a971f7fe8400e3e3dc9c3432a0df40f800cd474b87c55dc4261cb5f1a3d5e328",
+        "component_hash": "sha256:7e36fcd623ffccd3ea52d0e5ec3ab06dcce2fb56fce1da3c9f306992159b73eb",
         "component_id": "component:documentation_model:6466c47961246656",
         "consumer_ids": [
           "projection:installation"
@@ -380,7 +380,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:cfdfa541d2e45ffb42cad83390c6e123226b9400734828b61a238968b7782b06",
+    "impact_graph_hash": "sha256:0b0f14a1caf48d36a1150cd5bbb4c14bf047dc3f3e09a3c1a1d328298fa370cd",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -391,7 +391,7 @@
       },
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:documentation_model",
-        "content_hash": "sha256:ebc5ad5d362901258ce0a96a63ffa0747f8a3b6ca54332959bdc3c508d551c37",
+        "content_hash": "sha256:f0f39ed7fb9a31c1b472d1bc3a9567fd5376fa7ac1bc06b677446bdb0f622e1b",
         "install_disposition": "copy",
         "path": ".agents/skills/skillguard-global-router/SKILL.md",
         "role": "documentation_model"
@@ -418,7 +418,7 @@
         "role": "documentation_model"
       }
     ],
-    "inventory_hash": "sha256:7f95cb150fce4c6ad4b4aad5a43daaa73fa59bb960b5529aad2890b033d2f053",
+    "inventory_hash": "sha256:7fce306295758c267f3fa2ada970ae94bec91b6321d3f81a0ccf477b9eef219d",
     "member_root_path": ".agents/skills/skillguard-global-router",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -549,7 +549,7 @@
       },
       {
         "consumer_id": "projection:installation",
-        "consumer_projection_hash": "sha256:23ddb5e0498e6670c29593ed30fedfda34a8207438c1d8b36a194ba7400ac4e6",
+        "consumer_projection_hash": "sha256:53cf9eba6ec727e7fc13e954cdc0aa905f7be4ae247db14bd3e076fd2970518d",
         "impact_plan_schema_version": "skillguard.content_impact_plan.current",
         "impact_policy_id": "skillguard.content_impact_policy.current",
         "input_component_ids": [
@@ -557,7 +557,7 @@
           "component:documentation_model:6466c47961246656",
           "component:runtime_source:cc57ba44bdd74735"
         ],
-        "input_projection_hash": "sha256:746707296fc33dd6d12bb166f35048bd46285b1dde31ce29055688131111c1f0",
+        "input_projection_hash": "sha256:ac94ef4a67246d344072837571b80ae7d3107c56dab00284433be2f7efffea9e",
         "kind": "installation",
         "projection_declaration_hash": "sha256:7b4763982777bcd9e9943bff6437a32358778506e1e67d48c9ffc77b7726071f"
       },
@@ -587,9 +587,9 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "E9E49DC0444AFEDC2A0B969D6D0EC6526DB01BC0386114B7A3594D34BF187D5B",
+  "contract_hash": "81ACC1F796E79F89BF64D9F9DA8A4001AAB31CD8359D90781CF0297F942DA174",
   "maintenance_unit_id": "unit:skillguard-global-router",
-  "manifest_hash": "2C6614BA5DFBD40C86E433E0A68E53820CE24FAB8076B43E2EEC2C07E28ABDC6",
+  "manifest_hash": "EC120E43D1CE13188828CE62577D10DA1C6A21F130C56B4C1D5CCD5207903F80",
   "member_skill_ids": [
     "skillguard-global-router"
   ],
@@ -598,8 +598,8 @@
   "skill_id": "skillguard-global-router",
   "source_fingerprints": {
     "binding": "791A70377C78266132440C05EC914C266DFAF6EE2DC9A830066FB4F9D8B1E767",
-    "entrypoint": "EBC5AD5D362901258CE0A96A63FFA0747F8A3B6CA54332959BDC3C508D551C37",
-    "implementation:.agents/skills/skillguard-global-router/SKILL.md": "EBC5AD5D362901258CE0A96A63FFA0747F8A3B6CA54332959BDC3C508D551C37",
+    "entrypoint": "F0F39ED7FB9A31C1B472D1BC3A9567FD5376FA7AC1BC06B677446BDB0F622E1B",
+    "implementation:.agents/skills/skillguard-global-router/SKILL.md": "F0F39ED7FB9A31C1B472D1BC3A9567FD5376FA7AC1BC06B677446BDB0F622E1B",
     "implementation:.agents/skills/skillguard-global-router/references": "46871A25C106379B5CDA879E326290EB312BEAA48120341E11442061861B2C7F",
     "implementation:.agents/skills/skillguard-global-router/scripts": "85526DC5838848FB4A2F2A5647A8A215CF668383CA663684CC77B56397BBAF0C",
     "model": "FCEAFD3FF16CF5ACDAA13E95D88B5E0741EAF6A4AA62C34E7949FFE0AA2B6505",

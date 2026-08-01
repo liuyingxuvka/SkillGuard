@@ -222,9 +222,12 @@ class TemplateProfileIntegrationTest(unittest.TestCase):
             self.assertEqual(generated["template_instance_receipt"]["status"], "passed")
             self.assertEqual(generated["template_harvest_review"]["disposition"], "not_harvestable")
             skill_text = (target / "SKILL.md").read_text(encoding="utf-8")
-            self.assertIn("## Validated Template Pack Selection", skill_text)
-            self.assertIn("## Validated Template Pack Instance", skill_text)
-            self.assertIn("## Validated Template Pack Installation", skill_text)
+            self.assertNotIn("## Validated Template Pack Selection", skill_text)
+            self.assertNotIn("## Validated Template Pack Instance", skill_text)
+            self.assertNotIn("## Validated Template Pack Installation", skill_text)
+            self.assertFalse(
+                (target / "references" / "validated-template-pack.md").exists()
+            )
 
     def test_stale_source_blocks_before_any_target_write(self) -> None:
         with tempfile.TemporaryDirectory(prefix="template-stale-", dir=REPO_ROOT / ".agents" / "skills") as tmp:

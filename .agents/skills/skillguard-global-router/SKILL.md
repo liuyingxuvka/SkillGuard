@@ -1,136 +1,62 @@
 ---
 name: skillguard-global-router
-description: "Use when maintaining the private author-side SkillGuard registry, its managed AGENTS prompt projection, or explicit maintained-skill onboarding."
+description: Use only to build, refresh, inspect, or repair the private author-side SkillGuard registry and its managed global prompt projection from explicit maintained source roots.
 ---
 
 # SkillGuard Global Router
 
 ## Purpose
 
-This router is a maintainer-computer index. It helps an author select an
-explicitly registered skill source for SkillGuard maintenance. It is not part of
-the graduated skill and is not a runtime dependency of consumer machines or
-ordinary projects.
+This maintainer-computer router selects an explicitly registered author source for SkillGuard maintenance. It is not a consumer runtime dependency, a domain router, an evidence combiner, or proof that any target check ran.
 
-Each current entry points to an author-side source with a current maintenance
-contract trio:
+## Use when
 
-- `.skillguard/contract-source.json`
-- `.skillguard/compiled-contract.json`
-- `.skillguard/check-manifest.json`
+- Building, refreshing, checking, or repairing the private maintained-source registry.
+- Installing or checking the compact managed SkillGuard author block in global `AGENTS.md`.
+- Onboarding one explicit author source after its maintenance unit and current contract trio exist.
 
-Those files prove what SkillGuard is checking while the skill is being
-maintained. A consumer distribution deliberately excludes them.
+## Do not use when
 
-Official OpenSpec is external and unmanaged. Do not add its official skills to
-this registry and do not project SkillGuard authority into OpenSpec.
+- An installed consumer skill is performing ordinary domain work.
+- Membership would be inferred by scanning `$CODEX_HOME/skills` or another consumer directory.
+- Official OpenSpec, a target's native workflow, or its domain template would be selected or governed.
+- Receipts, checks, or closure would be shared between maintenance units.
 
-## Use When
+## Required inputs
 
-Use this skill when the user asks to:
-
-- build, refresh, inspect, or repair the private author-side maintained-skill
-  registry;
-- route SkillGuard maintenance work to an explicitly covered skill source;
-- install or check the maintainer-only managed AGENTS prompt block;
-- onboard a new maintained skill source after its maintenance unit and contract
-  are explicit;
-- verify that a registry entry still matches its author-side source.
-
-## Do Not Use When
-
-Do not use this skill:
-
-- before ordinary use of an installed consumer skill;
-- to scan every installed skill and infer that SkillGuard owns it;
-- to require `.skillguard`, SkillGuard commands, receipts, imports, router
-  state, or Portfolio state in a consumer distribution;
-- to maintain or wrap official OpenSpec;
-- to replace a target skill's domain workflow or native checks;
-- to make execution, publication, release, or future-AI-behavior claims.
-
-## Author-Side Inputs
-
-Every scan/build/refresh must receive one or more explicit `--skill-root`
-values that resolve to maintainer sources. No command may fall back to
-`~/.codex/skills` or another installed-consumer directory.
-
-A routable author source must declare:
+Every build/refresh receives one or more explicit `--skill-root` paths resolving to author sources. Each routable source must declare:
 
 - `repository_role: skill_maintainer_source`;
-- one non-empty `maintenance_unit_id`;
-- its `skill_id` in `member_skill_ids`;
-- the current contract trio and exact native route/check bindings.
+- one maintenance unit and member binding;
+- current `.skillguard/contract-source.json`, `compiled-contract.json`, and `check-manifest.json`;
+- exact native route/check bindings and clean consumer boundary.
 
-An uncontracted directory is skipped, not silently adopted. An external
-exclusion such as official OpenSpec remains outside the registry.
+An uncontracted source is skipped, never silently adopted. A missing, stale, ambiguous, or duplicate source blocks that route.
 
-## Required Workflow
+## Workflow
 
-1. Identify the explicit author-side roots and the private registry location.
-2. Run `refresh-global-router` with repeated `--skill-root` arguments. This
-   single author-only command scans, builds, projects, installs, and checks the
-   private maintainer block.
-3. Run `check-global-registry` against the same explicit roots when a separate
-   read-only registry audit is needed.
-4. Read the selected source skill's `SKILL.md`; invoke SkillGuard maintenance
-   only because that source is explicitly registered.
-5. Report registry identity, inspected roots, skipped unmaintained sources,
-   failures, blockers, and the author-only claim boundary.
+1. Freeze the explicit author roots and private registry/managed-prompt targets.
+2. Run `refresh-global-router` once; it discovers only those roots, builds the current registry, projects the compact managed block, activates transactionally, and checks currentness.
+3. Use `check-global-registry` with the same explicit roots for a separate read-only audit.
+4. Read the selected source skill's own `SKILL.md` and conditional references. The registry points to the owner; it does not carry the owner's full manual.
+5. Report registry hash/path, inspected and skipped roots, selected source, blockers, global block currentness, and bounded claim.
 
-## Maintenance-Unit Boundary
+```powershell
+python .agents/skills/skillguard/scripts/skillguard.py refresh-global-router --skill-root <explicit-author-skill-root> --codex-home <codex-home>
+```
 
-The router selects a source; it does not combine evidence.
+## Hard gates
 
-- Every maintenance unit owns its members, semantic checks, evidence subjects,
-  run state, and receipts.
-- A receipt may be reused only inside the same unit under the exact full
-  identity.
-- Different units never import, share, or project one another's receipts, even
-  if commands and inputs are identical.
-- Apparent semantic overlap is a source-boundary defect. Split, merge, or retire
-  the declarations instead of creating shared proof.
+- No installed-consumer scan or fallback root.
+- No official OpenSpec registration.
+- No cross-unit receipt import, sharing, projection, or graduation gate.
+- No global route catalog or validated-template lifecycle duplicated in the always-loaded block.
+- No global router selection of a target domain template.
+- No registry hash, prompt block, or source path used as proof of checks, installation, Git/tag/release, or future behavior.
+- No direct edits to the managed global block; regenerate it from current explicit sources.
 
-## Consumer Boundary
+## Output
 
-Graduation produces a clean standalone distribution containing only the
-target-owned files needed for domain work. It must exclude:
+Return the registry identity, explicit roots, current/blocked/skipped source rows, selected author source and native route pointer, compact prompt currentness, consumer-independence boundary, and all separate unverified claims.
 
-- `.skillguard/**`;
-- SkillGuard imports and command invocations;
-- SkillGuard run/receipt references;
-- router/registry and Portfolio state;
-- author-only tests, fixtures, models, plans, and maintenance notes unless the
-  target itself explicitly owns them as runtime material.
-
-The installed skill reads its own `SKILL.md` and follows its own native
-workflow. Missing SkillGuard on the consumer machine is a valid and expected
-state.
-
-## Hard Gates
-
-- No implicit installed-skill scan.
-- No current registry entry without the exact author role, unit, member, and
-  contract bindings.
-- No official OpenSpec entry.
-- No consumer-runtime handoff through maintenance contracts.
-- No cross-unit receipt consumption.
-- No duplicated/corrupted managed prompt markers.
-- No private absolute paths or credentials in portable registry output.
-
-## Output Requirements
-
-Reports include:
-
-- private registry path and hash;
-- explicit author roots;
-- selected maintenance unit/member;
-- current/skipped/blocked entries;
-- prompt projection/check status when applicable;
-- failures, blockers, skipped checks, residual risk, and claim boundary.
-
-## SkillGuard Maintenance
-
-Changes to this router must keep its source contract, implementation, schema,
-template, tests, and documentation synchronized. Ordinary use of a consumer
-skill never activates this maintenance workflow.
+The router selects only where registered author maintenance begins. Each target keeps its own checks and evidence, and each consumer remains standalone.

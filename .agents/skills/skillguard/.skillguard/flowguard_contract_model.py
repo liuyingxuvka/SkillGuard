@@ -94,6 +94,9 @@ class ExecutableContractCase:
     model_authority_read_side_effect_free: bool = True
     route_owner_unique: bool = True
     route_typed: bool = True
+    route_predicate_exact: bool = True
+    selected_reference_current: bool = True
+    unselected_material_excluded: bool = True
     packet_fields_consumed: bool = True
     guard_runtime_changed: bool = False
     guard_compatible_run_claimed: bool = True
@@ -168,6 +171,9 @@ class ExecutableContractState:
     model_authority_read_side_effect_free: bool = False
     route_owner_unique: bool = False
     route_typed: bool = False
+    route_predicate_exact: bool = False
+    selected_reference_current: bool = False
+    unselected_material_excluded: bool = False
     packet_fields_consumed: bool = False
     guard_runtime_changed: bool = False
     guard_compatible_run_claimed: bool = False
@@ -306,6 +312,24 @@ def routes_are_typed_and_uniquely_owned(state: ExecutableContractState, _trace: 
         return _fail(
             "routes_are_typed_and_uniquely_owned",
             "every selected route needs a typed handoff and one canonical owner",
+        )
+    return _pass()
+
+
+def selected_route_loads_only_declared_material(
+    state: ExecutableContractState,
+    _trace: object,
+) -> InvariantResult:
+    if _empty(state):
+        return _pass()
+    if (
+        not state.route_predicate_exact
+        or not state.selected_reference_current
+        or not state.unselected_material_excluded
+    ):
+        return _fail(
+            "selected_route_loads_only_declared_material",
+            "one exact declared route must load its current reference graph while unrelated author protocols remain excluded",
         )
     return _pass()
 
@@ -741,6 +765,11 @@ INVARIANTS = (
         routes_are_typed_and_uniquely_owned,
     ),
     Invariant(
+        "selected_route_loads_only_declared_material",
+        "One exact author route loads only its current declared reference graph.",
+        selected_route_loads_only_declared_material,
+    ),
+    Invariant(
         "packet_fields_are_declared_and_consumed",
         "Every supervisor packet field is declared, route-reachable, and consumed.",
         packet_fields_are_declared_and_consumed,
@@ -950,6 +979,24 @@ SCENARIOS = (
         "A bare or mistyped route handoff cannot execute.",
         ExecutableContractCase("untyped_route", route_typed=False),
         _violation("route untyped", "routes_are_typed_and_uniquely_owned"),
+    ),
+    _scenario(
+        "zero_or_many_route_predicates_block",
+        "A zero-match or many-match author request cannot load a guessed protocol.",
+        ExecutableContractCase("route_predicate_not_exact", route_predicate_exact=False),
+        _violation("route predicate not exact", "selected_route_loads_only_declared_material"),
+    ),
+    _scenario(
+        "stale_selected_reference_blocks",
+        "A selected route cannot load a stale or missing reference projection.",
+        ExecutableContractCase("selected_reference_stale", selected_reference_current=False),
+        _violation("selected reference stale", "selected_route_loads_only_declared_material"),
+    ),
+    _scenario(
+        "unselected_protocol_loading_blocks",
+        "Unrelated Portfolio, installation, release, or template protocols stay outside a light route.",
+        ExecutableContractCase("unselected_material_loaded", unselected_material_excluded=False),
+        _violation("unselected material loaded", "selected_route_loads_only_declared_material"),
     ),
     _scenario(
         "unknown_packet_field_blocks",
@@ -1415,6 +1462,7 @@ def export_contract_model() -> dict[str, object]:
             "start_step_id": "step:select-function-route",
             "step_ids": [
                 "step:select-function-route",
+                "step:load-selected-route-material",
                 "step:claim-run",
                 "step:next-ready-step",
                 "step:record-step-event",
@@ -1611,7 +1659,8 @@ def export_contract_model() -> dict[str, object]:
         step("terminal:compiled", "route:compile-contract", "contract-compiler-v2", "terminal", ("step:verify-generated-parity",), terminal_kind="success"),
         step("terminal:compile-blocked", "route:compile-contract", "contract-compiler-v2", "terminal", terminal_kind="blocked"),
         step("step:select-function-route", "route:supervise-run", "run-runtime-v2", "router"),
-        step("step:claim-run", "route:supervise-run", "run-runtime-v2", "state_write", ("step:select-function-route",)),
+        step("step:load-selected-route-material", "route:supervise-run", "run-runtime-v2", "input", ("step:select-function-route",)),
+        step("step:claim-run", "route:supervise-run", "run-runtime-v2", "state_write", ("step:load-selected-route-material",)),
         step("step:next-ready-step", "route:supervise-run", "run-runtime-v2", "router", ("step:claim-run",)),
         step("step:record-step-event", "route:supervise-run", "run-runtime-v2", "state_write", ("step:next-ready-step",)),
         step("terminal:run-ready-for-closure", "route:supervise-run", "run-runtime-v2", "terminal", ("step:record-step-event",), terminal_kind="success"),
@@ -1657,6 +1706,7 @@ def export_contract_model() -> dict[str, object]:
         ("obligation:deep-audit", "artifacts_and_checks_are_current", ["step:freeze-declared-check-inventory", "step:run-declared-checks", "step:reconcile-declared-check-results"]),
         ("obligation:model-authority", "model_and_binding_are_authoritative", ["step:load-model-export", "step:validate-binding"]),
         ("obligation:route-ownership", "routes_are_typed_and_uniquely_owned", ["step:select-function-route"]),
+        ("obligation:author-entry-loading", "selected_route_loads_only_declared_material", ["step:select-function-route", "step:load-selected-route-material"]),
         ("obligation:packet-consumption", "packet_fields_are_declared_and_consumed", ["step:select-function-route"]),
         ("obligation:guard-run-identity", "guard_change_claims_a_new_run", ["step:claim-run"]),
         ("obligation:claimed-run", "every_task_is_claimed_and_locked", ["step:claim-run"]),
@@ -2350,6 +2400,7 @@ def build_model_test_alignment_plan() -> ModelTestAlignmentPlan:
         ("obligation:deep-audit", "deep audit preserves target-specific functional coverage", "deep_audit_is_target_specific", "test_self_host_functions_have_distinct_routes_and_terminals", "test_known_bad_scenarios_are_required"),
         ("obligation:model-authority", "model and binding are current", "model_and_binding_are_authoritative", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:route-ownership", "routes are typed and uniquely owned", "routes_are_typed_and_uniquely_owned", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
+        ("obligation:author-entry-loading", "one exact route loads only declared current material", "selected_route_loads_only_declared_material", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:packet-consumption", "supervisor packet fields are declared and consumed", "packet_fields_are_declared_and_consumed", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:guard-run-identity", "Guard changes create a fresh claimed-run identity", "guard_change_claims_a_new_run", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),
         ("obligation:claimed-run", "every task is claimed and locked", "every_task_is_claimed_and_locked", "test_good_scenario_review_passes", "test_known_bad_scenarios_are_required"),

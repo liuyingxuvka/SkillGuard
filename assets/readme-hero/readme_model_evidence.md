@@ -1,6 +1,6 @@
 # SkillGuard README Model Evidence
 
-This file records the LogicGuard-backed capability model used for the `v0.7.1`
+This file records the LogicGuard-backed capability model used for the `v0.7.2`
 source README. It is README synthesis evidence only. It does not replace
 SkillGuard or FlowGuard checks, package publication, GitHub release
 confirmation, or future AI behavior validation.
@@ -13,7 +13,7 @@ confirmation, or future AI behavior validation.
   compiler, author supervisor, TestMesh, Portfolio, consumer distribution,
   installer, privacy/provenance checks, FlowGuard models, schemas, fixtures,
   tests, and CI workflow definition.
-- release/version facts: current source version is `v0.7.1`; `VERSION`,
+- release/version facts: current source version is `v0.7.2`; `VERSION`,
   `pyproject.toml`, README, changelog, and release notes must agree before a tag
   or GitHub Release claim.
 - authority facts: the `.skillguard` contract trio is author-maintenance
@@ -130,7 +130,7 @@ retired. Otherwise each unit owns and proves its own distinct promise.
 - migration risk: target-domain runtime under `.skillguard/runtime` must move
   and pass parity before cleanup; unknown canonical sources block destructive
   withdrawal.
-- maturity: SkillGuard remains a `0.6.x` source-level project.
+- maturity: SkillGuard remains a `0.7.x` source-level project.
 - privacy risks: public and consumer artifacts must exclude private installed
   inventories, absolute paths, credentials, author receipts, and task text.
 

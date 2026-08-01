@@ -273,7 +273,7 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
         self.assertTrue(result.ok, result.to_dict())
         contract = result.compiled_contract
         manifest = result.check_manifest
-        self.assertEqual(45, sum(1 for row in contract["steps"] if not row["terminal_kind"]))
+        self.assertEqual(46, sum(1 for row in contract["steps"] if not row["terminal_kind"]))
         assurance_step_ids = {
             row["step_id"]
             for row in contract["steps"]

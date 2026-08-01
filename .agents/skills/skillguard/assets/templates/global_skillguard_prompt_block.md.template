@@ -1,25 +1,22 @@
 <!-- BEGIN MANAGED SKILLGUARD GLOBAL ROUTER -->
-## SkillGuard Global Router
+## SkillGuard Author Router
 
-- This is a private maintainer-computer routing projection. Use it only when selecting, maintaining, checking, installing, or releasing explicitly registered SkillGuard-maintained skill sources.
-- Do not use this registry as a pre-execution gate for ordinary domain use of an installed skill. A graduated consumer skill works from its own `SKILL.md`, scripts, references, assets, and target-owned checks without SkillGuard.
-- A current registry entry points to an author-side source whose `.skillguard/contract-source.json`, `.skillguard/compiled-contract.json`, and exact `.skillguard/check-manifest.json` are maintenance evidence. Those files stay in the maintainer source and must not be copied into the consumer distribution.
-- External OpenSpec is outside this registry and outside SkillGuard maintenance authority.
-- If the private registry or this managed block is stale, refresh it only from explicit author-side `--skill-root` inputs. Never infer maintenance membership by scanning ordinary installed consumer skills.
+- Use this private block only for authoring, maintaining, checking, installing, or releasing an explicitly registered SkillGuard-maintained source.
+- Ordinary use of a graduated consumer skill stays independent: no `.skillguard`, contract, receipt, command, router, Portfolio, or author path is required.
+- External OpenSpec is outside this registry. Never infer maintenance membership by scanning installed consumer skills; refresh only from explicit author-side `--skill-root` values.
+- The selected target owns domain behavior, completion/depth criteria, checks, and results. SkillGuard supervises exact author identities/evidence and clean consumer projection only.
+- Different maintenance units never share, import, project, or reuse check receipts. Similar command text does not create shared evidence authority.
 
-### Author-Side Graduation Boundary
-- Each maintenance unit declares its own members, obligations, semantic checks, evidence subjects, and completion/depth criteria.
-- SkillGuard checks that the unit executed and evidenced the exact completion/depth criteria the target itself declared. It never decides that those criteria should be deeper, invents a target-domain check, or reinterprets the target's result. It does not move its receipts, run store, router state, Portfolio state, or maintenance contract into the graduated consumer.
-- Different maintenance units never share, import, project, or reuse check receipts. Similar commands are not proof of shared responsibility; semantic overlap is a boundary defect to split, merge, or retire at the author source.
-
-### Validation Execution Ownership
+### Direct-Current Validation Boundary
 {{validation_execution_policy}}
-- router_skill_id: skillguard-global-router
+
+### Private Registry Pointer
+
+- router_skill_id: `skillguard-global-router`
 - registry_hash: {{registry_hash}}
 - registry_path: {{registry_path}}
-
-### Current Route Index
 {{route_index}}
+- Read the selected registered source's own `SKILL.md` and conditional references before executing its maintenance route. The global block neither selects a domain template nor carries the full route/template manuals.
 
-Claim boundary: this private author-side block helps route maintenance work only. It neither governs consumer runtime nor proves checker execution, fixture coverage, tests, publication, release readiness, or future AI behavior without separate current evidence.
+Claim boundary: this block routes registered author maintenance only. It proves no target check, consumer installation, Git/tag/release, factual result, or future AI behavior without separate current evidence.
 <!-- END MANAGED SKILLGUARD GLOBAL ROUTER -->

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -12,6 +13,8 @@ sys.path.insert(0, str(SKILL_ROOT / "scripts"))
 
 from skillguard_v2.template_prompts import (  # noqa: E402
     TARGET_TEMPLATE_PROMPT_BEGIN,
+    TARGET_TEMPLATE_REFERENCE_PATH,
+    materialize_target_template_guidance,
     render_target_template_routing_section,
     replace_target_template_routing_section,
 )
@@ -87,15 +90,42 @@ class TargetTemplatePromptTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "different targets or native owners"):
             render_target_template_routing_section([projection(), second])
 
-    def test_compact_section_preserves_catalog_authority_without_new_heading(self) -> None:
+    def test_compact_section_is_only_a_conditional_reference_pointer(self) -> None:
         section = render_target_template_routing_section(projection(), compact=True)
-        self.assertIn("target adapter/catalog", section)
-        self.assertIn("native validation", section)
-        self.assertIn("stale/ambiguous=block", section)
-        self.assertIn("preview!=proof", section)
-        self.assertIn("harvest", section)
+        self.assertIn("## Conditional Validated Template Packs", section)
+        self.assertIn(TARGET_TEMPLATE_REFERENCE_PATH, section)
+        self.assertIn("Do not load", section)
         self.assertNotIn("## Validated Template Pack Routing", section)
-        self.assertEqual(1, len(section.rstrip().splitlines()))
+
+    def test_applicable_target_materializes_pointer_and_complete_reference(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="target-template-guidance-") as directory:
+            target = Path(directory)
+            (target / "SKILL.md").write_text("# Target\n", encoding="utf-8")
+
+            result = materialize_target_template_guidance(
+                target, projection(), write=True
+            )
+
+            self.assertTrue(result["ok"], result)
+            entry = (target / "SKILL.md").read_text(encoding="utf-8")
+            reference = (target / TARGET_TEMPLATE_REFERENCE_PATH).read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("## Conditional Validated Template Packs", entry)
+            self.assertNotIn("Template inventory:", entry)
+            self.assertIn("## Validated Template Pack Routing", reference)
+            self.assertIn("### Instance and Validation", reference)
+            self.assertIn("### Installation", reference)
+            replay = materialize_target_template_guidance(target, projection())
+            self.assertTrue(replay["ok"], replay)
+
+    def test_target_without_declared_template_support_gets_no_guidance(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="target-without-template-") as directory:
+            target = Path(directory)
+            (target / "SKILL.md").write_text("# Target\n", encoding="utf-8")
+
+            self.assertFalse((target / TARGET_TEMPLATE_REFERENCE_PATH).exists())
+            self.assertNotIn("Validated Template", (target / "SKILL.md").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

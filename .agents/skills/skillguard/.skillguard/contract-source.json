@@ -602,6 +602,78 @@
       "args": [
         "-m",
         "pytest",
+        "tests/test_author_entry_loading.py",
+        "-q"
+      ],
+      "check_id": "check:self:author-entry-loading",
+      "command": "python",
+      "covers_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:route-ownership",
+        "obligation:global-router-handoff",
+        "obligation:template-target-route"
+      ],
+      "cwd_token": "repository_root",
+      "depends_on_check_ids": [],
+      "evidence_class": "hard",
+      "evidence_domain_id": "skillguard:author-entry-loading",
+      "evidence_subject_id": "subject:skillguard:check:self:author-entry-loading",
+      "execution_owner_id": "owner:self:author-entry-loading",
+      "expected": {
+        "exit_code": 0
+      },
+      "input_selectors": [
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/SKILL.md"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard-global-router/SKILL.md"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/references/skillguard-route-index.json"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/references/validated-template-pack.md"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/generate_route_index.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/checker_engine.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/global_router_projection.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/template_prompts.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/skillguard_v2/validation_execution_policy.py"
+        },
+        {
+          "kind": "path",
+          "path": "tests/test_author_entry_loading.py"
+        }
+      ],
+      "kind": "command",
+      "maintenance_unit_id": "unit:skillguard",
+      "member_skill_id": "skillguard",
+      "semantic_check_id": "check:self:author-entry-loading",
+      "timeout_seconds": 120
+    },
+    {
+      "args": [
+        "-m",
+        "pytest",
         "tests/test_contract_compiler_v2.py",
         "-q",
         "-k",
@@ -1720,6 +1792,7 @@
     {
       "profile_id": "enforced",
       "required_obligation_ids": [
+        "obligation:author-entry-loading",
         "obligation:model-authority",
         "obligation:static-audit",
         "obligation:route-ownership",
@@ -1795,6 +1868,7 @@
     "enforcement_level": "enforced",
     "integration_mode": "native-integrated",
     "native_check_ids": [
+      "check:self:author-entry-loading",
       "check:self:audit-author-repository-adoption",
       "check:self:check-run-closure",
       "check:self:compile-generated-contract",
@@ -1851,7 +1925,11 @@
     ".gitignore",
     ".github/workflows/ci.yml",
     ".agents/skills/skillguard/SKILL.md",
+    ".agents/skills/skillguard-global-router/SKILL.md",
     ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
+    ".agents/skills/skillguard/references/skillguard-route-index.json",
+    ".agents/skills/skillguard/references/validated-template-pack.md",
+    ".agents/skills/skillguard/scripts/generate_route_index.py",
     ".agents/skills/skillguard/scripts/skillguard_v2",
     ".agents/skills/skillguard/scripts/skillguard_v2/portfolio.py",
     ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_records.py",
@@ -1948,6 +2026,7 @@
     "tests/test_template_packs_v2.py",
     "tests/test_template_profiles_v2.py",
     "tests/test_template_prompts_v2.py",
+    "tests/test_author_entry_loading.py",
     "tests/test_assurance_diagnostics.py",
     "VERSION",
     "pyproject.toml"
@@ -1963,6 +2042,12 @@
   "model_id": "skillguard.executable_contract_runtime.v2",
   "model_path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
   "native_check_bindings": [
+    {
+      "binding_id": "native-check:author-entry-loading",
+      "evidence_source": "tests/test_author_entry_loading.py",
+      "native_check_id": "check:self:author-entry-loading",
+      "required": true
+    },
     {
       "binding_id": "native-check:static-audit",
       "evidence_source": ".agents/skills/skillguard/scripts/skillguard.py",
@@ -2285,11 +2370,23 @@
       },
       "check_ids": [
         "check:self:select-function-route",
+        "check:self:author-entry-loading",
         "check:self:packet-consumption",
         "check:self:obligation:no-former-authority-success"
       ],
       "output_artifact_ids": [],
       "step_id": "step:select-function-route"
+    },
+    {
+      "action": {
+        "kind": "input",
+        "summary": "Load only the exact selected route reference graph and keep unrelated author protocols excluded."
+      },
+      "check_ids": [
+        "check:self:author-entry-loading"
+      ],
+      "output_artifact_ids": [],
+      "step_id": "step:load-selected-route-material"
     },
     {
       "action": {

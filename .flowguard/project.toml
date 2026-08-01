@@ -1,9 +1,9 @@
 [flowguard]
 repository = "https://github.com/liuyingxuvka/FlowGuard"
-adopted_package_version = "0.66.0"
+adopted_package_version = "0.68.2"
 schema_version = "1.0"
-last_verified_at = "2026-07-31T02:52:33+00:00"
-last_verified_by = "FlowGuard project-upgrade"
+last_verified_at = "2026-08-01T09:26:28+00:00"
+last_verified_by = "FlowGuard project-adopt"
 agents_path = "AGENTS.md"
 
 [policy]
@@ -15,12 +15,12 @@ require_model_update_for_behavior_changes = true
 
 [model_authority]
 system_id = "flowguard"
-observed_snapshot_path = ".flowguard/model-mesh/snapshots/cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534.json"
-observed_snapshot_fingerprint = "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534"
-subject_revision = "source-inventory:dc9a59d684920d034b3985cbe7d60af802c3c517305c092a2e80af1327e7b351"
+observed_snapshot_path = ".flowguard/model-mesh/snapshots/00b30aaf19f826426e644c860bd4f615c0a99d08384e9bb9747463dd91f229e4.json"
+observed_snapshot_fingerprint = "sha256:00b30aaf19f826426e644c860bd4f615c0a99d08384e9bb9747463dd91f229e4"
+subject_revision = "source-inventory:60f570e71b246b8d7ed1f06964b790f9654cfa384fcfa6ec9b1eb96ac907a9c7"
 coverage_status = "complete_within_declared_boundary"
-generation = 9
-accepted_revision_set_fingerprint = "sha256:79d066ff7f104fdff1387e37d87ed5be8b4dbf76c708144bba1dfcbd73ef7453"
-previous_snapshot_fingerprint = "sha256:a252026def68855b84afc91a209da22c2e73b266c3c665d4a9c997be19a0fe86"
-activation_receipt_fingerprint = "sha256:6b54aa5828136a8bd66ffb77dba50ed3bf9aaaec4d1eb57e7f33d8b5664bdcb6"
-head_fingerprint = "sha256:00a20861302377ad92fd6f4091d19abc5a52fa5e7fb816b96637fcedf04aaacc"
+generation = 10
+accepted_revision_set_fingerprint = "sha256:b2d0072312ccdc87dc9a08525ac1aa6d52bd3eaa148698d67585149236d0d6c2"
+previous_snapshot_fingerprint = "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534"
+activation_receipt_fingerprint = "sha256:d36560bf847b5574fd05f4359ade39cd0a051a1a280f8f064d71f96091e217ba"
+head_fingerprint = "sha256:b6afdb9a1dbe80dc0b7b627c76fe8b962ca8e85028c4769c06b4bd1eff3477a2"

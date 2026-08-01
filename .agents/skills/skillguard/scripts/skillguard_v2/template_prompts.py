@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any, Mapping
 
 from .template_adapters import compile_target_template_projection
@@ -10,8 +11,13 @@ from .template_adapters import compile_target_template_projection
 
 TARGET_TEMPLATE_PROMPT_BEGIN = "<!-- BEGIN MANAGED VALIDATED TEMPLATE PACK -->"
 TARGET_TEMPLATE_PROMPT_END = "<!-- END MANAGED VALIDATED TEMPLATE PACK -->"
-TARGET_TEMPLATE_COMPACT_PROMPT_BEGIN = "<!--VTP:"
-TARGET_TEMPLATE_COMPACT_PROMPT_END = ":VTP-->"
+TARGET_TEMPLATE_COMPACT_PROMPT_BEGIN = (
+    "<!-- BEGIN MANAGED VALIDATED TEMPLATE PACK POINTER -->"
+)
+TARGET_TEMPLATE_COMPACT_PROMPT_END = (
+    "<!-- END MANAGED VALIDATED TEMPLATE PACK POINTER -->"
+)
+TARGET_TEMPLATE_REFERENCE_PATH = "references/validated-template-pack.md"
 
 
 def render_target_template_routing_section(projection: object, *, compact: bool = False) -> str:
@@ -46,12 +52,17 @@ def render_target_template_routing_section(projection: object, *, compact: bool 
         }
     )
     if compact:
-        return (
-            TARGET_TEMPLATE_COMPACT_PROMPT_BEGIN
-            + "target adapter/catalog;native validation;stale/ambiguous=block;"
-            + "preview!=proof;harvest"
-            + TARGET_TEMPLATE_COMPACT_PROMPT_END
-            + "\n"
+        return "\n".join(
+            (
+                TARGET_TEMPLATE_COMPACT_PROMPT_BEGIN,
+                "## Conditional Validated Template Packs",
+                "",
+                "When this target's current native route declares validated-template-pack work, read "
+                f"[{TARGET_TEMPLATE_REFERENCE_PATH}]({TARGET_TEMPLATE_REFERENCE_PATH}). ",
+                "Do not load that reference for ordinary domain work, infer applicability from wording, or treat a template preview as semantic proof.",
+                TARGET_TEMPLATE_COMPACT_PROMPT_END,
+                "",
+            )
         )
     lines = [
         TARGET_TEMPLATE_PROMPT_BEGIN,
@@ -67,11 +78,78 @@ def render_target_template_routing_section(projection: object, *, compact: bool 
         "- Declared validated bases: " + ", ".join(f"`{item['base_template_id']}`" for item in catalogs) + ".",
         "- Template inventory: " + ", ".join(f"`{item}`" for item in template_ids) + ".",
         "- Native validator inventory: " + ", ".join(f"`{item}`" for item in validator_ids) + ".",
+        "",
+        "### Instance and Validation",
+        "",
+        "- Bind one instance to the exact current selection receipt, parameters, target builder, manifests, artifact inventory, and single leaf-field owners.",
+        "- Scan every output for unresolved placeholders and consume every target-declared native validator receipt. Failed, skipped, stale, blocked, or not-run validation blocks the instance.",
+        "- Keep instance, source, contract, package/runtime, installation, Git, tag, and release identities separate.",
+        "",
+        "### Installation",
+        "",
+        "- Stage and verify the compiler-owned clean consumer projection before transactional activation. Run installed currentness separately from native validation and restore the prior projection after a required post-activation failure.",
+        "- Refresh the private router only when the target route projection changes. Never export SkillGuard contracts, receipts, router/Portfolio state, author paths, or `.skillguard` into the consumer.",
+        "",
         "- Claim boundaries: " + " ".join(str(item["claim_boundary"]) for item in catalogs),
         TARGET_TEMPLATE_PROMPT_END,
         "",
     ]
     return "\n".join(lines)
+
+
+def render_target_template_guidance(projection: object) -> tuple[str, str]:
+    """Return the compact entry pointer and complete target-owned reference."""
+
+    return (
+        render_target_template_routing_section(projection, compact=True),
+        render_target_template_routing_section(projection, compact=False),
+    )
+
+
+def materialize_target_template_guidance(
+    skill_root: Path,
+    projection: object,
+    *,
+    write: bool = False,
+) -> dict[str, object]:
+    """Check or write one applicable target's pointer plus complete reference."""
+
+    skill_root = skill_root.resolve()
+    entry_path = skill_root / "SKILL.md"
+    if not entry_path.is_file():
+        raise ValueError("target SKILL.md is missing")
+    pointer, reference = render_target_template_guidance(projection)
+    updated_entry, disposition = replace_target_template_routing_section(
+        entry_path.read_text(encoding="utf-8"), pointer
+    )
+    reference_path = skill_root / TARGET_TEMPLATE_REFERENCE_PATH
+    entry_current = entry_path.read_text(encoding="utf-8") == updated_entry
+    reference_current = (
+        reference_path.is_file()
+        and reference_path.read_text(encoding="utf-8") == reference
+    )
+    written: list[str] = []
+    if write and not entry_current:
+        entry_path.write_text(updated_entry, encoding="utf-8", newline="\n")
+        entry_current = True
+        written.append("SKILL.md")
+    if write and not reference_current:
+        reference_path.parent.mkdir(parents=True, exist_ok=True)
+        reference_path.write_text(reference, encoding="utf-8", newline="\n")
+        reference_current = True
+        written.append(TARGET_TEMPLATE_REFERENCE_PATH)
+    return {
+        "schema_version": "skillguard.target_template_guidance.v1",
+        "status": "pass" if entry_current and reference_current else "blocked",
+        "ok": entry_current and reference_current,
+        "entry_disposition": disposition,
+        "entry_path": "SKILL.md",
+        "reference_path": TARGET_TEMPLATE_REFERENCE_PATH,
+        "written_files": written,
+        "claim_boundary": (
+            "This result proves prompt projection only; target-native selection, instance, validation, installation, and release remain separate evidence."
+        ),
+    }
 
 
 def replace_target_template_routing_section(existing: str, managed_section: str) -> tuple[str, str]:
@@ -115,6 +193,9 @@ __all__ = [
     "TARGET_TEMPLATE_COMPACT_PROMPT_BEGIN",
     "TARGET_TEMPLATE_COMPACT_PROMPT_END",
     "TARGET_TEMPLATE_PROMPT_END",
+    "TARGET_TEMPLATE_REFERENCE_PATH",
+    "materialize_target_template_guidance",
+    "render_target_template_guidance",
     "render_target_template_routing_section",
     "replace_target_template_routing_section",
 ]

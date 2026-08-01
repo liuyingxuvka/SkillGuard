@@ -62,6 +62,7 @@ from skillguard_v2.path_identity import (
     physical_relative_path,
 )
 from skillguard_v2.validation_execution_policy import (
+    GLOBAL_VALIDATION_EXECUTION_POLICY_LINES,
     VALIDATION_EXECUTION_POLICY_ID,
     VALIDATION_EXECUTION_POLICY_LINES,
 )
@@ -413,7 +414,7 @@ VALIDATION_REGISTRY_CONFLICT_CODES = {
     "conflicting_responsibility_sources",
     "incompatible_route_hint",
     "incompatible_route_identifiers",
-    "multiple_equal_route_candidates",
+    "multiple_route_predicate_matches",
     "mutually_exclusive_flags",
     "responsibility_route_conflict",
 }
@@ -551,7 +552,7 @@ GENERATE_SUITE_REQUIRED_FILES = (
     ".skillguard/suite/evidence/suite_closure.json",
     ".skillguard/suite/reports/suite_generation_report.json",
 )
-ROUTE_TASK_REGISTRY_VERSION = "skillguard.route_registry.v3"
+ROUTE_TASK_REGISTRY_VERSION = "skillguard.route_registry.v4"
 ROUTE_TASK_PATH_FIELDS = {
     "blueprint",
     "blueprint_path",
@@ -619,7 +620,7 @@ ROUTE_TASK_CHECKER_SUITE_FIELDS = (
 )
 ROUTE_TASK_GENERATOR_EXECUTE_FLAGS = ("execute", "invoke_generators", "write_files")
 ROUTE_TASK_GENERATOR_NO_WRITE_FLAGS = ("dry_run", "no_write", "no_mutation", "no_generators")
-ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
+_ROUTE_TASK_ROUTE_REGISTRY_BASE: tuple[dict[str, Any], ...] = (
     {
         "route_id": "skillguard.route.route-task.v1",
         "route_node_id": "route-task",
@@ -989,6 +990,121 @@ ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = (
         "hints": ("inventory", "file-inventory", "repository-inventory"),
         "keywords": ("inventory", "list files", "repository inventory", "file listing", "path inventory"),
     },
+)
+
+
+def _route_reference(entry: dict[str, Any]) -> str:
+    node = str(entry["route_node_id"])
+    if node == "route-task":
+        return "references/skillguard-route-index.json"
+    if node in {"maintainer-adopt", "maintainer-audit"}:
+        return "references/skillguard-project-adoption.md"
+    if "portfolio" in node:
+        return "references/skillguard-portfolio.md"
+    if node == "check-depth":
+        return "references/skillguard-execution-depth.md"
+    if node in {"fixture-test", "detect-stale-evidence", "review-checker-change"}:
+        return "references/skillguard-test-mesh.md"
+    if node == "self-check":
+        return "references/skillguard-self-host.md"
+    if node == "check-readme-release":
+        return "references/skillguard-target-installation.md"
+    return "references/skillguard-supervisor.md"
+
+
+def _route_mutation_class(entry: dict[str, Any]) -> str:
+    node = str(entry["route_node_id"])
+    if node in {
+        "generate-skill",
+        "generate-suite",
+        "maintainer-adopt",
+        "build-current-portfolio-registry",
+        "prepare-portfolio-run",
+        "execute-portfolio-run",
+        "capture-portfolio-production-revalidation",
+        "assemble-portfolio-run",
+        "graduate-portfolio",
+        "make-closure",
+    }:
+        return "explicit_author_write"
+    if node == "route-task":
+        return "route_only_unless_explicit_generator_execution"
+    return "read_only"
+
+
+def _route_conditional_references(entry: dict[str, Any]) -> list[str]:
+    node = str(entry["route_node_id"])
+    if node == "self-check":
+        return [
+            "references/skillguard-supervisor.md",
+            "references/skillguard-execution-depth.md",
+            "references/skillguard-test-mesh.md",
+        ]
+    if node == "make-closure":
+        return [
+            "references/skillguard-execution-depth.md",
+            "references/skillguard-test-mesh.md",
+            "references/skillguard-execution-records.md",
+        ]
+    if node in {
+        "prepare-portfolio-run",
+        "execute-portfolio-run",
+        "capture-portfolio-production-revalidation",
+        "assemble-portfolio-run",
+        "graduate-portfolio",
+    }:
+        return ["references/skillguard-test-mesh.md"]
+    return []
+
+
+def _complete_route_entry(entry: dict[str, Any]) -> dict[str, Any]:
+    command_family = str(entry["command_family"])
+    mutation_class = _route_mutation_class(entry)
+    next_reference = _route_reference(entry)
+    conditional_references = _route_conditional_references(entry)
+    load_order = list(
+        dict.fromkeys(["SKILL.md", next_reference, *conditional_references])
+    )
+    forbidden = [
+        {"fact": "ordinary_consumer_runtime", "operator": "equals", "value": True},
+        {"fact": "official_openspec_work", "operator": "equals", "value": True},
+        {"fact": "registered_author_source", "operator": "equals", "value": False},
+    ]
+    if mutation_class == "explicit_author_write":
+        forbidden.append(
+            {"fact": "author_write_authorized", "operator": "equals", "value": False}
+        )
+    return {
+        **entry,
+        "applicability_predicates": [
+            {
+                "fact": "requested_command_family",
+                "operator": "equals",
+                "value": command_family,
+            },
+            {
+                "fact": "declared_text_cue",
+                "operator": "contains_any_exact_declared_cue",
+                "values": list(entry.get("keywords", ())),
+            },
+        ],
+        "forbidden_predicates": forbidden,
+        "required_input_fields": ["task_text_or_typed_task_facts"],
+        "read_authority": "explicit_registered_author_source_and_private_current_records",
+        "write_authority": mutation_class,
+        "first_command": f"python scripts/skillguard.py {command_family}",
+        "next_reference": next_reference,
+        "conditional_references": conditional_references,
+        "load_order": load_order,
+        "claim_boundary": (
+            f"This route selects only the {command_family} author-side command family. "
+            "It does not prove target-domain behavior, consumer installation, Git, tag, release, or future AI behavior."
+        ),
+    }
+
+
+ROUTE_TASK_ROUTE_REGISTRY: tuple[dict[str, Any], ...] = tuple(
+    _complete_route_entry(entry) for entry in _ROUTE_TASK_ROUTE_REGISTRY_BASE
 )
 DETECT_STALE_EXPECTED_ROUTE_VERSION = "5"
 MAINTENANCE_MISSING_BLOCKER_CODES = {
@@ -3072,22 +3188,9 @@ def render_global_prompt_block(registry: dict[str, Any], registry_path: str = ""
         registry_path=registry_path,
         template=template_path.read_text(encoding="utf-8"),
         policy_id=VALIDATION_EXECUTION_POLICY_ID,
-        policy_lines=VALIDATION_EXECUTION_POLICY_LINES,
+        policy_lines=GLOBAL_VALIDATION_EXECUTION_POLICY_LINES,
     )
-    lifecycle, lifecycle_hash = template_lifecycle_prompt_bundle()
-    insertion = "\n".join(
-        [
-            lifecycle,
-            "",
-            f"- template_lifecycle_hash: {lifecycle_hash}",
-            "- template_domain_selection_owner: selected_target_skill",
-            "- global_router_selects_domain_template: false",
-        ]
-    )
-    marker = "\n### Current Route Index"
-    if block.count(marker) != 1:
-        raise ValueError("global_prompt_route_index_marker_invalid")
-    return block.replace(marker, f"\n{insertion}\n\n### Current Route Index", 1)
+    return block
 
 
 def build_global_prompt_projection(registry: dict[str, Any], registry_path: str = "") -> dict[str, Any]:
@@ -3208,7 +3311,7 @@ def check_global_prompt_text(
         registry_hash,
         expected_block=expected_block,
         policy_id=VALIDATION_EXECUTION_POLICY_ID,
-        policy_lines=VALIDATION_EXECUTION_POLICY_LINES,
+        policy_lines=GLOBAL_VALIDATION_EXECUTION_POLICY_LINES,
     )
 
 
@@ -3746,12 +3849,6 @@ def build_generate_skill_scaffold(blueprint: dict[str, Any], target: Path, input
     output_terms = ["evidence", "failures", "blockers", "skipped_checks", "residual_risk", "claim_boundary"]
     generated_at = "generated-scaffold-draft"
     claim_boundary = common_claim_boundary("generated scaffold")
-    template_routing_guidance = "\n".join(
-        ensure_under_root(skill_root() / relative_path)
-        .read_text(encoding="utf-8")
-        .strip()
-        for relative_path in TEMPLATE_PROFILE_PROMPT_PATHS.values()
-    )
     blueprint_trace = {
         "blueprint_id": blueprint.get("blueprint_id"),
         "source_input": input_relative,
@@ -3792,8 +3889,6 @@ This generated entrypoint is a scaffold for `{target_relative}`. It is not accep
 - Keep all ordinary runtime, data, imports, checks, and recovery instructions inside this target-owned tree.
 - Run the target's own declared checks when the task requires validation.
 - Do not depend on an author-maintenance package, receipt store, router, or hidden project state.
-
-{template_routing_guidance}
 
 ## Entrypoint Acceptance Map
 
@@ -7980,6 +8075,16 @@ def public_route_entry(entry: dict[str, Any]) -> dict[str, Any]:
         "responsibility": entry["responsibility"],
         "next_step": entry["next_step"],
         "status": entry["status"],
+        "applicability_predicates": entry["applicability_predicates"],
+        "forbidden_predicates": entry["forbidden_predicates"],
+        "required_input_fields": entry["required_input_fields"],
+        "read_authority": entry["read_authority"],
+        "write_authority": entry["write_authority"],
+        "first_command": entry["first_command"],
+        "next_reference": entry["next_reference"],
+        "conditional_references": entry["conditional_references"],
+        "load_order": entry["load_order"],
+        "claim_boundary": entry["claim_boundary"],
     }
 
 
@@ -8033,28 +8138,55 @@ def find_route_by_hint(route_hint: str) -> dict[str, Any] | None:
     return None
 
 
-def route_task_keyword_score(task_text: str, entry: dict[str, Any]) -> int:
+def _declared_cue_evidence(task_text: str, cues: tuple[str, ...]) -> list[dict[str, Any]]:
     lowered = task_text.lower()
-    score = 0
-    for keyword in entry.get("keywords", ()):
-        keyword_text = str(keyword).lower()
-        if keyword_text in lowered:
-            score += 3 if " " in keyword_text else 1
-    command_text = str(entry.get("command_family", "")).replace("-", " ")
-    if command_text and command_text in lowered:
-        score += 4
-    return score
+    evidence: list[dict[str, Any]] = []
+    for cue in cues:
+        cue_text = str(cue).strip().lower()
+        if not cue_text:
+            continue
+        start = lowered.find(cue_text)
+        if start >= 0:
+            evidence.append(
+                {
+                    "fact": "declared_text_cue",
+                    "cue": cue_text,
+                    "source_span": [start, start + len(cue_text)],
+                }
+            )
+    return evidence
 
 
 def route_task_candidates(task_text: str) -> list[dict[str, Any]]:
+    """Return exact predicate matches; no weighting or score may choose a route."""
+
+    explicit: list[dict[str, Any]] = []
+    for entry in current_route_entries():
+        command_text = str(entry.get("command_family", "")).replace("-", " ")
+        evidence = _declared_cue_evidence(task_text, (command_text,))
+        if evidence:
+            explicit.append(
+                public_route_entry(entry)
+                | {
+                    "matched_fact_evidence": evidence,
+                    "predicate_match_kind": "explicit_command_family_text",
+                }
+            )
+    if explicit:
+        return sorted(explicit, key=lambda item: item["route_id"])
+
     candidates: list[dict[str, Any]] = []
     for entry in current_route_entries():
-        score = route_task_keyword_score(task_text, entry)
-        if score > 0:
-            candidate = public_route_entry(entry)
-            candidate["score"] = score
-            candidates.append(candidate)
-    return sorted(candidates, key=lambda item: (-int(item["score"]), item["route_id"]))
+        evidence = _declared_cue_evidence(task_text, tuple(entry.get("keywords", ())))
+        if evidence:
+            candidates.append(
+                public_route_entry(entry)
+                | {
+                    "matched_fact_evidence": evidence,
+                    "predicate_match_kind": "declared_fact_cue",
+                }
+            )
+    return sorted(candidates, key=lambda item: item["route_id"])
 
 
 def route_task_enabled_flag(value: Any) -> bool:
@@ -8425,18 +8557,18 @@ def select_route_task_decision(
                 public_context={"hint_fingerprint": route_task_fingerprint(route_hint), "hint_character_count": len(route_hint)},
             )
             return None, []
-        hinted = public_route_entry(route_entry) | {"score": 100}
+        hinted = public_route_entry(route_entry) | {
+            "predicate_match_kind": "explicit_route_hint"
+        }
         if task_candidates:
-            top_score = int(task_candidates[0]["score"])
-            top_candidates = [candidate for candidate in task_candidates if int(candidate["score"]) == top_score]
-            if all(candidate["route_id"] != route_entry["route_id"] for candidate in top_candidates):
+            if all(candidate["route_id"] != route_entry["route_id"] for candidate in task_candidates):
                 add_route_task_blocker(
                     blockers,
                     structured_blockers,
                     blocker_code="incompatible_route_hint",
                     message="route-task route hint conflicts with the task's strongest current route match.",
                     conflicting_fields=["$.task", "$.route_hint"],
-                    conflicting_candidates=[hinted, *top_candidates],
+                    conflicting_candidates=[hinted, *task_candidates],
                     recommended_resolution="Change the route hint to match the task, rewrite the task for the hinted route, or remove the hint and handle the unhinted route decision.",
                 )
                 return None, [hinted, *task_candidates]
@@ -8454,22 +8586,20 @@ def select_route_task_decision(
             blocker_class="routing_config_error",
         )
         return None, []
-    top_score = int(candidates[0]["score"])
-    top_candidates = [candidate for candidate in candidates if int(candidate["score"]) == top_score]
-    if len(top_candidates) > 1:
+    if len(candidates) > 1:
         add_route_task_blocker(
             blockers,
             structured_blockers,
-            blocker_code="multiple_equal_route_candidates",
-            message="ambiguous route-task input matched multiple current routes with equal score.",
+            blocker_code="multiple_route_predicate_matches",
+            message="ambiguous route-task input satisfied multiple current routes' declared predicates.",
             conflicting_fields=["$.task"],
-            conflicting_candidates=top_candidates,
-            recommended_resolution="Add an explicit current route_hint or rewrite the task so only one current route is the strongest match.",
+            conflicting_candidates=candidates,
+            recommended_resolution="Add one explicit current route_hint or provide typed facts that satisfy exactly one current route.",
         )
         return None, candidates
     selected = dict(candidates[0])
-    selected["selection_reason"] = "keyword_match"
-    selected["confidence"] = "medium" if top_score < 5 else "high"
+    selected["selection_reason"] = "declared_predicate_match"
+    selected["confidence"] = "exact"
     return selected, candidates
 
 
