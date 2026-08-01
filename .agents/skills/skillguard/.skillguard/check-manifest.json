@@ -1,5 +1,5 @@
 {
-  "check_declarations_hash": "D701351DD2E6EA5E095FE0A1C20BD83BECC51D441AA6DC9EF1EB59CB84C4BBDD",
+  "check_declarations_hash": "EFBD31C23CCC7E36B842BB757C6C7C9F8C53D38F9992B8C6E185ADA286868A8E",
   "checks": [
     {
       "args": [
@@ -1777,7 +1777,7 @@
       "maintenance_unit_id": "unit:skillguard",
       "member_skill_id": "skillguard",
       "owner_declaration_hash": "sha256:a29a9d8eacb125dcf6fb0a1f876b4b4ceda9fd85dd3151b548cf39a2d27bd85b",
-      "owner_input_projection_hash": "sha256:19987983f9695b9ccf2159dfcf9bf9e0920ad9f13da64581da4d35f4d5622a8d",
+      "owner_input_projection_hash": "sha256:f9bf1cc3eb6c3ef7fee5b0693765bc8899b3f03ea7aa7376ac9f8adabe908fe7",
       "projection_declaration_hash": "sha256:9ba7fa6926cfe3cd8e03c9b3705098aee8b64a983a936695151204bd129da3be",
       "semantic_check_id": "check:self:installed-provenance",
       "target_input_role_ids": [],
@@ -3210,7 +3210,7 @@
         "classification_rule_ids": [
           "reviewed_override:path:release-version contract input"
         ],
-        "component_hash": "sha256:389fe477ef2c87659d3e16a93e18311d5a53da367352e2db58361ad987390c37",
+        "component_hash": "sha256:730c0f6665b1846724f782e32515d958aba9822dfbbdd9b2534a1a788dabf4f0",
         "component_id": "component:contract_schema:4f16c9c79e806fbe",
         "consumer_ids": [
           "owner:self:installed-provenance"
@@ -4444,7 +4444,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:6ad5118a87a5b949383435253a933073679cf15ddc6b0494951e2d1ca7aec856",
+    "impact_graph_hash": "sha256:7ac988cc18b85936426b2a95d3cb886661ac1370f5b4824564bd7f5ca20fc82c",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -6828,14 +6828,14 @@
       },
       {
         "classification_rule_id": "reviewed_override:path:release-version contract input",
-        "content_hash": "sha256:967d9afb101346667166f2e76e81910bc190488d7d41d50ca0072e9d92f00e32",
+        "content_hash": "sha256:902311c7bb38fa1658ff403def6158ee7378fe9d6e2e284fa1c38735c31bd30b",
         "install_disposition": "source_only",
         "path": "VERSION",
         "role": "contract_schema"
       },
       {
         "classification_rule_id": "reviewed_override:path:release-version contract input",
-        "content_hash": "sha256:f79b3ddd7682ec7238bcafd692d37d9a40b5f7158c7e07f226b90a9a8f07948a",
+        "content_hash": "sha256:c063e40af14d4ff77d4b281a52a67dc6e7198220d2e8682b16b016611b4ae6ef",
         "install_disposition": "source_only",
         "path": "pyproject.toml",
         "role": "contract_schema"
@@ -7044,7 +7044,7 @@
         "role": "test_dev"
       }
     ],
-    "inventory_hash": "sha256:d33c5f0b5a573c05f403388c296227b7a7821ed362a084f80d0f2c6a9fb668e5",
+    "inventory_hash": "sha256:9cb566f9ba0dbe265dcfedd98ea055fed8536bc9f6e8c0bddba27aac14b9a634",
     "member_root_path": ".agents/skills/skillguard",
     "owner_receipt_root_ref": {
       "path_token": "owner_evidence_root",
@@ -7507,7 +7507,7 @@
           }
         ],
         "owner_declaration_hash": "sha256:a29a9d8eacb125dcf6fb0a1f876b4b4ceda9fd85dd3151b548cf39a2d27bd85b",
-        "owner_input_projection_hash": "sha256:19987983f9695b9ccf2159dfcf9bf9e0920ad9f13da64581da4d35f4d5622a8d",
+        "owner_input_projection_hash": "sha256:f9bf1cc3eb6c3ef7fee5b0693765bc8899b3f03ea7aa7376ac9f8adabe908fe7",
         "target_input_role_ids": []
       },
       {
@@ -8250,9 +8250,9 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "D7BF5CDA3F3F10EEA6396A5566E09FE21AE3323303DEDA414A963F780CE7B716",
+  "contract_hash": "FD9202A4B82E5A828F694444332A2835F575D586C22080C658403F7ACE06DD07",
   "maintenance_unit_id": "unit:skillguard",
-  "manifest_hash": "930158383A423392110732E01C92B2C25A2064D0040A5DB47182B7A01FA724CA",
+  "manifest_hash": "39210D18D9FA32D67912A5729A059C131BE3085AC6C2A986C3BCD8FE54724770",
   "member_skill_ids": [
     "skillguard"
   ],
@@ -8368,8 +8368,8 @@
     "implementation:.github/workflows/ci.yml": "6F969F2937E613F7214340B241356C4AEF2D6AC56CF9EB72B5E02950C430E4DD",
     "implementation:.gitignore": "C15088FA231237909B8F284FB45A827204B312C7B9A013D61BC2FB37631A6A1D",
     "implementation:AGENTS.md": "D030A8B03F4A9C58142BB794170745618D17481D38861EDB4A12BD0B99F2FB1C",
-    "implementation:VERSION": "967D9AFB101346667166F2E76E81910BC190488D7D41D50CA0072E9D92F00E32",
-    "implementation:pyproject.toml": "F79B3DDD7682EC7238BCAFD692D37D9A40B5F7158C7E07F226B90A9A8F07948A",
+    "implementation:VERSION": "902311C7BB38FA1658FF403DEF6158EE7378FE9D6E2E284FA1C38735C31BD30B",
+    "implementation:pyproject.toml": "C063E40AF14D4FF77D4B281A52A67DC6E7198220D2E8682B16B016611B4AE6EF",
     "implementation:tests/test_assurance_diagnostics.py": "8140CD5B596C5FC9A3298E19460A4FE94953E46E2ACA9B8679CFD7AC0BECAD2E",
     "implementation:tests/test_conditional_noop_closure_v2.py": "55B07B4C3CA3CB3307EB864D86949E976C67F115E1AA60F22697E6E6AAFA5911",
     "implementation:tests/test_contract_compiler_v2.py": "F77BBDE442E90C1989456BCA9F1D7F17B8110C3604119373CC64CED46C23479F",

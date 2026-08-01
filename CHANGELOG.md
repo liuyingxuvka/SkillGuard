@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.1 - 2026-07-31
+
+- Updated the self-host contract cardinality regression to include the current
+  `target-native-deepening-closure` step introduced in v0.7.0.
+- Restored clean-branch CI parity without changing the target-owned model
+  deepening contract or weakening any closure requirement.
+
 ## v0.7.0 - 2026-07-31
 
 - Added an explicit target-owned `model_deepening_check_id` binding to the

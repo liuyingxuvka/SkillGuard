@@ -1,0 +1,204 @@
+{
+  "added_ids": [],
+  "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+  "affected_closure_ids": [
+    "coverage:universe",
+    "model_instance:model:development_process_flow",
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow",
+    "parent_closure:purpose:development_process_flow",
+    "parent_closure:system:flowguard:model-regression-manifest",
+    "system_property:subject_revision"
+  ],
+  "affected_edge_ids": [
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow"
+  ],
+  "affected_owner_bindings": [
+    {
+      "affected_id": "coverage:universe",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "model_instance:model:development_process_flow",
+      "owner_route": "model_test_alignment"
+    },
+    {
+      "affected_id": "model_relation:relation:model-realizes-purpose:development_process_flow",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "model_relation:relation:system-contains:development_process_flow",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "parent_closure:purpose:development_process_flow",
+      "owner_route": "model_test_alignment"
+    },
+    {
+      "affected_id": "parent_closure:system:flowguard:model-regression-manifest",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "system_property:subject_revision",
+      "owner_route": "model_mesh_maintenance"
+    }
+  ],
+  "base_snapshot_fingerprint": "sha256:a252026def68855b84afc91a209da22c2e73b266c3c665d4a9c997be19a0fe86",
+  "candidate_snapshot_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+  "changed_commitment_ids": [],
+  "changed_contract_ids": [],
+  "changed_coverage_ids": [
+    "coverage:universe"
+  ],
+  "changed_field_ids": [],
+  "changed_gap_ids": [],
+  "changed_owner_artifact_ids": [],
+  "changed_relation_ids": [
+    "relation:model-realizes-purpose:development_process_flow",
+    "relation:system-contains:development_process_flow"
+  ],
+  "changed_root_ids": [],
+  "changed_side_effect_ids": [],
+  "changed_source_surface_ids": [],
+  "changed_system_property_ids": [
+    "system_property:subject_revision"
+  ],
+  "changed_test_ids": [],
+  "completed_evidence_refs": [
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+      "covered_affected_ids": [
+        "coverage:universe",
+        "model_relation:relation:model-realizes-purpose:development_process_flow",
+        "model_relation:relation:system-contains:development_process_flow",
+        "parent_closure:system:flowguard:model-regression-manifest",
+        "system_property:subject_revision"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:ef17a8f4743661faa1f16c3fd0f34eaf45d4c3ae51643e128176802657e18873",
+      "obligation_ids": [
+        "model-regression:declared_check_supervision",
+        "model-regression:development_process_flow",
+        "model-regression:validation_composition"
+      ],
+      "owner_route": "model_mesh_maintenance",
+      "receipt_fingerprint": "sha256:7f40af287a919c8a6fc8ef7c1c7403d710d7077a9b1aec506f3e51e4e0f6084a",
+      "receipt_id": "receipt:model-regression-parent:7f40af287a919c8a6fc8ef7c1c7403d710d7077a9b1aec506f3e51e4e0f6084a",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "pass",
+      "subject_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+      "toolchain_fingerprint": "sha256:3d182f999465a9a34a7493e279dc6a9bc6c06c0292a4e5710746d33a9d5162ba"
+    },
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+      "covered_affected_ids": [
+        "model_instance:model:development_process_flow",
+        "parent_closure:purpose:development_process_flow"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:ef17a8f4743661faa1f16c3fd0f34eaf45d4c3ae51643e128176802657e18873",
+      "obligation_ids": [
+        "model-regression:declared_check_supervision",
+        "model-regression:development_process_flow",
+        "model-regression:validation_composition"
+      ],
+      "owner_route": "model_test_alignment",
+      "receipt_fingerprint": "sha256:7f40af287a919c8a6fc8ef7c1c7403d710d7077a9b1aec506f3e51e4e0f6084a",
+      "receipt_id": "receipt:model-regression-parent:7f40af287a919c8a6fc8ef7c1c7403d710d7077a9b1aec506f3e51e4e0f6084a",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "pass",
+      "subject_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+      "toolchain_fingerprint": "sha256:3d182f999465a9a34a7493e279dc6a9bc6c06c0292a4e5710746d33a9d5162ba"
+    }
+  ],
+  "decision_reason": "The exact current full model-regression parent receipt and all bound owner receipts passed under FlowGuard 0.68.1.",
+  "evidence_complete": true,
+  "expected_head_fingerprint": "sha256:165b9f280513bda5222c39a363b79ffa2057ff51b5bf9b8974d778b6b40aba40",
+  "fingerprint": "sha256:79d066ff7f104fdff1387e37d87ed5be8b4dbf76c708144bba1dfcbd73ef7453",
+  "fingerprint_changed_ids": [
+    "coverage:universe",
+    "model_instance:model:development_process_flow",
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow"
+  ],
+  "implementation_bundle_fingerprint": "",
+  "members": [
+    {
+      "base_instance_fingerprint": "sha256:72360dafa82fcb6c7b257514dcd467de7c9eaccd16b90a19f3bc1c457afdefa5",
+      "candidate_instance_fingerprint": "sha256:ae2daa142dde22a99ec2fd6e9821410a25f1a6e99a692806697eb6e43206148a",
+      "changed_element_ids": [
+        "model_instance:model:development_process_flow"
+      ],
+      "member_id": "development_process_flow",
+      "operation": "replace",
+      "schema": "flowguard.model_revision_member.v1"
+    }
+  ],
+  "originating_activation_receipt_fingerprint": "",
+  "originating_revision_set_fingerprint": "",
+  "prediction_replay_refs": [],
+  "removal_dispositions": [],
+  "removed_ids": [],
+  "required_evidence_refs": [
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+      "covered_affected_ids": [
+        "coverage:universe",
+        "model_relation:relation:model-realizes-purpose:development_process_flow",
+        "model_relation:relation:system-contains:development_process_flow",
+        "parent_closure:system:flowguard:model-regression-manifest",
+        "system_property:subject_revision"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:ef17a8f4743661faa1f16c3fd0f34eaf45d4c3ae51643e128176802657e18873",
+      "obligation_ids": [
+        "model-regression:declared_check_supervision",
+        "model-regression:development_process_flow",
+        "model-regression:validation_composition"
+      ],
+      "owner_route": "model_mesh_maintenance",
+      "receipt_fingerprint": "sha256:7f40af287a919c8a6fc8ef7c1c7403d710d7077a9b1aec506f3e51e4e0f6084a",
+      "receipt_id": "receipt:model-regression-parent:7f40af287a919c8a6fc8ef7c1c7403d710d7077a9b1aec506f3e51e4e0f6084a",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "required",
+      "subject_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+      "toolchain_fingerprint": "sha256:3d182f999465a9a34a7493e279dc6a9bc6c06c0292a4e5710746d33a9d5162ba"
+    },
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+      "covered_affected_ids": [
+        "model_instance:model:development_process_flow",
+        "parent_closure:purpose:development_process_flow"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:ef17a8f4743661faa1f16c3fd0f34eaf45d4c3ae51643e128176802657e18873",
+      "obligation_ids": [
+        "model-regression:declared_check_supervision",
+        "model-regression:development_process_flow",
+        "model-regression:validation_composition"
+      ],
+      "owner_route": "model_test_alignment",
+      "receipt_fingerprint": "sha256:7f40af287a919c8a6fc8ef7c1c7403d710d7077a9b1aec506f3e51e4e0f6084a",
+      "receipt_id": "receipt:model-regression-parent:7f40af287a919c8a6fc8ef7c1c7403d710d7077a9b1aec506f3e51e4e0f6084a",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "required",
+      "subject_fingerprint": "sha256:cb18d8598e3e1167ead3dc97a8535ef2165959f50f2173a709ad4b1332808534",
+      "toolchain_fingerprint": "sha256:3d182f999465a9a34a7493e279dc6a9bc6c06c0292a4e5710746d33a9d5162ba"
+    }
+  ],
+  "revision_set_id": "revision-skillguard-release-0-7-1",
+  "rollback_contract_fingerprint": "",
+  "schema": "flowguard.model_revision_set.v2",
+  "snapshot_diff_fingerprint": "sha256:4ded4e5113e2ef4e44b1cec9dd00d0685f810d630814b47aac5f904731a6a29c",
+  "status": "accepted",
+  "task_id": "task-skillguard-release-0-7-1"
+}
