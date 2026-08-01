@@ -1,7 +1,9 @@
 # target-model-deepening-closure Specification
 
 ## Purpose
-TBD - created by archiving change enforce-target-model-deepening-closure. Update Purpose after archive.
+Define how SkillGuard verifies a maintained target's own model-deepening closure
+receipt without inventing domain depth, reusing foreign evidence, or projecting
+author-side authority into consumers.
 ## Requirements
 ### Requirement: Target owns model-deepening meaning
 
