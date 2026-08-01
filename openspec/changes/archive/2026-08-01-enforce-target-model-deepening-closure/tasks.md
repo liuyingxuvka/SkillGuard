@@ -20,4 +20,4 @@
 - [x] 3.3 Stage and verify the clean target-owned consumer projection.
 - [x] 3.4 Activate local SkillGuard installation transactionally and check currentness.
 - [x] 3.5 Run one frozen author-side final validation and verify closure identity.
-- [ ] 3.6 Update version/changelog, commit, tag, push, and create the GitHub release after all gates pass.
+- [x] 3.6 Update version/changelog, commit, tag, push, and create the GitHub release after all gates pass.
