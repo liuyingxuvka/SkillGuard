@@ -86,6 +86,7 @@
         "projection_declaration_hash",
         "input_projection_hash",
         "consumer_projection_hash",
+        "generated_install_authorities",
         "identity_hash"
       ],
       "properties": {
@@ -100,6 +101,19 @@
         "projection_declaration_hash": {"$ref": "#/$defs/wire_hash"},
         "input_projection_hash": {"$ref": "#/$defs/wire_hash"},
         "consumer_projection_hash": {"$ref": "#/$defs/wire_hash"},
+        "generated_install_authorities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "content_hash"],
+            "properties": {
+              "path": {"$ref": "#/$defs/path"},
+              "content_hash": {"$ref": "#/$defs/wire_hash"}
+            }
+          }
+        },
         "identity_hash": {"$ref": "#/$defs/wire_hash"}
       }
     },

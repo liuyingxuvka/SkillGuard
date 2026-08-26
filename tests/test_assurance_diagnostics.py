@@ -6,6 +6,13 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_ROOT = ROOT / ".agents" / "skills" / "skillguard" / "scripts"
+if str(SCRIPT_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_ROOT))
 
 from skillguard_v2.assurance_diagnostics import (
     ASSURANCE_INPUT_SCHEMA,
@@ -21,7 +28,6 @@ from skillguard_v2.contract_compiler import canonical_hash
 import checker_engine
 
 
-ROOT = Path(__file__).resolve().parents[1]
 CONTROL_ROOT = ROOT / ".agents" / "skills" / "skillguard" / ".skillguard"
 
 

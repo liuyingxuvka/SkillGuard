@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from _skillguard_v2_runtime_fixture import (  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import (  # noqa: F401
     SCRIPT_ROOT,
     runtime_check_manifest,
     runtime_checks,

@@ -12,7 +12,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from skillguard_v2.contract_schema import validate_depth_profile  # noqa: E402
-from test_execution_depth import declared_check_profile  # noqa: E402
+from tests.test_execution_depth import declared_check_profile  # noqa: E402
 
 
 class RetiredGuardFieldsTests(unittest.TestCase):

@@ -59,6 +59,11 @@ class DepthProfileTemplateV2Tests(unittest.TestCase):
             profile["model_deepening_check_id"], profile["native_check_ids"]
         )
         self.assertEqual(
+            profile["model_deepening_check_id"],
+            profile["surface_inventory"]["model_deepening_check_id"],
+        )
+        self.assertTrue(profile["surface_inventory"]["adequacy_check_ids"])
+        self.assertEqual(
             list(RUNTIME_CAPABILITY_IDS),
             profile["provider_runtime"]["required_capability_ids"],
         )
@@ -79,6 +84,34 @@ class DepthProfileTemplateV2Tests(unittest.TestCase):
                 self.assertTrue(profile["native_check_ids"])
                 self.assertTrue(RETIRED_DOMAIN_FIELDS.isdisjoint(profile))
                 self.assertEqual("enforced", profile["enforcement_level"])
+
+    def test_surface_adequacy_requires_a_current_native_check(self) -> None:
+        profile = json.loads(
+            (PROFILE_ROOT / "single_check_target_profile.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        profile["surface_inventory"]["adequacy_check_ids"] = []
+        codes = {item.code for item in validate_depth_profile(profile, path="$")}
+        self.assertIn("surface_inventory_declaration_checks_missing", codes)
+
+        profile["surface_inventory"]["adequacy_check_ids"] = [
+            "check:foreign-adequacy"
+        ]
+        codes = {item.code for item in validate_depth_profile(profile, path="$")}
+        self.assertIn("surface_inventory_declaration_check_not_native", codes)
+
+    def test_surface_deepening_must_match_the_profile_deepening_check(self) -> None:
+        profile = json.loads(
+            (PROFILE_ROOT / "multi_check_target_profile.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        profile["surface_inventory"]["model_deepening_check_id"] = (
+            "check:target-secondary"
+        )
+        codes = {item.code for item in validate_depth_profile(profile, path="$")}
+        self.assertIn("surface_inventory_declaration_deepening_mismatch", codes)
 
 
 if __name__ == "__main__":

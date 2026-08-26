@@ -38,6 +38,7 @@ from .portfolio_records import (
     resolve_record_ref,
 )
 from .wire_identity import wire_hash
+from .surface_inventory import graduation_surface_findings
 
 
 PORTFOLIO_REGISTRY_SCHEMA = "skillguard.portfolio_registry.v2"
@@ -7071,6 +7072,44 @@ def graduate_portfolio_target(
             skill_root_relatives=skill_paths,
         )
         blockers.extend(identity_findings)
+        target_skill_root = (target_repository_root / skill_path).resolve()
+        compiled_target_path = target_skill_root / ".skillguard" / "compiled-contract.json"
+        compiled_target: Mapping[str, Any] | None = None
+        try:
+            loaded_compiled = json.loads(compiled_target_path.read_text(encoding="utf-8"))
+            if isinstance(loaded_compiled, Mapping):
+                compiled_target = loaded_compiled
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            compiled_target = None
+        target_depth_profile = (
+            compiled_target.get("depth_profile")
+            if isinstance(compiled_target, Mapping)
+            else None
+        )
+        target_native_check_ids = (
+            target_depth_profile.get("native_check_ids", [])
+            if isinstance(target_depth_profile, Mapping)
+            else []
+        )
+        target_model_deepening_check_id = (
+            str(target_depth_profile.get("model_deepening_check_id", ""))
+            if isinstance(target_depth_profile, Mapping)
+            else None
+        )
+        blockers.extend(
+            {
+                "code": finding.code,
+                "skill_id": skill_id,
+                "detail": finding.detail,
+            }
+            for finding in graduation_surface_findings(
+                target_skill_root,
+                target_skill_id=skill_id,
+                profile=target_depth_profile if isinstance(target_depth_profile, Mapping) else None,
+                native_check_ids=target_native_check_ids,
+                model_deepening_check_id=target_model_deepening_check_id,
+            )
+        )
     if identity is not None:
         if evidence.get("source_fingerprint") != identity.get("source_fingerprint"):
             blockers.append(_finding("graduation_source_not_verifier_derived", skill_id=skill_id))

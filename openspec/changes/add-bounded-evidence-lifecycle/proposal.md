@@ -14,6 +14,21 @@ The correction must preserve target sovereignty: SkillGuard verifies only the ch
 - Remove current installation-projection leakage from source-only checks and suppress Python bytecode generation during installed smoke checks.
 - **BREAKING**: replace the current uncompressed sidecar authority with the new compressed evidence-object schema and direct current lifecycle commands. Existing evidence remains archive-only and is not accepted through a compatibility reader or fallback path.
 
+## Authority boundary
+
+This change is the sole current authority for the bounded evidence-store and
+evidence-lifecycle semantics described above. It is not an authority for the
+executable skill contract, functional/release/highest-quality closure,
+SkillGuard self-host acceptance, CI acceptance, or publication. Those claims
+remain solely owned by
+`../build-executable-skill-contract-runtime`. If its implementation changes a
+contract, receipt, aggregation, installation, or toolchain input consumed by
+that change, the current executable-contract authority must be rebuilt and
+revalidated directly; this change cannot create a parallel closure or release
+success path. Former evidence objects are archive-only direct-current rewrite
+inputs, with no compatibility reader, fallback, converter, alias, or dual
+authority.
+
 ## Capabilities
 
 ### New Capabilities

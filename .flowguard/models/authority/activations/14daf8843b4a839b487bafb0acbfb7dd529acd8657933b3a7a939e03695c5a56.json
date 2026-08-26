@@ -1,0 +1,12 @@
+{
+  "candidate_snapshot_fingerprint": "sha256:aa69730def48639c2d220ec821db4fa1af5e979ade6121a3673d856b06df49ba",
+  "expected_head_fingerprint": "sha256:f7dc86daebbe443be0c569a6611adfe0f0d02900c993c8d79a1ef3e72ebfe772",
+  "fingerprint": "sha256:14daf8843b4a839b487bafb0acbfb7dd529acd8657933b3a7a939e03695c5a56",
+  "next_generation": 15,
+  "previous_snapshot_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+  "receipt_id": "activation:skillguard-direct-current-20260821-layout-v2",
+  "revision_set_fingerprint": "sha256:6a090b71b9fda786dc1908863f1ee2084183d50428fa1a512e3b01bc399b2b1a",
+  "schema": "flowguard.model_activation_receipt.v1",
+  "subject_revision": "source-inventory:646c0dae6d775a477745ea54f81814448542277b2d64c2988a5e4c5bdd14bef2",
+  "system_id": "flowguard"
+}

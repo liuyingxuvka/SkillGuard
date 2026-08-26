@@ -6,6 +6,12 @@
   "native_owner_id": "owner:single-check-target",
   "native_route_ids": ["route:target-work"],
   "native_check_ids": ["check:target-result"],
+  "model_deepening_check_id": "check:target-result",
+  "surface_inventory": {
+    "path": ".skillguard/surface-inventory.json",
+    "adequacy_check_ids": ["check:target-result"],
+    "model_deepening_check_id": "check:target-result"
+  },
   "skillguard_adds_domain_route": false,
   "enforcement_level": "enforced",
   "required_closure_profiles": ["enforced"],

@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from _skillguard_v2_runtime_fixture import ROOT, SCRIPT_ROOT  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import ROOT, SCRIPT_ROOT  # noqa: F401
 from skillguard_v2 import portable_content
 from skillguard_v2.runtime_fingerprint import (
     GuardRuntimeFingerprintError,
@@ -69,6 +69,31 @@ class PortableContentPolicyTests(unittest.TestCase):
         self.assertEqual(live.classification, portable_content.RUNTIME)
         self.assertFalse(live.boundary_blocking)
         self.assertTrue(fixture.portable)
+
+    def test_author_reports_and_surface_inventory_are_not_portable_install_inputs(self) -> None:
+        for token in (
+            ".skillguard/reports/check-depth-current.json",
+        ):
+            with self.subTest(token=token):
+                decision = portable_content.classify_relative_path(token)
+                self.assertEqual(portable_content.RUNTIME, decision.classification)
+                self.assertFalse(decision.boundary_blocking)
+                self.assertIn(
+                    decision.reason,
+                    {"member_control_runtime"},
+                )
+
+    def test_surface_inventory_remains_source_portable_but_source_only_install(self) -> None:
+        self.assertTrue(
+            portable_content.classify_relative_path(
+                ".skillguard/surface-inventory.json"
+            ).portable
+        )
+        self.assertTrue(
+            portable_content.classify_relative_path(
+                "fixtures/example/.skillguard/surface-inventory.json"
+            ).portable
+        )
 
     def test_member_root_work_output_is_excluded_but_nested_fixture_work_is_portable(self) -> None:
         live = portable_content.classify_relative_path(

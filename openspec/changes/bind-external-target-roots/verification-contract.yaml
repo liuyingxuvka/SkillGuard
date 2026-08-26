@@ -52,8 +52,8 @@ checks:
     toolchain_identity: flowguard-0.55.0-python
     input_selectors:
       - .agents/skills/skillguard/.skillguard/flowguard_contract_model.py
-      - .flowguard/development_process_flow/skillguard_executable_contract_model.py
-      - .flowguard/model_miss_reviews/skillguard-external-target-binding-20260715.json
+      - .flowguard/models/owners/development_process_flow/skillguard_executable_contract_model.py
+      - .flowguard/history/skillguard-external-target-binding-20260715.json
       - tests/test_executable_contract_model.py
     depends_on_receipts: [check.external-binding.cli]
     command: python
@@ -86,8 +86,8 @@ freshness:
     - .agents/skills/skillguard/scripts/checker_engine.py
     - .agents/skills/skillguard/assets/schemas/skillguard_external_target_binding_v1.schema.json
     - .agents/skills/skillguard/.skillguard/flowguard_contract_model.py
-    - .flowguard/development_process_flow/skillguard_executable_contract_model.py
-    - .flowguard/model_miss_reviews/skillguard-external-target-binding-20260715.json
+    - .flowguard/models/owners/development_process_flow/skillguard_executable_contract_model.py
+    - .flowguard/history/skillguard-external-target-binding-20260715.json
     - tests/test_external_target_binding.py
     - tests/test_executable_contract_model.py
     - README.md

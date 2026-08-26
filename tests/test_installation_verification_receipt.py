@@ -7,7 +7,7 @@ from dataclasses import FrozenInstanceError
 from pathlib import Path
 from unittest.mock import patch
 
-from _skillguard_v2_runtime_fixture import ROOT, SCRIPT_ROOT  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import ROOT, SCRIPT_ROOT  # noqa: F401
 from skillguard_v2.contract_compiler import canonical_hash
 from skillguard_v2.installation import activate_stage, prepare_stage
 from skillguard_v2.installation import replay_installed_smoke_currentness

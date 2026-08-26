@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: git config --global core.longpaths true
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.66.0"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.68.15"
       - run: python -m pytest tests/test_contract_compiler_v2.py tests/test_installation.py tests/test_assurance_diagnostics.py -q
 
   clean-installed-layout:
@@ -41,7 +41,7 @@ jobs:
           python-version: "3.12"
       - run: git config --global core.longpaths true
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.66.0"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.68.15"
       - run: python .agents/skills/skillguard/scripts/skillguard_install.py --canonical-skill-root .agents/skills/skillguard --stage-root .install-smoke/.codex/skills/skillguard --prepare
 
   full-current-suite:
@@ -54,7 +54,7 @@ jobs:
           python-version: "3.12"
       - run: git config --global core.longpaths true
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.66.0"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.68.15"
       - run: python -m pytest -q
 
   tag-release-identity:

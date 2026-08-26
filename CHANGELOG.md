@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.7.3 - 2026-08-26
+
+- Added the reverse surface-closure contract: a target's real commands,
+  scripts, exports, routes, action surfaces, artifacts, and failure/recovery
+  boundaries are part of the adequacy denominator and cannot be hidden by a
+  declaration-only green result.
+- Made the currentness repair wording explicit: an identity mismatch is a
+  visible blocker that requires a manual rewrite of the current
+  contract/model/manifest under the latest schema, followed by fresh checks.
+  Historical records remain provenance only; no compatibility reader,
+  automatic inheritance, one-click migration, alias, or fallback success path
+  is introduced.
+- Kept target sovereignty intact: the target skill chooses the semantic
+  intent, native oracle, and typed disposition for historical requirements;
+  SkillGuard verifies the exact current binding and evidence.
+
 ## v0.7.2 - 2026-08-01
 
 - Replaced weighted author-command routing with explicit route ids or exact declared predicate evidence; zero and multiple matches now block visibly.

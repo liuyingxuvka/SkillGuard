@@ -8,6 +8,8 @@
     "schema_version": {"const": "skillguard.check_manifest.v2"},
     "compiler_version": {"type": "string", "minLength": 1},
     "skill_id": {"type": "string", "minLength": 1},
+    "maintenance_unit_id": {"type": "string", "minLength": 1},
+    "member_skill_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "model_id": {"type": "string", "minLength": 1},
     "contract_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
     "check_declarations_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
@@ -18,6 +20,17 @@
     "content_components": {
       "type": "object",
       "additionalProperties": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}
+    },
+    "consumer_projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["projection_id", "prohibited_path_prefixes", "prohibited_prompt_tokens", "release_manifest_path"],
+      "properties": {
+        "projection_id": {"type": "string", "minLength": 1},
+        "prohibited_path_prefixes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "prohibited_prompt_tokens": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "release_manifest_path": {"type": "string", "minLength": 1}
+      }
     },
     "claim_boundary": {"type": "string", "minLength": 1},
     "manifest_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"}

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import (  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import (  # noqa: F401
     ROOT,
     SCRIPT_ROOT,
     runtime_check_manifest,

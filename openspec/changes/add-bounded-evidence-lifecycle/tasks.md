@@ -45,5 +45,9 @@
 - [x] 7.2 Freeze one final SkillGuard TestMesh execution plan and run exactly one final full validation owner, reusing only exact current receipts.
 - [x] 7.3 Install the new consumer projection transactionally, run installed currentness and smoke checks, and prove source/install parity with no bytecode residue.
 - [x] 7.4 Run lifecycle audit and plan on the legacy working evidence, quarantine only proven unreachable objects, replay current/release pins, and purge only after the explicit safety gates pass.
+> **Integration boundary:** if this lifecycle work changes any executable-contract,
+> closure, self-host, installation, or CI input, rebuild and revalidate the sole
+> current authority `../build-executable-skill-contract-runtime`. This change
+> cannot supply a parallel closure or release receipt.
 - [ ] 7.5 Commit and push the exact validated SkillGuard source, tag the new version, verify tag/version/commit identity, and publish the source-only GitHub Release without rerunning the regression suite.
 - [ ] 7.6 Complete OpenSpec verification/archive readiness, SkillGuard closure, and predictive-KB postflight records with bounded claim language.

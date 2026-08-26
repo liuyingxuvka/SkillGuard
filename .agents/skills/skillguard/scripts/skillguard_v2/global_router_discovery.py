@@ -124,6 +124,8 @@ def _empty_contract_projection(skill_file_path: str) -> dict[str, Any]:
         "check_manifest_sha256": "",
         "check_manifest_hash": "",
         "check_declarations_hash": "",
+        "surface_inventory_path": "",
+        "surface_inventory_sha256": "",
         "model_id": "",
         "function_ids": [],
         "route_ids": [],
@@ -225,6 +227,48 @@ def contract_projection(
     warnings.extend(_schema_warnings("contract-source", validate_binding_source(source)))
     warnings.extend(_schema_warnings("compiled-contract", validate_compiled_contract(contract)))
     warnings.extend(_schema_warnings("check-manifest", validate_check_manifest(manifest)))
+
+    depth_profile = contract.get("depth_profile")
+    surface_declaration = (
+        depth_profile.get("surface_inventory")
+        if isinstance(depth_profile, Mapping)
+        else None
+    )
+    if isinstance(surface_declaration, Mapping):
+        relative_surface_path = str(surface_declaration.get("path") or "").strip()
+        relative_parts = Path(relative_surface_path).parts
+        surface_path = root / Path(*relative_surface_path.replace("\\", "/").split("/"))
+        unsafe_surface_path = (
+            not relative_surface_path
+            or Path(relative_surface_path).is_absolute()
+            or relative_surface_path.replace("\\", "/") != relative_surface_path
+            or any(part in {"", ".", ".."} for part in relative_parts)
+        )
+        if unsafe_surface_path:
+            warnings.append("surface inventory declaration path is unsafe")
+        else:
+            try:
+                resolved_surface_path = surface_path.resolve(strict=True)
+            except (OSError, RuntimeError):
+                resolved_surface_path = None
+            if (
+                resolved_surface_path is None
+                or not resolved_surface_path.is_file()
+                or not resolved_surface_path.is_relative_to(root)
+            ):
+                warnings.append("surface inventory declaration file is missing")
+            else:
+                projection["surface_inventory_path"] = public_path(
+                    resolved_surface_path,
+                    repository_root=repository_root,
+                    codex_home=codex_home,
+                )
+                projection["surface_inventory_sha256"] = impact_file_hash(
+                    resolved_surface_path
+                )
+                projection["route_doc_paths"].append(
+                    projection["surface_inventory_path"]
+                )
 
     unsigned_contract = dict(contract)
     stored_contract_hash = unsigned_contract.pop("contract_hash", None)

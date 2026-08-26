@@ -13,6 +13,7 @@ if str(SCRIPTS) not in sys.path:
 
 import skillguard_v2.execution_depth as execution_depth_module  # noqa: E402
 from skillguard_v2.execution_depth import (  # noqa: E402
+    DEPTH_CONTRACT_MISSING,
     EXECUTION_DEPTH_PASS,
     SHALLOW_BLOCKED,
     _execution_runtime_identity,
@@ -26,7 +27,10 @@ def declared_check_profile(
     native_check_ids: tuple[str, ...] = ("check:intake",),
     *,
     model_deepening_check_id: str | None = None,
+    include_required_reverse_gate: bool = True,
 ) -> dict[str, object]:
+    if model_deepening_check_id is None and include_required_reverse_gate:
+        model_deepening_check_id = native_check_ids[0]
     profile: dict[str, object] = {
         "schema_version": "skillguard.depth_profile.v2",
         "profile_id": "fixture-declared-check-supervision",
@@ -56,6 +60,12 @@ def declared_check_profile(
     }
     if model_deepening_check_id is not None:
         profile["model_deepening_check_id"] = model_deepening_check_id
+    if include_required_reverse_gate:
+        profile["surface_inventory"] = {
+            "path": ".skillguard/surface-inventory.json",
+            "adequacy_check_ids": [native_check_ids[0]],
+            "model_deepening_check_id": model_deepening_check_id,
+        }
     return profile
 
 
@@ -113,7 +123,7 @@ class ExecutionDepthTests(unittest.TestCase):
             self.assertEqual(explicit, _execution_runtime_identity(explicit))
         fingerprint.assert_called_once_with()
 
-    def test_target_declared_checks_are_the_only_depth_denominator(self) -> None:
+    def test_declared_check_profile_with_reverse_gate_can_close(self) -> None:
         result = evaluate_execution_depth(
             declared_check_profile(), (), context=_context(passed=True)
         )
@@ -203,12 +213,13 @@ class ExecutionDepthTests(unittest.TestCase):
         with self.assertRaises(Exception):
             profile_fingerprint(profile)
 
-    def test_profiles_without_designated_lane_do_not_claim_model_deepening(self) -> None:
+    def test_profiles_without_required_reverse_gate_block(self) -> None:
+        profile = declared_check_profile(include_required_reverse_gate=False)
         result = evaluate_execution_depth(
-            declared_check_profile(), (), context=_context(passed=True)
+            profile, (), context=_context(passed=True)
         )
-        self.assertEqual(EXECUTION_DEPTH_PASS, result.status)
-        self.assertEqual("not_declared", result.model_deepening_result["status"])
+        self.assertEqual(DEPTH_CONTRACT_MISSING, result.status)
+        self.assertIn("depth_profile_invalid", result.blockers[0])
 
     def test_replay_rejects_forged_model_deepening_projection(self) -> None:
         profile = declared_check_profile(

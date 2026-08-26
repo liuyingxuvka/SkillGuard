@@ -19,6 +19,7 @@ from skillguard_v2.contract_compiler import compile_skill_contract  # noqa: E402
 from skillguard_v2 import self_host  # noqa: E402
 from skillguard_v2.self_host import (  # noqa: E402
     SelfHostError,
+    _seed_current_owner_receipts,
     _order_step_checks_by_owner_dependencies,
     _reopen_failed_steps_after_owner_input_change,
     _self_host_request,
@@ -30,6 +31,74 @@ from skillguard_v2.self_host import (  # noqa: E402
 
 
 class SkillGuardSelfHostV2Tests(unittest.TestCase):
+    def test_seed_current_owner_receipts_reuses_only_dependency_ordered_current_heads(self) -> None:
+        owner_rows = {
+            "owner:base": {
+                "check_ids": ["check:base"],
+                "depends_on_owner_ids": [],
+            },
+            "owner:dependent": {
+                "check_ids": ["check:dependent"],
+                "depends_on_owner_ids": ["owner:base"],
+            },
+            "owner:missing": {
+                "check_ids": ["check:missing"],
+                "depends_on_owner_ids": [],
+            },
+        }
+        check_index = {
+            "check:base": {"check_id": "check:base", "execution_owner_id": "owner:base"},
+            "check:dependent": {
+                "check_id": "check:dependent",
+                "execution_owner_id": "owner:dependent",
+            },
+        }
+        existing = {"owner:existing": {"receipt_id": "receipt:existing"}}
+        inspection_calls: list[str] = []
+
+        def inspect(check: dict[str, str], **kwargs: object) -> dict[str, object]:
+            inspection_calls.append(check["check_id"])
+            dependencies = kwargs["dependency_execution_receipts"]
+            if check["check_id"] == "check:dependent":
+                self.assertEqual(
+                    {"owner:base": {"receipt_id": "receipt:base"}},
+                    dependencies,
+                )
+            else:
+                self.assertEqual({}, dependencies)
+            return {
+                "disposition": "reuse_owner_receipt",
+                "receipt": {
+                    "receipt_id": f"receipt:{check['execution_owner_id'].split(':')[-1]}"
+                },
+            }
+
+        with patch.object(self_host, "inspect_current_owner_execution", side_effect=inspect):
+            seeded = _seed_current_owner_receipts(
+                existing,
+                check_index=check_index,
+                owner_rows=owner_rows,
+                skill_root=ROOT / ".agents" / "skills" / "skillguard",
+                target_root=ROOT,
+                repository_root=ROOT,
+                run_root=ROOT / "run",
+                owner_evidence_root=ROOT / "owner-evidence",
+            )
+
+        self.assertEqual(
+            ["check:base", "check:dependent"],
+            inspection_calls,
+        )
+        self.assertEqual(
+            {
+                "owner:existing": {"receipt_id": "receipt:existing"},
+                "owner:base": {"receipt_id": "receipt:base"},
+                "owner:dependent": {"receipt_id": "receipt:dependent"},
+            },
+            seeded,
+        )
+        self.assertNotIn("owner:missing", seeded)
+
     def test_self_host_fingerprints_use_the_location_derived_execution_boundary(self) -> None:
         runtime = {
             "runtime_id": "skillguard-v2",
@@ -273,7 +342,15 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
         self.assertTrue(result.ok, result.to_dict())
         contract = result.compiled_contract
         manifest = result.check_manifest
-        self.assertEqual(46, sum(1 for row in contract["steps"] if not row["terminal_kind"]))
+        self.assertEqual(37, sum(1 for row in contract["steps"] if not row["terminal_kind"]))
+        self.assertIn(
+            "step:surface-inventory-adequacy",
+            {
+                row["step_id"]
+                for row in contract["steps"]
+                if not row["terminal_kind"]
+            },
+        )
         assurance_step_ids = {
             row["step_id"]
             for row in contract["steps"]
@@ -288,26 +365,9 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             },
             assurance_step_ids,
         )
-        template_step_ids = {
-            row["step_id"]
-            for row in contract["steps"]
-            if row["route_id"] == "route:template-lifecycle-supervision"
-            and not row["terminal_kind"]
-        }
-        self.assertEqual(
-            {
-                "step:resolve-template-native-route",
-                "step:load-target-template-projection",
-                "step:validate-template-applicability",
-                "step:select-template-pack",
-                "step:issue-template-selection-receipt",
-                "step:materialize-template-preview",
-                "step:run-target-native-template-builder",
-                "step:run-target-native-template-validators",
-                "step:issue-template-instance-receipt",
-                "step:record-template-harvest-disposition",
-            },
-            template_step_ids,
+        self.assertNotIn(
+            "route:template-lifecycle-supervision",
+            {row["route_id"] for row in contract["steps"]},
         )
         self.assertEqual(
             {
@@ -315,8 +375,6 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
                 "artifact:self-check-manifest",
                 "artifact:self-author-project-manifest",
                 "artifact:self-author-project-prompt",
-                "artifact:self-template-selection-receipt",
-                "artifact:self-template-instance-receipt",
             },
             {row["artifact_id"] for row in contract["artifacts"]},
         )
@@ -336,14 +394,8 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             ".skillguard/author-project.json",
             artifact_paths["artifact:self-author-project-manifest"],
         )
-        self.assertEqual(
-            ".skillguard/runs/{run_id}/template-selection-receipt.json",
-            artifact_paths["artifact:self-template-selection-receipt"],
-        )
-        self.assertEqual(
-            ".skillguard/runs/{run_id}/template-instance-receipt.json",
-            artifact_paths["artifact:self-template-instance-receipt"],
-        )
+        self.assertNotIn("artifact:self-template-selection-receipt", artifact_paths)
+        self.assertNotIn("artifact:self-template-instance-receipt", artifact_paths)
         author_audit = next(
             row
             for row in manifest["checks"]

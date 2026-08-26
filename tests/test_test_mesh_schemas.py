@@ -5,7 +5,7 @@ import re
 import unittest
 from pathlib import Path
 
-from test_test_mesh_current import CurrentTestMeshTests
+from tests.test_test_mesh_current import CurrentTestMeshTests
 
 
 ROOT = Path(__file__).resolve().parents[1]

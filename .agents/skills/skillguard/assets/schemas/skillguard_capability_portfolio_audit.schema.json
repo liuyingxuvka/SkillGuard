@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_capability_portfolio_audit.schema.json",
+  "title": "SkillGuard capability portfolio audit report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "artifact_type", "status", "decision", "claim_scope", "rows", "counts", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": "skillguard.capability_portfolio_audit.v1"},
+    "artifact_type": {"const": "skillguard_capability_portfolio_audit"},
+    "status": {"enum": ["pass", "blocked"]},
+    "decision": {"enum": ["pass", "block"]},
+    "claim_scope": {"enum": ["routine", "functional", "release", "highest-quality"]},
+    "rows": {"type": "array"},
+    "counts": {"type": "object"},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

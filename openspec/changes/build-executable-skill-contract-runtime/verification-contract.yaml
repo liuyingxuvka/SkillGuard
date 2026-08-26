@@ -105,7 +105,7 @@ checks:
   - id: check.flowguard-model
     kind: command
     command: python
-    args: [.flowguard/development_process_flow/skillguard_executable_contract_model.py]
+    args: [.flowguard/models/owners/development_process_flow/skillguard_executable_contract_model.py]
     required: true
     covers: [req.compile.flowguard-authority]
     expected: {exit_code: 0}

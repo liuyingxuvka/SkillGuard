@@ -61,6 +61,8 @@ DIAGNOSTIC_ROUTE_ENTRYPOINT_FIELDS = (
     "check_manifest_sha256",
     "check_manifest_hash",
     "check_declarations_hash",
+    "surface_inventory_path",
+    "surface_inventory_sha256",
 )
 CURRENT_ROUTE_ITEM_FIELDS = frozenset(
     {
@@ -473,6 +475,7 @@ def registry_integrity_failures(payload: object) -> list[str]:
             "check_manifest_sha256",
             "check_manifest_hash",
             "check_declarations_hash",
+            "surface_inventory_sha256",
         ):
             value = str(entrypoint.get(field, ""))
             if value and WIRE_HASH_PATTERN.fullmatch(value) is None:

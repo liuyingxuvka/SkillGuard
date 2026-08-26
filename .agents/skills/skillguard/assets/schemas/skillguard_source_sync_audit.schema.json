@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_source_sync_audit.schema.json",
+  "title": "SkillGuard source synchronization audit report",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "artifact_type", "status", "decision", "rows", "findings", "gap_codes", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": "skillguard.source_sync_audit.v1"},
+    "artifact_type": {"const": "skillguard_source_sync_audit"},
+    "status": {"enum": ["pass", "blocked"]},
+    "decision": {"enum": ["pass", "block"]},
+    "rows": {"type": "array"},
+    "findings": {"type": "array"},
+    "gap_codes": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  }
+}

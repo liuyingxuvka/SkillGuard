@@ -47,10 +47,11 @@ def test_tag_job_is_receipt_only_and_binds_version_to_commit() -> None:
 
 def test_ci_uses_current_flowguard_release() -> None:
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    assert workflow.count("FlowGuard.git@v0.66.0") == 3
+    assert workflow.count("FlowGuard.git@v0.68.15") == 3
+    assert "FlowGuard.git@v0.66.0" not in workflow
     assert workflow.count("git config --global core.longpaths true") == 3
     assert "FlowGuard.git@v0.58.5" not in workflow
     assert "FlowGuard.git@v0.56.0" not in workflow
     for job_name in TEST_JOB_NAMES:
         block = _job_block(workflow, job_name)
-        assert block.index("core.longpaths true") < block.index("FlowGuard.git@v0.66.0")
+        assert block.index("core.longpaths true") < block.index("FlowGuard.git@v0.68.15")

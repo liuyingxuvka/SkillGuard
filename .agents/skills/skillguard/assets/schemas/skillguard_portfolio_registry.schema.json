@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_portfolio_registry.schema.json",
+  "title": "SkillGuard private portfolio registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_id", "entries", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": "skillguard.portfolio_registry.v1"},
+    "registry_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "minLength": 1},
+    "entries": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/entry"}
+    },
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "entry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["skill_id", "lifecycle", "canonical_source", "installed_path", "repository_identity", "visibility", "release_policy"],
+      "properties": {
+        "skill_id": {"type": "string", "minLength": 1},
+        "lifecycle": {"enum": ["active", "retired"]},
+        "retirement_reason": {"type": "string", "minLength": 1},
+        "canonical_source": {"$ref": "#/$defs/source"},
+        "installed_path": {"type": "string", "minLength": 1},
+        "repository_identity": {"type": "string", "minLength": 1},
+        "visibility": {"enum": ["private", "public"]},
+        "release_policy": {"enum": ["no_publish", "private_only", "public_release"]}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["root", "skill_path"],
+      "properties": {
+        "root": {"type": "string", "minLength": 1},
+        "skill_path": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

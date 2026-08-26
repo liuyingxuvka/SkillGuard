@@ -46,7 +46,7 @@ from skillguard_v2.installation import (  # noqa: E402
 )
 
 
-SELF_MODEL_PATH = ROOT / ".flowguard" / "development_process_flow" / "skillguard_executable_contract_model.py"
+SELF_MODEL_PATH = ROOT / ".flowguard" / "models" / "owners" / "development_process_flow" / "skillguard_executable_contract_model.py"
 
 
 def load_self_model():
@@ -150,6 +150,42 @@ class ContractCompilerV2Tests(unittest.TestCase):
             _install_disposition("fixtures/contract/case.json", ".", role),
         )
 
+    def test_functional_closure_is_author_evidence_not_installation_input(self) -> None:
+        role = _content_role(".skillguard/functional-closure.json")
+
+        self.assertEqual(
+            "source_only",
+            _install_disposition(".skillguard/functional-closure.json", ".", role),
+        )
+
+    def test_functional_closure_receipt_does_not_stale_compiler_inventory(self) -> None:
+        closure = self.control / "functional-closure.json"
+        closure.write_text('{"result":"pass","revision":1}\n', encoding="utf-8")
+        first = compile_skill_contract(
+            self.skill, repository_root=self.repo, write=True
+        )
+        self.assertTrue(first.ok, first.to_dict())
+        first_plan = first.compiled_contract["content_impact_plan"]
+        self.assertNotIn(
+            ".agents/skills/fixture-skill/.skillguard/functional-closure.json",
+            {row["path"] for row in first_plan["inventory"]},
+        )
+        first_identity = (
+            first_plan["inventory_hash"],
+            first_plan["impact_graph_hash"],
+        )
+
+        closure.write_text('{"result":"pass","revision":2}\n', encoding="utf-8")
+        second = compile_skill_contract(
+            self.skill, repository_root=self.repo, write=False
+        )
+        self.assertTrue(second.ok, second.to_dict())
+        second_plan = second.compiled_contract["content_impact_plan"]
+        self.assertEqual(
+            first_identity,
+            (second_plan["inventory_hash"], second_plan["impact_graph_hash"]),
+        )
+
     def test_current_nested_skill_repository_layout_replays_installation_projection(self) -> None:
         nested_skill = self.repo / "skills" / "fixture-skill"
         nested_skill.parent.mkdir(parents=True)
@@ -179,6 +215,25 @@ class ContractCompilerV2Tests(unittest.TestCase):
             _installation_member_relative_path(
                 "skills/fixture-skill", "skills/fixture-skill/SKILL.md"
             ),
+        )
+
+    def test_installation_projection_binds_generated_authority_bytes(self) -> None:
+        result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
+        self.assertTrue(result.ok, result.to_dict())
+        first = installation_projection_identity(self.skill)
+        compiled_path = self.control / "compiled-contract.json"
+        original = compiled_path.read_bytes()
+        try:
+            tampered = original.replace(b'"skill_id": "fixture-skill"', b'"skill_id": "tampered"', 1)
+            self.assertNotEqual(original, tampered)
+            compiled_path.write_bytes(tampered)
+            second = installation_projection_identity(self.skill)
+        finally:
+            compiled_path.write_bytes(original)
+        self.assertNotEqual(first["identity_hash"], second["identity_hash"])
+        self.assertNotEqual(
+            first["generated_install_authorities"],
+            second["generated_install_authorities"],
         )
 
     def test_current_skill_root_layout_rejects_a_path_outside_declared_member_root(self) -> None:
@@ -370,6 +425,11 @@ class ContractCompilerV2Tests(unittest.TestCase):
             "native_route_ids": [route_id],
             "native_check_ids": [check_id],
             "model_deepening_check_id": check_id,
+            "surface_inventory": {
+                "path": ".skillguard/surface-inventory.json",
+                "adequacy_check_ids": [check_id],
+                "model_deepening_check_id": check_id,
+            },
             "skillguard_adds_domain_route": False,
             "enforcement_level": "enforced",
             "required_closure_profiles": ["enforced"],
@@ -619,6 +679,44 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.assertTrue(all(row["args"] == [".flowguard/skill_contract_model.py"] for row in model_checks))
         self.assertTrue(all(row["cwd_token"] == "repository_root" for row in model_checks))
 
+    def test_self_host_and_report_outputs_do_not_refresh_contract_authority(self) -> None:
+        first = compile_skill_contract(
+            self.skill,
+            repository_root=self.repo,
+            write=True,
+        )
+        self.assertTrue(first.ok, first.to_dict())
+        assert first.compiled_contract is not None
+        assert first.check_manifest is not None
+
+        (self.control / "self-host").mkdir()
+        (self.control / "self-host" / "current").write_text(
+            "{\"status\":\"passed\",\"receipt_hash\":\"current\"}\n",
+            encoding="utf-8",
+        )
+        (self.control / "reports" / "check").mkdir(parents=True)
+        (self.control / "reports" / "check" / "result.json").write_text(
+            "{\"status\":\"passed\"}\n",
+            encoding="utf-8",
+        )
+
+        second = compile_skill_contract(
+            self.skill,
+            repository_root=self.repo,
+            write=False,
+        )
+        self.assertTrue(second.ok, second.to_dict())
+        assert second.compiled_contract is not None
+        assert second.check_manifest is not None
+        self.assertEqual(
+            first.compiled_contract["contract_hash"],
+            second.compiled_contract["contract_hash"],
+        )
+        self.assertEqual(
+            first.check_manifest["manifest_hash"],
+            second.check_manifest["manifest_hash"],
+        )
+
     def test_content_impact_graph_is_current_component_scoped_and_wire_hashed(self) -> None:
         result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
 
@@ -748,6 +846,10 @@ class ContractCompilerV2Tests(unittest.TestCase):
             },
             path_selectors,
         )
+        self.assertEqual(
+            ["check:self:compile-generated-contract"],
+            check["depends_on_check_ids"],
+        )
         version_component = next(
             row
             for row in result.compiled_contract["content_impact_plan"]["components"]
@@ -758,6 +860,24 @@ class ContractCompilerV2Tests(unittest.TestCase):
         self.assertEqual(
             ["owner:self:installed-provenance"],
             version_component["consumer_ids"],
+        )
+
+    def test_real_target_native_deepening_obligation_owns_native_closure_step(self) -> None:
+        result = compile_skill_contract(
+            ROOT / ".agents" / "skills" / "skillguard",
+            repository_root=ROOT,
+            write=False,
+        )
+        self.assertTrue(result.ok, result.to_dict())
+        assert result.compiled_contract is not None
+        obligation = next(
+            row
+            for row in result.compiled_contract["obligations"]
+            if row["obligation_id"] == "obligation:target-native-deepening-closure"
+        )
+        self.assertEqual(
+            ["step:target-native-deepening-closure", "step:check-run-closure"],
+            obligation["owner_step_ids"],
         )
 
     def test_portfolio_target_edge_is_explicit_and_component_scoped(self) -> None:
@@ -1932,6 +2052,7 @@ class ContractCompilerV2Tests(unittest.TestCase):
             "skillguard_compiled_contract_v2.schema.json",
             "skillguard_contract_source_v2.schema.json",
             "skillguard_depth_profile_v2.schema.json",
+            "skillguard_surface_inventory_v1.schema.json",
             "skillguard_guard_change_v2.schema.json",
             "skillguard_native_terminal_receipt_v2.schema.json",
             "skillguard_obligation_applicability_receipt_v2.schema.json",

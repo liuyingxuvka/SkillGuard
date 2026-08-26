@@ -36,7 +36,15 @@ htmlcov/
 logs/
 /work/
 /.flowguard/evidence/
+/.flowguard/history/
+/.flowguard/work/
 /.agents/skills/skillguard/work/
+/.agents/skills/skillguard/.skillguard/surface-inventory.json
+/.agents/skills/skillguard/.skillguard/surface-semantic-map.json
+/.agents/skills/skillguard-global-router/.skillguard/surface-inventory.json
+/.agents/skills/skillguard/.skillguard/functional-closure.json
+/.agents/skills/skillguard/.skillguard/reports/
+/.agents/skills/skillguard/.skillguard/self-host/
 openspec/**/run-artifacts/
 openspec/**/verification-receipts/
 openspec/**/verification-reports/

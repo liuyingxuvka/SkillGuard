@@ -36,9 +36,12 @@ from flowguard import (
     BCL_SCOPE_ROUTINE,
     BCL_PLANE_AGENT_OPERATION,
     BCL_SOURCE_CODE,
+    BCL_SOURCE_CLASSIFICATION_IMPLEMENTATION,
+    BCL_SOURCE_CLASSIFICATION_TEST,
     BCL_SOURCE_AUTHORITY_NORMATIVE,
     BCL_SOURCE_AUTHORITY_OBSERVED,
     BCL_SOURCE_AUTHORITY_SUPPORTING,
+    BCL_DISPOSITION_DELEGATED,
     BCL_SOURCE_FRESHNESS_CURRENT,
     BCL_SOURCE_WORK_CONTEXT,
     BCL_SOURCE_TEST,
@@ -1315,6 +1318,21 @@ def _load_template_lifecycle_extension() -> dict[str, object]:
     return extension
 
 
+def export_template_lifecycle_contract_extension() -> dict[str, object]:
+    """Return the optional target-template supervision fragment.
+
+    Template-pack selection and instance construction are not part of
+    SkillGuard's base self-maintenance contract.  A target that explicitly
+    declares validated-template support may import this extension and bind it
+    to its own native route and receipts.  Keeping the extension callable but
+    out of :func:`export_contract_model` prevents the SkillGuard self-host
+    contract from silently requiring template receipts that SkillGuard itself
+    does not produce.
+    """
+
+    return _load_template_lifecycle_extension()
+
+
 def export_contract_model() -> dict[str, object]:
     """Return the canonical machine projection consumed by current SkillGuard.
 
@@ -1395,8 +1413,6 @@ def export_contract_model() -> dict[str, object]:
             "composable_with": ["static_audit", "global_router_handoff"],
         },
     )
-    template_extension = _load_template_lifecycle_extension()
-    functions = functions + tuple(template_extension["functions"])
     function_ids = tuple(str(row["function_id"]) for row in functions)
     functions = tuple(
         {
@@ -1429,6 +1445,7 @@ def export_contract_model() -> dict[str, object]:
             "start_step_id": "step:freeze-declared-check-inventory",
             "step_ids": [
                 "step:freeze-declared-check-inventory",
+                "step:surface-inventory-adequacy",
                 "step:run-declared-checks",
                 "step:reconcile-declared-check-results",
                 "terminal:deep-audit-closed",
@@ -1619,7 +1636,7 @@ def export_contract_model() -> dict[str, object]:
             "blocked_terminal_step_id": "terminal:provenance-blocked",
             "handoffs": [],
         },
-    ) + tuple(template_extension["routes"])
+    )
 
     def step(
         step_id: str,
@@ -1648,6 +1665,7 @@ def export_contract_model() -> dict[str, object]:
         step("terminal:static-audit-closed", "route:static-audit", "static-audit-v2", "terminal", ("step:issue-static-audit-receipt",), terminal_kind="success"),
         step("terminal:static-audit-blocked", "route:static-audit", "static-audit-v2", "terminal", terminal_kind="blocked"),
         step("step:freeze-declared-check-inventory", "route:deep-audit", "deep-audit-v2", "inventory"),
+        step("step:surface-inventory-adequacy", "route:deep-audit", "deep-audit-v2", "native", ("step:freeze-declared-check-inventory",)),
         step("step:run-declared-checks", "route:deep-audit", "deep-audit-v2", "native", ("step:freeze-declared-check-inventory",)),
         step("step:reconcile-declared-check-results", "route:deep-audit", "deep-audit-v2", "native", ("step:run-declared-checks",)),
         step("terminal:deep-audit-closed", "route:deep-audit", "deep-audit-v2", "terminal", ("step:reconcile-declared-check-results",), terminal_kind="success"),
@@ -1700,7 +1718,7 @@ def export_contract_model() -> dict[str, object]:
         step("step:verify-release-provenance", "route:provenance-audit", "provenance-audit-v2", "validator", ("step:compare-installed-and-repository",)),
         step("terminal:provenance-current", "route:provenance-audit", "provenance-audit-v2", "terminal", ("step:verify-release-provenance",), terminal_kind="success"),
         step("terminal:provenance-blocked", "route:provenance-audit", "provenance-audit-v2", "terminal", terminal_kind="blocked"),
-    ) + tuple(template_extension["steps"])
+    )
     obligation_rows = (
         ("obligation:static-audit", "artifacts_and_checks_are_current", ["step:inventory-static-surface", "step:run-native-static-checks", "step:issue-static-audit-receipt"]),
         ("obligation:deep-audit", "artifacts_and_checks_are_current", ["step:freeze-declared-check-inventory", "step:run-declared-checks", "step:reconcile-declared-check-results"]),
@@ -1720,13 +1738,13 @@ def export_contract_model() -> dict[str, object]:
         ("obligation:no-former-authority-success", "failures_and_former_authority_cannot_hide", ["step:select-function-route", "step:check-run-closure"]),
         ("obligation:portfolio-freshness", "maintenance_unit_graduation_uses_only_unit_evidence", ["step:scan-maintenance-unit-freshness", "step:validate-maintenance-unit-evidence", "step:issue-portfolio-receipt"]),
         ("obligation:depth-native-authority", "depth_profile_preserves_native_authority", ["step:freeze-declared-check-inventory", "step:reconcile-declared-check-results"]),
-        ("obligation:target-native-deepening-closure", "target_native_deepening_is_current", ["step:reconcile-declared-check-results", "step:check-run-closure"]),
+        ("obligation:target-native-deepening-closure", "target_native_deepening_is_current", ["step:target-native-deepening-closure", "step:check-run-closure"]),
         ("obligation:execution-depth-closure", "execution_depth_is_current_and_consumed", ["step:reconcile-declared-check-results", "step:check-run-closure", "step:issue-closure-receipt"]),
         ("obligation:unique-depth-evidence", "evidence_contribution_is_unique", ["step:reconcile-declared-check-results", "step:validate-step-evidence"]),
         ("obligation:author-repository-adoption", "author_repositories_keep_skillguard_maintenance_private", ["step:inspect-author-repository-adoption", "step:render-managed-project-prompt", "step:install-author-repository-adoption", "step:audit-author-repository-adoption"]),
         ("obligation:global-router-handoff", "routes_are_typed_and_uniquely_owned", ["step:refresh-global-router", "step:check-global-registry-and-prompt", "step:verify-target-handoff"]),
         ("obligation:provenance", "model_and_binding_are_authoritative", ["step:resolve-canonical-source", "step:compare-installed-and-repository", "step:verify-release-provenance"]),
-    ) + tuple(template_extension["obligations"])
+    )
     return {
         "schema_version": "skillguard.flowguard_model_export.v2",
         "flowguard_schema_version": str(_flowguard.SCHEMA_VERSION),
@@ -1746,14 +1764,14 @@ def export_contract_model() -> dict[str, object]:
         ],
         "invariant_ids": [
             *[invariant.name for invariant in INVARIANTS],
-            *template_extension["invariant_ids"],
         ],
         "claim_boundary": (
             "This export defines executable-contract behavior and topology. "
             "It does not supply target commands, tools, artifacts, native checks, "
-            "current runtime receipts, or publication evidence. The template "
-            "lifecycle extension preserves target-owned route, builder, "
-            "validator, and semantic authority."
+            "current runtime receipts, publication evidence, or template-pack "
+            "selection. A target that explicitly declares validated-template "
+            "support must bind the optional template lifecycle extension to its "
+            "own native route, builder, validators, and receipts."
         ),
     }
 
@@ -1889,8 +1907,6 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             failure_boundary=row[4],
             source_surface_ids=(
                 row[7][0],
-                f"surface:model:{row[0].removeprefix('commitment:')}",
-                f"surface:test:{row[0].removeprefix('commitment:')}",
             ),
             primary_owner_model_id=MODEL_ID,
             path_authority=_path_binding(row[5], row[6], row[0]),
@@ -2008,11 +2024,15 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         BehaviorSourceSurface(
             f"surface:model:{row[0].removeprefix('commitment:')}",
             surface_kind=BCL_SOURCE_CODE,
+            source_classification=BCL_SOURCE_CLASSIFICATION_IMPLEMENTATION,
             source_ref=MODEL_PATH,
-            commitment_ids=(row[0],),
             business_intent_ids=(
                 f"intent:{row[0].removeprefix('commitment:')}",
             ),
+            coverage_disposition=BCL_DISPOSITION_DELEGATED,
+            delegated_owner_inventory_id="inventory:skillguard-executable-model",
+            delegation_relation_type="native-model-owns",
+            native_evidence_ids=("evidence:model:skillguard-executable-contract",),
             primary_path_id=row[6],
             owner=MODEL_ID,
             validation_boundary="current executable scenario and governance model",
@@ -2024,11 +2044,15 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
         BehaviorSourceSurface(
             f"surface:test:{row[0].removeprefix('commitment:')}",
             surface_kind=BCL_SOURCE_TEST,
+            source_classification=BCL_SOURCE_CLASSIFICATION_TEST,
             source_ref=TEST_PATH,
-            commitment_ids=(row[0],),
             business_intent_ids=(
                 f"intent:{row[0].removeprefix('commitment:')}",
             ),
+            coverage_disposition=BCL_DISPOSITION_DELEGATED,
+            delegated_owner_inventory_id="inventory:skillguard-executable-tests",
+            delegation_relation_type="native-test-runner-owns",
+            native_evidence_ids=("evidence:test:skillguard-executable-contract",),
             primary_path_id=row[6],
             delegates_to_primary_path=True,
             owner=MODEL_ID,
@@ -2070,8 +2094,6 @@ def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
             source_authority_role=(
                 BCL_SOURCE_AUTHORITY_NORMATIVE
                 if surface.surface_kind == BCL_SOURCE_WORK_CONTEXT
-                else BCL_SOURCE_AUTHORITY_OBSERVED
-                if surface.surface_kind == BCL_SOURCE_CODE
                 else BCL_SOURCE_AUTHORITY_SUPPORTING
             ),
             freshness_state=BCL_SOURCE_FRESHNESS_CURRENT,

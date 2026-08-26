@@ -10,7 +10,7 @@ from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
-from _skillguard_v2_runtime_fixture import (  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import (  # noqa: F401
     SCRIPT_ROOT,
     runtime_contract_with_checks,
 )

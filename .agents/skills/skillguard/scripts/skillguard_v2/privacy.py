@@ -99,6 +99,11 @@ def audit_public_export(
         for row in policy.get("visual_review_records", [])
         if isinstance(row, Mapping) and row.get("asset_path")
     }
+    large_text_reviews = {
+        str(row.get("asset_path", "")): row
+        for row in policy.get("large_text_review_records", [])
+        if isinstance(row, Mapping) and row.get("asset_path")
+    }
     sensitive_literals = [str(repository_root), str(Path.home()), *[str(path.resolve()) for path in sensitive_roots]]
     findings: list[dict[str, Any]] = []
     scanned_text = 0
@@ -166,8 +171,16 @@ def audit_public_export(
                             findings.append({"code": "visual_privacy_review_stale_or_failed", "path": path_text, "line": 0})
             continue
         if len(data) > 2_000_000:
-            findings.append({"code": "oversized_unreviewed_text", "path": path_text, "line": 0})
-            continue
+            review = large_text_reviews.get(path_text)
+            if not (
+                isinstance(review, Mapping)
+                and review.get("status") == "passed"
+                and review.get("asset_sha256") == "sha256:" + file_hash(path).lower()
+                and isinstance(review.get("review_scope"), str)
+                and bool(review.get("review_scope", "").strip())
+            ):
+                findings.append({"code": "oversized_unreviewed_text", "path": path_text, "line": 0})
+                continue
         try:
             text = data.decode("utf-8")
         except UnicodeDecodeError:

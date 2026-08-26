@@ -13,6 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = (
     ROOT
     / ".flowguard"
+    / "models"
+    / "owners"
     / "development_process_flow"
     / "current_runtime_authority_model.py"
 )

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/liuyingxuvka/SkillGuard/schemas/skillguard_surface_semantic_map_v1.schema.json",
+  "title": "SkillGuard current surface semantic map v1",
+  "description": "A target-owned, explicit mapping from the current implementation-surface denominator to the current compiled model obligations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "map_id",
+    "target_skill_id",
+    "source_discovery_fingerprint",
+    "full_surface_ids",
+    "current_obligation_ids",
+    "decision_rules",
+    "surface_bindings",
+    "obligation_bindings",
+    "map_hash",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.surface_semantic_map.v1"},
+    "map_id": {"$ref": "#/$defs/id"},
+    "target_skill_id": {"$ref": "#/$defs/id"},
+    "source_discovery_fingerprint": {"$ref": "#/$defs/hash"},
+    "full_surface_ids": {"$ref": "#/$defs/nonempty_ids"},
+    "current_obligation_ids": {"$ref": "#/$defs/nonempty_ids"},
+    "decision_rules": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/rule"}
+    },
+    "surface_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/surface_binding"}
+    },
+    "obligation_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/obligation_binding"}
+    },
+    "map_hash": {"$ref": "#/$defs/hash"},
+    "claim_boundary": {"$ref": "#/$defs/text"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$"},
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/id"}
+    },
+    "nonempty_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/id"}
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "model_obligation_ids", "reason", "proof_ref"],
+      "properties": {
+        "rule_id": {"$ref": "#/$defs/id"},
+        "model_obligation_ids": {"$ref": "#/$defs/nonempty_ids"},
+        "source_paths": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+        "kinds": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+        "reason": {"$ref": "#/$defs/text"},
+        "proof_ref": {"$ref": "#/$defs/text"}
+      }
+    },
+    "surface_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surface_id", "model_obligation_ids", "rule_ids", "decision"],
+      "properties": {
+        "surface_id": {"$ref": "#/$defs/id"},
+        "model_obligation_ids": {"$ref": "#/$defs/nonempty_ids"},
+        "rule_ids": {"$ref": "#/$defs/nonempty_ids"},
+        "decision": {"enum": ["explicit-author-rule", "explicit-author-component-group-closure"]}
+      }
+    },
+    "obligation_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["obligation_id", "disposition", "surface_ids", "reason", "proof_ref"],
+      "properties": {
+        "obligation_id": {"$ref": "#/$defs/id"},
+        "disposition": {"const": "governed"},
+        "surface_ids": {"$ref": "#/$defs/nonempty_ids"},
+        "reason": {"$ref": "#/$defs/text"},
+        "proof_ref": {"$ref": "#/$defs/text"}
+      }
+    }
+  }
+}

@@ -23,6 +23,7 @@ from .closure import close_run, verify_closure
 from .contract_compiler import canonical_hash, canonical_json_bytes, compile_skill_contract
 from .evidence_policy import required_evidence_class
 from .execution_depth import issue_target_execution_receipt
+from .execution_records import filesystem_path
 from .privacy import git_public_candidates
 from .receipts import fingerprint_value, issue_receipt
 from .route_runtime import select_routes
@@ -41,6 +42,12 @@ from .target_inputs import fingerprint_target_input_roles, fingerprint_target_in
 
 
 ProgressCallback = Callable[[Mapping[str, Any]], None]
+
+SELF_HOST_CURRENT_RECEIPT_SCHEMA = "skillguard.self_host_terminal_receipt.current"
+SELF_HOST_CURRENT_RECEIPT_ARTIFACT = "skillguard_self_host_terminal_receipt"
+SELF_HOST_CURRENT_RECEIPT_RELATIVE_PATH = Path(
+    ".skillguard", "self-host", "current"
+)
 
 
 ROUTE_PRIORITY = (
@@ -97,9 +104,11 @@ class SelfHostClaimContext:
     target_input_roles: Mapping[str, tuple[str, ...]]
     claim: Any
     run_root: Path
+    decision: Any | None = None
 
 
 def _load_json(path: Path) -> Mapping[str, Any]:
+    path = filesystem_path(path)
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, Mapping):
         raise SelfHostError("self_host_json_not_object", path.name)
@@ -107,6 +116,7 @@ def _load_json(path: Path) -> Mapping[str, Any]:
 
 
 def _atomic_write(path: Path, payload: Mapping[str, Any]) -> None:
+    path = filesystem_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
     temporary.write_bytes(canonical_json_bytes(payload))
@@ -180,6 +190,90 @@ def _step_sort_key(step: Mapping[str, Any]) -> tuple[int, str]:
     except ValueError:
         priority = len(ROUTE_PRIORITY)
     return priority, str(step.get("step_id", ""))
+
+
+def _seed_current_owner_receipts(
+    owner_receipts: Mapping[str, Mapping[str, Any]],
+    *,
+    check_index: Mapping[str, Mapping[str, Any]],
+    owner_rows: Mapping[str, Mapping[str, Any]],
+    skill_root: Path,
+    target_root: Path,
+    repository_root: Path,
+    run_root: Path,
+    owner_evidence_root: Path,
+) -> dict[str, Mapping[str, Any]]:
+    """Add exact persistent owner receipts that this run may reuse.
+
+    TestMesh can deliberately reuse a current owner receipt without writing a
+    check record into the newly claimed run.  The self-host verifier still
+    needs those receipts to order cross-step owner dependencies.  Resolve them
+    from the current owner heads, in dependency order, using the same identity
+    calculation as the execution path.  A missing or stale receipt is left
+    absent so the owning step remains executable; nothing is imported from a
+    prior unit, an old schema, or an alternate path.
+    """
+
+    seeded: dict[str, Mapping[str, Any]] = dict(owner_receipts)
+    pending = {
+        str(owner_id)
+        for owner_id in owner_rows
+        if str(owner_id) and str(owner_id) not in seeded
+    }
+    while pending:
+        progressed = False
+        for owner_id in sorted(tuple(pending)):
+            owner = owner_rows.get(owner_id)
+            if not isinstance(owner, Mapping):
+                pending.remove(owner_id)
+                progressed = True
+                continue
+            dependencies = {
+                str(value)
+                for value in owner.get("depends_on_owner_ids", [])
+                if str(value)
+            }
+            if not dependencies.issubset(seeded):
+                continue
+            check_ids = [
+                str(value) for value in owner.get("check_ids", []) if str(value)
+            ]
+            check = next(
+                (
+                    check_index[check_id]
+                    for check_id in check_ids
+                    if check_id in check_index
+                ),
+                None,
+            )
+            if not isinstance(check, Mapping):
+                pending.remove(owner_id)
+                progressed = True
+                continue
+            inspection = inspect_current_owner_execution(
+                check,
+                skill_root=skill_root,
+                target_root=target_root,
+                repository_root=repository_root,
+                run_root=run_root,
+                owner_evidence_root=owner_evidence_root,
+                dependency_execution_receipts={
+                    dependency_id: seeded[dependency_id]
+                    for dependency_id in sorted(dependencies)
+                },
+            )
+            if (
+                inspection.get("disposition") == "reuse_owner_receipt"
+                and isinstance(inspection.get("receipt"), Mapping)
+            ):
+                seeded[owner_id] = inspection["receipt"]
+            pending.remove(owner_id)
+            progressed = True
+        if not progressed:
+            # A cycle or a chain whose upstream owner is missing remains
+            # visible to the normal dependency-deadlock gate.
+            break
+    return seeded
 
 
 def _select_ready_step_by_owner_dependencies(
@@ -629,7 +723,7 @@ def _self_host_request(
         "claim_scope": "enforced",
         "write_targets": [
             ".agents/skills/skillguard",
-            ".flowguard/development_process_flow/skillguard_executable_contract_model.py",
+            ".flowguard/models/owners/development_process_flow/skillguard_executable_contract_model.py",
             "tests",
         ],
         "target_input_paths": list(target_inputs["paths"]),
@@ -717,6 +811,7 @@ def _prepare_current_self_host_claim(
         target_input_roles=target_input_roles,
         claim=claim,
         run_root=claim.run_root,
+        decision=decision,
     )
 
 
@@ -758,6 +853,377 @@ def claim_current_self_host_run(
     return report
 
 
+def publish_current_self_host_terminal_receipt(
+    skill_root: Path,
+    report: Mapping[str, Any],
+    *,
+    contract: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    """Publish the one direct-current self-host terminal receipt.
+
+    This publisher accepts only the terminal result produced by the native
+    owner-check verifier.  A claim, plan, aggregation, simulation, or report
+    with a foreign current identity cannot replace the canonical current file.
+    The old current file is never read: a valid new result atomically replaces
+    it, while every invalid result leaves the current authority untouched.
+    """
+
+    if report.get("schema_version") != "skillguard.self_host_result.v2":
+        raise SelfHostError(
+            "self_host_current_result_schema_invalid",
+            "current self-host terminal requires skillguard.self_host_result.v2",
+        )
+    if report.get("status") != "passed":
+        raise SelfHostError(
+            "self_host_current_result_not_terminal",
+            "current self-host terminal requires a passed result",
+        )
+    if report.get("execution_mode") != "owner_check_verification":
+        raise SelfHostError(
+            "self_host_current_aggregation_only",
+            "aggregation, planning, claim, and simulated reports cannot become the current self-host receipt",
+        )
+    if report.get("aggregation_only") is True or report.get("simulated") is True:
+        raise SelfHostError(
+            "self_host_current_aggregation_only",
+            "aggregation or simulated reports cannot become the current self-host receipt",
+        )
+
+    run_id = str(report.get("run_id", ""))
+    run_root = str(report.get("run_root", ""))
+    report_hash = str(report.get("report_hash", ""))
+    if not run_id or not run_root or not report_hash:
+        raise SelfHostError(
+            "self_host_current_terminal_identity_missing",
+            "run_id, run_root, and report_hash are required for the current self-host receipt",
+        )
+
+    step_count = report.get("executed_step_count")
+    executed_steps = report.get("executed_steps")
+    if (
+        isinstance(step_count, bool)
+        or not isinstance(step_count, int)
+        or step_count <= 0
+        or not isinstance(executed_steps, Sequence)
+        or not executed_steps
+    ):
+        raise SelfHostError(
+            "self_host_current_terminal_missing_execution",
+            "current self-host receipt requires at least one verifier-produced step",
+        )
+    for row in executed_steps:
+        if not isinstance(row, Mapping) or not isinstance(row.get("receipt_ids"), Sequence):
+            raise SelfHostError(
+                "self_host_current_terminal_receipt_missing",
+                "every self-host step must carry verifier receipt ids",
+            )
+        if not row.get("receipt_ids"):
+            raise SelfHostError(
+                "self_host_current_terminal_receipt_missing",
+                "every self-host step must carry verifier receipt ids",
+            )
+
+    closures = report.get("closures")
+    if not isinstance(closures, Sequence) or not closures:
+        raise SelfHostError(
+            "self_host_current_terminal_closure_missing",
+            "current self-host receipt requires a verified closure",
+        )
+    for closure in closures:
+        if not isinstance(closure, Mapping):
+            raise SelfHostError(
+                "self_host_current_terminal_closure_invalid",
+                "self-host closure projection must be an object",
+            )
+        verification = closure.get("verification")
+        if not isinstance(verification, Mapping) or verification.get("ok") is not True:
+            raise SelfHostError(
+                "self_host_current_terminal_closure_invalid",
+                "self-host closure must carry an independent successful replay",
+            )
+
+    depth_receipt = report.get("target_execution_depth_receipt")
+    if not isinstance(depth_receipt, Mapping) or not depth_receipt:
+        raise SelfHostError(
+            "self_host_current_terminal_depth_missing",
+            "current self-host receipt requires a target execution-depth receipt",
+        )
+
+    impact_plan = contract.get("content_impact_plan")
+    sources = contract.get("source_fingerprints")
+    if not isinstance(impact_plan, Mapping) or not isinstance(sources, Mapping):
+        raise SelfHostError(
+            "self_host_current_identity_missing",
+            "current contract source and owner plan are required",
+        )
+    expected_identities = {
+        "source_identity_hash": str(impact_plan.get("inventory_hash", "")),
+        "model_identity_hash": str(sources.get("model_export", "")),
+        "contract_hash": str(contract.get("contract_hash", "")),
+        "manifest_hash": str(manifest.get("manifest_hash", "")),
+        "owner_plan_hash": str(impact_plan.get("impact_graph_hash", "")),
+    }
+    if any(not value for value in expected_identities.values()):
+        raise SelfHostError(
+            "self_host_current_identity_missing",
+            "source, model, contract, manifest, and owner-plan identities are required",
+        )
+    for field, expected in expected_identities.items():
+        observed = str(report.get(field, ""))
+        if observed != expected:
+            raise SelfHostError(
+                "self_host_current_identity_mismatch",
+                f"{field} does not match the current contract authority",
+            )
+
+    current_fingerprints = report.get("current_fingerprints")
+    if not isinstance(current_fingerprints, Mapping) or not current_fingerprints:
+        raise SelfHostError(
+            "self_host_current_fingerprints_missing",
+            "current self-host receipt requires verifier current fingerprints",
+        )
+
+    repository_root = skill_root.resolve().parents[2]
+    producer_report_path = (repository_root / Path(run_root)).resolve()
+    try:
+        producer_report_path.relative_to(repository_root)
+    except ValueError as exc:
+        raise SelfHostError(
+            "self_host_current_run_root_outside_repository",
+            "the self-host producer run must remain under the author repository",
+        ) from exc
+    producer_report_path = producer_report_path / "self-host-result.json"
+    producer_report_path = filesystem_path(producer_report_path)
+    if not producer_report_path.is_file():
+        raise SelfHostError(
+            "self_host_current_producer_missing",
+            "the verifier-produced self-host result is missing",
+        )
+    try:
+        stored_report = _load_json(producer_report_path)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SelfHostError(
+            "self_host_current_producer_unreadable",
+            "the verifier-produced self-host result is unreadable",
+        ) from exc
+    unsigned_report = dict(stored_report)
+    stored_report_hash = str(unsigned_report.pop("report_hash", ""))
+    if (
+        dict(stored_report) != dict(report)
+        or stored_report_hash != report_hash
+        or canonical_hash(unsigned_report) != report_hash
+    ):
+        raise SelfHostError(
+            "self_host_current_producer_mismatch",
+            "the current self-host result does not match its persisted verifier report",
+        )
+
+    payload: dict[str, Any] = {
+        "schema_version": SELF_HOST_CURRENT_RECEIPT_SCHEMA,
+        "artifact_type": SELF_HOST_CURRENT_RECEIPT_ARTIFACT,
+        "status": "passed",
+        "terminal_kind": "self_host_current",
+        "run_id": run_id,
+        "run_root": run_root,
+        "producer_report_ref": {
+            "path_token": "repository_root",
+            "relative_path": (Path(run_root) / "self-host-result.json").as_posix(),
+        },
+        "report_hash": report_hash,
+        "source_identity_hash": expected_identities["source_identity_hash"],
+        "model_identity_hash": expected_identities["model_identity_hash"],
+        "contract_hash": expected_identities["contract_hash"],
+        "manifest_hash": expected_identities["manifest_hash"],
+        "owner_plan_hash": expected_identities["owner_plan_hash"],
+        "source_fingerprints": dict(sources),
+        "current_fingerprints": dict(current_fingerprints),
+        "execution_mode": "owner_check_verification",
+        "execution_count": report.get("execution_count", 0),
+        "executed_step_count": step_count,
+        "profiles": list(report.get("profiles", ())),
+        "executed_steps": [dict(row) for row in executed_steps if isinstance(row, Mapping)],
+        "closures": [dict(row) for row in closures if isinstance(row, Mapping)],
+        "target_execution_depth_receipt": dict(depth_receipt),
+        "created_at": str(report.get("created_at", utc_now())),
+        "claim_boundary": (
+            "This receipt proves only the current SkillGuard author-side self-host "
+            "verifier terminal under the bound source/model/contract/manifest/owner "
+            "plan. It does not prove installation, consumer parity, publication, "
+            "or future AI behavior."
+        ),
+    }
+    payload["receipt_hash"] = canonical_hash(payload)
+    _atomic_write(skill_root / SELF_HOST_CURRENT_RECEIPT_RELATIVE_PATH, payload)
+    return payload
+
+
+def verify_current_self_host_terminal_receipt(
+    skill_root: Path,
+    *,
+    contract: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    """Verify the one direct-current self-host terminal receipt.
+
+    This consumer reads only the canonical current path.  It does not inspect
+    historical receipts, resume an execution, choose another producer, or
+    downgrade to a claim/aggregation result.  A missing, stale, foreign, or
+    tampered current receipt is a hard failure.
+    """
+
+    current_path = skill_root / SELF_HOST_CURRENT_RECEIPT_RELATIVE_PATH
+    current_path = filesystem_path(current_path)
+    if not current_path.is_file():
+        raise SelfHostError(
+            "self_host_current_receipt_missing",
+            "the canonical current self-host terminal receipt is missing",
+        )
+    try:
+        receipt = _load_json(current_path)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SelfHostError(
+            "self_host_current_receipt_unreadable",
+            "the canonical current self-host terminal receipt is unreadable",
+        ) from exc
+
+    if receipt.get("schema_version") != SELF_HOST_CURRENT_RECEIPT_SCHEMA:
+        raise SelfHostError(
+            "self_host_current_receipt_schema_invalid",
+            "the canonical current self-host receipt has an invalid schema",
+        )
+    if receipt.get("artifact_type") != SELF_HOST_CURRENT_RECEIPT_ARTIFACT:
+        raise SelfHostError(
+            "self_host_current_receipt_artifact_invalid",
+            "the canonical current self-host receipt has an invalid artifact type",
+        )
+    if receipt.get("status") != "passed" or receipt.get("terminal_kind") != "self_host_current":
+        raise SelfHostError(
+            "self_host_current_receipt_not_terminal",
+            "the canonical current self-host receipt is not a passed terminal result",
+        )
+    if receipt.get("execution_mode") != "owner_check_verification":
+        raise SelfHostError(
+            "self_host_current_receipt_execution_mode_invalid",
+            "the canonical current self-host receipt must come from owner verification",
+        )
+
+    stored_receipt_hash = str(receipt.get("receipt_hash", ""))
+    unsigned_receipt = dict(receipt)
+    unsigned_receipt.pop("receipt_hash", None)
+    if not stored_receipt_hash or canonical_hash(unsigned_receipt) != stored_receipt_hash:
+        raise SelfHostError(
+            "self_host_current_receipt_hash_mismatch",
+            "the canonical current self-host receipt hash does not match its contents",
+        )
+
+    impact_plan = contract.get("content_impact_plan")
+    sources = contract.get("source_fingerprints")
+    if not isinstance(impact_plan, Mapping) or not isinstance(sources, Mapping):
+        raise SelfHostError(
+            "self_host_current_receipt_identity_missing",
+            "current contract source and owner plan are required to consume the receipt",
+        )
+    expected_identities = {
+        "source_identity_hash": str(impact_plan.get("inventory_hash", "")),
+        "model_identity_hash": str(sources.get("model_export", "")),
+        "contract_hash": str(contract.get("contract_hash", "")),
+        "manifest_hash": str(manifest.get("manifest_hash", "")),
+        "owner_plan_hash": str(impact_plan.get("impact_graph_hash", "")),
+    }
+    if any(not value for value in expected_identities.values()):
+        raise SelfHostError(
+            "self_host_current_receipt_identity_missing",
+            "source, model, contract, manifest, and owner-plan identities are required",
+        )
+    for field, expected in expected_identities.items():
+        if str(receipt.get(field, "")) != expected:
+            raise SelfHostError(
+                "self_host_current_receipt_identity_mismatch",
+                f"{field} does not match the current contract authority",
+            )
+
+    current_fingerprints = receipt.get("current_fingerprints")
+    source_fingerprints = receipt.get("source_fingerprints")
+    if not isinstance(current_fingerprints, Mapping) or not current_fingerprints:
+        raise SelfHostError(
+            "self_host_current_receipt_fingerprints_missing",
+            "current verifier fingerprints are required",
+        )
+    if not isinstance(source_fingerprints, Mapping) or dict(source_fingerprints) != dict(sources):
+        raise SelfHostError(
+            "self_host_current_receipt_source_fingerprints_mismatch",
+            "the receipt source fingerprints do not match the current contract",
+        )
+
+    run_id = str(receipt.get("run_id", ""))
+    run_root_text = str(receipt.get("run_root", ""))
+    report_hash = str(receipt.get("report_hash", ""))
+    if not run_id or not run_root_text or not report_hash:
+        raise SelfHostError(
+            "self_host_current_receipt_producer_identity_missing",
+            "run, producer report, and report hash identities are required",
+        )
+    repository_root = skill_root.resolve().parents[2]
+    producer_root = (repository_root / Path(run_root_text)).resolve()
+    try:
+        producer_root.relative_to(repository_root)
+    except ValueError as exc:
+        raise SelfHostError(
+            "self_host_current_receipt_producer_outside_repository",
+            "the current receipt producer must remain under the author repository",
+        ) from exc
+    producer_path = producer_root / "self-host-result.json"
+    producer_ref = receipt.get("producer_report_ref")
+    if not isinstance(producer_ref, Mapping):
+        raise SelfHostError(
+            "self_host_current_receipt_producer_reference_missing",
+            "the current receipt producer reference is missing",
+        )
+    expected_ref = (Path(run_root_text) / "self-host-result.json").as_posix()
+    if (
+        str(producer_ref.get("path_token", "")) != "repository_root"
+        or str(producer_ref.get("relative_path", "")) != expected_ref
+    ):
+        raise SelfHostError(
+            "self_host_current_receipt_producer_reference_mismatch",
+            "the current receipt producer reference does not match its run root",
+        )
+    producer_path = filesystem_path(producer_path)
+    if not producer_path.is_file():
+        raise SelfHostError(
+            "self_host_current_receipt_producer_missing",
+            "the verifier-produced self-host result referenced by current is missing",
+        )
+    try:
+        producer = _load_json(producer_path)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SelfHostError(
+            "self_host_current_receipt_producer_unreadable",
+            "the verifier-produced self-host result referenced by current is unreadable",
+        ) from exc
+    producer_unsigned = dict(producer)
+    producer_report_hash = str(producer_unsigned.pop("report_hash", ""))
+    if (
+        producer.get("schema_version") != "skillguard.self_host_result.v2"
+        or producer.get("status") != "passed"
+        or producer.get("execution_mode") != "owner_check_verification"
+        or producer_report_hash != report_hash
+        or canonical_hash(producer_unsigned) != report_hash
+    ):
+        raise SelfHostError(
+            "self_host_current_receipt_producer_mismatch",
+            "the referenced verifier result is not the exact passed current producer",
+        )
+    if str(producer.get("run_id", "")) != run_id or str(producer.get("run_root", "")) != run_root_text:
+        raise SelfHostError(
+            "self_host_current_receipt_producer_identity_mismatch",
+            "the referenced verifier result has a different run identity",
+        )
+
+    return receipt
+
+
 def run_current_verifier(
     repository_root: Path,
     *,
@@ -784,6 +1250,12 @@ def run_current_verifier(
     }
     claim = context.claim
     run_root = context.run_root
+    decision = context.decision
+    if decision is None:
+        raise SelfHostError(
+            "self_host_route_decision_missing",
+            "current self-host verifier requires the frozen route decision from its claim",
+        )
     fingerprints = _current_fingerprints(
         contract,
         repository_root=repository_root,
@@ -825,6 +1297,16 @@ def run_current_verifier(
     owner_receipts = load_run_owner_receipt_index(
         run_root,
         persistent_owner_root,
+    )
+    owner_receipts = _seed_current_owner_receipts(
+        owner_receipts,
+        check_index=check_index,
+        owner_rows=owner_rows,
+        skill_root=skill_root,
+        target_root=repository_root,
+        repository_root=repository_root,
+        run_root=run_root,
+        owner_evidence_root=persistent_owner_root,
     )
     _reopen_failed_steps_after_owner_input_change(
         run_root,
@@ -1107,19 +1589,43 @@ def run_current_verifier(
         "status": "passed",
         "run_id": claim.run_id,
         "run_root": run_root.relative_to(repository_root).as_posix(),
+        "source_identity_hash": str(
+            contract.get("content_impact_plan", {}).get("inventory_hash", "")
+        ),
+        "model_identity_hash": str(
+            contract.get("source_fingerprints", {}).get("model_export", "")
+        ),
         "contract_hash": contract["contract_hash"],
         "manifest_hash": manifest["manifest_hash"],
+        "owner_plan_hash": str(
+            contract.get("content_impact_plan", {}).get("impact_graph_hash", "")
+        ),
+        "current_fingerprints": dict(fingerprints),
+        "execution_mode": "owner_check_verification",
+        "execution_count": sum(
+            1
+            for step in executed_steps
+            for disposition in step.get("check_execution_dispositions", [])
+            if disposition == "executed_terminal_success"
+        ),
         "executed_step_count": len(executed_steps),
         "executed_steps": executed_steps,
         "target_execution_depth_receipt": dict(depth_receipt) if depth_receipt is not None else None,
         "test_mesh_boundary_checks": list(test_mesh_boundary_checks),
         "long_check_timeout_budget_checks": list(long_check_timeout_budget_checks),
         "closures": closures,
+        "profiles": list(profiles),
         "created_at": utc_now(),
         "claim_boundary": _self_host_claim_boundary(profiles, closures),
     }
     report["report_hash"] = canonical_hash(report)
     _atomic_write(run_root / "self-host-result.json", report)
+    publish_current_self_host_terminal_receipt(
+        skill_root,
+        report,
+        contract=contract,
+        manifest=manifest,
+    )
     return report
 
 

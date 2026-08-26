@@ -18,7 +18,7 @@ from skillguard_v2.template_prompts import (  # noqa: E402
     render_target_template_routing_section,
     replace_target_template_routing_section,
 )
-from test_template_adapters_v2 import manifest, projection  # noqa: E402
+from tests.test_template_adapters_v2 import manifest, projection  # noqa: E402
 from skillguard_v2.template_packs import (  # noqa: E402
     TemplatePackError,
     seal_template_catalog,

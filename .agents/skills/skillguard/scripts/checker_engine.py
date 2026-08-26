@@ -88,6 +88,20 @@ from skillguard_v2.template_profiles import (
     validate_builtin_profile_current,
     validate_template_profile,
 )
+from skillguard_v2.surface_inventory import (
+    discover_full_source_surfaces,
+    discover_public_source_surfaces,
+    validate_full_surface_inventory,
+    validate_reverse_surface_inventory,
+    validate_surface_inventory,
+)
+from skillguard_v2.capability_engine import (
+    CLAIM_SCOPES,
+    audit_capabilities as audit_capability_portfolio,
+    audit_target_capability,
+    check_source_sync as check_capability_source_sync,
+    load_private_portfolio_registry,
+)
 
 
 CHECKER_VERSION = "skillguard.local_cli_dispatch.v1"
@@ -169,6 +183,11 @@ TRANSIENT_SKILLGUARD_RUNTIME_PREFIXES = (
 )
 DECLARED_REFERENCE_PREFIXES = (
     ".agents/",
+    # Some maintained skills explicitly bind to the author repository's
+    # current FlowGuard layout.  This is a declared repository-root boundary,
+    # not a search fallback: the reference must resolve under the supplied
+    # --repository-root and remains fail-closed when absent.
+    ".flowguard/",
     ".skillguard/",
     "references/",
     "scripts/",
@@ -552,7 +571,7 @@ GENERATE_SUITE_REQUIRED_FILES = (
     ".skillguard/suite/evidence/suite_closure.json",
     ".skillguard/suite/reports/suite_generation_report.json",
 )
-ROUTE_TASK_REGISTRY_VERSION = "skillguard.route_registry.v4"
+ROUTE_TASK_REGISTRY_VERSION = "skillguard.route_registry.v5"
 ROUTE_TASK_PATH_FIELDS = {
     "blueprint",
     "blueprint_path",
@@ -990,6 +1009,296 @@ _ROUTE_TASK_ROUTE_REGISTRY_BASE: tuple[dict[str, Any], ...] = (
         "hints": ("inventory", "file-inventory", "repository-inventory"),
         "keywords": ("inventory", "list files", "repository inventory", "file listing", "path inventory"),
     },
+    {
+        "route_id": "skillguard.route.commands.v1",
+        "route_node_id": "commands",
+        "command_family": "commands",
+        "responsibility": "command-surface-introspection",
+        "next_step": "Run commands to inspect the current public dispatch table and its target-native check bindings.",
+        "status": "current",
+        "hints": ("commands", "command-surface", "dispatch-table"),
+        "keywords": ("list commands", "command dispatch", "public command surface", "dispatch table"),
+    },
+    {
+        "route_id": "skillguard.route.assurance-diagnostics.v1",
+        "route_node_id": "assurance-diagnostics",
+        "command_family": "assurance-diagnostics",
+        "responsibility": "assurance-diagnostics",
+        "next_step": "Run assurance-diagnostics to explain current author-side closure blockers without changing authority.",
+        "status": "current",
+        "hints": ("assurance-diagnostics", "closure-diagnostics", "blocker-diagnostics"),
+        "keywords": ("assurance diagnostics", "explain blockers", "closure diagnostics", "diagnose closure"),
+    },
+    {
+        "route_id": "skillguard.route.scan-global-skills.v1",
+        "route_node_id": "scan-global-skills",
+        "command_family": "scan-global-skills",
+        "responsibility": "global-skill-discovery",
+        "next_step": "Run scan-global-skills against explicit author-side skill roots before building registry authority.",
+        "status": "current",
+        "hints": ("scan-global-skills", "global-skill-scan", "skill-discovery"),
+        "keywords": ("scan global skills", "discover skill roots", "find skill files", "global skill discovery"),
+    },
+    {
+        "route_id": "skillguard.route.build-global-registry.v1",
+        "route_node_id": "build-global-registry",
+        "command_family": "build-global-registry",
+        "responsibility": "global-registry-builder",
+        "next_step": "Build the current author-side registry from one explicit scan scope and preserve its source identity.",
+        "status": "current",
+        "hints": ("build-global-registry", "global-registry-build", "registry-authority"),
+        "keywords": ("build global registry", "create skill registry", "registry from scan", "global registry authority"),
+    },
+    {
+        "route_id": "skillguard.route.check-global-registry.v1",
+        "route_node_id": "check-global-registry",
+        "command_family": "check-global-registry",
+        "responsibility": "global-registry-checker",
+        "next_step": "Check the supplied registry against explicit current roots and the managed prompt projection.",
+        "status": "current",
+        "hints": ("check-global-registry", "global-registry-check", "registry-freshness"),
+        "keywords": ("check global registry", "validate skill registry", "registry freshness", "check managed registry"),
+    },
+    {
+        "route_id": "skillguard.route.refresh-global-router.v1",
+        "route_node_id": "refresh-global-router",
+        "command_family": "refresh-global-router",
+        "responsibility": "global-router-maintainer",
+        "next_step": "Refresh the author-side registry and managed prompt projection only from explicit registered source roots.",
+        "status": "current",
+        "hints": ("refresh-global-router", "global-router-refresh", "managed-prompt-refresh"),
+        "keywords": ("refresh global router", "refresh managed prompt", "update skill registry", "router projection"),
+    },
+    {
+        "route_id": "skillguard.route.check-runtime-authority.v1",
+        "route_node_id": "check-runtime-authority",
+        "command_family": "check-runtime-authority",
+        "responsibility": "runtime-authority-checker",
+        "next_step": "Resolve one target's current runtime authority and return a visible blocker when source identity is missing or stale.",
+        "status": "current",
+        "hints": ("check-runtime-authority", "runtime-authority", "current-runtime"),
+        "keywords": ("check runtime authority", "resolve current runtime", "runtime identity", "current authority"),
+    },
+    {
+        "route_id": "skillguard.route.evidence-audit.v1",
+        "route_node_id": "evidence-audit",
+        "command_family": "evidence-audit",
+        "responsibility": "evidence-lifecycle-auditor",
+        "next_step": "Audit one canonical private evidence store read-only and classify every object without rewriting it.",
+        "status": "current",
+        "hints": ("evidence-audit", "evidence-store-audit", "evidence-classification"),
+        "keywords": ("audit evidence store", "classify evidence", "evidence audit", "inspect evidence objects"),
+    },
+    {
+        "route_id": "skillguard.route.evidence-gc-plan.v1",
+        "route_node_id": "evidence-gc-plan",
+        "command_family": "evidence-gc-plan",
+        "responsibility": "evidence-gc-planner",
+        "next_step": "Produce a snapshot-bound, read-only plan for unreachable evidence and do not mutate the store.",
+        "status": "current",
+        "hints": ("evidence-gc-plan", "evidence-gc", "evidence-quarantine-plan"),
+        "keywords": ("plan evidence cleanup", "evidence garbage collection plan", "unreachable evidence plan", "evidence quarantine plan"),
+    },
+    {
+        "route_id": "skillguard.route.evidence-gc-apply.v1",
+        "route_node_id": "evidence-gc-apply",
+        "command_family": "evidence-gc-apply",
+        "responsibility": "evidence-gc-quarantine",
+        "next_step": "Quarantine exactly the candidates in one unchanged current evidence plan and emit a terminal receipt.",
+        "status": "current",
+        "hints": ("evidence-gc-apply", "evidence-quarantine", "apply-evidence-plan"),
+        "keywords": ("apply evidence cleanup", "quarantine evidence", "apply evidence gc", "quarantine exact candidates"),
+    },
+    {
+        "route_id": "skillguard.route.evidence-gc-purge.v1",
+        "route_node_id": "evidence-gc-purge",
+        "command_family": "evidence-gc-purge",
+        "responsibility": "evidence-gc-purger",
+        "next_step": "Permanently remove only grace-qualified objects named by one unchanged quarantine receipt.",
+        "status": "current",
+        "hints": ("evidence-gc-purge", "evidence-purge", "purge-quarantine"),
+        "keywords": ("purge evidence", "purge quarantined evidence", "evidence grace purge", "remove evidence objects"),
+    },
+    {
+        "route_id": "skillguard.route.mark-portfolio-impact.v1",
+        "route_node_id": "mark-portfolio-impact",
+        "command_family": "mark-portfolio-impact",
+        "responsibility": "portfolio-impact-marker",
+        "next_step": "Invalidate affected portfolio evidence after a declared SkillGuard change and preserve the impact receipt.",
+        "status": "current",
+        "hints": ("mark-portfolio-impact", "portfolio-impact", "invalidate-portfolio-evidence"),
+        "keywords": ("mark portfolio impact", "invalidate portfolio evidence", "portfolio change impact", "mark affected skills"),
+    },
+    {
+        "route_id": "skillguard.route.verify-portfolio-impact-receipt.v1",
+        "route_node_id": "verify-portfolio-impact-receipt",
+        "command_family": "verify-portfolio-impact-receipt",
+        "responsibility": "portfolio-impact-verifier",
+        "next_step": "Replay one immutable impact receipt against the exact current portfolio registry and target set.",
+        "status": "current",
+        "hints": ("verify-portfolio-impact-receipt", "portfolio-impact-replay", "impact-receipt"),
+        "keywords": ("verify portfolio impact receipt", "replay portfolio impact", "check impact receipt", "impact receipt verification"),
+    },
+    {
+        "route_id": "skillguard.route.capture-installation-receipt.v1",
+        "route_node_id": "capture-installation-receipt",
+        "command_family": "capture-installation-receipt",
+        "responsibility": "installation-receipt-capture",
+        "next_step": "Capture one canonical transactional installation receipt with active-tree and installed-runtime identities.",
+        "status": "current",
+        "hints": ("capture-installation-receipt", "installation-receipt", "capture-install"),
+        "keywords": ("capture installation receipt", "record installed runtime", "installation identity receipt", "capture install proof"),
+    },
+    {
+        "route_id": "skillguard.route.verify-installation-receipt.v1",
+        "route_node_id": "verify-installation-receipt",
+        "command_family": "verify-installation-receipt",
+        "responsibility": "installation-receipt-verifier",
+        "next_step": "Replay one immutable installation receipt against current canonical and installed trees without launching validation.",
+        "status": "current",
+        "hints": ("verify-installation-receipt", "installation-receipt-check", "installed-currentness"),
+        "keywords": ("verify installation receipt", "check installed currentness", "replay install receipt", "installed tree parity"),
+    },
+    {
+        "route_id": "skillguard.route.check-json-schema.v1",
+        "route_node_id": "check-json-schema",
+        "command_family": "check-json-schema",
+        "responsibility": "schema-checker",
+        "next_step": "Check one repository-local JSON input against its explicit repository-local schema.",
+        "status": "current",
+        "hints": ("check-json-schema", "json-schema-check", "schema-validation"),
+        "keywords": ("check json schema", "validate json", "schema validation", "json input schema"),
+    },
+    {
+        "route_id": "skillguard.route.init-target.v1",
+        "route_node_id": "init-target",
+        "command_family": "init-target",
+        "responsibility": "target-initializer",
+        "next_step": "Create only missing target .skillguard directories and preserve every existing target record.",
+        "status": "current",
+        "hints": ("init-target", "initialize-target", "target-initialization"),
+        "keywords": ("initialize target skill", "init target", "create target skillguard directory", "target bootstrap"),
+    },
+    {
+        "route_id": "skillguard.route.init-suite.v1",
+        "route_node_id": "init-suite",
+        "command_family": "init-suite",
+        "responsibility": "suite-initializer",
+        "next_step": "Create only missing suite-level .skillguard directories and preserve every existing suite record.",
+        "status": "current",
+        "hints": ("init-suite", "initialize-suite", "suite-initialization"),
+        "keywords": ("initialize suite", "init suite", "create suite skillguard directory", "suite bootstrap"),
+    },
+    {
+        "route_id": "skillguard.route.mark.v1",
+        "route_node_id": "mark",
+        "command_family": "mark",
+        "responsibility": "marker-record-owner",
+        "next_step": "Create or update one explicitly selected marker record while preserving its current scope and identity.",
+        "status": "current",
+        "hints": ("mark", "marker-record", "maintenance-marker"),
+        "keywords": ("write marker", "update marker record", "maintenance marker", "mark target scope"),
+    },
+    {
+        "route_id": "skillguard.route.check-suite-map.v1",
+        "route_node_id": "check-suite-map",
+        "command_family": "check-suite-map",
+        "responsibility": "suite-record-checker",
+        "next_step": "Check one suite map record against the current local schema and member references.",
+        "status": "current",
+        "hints": ("check-suite-map", "suite-map-check", "suite-map-schema"),
+        "keywords": ("check suite map", "validate suite map", "suite member map", "suite map record"),
+    },
+    {
+        "route_id": "skillguard.route.check-suite-contract.v1",
+        "route_node_id": "check-suite-contract",
+        "command_family": "check-suite-contract",
+        "responsibility": "suite-record-checker",
+        "next_step": "Check one suite contract record against the current local contract schema and member bindings.",
+        "status": "current",
+        "hints": ("check-suite-contract", "suite-contract-check", "suite-contract-schema"),
+        "keywords": ("check suite contract", "validate suite contract", "suite contract record", "suite contract bindings"),
+    },
+    {
+        "route_id": "skillguard.route.check-fixture-manifest.v1",
+        "route_node_id": "check-fixture-manifest",
+        "command_family": "check-fixture-manifest",
+        "responsibility": "fixture-record-checker",
+        "next_step": "Check one fixture manifest record before any fixture execution claims consume it.",
+        "status": "current",
+        "hints": ("check-fixture-manifest", "fixture-manifest-check", "fixture-record"),
+        "keywords": ("check fixture manifest", "validate fixture manifest", "fixture record", "fixture schema"),
+    },
+    {
+        "route_id": "skillguard.route.check-ai-judgment.v1",
+        "route_node_id": "check-ai-judgment",
+        "command_family": "check-ai-judgment",
+        "responsibility": "judgment-record-checker",
+        "next_step": "Check one AI judgment record as a declared artifact without treating it as domain truth or execution evidence.",
+        "status": "current",
+        "hints": ("check-ai-judgment", "ai-judgment-check", "judgment-record"),
+        "keywords": ("check ai judgment", "validate judgment record", "judgment artifact", "ai judgment json"),
+    },
+    {
+        "route_id": "skillguard.route.check-report.v1",
+        "route_node_id": "check-report",
+        "command_family": "check-report",
+        "responsibility": "report-checker",
+        "next_step": "Check one deterministic check-report artifact and preserve its distinction from producer execution evidence.",
+        "status": "current",
+        "hints": ("check-report", "report-check", "check-report-json"),
+        "keywords": ("check report", "validate check report", "report artifact", "check report json"),
+    },
+    {
+        "route_id": "skillguard.route.check-workflow-report.v1",
+        "route_node_id": "check-workflow-report",
+        "command_family": "check-workflow-report",
+        "responsibility": "report-checker",
+        "next_step": "Check one workflow-report artifact and preserve its terminal and evidence boundaries.",
+        "status": "current",
+        "hints": ("check-workflow-report", "workflow-report-check", "workflow-report"),
+        "keywords": ("check workflow report", "validate workflow report", "workflow report artifact", "workflow report json"),
+    },
+    {
+        "route_id": "skillguard.route.write-report.v1",
+        "route_node_id": "write-report",
+        "command_family": "write-report",
+        "responsibility": "report-writer",
+        "next_step": "Write stable parseable JSON only to the explicitly selected output boundary and return its identity.",
+        "status": "current",
+        "hints": ("write-report", "report-writer", "stable-json-output"),
+        "keywords": ("write report", "write json report", "stable report output", "persist report"),
+    },
+    {
+        "route_id": "skillguard.route.check-capability.v1",
+        "route_node_id": "check-capability",
+        "command_family": "check-capability",
+        "responsibility": "capability-closure-checker",
+        "next_step": "Run check-capability against one target-owned functional-closure record and its current native evidence.",
+        "status": "current",
+        "hints": ("check-capability", "functional-closure", "capability-audit"),
+        "keywords": ("check capability", "functional closure", "capability contract", "target capability audit"),
+    },
+    {
+        "route_id": "skillguard.route.audit-capabilities.v1",
+        "route_node_id": "audit-capabilities",
+        "command_family": "audit-capabilities",
+        "responsibility": "capability-portfolio-auditor",
+        "next_step": "Audit the explicitly registered target capability records while preserving each child result independently.",
+        "status": "current",
+        "hints": ("audit-capabilities", "capability-portfolio", "child-capability-audit"),
+        "keywords": ("audit capabilities", "capability portfolio", "child capability truth", "functional capability fleet"),
+    },
+    {
+        "route_id": "skillguard.route.check-source-sync.v1",
+        "route_node_id": "check-source-sync",
+        "command_family": "check-source-sync",
+        "responsibility": "source-sync-checker",
+        "next_step": "Compare the explicit canonical source and installed capability projections without synchronizing or reading stale authority.",
+        "status": "current",
+        "hints": ("check-source-sync", "source-install-parity", "capability-source-parity"),
+        "keywords": ("check source sync", "source installed parity", "capability projection parity", "compare source and install"),
+    },
 )
 
 
@@ -1001,6 +1310,24 @@ def _route_reference(entry: dict[str, Any]) -> str:
         return "references/skillguard-project-adoption.md"
     if "portfolio" in node:
         return "references/skillguard-portfolio.md"
+    if node in {
+        "scan-global-skills",
+        "build-global-registry",
+        "check-global-registry",
+        "refresh-global-router",
+    }:
+        return "references/skillguard-project-adoption.md"
+    if node in {
+        "evidence-audit",
+        "evidence-gc-plan",
+        "evidence-gc-apply",
+        "evidence-gc-purge",
+    }:
+        return "references/skillguard-execution-records.md"
+    if node in {"capture-installation-receipt", "verify-installation-receipt"}:
+        return "references/skillguard-target-installation.md"
+    if node == "assurance-diagnostics":
+        return "references/skillguard-assurance-diagnostics.md"
     if node == "check-depth":
         return "references/skillguard-execution-depth.md"
     if node in {"fixture-test", "detect-stale-evidence", "review-checker-change"}:
@@ -1018,13 +1345,23 @@ def _route_mutation_class(entry: dict[str, Any]) -> str:
         "generate-skill",
         "generate-suite",
         "maintainer-adopt",
+        "build-global-registry",
+        "refresh-global-router",
+        "evidence-gc-apply",
+        "evidence-gc-purge",
         "build-current-portfolio-registry",
         "prepare-portfolio-run",
         "execute-portfolio-run",
         "capture-portfolio-production-revalidation",
         "assemble-portfolio-run",
+        "mark-portfolio-impact",
+        "capture-installation-receipt",
         "graduate-portfolio",
         "make-closure",
+        "init-target",
+        "init-suite",
+        "mark",
+        "write-report",
     }:
         return "explicit_author_write"
     if node == "route-task":
@@ -2128,6 +2465,109 @@ def check_depth(argv: list[str]) -> int:
         payload["contract_source_sha256"] = file_sha256(current_source)
         payload["depth_classification"] = "declared-contract-current" if not failures else "declared-contract-incomplete"
         payload["coverage_rows"] = coverage_rows
+        surface_declaration = depth_profile.get("surface_inventory") if isinstance(depth_profile, dict) else None
+        surface_result: dict[str, Any] = {
+            "status": "not_declared",
+            "required_for_graduation": True,
+            "findings": [],
+        }
+        if isinstance(surface_declaration, Mapping):
+            relative_inventory = str(surface_declaration.get("path", "")).strip()
+            if not relative_inventory or Path(relative_inventory).is_absolute() or any(
+                part == ".." for part in Path(relative_inventory).parts
+            ):
+                surface_result = {
+                    "status": "blocked",
+                    "required_for_graduation": True,
+                    "path": relative_inventory,
+                    "findings": [
+                        {
+                            "code": "surface_inventory_path_unsafe",
+                            "path": "$.depth_profile.surface_inventory.path",
+                            "detail": relative_inventory,
+                        }
+                    ],
+                }
+            else:
+                inventory_path = (target_candidate / relative_inventory).resolve()
+                if not inventory_path.is_relative_to(target_candidate.resolve()) or not inventory_path.is_file():
+                    surface_result = {
+                        "status": "blocked",
+                        "required_for_graduation": True,
+                        "path": relative_inventory,
+                        "findings": [
+                            {
+                                "code": "surface_inventory_file_missing",
+                                "path": relative_inventory,
+                                "detail": "target-owned surface inventory file is missing",
+                            }
+                        ],
+                    }
+                else:
+                    try:
+                        inventory = load_json(inventory_path, authority_root)
+                        surface_findings = list(validate_surface_inventory(
+                            inventory,
+                            target_skill_id=str(depth_profile.get("target_skill_id", "")),
+                            native_check_ids=depth_profile.get("native_check_ids", []),
+                            model_deepening_check_id=str(depth_profile.get("model_deepening_check_id", "")),
+                            path=relative_inventory,
+                        ))
+                        # The command/route inventory is only one projection.
+                        # A current depth claim also needs the independently
+                        # discovered implementation denominator.  The target
+                        # owns the command/route registry; SkillGuard never
+                        # invents one for another target.
+                        full_command_surface = (
+                            current_checker_command_surface()
+                            if str(depth_profile.get("target_skill_id", "")) == "skillguard"
+                            else ()
+                        )
+                        full_route_entries = (
+                            current_route_entries()
+                            if str(depth_profile.get("target_skill_id", "")) == "skillguard"
+                            else ()
+                        )
+                        surface_findings.extend(
+                            validate_full_surface_inventory(
+                                inventory,
+                                target_root=target_candidate,
+                                command_surface=full_command_surface,
+                                route_entries=full_route_entries,
+                                command_handlers=COMMANDS if str(depth_profile.get("target_skill_id", "")) == "skillguard" else None,
+                                native_check_ids=depth_profile.get("native_check_ids", []),
+                                model_deepening_check_id=str(depth_profile.get("model_deepening_check_id", "")),
+                            )
+                        )
+                        surface_result = {
+                            "status": "pass" if not surface_findings else "blocked",
+                            "required_for_graduation": True,
+                            "path": relative_inventory,
+                            "findings": [finding.to_dict() for finding in surface_findings],
+                            # ``rows`` is the compact command/route projection.
+                            # The full implementation denominator lives in
+                            # ``full_surfaces`` and is deliberately reported
+                            # separately so a 51-command projection cannot be
+                            # mistaken for line-level or whole-source closure.
+                            "row_count": len(inventory.get("rows", [])) if isinstance(inventory, Mapping) and isinstance(inventory.get("rows"), list) else 0,
+                            "full_surface_count": len(inventory.get("full_surfaces", [])) if isinstance(inventory, Mapping) and isinstance(inventory.get("full_surfaces"), list) else 0,
+                            "full_surface_id_count": len(inventory.get("full_surface_ids", [])) if isinstance(inventory, Mapping) and isinstance(inventory.get("full_surface_ids"), list) else 0,
+                            "full_discovery_fingerprint": str(inventory.get("full_discovery_fingerprint", "")) if isinstance(inventory, Mapping) else "",
+                        }
+                    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+                        surface_result = {
+                            "status": "blocked",
+                            "required_for_graduation": True,
+                            "path": relative_inventory,
+                            "findings": [
+                                {
+                                    "code": "surface_inventory_unreadable",
+                                    "path": relative_inventory,
+                                    "detail": str(exc),
+                                }
+                            ],
+                        }
+        payload["surface_inventory"] = surface_result
         payload["checks"] = [
             {
                 "check_id": "check-depth:current-authority",
@@ -2143,6 +2583,13 @@ def check_depth(argv: list[str]) -> int:
                 "status": "pass" if isinstance(depth_profile, dict) and not failures else "fail",
                 "summary": "Checked native-route authority, exact declared-check inventory, execution ownership, receipt reconciliation, and closure bindings.",
             },
+            {
+                "check_id": "check-depth:surface-inventory",
+                "name": "Target-owned surface inventory",
+                "required": True,
+                "status": surface_result["status"],
+                "summary": "Required target-owned surface adequacy and model-deepening readiness; a missing, stale, or incomplete inventory blocks depth and graduation.",
+            },
         ]
         payload["evidence"] = [
             {
@@ -2153,12 +2600,17 @@ def check_depth(argv: list[str]) -> int:
                 "source_path": public_relative_path(current_source, target_root),
             }
         ]
+        if surface_result["status"] != "pass":
+            failures.append(
+                "surface_inventory_not_current: target-owned implementation surface inventory, adequacy checks, and model-deepening binding are required"
+            )
         payload["failures"] = failures
         payload["blockers"] = []
         payload["decision"] = "pass" if not failures else "fail"
         payload["claim_boundary"] = (
             "A check-depth pass proves only that the sole current contract preserves the target's own declared profile, check inventory, and native-route bindings. "
-            "It does not judge whether the target should declare more, and it does not prove execution; that requires a current target-declared execution receipt consumed by closure."
+            "It does not judge whether the target should declare more, and it does not prove execution; that requires a current target-declared execution receipt consumed by closure. "
+            "The target-owned surface inventory is a required depth condition; portfolio graduation applies the same fail-closed result and also consumes current native receipts."
         )
         return write_and_exit(payload, args.output)
     raise SkillGuardCliError(
@@ -2166,6 +2618,171 @@ def check_depth(argv: list[str]) -> int:
         f"unsupported runtime authority: {authority.authority if authority else 'blocked'}",
         "runtime_authority_blocked",
     )
+
+
+def check_capability(argv: list[str]) -> int:
+    """Read-only audit of one target-owned functional-closure record."""
+
+    parser = JsonArgumentParser(
+        prog="skillguard.py check-capability",
+        description=(
+            "Check one target functional-closure record and its current evidence "
+            "without executing or mutating the target workflow."
+        ),
+    )
+    parser.add_argument("--target", "--skill-root", dest="target", required=True, help="Target skill member directory.")
+    parser.add_argument("--repository-root", help="Canonical repository root for an external target member.")
+    parser.add_argument("--closure", help="Optional current functional-closure path under the target repository.")
+    parser.add_argument("--claim-scope", choices=list(CLAIM_SCOPES), default="routine")
+    parser.add_argument("--output", default="-", help="Output path under the SkillGuard runtime evidence directories, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    _canonical_root, target, report_root, target_binding = resolve_check_target_binding(
+        "check-capability", args.target, args.repository_root
+    )
+    require_skill_target(target, "check-capability", report_root)
+    closure = None
+    closure_path = None
+    if args.closure:
+        closure_path = Path(args.closure)
+        if not closure_path.is_absolute():
+            closure_path = target / closure_path
+        closure_path = closure_path.resolve()
+        try:
+            closure_path.relative_to(target.resolve())
+        except ValueError as exc:
+            raise SkillGuardCliError(
+                "check-capability",
+                "--closure must stay under the target repository; no external current authority is accepted",
+                "validation_error",
+            ) from exc
+    self_target = target.resolve() == (
+        report_root / ".agents" / "skills" / "skillguard"
+    ).resolve()
+    payload = audit_target_capability(
+        target,
+        repository_root=report_root,
+        claim_scope=args.claim_scope,
+        closure_path=closure_path,
+        require_surface_inventory=True,
+        surface_command_surface=(
+            current_checker_command_surface()
+            if self_target
+            else ()
+        ),
+        surface_route_entries=(
+            current_route_entries()
+            if self_target
+            else ()
+        ),
+        surface_command_handlers=COMMANDS if self_target else None,
+    )
+    payload["target_binding"] = target_binding
+    payload["target_path"] = public_relative_path(target, report_root)
+    payload["checks"] = [
+        {
+            "check_id": "check-capability:read-only-load",
+            "name": "Current functional-closure load",
+            "required": True,
+            "status": "pass" if "missing-functional-contract" not in payload.get("gap_codes", []) else "fail",
+            "summary": "Loaded the target-owned functional-closure record without executing target code or writing target state.",
+        },
+        {
+            "check_id": "check-capability:closure-audit",
+            "name": "Functional closure and evidence axes",
+            "required": True,
+            "status": "pass" if payload.get("decision") == "pass" else "fail",
+            "summary": "Checked ordered lifecycle stages, native bindings, failures, terminals, evidence freshness, and the selected claim floor.",
+        },
+    ]
+    payload["evidence"] = [
+        {
+            "evidence_id": "check-capability:current-target-record",
+            "kind": "read_only_capability_audit",
+            "fresh": True,
+            "summary": "The report is verifier-derived from the current target record; no target route was executed.",
+        }
+    ]
+    write_report(payload, args.output, skill_root())
+    return 0 if payload.get("decision") == "pass" else 1
+
+
+def audit_capabilities(argv: list[str]) -> int:
+    """Read-only portfolio capability audit preserving every child result."""
+
+    parser = JsonArgumentParser(
+        prog="skillguard.py audit-capabilities",
+        description="Discover explicitly supplied target roots and audit their functional closure independently.",
+    )
+    parser.add_argument("--root", "--skill-root", dest="root", required=True, help="Explicit canonical target or repository root to inspect.")
+    parser.add_argument("--registry", "--portfolio-registry", dest="registry", help="Optional private registry used only for typed retired exclusion.")
+    parser.add_argument("--claim-scope", choices=list(CLAIM_SCOPES), default="routine")
+    parser.add_argument("--output", default="-", help="Output path under SkillGuard runtime evidence directories, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    root = Path(args.root).resolve()
+    if not root.is_dir():
+        raise SkillGuardCliError("audit-capabilities", f"root is missing or not a directory: {args.root}", "missing_file")
+    registry = None
+    if args.registry:
+        registry_path = Path(args.registry).resolve()
+        registry, registry_findings = load_private_portfolio_registry(registry_path)
+        if registry is None or registry_findings:
+            raise SkillGuardCliError("audit-capabilities", "private registry is missing, unreadable, or structurally invalid", "validation_error")
+    payload = audit_capability_portfolio(root, claim_scope=args.claim_scope, registry=registry)
+    payload["checks"] = [
+        {
+            "check_id": "audit-capabilities:child-truth",
+            "name": "Independent child capability results",
+            "required": True,
+            "status": "pass" if payload.get("decision") == "pass" else "fail",
+            "summary": "Preserved each discovered active child result; retired entries are excluded only by explicit registry lifecycle.",
+        }
+    ]
+    payload["evidence"] = [{"evidence_id": "audit-capabilities:portfolio-discovery", "kind": "read_only_portfolio_audit", "fresh": True, "summary": "Explicit root discovery and child-local capability audits completed without mutation."}]
+    write_report(payload, args.output, skill_root())
+    return 0 if payload.get("decision") == "pass" else 1
+
+
+def check_source_sync(argv: list[str]) -> int:
+    """Read one private registry and compare canonical source to installation."""
+
+    parser = JsonArgumentParser(
+        prog="skillguard.py check-source-sync",
+        description="Check canonical source ownership and source-to-installed capability protection without synchronizing files.",
+    )
+    parser.add_argument("--registry", "--portfolio-registry", dest="registry", required=True, help="Explicit private portfolio registry JSON path.")
+    parser.add_argument("--output", default="-", help="Output path under SkillGuard runtime evidence directories, or '-' for stdout.")
+    args = parser.parse_args(argv)
+    registry_path = Path(args.registry).resolve()
+    registry, registry_findings = load_private_portfolio_registry(registry_path)
+    if registry is None or registry_findings:
+        payload = {
+            "schema_version": "skillguard.source_sync_audit.v1",
+            "artifact_type": "skillguard_source_sync_audit",
+            "status": "blocked",
+            "decision": "block",
+            "rows": [],
+            "findings": [finding.to_dict() for finding in registry_findings],
+            "gap_codes": sorted({finding.code for finding in registry_findings}),
+            "retired_excluded": [],
+            "claim_boundary": "Invalid private registry does not establish source ownership.",
+        }
+        payload["checks"] = [{"check_id": "check-source-sync:private-registry", "name": "Explicit private portfolio registry", "required": True, "status": "fail", "summary": "The explicitly named registry is missing, unreadable, or structurally invalid."}]
+        payload["evidence"] = [{"evidence_id": "check-source-sync:registry-input", "kind": "read_only_source_sync_audit", "fresh": False, "summary": "No source synchronization was attempted."}]
+        write_report(payload, args.output, skill_root())
+        return 1
+    payload = check_capability_source_sync(registry)
+    payload["checks"] = [
+        {
+            "check_id": "check-source-sync:private-registry",
+            "name": "Explicit private portfolio registry",
+            "required": True,
+            "status": "pass" if not payload.get("gap_codes") else "fail",
+            "summary": "Validated one explicit registry; paths are sanitized from the report and no synchronization was attempted.",
+        }
+    ]
+    payload["evidence"] = [{"evidence_id": "check-source-sync:registry-input", "kind": "read_only_source_sync_audit", "fresh": True, "summary": "Compared the named current source and installed projections using normalized fingerprints."}]
+    write_report(payload, args.output, skill_root())
+    return 0 if payload.get("decision") == "pass" else 1
 
 
 README_RELEASE_HEADING_PAIRS = (
@@ -2668,7 +3285,10 @@ def normalize_plan_skill_input(data: Any) -> tuple[dict[str, Any], list[str]]:
         return {}, ["plan-skill input must be a JSON object"]
 
     normalized: dict[str, Any] = {}
-    normalized["skill_name"] = string_field(data, "skill_name", blockers, alias="name")
+    # ``skill_name`` is the sole current input key.  Historical ``name``
+    # payloads are rejected instead of being silently promoted into the
+    # current plan identity; the author must rewrite the input explicitly.
+    normalized["skill_name"] = string_field(data, "skill_name", blockers)
     normalized["description"] = string_field(data, "description", blockers)
     normalized["target_path"] = string_field(data, "target_path", blockers)
     normalized["purpose"] = string_field(data, "purpose", blockers)
@@ -5582,7 +6202,7 @@ def resolve_declared_reference(
         if project_source_layout:
             return target / normalized[len(source_layout_prefix):]
         return repo / normalized
-    if normalized in ROOT_REFERENCE_NAMES or normalized.startswith(".agents/"):
+    if normalized in ROOT_REFERENCE_NAMES or normalized.startswith((".agents/", ".flowguard/")):
         return repo / normalized
     return target / normalized
 
@@ -10704,35 +11324,200 @@ def add_checker_change_suite_guard_arguments(parser: argparse.ArgumentParser) ->
 
 
 def checker_command_required_checks(command_name: str) -> list[str]:
+    """Return the target-native checks that actually cover one public command.
+
+    The command surface is a reverse-closure denominator.  An empty list here
+    means that the command is intentionally unaccounted for, so the self-host
+    surface gate must fail.  Keep these bindings to checks already declared by
+    SkillGuard's current contract; a command name or a route entry is not a
+    substitute for executable/native evidence.
+    """
     required_checks = {
-        "commands": ["commands:dispatch-table"],
-        "route-task": ["route-task:input-shape", "route-task:registry-match", "route-task:conflict-blockers"],
-        "fixture-test": ["fixture-test:manifest-load", "fixture-test:case-execution", "fixture-test:expected-outcomes"],
+        "commands": ["check:self:inventory-static-surface"],
+        "assurance-diagnostics": ["check:self:assurance-diagnostics"],
+        "route-task": ["check:self:select-function-route"],
+        "inventory": ["check:self:inventory-static-surface"],
+        "plan-skill": [
+            "check:self:select-function-route",
+            "check:self:validation-composition-model",
+        ],
+        "generate-skill": [
+            "check:self:validation-composition-model",
+            "check:self:inventory-static-surface",
+        ],
+        "generate-suite": [
+            "check:self:validation-composition-model",
+            "check:self:inventory-static-surface",
+        ],
+        "scan-global-skills": ["check:self:author-entry-loading"],
+        "build-global-registry": [
+            "check:self:author-entry-loading",
+            "check:self:validate-binding",
+        ],
+        "check-global-registry": [
+            "check:self:author-entry-loading",
+            "check:self:validate-binding",
+        ],
+        "refresh-global-router": [
+            "check:self:render-managed-project-prompt",
+            "check:self:validate-binding",
+        ],
+        "check-runtime-authority": [
+            "check:self:declared-check-runtime",
+            "check:self:validate-binding",
+        ],
+        "maintainer-adopt": [
+            "check:self:inspect-author-repository-adoption",
+            "check:self:install-author-repository-adoption",
+        ],
+        "maintainer-audit": [
+            "check:self:audit-author-repository-adoption",
+            "check:self:inspect-author-repository-adoption",
+        ],
+        "evidence-audit": ["check:self:validate-binding"],
+        "evidence-gc-plan": [
+            "check:self:validate-binding",
+            "check:self:reconcile-declared-check-results",
+        ],
+        "evidence-gc-apply": [
+            "check:self:validate-binding",
+            "check:self:check-run-closure",
+        ],
+        "evidence-gc-purge": [
+            "check:self:validate-binding",
+            "check:self:check-run-closure",
+        ],
+        "assemble-portfolio-run": [
+            "check:self:reconcile-declared-check-results",
+            "check:self:check-run-closure",
+        ],
+        "audit-portfolio": [
+            "check:self:scan-maintenance-unit-freshness",
+            "check:self:validate-binding",
+        ],
+        "build-current-portfolio-registry": [
+            "check:self:freeze-declared-check-inventory",
+            "check:self:validate-binding",
+        ],
+        "capture-portfolio-production-revalidation": [
+            "check:self:declared-check-runtime",
+            "check:self:validate-binding",
+        ],
+        "execute-portfolio-run": [
+            "check:self:run-declared-checks",
+            "check:self:check-run-closure",
+        ],
+        "mark-portfolio-impact": [
+            "check:self:validate-binding",
+            "check:self:reconcile-declared-check-results",
+        ],
+        "verify-portfolio-impact-receipt": [
+            "check:self:reconcile-declared-check-results",
+            "check:self:validate-binding",
+        ],
+        "capture-installation-receipt": [
+            "check:self:install-author-repository-adoption",
+            "check:self:validate-binding",
+        ],
+        "verify-installation-receipt": [
+            "check:self:install-author-repository-adoption",
+            "check:self:validate-binding",
+        ],
+        "graduate-portfolio": [
+            "check:self:target-native-deepening-closure",
+            "check:self:reconcile-declared-check-results",
+            "check:self:check-run-closure",
+        ],
+        "prepare-portfolio-run": [
+            "check:self:freeze-declared-check-inventory",
+            "check:self:validate-binding",
+        ],
+        "check-json-schema": ["check:self:validation-composition-model"],
+        "check-contract": [
+            "check:self:compile-generated-contract",
+            "check:self:validate-binding",
+        ],
+        "check-depth": [
+            "check:self:declared-check-runtime",
+            "check:self:reconcile-declared-check-results",
+            "check:self:target-native-deepening-closure",
+            "check:self:surface-inventory",
+        ],
+        "check-capability": [
+            "check:self:target-native-deepening-closure",
+            "check:self:surface-inventory",
+            "check:self:reconcile-declared-check-results",
+        ],
+        "audit-capabilities": [
+            "check:self:target-native-deepening-closure",
+            "check:self:surface-inventory",
+        ],
+        "check-source-sync": [
+            "check:self:validate-binding",
+            "check:self:reconcile-declared-check-results",
+        ],
+        "check-readme-release": [
+            "check:self:validation-composition-model",
+            "check:self:validate-binding",
+        ],
+        "init-target": [
+            "check:self:validation-composition-model",
+            "check:self:validate-binding",
+        ],
+        "init-suite": [
+            "check:self:validation-composition-model",
+            "check:self:validate-binding",
+        ],
+        "mark": [
+            "check:self:validate-binding",
+            "check:self:check-run-closure",
+        ],
+        "check-skill": [
+            "check:self:inventory-static-surface",
+            "check:self:validate-binding",
+        ],
+        "check-suite": [
+            "check:self:inventory-static-surface",
+            "check:self:validate-binding",
+        ],
+        "check-suite-map": ["check:self:validation-composition-model"],
+        "check-suite-contract": ["check:self:validation-composition-model"],
+        "check-fixture-manifest": ["check:self:validation-composition-model"],
+        "fixture-test": [
+            "check:self:validation-composition-model",
+            "check:self:reconcile-declared-check-results",
+            "check:self:check-run-closure",
+        ],
         "detect-stale-evidence": [
-            "detect-stale-evidence:input-artifacts",
-            "detect-stale-evidence:freshness-bindings",
-            "detect-stale-evidence:no-mutation",
+            "check:self:validate-binding",
+            "check:self:reconcile-declared-check-results",
         ],
         "review-checker-change": [
-            "review-checker-change:baseline-metadata",
-            "review-checker-change:command-bindings",
-            "review-checker-change:route-bindings",
-            "review-checker-change:evidence-freshness",
-            "review-checker-change:public-boundary",
-            "review-checker-change:no-mutation",
+            "check:self:validation-composition-model",
+            "check:self:validate-binding",
+            "check:self:reconcile-declared-check-results",
         ],
         "check-maintenance-record": [
-            "check-maintenance-record:input-json",
-            "check-maintenance-record:schema",
-            "check-maintenance-record:current-shape",
+            "check:self:validation-composition-model",
+            "check:self:validate-binding",
+        ],
+        "check-ai-judgment": ["check:self:validation-composition-model"],
+        "check-report": ["check:self:validation-composition-model"],
+        "check-workflow-report": [
+            "check:self:validation-composition-model",
+            "check:self:check-run-closure",
+        ],
+        "make-closure": [
+            "check:self:check-run-closure",
+            "check:self:reconcile-declared-check-results",
         ],
         "self-check": [
-            "self-check:required-files",
-            "self-check:json-parse",
-            "self-check:public-boundary",
-            "self-check:policy-artifacts",
-            "self-check:public-safety",
+            "check:self:inventory-static-surface",
+            "check:self:validation-composition-model",
+            "check:self:validate-binding",
+            "check:self:surface-inventory",
         ],
+        "write-report": ["check:self:validation-composition-model"],
     }
     return list(required_checks.get(command_name, []))
 
@@ -10748,6 +11533,12 @@ def checker_command_output_schema(command_name: str) -> str:
         return evidence_lifecycle_schemas[command_name]
     if command_name == "build-current-portfolio-registry":
         return "skillguard.portfolio_registry.v2"
+    if command_name == "check-capability":
+        return "skillguard.capability_audit.v1"
+    if command_name == "audit-capabilities":
+        return "skillguard.capability_portfolio_audit.v1"
+    if command_name == "check-source-sync":
+        return "skillguard.source_sync_audit.v1"
     if command_name == "review-checker-change":
         return REVIEW_CHECKER_CHANGE_RESULT_SCHEMA
     if command_name == "check-maintenance-record":
@@ -13609,12 +14400,15 @@ def self_check(argv: list[str]) -> int:
         ".agents/skills/skillguard/scripts/skillguard.py",
         ".agents/skills/skillguard/scripts/checker_engine.py",
         ".agents/skills/skillguard/scripts/skillguard_utils.py",
+        ".agents/skills/skillguard/scripts/skillguard_v2/surface_inventory.py",
         ".agents/skills/skillguard/assets/schemas/skillguard_fixture_manifest.schema.json",
         ".agents/skills/skillguard/assets/schemas/skillguard_check_report.schema.json",
         ".agents/skills/skillguard/assets/schemas/skillguard_workflow_report.schema.json",
         ".agents/skills/skillguard/assets/schemas/skillguard_maintenance_record.schema.json",
         ".agents/skills/skillguard/assets/schemas/skillguard_global_registry.schema.json",
         ".agents/skills/skillguard/assets/schemas/skillguard_global_prompt_projection.schema.json",
+        ".agents/skills/skillguard/assets/schemas/skillguard_depth_profile_v2.schema.json",
+        ".agents/skills/skillguard/assets/schemas/skillguard_surface_inventory_v1.schema.json",
         ".agents/skills/skillguard/assets/templates/skillguard_checker_change.template.json",
         ".agents/skills/skillguard/assets/templates/skillguard_fixture_manifest.template.json",
         ".agents/skills/skillguard/assets/templates/skillguard_closure.template.json",
@@ -13628,6 +14422,8 @@ def self_check(argv: list[str]) -> int:
         ".agents/skills/skillguard/.skillguard/contract-source.json",
         ".agents/skills/skillguard/.skillguard/compiled-contract.json",
         ".agents/skills/skillguard/.skillguard/check-manifest.json",
+        ".agents/skills/skillguard/.skillguard/surface-inventory.json",
+        "tests/test_surface_inventory.py",
         "references/06-evidence-freshness-and-closure-boundaries.md",
         "references/08-checker-change-fixture-policy.md",
         "references/09-skillguard-self-check.md",
@@ -13637,12 +14433,15 @@ def self_check(argv: list[str]) -> int:
         "scripts/skillguard.py",
         "scripts/checker_engine.py",
         "scripts/skillguard_utils.py",
+        "scripts/skillguard_v2/surface_inventory.py",
         "assets/schemas/skillguard_fixture_manifest.schema.json",
         "assets/schemas/skillguard_check_report.schema.json",
         "assets/schemas/skillguard_workflow_report.schema.json",
         "assets/schemas/skillguard_maintenance_record.schema.json",
         "assets/schemas/skillguard_global_registry.schema.json",
         "assets/schemas/skillguard_global_prompt_projection.schema.json",
+        "assets/schemas/skillguard_depth_profile_v2.schema.json",
+        "assets/schemas/skillguard_surface_inventory_v1.schema.json",
         "assets/templates/skillguard_checker_change.template.json",
         "assets/templates/skillguard_fixture_manifest.template.json",
         "assets/templates/skillguard_closure.template.json",
@@ -13664,6 +14463,8 @@ def self_check(argv: list[str]) -> int:
             ".agents/skills/skillguard/assets/schemas/skillguard_maintenance_record.schema.json",
             ".agents/skills/skillguard/assets/schemas/skillguard_global_registry.schema.json",
             ".agents/skills/skillguard/assets/schemas/skillguard_global_prompt_projection.schema.json",
+            ".agents/skills/skillguard/assets/schemas/skillguard_depth_profile_v2.schema.json",
+            ".agents/skills/skillguard/assets/schemas/skillguard_surface_inventory_v1.schema.json",
             ".agents/skills/skillguard/fixtures/checker_change/current-baseline.json",
             ".agents/skills/skillguard/fixtures/bad_routing/fixture-manifest.json",
             ".agents/skills/skillguard/fixtures/global_router/fixture-manifest.json",
@@ -13672,6 +14473,7 @@ def self_check(argv: list[str]) -> int:
             ".agents/skills/skillguard/.skillguard/contract-source.json",
             ".agents/skills/skillguard/.skillguard/compiled-contract.json",
             ".agents/skills/skillguard/.skillguard/check-manifest.json",
+            ".agents/skills/skillguard/.skillguard/surface-inventory.json",
         ]
         if source_layout:
             return source_json_paths
@@ -13680,6 +14482,7 @@ def self_check(argv: list[str]) -> int:
             path[len(prefix):]
             for path in source_json_paths
             if not path.startswith(prefix + "fixtures/")
+            and not path.endswith("/.skillguard/surface-inventory.json")
         ]
 
     target_relative = public_relative_path(target)
@@ -13688,7 +14491,10 @@ def self_check(argv: list[str]) -> int:
     payload["claim_boundary"] = (
         "This self-check covers the current local SkillGuard source-repository layout or installed-skill layout, "
         "the SkillGuard skill entrypoint, checker policy artifacts when present for that layout, control records, "
-        "report/evidence conventions, public-boundary wording, and local CLI dispatch. It does not prove full fixture coverage, "
+        "report/evidence conventions, public-boundary wording, local CLI dispatch, and (for the source layout) "
+        "the explicit reverse inventory of Python entry scripts, dispatch functions, and current route-registry entries, "
+        "plus the complete implementation-surface denominator when the source layout supplies it. "
+        "It does not prove full fixture coverage, "
         "suite automation, package publication, release readiness, code-contract validation, external publication, or future AI behavior."
     )
     failures: list[str] = []
@@ -13758,6 +14564,171 @@ def self_check(argv: list[str]) -> int:
         "README and command boundary",
         check_status(failures, blockers, before_failures, before_blockers),
         "Checked local command dispatch entries and, when available for this layout, README command wording and conservative public-boundary terms.",
+    )
+
+    before_failures, before_blockers = len(failures), len(blockers)
+    reverse_surface_result: dict[str, Any] = {
+        "status": "not_applicable",
+        "required_for_source_self_check": True,
+        "findings": [],
+    }
+    if source_layout:
+        reverse_inventory_path = target / ".skillguard" / "surface-inventory.json"
+        if not reverse_inventory_path.is_file():
+            reverse_surface_result = {
+                "status": "blocked",
+                "required_for_source_self_check": True,
+                "path": public_relative_path(reverse_inventory_path),
+                "findings": [
+                    {
+                        "code": "surface_inventory_file_missing",
+                        "path": ".skillguard/surface-inventory.json",
+                        "detail": "target-owned reverse surface inventory is required for source self-check",
+                    }
+                ],
+            }
+        else:
+            try:
+                reverse_inventory = load_json(reverse_inventory_path)
+                reverse_findings = validate_reverse_surface_inventory(
+                    reverse_inventory,
+                    target_root=target,
+                    command_surface=current_checker_command_surface(),
+                    route_entries=current_route_entries(),
+                    command_handlers=COMMANDS,
+                )
+                reverse_scan = discover_public_source_surfaces(
+                    target,
+                    command_surface=current_checker_command_surface(),
+                    route_entries=current_route_entries(),
+                    command_handlers=COMMANDS,
+                )
+                reverse_surface_result = {
+                    "status": "pass" if not reverse_findings else "blocked",
+                    "required_for_source_self_check": True,
+                    "path": public_relative_path(reverse_inventory_path),
+                    "discovered_surface_count": len(reverse_scan.surfaces),
+                    "findings": [finding.to_dict() for finding in reverse_findings],
+                }
+                if isinstance(reverse_inventory, Mapping):
+                    reverse_surface_result["declared_reverse_surface_count"] = len(
+                        reverse_inventory.get("reverse_surfaces", [])
+                    ) if isinstance(reverse_inventory.get("reverse_surfaces"), list) else 0
+                failures.extend(
+                    f"reverse_surface_inventory:{finding.code}: {finding.path}: {finding.detail}"
+                    for finding in reverse_findings
+                )
+            except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+                reverse_surface_result = {
+                    "status": "blocked",
+                    "required_for_source_self_check": True,
+                    "path": public_relative_path(reverse_inventory_path),
+                    "findings": [
+                        {
+                            "code": "surface_inventory_unreadable",
+                            "path": ".skillguard/surface-inventory.json",
+                            "detail": str(exc),
+                        }
+                    ],
+                }
+                failures.append(f"reverse_surface_inventory:surface_inventory_unreadable: {exc}")
+    else:
+        skipped_checks.append(
+            {
+                "check_id": "self-check:reverse-surface-inventory",
+                "reason": "Installed SkillGuard projection does not ship the author-side surface inventory; source self-check owns reverse closure.",
+                "required": False,
+                "status_impact": "Not a pass claim for the author-side reverse source inventory.",
+            }
+        )
+    payload["reverse_surface_inventory"] = reverse_surface_result
+    append_check(
+        payload,
+        "self-check:reverse-surface-inventory",
+        "Reverse public source surface inventory",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Compared current Python entry scripts, public dispatch functions, and route-registry entries with explicit target-owned reverse surface rows.",
+    )
+
+    before_failures, before_blockers = len(failures), len(blockers)
+    full_surface_result: dict[str, Any] = {
+        "status": "not_applicable",
+        "required_for_source_self_check": True,
+        "findings": [],
+    }
+    if source_layout:
+        full_inventory_path = target / ".skillguard" / "surface-inventory.json"
+        if not full_inventory_path.is_file():
+            full_surface_result = {
+                "status": "blocked",
+                "required_for_source_self_check": True,
+                "path": public_relative_path(full_inventory_path),
+                "findings": [
+                    {
+                        "code": "full_surface_inventory_file_missing",
+                        "path": ".skillguard/surface-inventory.json",
+                        "detail": "the current target must publish the complete reverse surface denominator",
+                    }
+                ],
+            }
+        else:
+            try:
+                full_inventory = load_json(full_inventory_path)
+                full_findings = validate_full_surface_inventory(
+                    full_inventory,
+                    target_root=target,
+                    command_surface=current_checker_command_surface(),
+                    route_entries=current_route_entries(),
+                    command_handlers=COMMANDS,
+                )
+                full_scan = discover_full_source_surfaces(
+                    target,
+                    command_surface=current_checker_command_surface(),
+                    route_entries=current_route_entries(),
+                    command_handlers=COMMANDS,
+                )
+                full_surface_result = {
+                    "status": "pass" if not full_findings else "blocked",
+                    "required_for_source_self_check": True,
+                    "path": public_relative_path(full_inventory_path),
+                    "discovered_surface_count": len(full_scan.surfaces),
+                    "discovery_fingerprint": full_scan.discovery_fingerprint,
+                    "findings": [finding.to_dict() for finding in full_findings],
+                }
+                failures.extend(
+                    f"full_surface_inventory:{finding.code}: {finding.path}: {finding.detail}"
+                    for finding in full_findings
+                )
+            except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+                full_surface_result = {
+                    "status": "blocked",
+                    "required_for_source_self_check": True,
+                    "path": public_relative_path(full_inventory_path),
+                    "findings": [
+                        {
+                            "code": "full_surface_inventory_unreadable",
+                            "path": ".skillguard/surface-inventory.json",
+                            "detail": str(exc),
+                        }
+                    ],
+                }
+                failures.append(f"full_surface_inventory:full_surface_inventory_unreadable: {exc}")
+    else:
+        skipped_checks.append(
+            {
+                "check_id": "self-check:full-surface-inventory",
+                "reason": "Installed SkillGuard projection does not ship the author-side full surface inventory.",
+                "required": False,
+                "status_impact": "Not a pass claim for the author-side complete surface denominator.",
+            }
+        )
+    payload["full_surface_inventory"] = full_surface_result
+    append_check(
+        payload,
+        "self-check:full-surface-inventory",
+        "Complete implementation surface denominator",
+        check_status(failures, blockers, before_failures, before_blockers),
+        "Compared the current source tree's public commands/options, exports, scripts, templates, configs, effects, installers, UI-like actions, faults, recoveries, and provider surfaces with target-authored rows.",
     )
 
     before_failures, before_blockers = len(failures), len(blockers)
@@ -13939,6 +14910,9 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "check-json-schema": "Check one JSON file against an explicit local schema file.",
     "check-contract": "Check a target work contract for schema, hash, references, scripts, and closure-rule readiness.",
     "check-depth": "Check the target's own declared contract, check inventory, run evidence bindings, and closure blockers without inventing domain criteria.",
+    "check-capability": "Check one target-owned functional-closure contract, evidence axes, failures, terminals, and selected claim floor without executing the target.",
+    "audit-capabilities": "Audit explicit target capability records independently and preserve every active child result.",
+    "check-source-sync": "Compare explicit canonical source and installed capability protection without synchronizing or reading a prior authority.",
     "check-readme-release": "Check README release gates for bilingual mirror, hero provenance, current-version model artifacts, public boundary, and version consistency.",
     "init-target": "Create missing target .skillguard directories without rewriting existing files.",
     "init-suite": "Create missing suite-level .skillguard directories without rewriting existing files.",
@@ -13981,6 +14955,9 @@ COMMANDS: dict[str, CommandHandler] = {
     "check-json-schema": check_json_schema,
     "check-contract": check_contract,
     "check-depth": check_depth,
+    "check-capability": check_capability,
+    "audit-capabilities": audit_capabilities,
+    "check-source-sync": check_source_sync,
     "check-readme-release": check_readme_release,
     "init-target": init_target,
     "init-suite": init_suite,

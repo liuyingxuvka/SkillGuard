@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillguard.local/schemas/skillguard_functional_closure.schema.json",
+  "title": "SkillGuard functional closure contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "functional_closure_id",
+    "target_skill_id",
+    "outcomes",
+    "closure_paths",
+    "failure_modes",
+    "quality_requirements",
+    "evidence",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {"const": "skillguard.functional_closure.current"},
+    "functional_closure_id": {"type": "string", "minLength": 1},
+    "target_skill_id": {"type": "string", "minLength": 1},
+    "source_fingerprint": {"$ref": "#/$defs/hash"},
+    "contract_fingerprint": {"$ref": "#/$defs/hash"},
+    "outcomes": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/outcome"}
+    },
+    "closure_paths": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/path"}
+    },
+    "failure_modes": {
+      "type": "array", "items": {"$ref": "#/$defs/failure"}
+    },
+    "quality_requirements": {
+      "type": "array", "items": {"$ref": "#/$defs/quality"}
+    },
+    "evidence": {
+      "type": "array", "items": {"$ref": "#/$defs/evidence"}
+    },
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "native_hash": {"type": "string", "pattern": "^[A-F0-9]{64}$"},
+    "id_list": {
+      "type": "array", "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "outcome": {
+      "type": "object", "additionalProperties": false,
+      "required": ["outcome_id", "user_jobs", "success_outputs", "non_goals", "quality_requirement_ids", "path_id"],
+      "properties": {
+        "outcome_id": {"type": "string", "minLength": 1},
+        "user_jobs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "success_outputs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "success_result": {"type": "string", "minLength": 1},
+        "non_goals": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "quality_requirement_ids": {"$ref": "#/$defs/id_list", "minItems": 1},
+        "path_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "stage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stage_id", "role", "owner_id", "check_ids", "evidence_ids"],
+      "properties": {
+        "stage_id": {"type": "string", "minLength": 1},
+        "role": {"enum": ["trigger", "intake", "route", "execute", "produce", "validate", "recover", "terminal"]},
+        "owner_id": {"type": "string", "minLength": 1},
+        "native_route_id": {"type": "string", "minLength": 1},
+        "check_ids": {"$ref": "#/$defs/id_list"},
+        "evidence_ids": {"$ref": "#/$defs/id_list"},
+        "terminal_kind": {"enum": ["success", "blocked", "escalated", "scoped_out"]}
+      }
+    },
+    "path": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path_id", "outcome_ids", "stages"],
+      "properties": {
+        "path_id": {"type": "string", "minLength": 1},
+        "outcome_ids": {"$ref": "#/$defs/id_list"},
+        "stages": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/stage"}},
+        "claim_boundary": {"type": "string", "minLength": 1}
+      }
+    },
+    "failure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["failure_id", "stage_id", "detector", "disposition", "terminal_kind", "evidence_ids"],
+      "properties": {
+        "failure_id": {"type": "string", "minLength": 1},
+        "stage_id": {"type": "string", "minLength": 1},
+        "detector": {"type": "string", "minLength": 1},
+        "disposition": {"enum": ["recover", "block", "escalate", "scope_out"]},
+        "recovery_path_id": {"type": "string", "minLength": 1},
+        "terminal_kind": {"enum": ["success", "blocked", "escalated", "scoped_out"]},
+        "evidence_ids": {"$ref": "#/$defs/id_list"}
+      }
+    },
+    "quality": {
+      "type": "object", "additionalProperties": false,
+      "required": ["quality_id", "description", "required", "evidence_ids"],
+      "properties": {
+        "quality_id": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "required": {"type": "boolean"},
+        "evidence_ids": {"$ref": "#/$defs/id_list"}
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["evidence_id", "execution_depth", "environment_scope", "quality_level", "assertion_categories", "result"],
+      "properties": {
+        "evidence_id": {"type": "string", "minLength": 1},
+        "execution_depth": {"enum": ["declaration", "static", "fixture", "simulated_e2e", "real_e2e", "production_observed"]},
+        "environment_scope": {"enum": ["single", "matrix", "field"]},
+        "quality_level": {"enum": ["none", "deterministic", "human", "domain_expert"]},
+        "assertion_categories": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["activation", "input", "route", "execution", "output", "validation", "recovery", "terminal", "non_goal_rejection", "quality"]}},
+        "result": {"enum": ["pass", "fail", "blocked", "skipped", "not_run"]},
+        "source_fingerprint": {"$ref": "#/$defs/hash"},
+        "artifact_ref": {"type": "string", "minLength": 1},
+        "command_ref": {"type": "string", "minLength": 1},
+        "covered_outcome_ids": {"$ref": "#/$defs/id_list"},
+        "covered_stage_ids": {"$ref": "#/$defs/id_list"},
+        "covered_failure_ids": {"$ref": "#/$defs/id_list"},
+        "covered_quality_ids": {"$ref": "#/$defs/id_list"},
+        "freshness_reason": {"type": "string", "minLength": 1},
+        "receipt_ref": {"$ref": "#/$defs/receipt_ref"}
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["result"],
+            "properties": {"result": {"const": "pass"}}
+          },
+          "then": {"required": ["source_fingerprint", "receipt_ref"]}
+        }
+      ]
+    },
+    "content_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path_token", "relative_path", "content_hash", "media_type", "byte_count"],
+      "properties": {
+        "path_token": {"const": "owner_evidence_root"},
+        "relative_path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^check-executions/blobs/[0-9a-f]{64}\\.json$"
+        },
+        "content_hash": {"$ref": "#/$defs/hash"},
+        "media_type": {"const": "application/json"},
+        "byte_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "input_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_id", "component_hash"],
+      "properties": {
+        "component_id": {"type": "string", "minLength": 1},
+        "component_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "dependency_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maintenance_unit_id", "member_skill_id", "execution_owner_id", "receipt_id", "receipt_hash"],
+      "properties": {
+        "maintenance_unit_id": {"type": "string", "minLength": 1},
+        "member_skill_id": {"type": "string", "minLength": 1},
+        "execution_owner_id": {"type": "string", "minLength": 1},
+        "receipt_id": {"$ref": "#/$defs/hash"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "path_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+      }
+    },
+    "receipt_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "document_ref",
+        "maintenance_unit_id",
+        "member_skill_id",
+        "check_id",
+        "semantic_check_id",
+        "execution_owner_id",
+        "request_fingerprint",
+        "target_input_paths",
+        "target_input_roles",
+        "check_manifest_hash",
+        "projection_declaration_hash",
+        "execution_key",
+        "owner_declaration_hash",
+        "owner_input_projection_hash",
+        "input_components",
+        "dependency_receipts",
+        "target_input_fingerprint",
+        "target_input_role_fingerprints",
+        "toolchain_fingerprint",
+        "execution_environment_fingerprint",
+        "impact_policy_id",
+        "status",
+        "cleanup_confirmed",
+        "receipt_id",
+        "receipt_hash"
+      ],
+      "properties": {
+        "schema_version": {"const": "skillguard.functional_evidence_receipt_ref.current"},
+        "document_ref": {"$ref": "#/$defs/content_ref"},
+        "maintenance_unit_id": {"type": "string", "minLength": 1},
+        "member_skill_id": {"type": "string", "minLength": 1},
+        "check_id": {"type": "string", "minLength": 1},
+        "semantic_check_id": {"type": "string", "minLength": 1},
+        "execution_owner_id": {"type": "string", "minLength": 1},
+        "request_fingerprint": {"$ref": "#/$defs/hash"},
+        "target_input_paths": {"$ref": "#/$defs/path_list"},
+        "target_input_roles": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"},
+          "additionalProperties": {"$ref": "#/$defs/path_list"}
+        },
+        "check_manifest_hash": {"$ref": "#/$defs/native_hash"},
+        "projection_declaration_hash": {"$ref": "#/$defs/hash"},
+        "execution_key": {"$ref": "#/$defs/hash"},
+        "owner_declaration_hash": {"$ref": "#/$defs/hash"},
+        "owner_input_projection_hash": {"$ref": "#/$defs/hash"},
+        "input_components": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/input_component"}
+        },
+        "dependency_receipts": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/dependency_receipt"}
+        },
+        "target_input_fingerprint": {"$ref": "#/$defs/hash"},
+        "target_input_role_fingerprints": {
+          "type": "object",
+          "propertyNames": {"pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$"},
+          "additionalProperties": {"$ref": "#/$defs/hash"}
+        },
+        "toolchain_fingerprint": {"$ref": "#/$defs/hash"},
+        "execution_environment_fingerprint": {"$ref": "#/$defs/hash"},
+        "impact_policy_id": {"const": "skillguard.content_impact_policy.current"},
+        "status": {"const": "passed"},
+        "cleanup_confirmed": {"const": true},
+        "receipt_id": {"$ref": "#/$defs/hash"},
+        "receipt_hash": {"$ref": "#/$defs/hash"}
+      }
+    }
+  }
+}

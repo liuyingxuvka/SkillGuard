@@ -1,0 +1,271 @@
+{
+  "schema_version": "flowguard.model_regression_manifest.v4",
+  "governed_input_globs": [
+    ".agents/skills/skillguard/.skillguard/check-manifest.json",
+    ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+    ".agents/skills/skillguard/.skillguard/contract-source.json",
+    ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
+    ".agents/skills/skillguard/SKILL.md",
+    ".agents/skills/skillguard/assets/schemas/skillguard_assurance_diagnostic_input_v1.schema.json",
+    ".agents/skills/skillguard/assets/schemas/skillguard_assurance_diagnostics_report_v1.schema.json",
+    ".agents/skills/skillguard/references/skillguard-assurance-diagnostics.md",
+    ".agents/skills/skillguard/scripts/checker_engine.py",
+    ".agents/skills/skillguard/scripts/skillguard_v2/assurance_diagnostics.py",
+    ".flowguard/behavior/owners/**/*.py",
+    ".flowguard/models/owners/**/*.py",
+    ".flowguard/verification/owners/**/*.py",
+    "pyproject.toml",
+    "tests/test_assurance_diagnostics.py",
+    "tests/test_executable_contract_model.py"
+  ],
+  "snapshot_only_input_globs": [
+    ".flowguard/evidence/**/*",
+    ".flowguard/models/authority/**/*.json",
+    ".flowguard/work/**/*"
+  ],
+  "shared_input_groups": [],
+  "models": [
+    {
+      "model_id": "declared_check_supervision",
+      "model_path": ".flowguard/models/owners/declared_check_supervision/model.py",
+      "runner": [
+        "{python}",
+        ".flowguard/verification/owners/declared_check_supervision/run_checks.py",
+        "--json"
+      ],
+      "tier": "full",
+      "timeout_seconds": 180,
+      "shard_safe": true,
+      "mutation_policy": "none",
+      "intent_source_inputs": [
+        "docs/skillguard-current-design.md"
+      ],
+      "input_globs": [
+        ".flowguard/models/owners/declared_check_supervision/**/*.py",
+        ".flowguard/verification/owners/declared_check_supervision/run_checks.py",
+        ".agents/skills/skillguard/scripts/skillguard_v2/declared_check_supervision.py",
+        "tests/test_skillguard_generic_supervision.py",
+        "tests/test_skillguard_retired_guard_fields.py",
+        "tests/test_native_depth_evidence_identity.py"
+      ],
+      "expected_artifacts": [],
+      "exclusion_reason": "",
+      "distribution_policy": "required_public",
+      "absence_reason": "",
+      "model_kind": "executable_workflow",
+      "purpose_closure": {
+        "schema_version": "flowguard.model_purpose_closure.v1",
+        "model_instance_id": "regression:declared_check_supervision:0.5.0",
+        "reusable_model_type_id": "declared_check_supervision",
+        "task_intent_id": "skillguard-regression:declared-check-supervision",
+        "declaration_phase": "before_candidate",
+        "guarded_purpose": "Prevent incomplete declared-check inventories, unknown dependencies, foreign receipts, or missing semantic projections from closing a maintained SkillGuard unit.",
+        "protected_failure_ids": [
+          "skillguard:incomplete-check-inventory",
+          "skillguard:unknown-check-dependency",
+          "skillguard:foreign-check-receipt",
+          "skillguard:missing-semantic-projection"
+        ],
+        "claim_boundary": "This closure covers only the named current SkillGuard model and its native runner; repository tests, installed parity, Git identity, and publication require separate evidence.",
+        "adoption_scope": "current_candidate_only",
+        "known_good_case_id": "scenario:good-single-check-target",
+        "failure_bindings": [
+          {
+            "failure_id": "skillguard:incomplete-check-inventory",
+            "known_bad_case_id": "scenario:bad-declared_check_inventory_incomplete",
+            "oracle_id": "native:declared-check-supervision:run-checks"
+          },
+          {
+            "failure_id": "skillguard:unknown-check-dependency",
+            "known_bad_case_id": "scenario:bad-unknown_check_dependency",
+            "oracle_id": "native:declared-check-supervision:run-checks"
+          },
+          {
+            "failure_id": "skillguard:foreign-check-receipt",
+            "known_bad_case_id": "scenario:bad-foreign_unit_receipt",
+            "oracle_id": "native:declared-check-supervision:run-checks"
+          },
+          {
+            "failure_id": "skillguard:missing-semantic-projection",
+            "known_bad_case_id": "scenario:bad-semantic_projection_missing",
+            "oracle_id": "native:declared-check-supervision:run-checks"
+          }
+        ],
+        "evidence_check_ids": [
+          "check:model-regression:declared_check_supervision",
+          "check:self:declared-check-supervision-model"
+        ],
+        "model_sha256": "sha256:09d6c7444a83e9dfe020eadee4d8fc5da63046c31ff231d0b45f80506a8f064c",
+        "runner_sha256": "sha256:7e953fff6cb2127ddb5737a30f9327c4b77c09d1d6e6c6619a6b43c4dfb63205",
+        "declaration_fingerprint": "sha256:3e05b0b672e8bd8c7e15e2791c02e22a80d6ea32b802ff29620795af62ed7108",
+        "closure_fingerprint": "sha256:490f3c0d7b5f1a4e2eb0f252afa1c821617037ac59ce2238109f8e19d6f5588c"
+      }
+    },
+    {
+      "model_id": "development_process_flow",
+      "model_path": ".flowguard/models/owners/development_process_flow/model.py",
+      "runner": [
+        "{python}",
+        ".flowguard/verification/owners/development_process_flow/run_checks.py"
+      ],
+      "tier": "full",
+      "timeout_seconds": 180,
+      "shard_safe": true,
+      "mutation_policy": "none",
+      "intent_source_inputs": [
+        "docs/skillguard-current-design.md"
+      ],
+      "input_globs": [
+        ".flowguard/models/owners/development_process_flow/**/*.py",
+        ".flowguard/verification/owners/development_process_flow/run_checks.py",
+        ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
+        ".agents/skills/skillguard/.skillguard/contract-source.json",
+        ".agents/skills/skillguard/.skillguard/compiled-contract.json",
+        ".agents/skills/skillguard/.skillguard/check-manifest.json",
+        ".agents/skills/skillguard/scripts/checker_engine.py",
+        ".agents/skills/skillguard/scripts/skillguard_v2/assurance_diagnostics.py",
+        ".agents/skills/skillguard/SKILL.md",
+        ".agents/skills/skillguard/references/skillguard-assurance-diagnostics.md",
+        ".agents/skills/skillguard/assets/schemas/skillguard_assurance_diagnostic_input_v1.schema.json",
+        ".agents/skills/skillguard/assets/schemas/skillguard_assurance_diagnostics_report_v1.schema.json",
+        "tests/test_assurance_diagnostics.py",
+        "tests/test_executable_contract_model.py",
+        "pyproject.toml"
+      ],
+      "expected_artifacts": [],
+      "exclusion_reason": "",
+      "distribution_policy": "required_public",
+      "absence_reason": "",
+      "model_kind": "executable_workflow",
+      "purpose_closure": {
+        "schema_version": "flowguard.model_purpose_closure.v1",
+        "model_instance_id": "regression:development_process_flow:0.5.0",
+        "reusable_model_type_id": "development_process_flow",
+        "task_intent_id": "skillguard-regression:assurance-diagnostics-and-closure-authority",
+        "declaration_phase": "before_candidate",
+        "guarded_purpose": "Prevent stale assurance inputs, diagnostic closure overrides, obligation weakening, or foreign mutation judgment from being accepted as current SkillGuard behavior.",
+        "protected_failure_ids": [
+          "skillguard:stale-assurance-authority",
+          "skillguard:diagnostic-closure-override",
+          "skillguard:diagnostic-obligation-weakening",
+          "skillguard:foreign-mutation-judgment"
+        ],
+        "claim_boundary": "This closure covers only the named current SkillGuard model and its native runner; repository tests, installed parity, Git identity, and publication require separate evidence.",
+        "adoption_scope": "current_candidate_only",
+        "known_good_case_id": "scenario:good_run_passes",
+        "failure_bindings": [
+          {
+            "failure_id": "skillguard:stale-assurance-authority",
+            "known_bad_case_id": "scenario:stale_assurance_authority_blocks",
+            "oracle_id": "native:skillguard-executable-contract-model"
+          },
+          {
+            "failure_id": "skillguard:diagnostic-closure-override",
+            "known_bad_case_id": "scenario:diagnostic_closure_override_blocks",
+            "oracle_id": "native:skillguard-executable-contract-model"
+          },
+          {
+            "failure_id": "skillguard:diagnostic-obligation-weakening",
+            "known_bad_case_id": "scenario:diagnostic_weakening_blocks",
+            "oracle_id": "native:skillguard-executable-contract-model"
+          },
+          {
+            "failure_id": "skillguard:foreign-mutation-judgment",
+            "known_bad_case_id": "scenario:foreign_mutation_authority_blocks",
+            "oracle_id": "native:skillguard-executable-contract-model"
+          }
+        ],
+        "evidence_check_ids": [
+          "check:model-regression:development_process_flow",
+          "check:self:assurance-diagnostics"
+        ],
+        "model_sha256": "sha256:9e37f969c13bd1f9b92636d8e1e3822a49a0af9c000dece6b25794cc6c6fa68b",
+        "runner_sha256": "sha256:ed700cef27d61dc9b5ede622f47ca2754f09ebf50139c65a6126973ed09e9041",
+        "declaration_fingerprint": "sha256:ee4531565cc9fe4c18a9577ab59c7eb69e75eabd64caad8d1bdd1fbfdc4b4efa",
+        "closure_fingerprint": "sha256:f460472e84f7706ef37206b3755cbf86466634356a7fab26933a844451e314fd"
+      }
+    },
+    {
+      "model_id": "validation_composition",
+      "model_path": ".flowguard/models/owners/validation_composition/model.py",
+      "runner": [
+        "{python}",
+        ".flowguard/verification/owners/validation_composition/run_checks.py",
+        "--json"
+      ],
+      "tier": "full",
+      "timeout_seconds": 180,
+      "shard_safe": true,
+      "mutation_policy": "none",
+      "intent_source_inputs": [
+        "docs/skillguard-current-design.md"
+      ],
+      "input_globs": [
+        ".flowguard/models/owners/validation_composition/**/*.py",
+        ".flowguard/verification/owners/validation_composition/run_checks.py",
+        ".flowguard/behavior/owners/validation_composition/**/*.py",
+        ".agents/skills/skillguard/test-mesh.json",
+        ".agents/skills/skillguard/scripts/skillguard_test_mesh.py",
+        ".agents/skills/skillguard/assets/schemas/skillguard_test_mesh_manifest_current.schema.json",
+        ".agents/skills/skillguard/assets/schemas/skillguard_test_mesh_execution_plan_current.schema.json",
+        ".agents/skills/skillguard/assets/schemas/skillguard_test_mesh_aggregation_current.schema.json",
+        ".agents/skills/skillguard/assets/schemas/skillguard_test_mesh_replay_current.schema.json",
+        "tests/test_test_mesh_schemas.py",
+        "tests/test_test_mesh_legacy_rejection.py",
+        "tests/test_test_mesh_installation_binding.py"
+      ],
+      "expected_artifacts": [],
+      "exclusion_reason": "",
+      "distribution_policy": "required_public",
+      "absence_reason": "",
+      "model_kind": "executable_workflow",
+      "purpose_closure": {
+        "schema_version": "flowguard.model_purpose_closure.v1",
+        "model_instance_id": "regression:validation_composition:0.5.0",
+        "reusable_model_type_id": "validation_composition",
+        "task_intent_id": "skillguard-regression:validation-composition",
+        "declaration_phase": "before_candidate",
+        "guarded_purpose": "Prevent unmapped components, duplicate owners, stale receipt reuse, or premature full validation from being accepted as current SkillGuard validation composition.",
+        "protected_failure_ids": [
+          "skillguard:unmapped-component",
+          "skillguard:duplicate-owner",
+          "skillguard:stale-receipt-reuse",
+          "skillguard:premature-full-validation"
+        ],
+        "claim_boundary": "This closure covers only the named current SkillGuard model and its native runner; repository tests, installed parity, Git identity, and publication require separate evidence.",
+        "adoption_scope": "current_candidate_only",
+        "known_good_case_id": "scenario:good-one-component-one-owner",
+        "failure_bindings": [
+          {
+            "failure_id": "skillguard:unmapped-component",
+            "known_bad_case_id": "scenario:bad-unmapped-component-falls-back-full",
+            "oracle_id": "native:validation-composition:run-checks"
+          },
+          {
+            "failure_id": "skillguard:duplicate-owner",
+            "known_bad_case_id": "scenario:bad-duplicate-owner",
+            "oracle_id": "native:validation-composition:run-checks"
+          },
+          {
+            "failure_id": "skillguard:stale-receipt-reuse",
+            "known_bad_case_id": "scenario:bad-invalid-sidecar-reused",
+            "oracle_id": "native:validation-composition:run-checks"
+          },
+          {
+            "failure_id": "skillguard:premature-full-validation",
+            "known_bad_case_id": "scenario:bad-full-started-before-source-fixpoint",
+            "oracle_id": "native:validation-composition:run-checks"
+          }
+        ],
+        "evidence_check_ids": [
+          "check:model-regression:validation_composition",
+          "check:self:validation-composition-model"
+        ],
+        "model_sha256": "sha256:c5764cc673a4d269b22822c1685b0785ba314b10bbeb47dac35dc6dc8520a20b",
+        "runner_sha256": "sha256:33923da00fa9a74c16c451d01387c96a054196f302a117ff35404ac937b9903e",
+        "declaration_fingerprint": "sha256:2064a1725a702f434f5ccc1b0f1f152be9fc767a88c880bc3613962463cfb18e",
+        "closure_fingerprint": "sha256:1d5a3a1c00d08869fa449a14deda30b1548909f4c2c580b430f1f74cca854d92"
+      }
+    }
+  ]
+}

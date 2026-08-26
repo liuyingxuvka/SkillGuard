@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT  # noqa: F401
 import skillguard_supervise
 
 

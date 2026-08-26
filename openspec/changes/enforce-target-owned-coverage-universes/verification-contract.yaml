@@ -14,7 +14,7 @@ obligations:
     required: true
     evidence:
       - check.depth.focused-runtime
-      - check.depth.flowguard-model
+      - check.depth.validation-composition
   - id: req.depth.immutable-uniqueness
     source: "specs/universal-execution-depth/spec.md#Requirement: Unique evidence contribution"
     claim: Receipt/payload/range identity, not caller labels, decides whether evidence is unique.
@@ -34,34 +34,34 @@ obligations:
     required: true
     evidence:
       - check.depth.focused-runtime
-      - check.depth.flowguard-model
+      - check.depth.validation-composition
   - id: req.depth.dynamic-floor-anti-shrink
     source: "specs/universal-execution-depth/spec.md#Requirement: Native-bound dynamic floor"
     claim: Dynamic universes reconcile discovered/declared/excluded objects, bind child universes, and use the stricter compiled/native precommitted floor.
     required: true
     evidence:
       - check.depth.focused-runtime
-      - check.depth.flowguard-model
+      - check.depth.validation-composition
   - id: req.depth.dual-root-replay
     source: "specs/universal-execution-depth/spec.md#Requirement: Current target execution receipt"
     claim: Issuance, closure, and replay preserve separate skill/model repository and task-data target roots using portable content bindings.
     required: true
     evidence:
       - check.depth.focused-runtime
-      - check.depth.flowguard-model
+      - check.depth.validation-composition
   - id: req.depth.provider-readiness
     source: "specs/universal-execution-depth/spec.md#Requirement: Provider runtime readiness and enrollment"
     claim: Compatible active runtime identity and current enrollment receipts are required; prompt-new/runtime-old is blocked.
     required: true
     evidence:
       - check.depth.focused-runtime
-      - check.depth.flowguard-model
+      - check.depth.validation-composition
   - id: req.depth.native-route-preserved
     source: "../../../../openspec/specs/universal-execution-depth/spec.md#Requirement: Native route preservation"
     claim: The existing supervisor/closure owners are extended without a parallel target-domain executor.
     required: true
     evidence:
-      - check.depth.existing-model-preflight
+      - check.depth.development-process-flow
       - check.depth.executable-contract-model
   - id: req.depth.project-adoption-current
     source: "../../../../openspec/specs/universal-execution-depth/spec.md#Requirement: Safe project prompt lifecycle"
@@ -77,10 +77,10 @@ checks:
       - -m
       - pytest
       - tests/test_execution_depth.py
-      - tests/test_execution_depth_coverage_universes.py
-      - tests/test_execution_depth_dynamic_floor.py
-      - tests/test_depth_portfolio_calibration.py
-      - tests/test_skillguard_execution_depth.py
+      - tests/test_contract_compiler_v2.py
+      - tests/test_closure_profiles_v2.py
+      - tests/test_executable_contract_model.py
+      - tests/test_verification_contract_review.py
       - -q
       - -p
       - no:cacheprovider
@@ -111,21 +111,22 @@ checks:
       - req.depth.bound-calibration
     expected:
       exit_code: 0
-  - id: check.depth.existing-model-preflight
+  - id: check.depth.development-process-flow
     kind: command
     command: python
     args:
-      - .flowguard/existing_model_preflight/execution_depth_preflight.py
+      - .flowguard/verification/owners/development_process_flow/run_checks.py
     required: true
     covers:
       - req.depth.native-route-preserved
     expected:
       exit_code: 0
-  - id: check.depth.flowguard-model
+  - id: check.depth.validation-composition
     kind: command
     command: python
     args:
-      - .flowguard/execution_depth/run_checks.py
+      - .flowguard/verification/owners/validation_composition/run_checks.py
+      - --json
     required: true
     covers:
       - req.depth.current-receipt
@@ -184,10 +185,14 @@ freshness:
     - .agents/skills/skillguard/.skillguard/skillguard_manifest.json
     - .agents/skills/skillguard/.skillguard/skillguard_profile.json
     - .agents/skills/skillguard/.skillguard/skillguard_skill_contract.json
-    - .flowguard/execution_depth/**/*.py
-    - .flowguard/execution_depth/**/*.md
-    - .flowguard/existing_model_preflight/**/*.py
-    - .flowguard/development_process_flow/skillguard_executable_contract_model.py
+    - .agents/skills/skillguard/scripts/skillguard_v2/execution_depth.py
+    - .flowguard/models/owners/development_process_flow/**/*.py
+    - .flowguard/verification/owners/development_process_flow/run_checks.py
+    - .flowguard/models/owners/development_process_flow/skillguard_executable_contract_model.py
+    - .flowguard/models/owners/validation_composition/**/*.py
+    - .flowguard/verification/owners/validation_composition/run_checks.py
     - tests/test_execution_depth*.py
-    - tests/test_depth_portfolio_calibration.py
-    - tests/test_skillguard_execution_depth.py
+    - tests/test_contract_compiler_v2.py
+    - tests/test_closure_profiles_v2.py
+    - tests/test_executable_contract_model.py
+    - tests/test_verification_contract_review.py

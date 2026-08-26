@@ -9,7 +9,23 @@ SkillGuard SHALL compile function, state, transition, terminal, invariant, owner
 
 #### Scenario: Markdown is the only behavior source
 - **WHEN** a target has prompt prose but no supported FlowGuard behavior model
-- **THEN** SkillGuard refuses release compilation and may emit only an explicitly unconfirmed migration candidate
+- **THEN** SkillGuard refuses release compilation and emits a visible
+  direct-current rewrite blocker; no provisional artifact, alternate reader,
+  or unconfirmed artifact is accepted as current authority
+
+### Requirement: Compilation has one direct-current authority
+SkillGuard SHALL compile and validate only the current FlowGuard model,
+contract source, check manifest, and declared target bindings owned by this
+change. Former contract, closure, receipt, or installation identities SHALL be
+rejection-only direct-current rewrite inputs. The runtime SHALL NOT introduce a
+compatibility reader, fallback path, migration command, converter, alias, dual
+manifest, or alternate successful compilation authority.
+
+#### Scenario: Former generated authority is supplied
+- **WHEN** a former compiled contract, closure record, manifest, or receipt is
+  supplied after the current source/schema identity has changed
+- **THEN** compilation blocks with the exact identity mismatch and requires a
+  manual direct-current rewrite followed by fresh validation
 
 ### Requirement: Published generation is minimal and deterministic
 SkillGuard SHALL publish only the compiled contract and check manifest as generated contract artifacts, SHALL produce byte-stable output for identical inputs, and SHALL detect stale or missing outputs in read-only check mode.

@@ -1,0 +1,503 @@
+[flowguard_layout]
+schema = "flowguard.project_layout.v3"
+version = 3
+authority = "current"
+canonical_root = ".flowguard"
+project_identity = "https://github.com/liuyingxuvka/FlowGuard"
+project_identity_fingerprint = "sha256:679b44c3f8a1524c9ad0b94bf53f88d53207fda549edc5f4819a8be07685c9ef"
+model_authority_pointer = ".flowguard/project.toml#model_authority"
+model_authority_fingerprint = "sha256:3f91ef65d4524c1300548e07a8f0b3824594199dfcd8f2217a1e299cfc3882a1"
+non_authority_roots = ["evidence", "history"]
+
+[roots]
+behavior = "behavior"  # current_effective_intent_and_behavior_contracts
+models = "models"  # current_executable_model_authority
+structure = "structure"  # surface_ownership_and_code_binding_maps
+verification = "verification"  # test_and_check_definitions
+evidence = "evidence"  # immutable_execution_evidence
+history = "history"  # explicit_historical_context
+
+[role_authority]
+behavior = "current"
+models = "current"
+structure = "current"
+verification = "current"
+evidence = "non_authority"
+history = "non_authority"
+
+[inventory]
+schema = "flowguard.project_layout_shape.v1"
+mode = "exact"
+fingerprint = "sha256:1a424d317dd5691dfdf6d4c73c2d2cecfe504f86ecf44c8b3c6e003384f1f907"
+member_count = 94
+role_fingerprints = {behavior = "sha256:0c11645b3a8ad8985d42acde651ab4cd786ac9d33cc884aca6b002f894b01a2d", evidence = "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945", history = "sha256:5d4f5f98a6f27cf1daf19c629bf0ebad0419dbd32d1cb36cae0aec63a826d23f", models = "sha256:5e9868d6f996e3c4d3557285d9ef89fe336081ae17a0cb4f4bda3add09b7b8d6", structure = "sha256:0cc7875f64096a94c1e95a9ca8ea7c95ad5bae74b3075a7839b8401384977147", verification = "sha256:ab060d37a9d4703a83519218a35d1784a7c3dca83289d14c8fc5de181c31c74d"}
+
+[[inventory.members]]
+path = "behavior"
+role = "behavior"
+kind = "directory"
+
+[[inventory.members]]
+path = "behavior/context"
+role = "behavior"
+kind = "directory"
+
+[[inventory.members]]
+path = "behavior/context/bindings.json"
+role = "behavior"
+kind = "file"
+
+[[inventory.members]]
+path = "behavior/owners"
+role = "behavior"
+kind = "directory"
+
+[[inventory.members]]
+path = "behavior/owners/validation_composition"
+role = "behavior"
+kind = "directory"
+
+[[inventory.members]]
+path = "behavior/owners/validation_composition/behavior_commitments.py"
+role = "behavior"
+kind = "file"
+
+[[inventory.members]]
+path = "behavior/owners/validation_composition/development_process.py"
+role = "behavior"
+kind = "file"
+
+[[inventory.members]]
+path = "history"
+role = "history"
+kind = "directory"
+
+[[inventory.members]]
+path = "models"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/authority"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/authority/activations"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/authority/activations/0474edd8dc4abc2c64f18d351000f799ea3162d86fee9ada2ad99a8b827e485c.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/0e98b13e683d7af113c8b08f6bc6f4bf9cfce1c5134c880a762a06b7b4201821.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/14daf8843b4a839b487bafb0acbfb7dd529acd8657933b3a7a939e03695c5a56.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/275de34936706df5e6061369bdb5923ca9093c4a674f1cb0c3849afc03e45cdb.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/39467143e0ec99c804420d8228c58657f9f167193a8a25b8ad4f87c89c7afdac.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/6c53770f5f180246205fd72e95b01bd703696e7e3827f66f5f361042a886060c.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/851a6b15bc02e2164f6581fdf0c00c444f8081b55a856b2d6f9fde7a27f9cda1.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/9178147bb4d2bed1f2d63db379ce113b727b09f7cd2fd600d114932afd52acb5.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/9b130a1a6fa00c910762a6ffb90730f748b1bd3977f217000d48189a96a2329f.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/9cd9b21c3bf35d92f0087d9b2ee4a7977f3c6d6ab73bb62243dfad800556f9e7.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/9f683a0abebf2ef25fe4f1a27d8591d9ea25385137bd610da7aa0fd3fccb9a55.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/afc5da169ede5b66a0c9b6238536bc9e1e20a11954c8040a928212d99f766f9f.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/cefc6e694c5481cf0ec78082845c9a75502f8e6b6d023986ce35362e194ac065.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/daed42fd5cf4c8e08ad0118878f76b2edc161e75f1a7bd02c42b82f679097f02.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/eb795f1154ea8162882d773c8e282287b2bd1ec9b84d22b0042183b95ac4e774.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/activations/f713d6d849bd4204983f86800ae21800446d343172af5254123dfef98179f173.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/bootstraps"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/authority/bootstraps/fbb7de7e28c3bb57e41bb4391399768a122640bcdcf84c87713a555a4405c3db.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/authority/revisions/18cf1c81398ea3d5aa81f0df9e5ab9ab8d0355b33a9a72c33cb4516263c33256.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/3a9fc31e9ec4b6a32d355d232359e662593f7fa1f6b45b92b4b13c543d60715e.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/41883da619aa2469bbf47ea28f64a3b31e05151a4ec7143d11cb4baff672e9b9.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/4d001162d0fab0e1d41ef7ac9e252382dcfeb76011bf21c99945afef05843ec8.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/524653984d198335676e68169687b6c7c2c79fe2a435840859a4bfc5d3ae7dbf.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/6872ab5e665fd459e112f6adb6946a6a66c2566b91a218bc3f2e6c1a7e175128.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/6a090b71b9fda786dc1908863f1ee2084183d50428fa1a512e3b01bc399b2b1a.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/704f8c75150de2d0b590e256e5a0066291665bedc77804d4bbaa5c1b8999bd3f.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/a0617e0537114634a50133a661b8c76128e22bfcfb4b9be6745a8fb93d5f3d3a.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/a71a5ed25f02ffa04ba38d876b2d1b312fb8dc74f2907d2ef5c13acf3838a7d6.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/a884e27f6851b02010ff3daced262e6e28301e183d371be180cf6480ecc293f0.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/a8ce8abf8eada0048b970a0a9df0626aa08b54bc687b6bfbdb7928c9a306f171.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/aac97b99849fd5584c208d278e6a063c28a2cb6c785e641caec0c0fd85390906.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/b24a7d280e95f48fe5900444893ccc1c05c71df8430f9bfefa24ef9a9f0e0944.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/c7258a983ab3975e0f3371be88f5a42ba57b875715b601b08b71d91b1296307e.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/revisions/f71bda5d9f8afeb57714c4deaa9f13e5b09d710a2312b3614fb85ded63640971.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/authority/snapshots/055d046b9de51e0bfd66349111b7bf2af30fa4d3cb5145e3b971975ad7f4a3bc.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/05e4de42e1abb9384a7abd9bd152b25b763d907f8e020abbebf93d8d4111c887.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/1dc1c5832636c5597f98bb1f81e2e484387354cf9aa0a61f82ec6abc4cf1c758.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/22b33643bb7c826b579d3af96838f9542da428e156f074b8817e4e17d633e51d.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/26d06bca280f8e58da6a0a4dac4f3abd77581db2d326ed270880507ba19520ce.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/29d52e0e07b0cd27ce4cc2f18b0af022b45f273a0212740785a914188c1ab70b.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/43b5996a06f79f09f4d7f75cef11bfc7fb96beffbd7111e253d75c55fd5d001a.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/4ef59cab71abc328a62a4ad9046a6a235610114141cc2956ff9f2580f4801761.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/5230b9dd7214f849a59be4578b045d419af2fd5d18c80cfd550ebe556457a0d3.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/6a5f94ca023f19304fca1ebd26ce6afcb88e60630b9cbd255df4b30737c5ac94.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/7de6b1cd1d7c46013972339486bdb16a61b8794132c328f31ece37e5cf2b16d4.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/7ea5347d26d14097a5e0b47201b35dfa18517447a8bc97a5ae61fed6e60b143e.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/9e222fe4676207dcae4b8e42ebca848beab9200455faf08abaf57d30d79861bc.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/aa69730def48639c2d220ec821db4fa1af5e979ade6121a3673d856b06df49ba.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/d52f610637b9420ea5749c7320230b1d259fd4b4426637ca3224be95e1d6ba94.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/authority/snapshots/fd2d3a5c925975f82c0b23bc1846f97c748e9d9143cc1775155072967e302018.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/owners/declared_check_supervision"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/owners/declared_check_supervision/model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/development_process_flow"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/owners/development_process_flow/current_runtime_authority_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/development_process_flow/model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/development_process_flow/portfolio_scope_lifecycle_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/development_process_flow/skillguard_executable_contract_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/development_process_flow/skillguard_global_router_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/development_process_flow/skillguard_runtime_contract_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/development_process_flow/skillguard_template_lifecycle_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/validation_composition"
+role = "models"
+kind = "directory"
+
+[[inventory.members]]
+path = "models/owners/validation_composition/field_lifecycle_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/validation_composition/hierarchy_mesh.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/validation_composition/model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/validation_composition/structure_mesh_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/validation_composition/test_mesh_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/owners/validation_composition/validation_composition_model.py"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "models/regression-manifest.json"
+role = "models"
+kind = "file"
+
+[[inventory.members]]
+path = "structure"
+role = "structure"
+kind = "directory"
+
+[[inventory.members]]
+path = "structure/owner-bindings"
+role = "structure"
+kind = "directory"
+
+[[inventory.members]]
+path = "structure/owner-bindings.json"
+role = "structure"
+kind = "file"
+
+[[inventory.members]]
+path = "verification"
+role = "verification"
+kind = "directory"
+
+[[inventory.members]]
+path = "verification/owners"
+role = "verification"
+kind = "directory"
+
+[[inventory.members]]
+path = "verification/owners/declared_check_supervision"
+role = "verification"
+kind = "directory"
+
+[[inventory.members]]
+path = "verification/owners/declared_check_supervision/run_checks.py"
+role = "verification"
+kind = "file"
+
+[[inventory.members]]
+path = "verification/owners/development_process_flow"
+role = "verification"
+kind = "directory"
+
+[[inventory.members]]
+path = "verification/owners/development_process_flow/run_checks.py"
+role = "verification"
+kind = "file"
+
+[[inventory.members]]
+path = "verification/owners/validation_composition"
+role = "verification"
+kind = "directory"
+
+[[inventory.members]]
+path = "verification/owners/validation_composition/run_checks.py"
+role = "verification"
+kind = "file"

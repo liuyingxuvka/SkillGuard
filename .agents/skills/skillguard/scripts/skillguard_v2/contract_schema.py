@@ -94,8 +94,12 @@ DEPTH_PROFILE_FIELDS = frozenset(
         "enforcement_level",
         "required_closure_profiles",
         "provider_runtime",
+        "surface_inventory",
         "claim_boundary",
     }
+)
+SURFACE_INVENTORY_DECLARATION_FIELDS = frozenset(
+    {"path", "adequacy_check_ids", "model_deepening_check_id"}
 )
 DEPTH_CONTRIBUTION_RANGE_FIELDS = frozenset(
     {
@@ -1399,7 +1403,15 @@ def validate_depth_profile(payload: object, *, path: str = "$") -> tuple[SchemaF
     if len(check_ids) != len(set(check_ids)) or not check_ids:
         findings.append(_finding("depth_native_check_inventory_invalid", f"{path}.native_check_ids", "a non-empty unique declared-check inventory is required"))
     model_deepening_check_id = str(root.get("model_deepening_check_id", "")).strip()
-    if "model_deepening_check_id" in root:
+    if "model_deepening_check_id" not in root:
+        findings.append(
+            _finding(
+                "depth_model_deepening_check_id_missing",
+                f"{path}.model_deepening_check_id",
+                "a target-native model-deepening check is required before graduation",
+            )
+        )
+    else:
         if not model_deepening_check_id:
             findings.append(
                 _finding(
@@ -1448,6 +1460,90 @@ def validate_depth_profile(payload: object, *, path: str = "$") -> tuple[SchemaF
         findings.append(_finding("depth_runtime_readiness_check_not_native", f"{path}.provider_runtime.readiness_check_ids", check_id))
     if provider.get("required_enrollment_status") != "enrolled":
         findings.append(_finding("depth_runtime_enrollment_requirement_invalid", f"{path}.provider_runtime.required_enrollment_status", "enrolled is required"))
+    if "surface_inventory" not in root:
+        findings.append(
+            _finding(
+                "surface_inventory_declaration_missing",
+                f"{path}.surface_inventory",
+                "target must declare an implementation surface inventory before graduation",
+            )
+        )
+    else:
+        surface = _mapping(root.get("surface_inventory"), f"{path}.surface_inventory", findings)
+        unknown_surface_fields = sorted(set(surface) - SURFACE_INVENTORY_DECLARATION_FIELDS)
+        if unknown_surface_fields:
+            findings.append(
+                _finding(
+                    "surface_inventory_declaration_unknown_field",
+                    f"{path}.surface_inventory",
+                    ",".join(unknown_surface_fields),
+                )
+            )
+        surface_path = str(surface.get("path", "")).strip()
+        if not surface_path:
+            findings.append(
+                _finding(
+                    "surface_inventory_declaration_path_missing",
+                    f"{path}.surface_inventory.path",
+                    "a target-relative inventory path is required",
+                )
+            )
+        elif surface_path.startswith(("/", "\\")) or any(
+            part == ".." for part in surface_path.replace("\\", "/").split("/")
+        ):
+            findings.append(
+                _finding(
+                    "surface_inventory_declaration_path_unsafe",
+                    f"{path}.surface_inventory.path",
+                    surface_path,
+                )
+            )
+        surface_checks = _string_list(
+            surface.get("adequacy_check_ids"),
+            f"{path}.surface_inventory.adequacy_check_ids",
+            findings,
+        )
+        if not surface_checks:
+            findings.append(
+                _finding(
+                    "surface_inventory_declaration_checks_missing",
+                    f"{path}.surface_inventory.adequacy_check_ids",
+                    "at least one target-owned adequacy check is required",
+                )
+            )
+        for check_id in sorted(set(surface_checks) - set(check_ids)):
+            findings.append(
+                _finding(
+                    "surface_inventory_declaration_check_not_native",
+                    f"{path}.surface_inventory.adequacy_check_ids",
+                    check_id,
+                )
+            )
+        surface_deepening = str(surface.get("model_deepening_check_id", "")).strip()
+        if not surface_deepening:
+            findings.append(
+                _finding(
+                    "surface_inventory_declaration_deepening_missing",
+                    f"{path}.surface_inventory.model_deepening_check_id",
+                    "the same target-native model-deepening check must be bound",
+                )
+            )
+        elif surface_deepening not in set(check_ids):
+            findings.append(
+                _finding(
+                    "surface_inventory_declaration_deepening_not_native",
+                    f"{path}.surface_inventory.model_deepening_check_id",
+                    surface_deepening,
+                )
+            )
+        elif model_deepening_check_id and surface_deepening != model_deepening_check_id:
+            findings.append(
+                _finding(
+                    "surface_inventory_declaration_deepening_mismatch",
+                    f"{path}.surface_inventory.model_deepening_check_id",
+                    f"expected {model_deepening_check_id}",
+                )
+            )
     return tuple(findings)
 
 

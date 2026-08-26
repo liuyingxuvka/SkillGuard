@@ -77,6 +77,7 @@ _PROJECTION_KEYS = frozenset(
         "projection_declaration_hash",
         "input_projection_hash",
         "consumer_projection_hash",
+        "generated_install_authorities",
         "identity_hash",
     }
 )
@@ -330,6 +331,22 @@ def _validate_projection(value: object, label: str, findings: list[str]) -> None
     ):
         if not _wire_hash_ok(value.get(field)):
             findings.append(f"{label}_{field}_invalid")
+    authorities = value.get("generated_install_authorities")
+    authority_paths: list[str] = []
+    if not isinstance(authorities, list):
+        findings.append(f"{label}_generated_authorities_invalid")
+    else:
+        for row in authorities:
+            if not isinstance(row, Mapping) or set(row) != {"path", "content_hash"}:
+                findings.append(f"{label}_generated_authority_row_invalid")
+                continue
+            path = _portable_skill_path(row.get("path"))
+            if path in {None, "."} or not _wire_hash_ok(row.get("content_hash")):
+                findings.append(f"{label}_generated_authority_row_invalid")
+                continue
+            authority_paths.append(path)
+        if authority_paths != sorted(authority_paths) or len(authority_paths) != len(set(authority_paths)):
+            findings.append(f"{label}_generated_authorities_ordering_invalid")
     unsigned = dict(value)
     stored_identity = unsigned.pop("identity_hash", None)
     if stored_identity != wire_hash(unsigned):

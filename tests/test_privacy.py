@@ -124,6 +124,38 @@ class PrivacyTests(unittest.TestCase):
         self.assertEqual("blocked", report["status"])
         self.assertTrue(any(row["code"] == "visual_privacy_review_missing" for row in report["findings"]))
 
+    def test_large_text_requires_current_hash_bound_review(self) -> None:
+        candidate = self.workspace / "large.json"
+        candidate.write_text("x" * 2_000_001, encoding="utf-8")
+        blocked = audit_public_export(ROOT, self.policy, candidate_paths=[self._relative(candidate)])
+        self.assertTrue(any(row["code"] == "oversized_unreviewed_text" for row in blocked["findings"]))
+
+        import hashlib
+
+        digest = "sha256:" + hashlib.sha256(candidate.read_bytes()).hexdigest()
+        policy = json.loads(self.policy.read_text(encoding="utf-8"))
+        policy["large_text_review_records"] = [
+            {
+                "asset_path": self._relative(candidate),
+                "asset_sha256": digest,
+                "status": "passed",
+                "review_scope": "fixture-only large text review",
+            }
+        ]
+        policy_path = self.workspace / "large-policy.json"
+        policy_path.write_text(json.dumps(policy), encoding="utf-8")
+        reviewed = audit_public_export(
+            ROOT,
+            policy_path,
+            candidate_paths=[self._relative(candidate)],
+        )
+        self.assertEqual("passed", reviewed["status"])
+
+        policy["large_text_review_records"][0]["asset_sha256"] = "sha256:" + "0" * 64
+        policy_path.write_text(json.dumps(policy), encoding="utf-8")
+        stale = audit_public_export(ROOT, policy_path, candidate_paths=[self._relative(candidate)])
+        self.assertTrue(any(row["code"] == "oversized_unreviewed_text" for row in stale["findings"]))
+
     def test_unreadable_candidate_blocks_without_crashing(self) -> None:
         candidate = self.workspace / "locked.txt"
         candidate.write_text("locked\n", encoding="utf-8")

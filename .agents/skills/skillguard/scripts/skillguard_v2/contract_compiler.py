@@ -399,6 +399,23 @@ def _install_disposition(path: str, skill_root_relative: str, role: str) -> str:
         # consumer-runtime currentness.  Installation copies it explicitly as
         # a runtime-authority document outside projection:installation.
         return "source_only"
+    if relative == ".skillguard/surface-inventory.json":
+        # Reverse discovery is author-side source authority.  It must be
+        # validated and rebuilt against the current source, not projected into
+        # the installed consumer tree.
+        return "source_only"
+    if relative == ".skillguard/functional-closure.json":
+        # Functional closure is an author-side evidence record produced from
+        # the frozen owner receipts.  Treating it as an installation/runtime
+        # input creates a freshness cycle: the final validation writes the
+        # closure after its owners run, which would otherwise stale those same
+        # owners.  Keep the record in the author tree, but never let it become
+        # an installation input or source owner input.
+        return "source_only"
+    if relative.startswith(".skillguard/reports/"):
+        # Reports are evidence outputs.  They cannot be installation inputs or
+        # freshness authority for the installed runtime.
+        return "source_only"
     if role in {"test_dev", "fixture_reference"}:
         return "source_only"
     if relative == "SKILL.md" or relative.startswith(
@@ -439,12 +456,35 @@ def _inventory_rows(
             # projection, but never become functional inputs that invalidate
             # the compiler which produced them.
             return
+        if (
+            resolved_candidate.name.casefold() == "functional-closure.json"
+            and resolved_candidate.parent.name.casefold() == ".skillguard"
+        ):
+            # The functional closure is a receipt-backed author result. It is
+            # written after the owner run and must not become an input to the
+            # compiler that the same owner run is proving. Capability audit
+            # consumes it separately from the canonical owner-evidence store.
+            return
         try:
             relative = _relative_path(path, root)
         except (FileNotFoundError, ValueError) as exc:
             findings.append(
                 SchemaFinding("impact_inventory_path_invalid", "$.content_impact_plan", str(exc))
             )
+            return
+        skill_prefix = skill_relative.rstrip("/") + "/"
+        member_relative = (
+            relative[len(skill_prefix) :]
+            if relative.startswith(skill_prefix)
+            else ""
+        )
+        if member_relative.startswith(
+            (".skillguard/self-host/", ".skillguard/reports/")
+        ):
+            # Self-host terminals and checker reports are evidence outputs.  They
+            # are consumed by their receipt/verifier paths, never by the source
+            # compiler that the same run is proving.  Including them here would
+            # make a successful run stale merely because it published evidence.
             return
         if any(
             part.casefold().endswith(".egg-info")

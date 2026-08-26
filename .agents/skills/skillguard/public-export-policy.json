@@ -35,5 +35,13 @@
       "review_path": "assets/readme-hero/visual-privacy-review.json"
     }
   ],
+  "large_text_review_records": [
+    {
+      "asset_path": ".agents/skills/skillguard/.skillguard/surface-inventory.json",
+      "asset_sha256": "sha256:824c6847176157c9fc2308d01ed141514182b822eec47204f750bf1d86965b9d",
+      "status": "passed",
+      "review_scope": "Generated author-side reverse surface denominator; relative source identities only; excluded from consumer installation projection."
+    }
+  ],
   "claim_boundary": "This policy protects the public repository/export boundary. Runtime evidence remains local unless an explicitly sanitized release artifact is separately approved."
 }

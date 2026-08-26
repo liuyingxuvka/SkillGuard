@@ -61,7 +61,14 @@ _GENERIC_TRANSIENT_DIRECTORY_NAMES = frozenset(
     }
 )
 _MEMBER_CONTROL_RUNTIME_DIRECTORY_NAMES = frozenset(
-    {"bootstrap", "locks", "portfolio-artifacts", "runs", "test-results"}
+    {
+        "bootstrap",
+        "locks",
+        "portfolio-artifacts",
+        "reports",
+        "runs",
+        "test-results",
+    }
 )
 _MEMBER_ROOT_RUNTIME_DIRECTORY_NAMES = frozenset({"work"})
 _TRANSIENT_FILE_NAMES = frozenset(
@@ -159,6 +166,7 @@ def classify_relative_path(
         and folded[1] in _MEMBER_CONTROL_RUNTIME_DIRECTORY_NAMES
     ):
         return PortablePathDecision(RUNTIME, "member_control_runtime")
+
 
     name = folded[-1]
     if (

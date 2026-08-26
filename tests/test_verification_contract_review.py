@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT  # noqa: F401
 from skillguard_v2.verification_contract_review import review_verification_contract
 
 
@@ -149,6 +149,41 @@ freshness:
             "duplicate_normalized_command_obligation_owner",
             {row["code"] for row in payload["findings"]},
         )
+
+    def test_active_execution_depth_contract_uses_current_routes_without_legacy_read(self) -> None:
+        repository_root = Path(__file__).resolve().parents[1]
+        contract_path = (
+            repository_root
+            / "openspec"
+            / "changes"
+            / "enforce-target-owned-coverage-universes"
+            / "verification-contract.yaml"
+        )
+        contract = contract_path.read_text(encoding="utf-8")
+
+        for retired_marker in (
+            ".flowguard/execution_depth",
+            ".flowguard/existing_model_preflight",
+            "check.depth.existing-model-preflight",
+            "check.depth.flowguard-model",
+        ):
+            self.assertNotIn(retired_marker, contract)
+
+        for current_path in (
+            ".agents/skills/skillguard/scripts/skillguard_v2/execution_depth.py",
+            ".flowguard/verification/owners/development_process_flow/run_checks.py",
+            ".flowguard/verification/owners/validation_composition/run_checks.py",
+        ):
+            self.assertTrue(
+                (repository_root / current_path).is_file(),
+                current_path,
+            )
+
+        for retired_root in (
+            ".flowguard/execution_depth",
+            ".flowguard/existing_model_preflight",
+        ):
+            self.assertFalse((repository_root / retired_root).exists(), retired_root)
 
 
 if __name__ == "__main__":

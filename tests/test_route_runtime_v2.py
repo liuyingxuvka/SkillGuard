@@ -3,7 +3,7 @@ from __future__ import annotations
 import copy
 import unittest
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_contract  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_contract  # noqa: F401
 from skillguard_v2.route_runtime import select_routes
 
 

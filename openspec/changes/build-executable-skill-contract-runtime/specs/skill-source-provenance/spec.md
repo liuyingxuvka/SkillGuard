@@ -21,6 +21,29 @@ SkillGuard SHALL require separate current source, installed, repository, tag/rel
 - **WHEN** local checks pass but no matching remote tag/release receipt exists
 - **THEN** SkillGuard reports local release readiness without claiming publication complete
 
+### Requirement: Release provenance consumes current self-host and CI terminals
+SkillGuard SHALL permit a release claim only when the current local source,
+compiled contract, check manifest, owner plan, and target projection identities
+are bound to a current terminal `.skillguard/self-host/current` release receipt,
+clean-install smoke, source/installed projection parity, post-install full
+self-host verification, and current Windows/Linux CI terminal receipts. A local
+workflow declaration, installation transaction, global-router refresh, or
+functional aggregation without those terminal receipts SHALL remain a visible
+release blocker and SHALL NOT be promoted to publication evidence.
+
+#### Scenario: Self-host release receipt is missing
+- **WHEN** functional closure, staged installation, and source/installed parity
+  pass but `.skillguard/self-host/current` or post-install full verification is
+  absent, stale, foreign, or non-terminal
+- **THEN** SkillGuard reports functional/install evidence separately and keeps
+  release and publication claims blocked
+
+#### Scenario: CI configuration has no current run receipts
+- **WHEN** Windows/Linux CI jobs are declared in the workflow but no current
+  terminal receipts bind the required matrix to the current source and toolchain
+- **THEN** the CI/release claim remains `not_run` or blocked; workflow text is
+  not evidence of a completed run
+
 ### Requirement: Adopted skills preserve upstream and maintainer identities
 SkillGuard SHALL require a maintained skill without a user-owned repository to record its upstream source, license/redistribution decision, selected adoption mode, local canonical source, and any later maintainer repository as separate identities.
 

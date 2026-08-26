@@ -13,6 +13,7 @@ from typing import Any, Mapping
 
 from .contract_compiler import canonical_hash, canonical_json_bytes, file_hash
 from .contract_schema import ARTIFACT_SCHEMA, validate_runtime_payload
+from .execution_records import filesystem_path
 from .run_store import load_run, utc_now
 
 
@@ -97,7 +98,7 @@ def _validate_document(path: Path) -> tuple[bool, str]:
 
 
 def _store_artifact_record(run_root: Path, record: Mapping[str, Any]) -> None:
-    root = run_root / "artifacts"
+    root = filesystem_path(run_root / "artifacts")
     root.mkdir(parents=True, exist_ok=True)
     path = root / f"{record['artifact_record_id']}.json"
     try:
@@ -112,7 +113,11 @@ def _store_artifact_record(run_root: Path, record: Mapping[str, Any]) -> None:
 
 
 def load_artifact_records(run_root: Path) -> tuple[Mapping[str, Any], ...]:
-    root = run_root / "artifacts"
+    # Artifact records are written through the Windows extended-path spelling
+    # so deeply nested author runs remain addressable.  Read through the same
+    # spelling; a normal Path lookup can report an existing long-path record as
+    # missing even though the immutable file is present.
+    root = filesystem_path(run_root / "artifacts")
     if not root.is_dir():
         return ()
     records: list[Mapping[str, Any]] = []

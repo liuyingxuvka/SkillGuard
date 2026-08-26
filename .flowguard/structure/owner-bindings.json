@@ -1,0 +1,22 @@
+{
+  "schema": "flowguard.native_owner_model_bindings.v1",
+  "system_id": "flowguard",
+  "candidate_model_ids": [
+    "declared_check_supervision",
+    "development_process_flow",
+    "validation_composition"
+  ],
+  "bindings": [
+    {
+      "owner_route": "model_mesh_maintenance",
+      "model_ids": ["declared_check_supervision"],
+      "protected_failure_ids": ["skillguard:incomplete-check-inventory"]
+    },
+    {
+      "owner_route": "model_test_alignment",
+      "model_ids": ["development_process_flow"],
+      "protected_failure_ids": ["skillguard:stale-assurance-authority"]
+    }
+  ],
+  "claim_boundary": "This declaration binds the three current SkillGuard regression models to their two native FlowGuard semantic owner routes; it does not claim repository, consumer, installation, or release completion."
+}

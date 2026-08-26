@@ -1,0 +1,296 @@
+"""Behavior Commitment Ledger for component-scoped validation composition."""
+
+from __future__ import annotations
+
+import hashlib
+from dataclasses import replace
+
+from flowguard import (
+    BCL_ACTOR_AUTOMATION,
+    BCL_CHANGE_BOOTSTRAP_LEDGER,
+    BCL_COMMITMENT_PROCESS,
+    BCL_PLANE_DEVELOPMENT_PROCESS,
+    BCL_SCOPE_ROUTINE,
+    BCL_SOURCE_AUTHORITY_NORMATIVE,
+    BCL_SOURCE_AUTHORITY_OBSERVED,
+    BCL_SOURCE_AUTHORITY_SUPPORTING,
+    BCL_DISPOSITION_DELEGATED,
+    BCL_SOURCE_CLASSIFICATION_EXTERNAL_NORMATIVE_CONTRACT,
+    BCL_SOURCE_CLASSIFICATION_IMPLEMENTATION,
+    BCL_SOURCE_CLASSIFICATION_TEST,
+    BCL_SOURCE_CODE,
+    BCL_SOURCE_FRESHNESS_CURRENT,
+    BCL_SOURCE_TEST,
+    BCL_SOURCE_WORK_CONTEXT,
+    BehaviorCommitment,
+    BehaviorCommitmentLedger,
+    BehaviorSourceSurface,
+)
+
+from validation_composition_model import MODEL_ID, MODEL_PATH, PARENT_MODEL_ID
+
+
+SPEC_PATH = (
+    "openspec/changes/separate-skillguard-authoring-from-consumer-runtime/specs/"
+    "composable-validation-evidence/spec.md"
+)
+LIFECYCLE_SPEC_PATH = (
+    "openspec/changes/add-bounded-evidence-lifecycle/specs/"
+    "bounded-evidence-lifecycle/spec.md"
+)
+RUNNER_PATH = ".flowguard/verification/owners/validation_composition/run_checks.py"
+
+
+COMMITMENT_ROWS = (
+    (
+        "commitment:content-impact-graph-is-authoritative",
+        "intent:content-impact-graph-is-authoritative",
+        "maintained SkillGuard content or a validation declaration changes",
+        "the compiler assigns every maintained file one semantic role, one installation disposition, one checkout-portable text or byte-exact binary identity, and an exact consumer set, then proves owner uniqueness and dependency acyclicity",
+        "unmapped, ambiguous, cross-platform text-identity split, binary-byte collapse, duplicate-owner, invalid-edge, or cyclic rows block before any validation owner starts and never broaden to full",
+        ("impact_graph_status", "impact_graph_hash", "impact_graph_gaps"),
+    ),
+    (
+        "commitment:affected-plan-is-minimal",
+        "intent:affected-plan-is-minimal",
+        "a healthy impact graph is compared with the frozen baseline and current receipt heads",
+        "one side-effect-free plan names exactly which owners reuse, execute, aggregate, install, refresh router state, or invalidate Portfolio targets; the public runner consumes that exact plan and resolves only its execute partition",
+        "an unrelated component, parent declaration, consumer coverage declaration, report, receipt, log, or checkbox cannot invalidate an owner outside its graph edges",
+        (
+            "plan_hash",
+            "selected_owner_ids",
+            "will_reuse_owner_ids",
+            "will_execute_owner_ids",
+            "will_aggregate_only",
+            "required_install_component_ids",
+            "required_router_refresh",
+            "required_portfolio_target_ids",
+        ),
+    ),
+    (
+        "commitment:owner-receipts-cross-runs",
+        "intent:owner-receipts-cross-runs",
+        "a selected owner is requested in a new run",
+        "its execution key binds only the complete behavior declaration, exact input projection, dependency receipts, target inputs, toolchain, environment, domain, and impact policy; a current terminal-success receipt suppresses execution across runs",
+        "run, step, attempt, parent, whole-contract, whole-manifest, and whole-inventory metadata never enter the owner key; incomplete or tampered stdout, stderr, result, or termination sidecars are rejected",
+        ("owner_execution_keys", "owner_receipt_ids", "receipt_rejection_reasons"),
+    ),
+    (
+        "commitment:parent-aggregation-is-one-way",
+        "intent:parent-aggregation-is-one-way",
+        "all selected receipts owned by one maintenance unit are current or newly executed",
+        "the same-unit parent binds that unit's immutable receipt set, selection, and declaration into its own aggregation identity without copying, rewriting, or re-signing children",
+        "another maintenance unit or an external provider cannot consume the aggregation; a same-unit parent/profile/coverage-only change produces aggregation-only work and zero owner executions",
+        ("parent_consumed_receipt_ids", "aggregation_identity", "child_receipt_rewritten"),
+    ),
+    (
+        "commitment:install-portfolio-router-share-plan",
+        "intent:install-portfolio-router-share-plan",
+        "author validation, consumer distribution, Portfolio summary, or private maintainer-prompt maintenance is requested",
+        "each author-side subsystem consumes the same frozen impact graph and its exact projection without turning that graph into consumer runtime state",
+        "source-only tests do not enter the consumer distribution, unrelated maintenance units remain current, and the private router refreshes only for components on its exact author projection edge",
+        (
+            "required_install_component_ids",
+            "required_portfolio_target_ids",
+            "required_router_refresh",
+        ),
+    ),
+    (
+        "commitment:full-admission-is-derived",
+        "intent:full-admission-is-derived",
+        "a final, release, impact-policy, shared-runtime, or all-owner component gate requests full validation",
+        "the frozen plan records one allowlisted reason, source and toolchain fixpoint, and exactly one full execution owner before the full parent may start",
+        "installation happened, fixture changed, parent manifest changed, uncertainty, or insurance are not full reasons",
+        ("full_admitted", "full_admission_reason_codes", "plan_hash"),
+    ),
+    (
+        "commitment:evidence-domains-and-consumers-remain-separated",
+        "intent:evidence-domains-and-consumers-remain-separated",
+        "author evidence moves through one maintenance unit's source, checks, aggregation, and consumer-distribution gate",
+        "the maintenance unit owns its own current receipts while graduated consumers and external providers carry no SkillGuard receipt reference",
+        "OpenSpec, another maintenance unit, and a graduated consumer cannot copy, wrap, replay, resume, repair, backfill, or transport owner receipts; resume remains an author-side execution command",
+        ("domain_status", "missing_domain_ids", "closure_status"),
+    ),
+    (
+        "commitment:execution-lifecycle-is-controlled",
+        "intent:execution-lifecycle-is-controlled",
+        "a frozen TestMesh plan is handed to the public owner runner, or an owner process is started, interrupted, timed out, cancelled, or considered for unattended retry",
+        "self-host first claims the current run with zero executions; the runner then verifies planned reuse read-only and sends only will_execute owners from the frozen TestMesh plan to the existing single-flight authority; only terminal success with complete sidecars enters the persistent success head, and interrupted launchers prove zero descendants before another owner starts",
+        "pre-plan owner execution, failed attempts, cleanup-unconfirmed state, Scheduled Tasks, background resume, and unattended mutable-worktree retry cannot become reusable evidence",
+        ("execution_status", "executed_owner_ids", "interrupted_launcher_cleanup_confirmed_zero"),
+    ),
+    (
+        "commitment:producer-sharing-is-target-declared",
+        "intent:producer-sharing-is-target-declared",
+        "several target-declared semantic checks may be satisfied by one native producer execution",
+        "the compiler preserves every semantic projection and shares execution only when the target explicitly declares one same-unit owner whose producer behavior and inputs agree exactly",
+        "command, argument, filename, label, or output similarity never authorizes implicit sharing, and SkillGuard never invents or deepens target semantics",
+        ("owner_execution_keys", "owner_receipt_ids", "closure_status"),
+    ),
+    (
+        "commitment:evidence-lifecycle-is-bounded",
+        "intent:evidence-lifecycle-is-bounded",
+        "immutable execution streams are persisted, replayed, audited, quarantined, or considered for purge",
+        "one maintenance-unit evidence store preserves complete streams as deterministic compressed objects with separate logical and storage identities, selects one exact current head per producer and one exact current aggregation per unit/member/profile, keeps typed installation and global-prompt bindings outside its internal graph, coordinates active writers through a short lifecycle barrier, classifies reachability from explicit roots, quarantines exact unreachable objects before separately authorized purge, and resumes an interrupted destructive step through the same durable operation journal",
+        "historical heads are not current by directory membership; audit and planning write nothing; stale plans move nothing; active writers block collection; current, failed-diagnostic, historical-referenced, installation-pinned, and release-pinned evidence cannot be collected; normal validation purges nothing persistent",
+        ("owner_receipt_ids", "receipt_rejection_reasons", "closure_status"),
+    ),
+)
+
+
+def build_behavior_commitment_ledger() -> BehaviorCommitmentLedger:
+    commitment_ids = tuple(row[0] for row in COMMITMENT_ROWS)
+    intent_ids = tuple(row[1] for row in COMMITMENT_ROWS)
+
+    def surface_ids_for(commitment_id: str) -> tuple[str, str, str]:
+        slug = commitment_id.removeprefix("commitment:")
+        return (
+            f"surface:spec:{slug}",
+            f"surface:model:{slug}",
+            f"surface:test:{slug}",
+        )
+
+    commitments = tuple(
+        BehaviorCommitment(
+            commitment_id,
+            business_intent_id=intent_id,
+            label=commitment_id.removeprefix("commitment:").replace("-", " "),
+            commitment_kind=BCL_COMMITMENT_PROCESS,
+            behavior_plane=BCL_PLANE_DEVELOPMENT_PROCESS,
+            actor_kind=BCL_ACTOR_AUTOMATION,
+            actor="SkillGuard validation composer",
+            trigger=trigger,
+            expected_result=result,
+            expected_terminal=result,
+            failure_boundary=failure,
+            state_writes=state_writes,
+            # Only the OpenSpec contract is normative authority.  The model
+            # and runner remain part of the expected source inventory, but
+            # they are delegated native evidence and therefore must not be
+            # represented as a second external commitment authority.
+            source_surface_ids=(surface_ids_for(commitment_id)[0],),
+            primary_owner_model_id=MODEL_ID,
+            supporting_model_ids=(PARENT_MODEL_ID,),
+            owner=MODEL_ID,
+            validation_boundary="executable scenarios, contracts, refinement, TestMesh, ModelMesh, field lifecycle, and process flow",
+            rationale="the existing child owns validation composition while concrete executors and downstream consumers retain their typed boundaries",
+        )
+        for commitment_id, intent_id, trigger, result, failure, state_writes in COMMITMENT_ROWS
+    )
+    lifecycle_commitment_ids = {
+        "commitment:execution-lifecycle-is-controlled",
+        "commitment:producer-sharing-is-target-declared",
+        "commitment:evidence-lifecycle-is-bounded",
+    }
+    surfaces = tuple(
+        surface
+        for commitment_id, intent_id, *_ in COMMITMENT_ROWS
+        for surface in (
+            BehaviorSourceSurface(
+                surface_ids_for(commitment_id)[0],
+                surface_kind=BCL_SOURCE_WORK_CONTEXT,
+                source_classification=BCL_SOURCE_CLASSIFICATION_EXTERNAL_NORMATIVE_CONTRACT,
+                source_ref=(
+                    LIFECYCLE_SPEC_PATH
+                    if commitment_id in lifecycle_commitment_ids
+                    else SPEC_PATH
+                ),
+                commitment_ids=(commitment_id,),
+                business_intent_ids=(intent_id,),
+                owner=MODEL_ID,
+                validation_boundary="approved component-scoped validation requirements",
+                rationale="the governing OpenSpec slice declares this one maintained process commitment",
+            ),
+            BehaviorSourceSurface(
+                surface_ids_for(commitment_id)[1],
+                surface_kind=BCL_SOURCE_CODE,
+                source_classification=BCL_SOURCE_CLASSIFICATION_IMPLEMENTATION,
+                source_ref=MODEL_PATH,
+                business_intent_ids=(intent_id,),
+                coverage_disposition=BCL_DISPOSITION_DELEGATED,
+                delegated_owner_inventory_id="inventory:skillguard-validation-composition-model",
+                delegation_relation_type="native-model-owns",
+                native_evidence_ids=(
+                    "evidence:model:validation-composition-current",
+                ),
+                owner=MODEL_ID,
+                validation_boundary="finite executable FunctionBlocks and invariants",
+                rationale="this projection binds one commitment to the existing validation-composition model",
+            ),
+            BehaviorSourceSurface(
+                surface_ids_for(commitment_id)[2],
+                surface_kind=BCL_SOURCE_TEST,
+                source_classification=BCL_SOURCE_CLASSIFICATION_TEST,
+                source_ref=RUNNER_PATH,
+                business_intent_ids=(intent_id,),
+                coverage_disposition=BCL_DISPOSITION_DELEGATED,
+                delegated_owner_inventory_id="inventory:skillguard-validation-composition-tests",
+                delegation_relation_type="native-test-runner-owns",
+                native_evidence_ids=(
+                    "evidence:model:validation-composition-testmesh-current",
+                ),
+                owner=MODEL_ID,
+                validation_boundary="normal and adversarial executable model review",
+                rationale="this projection binds one commitment to the unified native model runner",
+            ),
+        )
+    )
+    source_ids = tuple(surface.surface_id for surface in surfaces)
+    source_inventory_revision = "skillguard-validation-composition-current"
+    discovery_evidence_id = "inventory:skillguard-validation-composition-current"
+
+    def bind_source_identity(
+        surface: BehaviorSourceSurface,
+    ) -> BehaviorSourceSurface:
+        content_fingerprint = "sha256:" + hashlib.sha256(
+            (
+                f"{surface.surface_id}|{surface.source_ref}|"
+                f"{','.join(surface.commitment_ids)}"
+            ).encode("utf-8")
+        ).hexdigest()
+        semantics_fingerprint = "sha256:" + hashlib.sha256(
+            ",".join(surface.commitment_ids).encode("utf-8")
+        ).hexdigest()
+        return replace(
+            surface,
+            source_system_id="skillguard-author-source",
+            native_artifact_id=surface.source_ref,
+            content_fingerprint=content_fingerprint,
+            inventory_revision=source_inventory_revision,
+            discovery_evidence_ids=(discovery_evidence_id,),
+            declared_semantics_fingerprint=semantics_fingerprint,
+            source_authority_role=(
+                BCL_SOURCE_AUTHORITY_NORMATIVE
+                if surface.surface_kind == BCL_SOURCE_WORK_CONTEXT
+                else BCL_SOURCE_AUTHORITY_SUPPORTING
+            ),
+            freshness_state=BCL_SOURCE_FRESHNESS_CURRENT,
+        )
+
+    current_surfaces = tuple(bind_source_identity(surface) for surface in surfaces)
+    source_inventory_fingerprint = "sha256:" + hashlib.sha256(
+        "\n".join(
+            f"{surface.surface_id}|{surface.content_fingerprint}"
+            for surface in sorted(current_surfaces, key=lambda item: item.surface_id)
+        ).encode("utf-8")
+    ).hexdigest()
+    return BehaviorCommitmentLedger(
+        "skillguard-validation-composition-ledger",
+        project_boundary="SkillGuard component-scoped validation evidence composition beneath the existing portable semantic parent",
+        current_revision="compose-validation-evidence-component-impact-current",
+        commitments=commitments,
+        source_surfaces=current_surfaces,
+        expected_commitment_ids=commitment_ids,
+        expected_business_intent_ids=intent_ids,
+        expected_source_surface_ids=source_ids,
+        source_inventory_revision=source_inventory_revision,
+        source_inventory_fingerprint=source_inventory_fingerprint,
+        source_inventory_evidence_ids=(discovery_evidence_id,),
+        require_complete_source_inventory=True,
+        claim_scope=BCL_SCOPE_ROUTINE,
+        change_mode=BCL_CHANGE_BOOTSTRAP_LEDGER,
+        require_current_evidence=False,
+        owner=MODEL_ID,
+        validation_boundary="design-stage executable evidence only; production receipts remain separately required",
+        rationale="upgrade the existing process promises without a second validation framework",
+    )

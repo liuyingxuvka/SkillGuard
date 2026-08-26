@@ -1,0 +1,17 @@
+{
+  "schema_version": "skillguard.portfolio_registry.v1",
+  "registry_id": "{{registry_id}}",
+  "generated_at": "{{generated_at}}",
+  "entries": [
+    {
+      "skill_id": "{{skill_id}}",
+      "lifecycle": "active",
+      "canonical_source": {"root": "{{canonical_source_root}}", "skill_path": "{{source_relative_skill_path}}"},
+      "installed_path": "{{installed_path}}",
+      "repository_identity": "{{repository_identity}}",
+      "visibility": "private",
+      "release_policy": "private_only"
+    }
+  ],
+  "claim_boundary": "This private registry binds source ownership and synchronization only; it does not prove target behavior, publication, or release."
+}

@@ -119,6 +119,8 @@ class GlobalRouterProjectionCurrentTests(unittest.TestCase):
                 "check_manifest_path": ".codex/skills/fixture/.skillguard/check-manifest.json",
                 "check_manifest_hash": "DIAGNOSTIC-ONLY-MANIFEST-HASH",
                 "check_declarations_hash": "DIAGNOSTIC-ONLY-CHECK-HASH",
+                "surface_inventory_path": ".codex/skills/fixture/.skillguard/surface-inventory.json",
+                "surface_inventory_sha256": "sha256:" + "3" * 64,
                 "model_id": "fixture.model",
                 "function_ids": ["route"],
                 "route_ids": ["route:fixture"],
@@ -155,6 +157,12 @@ class GlobalRouterProjectionCurrentTests(unittest.TestCase):
         diagnostic_only["items"][0]["route_entrypoint"][
             "check_declarations_hash"
         ] = "CHANGED-DIAGNOSTIC-CHECK-HASH"
+        diagnostic_only["items"][0]["route_entrypoint"][
+            "surface_inventory_sha256"
+        ] = "sha256:" + "4" * 64
+        diagnostic_only["items"][0]["route_entrypoint"][
+            "surface_inventory_path"
+        ] = ".codex/skills/fixture/.skillguard/changed-surface-inventory.json"
         self.assertEqual(
             route_hash, checker_engine.global_registry_hash(diagnostic_only)
         )
@@ -270,6 +278,20 @@ class GlobalRouterProjectionCurrentTests(unittest.TestCase):
             diagnostic_change["diagnostic_inventory_hash"],
         )
         self.assertNotEqual(first["registry_hash"], route_change["registry_hash"])
+
+    def test_real_current_contract_projection_binds_declared_surface_inventory(self) -> None:
+        projection, warnings = checker_engine.global_contract_projection(
+            ROOT / ".agents" / "skills" / "skillguard"
+        )
+        self.assertEqual([], warnings)
+        self.assertTrue(
+            str(projection["surface_inventory_path"]).endswith(
+                ".agents/skills/skillguard/.skillguard/surface-inventory.json"
+            )
+        )
+        self.assertRegex(
+            projection["surface_inventory_sha256"], r"^sha256:[0-9a-f]{64}$"
+        )
 
 
 if __name__ == "__main__":

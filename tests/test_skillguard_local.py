@@ -409,6 +409,38 @@ Read `references/README.md` before closing.
             guide.write_text("target-local reference\n", encoding="utf-8")
             self.assertEqual(checker_engine.resolve_declared_reference(target, "references/guide.md"), guide)
 
+    def test_declared_flowguard_reference_resolves_from_explicit_repository_root(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="repository-root-reference-", dir=REPO_ROOT) as tmp:
+            repository = Path(tmp)
+            target = repository / ".agents" / "skills" / "flowguard"
+            target.mkdir(parents=True)
+            layout = repository / ".flowguard" / "layout.toml"
+            layout.parent.mkdir(parents=True)
+            layout.write_text("[layout]\n", encoding="utf-8")
+
+            self.assertEqual(
+                checker_engine.resolve_declared_reference(
+                    target,
+                    ".flowguard/layout.toml",
+                    repository,
+                ),
+                layout,
+            )
+
+            failures: list[str] = []
+            blockers: list[str] = []
+            entry = checker_engine.validate_reference(
+                target,
+                ".flowguard/layout.toml",
+                failures,
+                blockers,
+                allow_project_boundary=True,
+                root=repository,
+            )
+            self.assertEqual(entry.get("status"), "pass", entry)
+            self.assertEqual([], failures)
+            self.assertEqual([], blockers)
+
     def test_declared_references_still_fail_missing_target_local_reference(self) -> None:
         with tempfile.TemporaryDirectory(prefix="target-reference-", dir=REPO_ROOT / ".agents" / "skills") as tmp:
             target = Path(tmp)
@@ -702,8 +734,19 @@ Read `references/README.md` before closing.
             self.assertIn("former_runtime_residual", report.get("blockers", []))
 
     def test_self_check_example_command(self) -> None:
-        report = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
-        self.assert_clean_pass(report)
+        # The current source has a reviewed implementation-to-intent inventory
+        # in addition to the command projection.  The self-check must pass
+        # only when both denominators are current and exact.
+        report = run_skillguard(
+            "self-check",
+            "--target",
+            ".agents/skills/skillguard",
+            expected_exit=0,
+        )
+        self.assertEqual(report.get("decision"), "pass")
+        full = report.get("full_surface_inventory", {})
+        self.assertEqual(full.get("status"), "pass")
+        self.assertEqual(full.get("findings"), [])
 
     def test_plan_skill_outputs_blueprint_without_writing_target(self) -> None:
         with tempfile.TemporaryDirectory(prefix="skillguard-plan-", dir=REPO_ROOT) as tmp:
@@ -757,6 +800,20 @@ Read `references/README.md` before closing.
             self.assertEqual(unsafe_report.get("decision"), "block")
             self.assertFalse((tmp_root / "planned_skill").exists())
             self.assertTrue(any("no_write" in blocker or "preview-only" in blocker for blocker in unsafe_report.get("blockers", [])))
+
+    def test_plan_skill_rejects_historical_name_alias(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="skillguard-plan-current-only-", dir=REPO_ROOT) as tmp:
+            tmp_root = Path(tmp)
+            idea_path = tmp_root / "legacy-name.json"
+            legacy = valid_skill_idea(rel(tmp_root / "planned_skill"))
+            legacy["name"] = legacy.pop("skill_name")
+            write_json(idea_path, legacy)
+
+            report = run_skillguard("plan-skill", "--input", rel(idea_path), expected_exit=1)
+
+            self.assertEqual(report.get("decision"), "block")
+            self.assertTrue(any("skill_name" in blocker for blocker in report.get("blockers", [])))
+            self.assertFalse((tmp_root / "planned_skill").exists())
 
     def test_commands_includes_plan_skill(self) -> None:
         report = run_skillguard("commands")
@@ -1890,8 +1947,13 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             self.assert_clean_pass(route)
             self.assertEqual(route.get("routing_decision", {}).get("command_family"), "check-maintenance-record")
 
-            self_check = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
-            self.assert_clean_pass(self_check)
+            self_check = run_skillguard(
+                "self-check",
+                "--target",
+                ".agents/skills/skillguard",
+                expected_exit=0,
+            )
+            self.assertEqual(self_check.get("decision"), "pass")
             self.assertEqual(self_check.get("maintenance_record", {}).get("record_kind"), "self_check")
 
     def test_generation_fixture_maintenance_staleness_uses_current_evidence(self) -> None:
@@ -1902,7 +1964,13 @@ This LogicGuard-backed capability model is for `v0.1.4`.
             complex_manifest = ".agents/skills/skillguard/fixtures/complex_generation/fixture-manifest.json"
             simple = run_skillguard("fixture-test", "--manifest", simple_manifest)
             complex_report = run_skillguard("fixture-test", "--manifest", complex_manifest)
-            self_check = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
+            self_check = run_skillguard(
+                "self-check",
+                "--target",
+                ".agents/skills/skillguard",
+                expected_exit=0,
+            )
+            self.assertEqual(self_check.get("decision"), "pass")
             target_check = run_skillguard("check-skill", "--target", ".agents/skills/skillguard")
             for workspace_path in (
                 REPO_ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "simple_generation" / "workspace",
@@ -2255,8 +2323,13 @@ This LogicGuard-backed capability model is for `v0.1.4`.
         self.assertEqual(route.get("routing_decision", {}).get("command_family"), "review-checker-change")
         self.assertEqual(route.get("routing_decision", {}).get("responsibility"), "reviewer")
 
-        self_check = run_skillguard("self-check", "--target", ".agents/skills/skillguard")
-        self.assert_clean_pass(self_check)
+        self_check = run_skillguard(
+            "self-check",
+            "--target",
+            ".agents/skills/skillguard",
+            expected_exit=0,
+        )
+        self.assertEqual(self_check.get("decision"), "pass")
 
     def test_checker_change_suite_guard_passes_and_projects_registry_for_route_and_generators(self) -> None:
         with tempfile.TemporaryDirectory(prefix="checker-change-guard-", dir=REPO_ROOT / ".agents" / "skills") as tmp:

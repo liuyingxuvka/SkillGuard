@@ -1,18 +1,20 @@
 from __future__ import annotations
 
 import json
+import os
 import struct
 import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.artifact_validators import (
     ArtifactValidationError,
     hard_evidence_from_artifact,
     load_artifact_record,
     validate_artifact,
 )
+from skillguard_v2.execution_records import filesystem_path
 from skillguard_v2.receipts import fingerprint_value, issue_receipt
 from skillguard_v2.route_runtime import select_routes
 from skillguard_v2.run_store import claim_run
@@ -74,6 +76,38 @@ class ArtifactValidatorTests(unittest.TestCase):
         )
         self.assertEqual("failed", failed["status"])
         self.assertIn("producer_step", {row["check_id"] for row in failed["checks"] if row["status"] == "failed"})
+
+    def test_artifact_records_are_read_through_the_extended_long_path(self) -> None:
+        (self.target / "outputs" / "result.json").write_text('{"ok": true}', encoding="utf-8")
+        declaration = {
+            "artifact_id": "artifact:long-path-result",
+            "kind": "json",
+            "producer_step_id": "step:intake",
+            "path_template": "outputs/result.json",
+            "required_keys": ["ok"],
+        }
+        created = validate_artifact(
+            self.run_root,
+            self.target,
+            declaration,
+            producer_step_id="step:intake",
+        )
+        source = filesystem_path(
+            self.run_root / "artifacts" / f"{created['artifact_record_id']}.json"
+        )
+        long_run_root = self.target.joinpath(*(["long-run-root-" + "x" * 40] * 7))
+        destination = long_run_root / "artifacts" / source.name
+        filesystem_path(destination).parent.mkdir(parents=True, exist_ok=True)
+        filesystem_path(destination).write_bytes(source.read_bytes())
+        try:
+            loaded = load_artifact_record(long_run_root, created["artifact_record_id"])
+        finally:
+            filesystem_path(destination).unlink(missing_ok=True)
+            cursor = long_run_root / "artifacts"
+            for _ in range(8):
+                os.rmdir(filesystem_path(cursor))
+                cursor = cursor.parent
+        self.assertEqual(created["artifact_record_id"], loaded["artifact_record_id"])
 
     def test_screenshot_requires_matching_surface_state_and_interaction_witness(self) -> None:
         png = b"\x89PNG\r\n\x1a\n" + b"\x00\x00\x00\rIHDR" + struct.pack(">II", 800, 600)

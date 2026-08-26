@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT  # noqa: F401
 from skillguard_v2.contract_compiler import canonical_hash
 from skillguard_v2.portfolio import (
     _clear_member_revalidation_state,

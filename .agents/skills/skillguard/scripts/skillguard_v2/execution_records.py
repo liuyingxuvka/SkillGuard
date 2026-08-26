@@ -834,6 +834,14 @@ def release_process_tree_containment(
         "termination_error_kind": containment.error_kind,
         "cleanup_confirmed": False,
         "containment_attached": containment.attached,
+        # Keep the timeout-receipt shape total even when the OS-level
+        # containment query itself fails.  In that case the post-cleanup
+        # descendant count is genuinely unknown (-1), but the field must
+        # still be present so the failed evidence can be recorded and
+        # fail-closed instead of raising a secondary KeyError.
+        "descendant_count_before": 0,
+        "descendant_count_after": -1,
+        "remaining_descendant_pids": [],
     }
     if containment.released:
         facts["termination_error_kind"] = "containment_already_released"

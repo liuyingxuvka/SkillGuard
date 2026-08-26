@@ -38,7 +38,7 @@ from skillguard_v2.global_router_projection import (  # noqa: E402
 )
 from skillguard_v2.route_runtime import select_routes  # noqa: E402
 from skillguard_v2.run_store import claim_run  # noqa: E402
-from _skillguard_v2_runtime_fixture import runtime_contract_with_checks  # noqa: E402
+from tests._skillguard_v2_runtime_fixture import runtime_contract_with_checks  # noqa: E402
 
 
 INSTALLATION_RECEIPT_RELATIVE_PATH = (

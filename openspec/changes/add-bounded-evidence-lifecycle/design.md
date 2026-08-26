@@ -4,6 +4,19 @@ SkillGuard's current owner runner stores complete stdout/stderr as raw content-a
 
 The existing contract already separates execution owners from semantic check projections, but the compiler's implicit signature grouping and model-assertion defaults do not express the intended authority clearly. Sharing must be authored explicitly by the target/compiler contract, never guessed from equivalent command text.
 
+## Authority boundary
+
+This change owns only evidence-object storage, replay, reachability, cleanup,
+and lifecycle mutation. The sole authority for executable-contract semantics,
+functional/release/highest-quality closure, self-host acceptance, CI
+acceptance, and publication remains
+`../build-executable-skill-contract-runtime`. This design must not be used to
+derive a competing closure receipt or release claim. Any lifecycle-induced
+change to an input of that current authority requires a direct-current rebuild
+and fresh validation there. Former evidence is archive-only direct-current
+rewrite input; there is no compatibility reader, fallback, converter, alias,
+dual write, or alternate success authority.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -75,7 +88,7 @@ Compiled/check-manifest identities used by installed parity are projected from `
 - **Explicit sharing is underdeclared** → execute separate producers; correctness is preferred over automatic deduplication.
 - **Explicit sharing is declared incorrectly** → fail before execution when producer behavior, input selectors, target-input roles, toolchain, or environment disagree. Different evidence domains and semantic dependency rows remain visible in the separate check projections.
 
-## Migration Plan
+## Direct-current rollout plan
 
 1. Add schema/model/tests for producer projections and compressed evidence before changing the current writer.
 2. Directly replace current writer/replay paths and lifecycle CLI; run focused tests against temporary stores.

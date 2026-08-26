@@ -10,7 +10,7 @@
 </p>
 <!-- README HERO END -->
 
-Current release: `v0.7.2` (source-only; validation evidence and publication status remain separate claims)
+Current release: `v0.7.3` (source-only; validation evidence and publication status remain separate claims)
 
 English comes first; the second half is a full Chinese mirror.
 
@@ -44,6 +44,15 @@ real check.
 
 Receipt reuse is narrowly local: the same maintenance unit may single-flight one exact identical check request. A different unit must execute and own its own evidence. Consumer skills carry neither those receipts nor a receipt lookup rule.
 
+The denominator is deliberately bidirectional. A complete contract does not
+make an undeclared command, export, UI-like action, artifact, or recovery path
+disappear. Reverse discovery must account for those surfaces before a target
+can graduate. Conversely, a historical requirement is a provenance input, not
+an immutable product command: the maintainer may accept, supersede, retire,
+reject, or mark it not applicable in the current model. Only the explicitly
+accepted current intent becomes current authority; an unresolved decision
+blocks.
+
 ## What It Can Do
 
 | Area | Current capability |
@@ -51,6 +60,7 @@ Receipt reuse is narrowly local: the same maintenance unit may single-flight one
 | Author adoption | Mark only an explicit skill-authoring repository with a private maintainer prompt and `.skillguard/author-project.json`. |
 | Contract compilation | Compile one current author contract and exact check manifest from the maintained source. |
 | Declared verification | Compare target-declared promises with target-owned checks, current execution evidence, and bounded closure claims without inventing domain criteria. |
+| Reverse surface closure | Discover real target commands, scripts, exports, routes, actions, artifacts, and failure/recovery boundaries; require every row to be governed or explicitly proven internal, retired, or not-applicable with current evidence. |
 | Assurance diagnostics | Explain a supplied current closure with a dependency-aware subset-minimal blocker basis and project target-owned mutation evidence without executing, resuming, weakening obligations, or changing closure. |
 | Maintenance-unit isolation | Bind checks and receipts to unit, member, subject, semantic responsibility, owner, inputs, dependencies, toolchain, and environment. |
 | TestMesh | Freeze same-unit validation plans, order dependencies, preserve immutable evidence, and keep skipped/not-run gaps visible. |
@@ -69,10 +79,11 @@ SkillGuard currently ships as source plus a local Python dispatcher. It is not a
 | --- | --- |
 | Skill entrypoint | `.agents/skills/skillguard/SKILL.md` |
 | Local dispatcher | `.agents/skills/skillguard/scripts/skillguard.py` |
-| Source version | `0.7.2` |
+| Source version | `0.7.3` |
 | Author control root | `.skillguard/**` inside explicit maintainer sources only |
 | Consumer projection | Target-owned files plus `consumer-release.json`; no SkillGuard dependency |
 | Ordinary project behavior | Zero SkillGuard writes |
+| Reverse implementation denominator | Current author inventory covers 1,968 implementation surfaces and 119 reverse surfaces with exact current bindings; the local self-check reports no findings within its declared boundary. A row is not a source-code line. |
 | OpenSpec relationship | Official external provider; read-only context only |
 | Publication | Not proven by local source or tests |
 
@@ -88,7 +99,7 @@ The current public commands are:
 
 - discovery and author routing: `commands`, `route-task`, `inventory`, `scan-global-skills`, `build-global-registry`, `check-global-registry`, `refresh-global-router`;
 - planning and generation: `plan-skill`, `generate-skill`, `generate-suite`;
-- author repository and contract work: `maintainer-adopt`, `maintainer-audit`, `check-runtime-authority`, `check-json-schema`, `check-contract`, `check-depth`, `init-target`, `init-suite`, `mark`, `check-skill`, `check-suite`, `check-suite-map`, `check-suite-contract`;
+- author repository and contract work: `maintainer-adopt`, `maintainer-audit`, `check-runtime-authority`, `check-json-schema`, `check-contract`, `check-depth`, `check-capability`, `audit-capabilities`, `check-source-sync`, `init-target`, `init-suite`, `mark`, `check-skill`, `check-suite`, `check-suite-map`, `check-suite-contract`;
 - fixtures and evidence review: `assurance-diagnostics`, `check-fixture-manifest`, `fixture-test`, `detect-stale-evidence`, `review-checker-change`, `check-maintenance-record`, `check-ai-judgment`, `check-report`, `check-workflow-report`, `make-closure`, `evidence-audit`, `evidence-gc-plan`, `evidence-gc-apply`, `evidence-gc-purge`;
 - independent Portfolio maintenance: `build-current-portfolio-registry`, `audit-portfolio`, `mark-portfolio-impact`, `verify-portfolio-impact-receipt`, `prepare-portfolio-run`, `execute-portfolio-run`, `capture-portfolio-production-revalidation`, `assemble-portfolio-run`, `graduate-portfolio`;
 - installation evidence: `capture-installation-receipt`, `verify-installation-receipt`;
@@ -113,6 +124,12 @@ The sole current author authority is:
 - `.skillguard/check-manifest.json`.
 
 These files belong to the maintained source and are excluded from the consumer distribution. Former schemas, compatibility readers, aliases, converters, reuse tickets, and parallel authority are not current success paths.
+
+When one of these identities no longer matches, SkillGuard reports a visible
+currentness blocker. The repair is a direct manual rewrite of the current
+contract/model/manifest and fresh validation under the latest schema, using old
+records only to understand provenance. There is no automatic inheritance,
+compatibility reader, one-click migration, or fallback success route.
 
 The compiler also declares `projection:consumer-distribution`. That projection rejects `.skillguard/**`, SkillGuard prompt markers, SkillGuard imports and commands, receipts, Portfolio data, and global-router state. If target-domain runtime is hidden below `.skillguard/runtime`, distribution blocks until the runtime moves to a target-owned namespace and parity is verified.
 
@@ -159,7 +176,7 @@ Portfolio records one status per independent maintenance unit. A change stales o
 ### Adopt Or Audit A Skill Repository
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.7.2
+python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.7.3
 python .agents/skills/skillguard/scripts/skillguard.py maintainer-audit --root <author-repository>
 ```
 
@@ -245,6 +262,8 @@ SkillGuard 是一个只在技能维护端使用的维护与毕业证据系统。
 
 只有同一个维护单元里、完全相同的一次检查请求，才可以合并为一次执行。另一个维护单元必须自己执行并拥有证据。毕业技能里既不带这些收据，也不带查收据的规则。
 
+这个分母是双向的。合同完整并不能让没有声明的命令、导出、类似 UI 的动作、产物或恢复路径消失；在毕业前，反向发现必须按可独立验收的 surface 或 component review group 处置这些真实表面，不是逐行处置源码。历史需求只是来源材料，不是不可修改的产品命令。维护者可以在当前模型里接受、取代、退役、拒绝或标记为不适用；只有明确接受的当前意图才进入当前权威，无法判断的意图必须阻断。
+
 ## 它现在能做什么
 
 | 范围 | 当前能力 |
@@ -252,6 +271,7 @@ SkillGuard 是一个只在技能维护端使用的维护与毕业证据系统。
 | 作者仓库接入 | 只为明确的技能作者仓库写入私有维护提示和 `.skillguard/author-project.json`。 |
 | 合同编译 | 从维护源码生成唯一当前作者合同和精确检查清单。 |
 | 声明核验 | 对照目标自己声明的技能承诺、原生检查、当前执行证据和有限结论，不发明领域标准。 |
+| 反向表面闭包 | 发现真实命令、脚本、导出、路线、动作、产物和失败/恢复边界；每个 surface 或 component group 都必须有当前治理绑定，或明确证明为内部、退役或不适用并附证据。源码行/span 只是定位锚点，不是独立意图。 |
 | 保障诊断 | 只读解释一份已经存在的当前 closure，给出考虑依赖关系的子集最小阻断依据，并原样投影目标自己声明的 mutation 结果；不执行、不恢复、不削弱义务，也不改变 closure。 |
 | 维护单元隔离 | 用单元、成员、主体、语义职责、负责人、输入、依赖、工具链和环境绑定检查与收据。 |
 | TestMesh | 冻结单元内的验证计划和依赖顺序，保留不可变证据，并显示跳过或未运行。 |
@@ -269,10 +289,11 @@ SkillGuard 目前以源码和本地 Python 调度器的形式存在，不是托�
 | --- | --- |
 | 技能入口 | `.agents/skills/skillguard/SKILL.md` |
 | 本地调度器 | `.agents/skills/skillguard/scripts/skillguard.py` |
-| 源码版本 | `0.7.2` |
+| 源码版本 | `0.7.3` |
 | 作者控制目录 | 只存在于明确维护源码里的 `.skillguard/**` |
 | 消费者投影 | 目标自己的文件和 `consumer-release.json`，不依赖 SkillGuard |
 | 普通项目 | SkillGuard 零写入 |
+| 反向实现分母 | 反向发现已经启用；当前作者清单包含 1,968 个实现表面和 119 个反向表面，并按精确的当前绑定连接意图、owner、检查和证据；本地 self-check 在声明边界内没有 findings。源码行只是定位锚点，不是独立 row。 |
 | OpenSpec | 官方外部工具，只读上下文 |
 | 发布 | 不能由本地源码或测试自动证明 |
 
@@ -305,6 +326,8 @@ python .agents/skills/skillguard/scripts/skillguard.py commands
 - `.skillguard/check-manifest.json`。
 
 这些文件属于维护源码，不进入消费者分发。旧 schema、兼容读取器、别名、转换器、复用票据和平行权威都不是当前成功路径。
+
+如果其中任何身份不再匹配，SkillGuard 会明确报告当前性阻断。修复方式是依据最新 schema 手工重写当前合同、模型和清单，再重新验证；旧记录只能用来理解来源。系统没有自动继承、兼容读取、一键迁移或 fallback 成功路径。
 
 编译器还声明 `projection:consumer-distribution`。它拒绝 `.skillguard/**`、SkillGuard 提示标记、SkillGuard 导入和命令、收据、Portfolio 数据和全局路由状态。如果目标领域运行时代码藏在 `.skillguard/runtime` 下，必须先迁移到目标自己的目录并验证一致性，才能生成消费者版本。
 

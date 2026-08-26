@@ -1,0 +1,662 @@
+{
+  "added_ids": [],
+  "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+  "affected_closure_ids": [
+    "coverage:universe",
+    "model_instance:model:development_process_flow",
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow",
+    "parent_closure:purpose:development_process_flow",
+    "parent_closure:system:flowguard:model-regression-manifest",
+    "system_property:subject_revision"
+  ],
+  "affected_edge_ids": [
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow"
+  ],
+  "affected_owner_bindings": [
+    {
+      "affected_id": "coverage:universe",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "model_instance:model:development_process_flow",
+      "owner_route": "model_test_alignment"
+    },
+    {
+      "affected_id": "model_relation:relation:model-realizes-purpose:development_process_flow",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "model_relation:relation:system-contains:development_process_flow",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "parent_closure:purpose:development_process_flow",
+      "owner_route": "model_test_alignment"
+    },
+    {
+      "affected_id": "parent_closure:system:flowguard:model-regression-manifest",
+      "owner_route": "model_mesh_maintenance"
+    },
+    {
+      "affected_id": "system_property:subject_revision",
+      "owner_route": "model_mesh_maintenance"
+    }
+  ],
+  "base_snapshot_fingerprint": "sha256:43b5996a06f79f09f4d7f75cef11bfc7fb96beffbd7111e253d75c55fd5d001a",
+  "candidate_snapshot_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+  "changed_commitment_ids": [],
+  "changed_contract_ids": [],
+  "changed_coverage_ids": [
+    "coverage:universe"
+  ],
+  "changed_field_ids": [],
+  "changed_gap_ids": [],
+  "changed_owner_artifact_ids": [],
+  "changed_relation_ids": [
+    "relation:model-realizes-purpose:development_process_flow",
+    "relation:system-contains:development_process_flow"
+  ],
+  "changed_root_ids": [],
+  "changed_side_effect_ids": [],
+  "changed_source_surface_ids": [],
+  "changed_system_property_ids": [
+    "system_property:subject_revision"
+  ],
+  "changed_test_ids": [],
+  "completed_evidence_refs": [
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "covered_affected_ids": [
+        "coverage:universe",
+        "model_relation:relation:model-realizes-purpose:development_process_flow",
+        "model_relation:relation:system-contains:development_process_flow",
+        "parent_closure:system:flowguard:model-regression-manifest",
+        "system_property:subject_revision"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:6d73df4c1cc42a75c68c80b2e650eabfab797a93aaf57d284f3263eacf3235e0",
+      "obligation_ids": [
+        "coverage:universe",
+        "model_relation:relation:model-realizes-purpose:development_process_flow",
+        "model_relation:relation:system-contains:development_process_flow",
+        "parent_closure:system:flowguard:model-regression-manifest",
+        "system_property:subject_revision"
+      ],
+      "owner_route": "model_mesh_maintenance",
+      "receipt_fingerprint": "sha256:a39e9476290834054d0f83a1d1ca644077f3973c3984ff5c0bb201509671df96",
+      "receipt_id": "receipt:validation-owner:model_mesh_maintenance:ee29a53540cd36f60aaddd3b0f7b0990",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "pass",
+      "subject_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "toolchain_fingerprint": "sha256:2076e7338a6b9e06883cceeb35ce417f0f6c65034d232e261ca0d92a32705618"
+    },
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "covered_affected_ids": [
+        "model_instance:model:development_process_flow",
+        "parent_closure:purpose:development_process_flow"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:6d73df4c1cc42a75c68c80b2e650eabfab797a93aaf57d284f3263eacf3235e0",
+      "obligation_ids": [
+        "model_instance:model:development_process_flow",
+        "parent_closure:purpose:development_process_flow"
+      ],
+      "owner_route": "model_test_alignment",
+      "receipt_fingerprint": "sha256:13f4e7573ad34d068e6da6fa79b3555e592c9d44aeccf7aa959d733cc4474fe8",
+      "receipt_id": "receipt:validation-owner:model_test_alignment:b03d7fa84be70ca37a2dce8a99ff48b8",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "pass",
+      "subject_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "toolchain_fingerprint": "sha256:57370163a16f5a036b64b5e328e5921e1dfe6be8c09e90137413a611f7711070"
+    }
+  ],
+  "current_effective_intent_view": {
+    "active_contributions": [
+      {
+        "conflicts_with_contribution_ids": [],
+        "contribution_id": "current-design:skillguard-direct-current-20260820-component-grouping-r1:declared_check_supervision:1",
+        "decision_state": "accepted",
+        "declared_consumer_ids": [],
+        "desired_terminal_state_ids": [],
+        "effective_revision": "skillguard-direct-current-20260820-component-grouping-r1",
+        "fingerprint": "sha256:be8d3521ded1a9e1e3e4e920a2ee0bf30686d35d2ea211feee8454934ee60673",
+        "lifecycle_state": "candidate",
+        "logical_model_id": "model:declared_check_supervision",
+        "native_owner_id": "",
+        "rationale": "Manual review of the historical specification accepted this intent as the current design source for a direct model rebuild. The implementation identity changed, so the old contribution is superseded explicitly; no compatibility or automatic inheritance path exists.",
+        "schema": "flowguard.model_intent_contribution.v1",
+        "source_fingerprint": "sha256:c346bc4469eef58822ba2740f7a8e5c0d497b2f4ae3813f835a84728fbc2e8ff",
+        "source_kind": "design",
+        "source_ref": "docs/skillguard-current-design.md",
+        "subject_lane": "normative_target",
+        "subject_role": "design",
+        "supersedes_contribution_ids": [
+          "current-design:skillguard-direct-current-20260819-r1:declared_check_supervision:1"
+        ],
+        "target_invariant_ids": [],
+        "target_obligation_ids": [],
+        "target_output_ids": [],
+        "target_relation_ids": [
+          "relation:model-realizes-purpose:declared_check_supervision"
+        ],
+        "target_state_ids": [],
+        "target_transition_ids": [],
+        "unresolved_owner_id": "",
+        "work_context_fingerprint": "",
+        "work_context_id": ""
+      },
+      {
+        "conflicts_with_contribution_ids": [],
+        "contribution_id": "current-design:skillguard-direct-current-20260820-component-grouping-r1:validation_composition:1",
+        "decision_state": "accepted",
+        "declared_consumer_ids": [],
+        "desired_terminal_state_ids": [],
+        "effective_revision": "skillguard-direct-current-20260820-component-grouping-r1",
+        "fingerprint": "sha256:1977fe5377a4e48a4ab056fd81ad58a34e60d15c1bd705e4370de1f2e929342f",
+        "lifecycle_state": "candidate",
+        "logical_model_id": "model:validation_composition",
+        "native_owner_id": "",
+        "rationale": "Manual review of the historical specification accepted this intent as the current design source for a direct model rebuild. The implementation identity changed, so the old contribution is superseded explicitly; no compatibility or automatic inheritance path exists.",
+        "schema": "flowguard.model_intent_contribution.v1",
+        "source_fingerprint": "sha256:c346bc4469eef58822ba2740f7a8e5c0d497b2f4ae3813f835a84728fbc2e8ff",
+        "source_kind": "design",
+        "source_ref": "docs/skillguard-current-design.md",
+        "subject_lane": "normative_target",
+        "subject_role": "design",
+        "supersedes_contribution_ids": [
+          "current-design:skillguard-direct-current-20260819-r1:validation_composition:1"
+        ],
+        "target_invariant_ids": [],
+        "target_obligation_ids": [],
+        "target_output_ids": [],
+        "target_relation_ids": [
+          "relation:model-realizes-purpose:validation_composition"
+        ],
+        "target_state_ids": [],
+        "target_transition_ids": [],
+        "unresolved_owner_id": "",
+        "work_context_fingerprint": "",
+        "work_context_id": ""
+      },
+      {
+        "conflicts_with_contribution_ids": [],
+        "contribution_id": "current-design:skillguard-direct-current-20260820-portable-content-r2:development_process_flow:1",
+        "decision_state": "accepted",
+        "declared_consumer_ids": [],
+        "desired_terminal_state_ids": [],
+        "effective_revision": "skillguard-direct-current-20260820-portable-content-r2",
+        "fingerprint": "sha256:4cf18cfe3783509cc227b8b09c04d041ef59451cd3af43bdeeeb00d1a8c3a5a1",
+        "lifecycle_state": "candidate",
+        "logical_model_id": "model:development_process_flow",
+        "native_owner_id": "",
+        "rationale": "Manual review of the historical specification accepted this intent as the current design source for a direct model rebuild. The implementation identity changed, so the old contribution is superseded explicitly; no compatibility or automatic inheritance path exists.",
+        "schema": "flowguard.model_intent_contribution.v1",
+        "source_fingerprint": "sha256:c346bc4469eef58822ba2740f7a8e5c0d497b2f4ae3813f835a84728fbc2e8ff",
+        "source_kind": "design",
+        "source_ref": "docs/skillguard-current-design.md",
+        "subject_lane": "normative_target",
+        "subject_role": "design",
+        "supersedes_contribution_ids": [
+          "current-design:skillguard-direct-current-20260820-compiled-artifacts-r1:development_process_flow:1"
+        ],
+        "target_invariant_ids": [],
+        "target_obligation_ids": [],
+        "target_output_ids": [],
+        "target_relation_ids": [
+          "relation:model-realizes-purpose:development_process_flow"
+        ],
+        "target_state_ids": [],
+        "target_transition_ids": [],
+        "unresolved_owner_id": "",
+        "work_context_fingerprint": "",
+        "work_context_id": ""
+      }
+    ],
+    "base_effective_intent_view_fingerprint": "sha256:fba7f69e122118a81aeabddf489b256115ead21701227fd6affb3b76c07d230a",
+    "bootstrap_receipt": null,
+    "candidate_snapshot_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+    "fingerprint": "sha256:bd41758199514edf08188d27bd95674b24687c2c8f6422b7d0aa5b14ba0fbac0",
+    "model_owner_ids": [
+      "model-obligation:declared_check_supervision",
+      "model-obligation:development_process_flow",
+      "model-obligation:validation_composition"
+    ],
+    "owner_bindings": [
+      {
+        "contribution_ids": [
+          "current-design:skillguard-direct-current-20260820-component-grouping-r1:declared_check_supervision:1"
+        ],
+        "fingerprint": "sha256:38682c4a6bb961857542ab9d3dbb27c55de89e1ea73f14cac24f26704c85008d",
+        "logical_model_id": "declared_check_supervision",
+        "model_owner_id": "model-obligation:declared_check_supervision",
+        "realization_relation_fingerprint": "sha256:4321934f05ac003fc6ea518084b84bd0a591698d526b1520873a4ac67d7083da",
+        "realization_relation_id": "relation:model-realizes-purpose:declared_check_supervision",
+        "schema": "flowguard.effective_intent_owner_binding.v1"
+      },
+      {
+        "contribution_ids": [
+          "current-design:skillguard-direct-current-20260820-portable-content-r2:development_process_flow:1"
+        ],
+        "fingerprint": "sha256:93d84ad0c9d3e8f693bd55441164907cd5f6c78f5c69c3239596decb98ed1d49",
+        "logical_model_id": "development_process_flow",
+        "model_owner_id": "model-obligation:development_process_flow",
+        "realization_relation_fingerprint": "sha256:ec6e6bc97c9198aaa3c2a22e895cf37d7c6b451448b72a19b23e40cd1fafa790",
+        "realization_relation_id": "relation:model-realizes-purpose:development_process_flow",
+        "schema": "flowguard.effective_intent_owner_binding.v1"
+      },
+      {
+        "contribution_ids": [
+          "current-design:skillguard-direct-current-20260820-component-grouping-r1:validation_composition:1"
+        ],
+        "fingerprint": "sha256:00e75028dfed0c9aa848dec3906ea34857177573b53b268b584e27ce8b18b250",
+        "logical_model_id": "validation_composition",
+        "model_owner_id": "model-obligation:validation_composition",
+        "realization_relation_fingerprint": "sha256:858d29a3b752d6913408fbab13c72e62d588892f9d97c92fe4268323578e63ad",
+        "realization_relation_id": "relation:model-realizes-purpose:validation_composition",
+        "schema": "flowguard.effective_intent_owner_binding.v1"
+      }
+    ],
+    "schema": "flowguard.current_effective_intent_view.v1",
+    "subject_lane": "observed_implementation",
+    "system_id": "flowguard",
+    "transitions": [
+      {
+        "action": "supersede",
+        "fingerprint": "sha256:cd384abc7e26db75f8f4a0bcb9d7949356fc0bb9ac60eee166c5f5ac6f30326e",
+        "prior_contribution_fingerprint": "sha256:548e72bd178db42c0e359bdbe86a3f43777f16ff692c6089b650e7f8d4f57686",
+        "prior_contribution_id": "current-design:skillguard-direct-current-20260820-compiled-artifacts-r1:development_process_flow:1",
+        "reason": "Direct current-standard reconstruction after implementation identity changed; the previous contribution is provenance only and is not automatically inherited.",
+        "replacement_contribution_ids": [
+          "current-design:skillguard-direct-current-20260820-portable-content-r2:development_process_flow:1"
+        ],
+        "schema": "flowguard.effective_intent_transition.v1"
+      },
+      {
+        "action": "retain",
+        "fingerprint": "sha256:0d939f7b6adfa884222b94b439599119f5c2912574a9d31a453196866086560a",
+        "prior_contribution_fingerprint": "sha256:be8d3521ded1a9e1e3e4e920a2ee0bf30686d35d2ea211feee8454934ee60673",
+        "prior_contribution_id": "current-design:skillguard-direct-current-20260820-component-grouping-r1:declared_check_supervision:1",
+        "reason": "The current intent remains unchanged; this revision retains it explicitly while rebuilding the changed implementation identity.",
+        "replacement_contribution_ids": [],
+        "schema": "flowguard.effective_intent_transition.v1"
+      },
+      {
+        "action": "retain",
+        "fingerprint": "sha256:8f60ff5bb44cfd1a1724e84f7204fac340e049d1b798ddb8feebf4842af2def1",
+        "prior_contribution_fingerprint": "sha256:1977fe5377a4e48a4ab056fd81ad58a34e60d15c1bd705e4370de1f2e929342f",
+        "prior_contribution_id": "current-design:skillguard-direct-current-20260820-component-grouping-r1:validation_composition:1",
+        "reason": "The current intent remains unchanged; this revision retains it explicitly while rebuilding the changed implementation identity.",
+        "replacement_contribution_ids": [],
+        "schema": "flowguard.effective_intent_transition.v1"
+      }
+    ],
+    "verified_source_identities": [
+      {
+        "authority_kind": "project_file",
+        "contribution_id": "current-design:skillguard-direct-current-20260820-component-grouping-r1:declared_check_supervision:1",
+        "fingerprint": "sha256:7b429bdc1f7c319952190d4bfc48258fb8b739311d148fe919b8ada0be4e0b38",
+        "native_owner_id": "",
+        "resolved_project_ref": "docs/skillguard-current-design.md",
+        "schema": "flowguard.model_intent_source_identity.v1",
+        "source_fingerprint": "sha256:c346bc4469eef58822ba2740f7a8e5c0d497b2f4ae3813f835a84728fbc2e8ff",
+        "source_ref": "docs/skillguard-current-design.md",
+        "work_context_artifact_id": "",
+        "work_context_fingerprint": "",
+        "work_context_id": ""
+      },
+      {
+        "authority_kind": "project_file",
+        "contribution_id": "current-design:skillguard-direct-current-20260820-component-grouping-r1:validation_composition:1",
+        "fingerprint": "sha256:ddec829fd02bbcc292fe3b2a5197629c523fb5c625e440467fbffe0b671f4a2f",
+        "native_owner_id": "",
+        "resolved_project_ref": "docs/skillguard-current-design.md",
+        "schema": "flowguard.model_intent_source_identity.v1",
+        "source_fingerprint": "sha256:c346bc4469eef58822ba2740f7a8e5c0d497b2f4ae3813f835a84728fbc2e8ff",
+        "source_ref": "docs/skillguard-current-design.md",
+        "work_context_artifact_id": "",
+        "work_context_fingerprint": "",
+        "work_context_id": ""
+      },
+      {
+        "authority_kind": "project_file",
+        "contribution_id": "current-design:skillguard-direct-current-20260820-portable-content-r2:development_process_flow:1",
+        "fingerprint": "sha256:27331cf84a05317a09d363dedc29c99ba03eaf485fcc29c9510ad565b7a1db1d",
+        "native_owner_id": "",
+        "resolved_project_ref": "docs/skillguard-current-design.md",
+        "schema": "flowguard.model_intent_source_identity.v1",
+        "source_fingerprint": "sha256:c346bc4469eef58822ba2740f7a8e5c0d497b2f4ae3813f835a84728fbc2e8ff",
+        "source_ref": "docs/skillguard-current-design.md",
+        "work_context_artifact_id": "",
+        "work_context_fingerprint": "",
+        "work_context_id": ""
+      }
+    ]
+  },
+  "decision_reason": "Direct current-standard rebuild after the reverse surface inventory and portable content installation disposition changed; historical specifications remain provenance only; no compatibility or fallback.",
+  "expected_head_fingerprint": "sha256:29b3fac35e18b595b1984056156c123cae05fd52152761051d960284c00e4342",
+  "fingerprint": "sha256:704f8c75150de2d0b590e256e5a0066291665bedc77804d4bbaa5c1b8999bd3f",
+  "fingerprint_changed_ids": [
+    "coverage:universe",
+    "model_instance:model:development_process_flow",
+    "model_relation:relation:model-realizes-purpose:development_process_flow",
+    "model_relation:relation:system-contains:development_process_flow"
+  ],
+  "implementation_bundle_fingerprint": "",
+  "intent_conflict_ids": [],
+  "intent_contribution_inventory_fingerprint": "sha256:3c7b32876f645eeafb1ab1391321f400c6c0f91e416b20ddca61e4369abc8c59",
+  "intent_contributions": [
+    {
+      "conflicts_with_contribution_ids": [],
+      "contribution_id": "current-design:skillguard-direct-current-20260820-portable-content-r2:development_process_flow:1",
+      "decision_state": "accepted",
+      "declared_consumer_ids": [],
+      "desired_terminal_state_ids": [],
+      "effective_revision": "skillguard-direct-current-20260820-portable-content-r2",
+      "fingerprint": "sha256:4cf18cfe3783509cc227b8b09c04d041ef59451cd3af43bdeeeb00d1a8c3a5a1",
+      "lifecycle_state": "candidate",
+      "logical_model_id": "model:development_process_flow",
+      "native_owner_id": "",
+      "rationale": "Manual review of the historical specification accepted this intent as the current design source for a direct model rebuild. The implementation identity changed, so the old contribution is superseded explicitly; no compatibility or automatic inheritance path exists.",
+      "schema": "flowguard.model_intent_contribution.v1",
+      "source_fingerprint": "sha256:c346bc4469eef58822ba2740f7a8e5c0d497b2f4ae3813f835a84728fbc2e8ff",
+      "source_kind": "design",
+      "source_ref": "docs/skillguard-current-design.md",
+      "subject_lane": "normative_target",
+      "subject_role": "design",
+      "supersedes_contribution_ids": [
+        "current-design:skillguard-direct-current-20260820-compiled-artifacts-r1:development_process_flow:1"
+      ],
+      "target_invariant_ids": [],
+      "target_obligation_ids": [],
+      "target_output_ids": [],
+      "target_relation_ids": [
+        "relation:model-realizes-purpose:development_process_flow"
+      ],
+      "target_state_ids": [],
+      "target_transition_ids": [],
+      "unresolved_owner_id": "",
+      "work_context_fingerprint": "",
+      "work_context_id": ""
+    }
+  ],
+  "intent_dispositions": [
+    {
+      "changed_invariant_ids": [],
+      "changed_obligation_ids": [],
+      "changed_relation_ids": [
+        "relation:model-realizes-purpose:development_process_flow",
+        "relation:system-contains:development_process_flow"
+      ],
+      "changed_state_ids": [],
+      "changed_transition_ids": [],
+      "conflict_ids": [],
+      "contribution_fingerprint": "sha256:4cf18cfe3783509cc227b8b09c04d041ef59451cd3af43bdeeeb00d1a8c3a5a1",
+      "contribution_id": "current-design:skillguard-direct-current-20260820-portable-content-r2:development_process_flow:1",
+      "disposition": "accepted",
+      "fingerprint": "sha256:e12c6578106b01969008229778bb62e4b0c03041c7923984da195d5623bf46c6",
+      "reason": "Manual review accepted the historical intent as current provenance for the changed implementation; all changed semantic relations are explicitly assigned to this intent.",
+      "schema": "flowguard.model_intent_disposition.v1",
+      "scoped_gap_ids": [],
+      "unconsumed_output_ids": [],
+      "unreachable_terminal_state_ids": [],
+      "unresolved_effect_ids": []
+    }
+  ],
+  "intent_unresolved_ids": [],
+  "members": [
+    {
+      "base_instance_fingerprint": "sha256:e297d1b009eda91f9dfb4565e3725a7126be810dd40b8b50e3b9dbe1507117a2",
+      "candidate_instance_fingerprint": "sha256:232c0c003e0ce4b04225bc4da94fde2bc0c791e901a3fd12259884b1d7c687f6",
+      "changed_element_ids": [
+        "model_instance:model:development_process_flow"
+      ],
+      "member_id": "development_process_flow",
+      "operation": "replace",
+      "schema": "flowguard.model_revision_member.v1"
+    }
+  ],
+  "no_declared_intent_evidence_fingerprints": [],
+  "no_declared_intent_rationale": "",
+  "no_declared_intent_rationale_id": "",
+  "originating_activation_receipt_fingerprint": "",
+  "originating_revision_set_fingerprint": "",
+  "path_quality_result_set_fingerprint": "sha256:5ed7b3176858496040156344c8431451a5d7622990b265e00d1158f0de8fdce8",
+  "path_quality_results": [
+    {
+      "candidate_ids": [
+        "observed-baseline:development_process_flow"
+      ],
+      "candidate_set_exhausted": false,
+      "candidate_set_fingerprint": "sha256:296060160450bffe63d33ed052edb8b048b5228f8d8c02a0336ecf2840340a4f",
+      "comparison_boundary_id": "path-boundary:development_process_flow:declared-element-removals",
+      "conclusion": "locally_irreducible_under_declared_rewrites",
+      "cost_detail_evidence_fingerprint": "sha256:2ac8d166139d57833c751a72cd072957e3a0d26c07c104160287c9bfe6e9c30f",
+      "cost_dimensions": [
+        "branches",
+        "payload_bytes",
+        "states",
+        "steps",
+        "transitions",
+        "validations"
+      ],
+      "cost_measurements": {},
+      "current": true,
+      "currentness_id": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "detail_evidence_fingerprint": "sha256:dd7a21a3948ce20bb534aa2a8e0d689451a53a5a5a41e79c5641d6fea8da9ba6",
+      "finding_ids": [],
+      "fingerprint": "sha256:eff34982c84ba39930ff0d878cae53f233f905d44d5888d116195817c2965a7c",
+      "mode": "deep",
+      "necessity_witness_set_fingerprint": "sha256:59d15fb6ae835cd1c409ffbc6e3f251159dae9d9a600f3603b2bbae8c2c2a935",
+      "optimization_depth": "deep_closed",
+      "producer_id": "flowguard-self-path-quality",
+      "result_id": "path-quality:development_process_flow:5641d6fea8da9ba6",
+      "rewrite_rule_ids": [
+        "rewrite:remove:field:development_process_flow:ExecutableContractState",
+        "rewrite:remove:field:development_process_flow:artifacts_current",
+        "rewrite:remove:field:development_process_flow:assurance_diagnostics_authorities_current",
+        "rewrite:remove:field:development_process_flow:assurance_diagnostics_minimality_exact",
+        "rewrite:remove:field:development_process_flow:assurance_diagnostics_preserve_closure",
+        "rewrite:remove:field:development_process_flow:assurance_diagnostics_read_only",
+        "rewrite:remove:field:development_process_flow:assurance_diagnostics_requested",
+        "rewrite:remove:field:development_process_flow:author_repository_adoption_current",
+        "rewrite:remove:field:development_process_flow:binding_current",
+        "rewrite:remove:field:development_process_flow:caller_authored_pass",
+        "rewrite:remove:field:development_process_flow:canonical_repository_root_bound",
+        "rewrite:remove:field:development_process_flow:case_name",
+        "rewrite:remove:field:development_process_flow:checks_current",
+        "rewrite:remove:field:development_process_flow:closure_requested",
+        "rewrite:remove:field:development_process_flow:declared_check_inventory_frozen",
+        "rewrite:remove:field:development_process_flow:declared_check_receipts_current",
+        "rewrite:remove:field:development_process_flow:declared_check_results_complete",
+        "rewrite:remove:field:development_process_flow:depth_profile_present",
+        "rewrite:remove:field:development_process_flow:depth_profile_target_neutral",
+        "rewrite:remove:field:development_process_flow:depth_receipt_consumed",
+        "rewrite:remove:field:development_process_flow:depth_receipt_current",
+        "rewrite:remove:field:development_process_flow:diagnostic_weakening_requested",
+        "rewrite:remove:field:development_process_flow:enforced_closure_exact",
+        "rewrite:remove:field:development_process_flow:enforcement_level",
+        "rewrite:remove:field:development_process_flow:execution_depth_status",
+        "rewrite:remove:field:development_process_flow:failed_or_dead_writer_lock_recoverable",
+        "rewrite:remove:field:development_process_flow:failure_visible",
+        "rewrite:remove:field:development_process_flow:former_authority_residual",
+        "rewrite:remove:field:development_process_flow:generated_authority_text_identity_current",
+        "rewrite:remove:field:development_process_flow:guard_compatible_run_claimed",
+        "rewrite:remove:field:development_process_flow:guard_runtime_changed",
+        "rewrite:remove:field:development_process_flow:illegal_required_skip",
+        "rewrite:remove:field:development_process_flow:maintenance_unit_evidence_current",
+        "rewrite:remove:field:development_process_flow:max_reentries",
+        "rewrite:remove:field:development_process_flow:member_binding_fallback_used",
+        "rewrite:remove:field:development_process_flow:member_root_bound",
+        "rewrite:remove:field:development_process_flow:member_within_repository",
+        "rewrite:remove:field:development_process_flow:model_authority_read_side_effect_free",
+        "rewrite:remove:field:development_process_flow:model_current",
+        "rewrite:remove:field:development_process_flow:mutation_evidence_target_owned",
+        "rewrite:remove:field:development_process_flow:native_route_preserved",
+        "rewrite:remove:field:development_process_flow:packet_fields_consumed",
+        "rewrite:remove:field:development_process_flow:parallel_domain_executor",
+        "rewrite:remove:field:development_process_flow:parent_receipts_current",
+        "rewrite:remove:field:development_process_flow:progress_changed",
+        "rewrite:remove:field:development_process_flow:provider_runtime_current",
+        "rewrite:remove:field:development_process_flow:reentry_count",
+        "rewrite:remove:field:development_process_flow:repository_relative_reference_fallback_used",
+        "rewrite:remove:field:development_process_flow:repository_root_supplied",
+        "rewrite:remove:field:development_process_flow:required_steps_passed",
+        "rewrite:remove:field:development_process_flow:resume_from_events",
+        "rewrite:remove:field:development_process_flow:root_role_binding_current",
+        "rewrite:remove:field:development_process_flow:route_owner_unique",
+        "rewrite:remove:field:development_process_flow:route_predicate_exact",
+        "rewrite:remove:field:development_process_flow:route_typed",
+        "rewrite:remove:field:development_process_flow:run_claimed",
+        "rewrite:remove:field:development_process_flow:safe_claim_scoped",
+        "rewrite:remove:field:development_process_flow:selected_reference_current",
+        "rewrite:remove:field:development_process_flow:standalone_member_root_path_current",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_check_declared",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_check_in_inventory",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_disposition_passed",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_owner_exact",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_projection_matches_result",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_receipt_current",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_receipt_identity_present",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_request_exact",
+        "rewrite:remove:field:development_process_flow:target_native_deepening_terminal",
+        "rewrite:remove:field:development_process_flow:target_root_supplied",
+        "rewrite:remove:field:development_process_flow:unique_evidence_contribution",
+        "rewrite:remove:field:development_process_flow:unselected_material_excluded",
+        "rewrite:remove:field:development_process_flow:writer_lock_owned",
+        "rewrite:remove:function-block:workflow:development_process_flow:skillguard_executable_contract_runtime:0:9b3d3c370078:0:EvaluateExecutableContract",
+        "rewrite:remove:state:workflow:development_process_flow:skillguard_executable_contract_runtime:0:9b3d3c370078:0",
+        "rewrite:remove:state:workflow:development_process_flow:skillguard_executable_contract_runtime:0:9b3d3c370078:1",
+        "rewrite:remove:transition:workflow:development_process_flow:skillguard_executable_contract_runtime:0:9b3d3c370078:0:EvaluateExecutableContract",
+        "rewrite:remove:validation:development_process_flow:invariant:artifacts_and_checks_are_current",
+        "rewrite:remove:validation:development_process_flow:invariant:assurance_diagnostics_preserve_authority",
+        "rewrite:remove:validation:development_process_flow:invariant:author_repositories_keep_skillguard_maintenance_private",
+        "rewrite:remove:validation:development_process_flow:invariant:closure_consumes_current_exact_receipts",
+        "rewrite:remove:validation:development_process_flow:invariant:depth_profile_preserves_native_authority",
+        "rewrite:remove:validation:development_process_flow:invariant:every_task_is_claimed_and_locked",
+        "rewrite:remove:validation:development_process_flow:invariant:evidence_contribution_is_unique",
+        "rewrite:remove:validation:development_process_flow:invariant:execution_depth_is_current_and_consumed",
+        "rewrite:remove:validation:development_process_flow:invariant:external_target_binding_is_explicit",
+        "rewrite:remove:validation:development_process_flow:invariant:failed_or_dead_writer_lock_cannot_block_forever",
+        "rewrite:remove:validation:development_process_flow:invariant:failures_and_former_authority_cannot_hide",
+        "rewrite:remove:validation:development_process_flow:invariant:generated_authority_uses_canonical_text_identity",
+        "rewrite:remove:validation:development_process_flow:invariant:guard_change_claims_a_new_run",
+        "rewrite:remove:validation:development_process_flow:invariant:loops_require_progress_and_a_finite_bound",
+        "rewrite:remove:validation:development_process_flow:invariant:maintenance_unit_graduation_uses_only_unit_evidence",
+        "rewrite:remove:validation:development_process_flow:invariant:model_and_binding_are_authoritative",
+        "rewrite:remove:validation:development_process_flow:invariant:packet_fields_are_declared_and_consumed",
+        "rewrite:remove:validation:development_process_flow:invariant:pass_and_skip_are_verifier_owned",
+        "rewrite:remove:validation:development_process_flow:invariant:resume_uses_durable_events",
+        "rewrite:remove:validation:development_process_flow:invariant:routes_are_typed_and_uniquely_owned",
+        "rewrite:remove:validation:development_process_flow:invariant:selected_route_loads_only_declared_material",
+        "rewrite:remove:validation:development_process_flow:invariant:target_native_deepening_is_current",
+        "rewrite:remove:validation:development_process_flow:protected-failure:skillguard:diagnostic-closure-override",
+        "rewrite:remove:validation:development_process_flow:protected-failure:skillguard:diagnostic-obligation-weakening",
+        "rewrite:remove:validation:development_process_flow:protected-failure:skillguard:foreign-mutation-judgment",
+        "rewrite:remove:validation:development_process_flow:protected-failure:skillguard:stale-assurance-authority"
+      ],
+      "rewrite_set_exhausted": true,
+      "rewrite_set_fingerprint": "sha256:1495bc11a1fd65aeb6a7658d08d5e8406a0c01e20d531c0e44dda680059fba47",
+      "schema_version": "flowguard.model-path-quality.v2",
+      "selected_candidate_id": "",
+      "selected_candidate_lane": "",
+      "subject_fingerprint": "sha256:ae5f9bfc11c345a457da283384d84a2daa19ea910d4c4464ba55c5ddddf69eb8",
+      "trigger_evidence_fingerprint": "sha256:40b192e87ab6d596c50d94b8a68785ef50ef05b32be597831a998476da7fd438",
+      "trigger_ids": [
+        "high_cost_boundary"
+      ],
+      "unresolved_ids": []
+    }
+  ],
+  "path_quality_subjects": [
+    {
+      "boundary_id": "model-boundary:development_process_flow",
+      "code_fingerprint": "sha256:9e37f969c13bd1f9b92636d8e1e3822a49a0af9c000dece6b25794cc6c6fa68b",
+      "currentness_id": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "dependency_fingerprint": "sha256:2e82731ab8afb072ea23a841523eb0d5ab75ed5474a2956f9f3898da19c4c784",
+      "evidence_fingerprint": "sha256:0d18779897b22b19a1a3baf70240169cef56f1b1f7e8842a03ede687105ed81a",
+      "fingerprint": "sha256:ae5f9bfc11c345a457da283384d84a2daa19ea910d4c4464ba55c5ddddf69eb8",
+      "intent_fingerprint": "sha256:555cca7f835d40057f3ee91bf9dc7328ecc8cbad800c5d41aaa7dd22519474f9",
+      "model_fingerprint": "sha256:232c0c003e0ce4b04225bc4da94fde2bc0c791e901a3fd12259884b1d7c687f6",
+      "model_id": "development_process_flow",
+      "normalized_facts_fingerprint": "sha256:fe605b443bf16902ac8d2c5593ae8797882616b20ba3c07dcde0df5ffa85c9b5",
+      "obligation_fingerprint": "sha256:bf5d8f91e8a4bf7e5d46becc10c3688143984e75cbf3a00b22b76373302ab942",
+      "oracle_fingerprint": "sha256:85a24f50d69f0391a030c4b6a3cd4b9ce4c073d24264367ea98e460fccf1959d",
+      "provider_fingerprint": "sha256:98e89c998604737d27e267e32fcd8fb6edecf964f3dea565be580592d51a5abf",
+      "purpose_fingerprint": "sha256:1f9ef0f4d02dba65d192944cec2e6d4fd0e699bb5058d79d889701891bee1e13",
+      "retained_element_inventory_fingerprint": "sha256:12a3ccb1a2092655041cf42a7f04ea58f9ce4bd7f1d336b9a80765f9870bae61",
+      "schema_version": "flowguard.model-path-quality.v2",
+      "test_fingerprint": "sha256:b78ecfcd79da3817262a4276786e998fb4c93e94615a3f8bf6ef5e4294358646"
+    }
+  ],
+  "prediction_replay_refs": [],
+  "removal_dispositions": [],
+  "removed_ids": [],
+  "required_evidence_refs": [
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "covered_affected_ids": [
+        "coverage:universe",
+        "model_relation:relation:model-realizes-purpose:development_process_flow",
+        "model_relation:relation:system-contains:development_process_flow",
+        "parent_closure:system:flowguard:model-regression-manifest",
+        "system_property:subject_revision"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:6d73df4c1cc42a75c68c80b2e650eabfab797a93aaf57d284f3263eacf3235e0",
+      "obligation_ids": [
+        "coverage:universe",
+        "model_relation:relation:model-realizes-purpose:development_process_flow",
+        "model_relation:relation:system-contains:development_process_flow",
+        "parent_closure:system:flowguard:model-regression-manifest",
+        "system_property:subject_revision"
+      ],
+      "owner_route": "model_mesh_maintenance",
+      "receipt_fingerprint": "sha256:a39e9476290834054d0f83a1d1ca644077f3973c3984ff5c0bb201509671df96",
+      "receipt_id": "receipt:validation-owner:model_mesh_maintenance:ee29a53540cd36f60aaddd3b0f7b0990",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "required",
+      "subject_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "toolchain_fingerprint": "sha256:2076e7338a6b9e06883cceeb35ce417f0f6c65034d232e261ca0d92a32705618"
+    },
+    {
+      "affected_closure_fingerprint": "sha256:3290261e6789b6ef5fd64520233a779e6325bcdc419ca369ef9b3a6d8132c6b3",
+      "candidate_snapshot_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "covered_affected_ids": [
+        "model_instance:model:development_process_flow",
+        "parent_closure:purpose:development_process_flow"
+      ],
+      "current": true,
+      "eligible": true,
+      "environment_fingerprint": "sha256:6d73df4c1cc42a75c68c80b2e650eabfab797a93aaf57d284f3263eacf3235e0",
+      "obligation_ids": [
+        "model_instance:model:development_process_flow",
+        "parent_closure:purpose:development_process_flow"
+      ],
+      "owner_route": "model_test_alignment",
+      "receipt_fingerprint": "sha256:13f4e7573ad34d068e6da6fa79b3555e592c9d44aeccf7aa959d733cc4474fe8",
+      "receipt_id": "receipt:validation-owner:model_test_alignment:b03d7fa84be70ca37a2dce8a99ff48b8",
+      "schema": "flowguard.model_revision_evidence.v2",
+      "status": "required",
+      "subject_fingerprint": "sha256:665fa955e48124985771a3ddfa3d0e6da219f871b932594d73b075e186b0094f",
+      "toolchain_fingerprint": "sha256:57370163a16f5a036b64b5e328e5921e1dfe6be8c09e90137413a611f7711070"
+    }
+  ],
+  "required_path_quality_model_ids": [
+    "development_process_flow"
+  ],
+  "revision_set_id": "skillguard-direct-current-20260820-portable-content-r2",
+  "rollback_contract_fingerprint": "",
+  "schema": "flowguard.model_revision_set.v5",
+  "snapshot_diff_fingerprint": "sha256:7f7a9b49eeaaf3a5481cd0c9f3980f597dcbbee725ed8b6f8686011fb4c7994e",
+  "status": "accepted",
+  "task_id": "task:skillguard-portable-content-20260820"
+}

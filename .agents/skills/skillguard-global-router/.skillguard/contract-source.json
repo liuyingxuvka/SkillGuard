@@ -228,6 +228,12 @@
       "check:router:command-surface",
       "check:router:flowguard-model"
     ],
+    "model_deepening_check_id": "check:router:flowguard-model",
+    "surface_inventory": {
+      "path": ".skillguard/surface-inventory.json",
+      "adequacy_check_ids": ["check:router:command-surface"],
+      "model_deepening_check_id": "check:router:flowguard-model"
+    },
     "native_owner_id": "skillguard.global_router_cli",
     "native_route_ids": [
       "route:scan-global-skills",

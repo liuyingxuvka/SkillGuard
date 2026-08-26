@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.closure import ClosureError, close_run, evaluate_closure, verify_closure
 from skillguard_v2.contract_compiler import canonical_hash
 from skillguard_v2.receipts import fingerprint_value, issue_receipt
@@ -225,6 +225,12 @@ class ClosureProfilesV2Tests(unittest.TestCase):
             "native_owner_id": "fixture-native-owner",
             "native_route_ids": ["route:analyze"],
             "native_check_ids": ["check:intake"],
+            "model_deepening_check_id": "check:intake",
+            "surface_inventory": {
+                "path": ".skillguard/surface-inventory.json",
+                "adequacy_check_ids": ["check:intake"],
+                "model_deepening_check_id": "check:intake",
+            },
             "skillguard_adds_domain_route": False,
             "enforcement_level": "enforced",
             "required_closure_profiles": ["enforced"],

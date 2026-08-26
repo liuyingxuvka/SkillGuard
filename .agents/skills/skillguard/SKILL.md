@@ -7,7 +7,7 @@ description: Use for authoring, maintaining, checking, graduating, installing, o
 
 ## Purpose
 
-SkillGuard supervises maintenance of explicitly registered skill sources. A target skill declares its own promises, completion/depth criteria, native checks, evidence subjects, and clean consumer material. SkillGuard verifies that those exact declarations, execution receipts, projections, and closure agree; it does not invent deeper domain criteria or reinterpret the target's result.
+SkillGuard supervises maintenance of explicitly registered skill sources. A target skill declares its own promises, completion/depth criteria, native checks, evidence subjects, a reverse implementation-surface inventory, and clean consumer material. SkillGuard verifies that those exact declarations, execution receipts, projections, and closure agree; it does not invent deeper domain criteria or reinterpret the target's result. A declared-check list without a current surface inventory is incomplete and cannot graduate.
 
 Graduated consumer skills must work from their own `SKILL.md`, scripts, references, assets, and native checks with no SkillGuard dependency.
 
@@ -92,11 +92,31 @@ Do not load Portfolio, installation, self-host, template-pack, or release materi
 3. Freeze every check, obligation/evidence domain, dependency, subject, private evidence root, and exactly one execution owner.
 4. Reuse a terminal-success receipt only inside the same unit when unit/member/owner/request/inputs/dependencies/toolchain/environment/policy and consumer projection identities are exact.
 5. Execute missing owners under single-flight ownership. Skipped, failed, stale, timed-out, cancelled, cleanup-unconfirmed, or non-terminal evidence blocks.
-6. Require the target's fixed enforced closure and declared model-deepening check when present. The target, not SkillGuard, decides whether its predictions, falsifiers, iterations, gaps, or other domain evidence close.
-7. Build a clean consumer projection containing only target-owned material; audit independence with SkillGuard absent.
-8. Prepare and activate installation transactionally, retaining rollback/recovery; verify installation currentness separately from validation.
-9. Update Portfolio/router state only if affected; they never make another unit current.
-10. Report exact checked, executed, reused, skipped, blocked, consumer, install, Git/tag/release, and residual claim boundaries.
+  6. Require the target's enforced closure, model-deepening check, and current
+     surface-inventory/adequacy binding. The target decides domain closure;
+     SkillGuard verifies only discovered surfaces and typed dispositions.
+    A pass requires replaying the canonical terminal receipt against identity,
+    owner, inputs, dependencies, toolchain, environment, obligations, and cleanup;
+    caller results, logs, and fixtures never close.
+  7. Reverse discovery belongs to the maintained target's author surface and
+     must cover public commands/routes/APIs, effects, faults, recovery, installers,
+     configuration, UI-like actions, and behavior-significant helpers through
+     governed components. Forward intent/model/test obligations and reverse
+     observations meet at a reviewable surface/component boundary: a line, local
+     variable, or incidental helper needs no intent row unless independently
+     meaningful. A visible control, effect, fault, recovery path, or implementation
+     surface without intent, owner, check, and evidence is a blocking gap; this
+     does not make SkillGuard a consumer runtime dependency. Unknown, orphan,
+     ambiguous, or one-way rows block.
+    Each row carries `surface_id`, kind, source+fingerprint, component, intent,
+    route, obligations, owners, checks, adequacy, evidence, fault/recovery/oracle,
+    disposition, and proof. Groups enumerate every member and share owner/oracle;
+    stale, unknown, one-way, or resealed rows block. Identity mismatch requires a
+    direct-current rewrite; former formats reject, never becoming another authority.
+  8. Build a clean target-owned consumer projection and audit it with SkillGuard absent.
+  9. Prepare/activate installation transactionally; verify installation currentness separately.
+  10. Update Portfolio/router only when affected; they never make another unit current.
+  11. Report exact checked, executed, reused, skipped, blocked, consumer, install, release, and residual boundaries.
 
 ## Terminals
 
@@ -112,6 +132,7 @@ Progress, a PID, a log, generated prompt text, an old receipt, or prose cannot c
 - No explicit author role/unit/member/contract trio: no write or validation.
 - No explicit private run/evidence roots: no supervision.
 - No semantic owner, duplicate owner, foreign-unit dependency/receipt, or cyclic plan: block.
+- No functional-closure pass without a current canonical terminal receipt replay.
 - No compatibility reader, fallback, migration command, alias, dual manifest, or alternate current authority.
 - No `.skillguard`, SkillGuard command/import/receipt/router/Portfolio state, author path, or author-only fixture/model/test in a consumer projection.
 - No target runtime hidden inside a retired private maintenance-runtime directory.

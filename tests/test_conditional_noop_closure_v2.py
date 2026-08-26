@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from _skillguard_v2_runtime_fixture import (  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import (  # noqa: F401
     SCRIPT_ROOT,
     runtime_check_manifest,
     runtime_contract,
@@ -97,6 +97,12 @@ def _branch_contract() -> dict[str, object]:
         "native_owner_id": "fixture-native-update",
         "native_route_ids": ["route:analyze"],
         "native_check_ids": ["check:update"],
+        "model_deepening_check_id": "check:update",
+        "surface_inventory": {
+            "path": ".skillguard/surface-inventory.json",
+            "adequacy_check_ids": ["check:update"],
+            "model_deepening_check_id": "check:update",
+        },
         "skillguard_adds_domain_route": False,
         "enforcement_level": "enforced",
         "required_closure_profiles": ["enforced"],

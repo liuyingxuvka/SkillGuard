@@ -157,6 +157,17 @@ def installation_projection_identity(skill_root: Path) -> dict[str, Any]:
     input_projection_hash = wire_hash(component_rows)
     if input_projection_hash != projection["input_projection_hash"]:
         raise ValueError("installation_projection_input_hash_mismatch")
+    generated_authorities: list[dict[str, str]] = []
+    for relative_text in sorted(GENERATED_INSTALL_AUTHORITIES):
+        candidate = root / Path(*relative_text.split("/"))
+        if candidate.is_symlink() or not candidate.is_file():
+            raise ValueError("installation_projection_generated_authority_missing")
+        generated_authorities.append(
+            {
+                "path": relative_text,
+                "content_hash": impact_file_hash(candidate),
+            }
+        )
     identity = {
         "schema_version": INSTALLATION_PROJECTION_SCHEMA,
         "skill_id": skill_id,
@@ -164,6 +175,7 @@ def installation_projection_identity(skill_root: Path) -> dict[str, Any]:
         "projection_declaration_hash": projection["projection_declaration_hash"],
         "input_projection_hash": input_projection_hash,
         "consumer_projection_hash": projection["consumer_projection_hash"],
+        "generated_install_authorities": generated_authorities,
     }
     identity["identity_hash"] = wire_hash(identity)
     return identity

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from _skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.closure import ClosureError, close_run, evaluate_closure, load_closure, verify_closure
 from skillguard_v2.receipts import fingerprint_value, issue_receipt
 from skillguard_v2.route_runtime import select_routes

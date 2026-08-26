@@ -1,0 +1,46 @@
+{
+  "schema_version": "skillguard.functional_closure.current",
+  "functional_closure_id": "{{functional_closure_id}}",
+  "target_skill_id": "{{target_skill_id}}",
+  "outcomes": [
+    {
+      "outcome_id": "{{outcome_id}}",
+      "user_jobs": ["{{representative_user_job}}"],
+      "success_outputs": ["{{success_output_or_artifact}}"],
+      "non_goals": ["{{explicit_non_goal}}"],
+      "quality_requirement_ids": ["{{quality_id}}"],
+      "path_id": "{{path_id}}"
+    }
+  ],
+  "closure_paths": [
+    {
+      "path_id": "{{path_id}}",
+      "outcome_ids": ["{{outcome_id}}"],
+      "stages": [
+        {"stage_id": "{{trigger_stage_id}}", "role": "trigger", "owner_id": "{{owner_id}}", "check_ids": ["{{check_id}}"], "evidence_ids": ["{{evidence_id}}"]},
+        {"stage_id": "{{intake_stage_id}}", "role": "intake", "owner_id": "{{owner_id}}", "check_ids": ["{{check_id}}"], "evidence_ids": ["{{evidence_id}}"]},
+        {"stage_id": "{{route_stage_id}}", "role": "route", "owner_id": "{{owner_id}}", "native_route_id": "{{route_id}}", "check_ids": ["{{check_id}}"], "evidence_ids": ["{{evidence_id}}"]},
+        {"stage_id": "{{execute_stage_id}}", "role": "execute", "owner_id": "{{owner_id}}", "check_ids": ["{{check_id}}"], "evidence_ids": ["{{evidence_id}}"]},
+        {"stage_id": "{{produce_stage_id}}", "role": "produce", "owner_id": "{{owner_id}}", "check_ids": ["{{check_id}}"], "evidence_ids": ["{{evidence_id}}"]},
+        {"stage_id": "{{validate_stage_id}}", "role": "validate", "owner_id": "{{owner_id}}", "check_ids": ["{{check_id}}"], "evidence_ids": ["{{evidence_id}}"]},
+        {"stage_id": "{{terminal_stage_id}}", "role": "terminal", "owner_id": "{{owner_id}}", "check_ids": ["{{check_id}}"], "evidence_ids": ["{{evidence_id}}"], "terminal_kind": "success"}
+      ]
+    }
+  ],
+  "failure_modes": [],
+  "quality_requirements": [
+    {"quality_id": "{{quality_id}}", "description": "{{quality_requirement}}", "required": true, "evidence_ids": ["{{evidence_id}}"]}
+  ],
+  "evidence": [
+    {
+      "evidence_id": "{{evidence_id}}",
+      "execution_depth": "fixture",
+      "environment_scope": "single",
+      "quality_level": "deterministic",
+      "assertion_categories": ["activation", "execution", "output", "validation", "terminal"],
+      "result": "not_run",
+      "command_ref": "{{native_command_or_check}}"
+    }
+  ],
+  "claim_boundary": "This template is a declaration scaffold only; it does not prove target execution, quality, recovery, installation, or publication."
+}

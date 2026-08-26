@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL_PATH = ROOT / ".flowguard" / "development_process_flow" / "skillguard_executable_contract_model.py"
+MODEL_PATH = ROOT / ".flowguard" / "models" / "owners" / "development_process_flow" / "skillguard_executable_contract_model.py"
 
 
 def load_model():
@@ -140,6 +140,19 @@ class ExecutableContractModelTests(unittest.TestCase):
             for route_id in functions[function_id]["route_ids"]:
                 self.assertIn(route_id, routes)
                 self.assertTrue(routes[route_id]["success_terminal_step_id"])
+
+    def test_template_lifecycle_is_explicit_optional_extension(self) -> None:
+        export = self.model.export_contract_model()
+        self.assertNotIn(
+            "route:template-lifecycle-supervision",
+            {row["route_id"] for row in export["routes"]},
+        )
+        extension = self.model.export_template_lifecycle_contract_extension()
+        self.assertIn(
+            "route:template-lifecycle-supervision",
+            {row["route_id"] for row in extension["routes"]},
+        )
+        self.assertEqual(5, len(extension["obligations"]))
 
     def test_test_mesh_passes_and_owns_generated_cases(self) -> None:
         reports = self.model.run_governance_reviews()

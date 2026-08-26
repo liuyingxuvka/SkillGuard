@@ -9,6 +9,25 @@ FlowGuard calibration established two distinct facts:
 
 The design therefore reuses the former directly, implements the latter inside SkillGuard's narrower boundary, and avoids copying FlowGuard's fixed five-phase and large generated-file surface.
 
+## Authority and direct-current boundary
+
+`build-executable-skill-contract-runtime` is the sole current authority for the
+executable contract, functional/release/highest-quality closure, SkillGuard
+self-host acceptance, and CI/release acceptance. The archived
+`../archive/2026-08-20-add-skill-functional-closure-audit` change is retained
+only as historical provenance and cannot provide current commands, schemas,
+receipts, tasks, or success authority. `add-bounded-evidence-lifecycle` owns
+only the evidence-store and lifecycle boundary; it is not a second authority
+for executable-contract or closure semantics. A lifecycle change that alters
+inputs consumed here must be integrated by a direct-current rebuild and fresh
+validation under this change.
+
+Former contract, closure, receipt, and installation identities are
+rejection-only direct-current rewrite inputs. There is no compatibility reader,
+fallback path, migration command, converter, alias, dual manifest, or alternate
+success authority. A mismatch is a visible blocker until the current source is
+manually rewritten and validated again.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -68,15 +87,46 @@ Receipts are immutable. Freshness is derived from current input, implementation,
 
 ### 6. Routes and loops
 
-Every handoff is typed and names a target, condition, and claim scope. Every business intent has one canonical success owner. A multi-function request may compose only declared compatible paths. Every SCC declares a progress measure, allowed delta, successful and blocked terminals, and a finite re-entry bound. Re-entry without progress is blocked.
+Every handoff is typed and names a target, condition, and claim scope. Every business intent has one canonical success owner. A multi-function request may compose only declared composable paths. Every SCC declares a progress measure, allowed delta, successful and blocked terminals, and a finite re-entry bound. Re-entry without progress is blocked.
 
 ### 7. Closure profiles
 
 `routine`, `functional`, `release`, and `highest_quality` are monotonic. A stricter profile adds requirements and never hides a failure. Closure consumes exact current receipts and reports a safe claim and unsafe claim boundary. `partial`, `stale`, `skipped`, `not_run`, `progress_only`, and `blocked` cannot satisfy full closure.
 
-### 8. Bootstrap and first external test
+The functional profile requires the current source, FlowGuard model export,
+compiled contract, check manifest, target-owned surface inventory, and one
+current full TestMesh aggregation for the self-host maintenance unit. Every
+required lifecycle stage must resolve to a current immutable terminal-success
+receipt with exact unit/member/check/owner/request/input/dependency/toolchain/
+environment/projection identity. Functional positive-path evidence is
+`simulated_e2e` or stronger; target-declared failure, recovery, non-goal, and
+terminal evidence must also be current.
 
-Self-hosting uses two stages: the frozen old verifier checks the new compiler/runtime build boundary, then the new verifier runs its own contract and fixtures with recorded version and hashes. The first external target is Autonomous Concept UI Redesign because it exercises explicit routing, conditional FlowGuard work, images, code, real UI launch, screenshots, geometry, bounded iteration, judged review, app-icon evidence, and parent closure.
+The release profile additionally requires `real_e2e` or stronger evidence for
+each required lifecycle stage, deterministic quality evidence, a canonical
+`.skillguard/self-host/current` terminal receipt bound to the current source,
+contract, manifest, and owner-plan identities, clean-install smoke,
+source/installed projection parity, post-install full self-host verification,
+and current terminal receipts for the declared Windows and Linux CI matrix. A
+workflow declaration, local install/router receipt, or aggregation-only record
+does not prove CI or release closure. The highest-quality profile adds current
+human or domain-expert evidence for every declared quality requirement.
+
+### 8. Direct-current self-host and bounded pressure test
+
+Self-hosting uses one current verifier after the current source, compiler,
+runtime, contract, manifest, and receipt authority are rebuilt and frozen
+together. Former verifier or contract identities are rejection-only inputs; they
+never close a current run. A transactional rollback may restore an incomplete
+write, but it cannot accept the former artifact as a current success. The
+current pressure test is limited to SkillGuard itself and its repository-
+controlled fixtures, so that the self-host contract, runtime, and evidence
+authority can be closed without mutating or depending on another project. A
+future external target may be selected only by a separate, explicitly
+authorized change after this self-host closure passes; external pilot evidence
+is not an input to this change. A missing canonical self-host receipt or a
+non-terminal/foreign receipt leaves the requested profile blocked; no weaker
+profile, old receipt, or alternate authority is substituted.
 
 ### 9. Portfolio calibration is a feedback loop
 
@@ -84,7 +134,15 @@ After the first pilot, maintained skills graduate one at a time in a recorded si
 
 Failures are classified as target implementation, target binding, SkillGuard model miss, SkillGuard runtime/validator gap, or environment/external blocker. A previous SkillGuard green followed by real failure invokes Model Miss Review: preserve the old claim and observed failure, classify the missed boundary, add an observed-regression and ContractExhaustion same-class cases, repair the owning model/code/test boundary, and mark the old proof stale or overclaimed.
 
-Every SkillGuard change declares affected feature tags such as schema, compiler, route, run-state, receipt, artifact, native-check, closure, or provenance. All graduated skills receive a cheap contract/parity/freshness scan; skills using an affected feature must rerun representative real jobs and related negative/recovery evidence. Before the next target graduates, every earlier target must have either current full evidence under the active Guard compatibility fingerprint or a current TestResultReuseTicket proving the Guard change does not intersect its covered surface. Core closure, receipt, routing, or schema changes invalidate reuse and require full reruns.
+Every SkillGuard change declares affected feature tags such as schema, compiler,
+route, run-state, receipt, artifact, native-check, closure, or provenance. All
+graduated skills receive a cheap contract/parity/freshness scan; skills using an
+affected feature must rerun representative real jobs and related
+negative/recovery evidence. Before the next target graduates, every earlier
+target must have either current full evidence under the exact current Guard
+identity fingerprint or a current TestResultReuseTicket proving the Guard
+change does not intersect its covered surface. Core closure, receipt, routing,
+or schema changes invalidate reuse and require full reruns.
 
 The parent portfolio gate consumes current child receipts or reuse tickets. It never hides `revalidation_required`, stale, missing, failed, or blocked children inside a green aggregate.
 
@@ -110,24 +168,42 @@ The CLI stays a thin facade. No module may implement an alternate successful ver
 - **Subjective work cannot be machine-proven** → preserve judged evidence as a separate class and disclose evaluator/self-review limits.
 - **FlowGuard API changes** → use a versioned adapter and fail closed on unsupported schema; never vendor a mini-FlowGuard.
 - **Generated files drift across many skills** → emit only two published files and provide deterministic check mode.
-- **Self-verification becomes circular** → retain two-stage bootstrap evidence and negative fixtures.
+- **Self-verification becomes circular** → retain direct-current bootstrap evidence and negative fixtures.
 - **Runtime duplicates native workflow** → enforce canonical owner and require target-native action/check bindings.
-- **Old commands become a fallback path** → govern every old field and command through FieldLifecycle and Primary Path Authority before release.
-- **The Guard evolves while targets are being migrated** → version a Guard compatibility fingerprint, project affected feature tags, stale affected prior graduates, and require TestMesh-backed revalidation before the next graduation.
+- **Old commands remain unresolved** → give every old field and command a direct
+  FieldLifecycle and Primary Path Authority disposition before release; rewrite,
+  retire, or block it, with no alternate success path.
+- **The Guard identity changes while targets are being updated** → record the
+  exact current Guard identity fingerprint, project affected feature tags, mark
+  affected prior graduates stale, and require TestMesh-backed revalidation
+  before the next graduation.
 - **Full portfolio reruns become too expensive** → run universal compile/freshness scans, targeted real reruns for affected skills, and permit result reuse only through current proof-bound tickets; require all-real full reruns for broad semantic or release changes.
 
-## Migration Plan
+## Direct-current rollout plan
 
 1. Build and validate FlowGuard parent/child models, BCL, PPA, CEM, MTA, and tests before production implementation.
 2. Implement schemas/compiler, then claimed run/replay, then receipts/checks/artifacts, then closure.
-3. Self-host on SkillGuard and remove or migrate duplicate old runtime authority.
-4. Run the Autonomous UI positive path and negative matrix; simplify the architecture based on measured friction.
-5. Add provenance, privacy, CI, staged install, global-router refresh, and post-install verification.
-6. Publish from the local canonical source branch only after release closure passes.
-7. For maintained skills without a user-owned repository, identify the real upstream and license, choose fork, attributed derivative, local overlay, upstream contribution, or no-adoption, and only then create or synchronize a GitHub repository.
-8. Roll targets out one at a time; after every target-driven SkillGuard repair, rerun self-host, the current target, all affected prior graduates, and the parent portfolio graduation gate before continuing.
+3. Self-host on SkillGuard and directly rebuild the current authority; remove,
+   retire, or block every duplicate former runtime authority. No former-format
+   reader or alternate success path is introduced. Then freeze the current
+   source, FlowGuard model, compiled contract, check manifest, target surface
+   inventory, toolchain, and owner plan.
+4. Run one functional self-host owner under the frozen identities and consume
+   its current full TestMesh aggregation and terminal receipts.
+5. Run the release self-host owner once under the same frozen identities, then
+   run clean-install smoke, source/installed parity, post-install full
+   verification, and the declared Windows/Linux CI matrix. Missing terminal
+   evidence keeps release blocked.
+6. Run the Autonomous UI positive path and negative matrix; simplify the architecture based on measured friction.
+7. Add provenance, privacy, staged install, global-router refresh, and post-install verification.
+8. Publish from the local canonical source branch only after release closure passes.
+9. For maintained skills without a user-owned repository, identify the real upstream and license, choose fork, attributed derivative, local overlay, upstream contribution, or no-adoption, and only then create or synchronize a GitHub repository.
+10. Roll targets out one at a time; after every target-driven SkillGuard repair, rerun self-host, the current target, all affected prior graduates, and the parent portfolio graduation gate before continuing.
 
-Rollback preserves the frozen prior release and installed backup. V2 run directories are additive and ignored by published skill packages. No rollback may silently treat a V2 failure as a V1 success.
+Rollback preserves the frozen prior release and installed backup. V2 run
+directories are additive and ignored by published skill packages. A rollback
+may restore an incomplete transaction, but it may not silently treat a current
+failure as a former-format success.
 
 ## Third-Party Skill Adoption
 
