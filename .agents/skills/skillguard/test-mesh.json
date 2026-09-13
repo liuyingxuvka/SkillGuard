@@ -6,17 +6,30 @@
     {
       "profile_id": "fast",
       "closure_profile_id": "enforced",
-      "full_admission_required": false
+      "requested_claims": ["source_release"],
+      "owner_ids": [
+        "owner:self:run-native-static-checks"
+      ]
     },
     {
       "profile_id": "focused",
       "closure_profile_id": "enforced",
-      "full_admission_required": false
+      "requested_claims": ["source_release"],
+      "owner_ids": [
+        "owner:self:run-declared-checks",
+        "owner:self:run-native-static-checks",
+        "owner:self:validate-step-evidence",
+        "owner:self:validation-composition-model"
+      ]
     },
     {
       "profile_id": "full",
       "closure_profile_id": "enforced",
-      "full_admission_required": true
+      "requested_claims": [
+        "global_router_current",
+        "installed_current",
+        "source_release"
+      ]
     }
   ],
   "claim_boundary": "This current manifest selects compiler-owned execution owners through existing closure profiles. TestMesh plans exact reuse/missing owners, its public frozen-plan runner resolves only will_execute owners through their declared single-flight authority, and it aggregates immutable owner receipts; the manifest declares no commands, source paths, compatibility suites, or hidden execution fallback."

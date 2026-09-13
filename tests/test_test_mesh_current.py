@@ -84,20 +84,24 @@ class CurrentTestMeshTests(unittest.TestCase):
             {
                 "profile_id": "fast",
                 "closure_profile_id": "enforced",
-                "full_admission_required": False,
+                "requested_claims": ["source_release"],
             },
             {
                 "profile_id": "full",
                 "closure_profile_id": "enforced",
-                "full_admission_required": True,
+                "requested_claims": [
+                    "global_router_current",
+                    "installed_current",
+                    "source_release",
+                ],
             },
         ]
         if second_profile:
             profiles.append(
                 {
-                    "profile_id": "same-owners",
-                    "closure_profile_id": "enforced",
-                    "full_admission_required": False,
+                "profile_id": "same-owners",
+                "closure_profile_id": "enforced",
+                "requested_claims": ["source_release"],
                 }
             )
         self.mesh_manifest.write_text(
@@ -381,7 +385,7 @@ class CurrentTestMeshTests(unittest.TestCase):
                             **shared,
                             "check_id": "check:review",
                             "covers_obligation_ids": ["obligation:review"],
-                            "timeout_seconds": 31,
+                            "args": ["-c", "print('different-functional-owner')"],
                         },
                     ],
                     name="shared-owner-omission",
@@ -565,7 +569,7 @@ class CurrentTestMeshTests(unittest.TestCase):
         full = self._plan("full")
         self.assertEqual("blocked", full["status"])
         self.assertEqual(
-            ["full_gate_requires_exact_freeze_and_derived_reason"],
+            ["requested_claims_require_exact_freeze_identity"],
             full["findings"],
         )
 

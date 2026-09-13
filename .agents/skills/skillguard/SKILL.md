@@ -85,6 +85,18 @@ python .agents/skills/skillguard/scripts/skillguard.py route-task --task <public
 
 Do not load Portfolio, installation, self-host, template-pack, or release material for an unrelated read-only unit check.
 
+## Functional closure profiles
+
+Use the smallest declared TestMesh profile: `fast` for native/static checks,
+`focused` for the affected composition, and `full` only for an explicit
+installation, release, or whole-unit claim. Every profile freezes
+`requested_claims`: `source_release` is the functional claim; installation and
+private global-router currentness are opt-in typed claims, never an automatic
+side effect of selecting `full`. `owner_ids` are exact and only DAG
+dependencies are added. Exact-current reuse is read-only: no lease, head, run
+record, or new run directory; timeout/output/report/pointer metadata is not a
+functional invalidation.
+
 ## Required Workflow
 
 1. Establish the author boundary and freeze one maintenance unit.
@@ -92,31 +104,23 @@ Do not load Portfolio, installation, self-host, template-pack, or release materi
 3. Freeze every check, obligation/evidence domain, dependency, subject, private evidence root, and exactly one execution owner.
 4. Reuse a terminal-success receipt only inside the same unit when unit/member/owner/request/inputs/dependencies/toolchain/environment/policy and consumer projection identities are exact.
 5. Execute missing owners under single-flight ownership. Skipped, failed, stale, timed-out, cancelled, cleanup-unconfirmed, or non-terminal evidence blocks.
-  6. Require the target's enforced closure, model-deepening check, and current
-     surface-inventory/adequacy binding. The target decides domain closure;
-     SkillGuard verifies only discovered surfaces and typed dispositions.
-    A pass requires replaying the canonical terminal receipt against identity,
-    owner, inputs, dependencies, toolchain, environment, obligations, and cleanup;
-    caller results, logs, and fixtures never close.
-  7. Reverse discovery belongs to the maintained target's author surface and
-     must cover public commands/routes/APIs, effects, faults, recovery, installers,
-     configuration, UI-like actions, and behavior-significant helpers through
-     governed components. Forward intent/model/test obligations and reverse
-     observations meet at a reviewable surface/component boundary: a line, local
-     variable, or incidental helper needs no intent row unless independently
-     meaningful. A visible control, effect, fault, recovery path, or implementation
-     surface without intent, owner, check, and evidence is a blocking gap; this
-     does not make SkillGuard a consumer runtime dependency. Unknown, orphan,
-     ambiguous, or one-way rows block.
-    Each row carries `surface_id`, kind, source+fingerprint, component, intent,
-    route, obligations, owners, checks, adequacy, evidence, fault/recovery/oracle,
-    disposition, and proof. Groups enumerate every member and share owner/oracle;
-    stale, unknown, one-way, or resealed rows block. Identity mismatch requires a
-    direct-current rewrite; former formats reject, never becoming another authority.
-  8. Build a clean target-owned consumer projection and audit it with SkillGuard absent.
-  9. Prepare/activate installation transactionally; verify installation currentness separately.
-  10. Update Portfolio/router only when affected; they never make another unit current.
-  11. Report exact checked, executed, reused, skipped, blocked, consumer, install, release, and residual boundaries.
+6. Aggregate the unchanged plan once, then finalize self-host only from that
+   frozen plan and aggregation. The finalizer is read-only with respect to
+   claims, owners, and compilation, and is idempotent for the same terminal
+   pointer.
+  7. Require the target's enforced closure, model-deepening check, and current
+     surface inventory; the target owns domain meaning. Replay the canonical
+     terminal receipt against identity, owner, inputs, dependencies, toolchain,
+     environment, obligations, and cleanup; caller prose, logs, and fixtures do
+     not close.
+  8. The target's reverse inventory must map public commands/routes/APIs, effects,
+     faults/recovery, installers/configuration, UI-like actions, and meaningful
+     helpers to intent, owner, checks, and evidence. Unknown, orphan, ambiguous,
+     one-way, stale, or mismatched rows block; incidental helpers need no row.
+  9. Build a clean target-owned consumer projection and audit it with SkillGuard absent.
+  10. Prepare/activate installation transactionally; verify installation currentness separately.
+  11. Update Portfolio/router only when affected; they never make another unit current.
+  12. Report exact checked, executed, reused, skipped, blocked, consumer, install, release, and residual boundaries.
 
 ## Terminals
 

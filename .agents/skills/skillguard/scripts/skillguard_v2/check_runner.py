@@ -2113,6 +2113,40 @@ def _projection_result_from_receipt(
     return projected
 
 
+def _read_only_reuse_result(
+    *,
+    declared: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+    receipt: Mapping[str, Any],
+    sidecars: Mapping[str, Mapping[str, Any]],
+    run_root: Path,
+    step_id: str,
+) -> dict[str, Any]:
+    """Project an exact owner receipt without creating any evidence."""
+
+    raw = _projection_result_from_receipt(
+        declared,
+        manifest,
+        receipt,
+        sidecars,
+    )
+    raw["step_id"] = step_id
+    record = dict(
+        store_check_result(
+            run_root,
+            step_id,
+            raw,
+            persist=False,
+        )
+    )
+    return {
+        "disposition": "reused_terminal_success",
+        "record": record,
+        "execution_receipt": receipt,
+        "execution_receipt_ref": _owner_receipt_document_ref(receipt),
+    }
+
+
 def get_or_execute_check(
     check: Mapping[str, Any],
     *,
@@ -2148,6 +2182,31 @@ def get_or_execute_check(
         owner_evidence_root=persistent_root,
         dependency_receipts=dependency_receipts,
     )
+    # The common exact-current path is deliberately outside the single-flight
+    # lease and writer.  A read of an already verified immutable receipt must
+    # not refresh heads, receipts, or the run directory.
+    try:
+        current = _load_canonical_success(persistent_root, tentative_identity)
+    except CheckRunnerError as exc:
+        if exc.code not in {
+            "check_execution_head_invalid",
+            "check_execution_receipt_ref_invalid",
+            "check_execution_receipt_unreadable",
+            "check_execution_receipt_invalid",
+            "check_execution_sidecar_invalid",
+        }:
+            raise
+        current = None
+    if current is not None:
+        receipt, sidecars = current
+        return _read_only_reuse_result(
+            declared=declared,
+            manifest=_manifest,
+            receipt=receipt,
+            sidecars=sidecars,
+            run_root=run_root,
+            step_id=step_id,
+        )
     lifecycle_attempt_id = "attempt-" + uuid.uuid4().hex
     try:
         with (
@@ -2196,27 +2255,14 @@ def get_or_execute_check(
                 current = None
             if current is not None:
                 receipt, sidecars = current
-                publish_current_head_authority(
-                    persistent_root,
-                    _canonical_success_slot(
-                        persistent_root,
-                        execution_key=str(identity["execution_key"]),
-                    ),
+                return _read_only_reuse_result(
+                    declared=declared,
+                    manifest=_manifest,
+                    receipt=receipt,
+                    sidecars=sidecars,
+                    run_root=run_root,
+                    step_id=step_id,
                 )
-                raw = _projection_result_from_receipt(
-                    declared,
-                    _manifest,
-                    receipt,
-                    sidecars,
-                )
-                raw["step_id"] = step_id
-                record = dict(store_check_result(run_root, step_id, raw))
-                return {
-                    "disposition": "reused_terminal_success",
-                    "record": record,
-                    "execution_receipt": receipt,
-                    "execution_receipt_ref": _owner_receipt_document_ref(receipt),
-                }
             execution_id = "execution-" + canonical_hash(
                 {
                     "execution_key": identity["execution_key"],
@@ -2859,7 +2905,13 @@ def execute_check(
     return result
 
 
-def store_check_result(run_root: Path, step_id: str, result: Mapping[str, Any]) -> Mapping[str, Any]:
+def store_check_result(
+    run_root: Path,
+    step_id: str,
+    result: Mapping[str, Any],
+    *,
+    persist: bool = True,
+) -> Mapping[str, Any]:
     run = load_run(run_root)
     contract = load_contract_snapshot(run_root)
     manifest = load_check_manifest_snapshot(run_root)
@@ -2903,7 +2955,13 @@ def store_check_result(run_root: Path, step_id: str, result: Mapping[str, Any]) 
     persisted_result = _stable_persisted_result(result)
     diagnostic_stdout = str(persisted_result.pop("_persisted_stdout", ""))
     diagnostic_stderr = str(persisted_result.pop("_persisted_stderr", ""))
-    if "stdout" in persisted_result or "stderr" in persisted_result:
+    # Read-only exact-current reuse calls this helper with ``persist=False``.
+    # It must remain genuinely read-only: in particular, do not materialize
+    # redacted diagnostic sidecars in the new run merely because the reused
+    # producer record contains stdout/stderr fields.  Diagnostics are
+    # evidence outputs and belong only to the producer run that executed the
+    # command.
+    if persist and ("stdout" in persisted_result or "stderr" in persisted_result):
         diagnostic: dict[str, Any] = {
             "schema_version": "skillguard.check_output_diagnostic.v1",
             "artifact_type": "skillguard_check_output_diagnostic",
@@ -2982,6 +3040,8 @@ def store_check_result(run_root: Path, step_id: str, result: Mapping[str, Any]) 
     record_id_source.pop("created_at", None)
     record["check_record_id"] = f"check-record-{canonical_hash(record_id_source)[:24].lower()}"
     record["record_hash"] = canonical_hash(record)
+    if not persist:
+        return record
     root = filesystem_path(run_root / "checks")
     root.mkdir(parents=True, exist_ok=True)
     path = root / f"{record['check_record_id']}.json"

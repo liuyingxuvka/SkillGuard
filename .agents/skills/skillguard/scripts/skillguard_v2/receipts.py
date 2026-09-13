@@ -51,6 +51,158 @@ class FreshnessResult:
         }
 
 
+# These fields describe execution or evidence transport, not behavior under
+# test. They remain available to installation/provenance consumers, but their
+# change must not reopen an otherwise current functional leaf.
+FUNCTIONAL_FRESHNESS_EXCLUDED_KEYS = frozenset(
+    {
+        "guard_runtime",
+        "environment",
+        "timeout",
+        "timeout_seconds",
+        "resource_policy",
+        "output_dir",
+        "report",
+        "pointer",
+        "activation",
+        "receipt",
+    }
+)
+
+
+def functional_fingerprint_projection(
+    fingerprints: Mapping[str, object],
+) -> dict[str, object]:
+    """Return only behavior-bearing inputs for functional currentness."""
+
+    return {
+        str(key): value
+        for key, value in fingerprints.items()
+        if str(key) not in FUNCTIONAL_FRESHNESS_EXCLUDED_KEYS
+    }
+
+
+@dataclass(frozen=True)
+class ReceiptIndex:
+    """Read-only lookup table for one selected receipt set.
+
+    Receipt freshness is a pure comparison once the selected receipts have
+    been loaded.  Keeping that lookup state explicit prevents each closure,
+    depth, and parent check from walking the same ``receipts`` directory
+    again.  The index is deliberately derived data: it is never an authority
+    and it never writes a head or receipt.
+    """
+
+    receipts: tuple[Mapping[str, Any], ...]
+    by_id: Mapping[str, Mapping[str, Any]]
+    latest_by_subject: Mapping[tuple[str, str, str, str, str], Mapping[str, Any]]
+    by_root: Mapping[str, tuple[Mapping[str, Any], ...]]
+
+    @classmethod
+    def from_rows(
+        cls,
+        rows: Sequence[Mapping[str, Any]],
+        *,
+        root: Path | None = None,
+    ) -> "ReceiptIndex":
+        normalized = tuple(rows)
+        by_id: dict[str, Mapping[str, Any]] = {}
+        latest: dict[tuple[str, str, str, str, str], Mapping[str, Any]] = {}
+        for row in normalized:
+            receipt_id = str(row.get("receipt_id", ""))
+            if receipt_id:
+                previous = by_id.get(receipt_id)
+                if previous is not None and previous != row:
+                    raise ReceiptError(
+                        "receipt_index_id_conflict",
+                        "the selected receipt set contains conflicting receipt ids",
+                        receipt_id,
+                    )
+                by_id[receipt_id] = row
+            subject = (
+                str(row.get("maintenance_unit_id", "")),
+                str(row.get("run_id", "")),
+                str(row.get("step_id", "")),
+                str(row.get("evidence_class", "")),
+                str(row.get("subject_id", "")),
+            )
+            existing = latest.get(subject)
+            if existing is None or int(row.get("issued_sequence", 0)) >= int(
+                existing.get("issued_sequence", 0)
+            ):
+                latest[subject] = row
+        roots = {}
+        if root is not None:
+            roots[str(filesystem_path(root).resolve())] = normalized
+        return cls(
+            receipts=normalized,
+            by_id=by_id,
+            latest_by_subject=latest,
+            by_root=roots,
+        )
+
+    @classmethod
+    def from_roots(
+        cls,
+        roots: Sequence[Path],
+        *,
+        receipt_ids: Sequence[str] = (),
+    ) -> "ReceiptIndex":
+        """Load the exact selected receipt roots once.
+
+        ``receipt_ids`` is useful for a targeted read: when supplied, only
+        those immutable files are opened.  The normal closure path omits it
+        because it must also resolve latest-by-subject and therefore loads the
+        one selected run store once, not once per candidate.
+        """
+
+        unique_roots: list[Path] = []
+        seen_roots: set[str] = set()
+        for root in roots:
+            normalized = filesystem_path(root).resolve()
+            key = str(normalized)
+            if key not in seen_roots:
+                seen_roots.add(key)
+                unique_roots.append(normalized)
+        selected_ids = tuple(dict.fromkeys(str(item) for item in receipt_ids if str(item)))
+        all_rows: list[Mapping[str, Any]] = []
+        by_root: dict[str, tuple[Mapping[str, Any], ...]] = {}
+        for root in unique_roots:
+            if selected_ids:
+                rows = tuple(
+                    _load_receipt_file(_receipts_root(root) / f"{receipt_id}.json")
+                    for receipt_id in selected_ids
+                    if (_receipts_root(root) / f"{receipt_id}.json").is_file()
+                )
+            else:
+                rows = load_receipts(root)
+            by_root[str(root)] = rows
+            all_rows.extend(rows)
+        index = cls.from_rows(all_rows)
+        return cls(
+            receipts=index.receipts,
+            by_id=index.by_id,
+            latest_by_subject=index.latest_by_subject,
+            by_root=by_root,
+        )
+
+    def receipts_for_root(self, root: Path) -> tuple[Mapping[str, Any], ...]:
+        return self.by_root.get(str(filesystem_path(root).resolve()), ())
+
+    def get(self, receipt_id: str) -> Mapping[str, Any] | None:
+        return self.by_id.get(str(receipt_id))
+
+    def latest_for(self, receipt: Mapping[str, Any]) -> Mapping[str, Any] | None:
+        subject = (
+            str(receipt.get("maintenance_unit_id", "")),
+            str(receipt.get("run_id", "")),
+            str(receipt.get("step_id", "")),
+            str(receipt.get("evidence_class", "")),
+            str(receipt.get("subject_id", "")),
+        )
+        return self.latest_by_subject.get(subject)
+
+
 def _semantic_normalize(value: object) -> object:
     if isinstance(value, str):
         return " ".join(value.split())
@@ -134,36 +286,47 @@ def _receipts_root(run_root: Path) -> Path:
     return filesystem_path(run_root / "receipts")
 
 
+def _load_receipt_file(path: Path) -> Mapping[str, Any]:
+    """Load and verify one immutable receipt file."""
+
+    path = filesystem_path(path)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ReceiptError("receipt_unreadable", type(exc).__name__, path.name) from exc
+    if not isinstance(payload, Mapping):
+        raise ReceiptError("receipt_not_object", path.name, path.name)
+    findings = validate_runtime_payload(payload, RECEIPT_SCHEMA)
+    if findings:
+        raise ReceiptError(findings[0].code, findings[0].message, path.name)
+    unsigned = dict(payload)
+    stored_hash = str(unsigned.pop("receipt_hash", ""))
+    if not stored_hash or stored_hash != canonical_hash(unsigned):
+        raise ReceiptError("receipt_hash_mismatch", "immutable receipt content changed", path.name)
+    receipt_id = str(payload.get("receipt_id", ""))
+    if not receipt_id or path.stem != receipt_id:
+        raise ReceiptError("receipt_id_path_mismatch", path.name, path.name)
+    return payload
+
+
 def load_receipts(run_root: Path) -> tuple[Mapping[str, Any], ...]:
     root = _receipts_root(run_root)
     if not root.is_dir():
         return ()
-    rows: list[Mapping[str, Any]] = []
-    for path in sorted(root.glob("receipt-*.json")):
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            raise ReceiptError("receipt_unreadable", type(exc).__name__, path.name) from exc
-        if not isinstance(payload, Mapping):
-            raise ReceiptError("receipt_not_object", path.name, path.name)
-        findings = validate_runtime_payload(payload, RECEIPT_SCHEMA)
-        if findings:
-            raise ReceiptError(findings[0].code, findings[0].message, path.name)
-        unsigned = dict(payload)
-        stored_hash = str(unsigned.pop("receipt_hash", ""))
-        if not stored_hash or stored_hash != canonical_hash(unsigned):
-            raise ReceiptError("receipt_hash_mismatch", "immutable receipt content changed", path.name)
-        rows.append(payload)
+    rows = [_load_receipt_file(path) for path in sorted(root.glob("receipt-*.json"))]
     return tuple(sorted(rows, key=lambda row: int(row.get("issued_sequence", 0))))
 
 
 def load_receipt(run_root: Path, receipt_id: str) -> Mapping[str, Any]:
     if not SAFE_ID.fullmatch(receipt_id):
         raise ReceiptError("receipt_id_invalid", receipt_id, receipt_id)
-    matches = [row for row in load_receipts(run_root) if row.get("receipt_id") == receipt_id]
-    if len(matches) != 1:
+    path = _receipts_root(run_root) / f"{receipt_id}.json"
+    if not path.is_file():
         raise ReceiptError("receipt_not_found", receipt_id, receipt_id)
-    return matches[0]
+    receipt = _load_receipt_file(path)
+    if receipt.get("receipt_id") != receipt_id:
+        raise ReceiptError("receipt_not_found", receipt_id, receipt_id)
+    return receipt
 
 
 def _validate_class_evidence(evidence_class: str, evidence: Mapping[str, Any]) -> None:
@@ -449,7 +612,7 @@ def derive_freshness(
     receipt: Mapping[str, Any],
     current_fingerprints: Mapping[str, object],
     *,
-    receipt_roots: Sequence[Path] = (),
+    receipt_index: ReceiptIndex,
 ) -> FreshnessResult:
     reasons: list[str] = []
     affected: list[str] = []
@@ -457,6 +620,8 @@ def derive_freshness(
     if not isinstance(expected_inputs, Mapping):
         return FreshnessResult(False, "stale", ("receipt_fingerprints_invalid",), ())
     for key, expected in expected_inputs.items():
+        if str(key) in FUNCTIONAL_FRESHNESS_EXCLUDED_KEYS:
+            continue
         if not isinstance(expected, Mapping):
             reasons.append(f"invalid_fingerprint:{key}")
             affected.append(str(key))
@@ -475,22 +640,8 @@ def derive_freshness(
             reasons.append(f"fingerprint_changed:{key}:{policy}")
             affected.append(str(key))
 
-    all_receipts: dict[str, Mapping[str, Any]] = {}
-    latest_by_subject: dict[tuple[str, str, str, str, str], Mapping[str, Any]] = {}
-    for root in receipt_roots:
-        for row in load_receipts(root):
-            receipt_id = str(row.get("receipt_id", ""))
-            all_receipts[receipt_id] = row
-            subject = (
-                str(row.get("maintenance_unit_id", "")),
-                str(row.get("run_id", "")),
-                str(row.get("step_id", "")),
-                str(row.get("evidence_class", "")),
-                str(row.get("subject_id", "")),
-            )
-            latest_by_subject[subject] = row
     for child_id in receipt.get("consumed_child_receipt_ids", []):
-        child = all_receipts.get(str(child_id))
+        child = receipt_index.get(str(child_id))
         if child is None:
             reasons.append(f"consumed_child_missing:{child_id}")
             affected.append(f"child:{child_id}")
@@ -501,14 +652,7 @@ def derive_freshness(
             reasons.append(f"consumed_child_foreign_unit:{child_id}")
             affected.append(f"child:{child_id}")
             continue
-        subject = (
-            str(child.get("maintenance_unit_id", "")),
-            str(child.get("run_id", "")),
-            str(child.get("step_id", "")),
-            str(child.get("evidence_class", "")),
-            str(child.get("subject_id", "")),
-        )
-        latest = latest_by_subject.get(subject)
+        latest = receipt_index.latest_for(child)
         if latest and latest.get("receipt_id") != child_id:
             reasons.append(f"consumed_child_superseded:{child_id}")
             affected.append(f"child:{child_id}")

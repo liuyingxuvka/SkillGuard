@@ -13,6 +13,12 @@
     "execution_count": {"const": 0},
     "profile_id": {"type": "string"},
     "plan_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "requested_claims": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["source_release", "installed_current", "global_router_current"]}
+    },
     "full_admission_required": {"type": "boolean"},
     "selection_declaration_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "snapshot_identity_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
@@ -52,7 +58,7 @@
     "claim_boundary": {"type": "string"}
   },
   "if": {"properties": {"status": {"const": "passed"}}},
-  "then": {"required": ["profile_id", "plan_hash", "full_admission_required", "selection_declaration_hash", "snapshot_identity_hash", "impact_graph_hash", "aggregation_id", "aggregation_hash", "child_receipts", "installation_verification_identity", "typed_domain_bindings", "external_projection_bindings_hash", "claim_boundary"]},
+  "then": {"required": ["profile_id", "plan_hash", "requested_claims", "full_admission_required", "selection_declaration_hash", "snapshot_identity_hash", "impact_graph_hash", "aggregation_id", "aggregation_hash", "child_receipts", "installation_verification_identity", "typed_domain_bindings", "external_projection_bindings_hash", "claim_boundary"]},
   "$defs": {
     "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "checkIds": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},

@@ -3,6 +3,17 @@
 TestMesh plans and aggregates validation for one maintenance unit. It is not a
 cross-skill proof network and is never part of a consumer distribution.
 
+## Explicit claim set
+
+Every current profile freezes a sorted `requested_claims` set containing
+`source_release` and, only when explicitly requested, `installed_current` or
+`global_router_current`. `source_release` is the functional/native/consumer
+closure claim; it does not imply an installation receipt or the private global
+router. The two external claims load and preserve their own typed binding
+projection during plan and aggregation. A missing or unrequested binding
+blocks with `execution_count: 0`; the runner never silently upgrades a fast or
+focused plan into a full external claim.
+
 ## Frozen plan
 
 The plan declares:
@@ -70,6 +81,12 @@ must receive the complete same set through repeated
 `--global-prompt-skill-root` arguments. The roots are used only to rebuild and
 compare the current route projection; absolute paths are not stored in the
 aggregation or managed prompt.
+
+After aggregation, the self-host terminal may consume exactly the frozen plan
+file and aggregation reference. This finalizer performs read-only replay and
+publishes the current pointer once; it does not claim, compile, inspect owner
+freshness, resume, or execute an owner. Re-consuming the same terminal is an
+idempotent zero-write operation.
 
 After timeout, cancellation, or interruption, evidence remains invalid until
 the entire descendant process tree is confirmed absent.

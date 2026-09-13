@@ -403,7 +403,8 @@
         ".agents/skills/skillguard/scripts/skillguard_compile.py",
         ".agents/skills/skillguard",
         "--repository-root",
-        "."
+        ".",
+        "--check"
       ],
       "check_id": "check:self:compile-generated-contract",
       "command": "python",

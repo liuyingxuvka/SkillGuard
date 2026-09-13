@@ -8,6 +8,7 @@ from pathlib import Path
 from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
 from skillguard_v2.receipts import (
     ReceiptError,
+    ReceiptIndex,
     build_action_witness,
     derive_freshness,
     fingerprint_value,
@@ -178,13 +179,17 @@ class EvidenceReceiptTests(unittest.TestCase):
             "prompt": fingerprint_value("hello world", policy="semantic"),
             "unrelated": fingerprint_value("changed", policy="raw"),
         }
-        self.assertTrue(derive_freshness(receipt, current).current)
+        receipt_index = ReceiptIndex.from_rows((receipt,))
+        self.assertTrue(
+            derive_freshness(receipt, current, receipt_index=receipt_index).current
+        )
         stale = derive_freshness(
             receipt,
             {
                 **current,
                 "implementation": fingerprint_value("version 2", policy="raw"),
             },
+            receipt_index=receipt_index,
         )
         self.assertFalse(stale.current)
         self.assertEqual(("implementation",), stale.affected_keys)
@@ -201,15 +206,41 @@ class EvidenceReceiptTests(unittest.TestCase):
             input_fingerprints=self.fingerprints,
             consumed_child_receipt_ids=[first_child["receipt_id"]],
         )
-        self.assertTrue(derive_freshness(parent, self.fingerprints, receipt_roots=[self.run_root]).current)
+        receipt_index = ReceiptIndex.from_roots((self.run_root,))
+        self.assertTrue(
+            derive_freshness(
+                parent,
+                self.fingerprints,
+                receipt_index=receipt_index,
+            ).current
+        )
         second_child = self._hard()
         self.assertEqual(first_child["receipt_id"], second_child["supersedes_receipt_id"])
-        stale = derive_freshness(parent, self.fingerprints, receipt_roots=[self.run_root])
+        receipt_index = ReceiptIndex.from_roots((self.run_root,))
+        stale = derive_freshness(
+            parent,
+            self.fingerprints,
+            receipt_index=receipt_index,
+        )
         self.assertFalse(stale.current)
         self.assertIn(
             f"consumed_child_superseded:{first_child['receipt_id']}",
             stale.reasons,
         )
+
+    def test_freshness_does_not_reload_receipts_after_index_is_built(self) -> None:
+        receipt = self._hard()
+        receipt_index = ReceiptIndex.from_roots((self.run_root,))
+        current = dict(self.fingerprints)
+        from unittest.mock import patch
+
+        with patch("skillguard_v2.receipts.load_receipts", side_effect=AssertionError("reload")):
+            result = derive_freshness(
+                receipt,
+                current,
+                receipt_index=receipt_index,
+            )
+        self.assertTrue(result.current)
 
     def test_receipt_tampering_is_detected(self) -> None:
         receipt = self._hard()

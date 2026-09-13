@@ -119,8 +119,11 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             self_host.fingerprint_value(runtime),
             fingerprints["guard_runtime"],
         )
-        self.assertEqual(2, execution_fingerprint.call_count)
-        self.assertEqual([call(), call()], execution_fingerprint.call_args_list)
+        # One verifier invocation reuses the cached runtime identity for all
+        # fingerprint projections.  Recomputing the same runtime source hash
+        # twice would add packaging work without changing the functional key.
+        self.assertEqual(1, execution_fingerprint.call_count)
+        self.assertEqual([call()], execution_fingerprint.call_args_list)
 
     def test_self_host_request_uses_the_direct_target_input_fingerprint(self) -> None:
         request = _self_host_request(ROOT, ("route:static-audit",))

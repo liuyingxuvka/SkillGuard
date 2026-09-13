@@ -181,7 +181,11 @@ class TestMeshInstallationBindingTests(unittest.TestCase):
                 {
                     "profile_id": "full",
                     "closure_profile_id": "enforced",
-                    "full_admission_required": True,
+                    "requested_claims": [
+                        "global_router_current",
+                        "installed_current",
+                        "source_release",
+                    ],
                 }
             ],
             "claim_boundary": "Installation binding fixture only.",
@@ -223,6 +227,8 @@ class TestMeshInstallationBindingTests(unittest.TestCase):
             mode="plan_only",
             full_admission_reason="explicit_final_gate",
             freeze_identity=self.freeze_identity,
+            installation_receipt_root=self.installation_root,
+            global_prompt_codex_home=self.codex_home,
         )
 
     def _aggregate(self, *, include_installation: bool = True):
@@ -252,9 +258,24 @@ class TestMeshInstallationBindingTests(unittest.TestCase):
             "skillguard_v2.test_mesh._load_global_prompt_currentness_binding",
             return_value=fixture_global_prompt_binding(),
         ):
-            report = self._aggregate(include_installation=False)
+            report = execute_test_mesh(
+                self.manifest_path,
+                self.repository,
+                "full",
+                run_root=self.run_root,
+                skill_root=self.skill,
+                target_root=self.target,
+                owner_evidence_root=self.owner_root,
+                mode="plan_only",
+                full_admission_reason="explicit_final_gate",
+                freeze_identity=self.freeze_identity,
+                global_prompt_codex_home=self.codex_home,
+            )
         self.assertEqual("blocked", report["status"], report)
-        self.assertIn("installation_receipt_root_required", report["findings"])
+        self.assertIn(
+            "installation_receipt_root_required_for_installed_current",
+            report["findings"],
+        )
         self.assertFalse(marker.exists())
         self.assertEqual(0, report["execution_count"])
 

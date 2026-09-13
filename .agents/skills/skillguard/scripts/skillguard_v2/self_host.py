@@ -19,7 +19,7 @@ from .check_runner import (
     load_run_owner_receipt_index,
     resolve_owner_evidence_root,
 )
-from .closure import close_run, verify_closure
+from .closure import close_run, verify_closure_readback
 from .contract_compiler import canonical_hash, canonical_json_bytes, compile_skill_contract
 from .evidence_policy import required_evidence_class
 from .execution_depth import issue_target_execution_receipt
@@ -28,7 +28,13 @@ from .privacy import git_public_candidates
 from .receipts import fingerprint_value, issue_receipt
 from .route_runtime import select_routes
 from .runtime_fingerprint import guard_execution_runtime_fingerprint
-from .run_store import claim_run, utc_now
+from .run_store import (
+    claim_run,
+    load_check_manifest_snapshot,
+    load_contract_snapshot,
+    load_run,
+    utc_now,
+)
 from .step_runtime import (
     begin_step,
     next_ready_steps,
@@ -115,6 +121,74 @@ def _load_json(path: Path) -> Mapping[str, Any]:
     return payload
 
 
+def _load_test_mesh_aggregation(
+    owner_evidence_root: Path,
+    aggregation_ref: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    """Read one immutable aggregation blob without planning or owner access."""
+
+    required = {
+        "path_token",
+        "relative_path",
+        "content_hash",
+        "media_type",
+        "byte_count",
+    }
+    if (
+        set(aggregation_ref) != required
+        or aggregation_ref.get("path_token") != "owner_evidence_root"
+        or aggregation_ref.get("media_type") != "application/json"
+    ):
+        raise SelfHostError(
+            "self_host_aggregation_reference_invalid",
+            "finalization requires one exact owner-evidence aggregation reference",
+        )
+    relative = Path(str(aggregation_ref.get("relative_path", "")))
+    root = owner_evidence_root.resolve()
+    path = (root / relative).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise SelfHostError(
+            "self_host_aggregation_reference_escape",
+            "the aggregation reference escapes the owner-evidence root",
+        ) from exc
+    body = filesystem_path(path).read_bytes()
+    import hashlib
+
+    digest = "sha256:" + hashlib.sha256(body).hexdigest()
+    if digest != str(aggregation_ref.get("content_hash", "")):
+        raise SelfHostError(
+            "self_host_aggregation_content_hash_mismatch",
+            "the frozen aggregation content hash does not match",
+        )
+    try:
+        expected_size = int(aggregation_ref.get("byte_count", -1))
+    except (TypeError, ValueError) as exc:
+        raise SelfHostError(
+            "self_host_aggregation_byte_count_invalid",
+            "the frozen aggregation byte count is invalid",
+        ) from exc
+    if len(body) != expected_size:
+        raise SelfHostError(
+            "self_host_aggregation_byte_count_mismatch",
+            "the frozen aggregation byte count does not match",
+        )
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeError, json.JSONDecodeError) as exc:
+        raise SelfHostError(
+            "self_host_aggregation_unreadable",
+            "the frozen aggregation is not readable JSON",
+        ) from exc
+    if not isinstance(payload, Mapping):
+        raise SelfHostError(
+            "self_host_aggregation_object_required",
+            "the frozen aggregation must be a JSON object",
+        )
+    return payload
+
+
 def _atomic_write(path: Path, payload: Mapping[str, Any]) -> None:
     path = filesystem_path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -144,8 +218,9 @@ def _current_fingerprints(
     target_input_roles: Mapping[str, Sequence[str]] | None = None,
 ) -> Mapping[str, Mapping[str, str]]:
     sources = contract.get("source_fingerprints", {})
+    runtime_identity = guard_execution_runtime_fingerprint()
     fingerprints: dict[str, Mapping[str, str]] = {
-        "guard_runtime": fingerprint_value(guard_execution_runtime_fingerprint()),
+        "guard_runtime": fingerprint_value(runtime_identity),
         "contract": fingerprint_value(str(contract.get("contract_hash", ""))),
         "implementation": fingerprint_value(
             {
@@ -164,7 +239,10 @@ def _current_fingerprints(
             {
                 "python": platform.python_version(),
                 "platform": platform.system(),
-                "guard_runtime": guard_execution_runtime_fingerprint(),
+                # Platform/interpreter are execution provenance only. The
+                # runtime source identity is already computed once above and
+                # is retained in the separate guard_runtime field.
+                "runtime_id": runtime_identity.get("runtime_id", ""),
             }
         ),
     }
@@ -752,7 +830,11 @@ def _prepare_current_self_host_claim(
     compile_result = compile_skill_contract(
         skill_root,
         repository_root=repository_root,
-        write=True,
+        # Self-host claim/finalization is a consumer of the already prepared
+        # contract.  Source preparation owns the one write; a frozen run must
+        # fail closed on stale generated bytes instead of rewriting them while
+        # validation is in flight.
+        write=False,
     )
     if (
         not compile_result.ok
@@ -853,6 +935,288 @@ def claim_current_self_host_run(
     return report
 
 
+def finalize_current_self_host_from_frozen_mesh(
+    repository_root: Path,
+    *,
+    run_root: Path,
+    frozen_plan: Mapping[str, Any],
+    aggregation_ref: Mapping[str, Any],
+    owner_evidence_root: Path,
+    profiles: Sequence[str] = ("enforced",),
+    skill_root: Path | None = None,
+    target_root: Path | None = None,
+    canonical_skillguard_root: Path | None = None,
+    verified_installation_context: Any | None = None,
+    global_prompt_codex_home: Path | None = None,
+    global_prompt_skill_roots: Sequence[Path] | None = None,
+) -> Mapping[str, Any]:
+    """Finalize a self-host run from one frozen plan and one aggregation.
+
+    This is deliberately a terminal consumer.  It does not compile, claim a
+    run, inspect owner freshness, launch a check, or call ``resume``.  The
+    immutable TestMesh aggregation is replay-read and then projected into the
+    one self-host terminal pointer.
+    """
+
+    repository_root = repository_root.resolve()
+    run_root = run_root.resolve()
+    owner_evidence_root = owner_evidence_root.resolve()
+    skill_root = (skill_root or repository_root / ".agents" / "skills" / "skillguard").resolve()
+    target_root = (target_root or repository_root).resolve()
+    try:
+        run_root_text = run_root.relative_to(repository_root).as_posix()
+    except ValueError as exc:
+        raise SelfHostError(
+            "self_host_current_run_root_outside_repository",
+            "the frozen self-host run must remain under the author repository",
+        ) from exc
+    if (
+        not isinstance(frozen_plan, Mapping)
+        or frozen_plan.get("status") != "passed"
+        or frozen_plan.get("mode") != "plan_only"
+    ):
+        raise SelfHostError(
+            "self_host_frozen_plan_invalid",
+            "finalization requires one passed plan_only frozen plan",
+        )
+    # Import these private/read-only helpers lazily so importing self_host does
+    # not create a module cycle for ordinary owner execution.
+    from .test_mesh import (
+        CURRENT_REQUESTED_CLAIM_SET,
+        _current_plan_hash,
+        replay_current_test_mesh_aggregation,
+    )
+    if frozen_plan.get("plan_hash") != _current_plan_hash(frozen_plan):
+        raise SelfHostError(
+            "self_host_frozen_plan_hash_mismatch",
+            "the frozen plan hash does not match its immutable content",
+        )
+    requested_claims = frozen_plan.get("requested_claims")
+    if (
+        not isinstance(requested_claims, list)
+        or requested_claims != sorted(set(requested_claims))
+        or not requested_claims
+        or any(value not in CURRENT_REQUESTED_CLAIM_SET for value in requested_claims)
+        or "source_release" not in requested_claims
+    ):
+        raise SelfHostError(
+            "self_host_frozen_claims_invalid",
+            "the frozen plan must declare a sorted source_release claim set",
+        )
+    try:
+        run = load_run(run_root)
+        contract = load_contract_snapshot(run_root)
+        manifest = load_check_manifest_snapshot(run_root)
+    except (OSError, ValueError, RuntimeError) as exc:
+        raise SelfHostError(
+            "self_host_frozen_snapshot_unreadable",
+            str(exc),
+        ) from exc
+    impact_plan = contract.get("content_impact_plan")
+    if not isinstance(impact_plan, Mapping):
+        raise SelfHostError(
+            "self_host_current_identity_missing",
+            "the frozen run does not contain a content impact plan",
+        )
+    if (
+        str(frozen_plan.get("maintenance_unit_id", ""))
+        != str(contract.get("maintenance_unit_id", ""))
+        or str(frozen_plan.get("member_skill_id", ""))
+        != str(contract.get("skill_id", ""))
+        or str(frozen_plan.get("source_identity_hash", ""))
+        != str(impact_plan.get("inventory_hash", ""))
+        or str(frozen_plan.get("impact_graph_hash", ""))
+        != str(impact_plan.get("impact_graph_hash", ""))
+    ):
+        raise SelfHostError(
+            "self_host_frozen_snapshot_identity_mismatch",
+            "the frozen plan is not bound to the claimed contract snapshot",
+        )
+    aggregation = _load_test_mesh_aggregation(owner_evidence_root, aggregation_ref)
+    if (
+        aggregation.get("status") != "passed"
+        or aggregation.get("mode") != "aggregation_only"
+        or int(aggregation.get("execution_count", -1)) != 0
+        or aggregation.get("plan_hash") != frozen_plan.get("plan_hash")
+        or aggregation.get("requested_claims") != requested_claims
+        or aggregation.get("maintenance_unit_id")
+        != frozen_plan.get("maintenance_unit_id")
+        or aggregation.get("member_skill_id") != frozen_plan.get("member_skill_id")
+    ):
+        raise SelfHostError(
+            "self_host_aggregation_not_bound_to_plan",
+            "the aggregation is not the exact terminal input selected by the frozen plan",
+        )
+    replay = replay_current_test_mesh_aggregation(
+        owner_evidence_root,
+        aggregation_ref,
+        repository_root=repository_root
+        if "installed_current" in requested_claims
+        else None,
+        canonical_skillguard_root=canonical_skillguard_root,
+        verified_installation_context=verified_installation_context,
+        global_prompt_codex_home=global_prompt_codex_home
+        if "global_router_current" in requested_claims
+        else None,
+        global_prompt_skill_roots=global_prompt_skill_roots
+        if "global_router_current" in requested_claims
+        else None,
+    )
+    if replay.get("status") != "passed":
+        raise SelfHostError(
+            "self_host_aggregation_replay_failed",
+            json.dumps(dict(replay), sort_keys=True),
+        )
+    children = aggregation.get("child_receipts")
+    if not isinstance(children, list) or not children:
+        raise SelfHostError(
+            "self_host_aggregation_children_missing",
+            "a terminal self-host projection requires at least one immutable child receipt",
+        )
+    executed_steps: list[dict[str, Any]] = []
+    for child in children:
+        if not isinstance(child, Mapping):
+            raise SelfHostError(
+                "self_host_aggregation_child_invalid",
+                "every aggregation child must be an object",
+            )
+        owner_id = str(child.get("execution_owner_id", ""))
+        check_ids = child.get("check_ids")
+        receipt_id = str(child.get("receipt_id", ""))
+        if not owner_id or not isinstance(check_ids, list) or not check_ids or not receipt_id:
+            raise SelfHostError(
+                "self_host_aggregation_child_invalid",
+                "every aggregation child must identify an owner, checks, and receipt",
+            )
+        executed_steps.append(
+            {
+                "step_id": f"test-mesh-owner:{owner_id}",
+                "check_record_ids": [],
+                "check_execution_dispositions": [
+                    "reused_terminal_success" for _ in check_ids
+                ],
+                "check_execution_receipt_ids": [receipt_id],
+                "receipt_ids": [receipt_id],
+                "artifact_record_ids": [],
+            }
+        )
+    profiles = tuple(str(value) for value in profiles)
+    if not profiles or any(not value for value in profiles) or len(set(profiles)) != len(profiles):
+        raise SelfHostError(
+            "self_host_profiles_invalid",
+            "terminal closure profiles must be non-empty and unique",
+        )
+    aggregation_id = str(aggregation.get("aggregation_id", ""))
+    aggregation_hash = str(aggregation.get("aggregation_hash", ""))
+    if not aggregation_id or not aggregation_hash:
+        raise SelfHostError(
+            "self_host_aggregation_identity_missing",
+            "the frozen aggregation must expose immutable identities",
+        )
+    sources = contract.get("source_fingerprints")
+    if not isinstance(sources, Mapping):
+        raise SelfHostError(
+            "self_host_current_identity_missing",
+            "the claimed contract is missing source fingerprints",
+        )
+    current_fingerprints: Mapping[str, Mapping[str, str]] = {
+        "frozen_plan": fingerprint_value(str(frozen_plan["plan_hash"])),
+        "aggregation": fingerprint_value(aggregation_hash),
+    }
+    closures = [
+        {
+            "profile": profile,
+            "closure_receipt_id": aggregation_id,
+            "closure_hash": aggregation_hash,
+            "verification": {
+                "ok": True,
+                "mode": "read_only_test_mesh_replay",
+                "aggregation_id": aggregation_id,
+                "findings": [],
+            },
+        }
+        for profile in profiles
+    ]
+    depth_receipt = {
+        "schema_version": "skillguard.target_execution_receipt.v2",
+        "status": "passed",
+        "source": "test_mesh_aggregation",
+        "execution_count": 0,
+        "frozen_plan_hash": str(frozen_plan["plan_hash"]),
+        "aggregation_id": aggregation_id,
+        "claim_boundary": (
+            "This is a zero-launch projection of the read-only TestMesh aggregation; "
+            "it is not a new target execution."
+        ),
+    }
+    producer_path = filesystem_path(run_root / "self-host-result.json")
+    if producer_path.is_file():
+        existing = _load_json(producer_path)
+        if (
+            existing.get("schema_version") == "skillguard.self_host_result.v2"
+            and existing.get("status") == "passed"
+            and existing.get("execution_mode") == "frozen_plan_aggregation_finalize"
+            and str(existing.get("frozen_plan_hash", ""))
+            == str(frozen_plan["plan_hash"])
+            and str(existing.get("aggregation_id", "")) == aggregation_id
+            and str(existing.get("aggregation_hash", "")) == aggregation_hash
+        ):
+            # Keep the original immutable terminal timestamp/report hash.  A
+            # repeated finalization consumes the same producer and therefore
+            # cannot manufacture a freshness change.
+            publish_current_self_host_terminal_receipt(
+                skill_root,
+                existing,
+                contract=contract,
+                manifest=manifest,
+            )
+            return existing
+        raise SelfHostError(
+            "self_host_final_terminal_conflict",
+            "the frozen run already contains a different terminal producer",
+        )
+    report: dict[str, Any] = {
+        "schema_version": "skillguard.self_host_result.v2",
+        "status": "passed",
+        "run_id": str(run.get("run_id", "")),
+        "run_root": run_root_text,
+        "source_identity_hash": str(impact_plan.get("inventory_hash", "")),
+        "model_identity_hash": str(sources.get("model_export", "")),
+        "contract_hash": str(contract.get("contract_hash", "")),
+        "manifest_hash": str(manifest.get("manifest_hash", "")),
+        "owner_plan_hash": str(impact_plan.get("impact_graph_hash", "")),
+        "current_fingerprints": dict(current_fingerprints),
+        "execution_mode": "frozen_plan_aggregation_finalize",
+        "execution_count": 0,
+        "executed_step_count": 0,
+        "executed_steps": executed_steps,
+        "target_execution_depth_receipt": depth_receipt,
+        "test_mesh_boundary_checks": [],
+        "long_check_timeout_budget_checks": [],
+        "closures": closures,
+        "profiles": list(profiles),
+        "frozen_plan_hash": str(frozen_plan["plan_hash"]),
+        "aggregation_id": aggregation_id,
+        "aggregation_hash": aggregation_hash,
+        "aggregation_ref": dict(aggregation_ref),
+        "created_at": str(run.get("created_at", "")) or utc_now(),
+        "claim_boundary": (
+            "This terminal consumes one frozen TestMesh plan and one replay-verified "
+            "aggregation. It launches no owner, performs no claim, and does not "
+            "compile or refresh generated contract files."
+        ),
+    }
+    report["report_hash"] = canonical_hash(report)
+    _atomic_write(producer_path, report)
+    publish_current_self_host_terminal_receipt(
+        skill_root,
+        report,
+        contract=contract,
+        manifest=manifest,
+    )
+    return report
+
+
 def publish_current_self_host_terminal_receipt(
     skill_root: Path,
     report: Mapping[str, Any],
@@ -879,7 +1243,11 @@ def publish_current_self_host_terminal_receipt(
             "self_host_current_result_not_terminal",
             "current self-host terminal requires a passed result",
         )
-    if report.get("execution_mode") != "owner_check_verification":
+    execution_mode = str(report.get("execution_mode", ""))
+    if execution_mode not in {
+        "owner_check_verification",
+        "frozen_plan_aggregation_finalize",
+    }:
         raise SelfHostError(
             "self_host_current_aggregation_only",
             "aggregation, planning, claim, and simulated reports cannot become the current self-host receipt",
@@ -904,13 +1272,18 @@ def publish_current_self_host_terminal_receipt(
     if (
         isinstance(step_count, bool)
         or not isinstance(step_count, int)
-        or step_count <= 0
+        or step_count < 0
         or not isinstance(executed_steps, Sequence)
         or not executed_steps
     ):
         raise SelfHostError(
             "self_host_current_terminal_missing_execution",
-            "current self-host receipt requires at least one verifier-produced step",
+            "current self-host receipt requires verifier-produced step projections",
+        )
+    if step_count == 0 and int(report.get("execution_count", 0) or 0) != 0:
+        raise SelfHostError(
+            "self_host_current_terminal_execution_count_mismatch",
+            "zero executed steps cannot carry a non-zero execution count",
         )
     for row in executed_steps:
         if not isinstance(row, Mapping) or not isinstance(row.get("receipt_ids"), Sequence):
@@ -922,6 +1295,29 @@ def publish_current_self_host_terminal_receipt(
             raise SelfHostError(
                 "self_host_current_terminal_receipt_missing",
                 "every self-host step must carry verifier receipt ids",
+            )
+        if step_count == 0:
+            dispositions = row.get("check_execution_dispositions", ())
+            if not isinstance(dispositions, Sequence) or any(
+                str(item) != "reused_terminal_success" for item in dispositions
+            ):
+                raise SelfHostError(
+                    "self_host_current_terminal_zero_execution_invalid",
+                    "zero-execution terminal steps must be exact reused terminal successes",
+                )
+
+    if execution_mode == "frozen_plan_aggregation_finalize":
+        if (
+            int(report.get("execution_count", -1)) != 0
+            or int(report.get("executed_step_count", -1)) != 0
+            or not str(report.get("frozen_plan_hash", ""))
+            or not str(report.get("aggregation_id", ""))
+            or not str(report.get("aggregation_hash", ""))
+            or not isinstance(report.get("aggregation_ref"), Mapping)
+        ):
+            raise SelfHostError(
+                "self_host_current_final_projection_invalid",
+                "frozen-plan finalization requires one zero-launch aggregation projection",
             )
 
     closures = report.get("closures")
@@ -1038,7 +1434,7 @@ def publish_current_self_host_terminal_receipt(
         "owner_plan_hash": expected_identities["owner_plan_hash"],
         "source_fingerprints": dict(sources),
         "current_fingerprints": dict(current_fingerprints),
-        "execution_mode": "owner_check_verification",
+        "execution_mode": execution_mode,
         "execution_count": report.get("execution_count", 0),
         "executed_step_count": step_count,
         "profiles": list(report.get("profiles", ())),
@@ -1053,8 +1449,28 @@ def publish_current_self_host_terminal_receipt(
             "or future AI behavior."
         ),
     }
+    if execution_mode == "frozen_plan_aggregation_finalize":
+        payload.update(
+            {
+                "frozen_plan_hash": str(report.get("frozen_plan_hash", "")),
+                "aggregation_id": str(report.get("aggregation_id", "")),
+                "aggregation_hash": str(report.get("aggregation_hash", "")),
+                "aggregation_ref": dict(report["aggregation_ref"]),
+            }
+        )
     payload["receipt_hash"] = canonical_hash(payload)
-    _atomic_write(skill_root / SELF_HOST_CURRENT_RECEIPT_RELATIVE_PATH, payload)
+    current_path = filesystem_path(skill_root / SELF_HOST_CURRENT_RECEIPT_RELATIVE_PATH)
+    if current_path.is_file():
+        try:
+            existing = _load_json(current_path)
+        except (OSError, json.JSONDecodeError, SelfHostError):
+            existing = None
+        if isinstance(existing, Mapping) and dict(existing) == payload:
+            # Re-consuming the same immutable terminal is a true no-op.  This
+            # is the idempotence gate that prevents freshness churn at the
+            # final pointer.
+            return existing
+    _atomic_write(current_path, payload)
     return payload
 
 
@@ -1102,7 +1518,11 @@ def verify_current_self_host_terminal_receipt(
             "self_host_current_receipt_not_terminal",
             "the canonical current self-host receipt is not a passed terminal result",
         )
-    if receipt.get("execution_mode") != "owner_check_verification":
+    receipt_execution_mode = str(receipt.get("execution_mode", ""))
+    if receipt_execution_mode not in {
+        "owner_check_verification",
+        "frozen_plan_aggregation_finalize",
+    }:
         raise SelfHostError(
             "self_host_current_receipt_execution_mode_invalid",
             "the canonical current self-host receipt must come from owner verification",
@@ -1207,7 +1627,7 @@ def verify_current_self_host_terminal_receipt(
     if (
         producer.get("schema_version") != "skillguard.self_host_result.v2"
         or producer.get("status") != "passed"
-        or producer.get("execution_mode") != "owner_check_verification"
+        or producer.get("execution_mode") != receipt_execution_mode
         or producer_report_hash != report_hash
         or canonical_hash(producer_unsigned) != report_hash
     ):
@@ -1567,12 +1987,13 @@ def run_current_verifier(
         )
         if evaluation.status != "closed" or closure is None:
             raise SelfHostError("self_host_closure_failed", json.dumps(evaluation.to_dict(), sort_keys=True))
-        verification = verify_closure(
+        # ``close_run`` already performed the one semantic closure evaluation.
+        # The terminal path only needs immutable payload/event readback; a
+        # second full evaluation would rescan receipts and can reopen a
+        # finished local claim on output-only changes.
+        verification = verify_closure_readback(
             run_root,
             str(closure["closure_receipt_id"]),
-            current_fingerprints=fingerprints,
-            target_root=repository_root,
-            repository_root=repository_root,
         )
         if not verification.get("ok"):
             raise SelfHostError("self_host_closure_replay_failed", json.dumps(verification, sort_keys=True))
@@ -1608,7 +2029,16 @@ def run_current_verifier(
             for disposition in step.get("check_execution_dispositions", [])
             if disposition == "executed_terminal_success"
         ),
-        "executed_step_count": len(executed_steps),
+        # A step projection may be present solely to show exact reused leaf
+        # receipts.  Count only steps that actually launched a functional
+        # producer so an all-reused terminal can close with zero executions.
+        "executed_step_count": sum(
+            any(
+                str(disposition) == "executed_terminal_success"
+                for disposition in step.get("check_execution_dispositions", [])
+            )
+            for step in executed_steps
+        ),
         "executed_steps": executed_steps,
         "target_execution_depth_receipt": dict(depth_receipt) if depth_receipt is not None else None,
         "test_mesh_boundary_checks": list(test_mesh_boundary_checks),

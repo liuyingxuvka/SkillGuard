@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.7.4 - 2026-09-13
+
+- Closed the lightweight functional-maintenance route with current source,
+  contract, model, test, installation, and readback evidence.
+- Kept terminal receipt reuse exact to the frozen maintenance unit so a
+  release does not trigger repeated full validation or recursive freshness
+  scans.
+- Published this source-only patch identity from the default `master` branch;
+  no binary artifact or compatibility route is introduced.
+
 ## v0.7.3 - 2026-08-26
 
 - Added the reverse surface-closure contract: a target's real commands,

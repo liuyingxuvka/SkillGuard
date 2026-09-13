@@ -39,7 +39,7 @@ from .native_terminal import (
     resolve_native_terminal_receipt,
     verify_persisted_applicability_receipts,
 )
-from .receipts import ReceiptError, derive_freshness, load_receipts
+from .receipts import ReceiptError, ReceiptIndex, derive_freshness
 from .run_store import (
     RunStoreError,
     append_event,
@@ -268,9 +268,10 @@ def evaluate_closure(
     missing_obligations = [obligation_id for obligation_id in requirements if obligation_id not in obligations]
     if missing_obligations:
         raise ClosureError("profile_unknown_obligation", ",".join(missing_obligations), profile)
-    receipts = load_receipts(run_root)
-    latest = _latest_by_subject(receipts)
     roots = tuple(dict.fromkeys([run_root, *receipt_roots]))
+    receipt_index = ReceiptIndex.from_roots(roots)
+    receipts = receipt_index.receipts_for_root(run_root)
+    latest = _latest_by_subject(receipts)
     effective_target_root = (target_root or run_root.parents[2]).resolve()
     gaps: dict[str, list[str]] = {key: [] for key in sorted(UNSAFE_FULL_STATUSES)}
     obligation_results: list[Mapping[str, Any]] = []
@@ -366,7 +367,11 @@ def evaluate_closure(
                 status = _gap_bucket(candidate_status)
                 detail = f"receipt {candidate.get('receipt_id')} status={candidate_status}"
                 continue
-            freshness = derive_freshness(candidate, current_fingerprints, receipt_roots=roots)
+            freshness = derive_freshness(
+                candidate,
+                current_fingerprints,
+                receipt_index=receipt_index,
+            )
             if not freshness.current:
                 status = "stale"
                 detail = ",".join(freshness.reasons)
@@ -697,6 +702,52 @@ def load_closure(run_root: Path, closure_receipt_id: str) -> Mapping[str, Any]:
     if not stored_hash or stored_hash != canonical_hash(unsigned):
         raise ClosureError("closure_hash_mismatch", path.name, closure_receipt_id)
     return closure
+
+
+def verify_closure_readback(
+    run_root: Path,
+    closure_receipt_id: str,
+) -> Mapping[str, Any]:
+    """Verify a just-written closure without reevaluating its leaves."""
+
+    try:
+        closure = load_closure(run_root, closure_receipt_id)
+        events = load_events(run_root)
+    except (ClosureError, RunStoreError) as exc:
+        return {
+            "closure_receipt_id": closure_receipt_id,
+            "ok": False,
+            "status": "invalid",
+            "findings": [getattr(exc, "code", type(exc).__name__)],
+            "readback_only": True,
+        }
+    event = next(
+        (
+            item
+            for item in events
+            if item.get("event_type") == "closure_issued"
+            and isinstance(item.get("payload"), Mapping)
+            and item["payload"].get("closure_receipt_id") == closure_receipt_id
+        ),
+        None,
+    )
+    findings: list[str] = []
+    if event is None:
+        findings.append("closure_event_missing")
+    else:
+        if event.get("previous_event_hash") != closure.get("evidence_event_head_hash"):
+            findings.append("closure_evidence_head_mismatch")
+        payload = event.get("payload", {})
+        if not isinstance(payload, Mapping) or payload.get("closure_hash") != closure.get("closure_hash"):
+            findings.append("closure_event_hash_reference_mismatch")
+    return {
+        "closure_receipt_id": closure_receipt_id,
+        "closure_hash": closure.get("closure_hash", ""),
+        "ok": not findings,
+        "status": "current" if not findings else "invalid",
+        "findings": findings,
+        "readback_only": True,
+    }
 
 
 def verify_closure(

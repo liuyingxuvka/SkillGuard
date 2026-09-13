@@ -30,6 +30,11 @@ from .native_evidence_identity import (
 )
 from .runtime_fingerprint import guard_execution_runtime_fingerprint
 from .execution_records import filesystem_path
+from .receipts import (
+    ReceiptIndex,
+    derive_freshness,
+    functional_fingerprint_projection,
+)
 
 
 EXECUTION_DEPTH_PASS = "EXECUTION_DEPTH_PASS"
@@ -444,7 +449,6 @@ def issue_target_execution_receipt(
 ) -> Mapping[str, Any]:
     """Write one immutable generic declared-check execution receipt."""
 
-    from .receipts import derive_freshness, load_receipts
     from .run_store import append_event, load_check_manifest_snapshot, load_run, utc_now
 
     profile = contract.get("depth_profile")
@@ -477,7 +481,8 @@ def issue_target_execution_receipt(
         str(row.get("check_id", "")): row for row in declarations
     }
     latest: dict[str, Mapping[str, Any]] = {}
-    runtime_receipts = load_receipts(run_root)
+    receipt_index = ReceiptIndex.from_roots((run_root,))
+    runtime_receipts = receipt_index.receipts_for_root(run_root)
     for receipt in runtime_receipts:
         evidence = receipt.get("evidence", {})
         if isinstance(evidence, Mapping):
@@ -502,7 +507,9 @@ def issue_target_execution_receipt(
             )
             continue
         freshness = derive_freshness(
-            receipt, current_fingerprints, receipt_roots=(run_root,)
+            receipt,
+            current_fingerprints,
+            receipt_index=receipt_index,
         )
         status = str(receipt.get("status", ""))
         disposition = status if status in {"passed", "failed", "skipped", "blocked", "timeout", "cancelled"} else "blocked"
@@ -592,6 +599,7 @@ def issue_target_execution_receipt(
         current_fingerprints=current_fingerprints,
         inventory_hash=str(inventory.get("inventory_hash", "")),
     )
+    functional_fingerprints = functional_fingerprint_projection(current_fingerprints)
     receipt: dict[str, Any] = {
         "schema_version": TARGET_EXECUTION_RECEIPT_SCHEMA,
         "sequence": len(existing) + 1,
@@ -625,8 +633,8 @@ def issue_target_execution_receipt(
         "blockers": list(evaluation.blockers),
         "active_runtime_identity": actual_runtime,
         "active_runtime_identity_hash": _canonical_hash(actual_runtime),
-        "input_fingerprints": dict(current_fingerprints),
-        "input_fingerprint_hash": _canonical_hash(current_fingerprints),
+        "input_fingerprints": dict(functional_fingerprints),
+        "input_fingerprint_hash": _canonical_hash(functional_fingerprints),
         "target_fingerprint": str(contract.get("contract_hash", "")),
         "runtime_fingerprint": str(actual_runtime.get("source_hash", "")),
         "evaluation_hash": str(evaluation_payload["evaluation_hash"]),
@@ -732,7 +740,9 @@ def evaluate_depth_receipt_gate(
         status, detail = STALE, "profile fingerprint changed"
     elif receipt.get("request_fingerprint") != run.get("request_fingerprint"):
         status, detail = STALE, "request fingerprint changed"
-    elif receipt.get("input_fingerprint_hash") != _canonical_hash(current_fingerprints):
+    elif receipt.get("input_fingerprint_hash") != _canonical_hash(
+        functional_fingerprint_projection(current_fingerprints)
+    ):
         status, detail = STALE, "target inputs changed"
     elif receipt.get("active_runtime_identity_hash") != _canonical_hash(current_runtime):
         status, detail = STALE, "active runtime identity changed"

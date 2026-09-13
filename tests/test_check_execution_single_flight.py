@@ -322,10 +322,35 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
             }
         )
         first = self._run(check, run_root)
+        head = next(
+            (
+                path
+                for path in (
+                    self.repository_root
+                    / "work"
+                    / "verification"
+                    / "owner-evidence"
+                    / "check-executions"
+                    / "heads"
+                ).glob("*.json")
+            ),
+            None,
+        )
+        self.assertIsNotNone(head)
+        assert head is not None
+        head_before = head.read_bytes()
+        check_records_before = sorted(
+            path.name for path in (run_root / "checks").glob("*.json")
+        )
         second = self._run(check, run_root)
         self.assertEqual("executed_terminal_success", first["disposition"])
         self.assertEqual("reused_terminal_success", second["disposition"])
         self.assertEqual("1", (run_root / counter).read_text(encoding="utf-8"))
+        self.assertEqual(head_before, head.read_bytes())
+        self.assertEqual(
+            check_records_before,
+            sorted(path.name for path in (run_root / "checks").glob("*.json")),
+        )
         receipt = first["execution_receipt"]
         self.assertEqual(
             receipt["receipt_id"], second["execution_receipt"]["receipt_id"]
@@ -416,12 +441,23 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
         check_one, run_one = self._claim(declaration, target_root=target_one)
         first = self._run(check_one, run_one, target_root=target_one)
         check_two, run_two = self._claim(declaration, target_root=target_two)
+        before_reuse = {
+            path.relative_to(run_two).as_posix(): path.read_bytes()
+            for path in run_two.rglob("*")
+            if path.is_file()
+        }
         second = self._run(check_two, run_two, target_root=target_two)
+        after_reuse = {
+            path.relative_to(run_two).as_posix(): path.read_bytes()
+            for path in run_two.rglob("*")
+            if path.is_file()
+        }
         self.assertEqual("executed_terminal_success", first["disposition"])
         self.assertEqual("reused_terminal_success", second["disposition"])
         self.assertEqual("1", (self.repository_root / counter).read_text())
         self.assertFalse(second["record"]["command_executed_in_this_call"])
         self.assertFalse(second["record"]["executed"])
+        self.assertEqual(before_reuse, after_reuse)
         self.assertEqual(
             first["execution_receipt"]["receipt_id"],
             second["execution_receipt"]["receipt_id"],

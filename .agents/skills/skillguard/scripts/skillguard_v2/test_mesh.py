@@ -85,6 +85,12 @@ TEST_MESH_TYPED_DOMAIN_BINDING_SCHEMA = (
 )
 GLOBAL_PROMPT_DOMAIN_ID = "global_prompt"
 CANONICAL_SKILL_ROOT_RELATIVE_PATH = Path(".agents/skills/skillguard")
+CURRENT_REQUESTED_CLAIMS = (
+    "source_release",
+    "installed_current",
+    "global_router_current",
+)
+CURRENT_REQUESTED_CLAIM_SET = frozenset(CURRENT_REQUESTED_CLAIMS)
 INSTALLATION_BINDING_FIELDS = (
     "schema_version",
     "evidence_domain",
@@ -622,10 +628,15 @@ def _load_current_test_mesh_manifest(path: Path) -> Mapping[str, Any]:
         raise ValueError("current_test_mesh_profiles_missing")
     seen: set[str] = set()
     for row in profiles:
-        if not isinstance(row, Mapping) or set(row) != {
+        if not isinstance(row, Mapping) or not {
             "profile_id",
             "closure_profile_id",
-            "full_admission_required",
+            "requested_claims",
+        }.issubset(row) or set(row) - {
+            "profile_id",
+            "closure_profile_id",
+            "requested_claims",
+            "owner_ids",
         }:
             raise ValueError("current_test_mesh_profile_shape_invalid")
         profile_id = str(row.get("profile_id", ""))
@@ -634,9 +645,31 @@ def _load_current_test_mesh_manifest(path: Path) -> Mapping[str, Any]:
             not profile_id
             or not closure_profile_id
             or profile_id in seen
-            or not isinstance(row.get("full_admission_required"), bool)
         ):
             raise ValueError("current_test_mesh_profile_invalid")
+        requested_claims = row.get("requested_claims")
+        if (
+            not isinstance(requested_claims, list)
+            or not requested_claims
+            or requested_claims != sorted(set(requested_claims))
+            or any(
+                not isinstance(value, str)
+                or value not in CURRENT_REQUESTED_CLAIM_SET
+                for value in requested_claims
+            )
+            or "source_release" not in requested_claims
+        ):
+            raise ValueError("current_test_mesh_profile_requested_claims_invalid")
+        owner_ids = row.get("owner_ids")
+        if owner_ids is not None:
+            if (
+                not isinstance(owner_ids, list)
+                or not owner_ids
+                or any(not isinstance(value, str) or not value for value in owner_ids)
+            ):
+                raise ValueError("current_test_mesh_profile_owner_ids_invalid")
+            if owner_ids != sorted(set(owner_ids)):
+                raise ValueError("current_test_mesh_profile_owner_ids_invalid")
         seen.add(profile_id)
     return payload
 
@@ -676,18 +709,20 @@ def _selected_owner_rows(
         if isinstance(row, Mapping)
     }
     check_ids: set[str] = set()
-    for obligation_id_value in closure_profile.get(
-        "required_obligation_ids", []
-    ):
-        obligation_id = str(obligation_id_value)
-        obligation = obligation_index.get(obligation_id)
-        if obligation is None:
-            raise ValueError(
-                f"current_test_mesh_obligation_unknown:{obligation_id}"
+    declared_owner_ids = profile.get("owner_ids")
+    if declared_owner_ids is None:
+        for obligation_id_value in closure_profile.get(
+            "required_obligation_ids", []
+        ):
+            obligation_id = str(obligation_id_value)
+            obligation = obligation_index.get(obligation_id)
+            if obligation is None:
+                raise ValueError(
+                    f"current_test_mesh_obligation_unknown:{obligation_id}"
+                )
+            check_ids.update(
+                str(value) for value in obligation.get("required_check_ids", [])
             )
-        check_ids.update(
-            str(value) for value in obligation.get("required_check_ids", [])
-        )
     plan = contract.get("content_impact_plan")
     if (
         not isinstance(plan, Mapping)
@@ -708,11 +743,19 @@ def _selected_owner_rows(
         for row in contract.get("checks", [])
         if isinstance(row, Mapping)
     }
-    selected = {
-        check_owner[check_id]
-        for check_id in check_ids
-        if check_id in check_owner
-    }
+    if declared_owner_ids is None:
+        selected = {
+            check_owner[check_id]
+            for check_id in check_ids
+            if check_id in check_owner
+        }
+    else:
+        selected = {str(value) for value in declared_owner_ids}
+        unknown = sorted(selected - set(owner_index))
+        if unknown:
+            raise ValueError(
+                "current_test_mesh_owner_unknown:" + ",".join(unknown)
+            )
     pending = list(selected)
     while pending:
         owner_id = pending.pop()
@@ -804,7 +847,7 @@ def _current_plan_hash(report: Mapping[str, Any]) -> str:
         {
             key: value
             for key, value in report.items()
-            if key not in {"plan_hash", "claim_boundary"}
+            if key not in {"plan_hash", "claim_boundary", "run_root_ref", "frozen_plan_path"}
         }
     )
 
@@ -994,6 +1037,12 @@ def _compile_current_test_mesh_plan(
     owner_evidence_root: Path | None,
     full_admission_reason: str,
     freeze_identity: Mapping[str, Any] | None,
+    requested_claims: Sequence[str] | None = None,
+    installation_receipt_root: Path | None = None,
+    canonical_skillguard_root: Path | None = None,
+    verified_installation_context: VerifiedInstallationContext | None = None,
+    global_prompt_codex_home: Path | None = None,
+    global_prompt_skill_roots: Sequence[Path] | None = None,
 ) -> dict[str, Any]:
     """Read the persistent receipt pool and freeze an exact zero-write plan."""
 
@@ -1228,8 +1277,33 @@ def _compile_current_test_mesh_plan(
         set(selected_owner_ids),
         full_admission_reason,
     )
-    full_required = bool(profile.get("full_admission_required", False))
-    if full_required:
+    selected_claims = tuple(
+        str(value)
+        for value in (
+            requested_claims
+            if requested_claims is not None
+            else profile.get("requested_claims", [])
+        )
+    )
+    if (
+        not selected_claims
+        or selected_claims != tuple(sorted(set(selected_claims)))
+        or any(value not in CURRENT_REQUESTED_CLAIM_SET for value in selected_claims)
+        or "source_release" not in selected_claims
+    ):
+        return _blocked_current_plan(
+            profile_id,
+            ["current_test_mesh_requested_claims_invalid"],
+        )
+    claim_requires_external_binding = bool(
+        set(selected_claims) & {"installed_current", "global_router_current"}
+    )
+    if claim_requires_external_binding and full_admission_reason not in full_reasons:
+        # External claims are explicit requests, not an implicit consequence of
+        # selecting the full functional owner set.  Keep the reason in the
+        # frozen plan only when the caller actually derived it from impact.
+        full_reasons = sorted(set(full_reasons) | {"explicit_claim_binding"})
+    if claim_requires_external_binding:
         expected_freeze = {
             "source_identity_hash": source_identity_hash,
             "toolchain_identity_hash": toolchain_identity_hash,
@@ -1240,12 +1314,60 @@ def _compile_current_test_mesh_plan(
         if (
             not isinstance(freeze_identity, Mapping)
             or dict(freeze_identity) != expected_freeze
-            or full_admission_reason not in full_reasons
         ):
             return _blocked_current_plan(
                 profile_id,
-                ["full_gate_requires_exact_freeze_and_derived_reason"],
+                ["requested_claims_require_exact_freeze_identity"],
             )
+    installation_binding: Mapping[str, Any] | None = None
+    prompt_binding: Mapping[str, Any] | None = None
+    if claim_requires_external_binding:
+        if "installed_current" in selected_claims:
+            if installation_receipt_root is None:
+                return _blocked_current_plan(
+                    profile_id,
+                    ["installation_receipt_root_required_for_installed_current"],
+                )
+            try:
+                installation_binding = _load_current_installation_binding(
+                    repository_root,
+                    installation_receipt_root,
+                    canonical_skillguard_root=canonical_skillguard_root,
+                    verified_installation_context=verified_installation_context,
+                )
+            except (ExecutionRecordError, OSError) as exc:
+                return _blocked_current_plan(profile_id, [str(exc)])
+        elif installation_receipt_root is not None or canonical_skillguard_root is not None:
+            return _blocked_current_plan(profile_id, ["installation_claim_not_requested"])
+        if "global_router_current" in selected_claims:
+            try:
+                prompt_binding = _load_global_prompt_currentness_binding(
+                    codex_home=global_prompt_codex_home,
+                    skill_roots=global_prompt_skill_roots,
+                )
+            except (ExecutionRecordError, OSError) as exc:
+                return _blocked_current_plan(profile_id, [str(exc)])
+        elif global_prompt_codex_home is not None or global_prompt_skill_roots:
+            return _blocked_current_plan(profile_id, ["global_router_claim_not_requested"])
+    elif installation_receipt_root is not None or canonical_skillguard_root is not None or verified_installation_context is not None or global_prompt_codex_home is not None or global_prompt_skill_roots:
+        return _blocked_current_plan(profile_id, ["current_test_mesh_external_bindings_not_requested"])
+
+    # A claimed run is normally materialized under the target's run store,
+    # which is intentionally outside the source repository.  Keep the
+    # reference relocatable when possible, but do not make a valid external
+    # run fail merely because it cannot be expressed relative to the source
+    # root.  The executor already receives the exact run_root separately.
+    try:
+        run_root_ref = {
+            "path_token": "repository_root",
+            "relative_path": run_root.relative_to(repository_root).as_posix(),
+        }
+    except ValueError:
+        run_root_ref = {
+            "path_token": "absolute_path",
+            "absolute_path": run_root.as_posix(),
+        }
+
     report: dict[str, Any] = {
         "schema_version": CURRENT_TEST_MESH_PLAN_SCHEMA,
         "artifact_type": "skillguard_test_mesh_execution_plan",
@@ -1254,12 +1376,16 @@ def _compile_current_test_mesh_plan(
         "profile_id": profile_id,
         "maintenance_unit_id": maintenance_unit_id,
         "member_skill_id": member_skill_id,
-        "full_admission_required": full_required,
+        "requested_claims": list(selected_claims),
+        # Kept as a derived display field for existing reports; it is not an
+        # input authority and never selects installation/router checks.
+        "full_admission_required": claim_requires_external_binding,
         "full_admission_reason": (
-            full_admission_reason if full_required else ""
+            full_admission_reason if claim_requires_external_binding else ""
         ),
         "selection_declaration_hash": selection_declaration_hash,
         "snapshot_identity_hash": snapshot_identity_hash,
+        "run_root_ref": run_root_ref,
         "source_identity_hash": source_identity_hash,
         "toolchain_identity_hash": toolchain_identity_hash,
         "impact_graph_hash": str(
@@ -1276,6 +1402,12 @@ def _compile_current_test_mesh_plan(
         ),
         "required_portfolio_target_ids": required_portfolio_target_ids,
         "full_required_reason_codes": full_reasons,
+        "installation_verification_identity": (
+            dict(installation_binding) if installation_binding is not None else None
+        ),
+        "typed_domain_bindings": (
+            [dict(prompt_binding)] if prompt_binding is not None else []
+        ),
         "owner_plans": owner_plans,
         "execution_count": 0,
         "findings": [],
@@ -1327,12 +1459,22 @@ def _validate_frozen_current_plan(
     if selected_owner_ids != list(frozen_plan.get("selected_owner_ids", [])):
         raise ValueError("current_test_mesh_frozen_owner_selection_stale")
     impact_plan = contract["content_impact_plan"]
-    full_required = bool(_profile.get("full_admission_required", False))
-    if frozen_plan.get("full_admission_required") is not full_required:
-        raise ValueError(
-            "current_test_mesh_frozen_full_admission_requirement_stale"
-        )
-    if full_required:
+    profile_claims = tuple(str(value) for value in _profile.get("requested_claims", []))
+    requested_claims = tuple(str(value) for value in frozen_plan.get("requested_claims", []))
+    if (
+        not profile_claims
+        or not requested_claims
+        or requested_claims != tuple(sorted(set(requested_claims)))
+        or any(value not in CURRENT_REQUESTED_CLAIM_SET for value in requested_claims)
+        or "source_release" not in requested_claims
+    ):
+        raise ValueError("current_test_mesh_profile_requested_claims_invalid")
+    claim_requires_external_binding = bool(
+        set(requested_claims) & {"installed_current", "global_router_current"}
+    )
+    if bool(frozen_plan.get("full_admission_required", False)) != claim_requires_external_binding:
+        raise ValueError("current_test_mesh_frozen_claim_binding_projection_stale")
+    if claim_requires_external_binding:
         frozen_reason = str(
             frozen_plan.get("full_admission_reason", "")
         )
@@ -1348,18 +1490,10 @@ def _validate_frozen_current_plan(
             frozen_reason,
         )
         if (
-            not frozen_reason
-            or frozen_reason not in derived_reasons
-            or frozen_reason
-            not in {
-                str(value)
-                for value in frozen_plan.get(
-                    "full_required_reason_codes", []
-                )
-            }
+            not isinstance(frozen_plan.get("full_required_reason_codes"), list)
         ):
             raise ValueError(
-                "current_test_mesh_frozen_full_admission_reason_stale"
+                "current_test_mesh_frozen_claim_binding_reason_stale"
             )
     elif frozen_plan.get("full_admission_reason") not in {"", None}:
         raise ValueError(
@@ -2115,6 +2249,7 @@ def _aggregate_frozen_current_test_mesh(
         "member_skill_id": str(frozen_plan.get("member_skill_id", "")),
         "profile_id": str(frozen_plan.get("profile_id", "")),
         "plan_hash": str(frozen_plan.get("plan_hash", "")),
+        "requested_claims": list(frozen_plan.get("requested_claims", [])),
         "full_admission_required": bool(
             frozen_plan.get("full_admission_required", False)
         ),
@@ -2258,9 +2393,25 @@ def replay_current_test_mesh_aggregation(
         )
         if payload.get("external_projection_bindings_hash") != expected_external_hash:
             findings.append("aggregation_external_projection_bindings_hash_mismatch")
-        if payload.get("full_admission_required") is True:
+        requested_claims = payload.get("requested_claims")
+        if (
+            not isinstance(requested_claims, list)
+            or not requested_claims
+            or requested_claims != sorted(set(requested_claims))
+            or any(value not in CURRENT_REQUESTED_CLAIM_SET for value in requested_claims)
+            or "source_release" not in requested_claims
+        ):
+            findings.append("aggregation_requested_claims_invalid")
+            requested_claims = []
+        requires_installation = "installed_current" in requested_claims
+        requires_router = "global_router_current" in requested_claims
+        if bool(payload.get("full_admission_required", False)) != (
+            requires_installation or requires_router
+        ):
+            findings.append("aggregation_claim_binding_projection_mismatch")
+        if requires_installation:
             if repository_root is None:
-                findings.append("aggregation_repository_root_required_for_full_replay")
+                findings.append("aggregation_repository_root_required_for_installed_current_replay")
             else:
                 findings.extend(
                     _replay_installation_binding(
@@ -2272,6 +2423,9 @@ def replay_current_test_mesh_aggregation(
                         ),
                     )
                 )
+        elif installation_binding is not None:
+            findings.append("aggregation_installation_binding_not_requested")
+        if requires_router:
             findings.extend(
                 _replay_global_prompt_currentness_binding(
                     typed_bindings,
@@ -2279,8 +2433,8 @@ def replay_current_test_mesh_aggregation(
                     skill_roots=global_prompt_skill_roots,
                 )
             )
-        elif installation_binding is not None or typed_bindings not in ([], None):
-            findings.append("aggregation_external_bindings_for_non_full_profile")
+        elif typed_bindings not in ([], None):
+            findings.append("aggregation_global_router_binding_not_requested")
         children = payload.get("child_receipts")
         if not isinstance(children, list):
             findings.append("aggregation_child_receipts_invalid")
@@ -2821,6 +2975,7 @@ def execute_test_mesh(
     frozen_plan: Mapping[str, Any] | None = None,
     full_admission_reason: str = "",
     freeze_identity: Mapping[str, Any] | None = None,
+    requested_claims: Sequence[str] | None = None,
     installation_receipt_root: Path | None = None,
     canonical_skillguard_root: Path | None = None,
     verified_installation_context: VerifiedInstallationContext | None = None,
@@ -2869,10 +3024,29 @@ def execute_test_mesh(
         ),
         None,
     )
-    full_required = bool(
-        isinstance(profile, Mapping)
-        and profile.get("full_admission_required") is True
+    effective_requested_claims = tuple(
+        str(value)
+        for value in (
+            requested_claims
+            if requested_claims is not None
+            else profile.get("requested_claims", [])
+            if isinstance(profile, Mapping)
+            else []
+        )
     )
+    if (
+        not effective_requested_claims
+        or effective_requested_claims != tuple(sorted(set(effective_requested_claims)))
+        or any(value not in CURRENT_REQUESTED_CLAIM_SET for value in effective_requested_claims)
+        or "source_release" not in effective_requested_claims
+    ):
+        return _blocked_current_plan(
+            profile_id,
+            ["current_test_mesh_profile_requested_claims_invalid"],
+        )
+    requires_installation = "installed_current" in effective_requested_claims
+    requires_router = "global_router_current" in effective_requested_claims
+    external_claim_requested = requires_installation or requires_router
     binding_options_supplied = bool(
         installation_receipt_root
         or canonical_skillguard_root
@@ -2886,7 +3060,7 @@ def execute_test_mesh(
             frozen_plan,
             ["current_test_mesh_binding_options_only_valid_for_aggregation"],
         )
-    if mode == "plan_only" and binding_options_supplied:
+    if mode == "plan_only" and binding_options_supplied and not external_claim_requested:
         schema_version = (
             CURRENT_TEST_MESH_PLAN_SCHEMA
             if mode == "plan_only"
@@ -2910,7 +3084,7 @@ def execute_test_mesh(
             "will_execute_owner_ids": [],
             "claim_boundary": "External projections are consumed only by final aggregation.",
         }
-    if mode == "aggregation_only" and not full_required and binding_options_supplied:
+    if mode == "aggregation_only" and not external_claim_requested and binding_options_supplied:
         return {
             "schema_version": CURRENT_TEST_MESH_AGGREGATION_SCHEMA,
             "status": "blocked",
@@ -2918,10 +3092,33 @@ def execute_test_mesh(
             "profile_id": profile_id,
             "execution_count": 0,
             "findings": [
-                "current_test_mesh_external_bindings_only_valid_for_full"
+                "current_test_mesh_external_bindings_not_requested"
             ],
             "child_receipts": [],
         }
+    if mode == "aggregation_only":
+        if not requires_installation and (
+            installation_receipt_root or canonical_skillguard_root or verified_installation_context
+        ):
+            return {
+                "schema_version": CURRENT_TEST_MESH_AGGREGATION_SCHEMA,
+                "status": "blocked",
+                "mode": mode,
+                "profile_id": profile_id,
+                "execution_count": 0,
+                "findings": ["installation_claim_not_requested"],
+                "child_receipts": [],
+            }
+        if not requires_router and (global_prompt_codex_home or global_prompt_skill_roots):
+            return {
+                "schema_version": CURRENT_TEST_MESH_AGGREGATION_SCHEMA,
+                "status": "blocked",
+                "mode": mode,
+                "profile_id": profile_id,
+                "execution_count": 0,
+                "findings": ["global_router_claim_not_requested"],
+                "child_receipts": [],
+            }
     if run_root is None:
         if mode == "owner_execution_only":
             return _blocked_owner_execution(
@@ -2967,6 +3164,12 @@ def execute_test_mesh(
             owner_evidence_root=owner_evidence_root,
             full_admission_reason=full_admission_reason,
             freeze_identity=freeze_identity,
+            requested_claims=requested_claims,
+            installation_receipt_root=installation_receipt_root,
+            canonical_skillguard_root=canonical_skillguard_root,
+            verified_installation_context=verified_installation_context,
+            global_prompt_codex_home=global_prompt_codex_home,
+            global_prompt_skill_roots=global_prompt_skill_roots,
         )
     if mode == "owner_execution_only" and (
         full_admission_reason or freeze_identity is not None
@@ -3021,30 +3224,62 @@ def execute_test_mesh(
     if mode == "aggregation_only":
         installation_binding: Mapping[str, Any] | None = None
         prompt_binding: Mapping[str, Any] | None = None
-        if full_required and frozen_plan.get("status") == "passed":
-            if installation_receipt_root is None:
+        if frozen_plan.get("status") == "passed":
+            if requires_installation and installation_receipt_root is None:
                 return {
                     "schema_version": CURRENT_TEST_MESH_AGGREGATION_SCHEMA,
                     "status": "blocked",
                     "mode": mode,
                     "profile_id": profile_id,
                     "execution_count": 0,
-                    "findings": ["installation_receipt_root_required"],
+                    "findings": [
+                        "installation_receipt_root_required_for_installed_current"
+                    ],
                     "child_receipts": [],
                 }
             try:
-                installation_binding = _load_current_installation_binding(
-                    repository_root,
-                    installation_receipt_root,
-                    canonical_skillguard_root=canonical_skillguard_root,
-                    verified_installation_context=(
-                        verified_installation_context
-                    ),
+                if requires_installation:
+                    installation_binding = _load_current_installation_binding(
+                        repository_root,
+                        installation_receipt_root,
+                        canonical_skillguard_root=canonical_skillguard_root,
+                        verified_installation_context=(
+                            verified_installation_context
+                        ),
+                    )
+                if requires_router:
+                    prompt_binding = _load_global_prompt_currentness_binding(
+                        codex_home=global_prompt_codex_home,
+                        skill_roots=global_prompt_skill_roots,
+                    )
+                planned_installation = frozen_plan.get(
+                    "installation_verification_identity"
                 )
-                prompt_binding = _load_global_prompt_currentness_binding(
-                    codex_home=global_prompt_codex_home,
-                    skill_roots=global_prompt_skill_roots,
-                )
+                planned_prompt = frozen_plan.get("typed_domain_bindings", [])
+                if planned_installation != installation_binding:
+                    return {
+                        "schema_version": CURRENT_TEST_MESH_AGGREGATION_SCHEMA,
+                        "status": "blocked",
+                        "mode": mode,
+                        "profile_id": profile_id,
+                        "execution_count": 0,
+                        "findings": [
+                            "frozen_installation_claim_binding_changed"
+                        ],
+                        "child_receipts": [],
+                    }
+                if planned_prompt != ([dict(prompt_binding)] if prompt_binding is not None else []):
+                    return {
+                        "schema_version": CURRENT_TEST_MESH_AGGREGATION_SCHEMA,
+                        "status": "blocked",
+                        "mode": mode,
+                        "profile_id": profile_id,
+                        "execution_count": 0,
+                        "findings": [
+                            "frozen_global_router_claim_binding_changed"
+                        ],
+                        "child_receipts": [],
+                    }
             except (ExecutionRecordError, OSError) as exc:
                 return {
                     "schema_version": CURRENT_TEST_MESH_AGGREGATION_SCHEMA,

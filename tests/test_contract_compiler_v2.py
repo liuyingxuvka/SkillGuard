@@ -1188,7 +1188,10 @@ class ContractCompilerV2Tests(unittest.TestCase):
         left, right = self.binding["checks"][:2]
         left["execution_owner_id"] = "owner:fixture-skill:shared-model-producer"
         right["execution_owner_id"] = left["execution_owner_id"]
-        right["timeout_seconds"] = int(left["timeout_seconds"]) + 1
+        # Execution supervision is attempt metadata, not owner behavior.
+        # Keep this conflict test focused on a true functional declaration
+        # difference so changing a timeout does not invalidate the owner.
+        right["native_route_id"] = "route:other-functional-route"
         self._write_binding(self.binding)
 
         result = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
@@ -1198,6 +1201,24 @@ class ContractCompilerV2Tests(unittest.TestCase):
             "content_impact_graph_unhealthy",
             {finding.code for finding in result.findings},
         )
+
+    def test_timeout_change_does_not_change_owner_functional_identity(self) -> None:
+        first = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
+        self.assertTrue(first.ok, first.to_dict())
+        first_hashes = {
+            row["execution_owner_id"]: row["owner_declaration_hash"]
+            for row in first.check_manifest["content_impact_plan"]["owners"]
+        }
+
+        self.binding["checks"][0]["timeout_seconds"] = 300
+        self._write_binding(self.binding)
+        second = compile_skill_contract(self.skill, repository_root=self.repo, write=True)
+        self.assertTrue(second.ok, second.to_dict())
+        second_hashes = {
+            row["execution_owner_id"]: row["owner_declaration_hash"]
+            for row in second.check_manifest["content_impact_plan"]["owners"]
+        }
+        self.assertEqual(first_hashes, second_hashes)
 
     def test_explicit_shared_execution_owner_unions_semantic_dependencies(self) -> None:
         left, right, dependency = self.binding["checks"][:3]

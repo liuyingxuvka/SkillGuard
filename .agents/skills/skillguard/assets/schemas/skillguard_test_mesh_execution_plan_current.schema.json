@@ -12,6 +12,12 @@
     "status": {"enum": ["passed", "blocked"]},
     "mode": {"const": "plan_only"},
     "profile_id": {"type": "string"},
+    "requested_claims": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["source_release", "installed_current", "global_router_current"]}
+    },
     "full_admission_required": {"type": "boolean"},
     "full_admission_reason": {"type": "string"},
     "execution_count": {"const": 0},
@@ -88,10 +94,40 @@
     "source_identity_hash": {"$ref": "#/$defs/hash"},
     "toolchain_identity_hash": {"$ref": "#/$defs/hash"},
     "impact_graph_hash": {"$ref": "#/$defs/hash"},
+    "run_root_ref": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path_token", "relative_path"],
+          "properties": {
+            "path_token": {"const": "repository_root"},
+            "relative_path": {"type": "string", "minLength": 1}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path_token", "absolute_path"],
+          "properties": {
+            "path_token": {"const": "absolute_path"},
+            "absolute_path": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "installation_verification_identity": {
+      "oneOf": [{"type": "null"}, {"type": "object"}]
+    },
+    "typed_domain_bindings": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {"type": "object"}
+    },
     "claim_boundary": {"type": "string", "minLength": 1}
   },
   "if": {"properties": {"status": {"const": "passed"}}},
-  "then": {"required": ["full_admission_required", "full_admission_reason", "selection_declaration_hash", "snapshot_identity_hash", "source_identity_hash", "toolchain_identity_hash", "impact_graph_hash", "plan_hash"]},
+  "then": {"required": ["full_admission_required", "full_admission_reason", "requested_claims", "selection_declaration_hash", "snapshot_identity_hash", "source_identity_hash", "toolchain_identity_hash", "impact_graph_hash", "plan_hash", "run_root_ref", "installation_verification_identity", "typed_domain_bindings"]},
   "$defs": {
     "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
     "checkIds": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},

@@ -12,6 +12,22 @@ from skillguard_v2.test_mesh import (
     execute_test_mesh,
     replay_current_test_mesh_aggregation,
 )
+from skillguard_v2.execution_records import filesystem_path
+from skillguard_v2.contract_compiler import canonical_json_bytes
+
+
+def _write_plan_snapshot(run_root: Path, report: dict[str, object]) -> Path:
+    """Persist the exact plan object once so later stages consume one file."""
+
+    path = filesystem_path(run_root / "test-mesh-plan.json")
+    body = canonical_json_bytes(report)
+    if path.is_file():
+        if path.read_bytes() != body:
+            raise ValueError("frozen_plan_path_already_contains_different_plan")
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(body)
+    return path
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -41,6 +57,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--full-admission-reason", default="")
     parser.add_argument("--freeze-identity")
+    parser.add_argument(
+        "--requested-claim",
+        action="append",
+        choices=("source_release", "installed_current", "global_router_current"),
+        default=None,
+        help=(
+            "Explicit claim set for the frozen plan. Repeat for each claim; "
+            "source_release is always required."
+        ),
+    )
     parser.add_argument("--installation-receipt-root")
     parser.add_argument(
         "--canonical-skillguard-root",
@@ -101,6 +127,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.freeze_identity,
                 args.full_admission_reason,
                 args.installation_receipt_root,
+                args.requested_claim,
             )
         ) or args.mode != "plan_only"
         if forbidden:
@@ -127,7 +154,7 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"--mode {args.mode} requires --frozen-plan")
         if args.mode == "plan_only" and args.frozen_plan:
             parser.error("--mode plan_only rejects --frozen-plan")
-        if args.mode in {"plan_only", "owner_execution_only"} and (
+        if args.mode == "owner_execution_only" and (
             args.installation_receipt_root
             or canonical_skillguard_root
             or prompt_home
@@ -141,16 +168,6 @@ def main(argv: list[str] | None = None) -> int:
         ):
             parser.error(
                 "owner-execution mode rejects planning and freeze inputs"
-            )
-        if (
-            args.installation_receipt_root
-            or canonical_skillguard_root
-            or global_prompt_skill_roots
-        ) and (
-            args.profile != "full" or args.mode != "aggregation_only"
-        ):
-            parser.error(
-                "installation and canonical SkillGuard bindings are valid only for full aggregation"
             )
         if canonical_skillguard_root is not None and not args.installation_receipt_root:
             parser.error(
@@ -182,6 +199,7 @@ def main(argv: list[str] | None = None) -> int:
             frozen_plan=frozen_plan,
             full_admission_reason=args.full_admission_reason,
             freeze_identity=freeze_identity,
+            requested_claims=args.requested_claim,
             installation_receipt_root=(
                 repository_path(args.installation_receipt_root)
                 if args.installation_receipt_root
@@ -191,6 +209,38 @@ def main(argv: list[str] | None = None) -> int:
             global_prompt_codex_home=prompt_home,
             global_prompt_skill_roots=global_prompt_skill_roots,
         )
+        output = dict(report)
+        # Stable machine-facing counters let callers advance to the next
+        # stage without parsing human-oriented findings or re-running a
+        # status helper.  They are projections only; the frozen artifacts
+        # remain the authority.
+        if args.mode == "plan_only":
+            output.setdefault("executed_count", 0)
+            output.setdefault(
+                "reused_count", len(report.get("will_reuse_owner_ids", []))
+            )
+            output.setdefault("not_run", [])
+        elif args.mode == "owner_execution_only":
+            output.setdefault("executed_count", int(report.get("execution_count", 0) or 0))
+            output.setdefault(
+                "reused_count",
+                len(report.get("verified_planned_reuse_owner_ids", []))
+                + len(report.get("reused_after_freeze_owner_ids", [])),
+            )
+            output.setdefault("not_run", list(report.get("not_run_owner_ids", [])))
+        elif args.mode == "aggregation_only":
+            output.setdefault("executed_count", 0)
+            output.setdefault("reused_count", len(report.get("child_receipts", [])))
+            output.setdefault("not_run", [])
+        if args.mode == "plan_only" and report.get("status") == "passed":
+            plan_path = _write_plan_snapshot(repository_path(args.run_root), report)
+            output["frozen_plan_path"] = str(plan_path)
+        aggregation_ref = report.get("aggregation_ref")
+        if args.mode == "aggregation_only" and isinstance(aggregation_ref, dict):
+            relative = Path(str(aggregation_ref.get("relative_path", "")))
+            aggregation_path = filesystem_path(owner_root / relative)
+            output["aggregation_ref_path"] = str(aggregation_path)
+        report = output
     emit_json(report)
     return 0 if report["status"] == "passed" else 1
 

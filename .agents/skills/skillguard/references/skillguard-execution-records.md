@@ -25,10 +25,11 @@ This reference defines the one current execution-record boundary shared by manif
 
 ## Frozen affected plan and aggregation
 
-- TestMesh `plan_only` reads the compiled component graph and persistent owner-receipt pool. It records exact changed components, reusable owners, owners that still require execution, installation/router/Portfolio projections, and any derived full-admission reason. It launches and writes nothing.
+- TestMesh `plan_only` reads the compiled component graph and persistent owner-receipt pool. It freezes `requested_claims` explicitly: `source_release` is independent of the optional `installed_current` and `global_router_current` projections. It records exact changed components, reusable owners, owners that still require execution, and only the requested external bindings. It launches and writes nothing.
 - The declared owner runner—not TestMesh—executes only `will_execute_owner_ids`. Each successful producer publishes one immutable receipt with complete stdout, stderr, result, and termination sidecars. Several semantic checks consume that producer only when their exact projections were explicitly frozen under the same owner.
 - TestMesh `aggregation_only` accepts the byte-exact frozen plan and references the matching owner receipts. A parent/profile-only change may create a new aggregation identity without changing or reissuing child receipts.
 - Read-only replay resolves the aggregation reference and every child receipt. Missing or tampered evidence blocks; replay never executes, resumes, repairs, or backfills an owner.
+- Self-host terminal finalization consumes the unchanged frozen plan and aggregation reference after replay. It does not claim, compile, inspect owner freshness, or execute; the same terminal identity returns the existing pointer without a second write.
 
 ## Self-host CLI exception terminal
 

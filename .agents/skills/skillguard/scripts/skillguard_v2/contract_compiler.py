@@ -103,7 +103,6 @@ OWNER_BEHAVIOR_FIELDS = (
     "cwd_relative",
     "environment",
     "expected",
-    "timeout_seconds",
     "assertion_scope",
     "native_route_id",
     "applicable",
