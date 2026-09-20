@@ -8,13 +8,15 @@ import re
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
-from .capability_contract import normalize_portfolio_capability_contracts
+from .wire_identity import is_wire_hash, wire_hash
 
 
 MODEL_EXPORT_SCHEMA = "skillguard.flowguard_model_export.v2"
 BINDING_SOURCE_SCHEMA = "skillguard.contract_source.v2"
 COMPILED_CONTRACT_SCHEMA = "skillguard.compiled_contract.v2"
 CHECK_MANIFEST_SCHEMA = "skillguard.check_manifest.v2"
+COMPILED_CONTRACT_V3_SCHEMA = "skillguard.compiled_contract.v3"
+CHECK_MANIFEST_V3_SCHEMA = "skillguard.check_manifest.v3"
 RUN_SCHEMA = "skillguard.run.v2"
 EVENT_SCHEMA = "skillguard.run_event.v2"
 ARTIFACT_SCHEMA = "skillguard.artifact_record.v2"
@@ -180,7 +182,6 @@ BINDING_SOURCE_FIELDS = frozenset(
         "native_check_bindings",
         "native_route_bindings",
         "native_route_owner",
-        "portfolio_capability_contracts",
         "portfolio_target_edges",
         "projection_consumers",
         "release_eligible",
@@ -213,7 +214,6 @@ COMPILED_CONTRACT_FIELDS = frozenset(
         "consumer_projection",
         "obligations",
         "parent_model_id",
-        "portfolio_capability_contracts",
         "route_branch_closure_required",
         "routes",
         "schema_version",
@@ -1218,14 +1218,6 @@ def validate_binding_source(payload: object) -> tuple[SchemaFinding, ...]:
     _unique_ids(step_bindings, "step_id", "$.step_bindings", findings)
     _unique_ids(checks, "check_id", "$.checks", findings)
     _unique_ids(artifacts, "artifact_id", "$.artifacts", findings)
-    _capability_contracts, capability_findings = (
-        normalize_portfolio_capability_contracts(
-            root.get("portfolio_capability_contracts")
-        )
-    )
-    findings.extend(
-        _finding(row.code, row.path, row.message) for row in capability_findings
-    )
     profile_index = _unique_ids(profiles, "profile_id", "$.closure_profiles", findings)
     for index, row in enumerate(step_bindings):
         action = _mapping(row.get("action"), f"$.step_bindings[{index}].action", findings)
@@ -2511,7 +2503,146 @@ def _validate_content_impact_plan(
         )
 
 
+def _validate_compiled_contract_v3(payload: object) -> tuple[SchemaFinding, ...]:
+    """Validate the direct compact contract consumed by the current runtime."""
+
+    findings: list[SchemaFinding] = []
+    root = _mapping(payload, "$", findings)
+    allowed = {
+        "schema_version",
+        "skill_id",
+        "inputs",
+        "routes",
+        "steps",
+        "obligations",
+        "checks",
+        "source_identity",
+        "consumer_projection",
+        "content_impact_plan",
+        "maintenance_unit_id",
+        "member_skill_ids",
+        "check_declarations_hash",
+        "contract_hash",
+        "claim_boundary",
+    }
+    unknown = sorted(set(root) - allowed)
+    if unknown:
+        findings.append(
+            _finding(
+                "compiled_contract_v3_unknown_field",
+                "$",
+                ",".join(unknown),
+            )
+        )
+    if root.get("schema_version") != COMPILED_CONTRACT_V3_SCHEMA:
+        findings.append(
+            _finding(
+                "compiled_contract_v3_schema_mismatch",
+                "$.schema_version",
+                COMPILED_CONTRACT_V3_SCHEMA,
+            )
+        )
+    for key in (
+        "skill_id",
+        "maintenance_unit_id",
+        "check_declarations_hash",
+        "contract_hash",
+        "claim_boundary",
+    ):
+        _required_text(root, key, "$", findings)
+    member_skill_ids = _string_list(
+        root.get("member_skill_ids"), "$.member_skill_ids", findings
+    )
+    if root.get("skill_id") not in member_skill_ids:
+        findings.append(
+            _finding(
+                "compiled_v3_member_skill_ids_invalid",
+                "$.member_skill_ids",
+                str(root.get("skill_id", "")),
+            )
+        )
+    for key in ("inputs", "routes", "steps", "obligations", "checks"):
+        _rows(root.get(key), f"$.{key}", findings)
+    checks = root.get("checks")
+    if isinstance(checks, list):
+        check_ids = [
+            str(row.get("check_id", ""))
+            for row in checks
+            if isinstance(row, Mapping)
+        ]
+        if any(not value for value in check_ids) or len(check_ids) != len(set(check_ids)):
+            findings.append(
+                _finding(
+                    "compiled_v3_check_ids_invalid",
+                    "$.checks",
+                    "check ids must be present and unique",
+                )
+            )
+        for index, row in enumerate(checks):
+            if not isinstance(row, Mapping):
+                continue
+            path = f"$.checks[{index}]"
+            for key in ("check_id", "kind", "command"):
+                _required_text(row, key, path, findings)
+            if not isinstance(row.get("args", []), list) or not all(
+                isinstance(item, str) for item in row.get("args", [])
+            ):
+                findings.append(_finding("compiled_v3_check_args_invalid", f"{path}.args", "args must be a string array"))
+            if not isinstance(row.get("expected"), Mapping):
+                findings.append(_finding("compiled_v3_check_oracle_missing", f"{path}.expected", "expected oracle is required"))
+    expected_declarations = wire_hash(checks) if isinstance(checks, list) else ""
+    if expected_declarations and root.get("check_declarations_hash") != expected_declarations:
+        findings.append(
+            _finding(
+                "compiled_v3_check_declarations_hash_mismatch",
+                "$.check_declarations_hash",
+                "check declarations do not match the compiled checks",
+            )
+        )
+    projection = root.get("consumer_projection")
+    if projection is not None:
+        projection_map = _mapping(projection, "$.consumer_projection", findings)
+        if projection_map.get("projection_id") != "projection:consumer-distribution":
+            findings.append(
+                _finding(
+                    "compiled_v3_consumer_projection_invalid",
+                    "$.consumer_projection.projection_id",
+                    "projection:consumer-distribution",
+                )
+            )
+    return tuple(findings)
+
+
+def _validate_check_manifest_v3(payload: object) -> tuple[SchemaFinding, ...]:
+    findings: list[SchemaFinding] = []
+    root = _mapping(payload, "$", findings)
+    allowed = {
+        "schema_version",
+        "skill_id",
+        "contract_hash",
+        "checks",
+        "check_declarations_hash",
+        "claim_boundary",
+        "manifest_hash",
+    }
+    unknown = sorted(set(root) - allowed)
+    if unknown:
+        findings.append(_finding("check_manifest_v3_unknown_field", "$", ",".join(unknown)))
+    if root.get("schema_version") != CHECK_MANIFEST_V3_SCHEMA:
+        findings.append(_finding("check_manifest_v3_schema_mismatch", "$.schema_version", CHECK_MANIFEST_V3_SCHEMA))
+    for key in ("skill_id", "contract_hash", "check_declarations_hash", "manifest_hash", "claim_boundary"):
+        _required_text(root, key, "$", findings)
+    checks = _rows(root.get("checks"), "$.checks", findings)
+    _unique_ids(checks, "check_id", "$.checks", findings)
+    expected_declarations = wire_hash(list(root.get("checks", []))) if isinstance(root.get("checks"), list) else ""
+    if expected_declarations and root.get("check_declarations_hash") != expected_declarations:
+        findings.append(_finding("check_manifest_v3_declarations_hash_mismatch", "$.check_declarations_hash", "check declarations do not match the manifest"))
+    return tuple(findings)
+
+
 def validate_compiled_contract(payload: object) -> tuple[SchemaFinding, ...]:
+    if isinstance(payload, Mapping) and payload.get("schema_version") == COMPILED_CONTRACT_V3_SCHEMA:
+        return _validate_compiled_contract_v3(payload)
     findings: list[SchemaFinding] = []
     root = _mapping(payload, "$", findings)
     unknown_root_fields = sorted(set(root) - COMPILED_CONTRACT_FIELDS)
@@ -2587,24 +2718,6 @@ def validate_compiled_contract(payload: object) -> tuple[SchemaFinding, ...]:
             path="$.content_impact_plan",
             findings=findings,
         )
-    if "portfolio_capability_contracts" not in root:
-        findings.append(
-            _finding(
-                "compiled_capability_contracts_missing",
-                "$.portfolio_capability_contracts",
-                "compiled contracts must project the target capability authority",
-            )
-        )
-    else:
-        _capability_contracts, capability_findings = (
-            normalize_portfolio_capability_contracts(
-                root.get("portfolio_capability_contracts")
-            )
-        )
-        findings.extend(
-            _finding(row.code, row.path, row.message)
-            for row in capability_findings
-        )
     _validate_route_branch_closure_profiles(
         root,
         compiled_rows.get("closure_profiles", ()),
@@ -2616,6 +2729,8 @@ def validate_compiled_contract(payload: object) -> tuple[SchemaFinding, ...]:
 
 
 def validate_check_manifest(payload: object) -> tuple[SchemaFinding, ...]:
+    if isinstance(payload, Mapping) and payload.get("schema_version") == CHECK_MANIFEST_V3_SCHEMA:
+        return _validate_check_manifest_v3(payload)
     findings: list[SchemaFinding] = []
     root = _mapping(payload, "$", findings)
     unknown_root_fields = sorted(set(root) - CHECK_MANIFEST_FIELDS)

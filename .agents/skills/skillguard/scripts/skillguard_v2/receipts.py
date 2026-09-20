@@ -51,23 +51,141 @@ class FreshnessResult:
         }
 
 
+_FUNCTIONAL_NONFUNCTIONAL_EXACT_KEYS = frozenset(
+    {
+        "activation",
+        "claim_boundary",
+        "consumed_child_receipt_ids",
+        "created_at",
+        "deadline_at",
+        "elapsed_ms",
+        "elapsed_seconds",
+        "environment",
+        "enrollment_status",
+        "finished_at",
+        "file_count",
+        "install",
+        "installation",
+        "installed",
+        "issued_at",
+        "issued_sequence",
+        "latest",
+        "output_dir",
+        "pointer",
+        "receipt",
+        "receipt_hash",
+        "receipt_id",
+        "receipt_path",
+        "receipt_ref",
+        "receipt_root",
+        "release",
+        "release_id",
+        "release_ref",
+        "release_tag",
+        "report",
+        "run",
+        "run_id",
+        "run_root",
+        "resource_policy",
+        "started_at",
+        "status",
+        "supersedes_receipt_id",
+        "time",
+        "timestamp",
+        "timeout",
+        "timeout_seconds",
+    }
+)
+_FUNCTIONAL_NONFUNCTIONAL_PREFIXES = (
+    "install_",
+    "installation_",
+    "installed_",
+    "latest_",
+    "receipt_",
+    "release_",
+    "run_",
+    "time_",
+    "timestamp_",
+)
+
+
+def _normalized_identity_key(key: object) -> str:
+    text = re.sub(r"(?<!^)(?=[A-Z])", "_", str(key))
+    return re.sub(r"[^a-zA-Z0-9]+", "_", text).strip("_").lower()
+
+
+def _is_nonfunctional_identity_key(
+    key: object,
+    *,
+    top_level: bool = False,
+) -> bool:
+    normalized = _normalized_identity_key(key)
+    if normalized == "status":
+        return top_level
+    return normalized in _FUNCTIONAL_NONFUNCTIONAL_EXACT_KEYS or normalized.startswith(
+        _FUNCTIONAL_NONFUNCTIONAL_PREFIXES
+    )
+
+
 # These fields describe execution or evidence transport, not behavior under
 # test. They remain available to installation/provenance consumers, but their
 # change must not reopen an otherwise current functional leaf.
 FUNCTIONAL_FRESHNESS_EXCLUDED_KEYS = frozenset(
     {
-        "guard_runtime",
+        "activation",
         "environment",
+        "install",
+        "installation",
+        "latest",
+        "output_dir",
+        "pointer",
+        "receipt",
+        "release",
+        "report",
+        "run",
+        "run_id",
+        "time",
         "timeout",
         "timeout_seconds",
+        "timestamp",
+        "created_at",
+        "deadline_at",
+        "elapsed_ms",
+        "elapsed_seconds",
+        "environment",
+        "enrollment_status",
+        "file_count",
+        "finished_at",
+        "issued_at",
+        "issued_sequence",
+        "claim_boundary",
+        "consumed_child_receipt_ids",
+        "receipt_hash",
+        "receipt_id",
+        "receipt_path",
+        "receipt_ref",
+        "receipt_root",
+        "release_id",
+        "release_ref",
+        "release_tag",
         "resource_policy",
-        "output_dir",
-        "report",
-        "pointer",
-        "activation",
-        "receipt",
+        "run_root",
+        "status",
+        "supersedes_receipt_id",
     }
 )
+
+
+def _functional_projection(value: object, *, top_level: bool = True) -> object:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _functional_projection(item, top_level=False)
+            for key, item in value.items()
+            if not _is_nonfunctional_identity_key(key, top_level=top_level)
+        }
+    if isinstance(value, (list, tuple)):
+        return [_functional_projection(item, top_level=False) for item in value]
+    return value
 
 
 def functional_fingerprint_projection(
@@ -75,11 +193,21 @@ def functional_fingerprint_projection(
 ) -> dict[str, object]:
     """Return only behavior-bearing inputs for functional currentness."""
 
-    return {
-        str(key): value
-        for key, value in fingerprints.items()
-        if str(key) not in FUNCTIONAL_FRESHNESS_EXCLUDED_KEYS
-    }
+    projected = _functional_projection(fingerprints)
+    if not isinstance(projected, dict):
+        raise ReceiptError(
+            "fingerprints_projection_invalid",
+            "functional fingerprints must be an object",
+        )
+    return projected
+
+
+def _expected_receipt_id(receipt: Mapping[str, Any]) -> str:
+    source = dict(receipt)
+    source.pop("receipt_id", None)
+    source.pop("receipt_hash", None)
+    source.pop("created_at", None)
+    return f"receipt-{canonical_hash(source)[:24].lower()}"
 
 
 @dataclass(frozen=True)
@@ -96,6 +224,10 @@ class ReceiptIndex:
     receipts: tuple[Mapping[str, Any], ...]
     by_id: Mapping[str, Mapping[str, Any]]
     latest_by_subject: Mapping[tuple[str, str, str, str, str], Mapping[str, Any]]
+    latest_by_functional_subject: Mapping[
+        tuple[str, str, str, str, str, str], Mapping[str, Any]
+    ]
+    functional_rows_by_key: Mapping[str, tuple[Mapping[str, Any], ...]]
     by_root: Mapping[str, tuple[Mapping[str, Any], ...]]
 
     @classmethod
@@ -108,7 +240,33 @@ class ReceiptIndex:
         normalized = tuple(rows)
         by_id: dict[str, Mapping[str, Any]] = {}
         latest: dict[tuple[str, str, str, str, str], Mapping[str, Any]] = {}
+        latest_functional: dict[
+            tuple[str, str, str, str, str, str], Mapping[str, Any]
+        ] = {}
         for row in normalized:
+            if not isinstance(row, Mapping):
+                raise ReceiptError(
+                    "receipt_index_row_invalid",
+                    "selected receipt rows must be objects",
+                )
+            if (
+                "receipt_hash" in row
+                and str(row.get("schema_version", "")) == RECEIPT_SCHEMA
+            ):
+                unsigned = dict(row)
+                stored_hash = str(unsigned.pop("receipt_hash", ""))
+                if not stored_hash or stored_hash != canonical_hash(unsigned):
+                    raise ReceiptError(
+                        "receipt_hash_mismatch",
+                        "selected receipt content is not self-consistent",
+                        str(row.get("receipt_id", "")),
+                    )
+                if str(row.get("receipt_id", "")) != _expected_receipt_id(row):
+                    raise ReceiptError(
+                        "receipt_id_content_mismatch",
+                        "selected receipt id does not match immutable content",
+                        str(row.get("receipt_id", "")),
+                    )
             receipt_id = str(row.get("receipt_id", ""))
             if receipt_id:
                 previous = by_id.get(receipt_id)
@@ -126,11 +284,44 @@ class ReceiptIndex:
                 str(row.get("evidence_class", "")),
                 str(row.get("subject_id", "")),
             )
+            sequence = _receipt_sequence(row)
             existing = latest.get(subject)
-            if existing is None or int(row.get("issued_sequence", 0)) >= int(
-                existing.get("issued_sequence", 0)
-            ):
+            if existing is None or sequence > _receipt_sequence(existing):
                 latest[subject] = row
+            elif existing is not None and sequence == _receipt_sequence(existing):
+                if receipt_functional_key(existing) != receipt_functional_key(row):
+                    raise ReceiptError(
+                        "receipt_index_sequence_conflict",
+                        "same receipt subject and sequence have different functional results",
+                        str(row.get("receipt_id", "")),
+                    )
+            functional_subject = (
+                str(row.get("maintenance_unit_id", "")),
+                str(row.get("member_skill_id", "")),
+                str(row.get("semantic_check_id", "")),
+                str(row.get("step_id", "")),
+                str(row.get("evidence_class", "")),
+                str(row.get("subject_id", "")),
+            )
+            existing_functional = latest_functional.get(functional_subject)
+            if existing_functional is None or sequence > _receipt_sequence(
+                existing_functional
+            ):
+                latest_functional[functional_subject] = row
+            elif (
+                existing_functional is not None
+                and sequence == _receipt_sequence(existing_functional)
+                and receipt_functional_key(existing_functional)
+                != receipt_functional_key(row)
+            ):
+                raise ReceiptError(
+                    "receipt_index_sequence_conflict",
+                    "same functional receipt subject and sequence have different results",
+                    str(row.get("receipt_id", "")),
+                )
+        functional_rows: dict[str, list[Mapping[str, Any]]] = {}
+        for row in normalized:
+            functional_rows.setdefault(receipt_functional_key(row), []).append(row)
         roots = {}
         if root is not None:
             roots[str(filesystem_path(root).resolve())] = normalized
@@ -138,6 +329,10 @@ class ReceiptIndex:
             receipts=normalized,
             by_id=by_id,
             latest_by_subject=latest,
+            latest_by_functional_subject=latest_functional,
+            functional_rows_by_key={
+                key: tuple(rows) for key, rows in functional_rows.items()
+            },
             by_root=roots,
         )
 
@@ -165,24 +360,42 @@ class ReceiptIndex:
                 seen_roots.add(key)
                 unique_roots.append(normalized)
         selected_ids = tuple(dict.fromkeys(str(item) for item in receipt_ids if str(item)))
+        for receipt_id in selected_ids:
+            if not SAFE_ID.fullmatch(receipt_id):
+                raise ReceiptError("receipt_id_invalid", receipt_id, receipt_id)
         all_rows: list[Mapping[str, Any]] = []
         by_root: dict[str, tuple[Mapping[str, Any], ...]] = {}
+        selected_found: set[str] = set()
         for root in unique_roots:
             if selected_ids:
-                rows = tuple(
-                    _load_receipt_file(_receipts_root(root) / f"{receipt_id}.json")
-                    for receipt_id in selected_ids
-                    if (_receipts_root(root) / f"{receipt_id}.json").is_file()
-                )
+                loaded_rows: list[Mapping[str, Any]] = []
+                for receipt_id in selected_ids:
+                    path = _receipts_root(root) / f"{receipt_id}.json"
+                    if not path.is_file():
+                        continue
+                    loaded_rows.append(_load_receipt_file(path))
+                    selected_found.add(receipt_id)
+                rows = tuple(loaded_rows)
             else:
                 rows = load_receipts(root)
             by_root[str(root)] = rows
             all_rows.extend(rows)
+        missing_selected = [
+            receipt_id for receipt_id in selected_ids if receipt_id not in selected_found
+        ]
+        if missing_selected:
+            raise ReceiptError(
+                "receipt_not_found",
+                ",".join(missing_selected),
+                missing_selected[0],
+            )
         index = cls.from_rows(all_rows)
         return cls(
             receipts=index.receipts,
             by_id=index.by_id,
             latest_by_subject=index.latest_by_subject,
+            latest_by_functional_subject=index.latest_by_functional_subject,
+            functional_rows_by_key=index.functional_rows_by_key,
             by_root=by_root,
         )
 
@@ -202,6 +415,30 @@ class ReceiptIndex:
         )
         return self.latest_by_subject.get(subject)
 
+    def latest_functional_for(
+        self, receipt: Mapping[str, Any]
+    ) -> Mapping[str, Any] | None:
+        subject = (
+            str(receipt.get("maintenance_unit_id", "")),
+            str(receipt.get("member_skill_id", "")),
+            str(receipt.get("semantic_check_id", "")),
+            str(receipt.get("step_id", "")),
+            str(receipt.get("evidence_class", "")),
+            str(receipt.get("subject_id", "")),
+        )
+        return self.latest_by_functional_subject.get(subject)
+
+    def by_functional_key(self, functional_key: str) -> tuple[Mapping[str, Any], ...]:
+        """Return immutable results for one exact functional identity.
+
+        Issuance metadata and transport pointers are deliberately excluded from
+        this lookup.  The index is still only a read-only view of the selected
+        receipt set; it never promotes the newest receipt or changes authority.
+        """
+
+        key = str(functional_key)
+        return self.functional_rows_by_key.get(key, ())
+
 
 def _semantic_normalize(value: object) -> object:
     if isinstance(value, str):
@@ -211,6 +448,52 @@ def _semantic_normalize(value: object) -> object:
     if isinstance(value, (list, tuple)):
         return [_semantic_normalize(item) for item in value]
     return value
+
+
+_FUNCTIONAL_RECEIPT_EXCLUDED_FIELDS = frozenset(
+    {
+        "receipt_id",
+        "receipt_hash",
+        "run_id",
+        "issued_sequence",
+        "created_at",
+        "supersedes_receipt_id",
+        "consumed_child_receipt_ids",
+        "status",
+        "claim_boundary",
+    }
+)
+
+
+def receipt_functional_key(receipt: Mapping[str, Any]) -> str:
+    """Derive the stable behavior identity of a receipt.
+
+    A new issuance, receipt path, run, or presentation pointer must not make
+    the same functional result a different leaf.  Functional inputs and the
+    declared verifier remain part of the key, so changed behavior/oracles do
+    not become reusable merely because an old receipt has the same subject.
+    """
+
+    return canonical_hash(_functional_projection(receipt))
+
+
+def _receipt_sequence(receipt: Mapping[str, Any]) -> int:
+    value = receipt.get("issued_sequence", 0)
+    try:
+        sequence = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ReceiptError(
+            "receipt_index_sequence_invalid",
+            "issued_sequence must be an integer",
+            str(receipt.get("receipt_id", "")),
+        ) from exc
+    if sequence < 0:
+        raise ReceiptError(
+            "receipt_index_sequence_invalid",
+            "issued_sequence must not be negative",
+            str(receipt.get("receipt_id", "")),
+        )
+    return sequence
 
 
 def _raw_digest(value: object) -> str:
@@ -306,6 +589,12 @@ def _load_receipt_file(path: Path) -> Mapping[str, Any]:
     receipt_id = str(payload.get("receipt_id", ""))
     if not receipt_id or path.stem != receipt_id:
         raise ReceiptError("receipt_id_path_mismatch", path.name, path.name)
+    if receipt_id != _expected_receipt_id(payload):
+        raise ReceiptError(
+            "receipt_id_content_mismatch",
+            "immutable receipt id does not match its content",
+            path.name,
+        )
     return payload
 
 
@@ -314,7 +603,7 @@ def load_receipts(run_root: Path) -> tuple[Mapping[str, Any], ...]:
     if not root.is_dir():
         return ()
     rows = [_load_receipt_file(path) for path in sorted(root.glob("receipt-*.json"))]
-    return tuple(sorted(rows, key=lambda row: int(row.get("issued_sequence", 0))))
+    return tuple(sorted(rows, key=_receipt_sequence))
 
 
 def load_receipt(run_root: Path, receipt_id: str) -> Mapping[str, Any]:
@@ -620,7 +909,7 @@ def derive_freshness(
     if not isinstance(expected_inputs, Mapping):
         return FreshnessResult(False, "stale", ("receipt_fingerprints_invalid",), ())
     for key, expected in expected_inputs.items():
-        if str(key) in FUNCTIONAL_FRESHNESS_EXCLUDED_KEYS:
+        if _is_nonfunctional_identity_key(key, top_level=True):
             continue
         if not isinstance(expected, Mapping):
             reasons.append(f"invalid_fingerprint:{key}")
@@ -640,7 +929,16 @@ def derive_freshness(
             reasons.append(f"fingerprint_changed:{key}:{policy}")
             affected.append(str(key))
 
-    for child_id in receipt.get("consumed_child_receipt_ids", []):
+    child_ids = receipt.get("consumed_child_receipt_ids", [])
+    if not isinstance(child_ids, (list, tuple)):
+        reasons.append("consumed_child_ids_invalid")
+        affected.append("children")
+        child_ids = ()
+    for child_id in child_ids:
+        if not isinstance(child_id, str) or not child_id:
+            reasons.append("consumed_child_id_invalid")
+            affected.append("children")
+            continue
         child = receipt_index.get(str(child_id))
         if child is None:
             reasons.append(f"consumed_child_missing:{child_id}")
@@ -652,11 +950,14 @@ def derive_freshness(
             reasons.append(f"consumed_child_foreign_unit:{child_id}")
             affected.append(f"child:{child_id}")
             continue
-        latest = receipt_index.latest_for(child)
-        if latest and latest.get("receipt_id") != child_id:
-            reasons.append(f"consumed_child_superseded:{child_id}")
-            affected.append(f"child:{child_id}")
-        if child.get("status") != "passed":
+        latest = receipt_index.latest_functional_for(child)
+        if latest is not None and latest.get("receipt_id") != child_id:
+            if receipt_functional_key(latest) != receipt_functional_key(child):
+                reasons.append(f"consumed_child_functional_changed:{child_id}")
+                affected.append(f"child:{child_id}")
+        if child.get("status") != "passed" or (
+            latest is not None and latest.get("status") != "passed"
+        ):
             reasons.append(f"consumed_child_not_passed:{child_id}")
             affected.append(f"child:{child_id}")
     current = not reasons and receipt.get("status") == "passed"

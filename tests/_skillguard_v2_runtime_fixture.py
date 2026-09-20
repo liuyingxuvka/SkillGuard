@@ -388,7 +388,93 @@ def runtime_contract() -> dict[str, object]:
         "check_declarations_hash": canonical_hash({"checks": checks}),
         "claim_boundary": "Runtime fixture only.",
     }
-    contract["contract_hash"] = canonical_hash(contract)
+    # Keep this reusable fixture on the current compact v3 wire shape. The
+    # surrounding tests still exercise function-id requests, but route
+    # selection derives those aliases from the declared route rows rather
+    # than carrying the retired top-level functions/platform block.
+    contract = {
+        "schema_version": "skillguard.compiled_contract.v3",
+        "skill_id": "runtime-fixture",
+        "inputs": [
+            {"id": "input:runtime", "path": "runtime-fixture.py", "required": True}
+        ],
+        "routes": [
+            {
+                "route_id": "route:analyze",
+                "function_id": "analyze",
+                "choice_group": "operation",
+                "composable_with": ["publish"],
+                "when": [{"fact": "operation", "equals": "analyze"}],
+                "step_ids": ["step:intake", "step:optional-review", "step:finish", "terminal:analyzed"],
+                "obligation_ids": ["obligation:intake", "obligation:review", "obligation:finish"],
+            },
+            {
+                "route_id": "route:publish",
+                "function_id": "publish",
+                "choice_group": "operation",
+                "composable_with": ["analyze"],
+                "when": [{"fact": "operation", "equals": "publish"}],
+                "step_ids": ["step:package", "terminal:published"],
+                "obligation_ids": ["obligation:release"],
+            },
+        ],
+        "steps": [
+            {
+                "step_id": "step:intake",
+                "requires": [],
+                "check_ids": ["check:intake"],
+            },
+            {
+                "step_id": "step:optional-review",
+                "requires": ["step:intake"],
+                "check_ids": ["check:review"],
+            },
+            {
+                "step_id": "step:finish",
+                "requires": ["step:optional-review"],
+                "check_ids": ["check:finish"],
+            },
+            {
+                "step_id": "terminal:analyzed",
+                "requires": ["step:finish"],
+                "check_ids": [],
+            },
+            {
+                "step_id": "step:package",
+                "requires": [],
+                "check_ids": ["check:release"],
+            },
+            {
+                "step_id": "terminal:published",
+                "requires": ["step:package"],
+                "check_ids": [],
+            },
+        ],
+        "obligations": [
+            {"obligation_id": "obligation:intake", "check_ids": ["check:intake"]},
+            {"obligation_id": "obligation:review", "check_ids": ["check:review"]},
+            {"obligation_id": "obligation:finish", "check_ids": ["check:finish"]},
+            {"obligation_id": "obligation:release", "check_ids": ["check:release"]},
+        ],
+        "checks": checks,
+        "source_identity": {
+            "path": "contract-source.json",
+            "content_hash": wire_hash("runtime-fixture-source"),
+            "input_fingerprints": {},
+        },
+        "maintenance_unit_id": "unit:runtime-fixture",
+        "member_skill_ids": ["runtime-fixture"],
+        "consumer_projection": {
+            "projection_id": "projection:consumer-distribution",
+            "release_manifest_path": "consumer-release.json",
+        },
+        "content_impact_plan": content_impact_plan,
+        "claim_boundary": "Runtime fixture only.",
+    }
+    contract["check_declarations_hash"] = wire_hash(checks)
+    contract["contract_hash"] = wire_hash(
+        {key: value for key, value in contract.items() if key != "contract_hash"}
+    )
     return contract
 
 
@@ -400,21 +486,14 @@ def runtime_check_manifest(
         copy.deepcopy(checks if checks is not None else runtime_checks())
     )
     manifest: dict[str, object] = {
-        "schema_version": "skillguard.check_manifest.v2",
-        "compiler_version": "fixture",
+        "schema_version": "skillguard.check_manifest.v3",
         "skill_id": contract["skill_id"],
-        "maintenance_unit_id": contract["maintenance_unit_id"],
-        "member_skill_ids": contract["member_skill_ids"],
-        "consumer_projection": contract["consumer_projection"],
-        "model_id": contract["model_id"],
         "contract_hash": contract["contract_hash"],
-        "check_declarations_hash": contract["check_declarations_hash"],
         "checks": checks,
-        "content_impact_plan": content_impact_plan,
-        "source_fingerprints": {},
+        "check_declarations_hash": wire_hash(checks),
         "claim_boundary": "Runtime fixture check manifest only.",
     }
-    manifest["manifest_hash"] = canonical_hash(manifest)
+    manifest["manifest_hash"] = wire_hash(manifest)
     return manifest
 
 
@@ -423,10 +502,95 @@ def runtime_contract_with_checks(
 ) -> tuple[dict[str, object], dict[str, object]]:
     checks, content_impact_plan = _current_checks_and_plan(checks)
     contract = runtime_contract()
+    if checks:
+        contract["maintenance_unit_id"] = str(
+            checks[0].get("maintenance_unit_id", contract["maintenance_unit_id"])
+        )
+    # A compact v3 fixture must bind only the checks supplied by the caller.
+    # The former v2 helper kept a fixed four-check step graph, which made every
+    # deliberately small current fixture fail closed as if its omitted checks
+    # were a runtime defect.  Build a small, deterministic analyze route for
+    # the declared checks instead of restoring the retired platform/function
+    # registry.
+    if checks:
+        steps: list[dict[str, object]] = []
+        obligations_by_id: dict[str, dict[str, object]] = {}
+        step_ids: list[str] = []
+        obligation_ids: list[str] = []
+        previous_step_id = ""
+        for index, check in enumerate(checks):
+            check_id = str(check["check_id"])
+            safe_id = check_id.removeprefix("check:").replace("_", "-")
+            # Keep the first-step token stable for the current check-runner
+            # tests, while still allowing arbitrary additional checks.
+            step_id = (
+                ("step:intake", "step:optional-review", "step:finish", "step:package")[index]
+                if index < 4
+                else f"step:fixture-{index}-{safe_id}"
+            )
+            step_ids.append(step_id)
+            prerequisites = [previous_step_id] if previous_step_id else []
+            steps.append(
+                {
+                    "step_id": step_id,
+                    "route_id": "route:analyze",
+                    "owner_id": "fixture",
+                    "action_kind": "native",
+                    "prerequisite_step_ids": prerequisites,
+                    "required": True,
+                    "terminal_kind": "",
+                    "check_ids": [check_id],
+                }
+            )
+            previous_step_id = step_id
+            for obligation_id in sorted(
+                str(value) for value in check.get("covers_obligation_ids", [])
+            ):
+                obligation_ids.append(obligation_id)
+                row = obligations_by_id.setdefault(
+                    obligation_id,
+                    {
+                        "obligation_id": obligation_id,
+                        "invariant_id": f"fixture:{obligation_id.removeprefix('obligation:')}",
+                        "owner_step_ids": [],
+                        "required": True,
+                        "evidence_classes": ["hard"],
+                        "required_check_ids": [],
+                    },
+                )
+                row["owner_step_ids"] = sorted(
+                    {*row["owner_step_ids"], step_id}
+                )
+                row["required_check_ids"] = sorted(
+                    {*row["required_check_ids"], check_id}
+                )
+        terminal_id = "terminal:analyzed"
+        steps.append(
+            {
+                "step_id": terminal_id,
+                "route_id": "route:analyze",
+                "owner_id": "fixture",
+                "action_kind": "terminal",
+                "prerequisite_step_ids": [previous_step_id] if previous_step_id else [],
+                "required": True,
+                "terminal_kind": "success",
+                "check_ids": [],
+            }
+        )
+        step_ids.append(terminal_id)
+        contract["steps"] = steps
+        contract["obligations"] = list(
+            sorted(obligations_by_id.values(), key=lambda row: str(row["obligation_id"])))
+        contract["routes"][0]["start_step_id"] = step_ids[0]
+        contract["routes"][0]["step_ids"] = step_ids
+        contract["routes"][0]["success_terminal_step_id"] = terminal_id
+        contract["routes"][0]["obligation_ids"] = sorted(set(obligation_ids))
+        contract["routes"][1]["step_ids"] = []
+        contract["routes"][1]["obligation_ids"] = []
     contract["checks"] = checks
     contract["content_impact_plan"] = content_impact_plan
-    contract["check_declarations_hash"] = canonical_hash({"checks": checks})
-    contract["contract_hash"] = canonical_hash(
+    contract["check_declarations_hash"] = wire_hash(checks)
+    contract["contract_hash"] = wire_hash(
         {key: value for key, value in contract.items() if key != "contract_hash"}
     )
     return contract, runtime_check_manifest(contract, checks)

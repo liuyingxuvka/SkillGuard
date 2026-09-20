@@ -16,7 +16,6 @@ from .installation import (
     _load_transaction,
     replay_installed_smoke_currentness,
 )
-from .portfolio import atomic_write_json
 from .runtime_fingerprint import (
     RUNTIME_CONTRACT_ID,
     RUNTIME_PROVIDER_ID,
@@ -24,6 +23,7 @@ from .runtime_fingerprint import (
     guard_runtime_fingerprint,
     resolve_guard_runtime_root,
 )
+from .wire_identity import atomic_write_json
 
 
 INSTALL_VERIFICATION_SCHEMA = "skillguard.installation_verification_receipt.v1"

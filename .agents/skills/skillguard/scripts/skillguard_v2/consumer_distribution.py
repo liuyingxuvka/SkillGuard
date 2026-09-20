@@ -297,6 +297,46 @@ def consumer_distribution_plan(
             if isinstance(row, Mapping)
         }
     findings: list[ConsumerDistributionFinding] = []
+    explicit_paths = projection.get("file_paths")
+    selected_files: tuple[tuple[str, Path], ...] | None = None
+    if isinstance(explicit_paths, list):
+        rows: list[tuple[str, Path]] = []
+        seen: set[str] = set()
+        for item in explicit_paths:
+            normalized = str(item).replace("\\", "/").strip("/")
+            candidate = root / Path(*normalized.split("/")) if normalized else root
+            try:
+                resolved = candidate.resolve(strict=True)
+            except OSError:
+                findings.append(
+                    ConsumerDistributionFinding(
+                        "consumer_projection_file_missing",
+                        normalized or str(item),
+                        "explicit consumer projection member is missing",
+                    )
+                )
+                continue
+            if (
+                not normalized
+                or normalized in seen
+                or Path(normalized).is_absolute()
+                or any(part in {"", ".", ".."} for part in normalized.split("/"))
+                or not resolved.is_relative_to(root)
+                or not candidate.is_file()
+            ):
+                findings.append(
+                    ConsumerDistributionFinding(
+                        "consumer_projection_file_invalid",
+                        normalized or str(item),
+                        "explicit consumer projection members must be unique regular files under the skill root",
+                    )
+                )
+                continue
+            seen.add(normalized)
+            rows.append((normalized, candidate))
+        selected_files = tuple(sorted(rows, key=lambda row: row[0]))
+    source_files = selected_files if selected_files is not None else _relative_files(root)
+    allow_self_references = str(contract.get("skill_id", "")).casefold() == "skillguard"
     files: list[dict[str, str]] = []
     stranded_runtime_root = root / ".skillguard" / "runtime"
     if stranded_runtime_root.is_dir():
@@ -308,7 +348,7 @@ def consumer_distribution_plan(
                     "move target-domain runtime into a target-owned namespace before graduation",
                 )
             )
-    for relative, path in _relative_files(root):
+    for relative, path in source_files:
         normalized = relative.replace("\\", "/")
         if normalized == release_manifest_path:
             findings.append(
@@ -329,7 +369,11 @@ def consumer_distribution_plan(
         if inventory_dispositions.get(inventory_path) == "source_only":
             continue
         text = _read_text(path)
-        if "skillguard" in normalized.lower() and not _is_retired_sentinel(path, text):
+        if (
+            not allow_self_references
+            and "skillguard" in normalized.lower()
+            and not _is_retired_sentinel(path, text)
+        ):
             findings.append(
                 ConsumerDistributionFinding(
                     "consumer_author_control_name_present",
@@ -346,7 +390,7 @@ def consumer_distribution_plan(
                 )
             )
             continue
-        if text is not None:
+        if text is not None and not allow_self_references:
             for code, detail in _text_reference_findings(path, text):
                 findings.append(ConsumerDistributionFinding(code, normalized, detail))
         files.append({"path": normalized, "content_hash": _file_hash(path)})
@@ -541,6 +585,7 @@ def audit_consumer_distribution(root: Path) -> dict[str, Any]:
         row["path"]: row["content_hash"]
         for row in _manifest_file_rows(manifest, findings)
     }
+    allow_self_references = str(manifest.get("skill_id", "")).casefold() == "skillguard"
     actual: dict[str, str] = {}
     for relative, path in _relative_files(tree):
         normalized = relative.replace("\\", "/")
@@ -556,7 +601,11 @@ def audit_consumer_distribution(root: Path) -> dict[str, Any]:
             )
             continue
         text = _read_text(path)
-        if "skillguard" in normalized.lower() and not _is_retired_sentinel(path, text):
+        if (
+            not allow_self_references
+            and "skillguard" in normalized.lower()
+            and not _is_retired_sentinel(path, text)
+        ):
             findings.append(
                 ConsumerDistributionFinding(
                     "consumer_author_control_name_present",
@@ -574,7 +623,7 @@ def audit_consumer_distribution(root: Path) -> dict[str, Any]:
             )
             continue
         actual[normalized] = _file_hash(path)
-        if text is not None:
+        if text is not None and not allow_self_references:
             for code, detail in _text_reference_findings(path, text):
                 findings.append(ConsumerDistributionFinding(code, normalized, detail))
     for missing in sorted(set(expected) - set(actual)):

@@ -12,6 +12,7 @@ from skillguard_v2 import portable_content
 from skillguard_v2.runtime_fingerprint import (
     GuardRuntimeFingerprintError,
     guard_execution_runtime_fingerprint,
+    runtime_functional_key,
 )
 
 
@@ -252,6 +253,31 @@ class PortableContentPolicyTests(unittest.TestCase):
                 r"portable boundary blocked: runtime:\.sg-runtime",
             ):
                 guard_execution_runtime_fingerprint(active)
+
+    def test_runtime_functional_key_ignores_enrollment_and_release_metadata(self) -> None:
+        base = {
+            "runtime_id": "skillguard-v2",
+            "provider_id": "skillguard-local-provider",
+            "runtime_contract_id": "skillguard-declared-check-supervision-current",
+            "capability_ids": ["single-flight-check-execution.v1"],
+            "source_hash": "sha256:" + "a" * 64,
+            "enrollment_status": "enrolled",
+            "file_count": 10,
+            "release_tag": "release-one",
+        }
+        metadata_changed = {
+            **base,
+            "enrollment_status": "re-enrolled",
+            "file_count": 99,
+            "release_tag": "release-two",
+        }
+        self.assertEqual(
+            runtime_functional_key(base), runtime_functional_key(metadata_changed)
+        )
+        changed_source = {**base, "source_hash": "sha256:" + "b" * 64}
+        self.assertNotEqual(
+            runtime_functional_key(base), runtime_functional_key(changed_source)
+        )
 
 
 if __name__ == "__main__":

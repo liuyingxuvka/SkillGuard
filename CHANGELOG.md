@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.7.6 - 2026-09-20
+
+- Completed the standalone contract/runtime contraction: the public dispatcher
+  now exposes only `read`, `change`, and `release`, with retired platform
+  modules removed rather than reached through compatibility fallbacks.
+- Kept route selection fact-based, execution summaries bounded, receipts
+  functionally reusable, and target installation atomic with explicit
+  projection identity.
+- Installed projections remain independent of author controls and the
+  FlowGuard v0.69.4 source; GitHub publication and validation evidence remain
+  separate claims.
+
 ## v0.7.5 - 2026-09-20
 
 - Added a bounded single-route reference entrypoint and compact author

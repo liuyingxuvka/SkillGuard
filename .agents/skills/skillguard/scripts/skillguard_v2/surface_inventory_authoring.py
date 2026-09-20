@@ -148,11 +148,8 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
             ".skillguard/flowguard_contract_model.py",
             ".skillguard/template_lifecycle_model.py",
             "scripts/skillguard_compile.py",
-            "scripts/skillguard_v2/capability_contract.py",
-            "scripts/skillguard_v2/capability_engine.py",
             "scripts/skillguard_v2/contract_compiler.py",
             "scripts/skillguard_v2/contract_schema.py",
-            "scripts/skillguard_v2/flowguard_adapter.py",
             "assets/contract_fragments/catalog.json",
             "assets/schemas/skillguard_compiled_contract_v2.schema.json",
             "assets/schemas/skillguard_contract_source_v2.schema.json",
@@ -187,21 +184,6 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
             "scripts/skillguard_v2/execution_records.py",
             "scripts/skillguard_v2/run_store.py",
             "scripts/skillguard_v2/supervisor.py",
-            "scripts/skillguard_v2/self_host.py",
-        ),
-    ),
-    SemanticRule(
-        "decision:self-host-finalize-terminal-closure",
-        (
-            "obligation:exact-closure",
-            "obligation:artifact-freshness",
-            "obligation:guard-run-identity",
-        ),
-        "The frozen self-host finalizer and its explicit fault surface may close only from the exact current mesh, artifact, and run identity.",
-        _CHECK_PROOF + "#check:self:issue-closure-receipt",
-        surface_ids=(
-            "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
-            "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         ),
     ),
     SemanticRule(
@@ -257,7 +239,6 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
             "scripts/skillguard_v2/step_runtime.py",
             "scripts/skillguard_v2/execution_depth.py",
             "scripts/skillguard_v2/supervisor.py",
-            "scripts/skillguard_v2/portfolio_runner.py",
         ),
     ),
     SemanticRule(
@@ -279,9 +260,7 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
         "Fault, diagnostic, capability, and assurance surfaces preserve authority while explaining blockers and outcomes.",
         _CHECK_PROOF + "#check:self:assurance-diagnostics",
         source_paths=(
-            "scripts/skillguard_v2/assurance_diagnostics.py",
             "scripts/skillguard_v2/evidence_policy.py",
-            "scripts/skillguard_v2/capability_engine.py",
             "assets/schemas/skillguard_assurance_diagnostic_input_v1.schema.json",
             "assets/schemas/skillguard_assurance_diagnostics_report_v1.schema.json",
         ),
@@ -308,11 +287,6 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
         "Portfolio preparation, impact, execution, and graduation surfaces use only the maintenance-unit evidence that is current for that unit.",
         _CHECK_PROOF + "#check:self:scan-maintenance-unit-freshness",
         source_paths=(
-            "scripts/skillguard_v2/portfolio.py",
-            "scripts/skillguard_v2/portfolio_records.py",
-            "scripts/skillguard_v2/portfolio_runner.py",
-            "scripts/skillguard_v2/portfolio_cli.py",
-            "scripts/skillguard_v2/portfolio_impact_receipt.py",
             "assets/schemas/skillguard_portfolio_registry_v2.schema.json",
             "assets/schemas/skillguard_portfolio_graduation_receipt_v2.schema.json",
             "assets/schemas/skillguard_portfolio_graduation_evidence_v2.schema.json",
@@ -376,8 +350,6 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
         _CHECK_PROOF + "#check:self:audit-author-repository-adoption",
         source_paths=(
             "scripts/skillguard_v2/project_adoption.py",
-            "scripts/skillguard_v2/self_host.py",
-            "scripts/skillguard_self_host.py",
             "AGENTS.md",
         ),
     ),
@@ -387,9 +359,6 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
         "Global-router discovery, projection, transaction, route index, and consumer projection surfaces own the exact handoff boundary.",
         _CHECK_PROOF + "#check:self:verify-target-handoff",
         source_paths=(
-            "scripts/skillguard_v2/global_router_discovery.py",
-            "scripts/skillguard_v2/global_router_projection.py",
-            "scripts/skillguard_v2/global_router_transaction.py",
             "scripts/skillguard_v2/content_projection.py",
             "scripts/skillguard_v2/consumer_distribution.py",
             "scripts/skillguard.py",

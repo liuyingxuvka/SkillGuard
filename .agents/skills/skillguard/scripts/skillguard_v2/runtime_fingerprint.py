@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from .contract_compiler import canonical_hash, source_file_hash
 from .portable_content import (
@@ -37,6 +37,56 @@ RUNTIME_CAPABILITY_IDS = (
     "provider-runtime-enrollment.v1",
     "single-flight-check-execution.v1",
 )
+_RUNTIME_FUNCTIONAL_FIELDS = (
+    "runtime_id",
+    "provider_id",
+    "runtime_contract_id",
+    "capability_ids",
+    "source_hash",
+)
+
+
+def runtime_functional_projection(
+    fingerprint: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Project runtime identity onto maintained behavior, not enrollment metadata."""
+
+    if not isinstance(fingerprint, Mapping):
+        raise GuardRuntimeFingerprintError(
+            "runtime fingerprint must be an object"
+        )
+    missing = [
+        field for field in _RUNTIME_FUNCTIONAL_FIELDS if field not in fingerprint
+    ]
+    if missing:
+        raise GuardRuntimeFingerprintError(
+            "runtime functional identity is incomplete: " + ",".join(missing)
+        )
+    capabilities = fingerprint.get("capability_ids")
+    if not isinstance(capabilities, (list, tuple)) or any(
+        not isinstance(value, str) or not value for value in capabilities
+    ) or not capabilities:
+        raise GuardRuntimeFingerprintError(
+            "runtime functional capability identity is invalid"
+        )
+    for field in ("runtime_id", "provider_id", "runtime_contract_id", "source_hash"):
+        if not str(fingerprint[field]):
+            raise GuardRuntimeFingerprintError(
+                f"runtime functional {field} is missing"
+            )
+    return {
+        "runtime_id": str(fingerprint["runtime_id"]),
+        "provider_id": str(fingerprint["provider_id"]),
+        "runtime_contract_id": str(fingerprint["runtime_contract_id"]),
+        "capability_ids": sorted(str(value) for value in capabilities),
+        "source_hash": str(fingerprint["source_hash"]),
+    }
+
+
+def runtime_functional_key(fingerprint: Mapping[str, Any]) -> str:
+    """Return the stable behavior identity for one runtime fingerprint."""
+
+    return canonical_hash(runtime_functional_projection(fingerprint))
 
 
 def _existing_directory(path: Path, *, label: str) -> Path:
@@ -219,7 +269,7 @@ def _guard_runtime_fingerprint(
                 "content_hash": source_file_hash(path),
             }
         )
-    return {
+    fingerprint = {
         "runtime_id": "skillguard-v2",
         "provider_id": RUNTIME_PROVIDER_ID,
         "runtime_contract_id": RUNTIME_CONTRACT_ID,
@@ -228,6 +278,10 @@ def _guard_runtime_fingerprint(
         "file_count": len(files),
         "source_hash": canonical_hash(files),
     }
+    # Validate the exact projection used by functional freshness while
+    # keeping enrollment/file-count metadata available to their own consumers.
+    runtime_functional_key(fingerprint)
+    return fingerprint
 
 
 def guard_runtime_fingerprint(runtime_root: Path | None = None) -> dict[str, Any]:

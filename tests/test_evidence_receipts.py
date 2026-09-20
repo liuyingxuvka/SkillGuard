@@ -14,6 +14,7 @@ from skillguard_v2.receipts import (
     fingerprint_value,
     issue_receipt,
     load_receipts,
+    receipt_functional_key,
 )
 from skillguard_v2.route_runtime import select_routes
 from skillguard_v2.run_store import claim_run
@@ -194,7 +195,7 @@ class EvidenceReceiptTests(unittest.TestCase):
         self.assertFalse(stale.current)
         self.assertEqual(("implementation",), stale.affected_keys)
 
-    def test_parent_becomes_stale_when_exact_child_is_superseded(self) -> None:
+    def test_parent_stays_current_when_same_child_result_is_reissued(self) -> None:
         first_child = self._hard()
         parent = issue_receipt(
             self.run_root,
@@ -216,16 +217,87 @@ class EvidenceReceiptTests(unittest.TestCase):
         )
         second_child = self._hard()
         self.assertEqual(first_child["receipt_id"], second_child["supersedes_receipt_id"])
+        self.assertEqual(
+            receipt_functional_key(first_child), receipt_functional_key(second_child)
+        )
         receipt_index = ReceiptIndex.from_roots((self.run_root,))
         stale = derive_freshness(
             parent,
             self.fingerprints,
             receipt_index=receipt_index,
         )
-        self.assertFalse(stale.current)
+        self.assertTrue(stale.current)
+
+    def test_parent_stales_when_child_input_or_oracle_changes(self) -> None:
+        first_child = self._hard()
+        parent = issue_receipt(
+            self.run_root,
+            step_id="step:finish",
+            evidence_class="hard",
+            evidence={"proof_kind": "aggregate", "proof_fingerprint": "parent:1"},
+            decision="passed",
+            verifier_id="parent-verifier",
+            input_fingerprints=self.fingerprints,
+            consumed_child_receipt_ids=[first_child["receipt_id"]],
+        )
+        issue_receipt(
+            self.run_root,
+            step_id="step:intake",
+            evidence_class="hard",
+            evidence={"proof_kind": "command", "proof_fingerprint": "proof:changed"},
+            decision="passed",
+            verifier_id="different-oracle",
+            input_fingerprints={
+                **self.fingerprints,
+                "implementation": fingerprint_value("version 2", policy="raw"),
+            },
+        )
+        result = derive_freshness(
+            parent,
+            self.fingerprints,
+            receipt_index=ReceiptIndex.from_roots((self.run_root,)),
+        )
+        self.assertFalse(result.current)
         self.assertIn(
-            f"consumed_child_superseded:{first_child['receipt_id']}",
-            stale.reasons,
+            f"consumed_child_functional_changed:{first_child['receipt_id']}",
+            result.reasons,
+        )
+
+    def test_functional_receipt_key_ignores_transport_but_keeps_result(self) -> None:
+        receipt = self._hard()
+        same_result = dict(receipt)
+        same_result.update(
+            {
+                "run_id": "run:other",
+                "receipt_id": "receipt-other",
+                "receipt_hash": "hash-other",
+                "created_at": "2099-01-01T00:00:00Z",
+                "issued_sequence": 999,
+                "latest_receipt_id": "receipt-other",
+                "install_marker": "install-2",
+                "release_tag": "release-2",
+            }
+        )
+        same_result["evidence"] = {
+            **dict(receipt["evidence"]),
+            "created_at": "2099-01-01T00:00:00Z",
+        }
+        self.assertEqual(
+            receipt_functional_key(receipt), receipt_functional_key(same_result)
+        )
+
+        changed_result = dict(same_result)
+        changed_result["evidence"] = {
+            **dict(receipt["evidence"]),
+            "proof_fingerprint": "proof:changed",
+        }
+        self.assertNotEqual(
+            receipt_functional_key(receipt), receipt_functional_key(changed_result)
+        )
+        changed_oracle = dict(same_result)
+        changed_oracle["verifier_id"] = "different-oracle"
+        self.assertNotEqual(
+            receipt_functional_key(receipt), receipt_functional_key(changed_oracle)
         )
 
     def test_freshness_does_not_reload_receipts_after_index_is_built(self) -> None:

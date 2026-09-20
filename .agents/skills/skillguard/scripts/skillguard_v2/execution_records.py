@@ -549,10 +549,19 @@ def validate_timeout_receipt(receipt: Mapping[str, Any], expected_schema: str) -
     expected_owner_type, owner_fields = owner_requirements[expected_schema]
     if owner.get("owner_type") != expected_owner_type:
         raise ExecutionRecordError("timeout_receipt_owner_type_invalid")
+    wire_hash_pattern = re.compile(r"^sha256:[0-9a-f]{64}$")
+    v3_wire_hash_fields = {
+        "contract_hash",
+        "check_manifest_hash",
+        "check_declarations_hash",
+    }
     for field in owner_fields:
         value = str(owner.get(field, ""))
         if field == "run_id":
             if not value:
+                raise ExecutionRecordError("timeout_receipt_owner_field_invalid", field)
+        elif field in v3_wire_hash_fields:
+            if not wire_hash_pattern.fullmatch(value):
                 raise ExecutionRecordError("timeout_receipt_owner_field_invalid", field)
         elif not hash_pattern.fullmatch(value):
             raise ExecutionRecordError("timeout_receipt_owner_field_invalid", field)
@@ -1143,6 +1152,10 @@ def release_process_tree_containment(
         if not group_empty:
             deadline = time.monotonic() + 5.0
             while time.monotonic() < deadline:
+                # Reap an exited direct child before probing its process group;
+                # otherwise a zombie parent can keep killpg(..., 0) reporting
+                # a group that has already stopped doing work.
+                process.poll()
                 try:
                     os.killpg(containment.root_pid, 0)
                 except ProcessLookupError:
@@ -1154,6 +1167,7 @@ def release_process_tree_containment(
             facts["termination_method"] = "posix_process_group_sigkill"
             deadline = time.monotonic() + 5.0
             while time.monotonic() < deadline:
+                process.poll()
                 try:
                     os.killpg(containment.root_pid, 0)
                 except ProcessLookupError:
@@ -1164,6 +1178,15 @@ def release_process_tree_containment(
             process.wait(timeout=2)
         except (OSError, subprocess.SubprocessError):
             pass
+        process.poll()
+        # The pre-wait observation is not authoritative.  Probe again after
+        # reaping so the final result reflects the actual process-group state.
+        try:
+            os.killpg(containment.root_pid, 0)
+        except ProcessLookupError:
+            group_empty = True
+        except OSError:
+            group_empty = False
         root_exited = process.poll() is not None
         facts["termination_succeeded"] = bool(root_exited and group_empty)
         facts["cleanup_confirmed"] = bool(root_exited and group_empty)

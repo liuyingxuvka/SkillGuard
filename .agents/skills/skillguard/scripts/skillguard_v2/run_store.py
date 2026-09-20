@@ -23,6 +23,7 @@ from .contract_schema import (
 )
 from .route_runtime import RouteDecision
 from .execution_records import filesystem_path
+from .wire_identity import atomic_write_json, wire_hash
 
 
 @dataclass(frozen=True)
@@ -72,11 +73,7 @@ def _json_load(path: Path) -> Mapping[str, Any]:
 
 
 def _atomic_write(path: Path, payload: Mapping[str, Any]) -> None:
-    path = filesystem_path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    temporary.write_bytes(canonical_json_bytes(payload))
-    os.replace(temporary, path)
+    atomic_write_json(filesystem_path(path), payload)
 
 
 def _hash_without(payload: Mapping[str, Any], field: str) -> str:
@@ -97,7 +94,18 @@ def _claim_artifact_findings(
     contract_hash = str(contract.get("contract_hash", ""))
     manifest_hash = str(check_manifest.get("manifest_hash", ""))
     declarations_hash = str(contract.get("check_declarations_hash", ""))
-    if contract_hash != _hash_without(contract, "contract_hash"):
+    is_v3 = contract.get("schema_version") == "skillguard.compiled_contract.v3"
+    expected_contract_hash = (
+        wire_hash({key: value for key, value in contract.items() if key != "contract_hash"})
+        if is_v3
+        else _hash_without(contract, "contract_hash")
+    )
+    expected_manifest_hash = (
+        wire_hash({key: value for key, value in check_manifest.items() if key != "manifest_hash"})
+        if is_v3
+        else _hash_without(check_manifest, "manifest_hash")
+    )
+    if contract_hash != expected_contract_hash:
         findings.append(
             SchemaFinding(
                 "compiled_contract_hash_mismatch",
@@ -105,7 +113,7 @@ def _claim_artifact_findings(
                 "compiled contract content does not match contract_hash",
             )
         )
-    if manifest_hash != _hash_without(check_manifest, "manifest_hash"):
+    if manifest_hash != expected_manifest_hash:
         findings.append(
             SchemaFinding(
                 "check_manifest_hash_mismatch",
@@ -121,7 +129,7 @@ def _claim_artifact_findings(
                 "check manifest and compiled contract must name the same skill",
             )
         )
-    if check_manifest.get("maintenance_unit_id") != contract.get(
+    if not is_v3 and check_manifest.get("maintenance_unit_id") != contract.get(
         "maintenance_unit_id"
     ):
         findings.append(
@@ -131,7 +139,7 @@ def _claim_artifact_findings(
                 "check manifest and compiled contract must name the same maintenance unit",
             )
         )
-    if check_manifest.get("member_skill_ids") != contract.get(
+    if not is_v3 and check_manifest.get("member_skill_ids") != contract.get(
         "member_skill_ids"
     ):
         findings.append(
@@ -151,7 +159,9 @@ def _claim_artifact_findings(
         )
     checks = check_manifest.get("checks")
     recomputed_declarations_hash = (
-        canonical_hash({"checks": list(checks)}) if isinstance(checks, list) else ""
+        wire_hash(list(checks)) if is_v3 and isinstance(checks, list)
+        else canonical_hash({"checks": list(checks)}) if isinstance(checks, list)
+        else ""
     )
     if (
         not declarations_hash
@@ -185,7 +195,9 @@ def _claim_artifact_findings(
         for step in contract.get("steps", [])
         if isinstance(step, Mapping)
         for check_id in (
-            step.get("binding", {}).get("check_ids", [])
+            step.get("check_ids", [])
+            if is_v3
+            else step.get("binding", {}).get("check_ids", [])
             if isinstance(step.get("binding"), Mapping)
             else []
         )
@@ -259,6 +271,144 @@ def author_run_control_root(
         / "members"
         / _identity_directory(contract.get("skill_id", ""))
     )
+
+
+ACCEPTED_TARGET_SCHEMA = "skillguard.accepted_target.v1"
+_ACCEPTED_TARGET_FIELDS = (
+    "schema_version",
+    "skill_id",
+    "generation",
+    "result_ref",
+    "result_hash",
+    "input_snapshot_ref",
+    "input_snapshot_hash",
+)
+
+
+def accepted_target_path(author_state_root: Path, contract: Mapping[str, Any]) -> Path:
+    """Return the only accepted-target pointer for one explicit unit/member."""
+
+    return author_run_control_root(author_state_root, contract) / "accepted.json"
+
+
+def accepted_target_identity(payload: Mapping[str, Any]) -> str:
+    """Return the canonical identity used by expected_current CAS."""
+
+    return "sha256:" + hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
+
+
+def _accepted_ref_hash(
+    author_state_root: Path,
+    reference: str,
+    expected_hash: str,
+    field: str,
+) -> None:
+    if not isinstance(reference, str) or not reference:
+        raise RunStoreError("accepted_reference_invalid", f"{field} must be a non-empty relative path", field)
+    path = Path(reference)
+    if path.is_absolute() or ".." in path.parts:
+        raise RunStoreError("accepted_reference_outside_state", reference, field)
+    resolved = (author_state_root.resolve() / path).resolve()
+    try:
+        resolved.relative_to(author_state_root.resolve())
+    except ValueError as exc:
+        raise RunStoreError("accepted_reference_outside_state", reference, field) from exc
+    if not resolved.is_file():
+        raise RunStoreError("accepted_reference_missing", reference, field)
+    actual = "sha256:" + hashlib.sha256(resolved.read_bytes()).hexdigest()
+    if actual != expected_hash:
+        raise RunStoreError("accepted_reference_hash_mismatch", reference, field)
+
+
+def load_accepted_target(
+    author_state_root: Path,
+    contract: Mapping[str, Any],
+) -> Mapping[str, Any] | None:
+    """Load and verify one accepted pointer; never scan historical runs."""
+
+    if not isinstance(author_state_root, Path):
+        raise RunStoreError("author_state_root_required", "author_state_root must be an explicit Path")
+    if not str(contract.get("maintenance_unit_id", "")) or not str(contract.get("skill_id", "")):
+        raise RunStoreError("accepted_identity_required", "maintenance_unit_id and skill_id are required")
+    path = accepted_target_path(author_state_root, contract)
+    if not path.is_file():
+        return None
+    payload = _json_load(path)
+    if set(payload) != set(_ACCEPTED_TARGET_FIELDS):
+        raise RunStoreError("accepted_schema_invalid", "accepted.json has unexpected fields", path.name)
+    if payload.get("schema_version") != ACCEPTED_TARGET_SCHEMA:
+        raise RunStoreError("accepted_schema_invalid", "accepted.json schema version is not current", path.name)
+    if payload.get("skill_id") != contract.get("skill_id"):
+        raise RunStoreError("accepted_skill_mismatch", "accepted.json names another skill", path.name)
+    if not isinstance(payload.get("generation"), int) or payload.get("generation", 0) < 1:
+        raise RunStoreError("accepted_generation_invalid", "generation must be a positive integer", path.name)
+    for field in ("result_hash", "input_snapshot_hash"):
+        value = payload.get(field)
+        if not isinstance(value, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", value):
+            raise RunStoreError("accepted_hash_invalid", field, path.name)
+    _accepted_ref_hash(author_state_root, str(payload["result_ref"]), str(payload["result_hash"]), "result_ref")
+    _accepted_ref_hash(
+        author_state_root,
+        str(payload["input_snapshot_ref"]),
+        str(payload["input_snapshot_hash"]),
+        "input_snapshot_ref",
+    )
+    return payload
+
+
+def accept_target_result(
+    author_state_root: Path,
+    contract: Mapping[str, Any],
+    *,
+    expected_current: str | None,
+    result_ref: str,
+    result_hash: str,
+    input_snapshot_ref: str,
+    input_snapshot_hash: str,
+) -> Mapping[str, Any]:
+    """CAS-replace the accepted pointer after validating real result files."""
+
+    if not isinstance(author_state_root, Path):
+        raise RunStoreError("author_state_root_required", "author_state_root must be an explicit Path")
+    if not str(contract.get("maintenance_unit_id", "")) or not str(contract.get("skill_id", "")):
+        raise RunStoreError("accepted_identity_required", "maintenance_unit_id and skill_id are required")
+    state_root = author_state_root.resolve()
+    state_root.mkdir(parents=True, exist_ok=True)
+    path = accepted_target_path(state_root, contract)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_root = path.parent / "locks"
+    guard = _acquire_claim_guard(lock_root)
+    try:
+        current = load_accepted_target(state_root, contract) if path.is_file() else None
+        current_identity = accepted_target_identity(current) if current is not None else None
+        if expected_current != current_identity:
+            raise RunStoreError(
+                "accepted_current_conflict",
+                f"expected {expected_current!r}, current {current_identity!r}",
+                path.name,
+            )
+        _accepted_ref_hash(state_root, result_ref, result_hash, "result_ref")
+        _accepted_ref_hash(state_root, input_snapshot_ref, input_snapshot_hash, "input_snapshot_ref")
+        result_payload = _json_load((state_root / result_ref).resolve())
+        if str(result_payload.get("status", "")).lower() not in {"pass", "passed", "accepted", "success"}:
+            raise RunStoreError("accepted_result_not_success", "result reference is not a successful aggregate", result_ref)
+        next_generation = int(current.get("generation", 0)) + 1 if current else 1
+        payload = {
+            "schema_version": ACCEPTED_TARGET_SCHEMA,
+            "skill_id": str(contract["skill_id"]),
+            "generation": next_generation,
+            "result_ref": result_ref,
+            "result_hash": result_hash,
+            "input_snapshot_ref": input_snapshot_ref,
+            "input_snapshot_hash": input_snapshot_hash,
+        }
+        _atomic_write(path, payload)
+        return payload
+    finally:
+        try:
+            guard.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def _normalize_claim_snapshots(

@@ -10,9 +10,14 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .contract_schema import DEPTH_INTEGRATION_MODES, PROJECT_ADOPTION_SCHEMA
-from .validation_execution_policy import (
-    VALIDATION_EXECUTION_POLICY_ID,
-    VALIDATION_EXECUTION_POLICY_LINES,
+
+
+VALIDATION_EXECUTION_POLICY_ID = "skillguard.validation_execution_ownership.current"
+VALIDATION_EXECUTION_POLICY_LINES = (
+    "- Freeze one unit, exact checks, one owner per check, and the private evidence root before validation.",
+    "- Reuse only an immutable terminal receipt with exact functional identity; otherwise execute the target-owned check.",
+    "- Installation and consumer projections contain no author receipts or execution-owner state.",
+    "- Timeout, cancellation or cleanup-unconfirmed evidence is never reusable.",
 )
 
 

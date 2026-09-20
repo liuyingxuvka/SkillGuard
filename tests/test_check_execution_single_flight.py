@@ -17,6 +17,7 @@ from tests._skillguard_v2_runtime_fixture import (  # noqa: F401
 )
 from skillguard_v2.check_runner import (
     CheckRunnerError,
+    _check_execution_identity,
     check_toolchain_identity,
     get_or_execute_check,
     inspect_current_owner_execution,
@@ -168,10 +169,8 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
                     "health": plan["health"],
                 }
             )
-            contract["check_declarations_hash"] = canonical_hash(
-                {"checks": contract["checks"]}
-            )
-            contract["contract_hash"] = canonical_hash(
+            contract["check_declarations_hash"] = wire_hash(contract["checks"])
+            contract["contract_hash"] = wire_hash(
                 {
                     key: value
                     for key, value in contract.items()
@@ -183,9 +182,8 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
                 "check_declarations_hash"
             ]
             manifest["checks"] = copy.deepcopy(contract["checks"])
-            manifest["content_impact_plan"] = copy.deepcopy(plan)
             manifest.pop("manifest_hash", None)
-            manifest["manifest_hash"] = canonical_hash(manifest)
+            manifest["manifest_hash"] = wire_hash(manifest)
         request = {
             "function_ids": ["analyze"],
             "write_targets": ["out"],
@@ -383,6 +381,40 @@ class CheckExecutionSingleFlightTests(unittest.TestCase):
                 result_sidecar[f"{kind}_content_hash"],
             )
             self.assertNotIn(f"{kind}_hash", result_sidecar)
+
+    def test_functional_execution_key_ignores_shared_parent_plan_identity(self) -> None:
+        check, run_root = self._claim(
+            {
+                "check_id": "check:functional-key",
+                "kind": "command",
+                "command": sys.executable,
+                "args": ["-c", "print('functional key')"],
+                "expected": {"exit_code": 0},
+            }
+        )
+        owner_root = self.root / "owner-evidence"
+        first = _check_execution_identity(
+            check,
+            skill_root=self.skill_root,
+            target_root=self.target_root,
+            repository_root=self.repository_root,
+            run_root=run_root,
+            owner_evidence_root=owner_root,
+            dependency_receipts={},
+            shared_leaf_plan_hash="sha256:" + "1" * 64,
+        )
+        second = _check_execution_identity(
+            check,
+            skill_root=self.skill_root,
+            target_root=self.target_root,
+            repository_root=self.repository_root,
+            run_root=run_root,
+            owner_evidence_root=owner_root,
+            dependency_receipts={},
+            shared_leaf_plan_hash="sha256:" + "2" * 64,
+        )
+        self.assertEqual(first["execution_key"], second["execution_key"])
+        self.assertNotIn("shared_leaf_plan_hash", first)
 
     def test_failed_attempt_never_hits_and_retry_can_succeed(self) -> None:
         marker = "check-output/first-attempt.txt"

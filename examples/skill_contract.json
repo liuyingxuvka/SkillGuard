@@ -1,0 +1,152 @@
+{
+  "schema_version": "skillguard.skill_contract.v3",
+  "skill_id": "example",
+  "inputs": [
+    {
+      "id": "input:instructions",
+      "role": "instructions",
+      "path": "examples/README.md",
+      "required": true
+    }
+  ],
+  "routes": [
+    {
+      "route_id": "read",
+      "choice_group": "operation",
+      "when": [
+        {
+          "fact": "operation",
+          "equals": "read"
+        }
+      ],
+      "step_ids": [
+        "step:read"
+      ],
+      "obligation_ids": [
+        "obligation:read"
+      ]
+    },
+    {
+      "route_id": "change",
+      "choice_group": "operation",
+      "when": [
+        {
+          "fact": "operation",
+          "equals": "change"
+        }
+      ],
+      "step_ids": [
+        "step:change"
+      ],
+      "obligation_ids": [
+        "obligation:change"
+      ]
+    },
+    {
+      "route_id": "release",
+      "choice_group": "operation",
+      "when": [
+        {
+          "fact": "operation",
+          "equals": "release"
+        }
+      ],
+      "step_ids": [
+        "step:release"
+      ],
+      "obligation_ids": [
+        "obligation:release"
+      ]
+    }
+  ],
+  "steps": [
+    {
+      "step_id": "step:read",
+      "requires": [],
+      "check_ids": [
+        "check:read"
+      ]
+    },
+    {
+      "step_id": "step:change",
+      "requires": [],
+      "check_ids": [
+        "check:change"
+      ]
+    },
+    {
+      "step_id": "step:release",
+      "requires": [],
+      "check_ids": [
+        "check:release"
+      ]
+    }
+  ],
+  "obligations": [
+    {
+      "obligation_id": "obligation:read",
+      "check_ids": [
+        "check:read"
+      ]
+    },
+    {
+      "obligation_id": "obligation:change",
+      "check_ids": [
+        "check:change"
+      ]
+    },
+    {
+      "obligation_id": "obligation:release",
+      "check_ids": [
+        "check:release"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "check_id": "check:read",
+      "kind": "command",
+      "command": "{{python}}",
+      "args": [
+        "-c",
+        "from pathlib import Path; assert Path('examples/README.md').is_file()"
+      ],
+      "input_ids": [
+        "input:instructions"
+      ],
+      "expected": {
+        "exit_code": 0
+      }
+    },
+    {
+      "check_id": "check:change",
+      "kind": "command",
+      "command": "{{python}}",
+      "args": [
+        "-c",
+        "assert True"
+      ],
+      "input_ids": [
+        "input:instructions"
+      ],
+      "expected": {
+        "exit_code": 0
+      }
+    },
+    {
+      "check_id": "check:release",
+      "kind": "command",
+      "command": "{{python}}",
+      "args": [
+        "-c",
+        "assert True"
+      ],
+      "input_ids": [
+        "input:instructions"
+      ],
+      "expected": {
+        "exit_code": 0
+      }
+    }
+  ]
+}

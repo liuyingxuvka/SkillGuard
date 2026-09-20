@@ -25,7 +25,6 @@ from .check_runner import (
     inspect_check_prelaunch_admission,
     inspect_current_owner_execution,
     inspect_current_owner_input_projection,
-    inspect_owner_receipt_history,
     load_owner_receipt_from_ref,
     owner_receipt_document_ref,
     prepare_current_owner_input_context,
@@ -805,183 +804,10 @@ def _load_global_prompt_currentness_binding(
     codex_home: Path | None = None,
     skill_roots: Sequence[Path] | None = None,
 ) -> dict[str, Any]:
-    """Validate, but never refresh, the global registry and prompt projection."""
+    """Reject the retired global-router currentness provider explicitly."""
 
-    from checker_engine import (
-        build_global_prompt_projection,
-        check_global_prompt_text,
-        global_public_path,
-        global_registry_current_route_failures,
-        global_registry_integrity_failures,
-    )
-    from skillguard_v2.global_router_projection import (
-        prompt_projection_integrity_failures,
-    )
-
-    try:
-        home = resolve_codex_home_root(codex_home)
-    except OSError:
-        raise ExecutionRecordError("global_prompt_codex_home_not_current") from None
-    registry_relative = Path(".skillguard/global-router/global_registry.json")
-    projection_relative = Path(
-        ".skillguard/global-router/global_prompt_projection.json"
-    )
-    prompt_relative = Path("AGENTS.md")
-    registry_path = home / registry_relative
-    projection_path = home / projection_relative
-    prompt_path = home / prompt_relative
-    if (
-        registry_path.is_symlink()
-        or projection_path.is_symlink()
-        or prompt_path.is_symlink()
-        or not registry_path.is_file()
-        or not projection_path.is_file()
-        or not prompt_path.is_file()
-    ):
-        raise ExecutionRecordError("global_prompt_currentness_input_missing")
-    try:
-        registry_value = json.loads(
-            filesystem_path(registry_path).read_text(encoding="utf-8")
-        )
-        stored_projection_value = json.loads(
-            filesystem_path(projection_path).read_text(encoding="utf-8")
-        )
-        prompt_text = filesystem_path(prompt_path).read_text(encoding="utf-8")
-    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
-        raise ExecutionRecordError(
-            f"global_prompt_currentness_input_unreadable:{type(exc).__name__}"
-        ) from None
-    if not isinstance(registry_value, Mapping):
-        raise ExecutionRecordError("global_prompt_registry_not_object")
-    registry = dict(registry_value)
-    if not isinstance(stored_projection_value, Mapping):
-        raise ExecutionRecordError(
-            "global_prompt_projection_not_object"
-        )
-    stored_projection = dict(stored_projection_value)
-    stored_projection_failures = prompt_projection_integrity_failures(
-        stored_projection
-    )
-    if stored_projection_failures:
-        raise ExecutionRecordError(
-            "global_prompt_projection_shape_or_hash_invalid:"
-            + ",".join(sorted(stored_projection_failures))
-        )
-    integrity_failures = global_registry_integrity_failures(registry)
-    if integrity_failures:
-        raise ExecutionRecordError(
-            "global_prompt_registry_shape_or_hash_invalid:"
-            + ",".join(sorted(integrity_failures))
-        )
-    route_failures, route_blockers = global_registry_current_route_failures(
-        registry,
-        codex_home=str(home),
-        skill_roots=[str(path.resolve()) for path in (skill_roots or ())],
-    )
-    if route_failures or route_blockers:
-        raise ExecutionRecordError(
-            "global_prompt_registry_stale:"
-            + ",".join(sorted([*route_failures, *route_blockers]))
-        )
-    try:
-        current_projection = build_global_prompt_projection(
-            registry, global_public_path(registry_path)
-        )
-    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
-        raise ExecutionRecordError(
-            f"global_prompt_projection_unavailable:{exc}"
-        ) from None
-    projection_mismatch_fields = [
-        field
-        for field in (
-            "registry_hash",
-            "managed_block_content_hash",
-            "projection_identity_hash",
-            "template_content_hash",
-        )
-        if stored_projection.get(field) != current_projection.get(field)
-    ]
-    stored_content_projection = stored_projection.get("content_projection")
-    current_content_projection_value = current_projection.get(
-        "content_projection"
-    )
-    if (
-        not isinstance(stored_content_projection, Mapping)
-        or not isinstance(current_content_projection_value, Mapping)
-        or stored_content_projection.get("consumer_projection_hash")
-        != current_content_projection_value.get("consumer_projection_hash")
-    ):
-        projection_mismatch_fields.append(
-            "content_consumer_projection_hash"
-        )
-    if projection_mismatch_fields:
-        raise ExecutionRecordError(
-            "global_prompt_projection_stale:"
-            + ",".join(sorted(set(projection_mismatch_fields)))
-        )
-    projection = stored_projection
-    managed_block = str(projection.get("managed_block") or "")
-    prompt_failures, prompt_blockers = check_global_prompt_text(
-        prompt_text,
-        str(registry.get("registry_hash") or ""),
-        managed_block,
-    )
-    if prompt_failures or prompt_blockers:
-        raise ExecutionRecordError(
-            "global_prompt_managed_block_stale:"
-            + ",".join(sorted([*prompt_failures, *prompt_blockers]))
-        )
-    content_projection = projection.get("content_projection")
-    if not isinstance(content_projection, Mapping):
-        raise ExecutionRecordError(
-            "global_prompt_content_projection_missing"
-        )
-    content_projection_hash = str(
-        content_projection.get("consumer_projection_hash") or ""
-    )
-    for field, value in (
-        ("registry_hash", registry.get("registry_hash")),
-        (
-            "managed_prompt_block_hash",
-            projection.get("managed_block_content_hash"),
-        ),
-        (
-            "prompt_projection_identity_hash",
-            projection.get("projection_identity_hash"),
-        ),
-        ("content_consumer_projection_hash", content_projection_hash),
-    ):
-        if re.fullmatch(r"sha256:[0-9a-f]{64}", str(value or "")) is None:
-            raise ExecutionRecordError(
-                f"global_prompt_binding_{field}_invalid"
-            )
-    binding: dict[str, Any] = {
-        "schema_version": TEST_MESH_TYPED_DOMAIN_BINDING_SCHEMA,
-        "evidence_domain": GLOBAL_PROMPT_DOMAIN_ID,
-        "owner_id": "skillguard-global-router",
-        "registry_ref": {
-            "path_token": "codex_home",
-            "relative_path": registry_relative.as_posix(),
-        },
-        "projection_ref": {
-            "path_token": "codex_home",
-            "relative_path": projection_relative.as_posix(),
-        },
-        "prompt_ref": {
-            "path_token": "codex_home",
-            "relative_path": prompt_relative.as_posix(),
-        },
-        "registry_hash": str(registry["registry_hash"]),
-        "managed_prompt_block_hash": str(
-            projection["managed_block_content_hash"]
-        ),
-        "prompt_projection_identity_hash": str(
-            projection["projection_identity_hash"]
-        ),
-        "content_consumer_projection_hash": content_projection_hash,
-    }
-    binding["binding_hash"] = wire_hash(binding)
-    return binding
+    del codex_home, skill_roots
+    raise ExecutionRecordError("global_router_currentness_retired")
 
 
 def _replay_global_prompt_currentness_binding(
@@ -990,34 +816,8 @@ def _replay_global_prompt_currentness_binding(
     codex_home: Path | None = None,
     skill_roots: Sequence[Path] | None = None,
 ) -> list[str]:
-    if not isinstance(value, list) or len(value) != 1:
-        return ["global_prompt_typed_domain_binding_missing_or_duplicated"]
-    binding = value[0]
-    if not isinstance(binding, Mapping):
-        return ["global_prompt_typed_domain_binding_not_object"]
-    if set(binding) != set(GLOBAL_PROMPT_BINDING_FIELDS):
-        return ["global_prompt_typed_domain_binding_shape_invalid"]
-    unsigned = dict(binding)
-    unsigned.pop("binding_hash", None)
-    if (
-        binding.get("schema_version") != TEST_MESH_TYPED_DOMAIN_BINDING_SCHEMA
-        or binding.get("evidence_domain") != GLOBAL_PROMPT_DOMAIN_ID
-        or binding.get("owner_id") != "skillguard-global-router"
-        or binding.get("binding_hash") != wire_hash(unsigned)
-    ):
-        return ["global_prompt_typed_domain_binding_hash_invalid"]
-    try:
-        current = _load_global_prompt_currentness_binding(
-            codex_home=codex_home,
-            skill_roots=skill_roots,
-        )
-    except ExecutionRecordError as exc:
-        return [f"global_prompt_currentness_replay_failed:{exc}"]
-    return [
-        f"global_prompt_currentness_mismatch:{field}"
-        for field in GLOBAL_PROMPT_BINDING_FIELDS
-        if binding.get(field) != current.get(field)
-    ]
+    del value, codex_home, skill_roots
+    return ["global_router_currentness_retired"]
 
 
 def _load_current_installation_binding(
@@ -1551,36 +1351,50 @@ def _portfolio_targets_for_components(
     )
 
 
-def _component_changes_from_history(
+def _component_changes_from_accepted(
     current_components: Sequence[Mapping[str, Any]],
-    history: Sequence[Mapping[str, Any]],
+    accepted_snapshot: Mapping[str, Any] | None,
 ) -> set[str]:
+    """Compare once with the caller-frozen accepted snapshot.
+
+    A missing snapshot is the explicit first-build state.  Historical receipt
+    search is intentionally not a substitute: choosing the smallest historical
+    diff can silently omit a currently changed component.
+    """
+
     current = {
         str(row.get("component_id", "")): str(
             row.get("component_hash", "")
         )
         for row in current_components
     }
-    if not history:
+    if accepted_snapshot is None:
         return set(current)
-    candidates: list[tuple[int, tuple[str, ...]]] = []
-    for receipt in history:
-        previous = {
-            str(row.get("component_id", "")): str(
-                row.get("component_hash", "")
-            )
-            for row in receipt.get("input_components", [])
-            if isinstance(row, Mapping)
-        }
-        changed = tuple(
-            sorted(
-                component_id
-                for component_id in set(current) | set(previous)
-                if current.get(component_id) != previous.get(component_id)
-            )
-        )
-        candidates.append((len(changed), changed))
-    return set(min(candidates)[1])
+    if not isinstance(accepted_snapshot, Mapping):
+        raise ValueError("accepted_snapshot_invalid")
+    rows = accepted_snapshot.get("input_components", accepted_snapshot.get("components", []))
+    if not isinstance(rows, Sequence) or isinstance(rows, (str, bytes, bytearray)):
+        raise ValueError("accepted_snapshot_components_invalid")
+    previous = {
+        str(row.get("component_id", "")): str(row.get("component_hash", ""))
+        for row in rows
+        if isinstance(row, Mapping)
+    }
+    return {
+        component_id
+        for component_id in set(current) | set(previous)
+        if current.get(component_id) != previous.get(component_id)
+    }
+
+
+def _component_changes_from_history(
+    current_components: Sequence[Mapping[str, Any]],
+    history: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    """Reject the retired history-selection API instead of choosing a diff."""
+
+    del current_components, history
+    raise ValueError("history_based_component_selection_retired_use_accepted_snapshot")
 
 
 def _derived_full_admission_reasons(
@@ -1666,6 +1480,7 @@ def _compile_current_test_mesh_plan(
         contract = load_contract_snapshot(run_root)
         check_manifest = load_check_manifest_snapshot(run_root)
         run = load_run(run_root)
+        accepted_snapshot = run.get("accepted_snapshot")
         profile, selected_rows = _selected_owner_rows(
             contract, mesh_manifest, profile_id
         )
@@ -1860,20 +1675,8 @@ def _compile_current_test_mesh_plan(
                     )
                 )
                 receipt_binding = None
-                history = inspect_owner_receipt_history(
-                    persistent_root,
-                    maintenance_unit_id=str(
-                        check.get("maintenance_unit_id", "")
-                    ),
-                    execution_owner_id=owner_id,
-                    owner_declaration_hash=str(
-                        owner.get("owner_declaration_hash", "")
-                    ),
-                )
                 changed_components.update(
-                    _component_changes_from_history(
-                        current_input["components"], history
-                    )
+                    _component_changes_from_accepted(current_input["components"], accepted_snapshot)
                 )
             owner_plans.append(
                 {

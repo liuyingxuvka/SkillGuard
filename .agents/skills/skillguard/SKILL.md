@@ -1,123 +1,84 @@
 ---
 name: skillguard
-description: Use for authoring, maintaining, checking, graduating, installing, or releasing explicitly registered Codex skill sources. SkillGuard supervises author-side contracts and target-owned evidence; it is not a consumer runtime dependency.
+description: Maintain explicitly registered SkillGuard source contracts, evidence, installation and release boundaries.
 ---
 
 # SkillGuard
 
-## Purpose
+SkillGuard is an author-side contract and evidence tool. It is not a consumer
+runtime dependency and it does not load or execute a FlowGuard model. Use it
+only when the repository explicitly declares a SkillGuard maintainer source,
+maintenance unit, member identity and private evidence root.
 
-Use this skill only when an author repository declares
-`repository_role: skill_maintainer_source`, a maintenance unit, exact members,
-the current contract trio, and private run/evidence roots. Ordinary installed
-skill use, OpenSpec work, and target-domain judgment do not enter SkillGuard.
+The target owns its domain route, semantics, fixtures, native checks,
+completion criteria and result. SkillGuard owns only deterministic contract
+identity, route admission, check execution, evidence freshness, installation
+parity and release-boundary reporting. Reports, logs, progress notes and old
+receipts never refresh source authority.
 
-The target owns its route, semantics, failures, fixtures, native checks,
-completion/depth criteria, and result. SkillGuard verifies identity, ownership,
-evidence composition, and clean consumer projection; it does not invent domain
-criteria or share receipts across units.
+## Public operations
 
-## Entrypoint Scope
+The only public operations are:
 
-This entrypoint covers registered author-side contracts, projections, routes,
-native checks, and typed evidence; it is not a consumer runtime or domain oracle.
+- `read`: read the current explicit contract and accepted result. This is
+  side-effect free and starts zero producers.
+- `change`: select from declared facts, execute only the selected declared
+  checks, and atomically accept the result when every required oracle passes.
+- `release`: verify one accepted current result and expose release evidence.
+  Installation and Git publication remain separate transactions.
 
-## Use When
-
-Use it for an explicitly registered maintainer source, current contract, author
-checks, self-host evidence, installation evidence, or release boundary.
-
-## Do Not Use When
-
-Do not use it for ordinary installed-skill work, OpenSpec work, target-domain
-judgment, or an unregistered repository.
-
-## Local Material Routing
-
-Read this entrypoint and the compact map
-[references/route_map_summary.md](references/route_map_summary.md), then query
-one current route before reading its long reference:
+Use the script with fixed arguments:
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py route-reference --route-id <route>
+python .agents/skills/skillguard/scripts/skillguard.py --help
+python .agents/skills/skillguard/scripts/skillguard.py read --root <root> --request <request.json> --json
+python .agents/skills/skillguard/scripts/skillguard.py change --root <root> --request <request.json> --json
+python .agents/skills/skillguard/scripts/skillguard.py release --root <root> --request <request.json> --json
 ```
 
-The generated catalog is for registry audit/generation only.
-`route-reference` returns one capsule and load order; it does not execute the
-route. Zero, many, stale, forbidden, or missing-input matches block. No keyword
-score, tie-break, alias fallback, or compatibility route authorizes a decision.
+Legacy command names, `--profile`, `fast`, `focused`, and `full` are rejected;
+they do not forward to another handler and they produce no producer or write.
 
-Load only the returned reference and declared conditional references. Do not read
-all routes, Portfolio, installation, self-host, template-pack, model history,
-logs, or receipt trees without a selected trigger.
+## Current contract
 
-## Entrypoint Acceptance Map
+The single source is `.skillguard/contract-source.json` with
+`schema_version: skillguard.skill_contract.v3`. It declares only:
 
-The route capsule selects the command family and load order; the current
-contract binds source, checks, evidence, and projection, while native checks
-decide domain completion. Ambiguous routes block.
+`inputs`, `routes`, `steps`, `obligations`, and `checks`.
 
-## Current contract and claims
+Each route contains a `choice_group`, finite exact-equality `when` predicates,
+step IDs and obligation IDs. Each check contains its real command, argument
+list, input IDs and expected oracle. There is no keyword score, similarity,
+first-match fallback, model path, global prompt, portfolio capability or
+fragment authority. The compiled contract and check manifest are deterministic
+derived records, never a second hand-written source.
 
-The contract trio is `.skillguard/contract-source.json`,
-`.skillguard/compiled-contract.json`, and `.skillguard/check-manifest.json`.
-Surface inventory, native route/check records, source/toolchain/input identities,
-and current receipts must agree. Reports, logs, checkboxes, and old receipts
-never refresh source authority.
+Route admission requires explicit request facts. Missing facts, no route,
+ambiguous same-group matches and unknown routes block before any producer.
+Steps are consumed once in the selected decision; a failed check never causes
+route reselection. Manual judgment is labelled judgment evidence and is never
+converted into a hard execution pass.
 
-Profiles are `fast`, `focused`, and explicit `full`; they freeze only the named
-`source_release` boundary. `installed_current` and `global_router_current` are
-opt-in claims requiring target binding; `full` never adds them.
+## Evidence and installation boundary
 
-## Read/diagnose terminal
+Freeze one maintenance unit, exact checks, input identities, dependencies,
+toolchain and one execution owner before running a change. A current accepted
+result may be reused only when those identities and the request match exactly.
+Missing, stale, duplicate, foreign, failed, skipped, timed-out, cancelled or
+cleanup-unconfirmed evidence blocks. After a timeout or cancellation, confirm
+the entire descendant process tree is gone before accepting evidence.
 
-Read compiled evidence, the check manifest, receipts, heads, and typed blockers
-for the admitted scope. This branch is read-only: no compilation, lease, run,
-owner start, pointer, installation, Portfolio/router refresh, or release write.
-Show current, skipped, blocked, and residual boundaries, then stop.
+Installation consumes the frozen installation projection only. It is a
+transaction with a staging directory, parity check, rollback on failure and an
+immutable installation receipt; it never runs a self-audit as a hidden side
+effect. Source, installed tree, Git branch and release artifact are reported
+separately.
 
-## Required Workflow
+## Claim boundary
 
-1. Freeze one unit, exact members/checks/evidence subjects, dependencies,
-   private evidence root, toolchain, environment, and one owner per check.
-2. Compile the direct-current contract and exact manifest. Former formats are
-   rejection-only; do not add readers, converters, aliases, or dual authority.
-3. Reuse a terminal-success receipt only when unit/member/owner/request,
-   inputs, dependencies, toolchain, environment, policy, obligations, and
-   consumer projection identities are exact. Otherwise execute selected owners
-   under single-flight ownership.
-4. Aggregate the frozen plan once; finalize only from that plan and aggregation.
-   Require target-enforced closure, model-deepening evidence, and a current
-   surface inventory.
-5. Report exact checked, executed, reused, skipped, blocked, source, release,
-   and residual boundaries. Source change does not install a consumer, update
-   Portfolio/router state, or self-optimize.
-
-## Explicit install/release terminal
-
-Enter only for an explicit typed `installed_current` or `global_router_current`
-claim with complete target binding. Replay the canonical terminal receipt
-against identity, owners, inputs, dependencies, toolchain, environment,
-obligations, and cleanup before transactional writes. Installation/router/
-release identities stay separate from source evidence.
-
-## Hard Gates
-
-- Direct-current replacement only: no fallback, migration, compatibility
-  reader, alias, dual manifest, parallel authority, or cross-unit receipt.
-- Missing, ambiguous, duplicate, foreign, cyclic, stale, failed, skipped,
-  timed-out, cancelled, or cleanup-unconfirmed owner evidence blocks. After
-  timeout/cancellation confirm the descendant process tree is zero.
-- A parent summary cannot become a leaf receipt; the target's native route and
-  check authority remain separate.
-- Do not use `--resume` as a read-only audit. Do not use background retry,
-  Scheduled Task, or unattended full validation on a mutable worktree.
-- Consumer projections contain no `.skillguard` receipt or author-only state.
-
-## Output Requirements
-
-Return route decision, source locations, selected references, checks, receipts,
-currentness, executed/reused/skipped/blocked/not-run states, and the fields
-`evidence`, `failures`, `blockers`, `skipped_checks`, `residual_risk`, and
-`claim_boundary`, plus typed next actions. Progress prose cannot create a
-terminal.
+Passing `read`, `change` or `release` proves only the explicitly selected
+contract and evidence scope. It does not prove every future AI session will
+invoke SkillGuard, target-domain quality, Azure/production deployment, or
+remote GitHub state. Final reports must state `evidence`, `failures`,
+`blockers`, `skipped_checks`, `residual_risk`, `producer_count` and
+`claim_boundary`.

@@ -78,8 +78,10 @@ _TOP_LEVEL_PACKET_FIELDS = frozenset(
 _REQUEST_PACKET_FIELDS = frozenset(
     {
         "route_ids",
+        "route_id",
         "function_ids",
         "compose",
+        "facts",
         "request",
         "intent",
         "claim_scope",
@@ -716,6 +718,10 @@ def supervise_contract_run(
         compiled_contract,
         check_manifest,
     )
+    decision = select_routes(contract, request)
+    if not decision.ok:
+        raise SupervisorError("route_selection_blocked", json.dumps(decision.to_dict(), sort_keys=True))
+    validate_supervisor_packet(packet, contract=contract, route_ids=decision.route_ids)
     persistent_owner_root = resolve_owner_evidence_root(
         repository_root,
         author_context.owner_evidence_root,
@@ -742,10 +748,6 @@ def supervise_contract_run(
             role: list(inventory["paths"])
             for role, inventory in sorted(target_input_roles.items())
         }
-    decision = select_routes(contract, request)
-    if not decision.ok:
-        raise SupervisorError("route_selection_blocked", json.dumps(decision.to_dict(), sort_keys=True))
-    validate_supervisor_packet(packet, contract=contract, route_ids=decision.route_ids)
     effective_guard = dict(
         guard_runtime_identity or guard_execution_runtime_fingerprint()
     )

@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+from pathlib import Path
+from typing import Any, Mapping
 
 
 WIRE_IDENTITY_POLICY_ID = "skillguard.wire_identity.sha256.current"
@@ -30,6 +33,16 @@ def canonical_json_bytes(payload: object) -> bytes:
     return (
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
     ).encode("utf-8")
+
+
+def atomic_write_json(path: Path, payload: Mapping[str, Any]) -> None:
+    """Atomically replace one JSON file without truncating its old bytes."""
+
+    path = path.resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary.write_bytes(canonical_json_bytes(payload))
+    os.replace(temporary, path)
 
 
 def wire_hash(payload: object) -> str:
@@ -85,6 +98,7 @@ __all__ = [
     "CONSUMER_RELEASE_WIRE_POLICY_ID",
     "CONSUMER_RELEASE_WIRE_HASH_PATTERN",
     "canonical_json_bytes",
+    "atomic_write_json",
     "consumer_release_canonical_json_bytes",
     "consumer_release_wire_hash",
     "consumer_release_wire_hash_bytes",

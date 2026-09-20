@@ -12,7 +12,6 @@ from skillguard_v2.contract_compiler import canonical_hash
 from skillguard_v2.portfolio import (
     _clear_member_revalidation_state,
     apply_guard_change,
-    atomic_write_json,
     portfolio_registry_hash,
     validate_registry,
 )
@@ -21,7 +20,7 @@ from skillguard_v2.portfolio_impact_receipt import (
     verify_portfolio_impact_receipt,
     write_portfolio_impact_receipt,
 )
-from skillguard_v2.wire_identity import wire_hash
+from skillguard_v2.wire_identity import atomic_write_json, wire_hash
 
 
 class PortfolioImpactReceiptTests(unittest.TestCase):

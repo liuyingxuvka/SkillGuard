@@ -1291,10 +1291,16 @@ def _check_execution_identity(
         )
     maintenance_unit_id = str(declared.get("maintenance_unit_id", ""))
     member_skill_id = str(declared.get("member_skill_id", ""))
+    manifest_has_legacy_unit_identity = (
+        contract.get("schema_version") != "skillguard.compiled_contract.v3"
+    )
     if (
         run.get("maintenance_unit_id") != maintenance_unit_id
         or contract.get("maintenance_unit_id") != maintenance_unit_id
-        or manifest.get("maintenance_unit_id") != maintenance_unit_id
+        or (
+            manifest_has_legacy_unit_identity
+            and manifest.get("maintenance_unit_id") != maintenance_unit_id
+        )
         or run.get("member_skill_id") != member_skill_id
         or contract.get("skill_id") != member_skill_id
     ):
@@ -1303,6 +1309,7 @@ def _check_execution_identity(
             str(declared.get("check_id", "")),
         )
     dependency_identities: list[dict[str, str]] = []
+    functional_dependency_identities: list[dict[str, str]] = []
     for dependency_owner_id in expected_dependency_owner_ids:
         receipt = dependency_receipts[dependency_owner_id]
         _validate_owner_receipt(
@@ -1318,6 +1325,16 @@ def _check_execution_identity(
                 "execution_owner_id": dependency_owner_id,
                 "receipt_id": str(receipt.get("receipt_id", "")),
                 "receipt_hash": str(receipt.get("receipt_hash", "")),
+            }
+        )
+        functional_dependency_identities.append(
+            {
+                "maintenance_unit_id": str(
+                    receipt.get("maintenance_unit_id", "")
+                ),
+                "member_skill_id": str(receipt.get("member_skill_id", "")),
+                "execution_owner_id": dependency_owner_id,
+                "execution_key": str(receipt.get("execution_key", "")),
             }
         )
     (
@@ -1337,7 +1354,13 @@ def _check_execution_identity(
         "execution_owner_id": str(owner.get("execution_owner_id", "")),
         "owner_declaration_hash": str(owner.get("owner_declaration_hash", "")),
         "owner_input_projection_hash": owner_input_projection_hash,
-        "dependency_receipts": dependency_identities,
+        # Receipt ids/hashes are immutable provenance pointers.  They are
+        # intentionally retained in the owner receipt below, but a new
+        # issuance of the same child result must not change this functional
+        # execution identity.  The child execution key carries its exact
+        # declaration, source inputs, dependency identities, toolchain, and
+        # environment instead.
+        "functional_dependencies": functional_dependency_identities,
         "target_input_fingerprint": target_input_fingerprint,
         "target_input_role_fingerprints": target_input_role_fingerprints,
         **toolchain_identity,
@@ -1365,12 +1388,13 @@ def _check_execution_identity(
                 "role": "target_root",
             }
         ),
-        "shared_leaf_plan_hash": str(shared_leaf_plan_hash),
     }
     return {
         **semantic_identity,
         "execution_key": wire_hash(semantic_identity),
         "owner_input_components": owner_input_components,
+        "dependency_receipts": dependency_identities,
+        "functional_dependencies": functional_dependency_identities,
         "check_manifest_hash": str(manifest.get("manifest_hash", "")),
         "_resolved_launch_plan": launch_plan,
     }
@@ -1426,6 +1450,25 @@ def _canonical_success_slot(
         / "heads"
         / f"{digest}.json"
     )
+
+
+def _dependency_owner_projection(value: object) -> tuple[tuple[str, str, str], ...] | None:
+    """Project dependency provenance onto stable owner identity only."""
+
+    if not isinstance(value, Sequence) or isinstance(value, (str, bytes, bytearray)):
+        return None
+    projected: list[tuple[str, str, str]] = []
+    for row in value:
+        if not isinstance(row, Mapping):
+            return None
+        projected.append(
+            (
+                str(row.get("maintenance_unit_id", "")),
+                str(row.get("member_skill_id", "")),
+                str(row.get("execution_owner_id", "")),
+            )
+        )
+    return tuple(sorted(projected))
 
 
 def _receipt_identity_payload(receipt: Mapping[str, Any]) -> dict[str, Any]:
@@ -1788,6 +1831,10 @@ def _load_canonical_success(
         expected_maintenance_unit_id=str(identity["maintenance_unit_id"]),
         expected_member_skill_id=str(identity["member_skill_id"]),
     )
+    dependency_receipts_match = (
+        _dependency_owner_projection(receipt.get("dependency_receipts"))
+        == _dependency_owner_projection(identity.get("dependency_receipts"))
+    )
     if (
         receipt.get("receipt_id") != head.get("receipt_id")
         or receipt.get("receipt_hash") != head.get("receipt_hash")
@@ -1803,7 +1850,6 @@ def _load_canonical_success(
                 "execution_key",
                 "owner_declaration_hash",
                 "owner_input_projection_hash",
-                "dependency_receipts",
                 "target_input_fingerprint",
                 "target_input_role_fingerprints",
                 "toolchain_fingerprint",
@@ -1811,6 +1857,7 @@ def _load_canonical_success(
                 "impact_policy_id",
             )
         )
+        or not dependency_receipts_match
     ):
         raise CheckRunnerError(
             "check_execution_receipt_invalid", receipt_path.name
