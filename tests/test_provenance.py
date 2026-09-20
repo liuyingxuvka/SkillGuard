@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -71,9 +72,35 @@ class ProvenanceTests(unittest.TestCase):
             self.assertEqual(["unexpected.txt"], comparison["unexpected_in_installed"])
 
     def test_repository_audit_uses_tokens_and_can_pass_a_development_identity_check(self) -> None:
-        skill = ROOT / ".agents" / "skills" / "skillguard"
         with tempfile.TemporaryDirectory() as temporary:
-            installed_parent = Path(temporary) / "skills"
+            fixture_root = Path(temporary) / "repository"
+            fixture_root.mkdir()
+            source_skill = ROOT / ".agents" / "skills" / "skillguard"
+            skill = fixture_root / ".agents" / "skills" / "skillguard"
+            self._copy_installation_projection(source_skill, skill)
+            self._copy_installation_projection(
+                source_skill.parent / "skillguard-global-router",
+                skill.parent / "skillguard-global-router",
+            )
+            version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+            (fixture_root / "VERSION").write_text(version + "\n", encoding="utf-8")
+            (fixture_root / "pyproject.toml").write_text(
+                "[project]\n"
+                "name = 'skillguard-provenance-fixture'\n"
+                f"version = '{version}'\n",
+                encoding="utf-8",
+            )
+            subprocess.run(["git", "init", "-b", "joint-audit-fixture"], cwd=fixture_root, check=True, capture_output=True, text=True)
+            subprocess.run(["git", "config", "user.name", "SkillGuard fixture"], cwd=fixture_root, check=True)
+            subprocess.run(["git", "config", "user.email", "fixture@example.invalid"], cwd=fixture_root, check=True)
+            subprocess.run(["git", "add", "VERSION", "pyproject.toml", ".agents"], cwd=fixture_root, check=True)
+            subprocess.run(["git", "commit", "-m", "fixture"], cwd=fixture_root, check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["git", "remote", "add", "origin", "https://github.com/liuyingxuvka/SkillGuard.git"],
+                cwd=fixture_root,
+                check=True,
+            )
+            installed_parent = Path(temporary) / "installed" / "skills"
             installed = installed_parent / "skillguard"
             self._copy_installation_projection(skill, installed)
             self._copy_installation_projection(
@@ -81,7 +108,7 @@ class ProvenanceTests(unittest.TestCase):
                 installed_parent / "skillguard-global-router",
             )
             report = audit_release_provenance(
-                ROOT,
+                fixture_root,
                 skill,
                 installed,
                 expected_origin="https://github.com/liuyingxuvka/SkillGuard.git",

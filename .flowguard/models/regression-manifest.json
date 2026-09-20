@@ -23,7 +23,20 @@
     ".flowguard/models/authority/**/*.json",
     ".flowguard/work/**/*"
   ],
-  "shared_input_groups": [],
+  "shared_input_groups": [
+    {
+      "component_id": "skillguard-current-owner-execution-engine",
+      "globs": [
+        ".agents/skills/skillguard/scripts/skillguard_v2/check_runner.py",
+        ".agents/skills/skillguard/scripts/skillguard_v2/test_mesh.py"
+      ],
+      "consumers": [
+        "declared_check_supervision",
+        "development_process_flow",
+        "validation_composition"
+      ]
+    }
+  ],
   "models": [
     {
       "model_id": "declared_check_supervision",

@@ -46,6 +46,11 @@ MODEL_PATH = ".flowguard/models/owners/validation_composition/model.py"
 POLICY_VERSION = "skillguard.content_impact_policy.current"
 CURRENT_PARENT_SCHEMA = "skillguard.test_mesh_aggregation.current"
 
+SOURCE_RELEASE_CLAIM = "source_release"
+EXTERNAL_REQUESTED_CLAIMS = frozenset(
+    {"installed_current", "global_router_current"}
+)
+
 DOMAIN_SOURCE = "canonical_source"
 DOMAIN_STAGE = "staged_install"
 DOMAIN_ACTIVE = "active_installation"
@@ -263,6 +268,9 @@ class ValidationCase:
     parent_declaration_changed: bool = False
     consumer_projection_changed: bool = False
     validation_scope: str = "focused"
+    requested_claims: tuple[str, ...] = (SOURCE_RELEASE_CLAIM,)
+    external_bindings_complete: bool = True
+    source_coverage_complete: bool = True
     full_admission_reason_codes: tuple[str, ...] = ()
     validation_plan_frozen: bool = True
     plan_source_current: bool = True
@@ -350,6 +358,7 @@ class ValidationCase:
     force_portfolio_target_ids: tuple[str, ...] = ()
     force_full_admitted: bool = False
     force_execute_before_full_admission: bool = False
+    force_publish_partial_pass: bool = False
     force_accept_invalid_receipt: bool = False
     force_hide_not_run: bool = False
     force_parent_consume_old_receipt: bool = False
@@ -415,6 +424,22 @@ def _result(case: ValidationCase, state: ValidationState, label: str, reason: st
             reason=reason,
         ),
     )
+
+
+def _requested_claims_are_current(case: ValidationCase) -> bool:
+    claims = tuple(case.requested_claims)
+    return (
+        bool(claims)
+        and claims == tuple(sorted(set(claims)))
+        and SOURCE_RELEASE_CLAIM in claims
+        and set(claims).issubset(
+            {SOURCE_RELEASE_CLAIM, *EXTERNAL_REQUESTED_CLAIMS}
+        )
+    )
+
+
+def _external_claims_requested(case: ValidationCase) -> frozenset[str]:
+    return frozenset(set(case.requested_claims) & EXTERNAL_REQUESTED_CLAIMS)
 
 
 def _graph_gaps(case: ValidationCase) -> tuple[str, ...]:
@@ -816,10 +841,14 @@ class DeriveAffectedPlan:
         if case.force_portfolio_target_ids:
             portfolio_targets = tuple(dict.fromkeys((*portfolio_targets, *case.force_portfolio_target_ids)))
         full_reasons = set(case.full_admission_reason_codes)
+        external_claims = _external_claims_requested(case)
         full_admitted = (
             case.validation_scope == "full"
             and bool(full_reasons)
             and full_reasons.issubset(ALLOWED_FULL_REASONS)
+            and _requested_claims_are_current(case)
+            and case.source_coverage_complete
+            and (not external_claims or case.external_bindings_complete)
             and case.validation_plan_frozen
             and case.plan_source_current
             and case.source_frozen
@@ -850,6 +879,8 @@ class DeriveAffectedPlan:
             "required_router_refresh": router_refresh,
             "required_portfolio_target_ids": portfolio_targets,
             "validation_scope": case.validation_scope,
+            "requested_claims": case.requested_claims,
+            "external_claims": tuple(sorted(external_claims)),
             "full_admitted": full_admitted,
             "full_reason_codes": case.full_admission_reason_codes,
         }
@@ -1118,7 +1149,11 @@ class HandoffEvidenceDomains:
         receipt_domains = {domain for domain, receipt in case.domain_receipts if receipt}
         missing = tuple(domain for domain in case.required_evidence_domains if domain not in receipt_domains)
         domain_pass = not missing or case.force_cross_domain_reuse
-        closure_pass = case.claim_complete and state.parent_status == STATUS_PASS and domain_pass
+        closure_pass = (
+            state.parent_status == STATUS_PASS
+            and domain_pass
+            and (case.claim_complete or case.force_publish_partial_pass)
+        )
         return _result(
             case,
             replace(
@@ -1339,6 +1374,7 @@ def full_admission_is_explicit_and_frozen(state: ValidationState, _trace: object
             return _fail("full_admission_is_explicit_and_frozen", "focused, installation, fixture, parent, or uncertainty changes cannot silently become full")
         return _pass()
     reasons = set(case.full_admission_reason_codes)
+    external_claims = _external_claims_requested(case)
     if not state.full_admitted and state.process_started_owner_ids:
         return _fail(
             "full_admission_is_explicit_and_frozen",
@@ -1347,6 +1383,9 @@ def full_admission_is_explicit_and_frozen(state: ValidationState, _trace: object
     exact = (
         bool(reasons)
         and reasons.issubset(ALLOWED_FULL_REASONS)
+        and _requested_claims_are_current(case)
+        and case.source_coverage_complete
+        and (not external_claims or case.external_bindings_complete)
         and case.source_frozen
         and case.toolchain_frozen
         and case.validation_plan_frozen
@@ -1354,7 +1393,18 @@ def full_admission_is_explicit_and_frozen(state: ValidationState, _trace: object
         and state.full_admitted
     )
     if not exact:
-        return _fail("full_admission_is_explicit_and_frozen", "full requires an allowlisted graph-derived reason, frozen source/toolchain/plan, and one execution owner")
+        return _fail("full_admission_is_explicit_and_frozen", "full requires an allowlisted graph-derived reason, current requested claims, complete external bindings when requested, frozen source/toolchain/plan, and one execution owner")
+    return _pass()
+
+
+def partial_pass_cannot_publish(state: ValidationState, _trace: object) -> InvariantResult:
+    if state.phase < 8 or state.case is None:
+        return _pass()
+    if not state.case.claim_complete and state.closure_status == STATUS_PASS:
+        return _fail(
+            "partial_pass_cannot_publish",
+            "a partial source or external claim cannot be published as a complete closure",
+        )
     return _pass()
 
 
@@ -1539,6 +1589,7 @@ INVARIANTS = (
     Invariant("execution_report_matches_process_start", "Post-launch failures preserve the true process-start count.", execution_report_matches_process_start),
     Invariant("parent_aggregation_is_one_way", "A same-unit parent aggregates immutable child receipts with zero reverse execution.", parent_aggregation_is_one_way),
     Invariant("full_admission_is_explicit_and_frozen", "Full requires one allowlisted derived reason, frozen identities, and one owner.", full_admission_is_explicit_and_frozen),
+    Invariant("partial_pass_cannot_publish", "A partial claim cannot become a published closure.", partial_pass_cannot_publish),
     Invariant("current_protocol_has_no_success_fallback", "One current runtime path succeeds and retired shapes are rejection fixtures only.", current_protocol_has_no_success_fallback),
     Invariant("compatibility_admission_is_explicit", "Skills use direct current replacement; ordinary-software compatibility requires an explicit bounded historical-input contract.", compatibility_admission_is_explicit),
     Invariant("evidence_domains_do_not_substitute", "Source, install, target, and author-prompt evidence remain distinct.", evidence_domains_do_not_substitute),
@@ -1628,14 +1679,12 @@ GOOD_FULL = replace(
     GOOD_DIRECT,
     case_name="good-explicit-frozen-full-parent",
     validation_scope="full",
+    requested_claims=(SOURCE_RELEASE_CLAIM,),
+    external_bindings_complete=False,
     full_admission_reason_codes=(FULL_REASON_FINAL_GATE,),
     current_receipt_owner_ids=GOOD_DIRECT.owner_ids,
-    required_evidence_domains=(DOMAIN_SOURCE, DOMAIN_ACTIVE, DOMAIN_PROMPT),
-    domain_receipts=(
-        (DOMAIN_SOURCE, "receipt:canonical-source"),
-        (DOMAIN_ACTIVE, "receipt:current-installation"),
-        (DOMAIN_PROMPT, "receipt:global-prompt"),
-    ),
+    required_evidence_domains=(DOMAIN_SOURCE,),
+    domain_receipts=((DOMAIN_SOURCE, "receipt:canonical-source"),),
 )
 GOOD_SOFTWARE_COMPATIBILITY = replace(
     GOOD_DIRECT,
@@ -1709,7 +1758,14 @@ SCENARIOS = (
         GOOD_ROUTER_EDGE_WITHOUT_PROMPT_ROLE,
         "an exact router consumer edge refreshes the router regardless of a broad file role",
     ),
-    _ok(GOOD_FULL, "an explicit final gate admits one frozen full parent under one owner"),
+    _ok(GOOD_FULL, "an explicit final gate admits one frozen source-only full parent under one owner"),
+    _ok(
+        replace(
+            GOOD_FULL,
+            case_name="good-retired-manifest-admission-field-does-not-control-claim",
+        ),
+        "a retired manifest admission field cannot add an external claim to a source-only full plan",
+    ),
     _ok(GOOD_SOFTWARE_COMPATIBILITY, "an explicit ordinary-software historical reader stays bounded outside skill runtime authority"),
     _bad(
         replace(
@@ -2058,9 +2114,29 @@ SCENARIOS = (
         "incomplete final admission must block before the first owner process starts",
     ),
     _bad(
+        replace(
+            GOOD_FULL,
+            case_name="bad-explicit-installed-missing-binding",
+            requested_claims=("installed_current", SOURCE_RELEASE_CLAIM),
+            external_bindings_complete=False,
+        ),
+        "full_admission_is_explicit_and_frozen",
+        "an explicit installed_current claim must carry its complete typed binding before producer execution",
+    ),
+    _bad(
         replace(GOOD_DIRECT, case_name="bad-old-wire-auto-accepted", parent_schema_version="skillguard.test_mesh_result.retired", legacy_success_route_enabled=True),
         "current_protocol_has_no_success_fallback",
         "retired shapes cannot be converted or accepted as current success",
+    ),
+    _bad(
+        replace(
+            GOOD_FULL,
+            case_name="bad-partial-pass-published",
+            claim_complete=False,
+            force_publish_partial_pass=True,
+        ),
+        "partial_pass_cannot_publish",
+        "a partial source or external pass cannot be published as complete closure",
     ),
     _bad(
         replace(GOOD_DIRECT, case_name="bad-stale-evidence-metadata-refreshed", evidence_metadata_refresh_route_enabled=True),

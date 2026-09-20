@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
 import sys
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 
@@ -153,6 +156,24 @@ def test_entry_and_global_prompt_preserve_declared_headroom():
     assert "## Validated Template Pack Selection" not in block
     assert "### Current Route Index" not in block
     assert "current_registered_source_count: 0" in block
+
+
+def test_entry_and_root_prompt_byte_caps_are_current():
+    assert (SKILL_ROOT / "SKILL.md").stat().st_size <= 6000
+    assert (ROOT / "AGENTS.md").stat().st_size <= 8000
+    assert (SKILL_ROOT / "references" / "route_map_summary.md").stat().st_size <= 2000
+
+
+def test_route_reference_returns_one_capsule_without_catalog():
+    stream = StringIO()
+    with redirect_stdout(stream):
+        status = checker_engine.route_reference(["--route-id", "check-depth"])
+
+    assert status == 0
+    payload = json.loads(stream.getvalue())
+    assert payload["selected_route"]["route_id"] == "skillguard.route.check-depth.v1"
+    assert payload["selected_route"]["load_order"]
+    assert "current_route_registry" not in payload
 
 
 def test_no_always_loaded_prompt_contains_an_understanding_level():

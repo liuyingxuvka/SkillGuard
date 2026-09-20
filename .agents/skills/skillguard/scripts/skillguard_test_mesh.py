@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import sys
 from pathlib import Path
 
 from skillguard_utils import emit_json
@@ -14,6 +16,27 @@ from skillguard_v2.test_mesh import (
 )
 from skillguard_v2.execution_records import filesystem_path
 from skillguard_v2.contract_compiler import canonical_json_bytes
+
+
+def _pin_invocation_python_runtime() -> None:
+    """Make every declared ``python`` owner use this frozen invocation runtime.
+
+    TestMesh is itself launched through the fixed audit Python executable.  A
+    child check declared as ``python`` must not silently resolve through a
+    WindowsApps shim or another interpreter on PATH, because that changes the
+    owner evidence while leaving the frozen plan looking unchanged.  Prefixing
+    this process' interpreter directory is deliberately local to this CLI
+    invocation; it does not install anything or mutate the user's environment.
+    """
+
+    interpreter_dir = str(Path(sys.executable).parent)
+    current_path = os.environ.get("PATH", "")
+    entries = [entry for entry in current_path.split(os.pathsep) if entry]
+    if entries and entries[0].casefold() == interpreter_dir.casefold():
+        return
+    os.environ["PATH"] = os.pathsep.join(
+        [interpreter_dir, *[entry for entry in entries if entry.casefold() != interpreter_dir.casefold()]]
+    )
 
 
 def _write_plan_snapshot(run_root: Path, report: dict[str, object]) -> Path:
@@ -31,6 +54,7 @@ def _write_plan_snapshot(run_root: Path, report: dict[str, object]) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _pin_invocation_python_runtime()
     parser = argparse.ArgumentParser()
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument("--profile", choices=("fast", "focused", "full"))
@@ -86,7 +110,31 @@ def main(argv: list[str] | None = None) -> int:
             "Repeat for every registered root."
         ),
     )
+    parser.add_argument("--output", help="Write the complete machine report to this repository-relative file.")
+    parser.add_argument(
+        "--full-output",
+        action="store_true",
+        help="Require --output for the complete machine report; stdout remains a bounded summary.",
+    )
+    parser.add_argument(
+        "--total-budget-seconds",
+        type=float,
+        help=(
+            "Operational monotonic budget for one owner-execution call. "
+            "Defaults to 30s/120s/900s for fast/focused/full."
+        ),
+    )
+    parser.add_argument(
+        "--diagnostic",
+        action="store_true",
+        help=(
+            "Collect independent owner failures after a normal failure; "
+            "never overrides cancellation, cleanup, or budget stops."
+        ),
+    )
     args = parser.parse_args(argv)
+    if args.full_output and not args.output:
+        parser.error("--full-output requires --output PATH")
 
     repository_root = Path(args.repository_root).resolve()
 
@@ -128,6 +176,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.full_admission_reason,
                 args.installation_receipt_root,
                 args.requested_claim,
+                args.total_budget_seconds,
+                args.diagnostic,
             )
         ) or args.mode != "plan_only"
         if forbidden:
@@ -144,6 +194,8 @@ def main(argv: list[str] | None = None) -> int:
             canonical_skillguard_root=canonical_skillguard_root,
             global_prompt_codex_home=prompt_home,
             global_prompt_skill_roots=global_prompt_skill_roots,
+            total_budget_seconds=args.total_budget_seconds,
+            diagnostic=args.diagnostic,
         )
     else:
         if not args.run_root or not args.skill_root or not args.target_root:
@@ -241,7 +293,12 @@ def main(argv: list[str] | None = None) -> int:
             aggregation_path = filesystem_path(owner_root / relative)
             output["aggregation_ref_path"] = str(aggregation_path)
         report = output
-    emit_json(report)
+    emit_json(
+        report,
+        output=args.output,
+        full_output=args.full_output,
+        root=repository_root,
+    )
     return 0 if report["status"] == "passed" else 1
 
 

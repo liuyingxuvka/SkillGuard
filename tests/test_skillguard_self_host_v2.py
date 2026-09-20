@@ -421,12 +421,22 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             self.assertNotEqual(all_obligations, coverage, check["check_id"])
             self.assertTrue(coverage)
 
-    def test_self_host_exposes_only_the_current_verifier(self) -> None:
+    def test_retired_self_host_paths_refuse_without_forwarding(self) -> None:
         self.assertTrue(callable(self_host.claim_current_self_host_run))
         self.assertTrue(callable(self_host.run_current_verifier))
         self.assertTrue(callable(self_host.run_self_host_bootstrap))
         self.assertFalse(hasattr(self_host, "run_frozen_old_verifier"))
         self.assertFalse(hasattr(self_host, "run_new_verifier"))
+        repository = Path(tempfile.mkdtemp(prefix="skillguard-retired-self-host-"))
+        with self.assertRaises(SelfHostError) as current_error:
+            self_host.run_current_verifier(repository, progress_callback=None)
+        self.assertEqual(
+            "self_host_current_verifier_retired", current_error.exception.code
+        )
+        with self.assertRaises(SelfHostError) as bootstrap_error:
+            self_host.run_self_host_bootstrap(repository, progress_callback=None)
+        self.assertEqual("self_host_bootstrap_retired", bootstrap_error.exception.code)
+        self.assertEqual([], list(repository.rglob("run-*")))
 
     def test_self_host_claim_launches_zero_owners_before_test_mesh_plan(self) -> None:
         repository_root = ROOT
@@ -513,6 +523,18 @@ class SkillGuardSelfHostV2Tests(unittest.TestCase):
             budget["required_timeout_seconds"],
         )
         self.assertGreater(budget["headroom_seconds"], 0)
+        under_budget = copy.deepcopy(manifest)
+        under_budget["checks"][
+            next(
+                index
+                for index, row in enumerate(under_budget["checks"])
+                if row.get("check_id") == "check:self:installation-safety"
+            )
+        ]["timeout_seconds"] = 60
+        recorded = validate_self_host_long_check_timeout_budgets(under_budget)
+        self.assertEqual(1, len(recorded))
+        self.assertFalse(recorded[0]["timeout_gate_satisfied"])
+        self.assertLess(recorded[0]["headroom_seconds"], 0)
 
     def test_failure_matrix_manifest_is_public_and_bounded(self) -> None:
         path = ROOT / ".agents" / "skills" / "skillguard" / "fixtures" / "v2_self_host_failure_matrix" / "fixture-manifest.json"

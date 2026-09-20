@@ -139,6 +139,20 @@
     },
     {
       "model_obligation_ids": [
+        "obligation:exact-closure",
+        "obligation:artifact-freshness",
+        "obligation:guard-run-identity"
+      ],
+      "proof_ref": ".agents/skills/skillguard/.skillguard/check-manifest.json#check:self:issue-closure-receipt",
+      "reason": "The frozen self-host finalizer and its explicit fault surface may close only from the exact current mesh, artifact, and run identity.",
+      "rule_id": "decision:self-host-finalize-terminal-closure",
+      "surface_ids": [
+        "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh"
+      ]
+    },
+    {
+      "model_obligation_ids": [
         "obligation:failed-lock-recovery"
       ],
       "proof_ref": ".agents/skills/skillguard/.skillguard/check-manifest.json#check:self:failed-lock-recovery",
@@ -285,6 +299,20 @@
         "scripts/skillguard_v2/test_mesh.py",
         "scripts/skillguard_test_mesh.py",
         "assets/schemas/skillguard_functional_closure.schema.json"
+      ]
+    },
+    {
+      "model_obligation_ids": [
+        "obligation:route-ownership",
+        "obligation:depth-native-authority",
+        "obligation:unique-depth-evidence",
+        "obligation:exact-closure"
+      ],
+      "proof_ref": ".agents/skills/skillguard/.skillguard/check-manifest.json#check:self:test-mesh-fast",
+      "reason": "The test-mesh component owns its route, native-depth, unique-evidence, and terminal-closure boundary as one explicit review unit.",
+      "rule_id": "decision:test-mesh-component-ownership-and-closure",
+      "surface_ids": [
+        "component:scripts/skillguard_test_mesh.py"
       ]
     },
     {
@@ -514,6 +542,7 @@
     "api:.skillguard/template_lifecycle_model.py:template_route_precedes_selection",
     "api:.skillguard/template_lifecycle_model.py:template_skillguard_never_owns_domain_semantics",
     "api:.skillguard/template_lifecycle_model.py:terminal_predicate",
+    "api:scripts/check_model_export.py:main",
     "api:scripts/checker_engine.py:JsonArgumentParser",
     "api:scripts/checker_engine.py:SkillGuardCliError",
     "api:scripts/checker_engine.py:add_checker_change_blocker",
@@ -750,6 +779,7 @@
     "api:scripts/checker_engine.py:review_path_snapshot",
     "api:scripts/checker_engine.py:review_public_paths",
     "api:scripts/checker_engine.py:review_string_list",
+    "api:scripts/checker_engine.py:route_reference",
     "api:scripts/checker_engine.py:route_task",
     "api:scripts/checker_engine.py:route_task_candidates",
     "api:scripts/checker_engine.py:route_task_checker_change_guard_argv",
@@ -852,6 +882,7 @@
     "api:scripts/skillguard_utils.py:repository_root",
     "api:scripts/skillguard_utils.py:repository_root_for_skill_root",
     "api:scripts/skillguard_utils.py:skill_root",
+    "api:scripts/skillguard_utils.py:summarize_payload",
     "api:scripts/skillguard_utils.py:utc_timestamp",
     "api:scripts/skillguard_utils.py:write_report",
     "api:scripts/skillguard_v2/artifact_validators.py:ArtifactValidationError",
@@ -883,6 +914,7 @@
     "api:scripts/skillguard_v2/capability_engine.py:validate_functional_closure",
     "api:scripts/skillguard_v2/capability_engine.py:validate_portfolio_registry",
     "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+    "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
     "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
     "api:scripts/skillguard_v2/check_runner.py:execute_check",
     "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -897,6 +929,7 @@
     "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
     "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
     "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+    "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
     "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
     "api:scripts/skillguard_v2/check_runner.py:store_check_result",
     "api:scripts/skillguard_v2/closure.py:ClosureError",
@@ -1179,6 +1212,7 @@
     "api:scripts/skillguard_v2/self_host.py:SelfHostClaimContext",
     "api:scripts/skillguard_v2/self_host.py:SelfHostError",
     "api:scripts/skillguard_v2/self_host.py:claim_current_self_host_run",
+    "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
     "api:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
     "api:scripts/skillguard_v2/self_host.py:run_current_verifier",
     "api:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
@@ -1205,6 +1239,8 @@
     "api:scripts/skillguard_v2/surface_inventory.py:FullSourceSurfaceScan",
     "api:scripts/skillguard_v2/surface_inventory.py:PublicSourceSurface",
     "api:scripts/skillguard_v2/surface_inventory.py:PublicSourceSurfaceScan",
+    "api:scripts/skillguard_v2/surface_inventory.py:SourceObservation",
+    "api:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
     "api:scripts/skillguard_v2/surface_inventory.py:SurfaceInventoryFinding",
     "api:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
     "api:scripts/skillguard_v2/surface_inventory.py:discover_public_source_surfaces",
@@ -1276,8 +1312,12 @@
     "api:scripts/skillguard_v2/template_prompts.py:render_target_template_routing_section",
     "api:scripts/skillguard_v2/template_prompts.py:replace_target_template_routing_section",
     "api:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+    "api:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+    "api:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
     "api:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
+    "api:scripts/skillguard_v2/test_mesh.py:pytest_leaf_plan_current_pass",
     "api:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation",
+    "api:scripts/skillguard_v2/test_mesh.py:validate_pytest_leaf_plan",
     "api:scripts/skillguard_v2/verification_contract_review.py:VerificationContractFinding",
     "api:scripts/skillguard_v2/verification_contract_review.py:audit_active_verification_contracts",
     "api:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
@@ -1350,6 +1390,7 @@
     "command:prepare-portfolio-run",
     "command:refresh-global-router",
     "command:review-checker-change",
+    "command:route-reference",
     "command:route-task",
     "command:scan-global-skills",
     "command:self-check",
@@ -1357,8 +1398,11 @@
     "command:verify-portfolio-impact-receipt",
     "command:write-report",
     "component:.skillguard/flowguard_contract_model.py",
+    "component:scripts/check_model_export.py",
     "component:scripts/checker_engine.py",
     "component:scripts/skillguard_self_host.py",
+    "component:scripts/skillguard_test_mesh.py",
+    "component:scripts/skillguard_utils.py",
     "component:scripts/skillguard_v2/artifact_validators.py",
     "component:scripts/skillguard_v2/assurance_diagnostics.py",
     "component:scripts/skillguard_v2/author_context.py",
@@ -1508,6 +1552,7 @@
     "effect:scripts/checker_engine.py:global_resolvable_scan_root_path",
     "effect:scripts/checker_engine.py:global_write_json",
     "effect:scripts/checker_engine.py:global_write_text_atomic",
+    "effect:scripts/checker_engine.py:invoke_post_generation_check",
     "effect:scripts/checker_engine.py:is_optional_reference",
     "effect:scripts/checker_engine.py:looks_like_database_runtime_path",
     "effect:scripts/checker_engine.py:looks_like_record_path",
@@ -1526,6 +1571,7 @@
     "effect:scripts/checker_engine.py:resolve_skillguard_self_layout_path",
     "effect:scripts/checker_engine.py:route_task_candidates",
     "effect:scripts/checker_engine.py:route_task_path_values",
+    "effect:scripts/checker_engine.py:run_fixture_handler",
     "effect:scripts/checker_engine.py:self_check",
     "effect:scripts/checker_engine.py:write_generate_skill_scaffold",
     "effect:scripts/checker_engine.py:write_generate_suite_scaffold",
@@ -1547,6 +1593,7 @@
     "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
     "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
     "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+    "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
     "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
     "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
     "effect:scripts/skillguard_v2/global_router_discovery.py:contract_projection",
@@ -1604,6 +1651,7 @@
     "fault:.skillguard/template_lifecycle_model.py:template_instance_requires_target_native_validation",
     "fault:.skillguard/template_lifecycle_model.py:template_route_precedes_selection",
     "fault:.skillguard/template_lifecycle_model.py:template_skillguard_never_owns_domain_semantics",
+    "fault:scripts/check_model_export.py:main",
     "fault:scripts/checker_engine.py:JsonArgumentParser",
     "fault:scripts/checker_engine.py:SkillGuardCliError",
     "fault:scripts/checker_engine.py:add_stale_evidence_blocker",
@@ -1663,6 +1711,7 @@
     "fault:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
     "fault:scripts/checker_engine.py:resolve_check_target_binding",
     "fault:scripts/checker_engine.py:review_checker_change",
+    "fault:scripts/checker_engine.py:run_fixture_handler",
     "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims",
     "fault:scripts/checker_engine.py:self_check",
     "fault:scripts/checker_engine.py:stale_hash_code_for",
@@ -1684,6 +1733,7 @@
     "fault:scripts/skillguard_self_host.py:main",
     "fault:scripts/skillguard_supervise.py:main",
     "fault:scripts/skillguard_test_mesh.py:main",
+    "fault:scripts/skillguard_utils.py:emit_json",
     "fault:scripts/skillguard_utils.py:ensure_under_root",
     "fault:scripts/skillguard_utils.py:load_jsonl",
     "fault:scripts/skillguard_utils.py:write_report",
@@ -1700,6 +1750,7 @@
     "fault:scripts/skillguard_v2/capability_engine.py:load_target_documents",
     "fault:scripts/skillguard_v2/capability_engine.py:validate_functional_closure",
     "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+    "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
     "fault:scripts/skillguard_v2/check_runner.py:execute_check",
     "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
     "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -1707,6 +1758,7 @@
     "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
     "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
     "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+    "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
     "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
     "fault:scripts/skillguard_v2/closure.py:ClosureError",
     "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -1837,8 +1889,10 @@
     "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
     "fault:scripts/skillguard_v2/runtime_fingerprint.py:GuardRuntimeFingerprintError",
     "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+    "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
     "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
     "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+    "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
     "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
     "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
     "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
@@ -1856,6 +1910,7 @@
     "fault:scripts/skillguard_v2/supervisor.py:SupervisorError",
     "fault:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
     "fault:scripts/skillguard_v2/supervisor.py:validate_supervisor_packet",
+    "fault:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
     "fault:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
     "fault:scripts/skillguard_v2/surface_inventory.py:validate_full_surface_inventory",
     "fault:scripts/skillguard_v2/surface_inventory_authoring.py:build_current_semantic_map",
@@ -1883,6 +1938,8 @@
     "fault:scripts/skillguard_v2/template_prompts.py:render_target_template_routing_section",
     "fault:scripts/skillguard_v2/template_prompts.py:replace_target_template_routing_section",
     "fault:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+    "fault:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+    "fault:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
     "fault:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
     "fault:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
     "fault:scripts/skillguard_verification_contract_review.py:main",
@@ -2091,6 +2148,7 @@
     "option:mark:--summary",
     "option:mark:--target",
     "option:plan-skill:--input",
+    "option:plan-skill:--output",
     "option:prepare-portfolio-run:--installed-target-root",
     "option:prepare-portfolio-run:--job-matrix",
     "option:prepare-portfolio-run:--output",
@@ -2111,6 +2169,8 @@
     "option:review-checker-change:--fixture-manifest",
     "option:review-checker-change:--output",
     "option:review-checker-change:--target",
+    "option:route-reference:--output",
+    "option:route-reference:--route-id",
     "option:route-task:--checker-change-review",
     "option:route-task:--checker-suite",
     "option:route-task:--checker-suite-impact",
@@ -2157,7 +2217,9 @@
     "provider:scripts/checker_engine.py:looks_like_transient_skillguard_runtime_output",
     "provider:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
     "provider:scripts/checker_engine.py:resolve_fixture_runtime_argument_path",
+    "provider:scripts/checker_engine.py:run_fixture_handler",
     "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv",
+    "provider:scripts/skillguard_test_mesh.py:main",
     "provider:scripts/skillguard_v2/artifact_validators.py:load_artifact_records",
     "provider:scripts/skillguard_v2/artifact_validators.py:validate_artifact",
     "provider:scripts/skillguard_v2/capability_contract.py:CapabilityContractFinding",
@@ -2223,7 +2285,6 @@
     "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_execution_runtime_fingerprint",
     "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_runtime_fingerprint",
     "provider:scripts/skillguard_v2/runtime_fingerprint.py:resolve_guard_runtime_root",
-    "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
     "provider:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
     "provider:scripts/skillguard_v2/step_runtime.py:approve_skip",
     "provider:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -2263,7 +2324,6 @@
     "recovery:scripts/skillguard_v2/portfolio_runner.py:execute_portfolio_attempt",
     "recovery:scripts/skillguard_v2/receipts.py:issue_receipt",
     "recovery:scripts/skillguard_v2/run_store.py:append_event",
-    "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
     "recovery:scripts/skillguard_v2/step_runtime.py:resume_run",
     "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
     "recovery:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
@@ -2318,6 +2378,7 @@
     "route:skillguard.route.prepare-portfolio-run.v1",
     "route:skillguard.route.refresh-global-router.v1",
     "route:skillguard.route.review-checker-change.v1",
+    "route:skillguard.route.route-reference.v1",
     "route:skillguard.route.route-task.v1",
     "route:skillguard.route.scan-global-skills.v1",
     "route:skillguard.route.self-check.v1",
@@ -2326,6 +2387,7 @@
     "route:skillguard.route.write-report.v1",
     "script:.skillguard/flowguard_contract_model.py",
     "script:.skillguard/template_lifecycle_model.py",
+    "script:scripts/check_model_export.py",
     "script:scripts/generate_route_index.py",
     "script:scripts/skillguard.py",
     "script:scripts/skillguard_compile.py",
@@ -2338,6 +2400,7 @@
     "script:scripts/skillguard_test_mesh.py",
     "script:scripts/skillguard_verification_contract_review.py",
     "template:SKILL.md",
+    "template:references/route_map_summary.md",
     "template:references/skillguard-assurance-diagnostics.md",
     "template:references/skillguard-execution-depth.md",
     "template:references/skillguard-execution-records.md",
@@ -2381,6 +2444,7 @@
     "ui:scripts/skillguard_test_mesh.py:main",
     "ui:scripts/skillguard_v2/assurance_diagnostics.py:derive_assurance_diagnostics",
     "ui:scripts/skillguard_v2/capability_contract.py:capability_contract_topology_findings",
+    "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
     "ui:scripts/skillguard_v2/closure.py:evaluate_closure",
     "ui:scripts/skillguard_v2/contract_schema.py:validate_binding_source",
     "ui:scripts/skillguard_v2/evidence_policy.py:required_evidence_class",
@@ -2405,7 +2469,6 @@
     "ui:scripts/skillguard_v2/run_store.py:author_run_control_root",
     "ui:scripts/skillguard_v2/run_store.py:claim_run",
     "ui:scripts/skillguard_v2/run_store.py:release_run_locks",
-    "ui:scripts/skillguard_v2/self_host.py:run_current_verifier",
     "ui:scripts/skillguard_v2/step_runtime.py:record_verification",
     "ui:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
     "ui:scripts/skillguard_v2/target_installation.py:activate_target_stage",
@@ -2423,7 +2486,7 @@
     "ui:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
     "ui:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation"
   ],
-  "map_hash": "sha256:059a281f883e88af86ec55184bf3183415e883d41b99d580de251a642db50dec",
+  "map_hash": "sha256:3269064323f670fe643df0706bca57625f5877de990e635b705b56d01deb591a",
   "map_id": "map:self:surface-semantics-direct-current-2026-08-22-r1",
   "obligation_bindings": [
     {
@@ -2494,6 +2557,7 @@
         "api:.skillguard/template_lifecycle_model.py:template_route_precedes_selection",
         "api:.skillguard/template_lifecycle_model.py:template_skillguard_never_owns_domain_semantics",
         "api:.skillguard/template_lifecycle_model.py:terminal_predicate",
+        "api:scripts/check_model_export.py:main",
         "api:scripts/checker_engine.py:JsonArgumentParser",
         "api:scripts/checker_engine.py:SkillGuardCliError",
         "api:scripts/checker_engine.py:add_checker_change_blocker",
@@ -2730,6 +2794,7 @@
         "api:scripts/checker_engine.py:review_path_snapshot",
         "api:scripts/checker_engine.py:review_public_paths",
         "api:scripts/checker_engine.py:review_string_list",
+        "api:scripts/checker_engine.py:route_reference",
         "api:scripts/checker_engine.py:route_task",
         "api:scripts/checker_engine.py:route_task_candidates",
         "api:scripts/checker_engine.py:route_task_checker_change_guard_argv",
@@ -2832,6 +2897,7 @@
         "api:scripts/skillguard_utils.py:repository_root",
         "api:scripts/skillguard_utils.py:repository_root_for_skill_root",
         "api:scripts/skillguard_utils.py:skill_root",
+        "api:scripts/skillguard_utils.py:summarize_payload",
         "api:scripts/skillguard_utils.py:utc_timestamp",
         "api:scripts/skillguard_utils.py:write_report",
         "api:scripts/skillguard_v2/artifact_validators.py:ArtifactValidationError",
@@ -2863,6 +2929,7 @@
         "api:scripts/skillguard_v2/capability_engine.py:validate_functional_closure",
         "api:scripts/skillguard_v2/capability_engine.py:validate_portfolio_registry",
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -2877,6 +2944,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/closure.py:ClosureError",
@@ -3159,6 +3227,7 @@
         "api:scripts/skillguard_v2/self_host.py:SelfHostClaimContext",
         "api:scripts/skillguard_v2/self_host.py:SelfHostError",
         "api:scripts/skillguard_v2/self_host.py:claim_current_self_host_run",
+        "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "api:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "api:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "api:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
@@ -3185,6 +3254,8 @@
         "api:scripts/skillguard_v2/surface_inventory.py:FullSourceSurfaceScan",
         "api:scripts/skillguard_v2/surface_inventory.py:PublicSourceSurface",
         "api:scripts/skillguard_v2/surface_inventory.py:PublicSourceSurfaceScan",
+        "api:scripts/skillguard_v2/surface_inventory.py:SourceObservation",
+        "api:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
         "api:scripts/skillguard_v2/surface_inventory.py:SurfaceInventoryFinding",
         "api:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "api:scripts/skillguard_v2/surface_inventory.py:discover_public_source_surfaces",
@@ -3256,8 +3327,12 @@
         "api:scripts/skillguard_v2/template_prompts.py:render_target_template_routing_section",
         "api:scripts/skillguard_v2/template_prompts.py:replace_target_template_routing_section",
         "api:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "api:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "api:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "api:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
+        "api:scripts/skillguard_v2/test_mesh.py:pytest_leaf_plan_current_pass",
         "api:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation",
+        "api:scripts/skillguard_v2/test_mesh.py:validate_pytest_leaf_plan",
         "api:scripts/skillguard_v2/verification_contract_review.py:VerificationContractFinding",
         "api:scripts/skillguard_v2/verification_contract_review.py:audit_active_verification_contracts",
         "api:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
@@ -3330,6 +3405,7 @@
         "command:prepare-portfolio-run",
         "command:refresh-global-router",
         "command:review-checker-change",
+        "command:route-reference",
         "command:route-task",
         "command:scan-global-skills",
         "command:self-check",
@@ -3337,8 +3413,11 @@
         "command:verify-portfolio-impact-receipt",
         "command:write-report",
         "component:.skillguard/flowguard_contract_model.py",
+        "component:scripts/check_model_export.py",
         "component:scripts/checker_engine.py",
         "component:scripts/skillguard_self_host.py",
+        "component:scripts/skillguard_test_mesh.py",
+        "component:scripts/skillguard_utils.py",
         "component:scripts/skillguard_v2/artifact_validators.py",
         "component:scripts/skillguard_v2/assurance_diagnostics.py",
         "component:scripts/skillguard_v2/author_context.py",
@@ -3488,6 +3567,7 @@
         "effect:scripts/checker_engine.py:global_resolvable_scan_root_path",
         "effect:scripts/checker_engine.py:global_write_json",
         "effect:scripts/checker_engine.py:global_write_text_atomic",
+        "effect:scripts/checker_engine.py:invoke_post_generation_check",
         "effect:scripts/checker_engine.py:is_optional_reference",
         "effect:scripts/checker_engine.py:looks_like_database_runtime_path",
         "effect:scripts/checker_engine.py:looks_like_record_path",
@@ -3506,6 +3586,7 @@
         "effect:scripts/checker_engine.py:resolve_skillguard_self_layout_path",
         "effect:scripts/checker_engine.py:route_task_candidates",
         "effect:scripts/checker_engine.py:route_task_path_values",
+        "effect:scripts/checker_engine.py:run_fixture_handler",
         "effect:scripts/checker_engine.py:self_check",
         "effect:scripts/checker_engine.py:write_generate_skill_scaffold",
         "effect:scripts/checker_engine.py:write_generate_suite_scaffold",
@@ -3527,6 +3608,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/global_router_discovery.py:contract_projection",
@@ -3584,6 +3666,7 @@
         "fault:.skillguard/template_lifecycle_model.py:template_instance_requires_target_native_validation",
         "fault:.skillguard/template_lifecycle_model.py:template_route_precedes_selection",
         "fault:.skillguard/template_lifecycle_model.py:template_skillguard_never_owns_domain_semantics",
+        "fault:scripts/check_model_export.py:main",
         "fault:scripts/checker_engine.py:JsonArgumentParser",
         "fault:scripts/checker_engine.py:SkillGuardCliError",
         "fault:scripts/checker_engine.py:add_stale_evidence_blocker",
@@ -3643,6 +3726,7 @@
         "fault:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "fault:scripts/checker_engine.py:resolve_check_target_binding",
         "fault:scripts/checker_engine.py:review_checker_change",
+        "fault:scripts/checker_engine.py:run_fixture_handler",
         "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims",
         "fault:scripts/checker_engine.py:self_check",
         "fault:scripts/checker_engine.py:stale_hash_code_for",
@@ -3664,6 +3748,7 @@
         "fault:scripts/skillguard_self_host.py:main",
         "fault:scripts/skillguard_supervise.py:main",
         "fault:scripts/skillguard_test_mesh.py:main",
+        "fault:scripts/skillguard_utils.py:emit_json",
         "fault:scripts/skillguard_utils.py:ensure_under_root",
         "fault:scripts/skillguard_utils.py:load_jsonl",
         "fault:scripts/skillguard_utils.py:write_report",
@@ -3680,6 +3765,7 @@
         "fault:scripts/skillguard_v2/capability_engine.py:load_target_documents",
         "fault:scripts/skillguard_v2/capability_engine.py:validate_functional_closure",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -3687,6 +3773,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/closure.py:ClosureError",
         "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -3817,8 +3904,10 @@
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
         "fault:scripts/skillguard_v2/runtime_fingerprint.py:GuardRuntimeFingerprintError",
         "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+        "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
         "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
@@ -3836,6 +3925,7 @@
         "fault:scripts/skillguard_v2/supervisor.py:SupervisorError",
         "fault:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "fault:scripts/skillguard_v2/supervisor.py:validate_supervisor_packet",
+        "fault:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
         "fault:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "fault:scripts/skillguard_v2/surface_inventory.py:validate_full_surface_inventory",
         "fault:scripts/skillguard_v2/surface_inventory_authoring.py:build_current_semantic_map",
@@ -3863,6 +3953,8 @@
         "fault:scripts/skillguard_v2/template_prompts.py:render_target_template_routing_section",
         "fault:scripts/skillguard_v2/template_prompts.py:replace_target_template_routing_section",
         "fault:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "fault:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "fault:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "fault:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
         "fault:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
         "fault:scripts/skillguard_verification_contract_review.py:main",
@@ -4071,6 +4163,7 @@
         "option:mark:--summary",
         "option:mark:--target",
         "option:plan-skill:--input",
+        "option:plan-skill:--output",
         "option:prepare-portfolio-run:--installed-target-root",
         "option:prepare-portfolio-run:--job-matrix",
         "option:prepare-portfolio-run:--output",
@@ -4091,6 +4184,8 @@
         "option:review-checker-change:--fixture-manifest",
         "option:review-checker-change:--output",
         "option:review-checker-change:--target",
+        "option:route-reference:--output",
+        "option:route-reference:--route-id",
         "option:route-task:--checker-change-review",
         "option:route-task:--checker-suite",
         "option:route-task:--checker-suite-impact",
@@ -4137,7 +4232,9 @@
         "provider:scripts/checker_engine.py:looks_like_transient_skillguard_runtime_output",
         "provider:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "provider:scripts/checker_engine.py:resolve_fixture_runtime_argument_path",
+        "provider:scripts/checker_engine.py:run_fixture_handler",
         "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/artifact_validators.py:load_artifact_records",
         "provider:scripts/skillguard_v2/artifact_validators.py:validate_artifact",
         "provider:scripts/skillguard_v2/capability_contract.py:CapabilityContractFinding",
@@ -4203,7 +4300,6 @@
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_execution_runtime_fingerprint",
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_runtime_fingerprint",
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:resolve_guard_runtime_root",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "provider:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "provider:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "provider:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -4243,7 +4339,6 @@
         "recovery:scripts/skillguard_v2/portfolio_runner.py:execute_portfolio_attempt",
         "recovery:scripts/skillguard_v2/receipts.py:issue_receipt",
         "recovery:scripts/skillguard_v2/run_store.py:append_event",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "recovery:scripts/skillguard_v2/step_runtime.py:resume_run",
         "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "recovery:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
@@ -4298,6 +4393,7 @@
         "route:skillguard.route.prepare-portfolio-run.v1",
         "route:skillguard.route.refresh-global-router.v1",
         "route:skillguard.route.review-checker-change.v1",
+        "route:skillguard.route.route-reference.v1",
         "route:skillguard.route.route-task.v1",
         "route:skillguard.route.scan-global-skills.v1",
         "route:skillguard.route.self-check.v1",
@@ -4306,6 +4402,7 @@
         "route:skillguard.route.write-report.v1",
         "script:.skillguard/flowguard_contract_model.py",
         "script:.skillguard/template_lifecycle_model.py",
+        "script:scripts/check_model_export.py",
         "script:scripts/generate_route_index.py",
         "script:scripts/skillguard.py",
         "script:scripts/skillguard_compile.py",
@@ -4318,6 +4415,7 @@
         "script:scripts/skillguard_test_mesh.py",
         "script:scripts/skillguard_verification_contract_review.py",
         "template:SKILL.md",
+        "template:references/route_map_summary.md",
         "template:references/skillguard-assurance-diagnostics.md",
         "template:references/skillguard-execution-depth.md",
         "template:references/skillguard-execution-records.md",
@@ -4361,6 +4459,7 @@
         "ui:scripts/skillguard_test_mesh.py:main",
         "ui:scripts/skillguard_v2/assurance_diagnostics.py:derive_assurance_diagnostics",
         "ui:scripts/skillguard_v2/capability_contract.py:capability_contract_topology_findings",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/closure.py:evaluate_closure",
         "ui:scripts/skillguard_v2/contract_schema.py:validate_binding_source",
         "ui:scripts/skillguard_v2/evidence_policy.py:required_evidence_class",
@@ -4385,7 +4484,6 @@
         "ui:scripts/skillguard_v2/run_store.py:author_run_control_root",
         "ui:scripts/skillguard_v2/run_store.py:claim_run",
         "ui:scripts/skillguard_v2/run_store.py:release_run_locks",
-        "ui:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "ui:scripts/skillguard_v2/step_runtime.py:record_verification",
         "ui:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "ui:scripts/skillguard_v2/target_installation.py:activate_target_stage",
@@ -4412,6 +4510,7 @@
       "surface_ids": [
         "api:scripts/skillguard_test_mesh.py:main",
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -4426,6 +4525,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/declared_check_supervision.py:DeclaredCheckError",
@@ -4439,12 +4539,17 @@
         "api:scripts/skillguard_v2/execution_depth.py:load_target_execution_receipts",
         "api:scripts/skillguard_v2/execution_depth.py:profile_fingerprint",
         "api:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "api:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "api:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "api:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
+        "api:scripts/skillguard_v2/test_mesh.py:pytest_leaf_plan_current_pass",
         "api:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation",
+        "api:scripts/skillguard_v2/test_mesh.py:validate_pytest_leaf_plan",
         "api:scripts/skillguard_v2/verification_contract_review.py:VerificationContractFinding",
         "api:scripts/skillguard_v2/verification_contract_review.py:audit_active_verification_contracts",
         "api:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
         "api:scripts/skillguard_verification_contract_review.py:main",
+        "component:scripts/skillguard_test_mesh.py",
         "component:scripts/skillguard_v2/check_runner.py",
         "component:scripts/skillguard_v2/declared_check_supervision.py",
         "component:scripts/skillguard_v2/execution_depth.py",
@@ -4456,6 +4561,7 @@
         "effect:scripts/skillguard_v2/execution_depth.py:issue_target_execution_receipt",
         "fault:scripts/skillguard_test_mesh.py:main",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -4463,6 +4569,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/declared_check_supervision.py:DeclaredCheckError",
         "fault:scripts/skillguard_v2/declared_check_supervision.py:freeze_declared_check_inventory",
@@ -4472,9 +4579,12 @@
         "fault:scripts/skillguard_v2/execution_depth.py:load_target_execution_receipts",
         "fault:scripts/skillguard_v2/execution_depth.py:profile_fingerprint",
         "fault:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "fault:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "fault:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "fault:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
         "fault:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
         "fault:scripts/skillguard_verification_contract_review.py:main",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "provider:scripts/skillguard_v2/check_runner.py:execute_check",
         "provider:scripts/skillguard_v2/execution_depth.py:evaluate_depth_receipt_gate",
@@ -4488,6 +4598,7 @@
         "template:references/skillguard-execution-depth.md",
         "template:references/skillguard-test-mesh.md",
         "ui:scripts/skillguard_test_mesh.py:main",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/execution_depth.py:evaluate_execution_depth",
         "ui:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
         "ui:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation"
@@ -4561,6 +4672,7 @@
         "api:.skillguard/template_lifecycle_model.py:template_route_precedes_selection",
         "api:.skillguard/template_lifecycle_model.py:template_skillguard_never_owns_domain_semantics",
         "api:.skillguard/template_lifecycle_model.py:terminal_predicate",
+        "api:scripts/check_model_export.py:main",
         "api:scripts/checker_engine.py:JsonArgumentParser",
         "api:scripts/checker_engine.py:SkillGuardCliError",
         "api:scripts/checker_engine.py:add_checker_change_blocker",
@@ -4797,6 +4909,7 @@
         "api:scripts/checker_engine.py:review_path_snapshot",
         "api:scripts/checker_engine.py:review_public_paths",
         "api:scripts/checker_engine.py:review_string_list",
+        "api:scripts/checker_engine.py:route_reference",
         "api:scripts/checker_engine.py:route_task",
         "api:scripts/checker_engine.py:route_task_candidates",
         "api:scripts/checker_engine.py:route_task_checker_change_guard_argv",
@@ -4899,6 +5012,7 @@
         "api:scripts/skillguard_utils.py:repository_root",
         "api:scripts/skillguard_utils.py:repository_root_for_skill_root",
         "api:scripts/skillguard_utils.py:skill_root",
+        "api:scripts/skillguard_utils.py:summarize_payload",
         "api:scripts/skillguard_utils.py:utc_timestamp",
         "api:scripts/skillguard_utils.py:write_report",
         "api:scripts/skillguard_v2/artifact_validators.py:ArtifactValidationError",
@@ -4930,6 +5044,7 @@
         "api:scripts/skillguard_v2/capability_engine.py:validate_functional_closure",
         "api:scripts/skillguard_v2/capability_engine.py:validate_portfolio_registry",
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -4944,6 +5059,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/closure.py:ClosureError",
@@ -5226,6 +5342,7 @@
         "api:scripts/skillguard_v2/self_host.py:SelfHostClaimContext",
         "api:scripts/skillguard_v2/self_host.py:SelfHostError",
         "api:scripts/skillguard_v2/self_host.py:claim_current_self_host_run",
+        "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "api:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "api:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "api:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
@@ -5252,6 +5369,8 @@
         "api:scripts/skillguard_v2/surface_inventory.py:FullSourceSurfaceScan",
         "api:scripts/skillguard_v2/surface_inventory.py:PublicSourceSurface",
         "api:scripts/skillguard_v2/surface_inventory.py:PublicSourceSurfaceScan",
+        "api:scripts/skillguard_v2/surface_inventory.py:SourceObservation",
+        "api:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
         "api:scripts/skillguard_v2/surface_inventory.py:SurfaceInventoryFinding",
         "api:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "api:scripts/skillguard_v2/surface_inventory.py:discover_public_source_surfaces",
@@ -5323,8 +5442,12 @@
         "api:scripts/skillguard_v2/template_prompts.py:render_target_template_routing_section",
         "api:scripts/skillguard_v2/template_prompts.py:replace_target_template_routing_section",
         "api:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "api:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "api:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "api:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
+        "api:scripts/skillguard_v2/test_mesh.py:pytest_leaf_plan_current_pass",
         "api:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation",
+        "api:scripts/skillguard_v2/test_mesh.py:validate_pytest_leaf_plan",
         "api:scripts/skillguard_v2/verification_contract_review.py:VerificationContractFinding",
         "api:scripts/skillguard_v2/verification_contract_review.py:audit_active_verification_contracts",
         "api:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
@@ -5338,8 +5461,11 @@
         "api:scripts/skillguard_verification_contract_review.py:main",
         "artifact:assets/contract_fragments/catalog.json",
         "component:.skillguard/flowguard_contract_model.py",
+        "component:scripts/check_model_export.py",
         "component:scripts/checker_engine.py",
         "component:scripts/skillguard_self_host.py",
+        "component:scripts/skillguard_test_mesh.py",
+        "component:scripts/skillguard_utils.py",
         "component:scripts/skillguard_v2/artifact_validators.py",
         "component:scripts/skillguard_v2/assurance_diagnostics.py",
         "component:scripts/skillguard_v2/author_context.py",
@@ -5415,6 +5541,7 @@
         "effect:scripts/checker_engine.py:global_resolvable_scan_root_path",
         "effect:scripts/checker_engine.py:global_write_json",
         "effect:scripts/checker_engine.py:global_write_text_atomic",
+        "effect:scripts/checker_engine.py:invoke_post_generation_check",
         "effect:scripts/checker_engine.py:is_optional_reference",
         "effect:scripts/checker_engine.py:looks_like_database_runtime_path",
         "effect:scripts/checker_engine.py:looks_like_record_path",
@@ -5433,10 +5560,13 @@
         "effect:scripts/checker_engine.py:resolve_skillguard_self_layout_path",
         "effect:scripts/checker_engine.py:route_task_candidates",
         "effect:scripts/checker_engine.py:route_task_path_values",
+        "effect:scripts/checker_engine.py:run_fixture_handler",
         "effect:scripts/checker_engine.py:self_check",
         "effect:scripts/checker_engine.py:write_generate_skill_scaffold",
         "effect:scripts/checker_engine.py:write_generate_suite_scaffold",
         "effect:scripts/checker_engine.py:write_generation_fixture_preexisting_files",
+        "effect:scripts/skillguard_utils.py:dump_json",
+        "effect:scripts/skillguard_utils.py:utc_timestamp",
         "effect:scripts/skillguard_v2/check_runner.py:execute_check",
         "effect:scripts/skillguard_v2/check_runner.py:store_check_result",
         "effect:scripts/skillguard_v2/closure.py:close_run",
@@ -5451,6 +5581,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/global_router_discovery.py:contract_projection",
@@ -5504,6 +5635,7 @@
         "fault:.skillguard/template_lifecycle_model.py:template_instance_requires_target_native_validation",
         "fault:.skillguard/template_lifecycle_model.py:template_route_precedes_selection",
         "fault:.skillguard/template_lifecycle_model.py:template_skillguard_never_owns_domain_semantics",
+        "fault:scripts/check_model_export.py:main",
         "fault:scripts/checker_engine.py:JsonArgumentParser",
         "fault:scripts/checker_engine.py:SkillGuardCliError",
         "fault:scripts/checker_engine.py:add_stale_evidence_blocker",
@@ -5563,6 +5695,7 @@
         "fault:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "fault:scripts/checker_engine.py:resolve_check_target_binding",
         "fault:scripts/checker_engine.py:review_checker_change",
+        "fault:scripts/checker_engine.py:run_fixture_handler",
         "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims",
         "fault:scripts/checker_engine.py:self_check",
         "fault:scripts/checker_engine.py:stale_hash_code_for",
@@ -5579,6 +5712,11 @@
         "fault:scripts/checker_engine.py:validate_suite_relationships",
         "fault:scripts/checker_engine.py:write_generation_fixture_preexisting_files",
         "fault:scripts/skillguard_self_host.py:main",
+        "fault:scripts/skillguard_test_mesh.py:main",
+        "fault:scripts/skillguard_utils.py:emit_json",
+        "fault:scripts/skillguard_utils.py:ensure_under_root",
+        "fault:scripts/skillguard_utils.py:load_jsonl",
+        "fault:scripts/skillguard_utils.py:write_report",
         "fault:scripts/skillguard_v2/artifact_validators.py:ArtifactValidationError",
         "fault:scripts/skillguard_v2/artifact_validators.py:hard_evidence_from_artifact",
         "fault:scripts/skillguard_v2/artifact_validators.py:load_artifact_record",
@@ -5592,6 +5730,7 @@
         "fault:scripts/skillguard_v2/capability_engine.py:load_target_documents",
         "fault:scripts/skillguard_v2/capability_engine.py:validate_functional_closure",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -5599,6 +5738,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/closure.py:ClosureError",
         "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -5721,8 +5861,10 @@
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
         "fault:scripts/skillguard_v2/runtime_fingerprint.py:GuardRuntimeFingerprintError",
         "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+        "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
         "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
@@ -5740,6 +5882,7 @@
         "fault:scripts/skillguard_v2/supervisor.py:SupervisorError",
         "fault:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "fault:scripts/skillguard_v2/supervisor.py:validate_supervisor_packet",
+        "fault:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
         "fault:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "fault:scripts/skillguard_v2/surface_inventory.py:validate_full_surface_inventory",
         "fault:scripts/skillguard_v2/surface_inventory_authoring.py:build_current_semantic_map",
@@ -5761,6 +5904,8 @@
         "fault:scripts/skillguard_v2/template_profiles.py:validate_builtin_profile_current",
         "fault:scripts/skillguard_v2/template_profiles.py:validate_template_profile",
         "fault:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "fault:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "fault:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "fault:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
         "fault:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
         "installer:scripts/skillguard_v2/capability_engine.py:check_source_sync",
@@ -5781,7 +5926,9 @@
         "provider:scripts/checker_engine.py:looks_like_transient_skillguard_runtime_output",
         "provider:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "provider:scripts/checker_engine.py:resolve_fixture_runtime_argument_path",
+        "provider:scripts/checker_engine.py:run_fixture_handler",
         "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/artifact_validators.py:load_artifact_records",
         "provider:scripts/skillguard_v2/artifact_validators.py:validate_artifact",
         "provider:scripts/skillguard_v2/capability_contract.py:CapabilityContractFinding",
@@ -5847,7 +5994,6 @@
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_execution_runtime_fingerprint",
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_runtime_fingerprint",
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:resolve_guard_runtime_root",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "provider:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "provider:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "provider:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -5885,7 +6031,6 @@
         "recovery:scripts/skillguard_v2/portfolio_runner.py:execute_portfolio_attempt",
         "recovery:scripts/skillguard_v2/receipts.py:issue_receipt",
         "recovery:scripts/skillguard_v2/run_store.py:append_event",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "recovery:scripts/skillguard_v2/step_runtime.py:resume_run",
         "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "recovery:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
@@ -5958,12 +6103,15 @@
         "command:prepare-portfolio-run",
         "command:refresh-global-router",
         "command:review-checker-change",
+        "command:route-reference",
         "command:route-task",
         "command:scan-global-skills",
         "command:self-check",
         "command:verify-installation-receipt",
         "command:verify-portfolio-impact-receipt",
         "command:write-report",
+        "component:scripts/skillguard_test_mesh.py",
+        "fault:scripts/skillguard_test_mesh.py:main",
         "option:assemble-portfolio-run:--execution-ref",
         "option:assemble-portfolio-run:--installed-target-root",
         "option:assemble-portfolio-run:--output",
@@ -6152,6 +6300,7 @@
         "option:mark:--summary",
         "option:mark:--target",
         "option:plan-skill:--input",
+        "option:plan-skill:--output",
         "option:prepare-portfolio-run:--installed-target-root",
         "option:prepare-portfolio-run:--job-matrix",
         "option:prepare-portfolio-run:--output",
@@ -6172,6 +6321,8 @@
         "option:review-checker-change:--fixture-manifest",
         "option:review-checker-change:--output",
         "option:review-checker-change:--target",
+        "option:route-reference:--output",
+        "option:route-reference:--route-id",
         "option:route-task:--checker-change-review",
         "option:route-task:--checker-suite",
         "option:route-task:--checker-suite-impact",
@@ -6201,6 +6352,7 @@
         "option:verify-portfolio-impact-receipt:--workspace-root",
         "option:write-report:--input",
         "option:write-report:--output",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "route:skillguard.route.assemble-portfolio-run.v1",
         "route:skillguard.route.assurance-diagnostics.v1",
         "route:skillguard.route.audit-capabilities.v1",
@@ -6249,6 +6401,7 @@
         "route:skillguard.route.prepare-portfolio-run.v1",
         "route:skillguard.route.refresh-global-router.v1",
         "route:skillguard.route.review-checker-change.v1",
+        "route:skillguard.route.route-reference.v1",
         "route:skillguard.route.route-task.v1",
         "route:skillguard.route.scan-global-skills.v1",
         "route:skillguard.route.self-check.v1",
@@ -6288,6 +6441,7 @@
         "ui:scripts/skillguard_test_mesh.py:main",
         "ui:scripts/skillguard_v2/assurance_diagnostics.py:derive_assurance_diagnostics",
         "ui:scripts/skillguard_v2/capability_contract.py:capability_contract_topology_findings",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/closure.py:evaluate_closure",
         "ui:scripts/skillguard_v2/contract_schema.py:validate_binding_source",
         "ui:scripts/skillguard_v2/evidence_policy.py:required_evidence_class",
@@ -6312,7 +6466,6 @@
         "ui:scripts/skillguard_v2/run_store.py:author_run_control_root",
         "ui:scripts/skillguard_v2/run_store.py:claim_run",
         "ui:scripts/skillguard_v2/run_store.py:release_run_locks",
-        "ui:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "ui:scripts/skillguard_v2/step_runtime.py:record_verification",
         "ui:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "ui:scripts/skillguard_v2/target_installation.py:activate_target_stage",
@@ -6385,6 +6538,7 @@
         "command:prepare-portfolio-run",
         "command:refresh-global-router",
         "command:review-checker-change",
+        "command:route-reference",
         "command:route-task",
         "command:scan-global-skills",
         "command:self-check",
@@ -6579,6 +6733,7 @@
         "option:mark:--summary",
         "option:mark:--target",
         "option:plan-skill:--input",
+        "option:plan-skill:--output",
         "option:prepare-portfolio-run:--installed-target-root",
         "option:prepare-portfolio-run:--job-matrix",
         "option:prepare-portfolio-run:--output",
@@ -6599,6 +6754,8 @@
         "option:review-checker-change:--fixture-manifest",
         "option:review-checker-change:--output",
         "option:review-checker-change:--target",
+        "option:route-reference:--output",
+        "option:route-reference:--route-id",
         "option:route-task:--checker-change-review",
         "option:route-task:--checker-suite",
         "option:route-task:--checker-suite-impact",
@@ -6676,6 +6833,7 @@
         "route:skillguard.route.prepare-portfolio-run.v1",
         "route:skillguard.route.refresh-global-router.v1",
         "route:skillguard.route.review-checker-change.v1",
+        "route:skillguard.route.route-reference.v1",
         "route:skillguard.route.route-task.v1",
         "route:skillguard.route.scan-global-skills.v1",
         "route:skillguard.route.self-check.v1",
@@ -6684,6 +6842,7 @@
         "route:skillguard.route.write-report.v1",
         "script:.skillguard/flowguard_contract_model.py",
         "script:.skillguard/template_lifecycle_model.py",
+        "script:scripts/check_model_export.py",
         "script:scripts/generate_route_index.py",
         "script:scripts/skillguard.py",
         "script:scripts/skillguard_compile.py",
@@ -6696,6 +6855,7 @@
         "script:scripts/skillguard_test_mesh.py",
         "script:scripts/skillguard_verification_contract_review.py",
         "template:SKILL.md",
+        "template:references/route_map_summary.md",
         "template:references/skillguard-assurance-diagnostics.md",
         "template:references/skillguard-execution-depth.md",
         "template:references/skillguard-execution-records.md",
@@ -6739,6 +6899,7 @@
         "ui:scripts/skillguard_test_mesh.py:main",
         "ui:scripts/skillguard_v2/assurance_diagnostics.py:derive_assurance_diagnostics",
         "ui:scripts/skillguard_v2/capability_contract.py:capability_contract_topology_findings",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/closure.py:evaluate_closure",
         "ui:scripts/skillguard_v2/contract_schema.py:validate_binding_source",
         "ui:scripts/skillguard_v2/evidence_policy.py:required_evidence_class",
@@ -6763,7 +6924,6 @@
         "ui:scripts/skillguard_v2/run_store.py:author_run_control_root",
         "ui:scripts/skillguard_v2/run_store.py:claim_run",
         "ui:scripts/skillguard_v2/run_store.py:release_run_locks",
-        "ui:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "ui:scripts/skillguard_v2/step_runtime.py:record_verification",
         "ui:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "ui:scripts/skillguard_v2/target_installation.py:activate_target_stage",
@@ -6836,6 +6996,7 @@
         "command:prepare-portfolio-run",
         "command:refresh-global-router",
         "command:review-checker-change",
+        "command:route-reference",
         "command:route-task",
         "command:scan-global-skills",
         "command:self-check",
@@ -7030,6 +7191,7 @@
         "option:mark:--summary",
         "option:mark:--target",
         "option:plan-skill:--input",
+        "option:plan-skill:--output",
         "option:prepare-portfolio-run:--installed-target-root",
         "option:prepare-portfolio-run:--job-matrix",
         "option:prepare-portfolio-run:--output",
@@ -7050,6 +7212,8 @@
         "option:review-checker-change:--fixture-manifest",
         "option:review-checker-change:--output",
         "option:review-checker-change:--target",
+        "option:route-reference:--output",
+        "option:route-reference:--route-id",
         "option:route-task:--checker-change-review",
         "option:route-task:--checker-suite",
         "option:route-task:--checker-suite-impact",
@@ -7127,6 +7291,7 @@
         "route:skillguard.route.prepare-portfolio-run.v1",
         "route:skillguard.route.refresh-global-router.v1",
         "route:skillguard.route.review-checker-change.v1",
+        "route:skillguard.route.route-reference.v1",
         "route:skillguard.route.route-task.v1",
         "route:skillguard.route.scan-global-skills.v1",
         "route:skillguard.route.self-check.v1",
@@ -7176,6 +7341,7 @@
         "api:scripts/skillguard_v2/self_host.py:SelfHostClaimContext",
         "api:scripts/skillguard_v2/self_host.py:SelfHostError",
         "api:scripts/skillguard_v2/self_host.py:claim_current_self_host_run",
+        "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "api:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "api:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "api:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
@@ -7192,6 +7358,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/run_store.py:append_event",
@@ -7217,8 +7384,10 @@
         "fault:scripts/skillguard_v2/run_store.py:load_run",
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
         "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+        "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
         "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
@@ -7230,19 +7399,16 @@
         "provider:scripts/skillguard_v2/run_store.py:claim_run",
         "provider:scripts/skillguard_v2/run_store.py:load_events",
         "provider:scripts/skillguard_v2/run_store.py:load_run",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "provider:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "recovery:scripts/skillguard_v2/execution_records.py:attach_process_tree_containment",
         "recovery:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "recovery:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "recovery:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "recovery:scripts/skillguard_v2/run_store.py:append_event",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "ui:scripts/skillguard_v2/run_store.py:author_run_control_root",
         "ui:scripts/skillguard_v2/run_store.py:claim_run",
         "ui:scripts/skillguard_v2/run_store.py:release_run_locks",
-        "ui:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "ui:scripts/skillguard_v2/supervisor.py:supervise_contract_run"
       ]
     },
@@ -7287,6 +7453,7 @@
         "api:scripts/skillguard_v2/self_host.py:SelfHostClaimContext",
         "api:scripts/skillguard_v2/self_host.py:SelfHostError",
         "api:scripts/skillguard_v2/self_host.py:claim_current_self_host_run",
+        "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "api:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "api:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "api:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
@@ -7303,6 +7470,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/run_store.py:append_event",
@@ -7328,8 +7496,10 @@
         "fault:scripts/skillguard_v2/run_store.py:load_run",
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
         "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+        "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
         "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
@@ -7341,19 +7511,16 @@
         "provider:scripts/skillguard_v2/run_store.py:claim_run",
         "provider:scripts/skillguard_v2/run_store.py:load_events",
         "provider:scripts/skillguard_v2/run_store.py:load_run",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "provider:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "recovery:scripts/skillguard_v2/execution_records.py:attach_process_tree_containment",
         "recovery:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "recovery:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "recovery:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "recovery:scripts/skillguard_v2/run_store.py:append_event",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "ui:scripts/skillguard_v2/run_store.py:author_run_control_root",
         "ui:scripts/skillguard_v2/run_store.py:claim_run",
         "ui:scripts/skillguard_v2/run_store.py:release_run_locks",
-        "ui:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "ui:scripts/skillguard_v2/supervisor.py:supervise_contract_run"
       ]
     },
@@ -7453,7 +7620,6 @@
         "component:scripts/skillguard_v2/portfolio_runner.py",
         "component:scripts/skillguard_v2/receipts.py",
         "component:scripts/skillguard_v2/run_store.py",
-        "component:scripts/skillguard_v2/self_host.py",
         "component:scripts/skillguard_v2/step_runtime.py",
         "component:scripts/skillguard_v2/supervisor.py",
         "component:scripts/skillguard_v2/surface_inventory.py",
@@ -7474,6 +7640,7 @@
         "effect:scripts/checker_engine.py:global_resolvable_scan_root_path",
         "effect:scripts/checker_engine.py:global_write_json",
         "effect:scripts/checker_engine.py:global_write_text_atomic",
+        "effect:scripts/checker_engine.py:invoke_post_generation_check",
         "effect:scripts/checker_engine.py:is_optional_reference",
         "effect:scripts/checker_engine.py:looks_like_database_runtime_path",
         "effect:scripts/checker_engine.py:looks_like_record_path",
@@ -7492,6 +7659,7 @@
         "effect:scripts/checker_engine.py:resolve_skillguard_self_layout_path",
         "effect:scripts/checker_engine.py:route_task_candidates",
         "effect:scripts/checker_engine.py:route_task_path_values",
+        "effect:scripts/checker_engine.py:run_fixture_handler",
         "effect:scripts/checker_engine.py:self_check",
         "effect:scripts/checker_engine.py:write_generate_skill_scaffold",
         "effect:scripts/checker_engine.py:write_generate_suite_scaffold",
@@ -7503,6 +7671,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/global_router_transaction.py:apply_global_router_transaction",
@@ -7600,6 +7769,7 @@
         "fault:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "fault:scripts/checker_engine.py:resolve_check_target_binding",
         "fault:scripts/checker_engine.py:review_checker_change",
+        "fault:scripts/checker_engine.py:run_fixture_handler",
         "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims",
         "fault:scripts/checker_engine.py:self_check",
         "fault:scripts/checker_engine.py:stale_hash_code_for",
@@ -7618,6 +7788,7 @@
         "fault:scripts/skillguard_consumer_install.py:main",
         "fault:scripts/skillguard_install.py:main",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -7625,6 +7796,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/closure.py:ClosureError",
         "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -7695,12 +7867,6 @@
         "fault:scripts/skillguard_v2/run_store.py:load_events",
         "fault:scripts/skillguard_v2/run_store.py:load_run",
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
-        "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
-        "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
-        "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
-        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
-        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
-        "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "fault:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "fault:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -7715,6 +7881,7 @@
         "fault:scripts/skillguard_v2/supervisor.py:SupervisorError",
         "fault:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "fault:scripts/skillguard_v2/supervisor.py:validate_supervisor_packet",
+        "fault:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
         "fault:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "fault:scripts/skillguard_v2/surface_inventory.py:validate_full_surface_inventory",
         "fault:scripts/skillguard_v2/target_installation.py:activate_target_stage",
@@ -7747,6 +7914,7 @@
         "provider:scripts/checker_engine.py:looks_like_transient_skillguard_runtime_output",
         "provider:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "provider:scripts/checker_engine.py:resolve_fixture_runtime_argument_path",
+        "provider:scripts/checker_engine.py:run_fixture_handler",
         "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv",
         "provider:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "provider:scripts/skillguard_v2/check_runner.py:execute_check",
@@ -7770,7 +7938,6 @@
         "provider:scripts/skillguard_v2/run_store.py:claim_run",
         "provider:scripts/skillguard_v2/run_store.py:load_events",
         "provider:scripts/skillguard_v2/run_store.py:load_run",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "provider:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "provider:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "provider:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -7810,7 +7977,6 @@
         "recovery:scripts/skillguard_v2/portfolio_runner.py:execute_portfolio_attempt",
         "recovery:scripts/skillguard_v2/receipts.py:issue_receipt",
         "recovery:scripts/skillguard_v2/run_store.py:append_event",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "recovery:scripts/skillguard_v2/step_runtime.py:resume_run",
         "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "recovery:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
@@ -7844,6 +8010,7 @@
         "api:scripts/skillguard_v2/artifact_validators.py:load_artifact_records",
         "api:scripts/skillguard_v2/artifact_validators.py:validate_artifact",
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -7858,6 +8025,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/evidence_store.py:EvidenceStoreError",
@@ -7926,6 +8094,7 @@
         "command:evidence-gc-plan",
         "command:evidence-gc-purge",
         "component:scripts/checker_engine.py",
+        "component:scripts/skillguard_test_mesh.py",
         "component:scripts/skillguard_v2/artifact_validators.py",
         "component:scripts/skillguard_v2/capability_contract.py",
         "component:scripts/skillguard_v2/capability_engine.py",
@@ -7954,7 +8123,6 @@
         "component:scripts/skillguard_v2/run_store.py",
         "component:scripts/skillguard_v2/runtime_authority.py",
         "component:scripts/skillguard_v2/runtime_fingerprint.py",
-        "component:scripts/skillguard_v2/self_host.py",
         "component:scripts/skillguard_v2/step_runtime.py",
         "component:scripts/skillguard_v2/supervisor.py",
         "component:scripts/skillguard_v2/surface_inventory.py",
@@ -7974,6 +8142,7 @@
         "effect:scripts/checker_engine.py:global_resolvable_scan_root_path",
         "effect:scripts/checker_engine.py:global_write_json",
         "effect:scripts/checker_engine.py:global_write_text_atomic",
+        "effect:scripts/checker_engine.py:invoke_post_generation_check",
         "effect:scripts/checker_engine.py:is_optional_reference",
         "effect:scripts/checker_engine.py:looks_like_database_runtime_path",
         "effect:scripts/checker_engine.py:looks_like_record_path",
@@ -7992,6 +8161,7 @@
         "effect:scripts/checker_engine.py:resolve_skillguard_self_layout_path",
         "effect:scripts/checker_engine.py:route_task_candidates",
         "effect:scripts/checker_engine.py:route_task_path_values",
+        "effect:scripts/checker_engine.py:run_fixture_handler",
         "effect:scripts/checker_engine.py:self_check",
         "effect:scripts/checker_engine.py:write_generate_skill_scaffold",
         "effect:scripts/checker_engine.py:write_generate_suite_scaffold",
@@ -8009,6 +8179,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/global_router_discovery.py:contract_projection",
@@ -8090,6 +8261,7 @@
         "fault:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "fault:scripts/checker_engine.py:resolve_check_target_binding",
         "fault:scripts/checker_engine.py:review_checker_change",
+        "fault:scripts/checker_engine.py:run_fixture_handler",
         "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims",
         "fault:scripts/checker_engine.py:self_check",
         "fault:scripts/checker_engine.py:stale_hash_code_for",
@@ -8105,6 +8277,7 @@
         "fault:scripts/checker_engine.py:validate_suite_member_path",
         "fault:scripts/checker_engine.py:validate_suite_relationships",
         "fault:scripts/checker_engine.py:write_generation_fixture_preexisting_files",
+        "fault:scripts/skillguard_test_mesh.py:main",
         "fault:scripts/skillguard_v2/artifact_validators.py:ArtifactValidationError",
         "fault:scripts/skillguard_v2/artifact_validators.py:hard_evidence_from_artifact",
         "fault:scripts/skillguard_v2/artifact_validators.py:load_artifact_record",
@@ -8113,6 +8286,7 @@
         "fault:scripts/skillguard_v2/capability_engine.py:load_target_documents",
         "fault:scripts/skillguard_v2/capability_engine.py:validate_functional_closure",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -8120,6 +8294,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/closure.py:ClosureError",
         "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -8225,12 +8400,6 @@
         "fault:scripts/skillguard_v2/run_store.py:load_run",
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
         "fault:scripts/skillguard_v2/runtime_fingerprint.py:GuardRuntimeFingerprintError",
-        "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
-        "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
-        "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
-        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
-        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
-        "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "fault:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "fault:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -8245,6 +8414,7 @@
         "fault:scripts/skillguard_v2/supervisor.py:SupervisorError",
         "fault:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "fault:scripts/skillguard_v2/supervisor.py:validate_supervisor_packet",
+        "fault:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
         "fault:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "fault:scripts/skillguard_v2/surface_inventory.py:validate_full_surface_inventory",
         "fault:scripts/skillguard_v2/target_installation.py:activate_target_stage",
@@ -8279,7 +8449,9 @@
         "provider:scripts/checker_engine.py:looks_like_transient_skillguard_runtime_output",
         "provider:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "provider:scripts/checker_engine.py:resolve_fixture_runtime_argument_path",
+        "provider:scripts/checker_engine.py:run_fixture_handler",
         "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/artifact_validators.py:load_artifact_records",
         "provider:scripts/skillguard_v2/artifact_validators.py:validate_artifact",
         "provider:scripts/skillguard_v2/capability_contract.py:CapabilityContractFinding",
@@ -8345,7 +8517,6 @@
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_execution_runtime_fingerprint",
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_runtime_fingerprint",
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:resolve_guard_runtime_root",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "provider:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "provider:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "provider:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -8381,7 +8552,6 @@
         "recovery:scripts/skillguard_v2/portfolio_runner.py:execute_portfolio_attempt",
         "recovery:scripts/skillguard_v2/receipts.py:issue_receipt",
         "recovery:scripts/skillguard_v2/run_store.py:append_event",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "recovery:scripts/skillguard_v2/step_runtime.py:resume_run",
         "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "recovery:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
@@ -8392,6 +8562,7 @@
         "route:skillguard.route.evidence-gc-apply.v1",
         "route:skillguard.route.evidence-gc-plan.v1",
         "route:skillguard.route.evidence-gc-purge.v1",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/native_terminal.py:build_target_native_terminal_receipt",
         "ui:scripts/skillguard_v2/native_terminal.py:resolve_native_terminal_receipt",
         "ui:scripts/skillguard_v2/receipts.py:build_action_witness"
@@ -8400,7 +8571,7 @@
     {
       "disposition": "governed",
       "obligation_id": "obligation:artifact-freshness",
-      "proof_ref": ".agents/skills/skillguard/.skillguard/check-manifest.json#check:self:validate-step-evidence",
+      "proof_ref": ".agents/skills/skillguard/.skillguard/check-manifest.json#check:self:issue-closure-receipt",
       "reason": "This obligation has an explicit target-owned source boundary in the decision rules.",
       "surface_ids": [
         "api:scripts/skillguard_v2/artifact_validators.py:ArtifactValidationError",
@@ -8410,6 +8581,7 @@
         "api:scripts/skillguard_v2/artifact_validators.py:load_artifact_records",
         "api:scripts/skillguard_v2/artifact_validators.py:validate_artifact",
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -8424,6 +8596,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/evidence_store.py:EvidenceStoreError",
@@ -8480,6 +8653,7 @@
         "api:scripts/skillguard_v2/runtime_fingerprint.py:guard_execution_runtime_fingerprint",
         "api:scripts/skillguard_v2/runtime_fingerprint.py:guard_runtime_fingerprint",
         "api:scripts/skillguard_v2/runtime_fingerprint.py:resolve_guard_runtime_root",
+        "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "api:scripts/skillguard_v2/wire_identity.py:canonical_json_bytes",
         "api:scripts/skillguard_v2/wire_identity.py:consumer_release_canonical_json_bytes",
         "api:scripts/skillguard_v2/wire_identity.py:consumer_release_wire_hash",
@@ -8499,6 +8673,7 @@
         "component:scripts/skillguard_v2/native_terminal.py",
         "component:scripts/skillguard_v2/receipts.py",
         "component:scripts/skillguard_v2/runtime_fingerprint.py",
+        "component:scripts/skillguard_v2/self_host.py",
         "effect:scripts/skillguard_v2/check_runner.py:execute_check",
         "effect:scripts/skillguard_v2/check_runner.py:store_check_result",
         "effect:scripts/skillguard_v2/native_evidence_identity.py:scheduled_production_identity",
@@ -8512,6 +8687,7 @@
         "fault:scripts/skillguard_v2/artifact_validators.py:load_artifact_records",
         "fault:scripts/skillguard_v2/artifact_validators.py:validate_artifact",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -8519,6 +8695,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/evidence_store.py:EvidenceStoreError",
         "fault:scripts/skillguard_v2/evidence_store.py:apply_evidence_gc_plan",
@@ -8552,6 +8729,14 @@
         "fault:scripts/skillguard_v2/receipts.py:issue_receipt",
         "fault:scripts/skillguard_v2/receipts.py:load_receipt",
         "fault:scripts/skillguard_v2/runtime_fingerprint.py:GuardRuntimeFingerprintError",
+        "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
+        "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
+        "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+        "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
+        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
+        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
+        "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
         "option:evidence-audit:--max-logical-bytes",
         "option:evidence-audit:--owner-evidence-root",
         "option:evidence-gc-apply:--owner-evidence-root",
@@ -8584,6 +8769,7 @@
         "route:skillguard.route.evidence-gc-apply.v1",
         "route:skillguard.route.evidence-gc-plan.v1",
         "route:skillguard.route.evidence-gc-purge.v1",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/native_terminal.py:build_target_native_terminal_receipt",
         "ui:scripts/skillguard_v2/native_terminal.py:resolve_native_terminal_receipt",
         "ui:scripts/skillguard_v2/receipts.py:build_action_witness"
@@ -8658,6 +8844,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/native_terminal.py:normalize_run_root_ref",
@@ -8849,8 +9036,11 @@
         "api:scripts/skillguard_v2/receipts.py:issue_receipt",
         "api:scripts/skillguard_v2/receipts.py:load_receipt",
         "api:scripts/skillguard_v2/receipts.py:load_receipts",
+        "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "component:.skillguard/flowguard_contract_model.py",
         "component:scripts/checker_engine.py",
+        "component:scripts/skillguard_test_mesh.py",
+        "component:scripts/skillguard_utils.py",
         "component:scripts/skillguard_v2/check_runner.py",
         "component:scripts/skillguard_v2/closure.py",
         "component:scripts/skillguard_v2/consumer_distribution.py",
@@ -8872,6 +9062,7 @@
         "component:scripts/skillguard_v2/provenance.py",
         "component:scripts/skillguard_v2/receipts.py",
         "component:scripts/skillguard_v2/run_store.py",
+        "component:scripts/skillguard_v2/self_host.py",
         "component:scripts/skillguard_v2/template_profiles.py",
         "config:assets/schemas/skillguard_closure_receipt_v2.schema.json",
         "config:assets/schemas/skillguard_functional_closure.schema.json",
@@ -8895,6 +9086,7 @@
         "effect:scripts/checker_engine.py:global_resolvable_scan_root_path",
         "effect:scripts/checker_engine.py:global_write_json",
         "effect:scripts/checker_engine.py:global_write_text_atomic",
+        "effect:scripts/checker_engine.py:invoke_post_generation_check",
         "effect:scripts/checker_engine.py:is_optional_reference",
         "effect:scripts/checker_engine.py:looks_like_database_runtime_path",
         "effect:scripts/checker_engine.py:looks_like_record_path",
@@ -8913,6 +9105,7 @@
         "effect:scripts/checker_engine.py:resolve_skillguard_self_layout_path",
         "effect:scripts/checker_engine.py:route_task_candidates",
         "effect:scripts/checker_engine.py:route_task_path_values",
+        "effect:scripts/checker_engine.py:run_fixture_handler",
         "effect:scripts/checker_engine.py:self_check",
         "effect:scripts/checker_engine.py:write_generate_skill_scaffold",
         "effect:scripts/checker_engine.py:write_generate_suite_scaffold",
@@ -8934,6 +9127,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/global_router_discovery.py:contract_projection",
@@ -9050,6 +9244,7 @@
         "fault:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "fault:scripts/checker_engine.py:resolve_check_target_binding",
         "fault:scripts/checker_engine.py:review_checker_change",
+        "fault:scripts/checker_engine.py:run_fixture_handler",
         "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims",
         "fault:scripts/checker_engine.py:self_check",
         "fault:scripts/checker_engine.py:stale_hash_code_for",
@@ -9066,10 +9261,13 @@
         "fault:scripts/checker_engine.py:validate_suite_relationships",
         "fault:scripts/checker_engine.py:write_generation_fixture_preexisting_files",
         "fault:scripts/skillguard.py:main",
+        "fault:scripts/skillguard_test_mesh.py:main",
+        "fault:scripts/skillguard_utils.py:emit_json",
         "fault:scripts/skillguard_utils.py:ensure_under_root",
         "fault:scripts/skillguard_utils.py:load_jsonl",
         "fault:scripts/skillguard_utils.py:write_report",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -9077,6 +9275,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/closure.py:ClosureError",
         "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -9171,6 +9370,14 @@
         "fault:scripts/skillguard_v2/run_store.py:load_events",
         "fault:scripts/skillguard_v2/run_store.py:load_run",
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
+        "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
+        "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
+        "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+        "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
+        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
+        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
+        "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/template_profiles.py:TemplateProfileError",
         "fault:scripts/skillguard_v2/template_profiles.py:normalize_source_bindings",
         "fault:scripts/skillguard_v2/template_profiles.py:read_json_under_root",
@@ -9196,7 +9403,9 @@
         "provider:scripts/checker_engine.py:looks_like_transient_skillguard_runtime_output",
         "provider:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "provider:scripts/checker_engine.py:resolve_fixture_runtime_argument_path",
+        "provider:scripts/checker_engine.py:run_fixture_handler",
         "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "provider:scripts/skillguard_v2/check_runner.py:execute_check",
         "provider:scripts/skillguard_v2/closure.py:close_run",
@@ -9267,8 +9476,11 @@
       "reason": "This obligation has an explicit target-owned source boundary in the decision rules.",
       "surface_ids": [
         "component:.skillguard/flowguard_contract_model.py",
+        "component:scripts/check_model_export.py",
         "component:scripts/checker_engine.py",
         "component:scripts/skillguard_self_host.py",
+        "component:scripts/skillguard_test_mesh.py",
+        "component:scripts/skillguard_utils.py",
         "component:scripts/skillguard_v2/artifact_validators.py",
         "component:scripts/skillguard_v2/assurance_diagnostics.py",
         "component:scripts/skillguard_v2/author_context.py",
@@ -9331,6 +9543,7 @@
         "effect:scripts/checker_engine.py:global_resolvable_scan_root_path",
         "effect:scripts/checker_engine.py:global_write_json",
         "effect:scripts/checker_engine.py:global_write_text_atomic",
+        "effect:scripts/checker_engine.py:invoke_post_generation_check",
         "effect:scripts/checker_engine.py:is_optional_reference",
         "effect:scripts/checker_engine.py:looks_like_database_runtime_path",
         "effect:scripts/checker_engine.py:looks_like_record_path",
@@ -9349,6 +9562,7 @@
         "effect:scripts/checker_engine.py:resolve_skillguard_self_layout_path",
         "effect:scripts/checker_engine.py:route_task_candidates",
         "effect:scripts/checker_engine.py:route_task_path_values",
+        "effect:scripts/checker_engine.py:run_fixture_handler",
         "effect:scripts/checker_engine.py:self_check",
         "effect:scripts/checker_engine.py:write_generate_skill_scaffold",
         "effect:scripts/checker_engine.py:write_generate_suite_scaffold",
@@ -9369,6 +9583,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/global_router_projection.py:candidate_handoff_blockers",
@@ -9421,6 +9636,7 @@
         "fault:.skillguard/template_lifecycle_model.py:template_instance_requires_target_native_validation",
         "fault:.skillguard/template_lifecycle_model.py:template_route_precedes_selection",
         "fault:.skillguard/template_lifecycle_model.py:template_skillguard_never_owns_domain_semantics",
+        "fault:scripts/check_model_export.py:main",
         "fault:scripts/checker_engine.py:JsonArgumentParser",
         "fault:scripts/checker_engine.py:SkillGuardCliError",
         "fault:scripts/checker_engine.py:add_stale_evidence_blocker",
@@ -9480,6 +9696,7 @@
         "fault:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "fault:scripts/checker_engine.py:resolve_check_target_binding",
         "fault:scripts/checker_engine.py:review_checker_change",
+        "fault:scripts/checker_engine.py:run_fixture_handler",
         "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims",
         "fault:scripts/checker_engine.py:self_check",
         "fault:scripts/checker_engine.py:stale_hash_code_for",
@@ -9501,6 +9718,7 @@
         "fault:scripts/skillguard_self_host.py:main",
         "fault:scripts/skillguard_supervise.py:main",
         "fault:scripts/skillguard_test_mesh.py:main",
+        "fault:scripts/skillguard_utils.py:emit_json",
         "fault:scripts/skillguard_utils.py:ensure_under_root",
         "fault:scripts/skillguard_utils.py:load_jsonl",
         "fault:scripts/skillguard_utils.py:write_report",
@@ -9517,6 +9735,7 @@
         "fault:scripts/skillguard_v2/capability_engine.py:load_target_documents",
         "fault:scripts/skillguard_v2/capability_engine.py:validate_functional_closure",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -9524,6 +9743,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/closure.py:ClosureError",
         "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -9654,8 +9874,10 @@
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
         "fault:scripts/skillguard_v2/runtime_fingerprint.py:GuardRuntimeFingerprintError",
         "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+        "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
         "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
@@ -9673,6 +9895,7 @@
         "fault:scripts/skillguard_v2/supervisor.py:SupervisorError",
         "fault:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "fault:scripts/skillguard_v2/supervisor.py:validate_supervisor_packet",
+        "fault:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
         "fault:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "fault:scripts/skillguard_v2/surface_inventory.py:validate_full_surface_inventory",
         "fault:scripts/skillguard_v2/surface_inventory_authoring.py:build_current_semantic_map",
@@ -9700,6 +9923,8 @@
         "fault:scripts/skillguard_v2/template_prompts.py:render_target_template_routing_section",
         "fault:scripts/skillguard_v2/template_prompts.py:replace_target_template_routing_section",
         "fault:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "fault:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "fault:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "fault:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
         "fault:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
         "fault:scripts/skillguard_verification_contract_review.py:main",
@@ -9720,7 +9945,9 @@
         "provider:scripts/checker_engine.py:looks_like_transient_skillguard_runtime_output",
         "provider:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "provider:scripts/checker_engine.py:resolve_fixture_runtime_argument_path",
+        "provider:scripts/checker_engine.py:run_fixture_handler",
         "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/artifact_validators.py:load_artifact_records",
         "provider:scripts/skillguard_v2/artifact_validators.py:validate_artifact",
         "provider:scripts/skillguard_v2/capability_engine.py:CapabilityFinding",
@@ -9773,7 +10000,6 @@
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_execution_runtime_fingerprint",
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:guard_runtime_fingerprint",
         "provider:scripts/skillguard_v2/runtime_fingerprint.py:resolve_guard_runtime_root",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "provider:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "provider:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "provider:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -9813,7 +10039,6 @@
         "recovery:scripts/skillguard_v2/portfolio_runner.py:execute_portfolio_attempt",
         "recovery:scripts/skillguard_v2/receipts.py:issue_receipt",
         "recovery:scripts/skillguard_v2/run_store.py:append_event",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "recovery:scripts/skillguard_v2/step_runtime.py:resume_run",
         "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "recovery:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
@@ -9829,6 +10054,7 @@
       "reason": "This obligation has an explicit target-owned source boundary in the decision rules.",
       "surface_ids": [
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -9843,6 +10069,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/closure.py:ClosureError",
@@ -9914,7 +10141,6 @@
         "component:scripts/skillguard_v2/receipts.py",
         "component:scripts/skillguard_v2/run_store.py",
         "component:scripts/skillguard_v2/runtime_authority.py",
-        "component:scripts/skillguard_v2/self_host.py",
         "component:scripts/skillguard_v2/step_runtime.py",
         "component:scripts/skillguard_v2/supervisor.py",
         "component:scripts/skillguard_v2/surface_inventory.py",
@@ -9935,6 +10161,7 @@
         "effect:scripts/checker_engine.py:global_resolvable_scan_root_path",
         "effect:scripts/checker_engine.py:global_write_json",
         "effect:scripts/checker_engine.py:global_write_text_atomic",
+        "effect:scripts/checker_engine.py:invoke_post_generation_check",
         "effect:scripts/checker_engine.py:is_optional_reference",
         "effect:scripts/checker_engine.py:looks_like_database_runtime_path",
         "effect:scripts/checker_engine.py:looks_like_record_path",
@@ -9953,6 +10180,7 @@
         "effect:scripts/checker_engine.py:resolve_skillguard_self_layout_path",
         "effect:scripts/checker_engine.py:route_task_candidates",
         "effect:scripts/checker_engine.py:route_task_path_values",
+        "effect:scripts/checker_engine.py:run_fixture_handler",
         "effect:scripts/checker_engine.py:self_check",
         "effect:scripts/checker_engine.py:write_generate_skill_scaffold",
         "effect:scripts/checker_engine.py:write_generate_suite_scaffold",
@@ -9964,6 +10192,7 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "effect:scripts/skillguard_v2/global_router_transaction.py:apply_global_router_transaction",
@@ -10063,6 +10292,7 @@
         "fault:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "fault:scripts/checker_engine.py:resolve_check_target_binding",
         "fault:scripts/checker_engine.py:review_checker_change",
+        "fault:scripts/checker_engine.py:run_fixture_handler",
         "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims",
         "fault:scripts/checker_engine.py:self_check",
         "fault:scripts/checker_engine.py:stale_hash_code_for",
@@ -10081,6 +10311,7 @@
         "fault:scripts/skillguard_consumer_install.py:main",
         "fault:scripts/skillguard_install.py:main",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -10088,6 +10319,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/closure.py:ClosureError",
         "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -10158,12 +10390,6 @@
         "fault:scripts/skillguard_v2/run_store.py:load_events",
         "fault:scripts/skillguard_v2/run_store.py:load_run",
         "fault:scripts/skillguard_v2/run_store.py:release_run_locks",
-        "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
-        "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
-        "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
-        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
-        "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
-        "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "fault:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "fault:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -10178,6 +10404,7 @@
         "fault:scripts/skillguard_v2/supervisor.py:SupervisorError",
         "fault:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "fault:scripts/skillguard_v2/supervisor.py:validate_supervisor_packet",
+        "fault:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext",
         "fault:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "fault:scripts/skillguard_v2/surface_inventory.py:validate_full_surface_inventory",
         "fault:scripts/skillguard_v2/target_installation.py:activate_target_stage",
@@ -10210,6 +10437,7 @@
         "provider:scripts/checker_engine.py:looks_like_transient_skillguard_runtime_output",
         "provider:scripts/checker_engine.py:reset_owned_runtime_fixture_workspace",
         "provider:scripts/checker_engine.py:resolve_fixture_runtime_argument_path",
+        "provider:scripts/checker_engine.py:run_fixture_handler",
         "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv",
         "provider:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "provider:scripts/skillguard_v2/check_runner.py:execute_check",
@@ -10241,7 +10469,6 @@
         "provider:scripts/skillguard_v2/runtime_authority.py:RuntimeAuthorityDecision",
         "provider:scripts/skillguard_v2/runtime_authority.py:resolve_runtime_authority",
         "provider:scripts/skillguard_v2/runtime_authority.py:scan_former_runtime_artifacts",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "provider:scripts/skillguard_v2/step_runtime.py:StepRuntimeError",
         "provider:scripts/skillguard_v2/step_runtime.py:approve_skip",
         "provider:scripts/skillguard_v2/step_runtime.py:begin_step",
@@ -10281,13 +10508,13 @@
         "recovery:scripts/skillguard_v2/portfolio_runner.py:execute_portfolio_attempt",
         "recovery:scripts/skillguard_v2/receipts.py:issue_receipt",
         "recovery:scripts/skillguard_v2/run_store.py:append_event",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "recovery:scripts/skillguard_v2/step_runtime.py:resume_run",
         "recovery:scripts/skillguard_v2/supervisor.py:supervise_contract_run",
         "recovery:scripts/skillguard_v2/surface_inventory.py:discover_full_source_surfaces",
         "recovery:scripts/skillguard_v2/target_installation.py:activate_target_stage",
         "recovery:scripts/skillguard_v2/target_installation.py:recover_target_installations",
         "recovery:scripts/skillguard_v2/target_installation.py:rollback_target_install",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/closure.py:evaluate_closure",
         "ui:scripts/skillguard_v2/installation.py:activate_stage",
         "ui:scripts/skillguard_v2/installation.py:rollback_install",
@@ -10513,6 +10740,7 @@
       "surface_ids": [
         "api:scripts/skillguard_test_mesh.py:main",
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -10527,6 +10755,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/declared_check_supervision.py:DeclaredCheckError",
@@ -10540,12 +10769,17 @@
         "api:scripts/skillguard_v2/execution_depth.py:load_target_execution_receipts",
         "api:scripts/skillguard_v2/execution_depth.py:profile_fingerprint",
         "api:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "api:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "api:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "api:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
+        "api:scripts/skillguard_v2/test_mesh.py:pytest_leaf_plan_current_pass",
         "api:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation",
+        "api:scripts/skillguard_v2/test_mesh.py:validate_pytest_leaf_plan",
         "api:scripts/skillguard_v2/verification_contract_review.py:VerificationContractFinding",
         "api:scripts/skillguard_v2/verification_contract_review.py:audit_active_verification_contracts",
         "api:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
         "api:scripts/skillguard_verification_contract_review.py:main",
+        "component:scripts/skillguard_test_mesh.py",
         "component:scripts/skillguard_v2/check_runner.py",
         "component:scripts/skillguard_v2/declared_check_supervision.py",
         "component:scripts/skillguard_v2/execution_depth.py",
@@ -10557,6 +10791,7 @@
         "effect:scripts/skillguard_v2/execution_depth.py:issue_target_execution_receipt",
         "fault:scripts/skillguard_test_mesh.py:main",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -10564,6 +10799,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/declared_check_supervision.py:DeclaredCheckError",
         "fault:scripts/skillguard_v2/declared_check_supervision.py:freeze_declared_check_inventory",
@@ -10573,9 +10809,12 @@
         "fault:scripts/skillguard_v2/execution_depth.py:load_target_execution_receipts",
         "fault:scripts/skillguard_v2/execution_depth.py:profile_fingerprint",
         "fault:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "fault:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "fault:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "fault:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
         "fault:scripts/skillguard_v2/verification_contract_review.py:review_verification_contract",
         "fault:scripts/skillguard_verification_contract_review.py:main",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "provider:scripts/skillguard_v2/check_runner.py:execute_check",
         "provider:scripts/skillguard_v2/execution_depth.py:evaluate_depth_receipt_gate",
@@ -10589,6 +10828,7 @@
         "template:references/skillguard-execution-depth.md",
         "template:references/skillguard-test-mesh.md",
         "ui:scripts/skillguard_test_mesh.py:main",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/execution_depth.py:evaluate_execution_depth",
         "ui:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
         "ui:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation"
@@ -10609,8 +10849,13 @@
         "api:scripts/skillguard_v2/execution_depth.py:load_target_execution_receipts",
         "api:scripts/skillguard_v2/execution_depth.py:profile_fingerprint",
         "api:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "api:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "api:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "api:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
+        "api:scripts/skillguard_v2/test_mesh.py:pytest_leaf_plan_current_pass",
         "api:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation",
+        "api:scripts/skillguard_v2/test_mesh.py:validate_pytest_leaf_plan",
+        "component:scripts/skillguard_test_mesh.py",
         "component:scripts/skillguard_v2/execution_depth.py",
         "component:scripts/skillguard_v2/test_mesh.py",
         "config:assets/schemas/skillguard_functional_closure.schema.json",
@@ -10621,7 +10866,10 @@
         "fault:scripts/skillguard_v2/execution_depth.py:load_target_execution_receipts",
         "fault:scripts/skillguard_v2/execution_depth.py:profile_fingerprint",
         "fault:scripts/skillguard_v2/test_mesh.py:execute_test_mesh",
+        "fault:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan",
+        "fault:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan",
         "fault:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/execution_depth.py:evaluate_depth_receipt_gate",
         "provider:scripts/skillguard_v2/execution_depth.py:evaluate_execution_depth",
         "provider:scripts/skillguard_v2/execution_depth.py:issue_target_execution_receipt",
@@ -10641,6 +10889,7 @@
       "reason": "This obligation has an explicit target-owned source boundary in the decision rules.",
       "surface_ids": [
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -10655,6 +10904,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/closure.py:ClosureError",
@@ -10703,9 +10953,11 @@
         "effect:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "effect:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text",
+        "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
         "effect:scripts/skillguard_v2/execution_records.py:terminate_process_tree",
         "effect:scripts/skillguard_v2/execution_records.py:utc_now_precise",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -10713,6 +10965,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/closure.py:ClosureError",
         "fault:scripts/skillguard_v2/closure.py:close_run",
@@ -10749,6 +11002,7 @@
         "recovery:scripts/skillguard_v2/execution_records.py:durable_copy_immutable_stream",
         "recovery:scripts/skillguard_v2/execution_records.py:durable_write_immutable_json",
         "recovery:scripts/skillguard_v2/execution_records.py:release_process_tree_containment",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/closure.py:evaluate_closure",
         "ui:scripts/skillguard_v2/execution_depth.py:evaluate_execution_depth"
       ]
@@ -10756,10 +11010,11 @@
     {
       "disposition": "governed",
       "obligation_id": "obligation:unique-depth-evidence",
-      "proof_ref": ".agents/skills/skillguard/.skillguard/check-manifest.json#check:self:declared-check-runtime",
+      "proof_ref": ".agents/skills/skillguard/.skillguard/check-manifest.json#check:self:test-mesh-fast",
       "reason": "This obligation has an explicit target-owned source boundary in the decision rules.",
       "surface_ids": [
         "api:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "api:scripts/skillguard_v2/check_runner.py:execute_check",
         "api:scripts/skillguard_v2/check_runner.py:execution_proof_fingerprint",
@@ -10774,6 +11029,7 @@
         "api:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_ref",
         "api:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
         "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref",
+        "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "api:scripts/skillguard_v2/check_runner.py:resolve_owner_evidence_root",
         "api:scripts/skillguard_v2/check_runner.py:store_check_result",
         "api:scripts/skillguard_v2/evidence_store.py:EvidenceStoreError",
@@ -10818,6 +11074,7 @@
         "api:scripts/skillguard_v2/receipts.py:issue_receipt",
         "api:scripts/skillguard_v2/receipts.py:load_receipt",
         "api:scripts/skillguard_v2/receipts.py:load_receipts",
+        "component:scripts/skillguard_test_mesh.py",
         "component:scripts/skillguard_v2/check_runner.py",
         "component:scripts/skillguard_v2/evidence_store.py",
         "component:scripts/skillguard_v2/execution_depth.py",
@@ -10828,7 +11085,9 @@
         "effect:scripts/skillguard_v2/execution_depth.py:issue_target_execution_receipt",
         "effect:scripts/skillguard_v2/native_evidence_identity.py:scheduled_production_identity",
         "effect:scripts/skillguard_v2/receipts.py:issue_receipt",
+        "fault:scripts/skillguard_test_mesh.py:main",
         "fault:scripts/skillguard_v2/check_runner.py:CheckRunnerError",
+        "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "fault:scripts/skillguard_v2/check_runner.py:execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:get_or_execute_check",
         "fault:scripts/skillguard_v2/check_runner.py:hard_evidence_from_check",
@@ -10836,6 +11095,7 @@
         "fault:scripts/skillguard_v2/check_runner.py:load_check_result",
         "fault:scripts/skillguard_v2/check_runner.py:load_owner_receipt_from_projection",
         "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index",
+        "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context",
         "fault:scripts/skillguard_v2/check_runner.py:store_check_result",
         "fault:scripts/skillguard_v2/evidence_store.py:EvidenceStoreError",
         "fault:scripts/skillguard_v2/evidence_store.py:apply_evidence_gc_plan",
@@ -10866,6 +11126,7 @@
         "fault:scripts/skillguard_v2/receipts.py:fingerprint_value",
         "fault:scripts/skillguard_v2/receipts.py:issue_receipt",
         "fault:scripts/skillguard_v2/receipts.py:load_receipt",
+        "provider:scripts/skillguard_test_mesh.py:main",
         "provider:scripts/skillguard_v2/check_runner.py:check_toolchain_identity",
         "provider:scripts/skillguard_v2/check_runner.py:execute_check",
         "provider:scripts/skillguard_v2/execution_depth.py:evaluate_depth_receipt_gate",
@@ -10878,6 +11139,7 @@
         "recovery:scripts/skillguard_v2/evidence_store.py:persist_compressed_stream",
         "recovery:scripts/skillguard_v2/execution_depth.py:issue_target_execution_receipt",
         "recovery:scripts/skillguard_v2/receipts.py:issue_receipt",
+        "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext",
         "ui:scripts/skillguard_v2/execution_depth.py:evaluate_execution_depth",
         "ui:scripts/skillguard_v2/receipts.py:build_action_witness"
       ]
@@ -10899,6 +11161,7 @@
         "api:scripts/skillguard_v2/self_host.py:SelfHostClaimContext",
         "api:scripts/skillguard_v2/self_host.py:SelfHostError",
         "api:scripts/skillguard_v2/self_host.py:claim_current_self_host_run",
+        "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "api:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "api:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "api:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
@@ -10915,8 +11178,10 @@
         "fault:scripts/skillguard_v2/project_adoption.py:adopt_maintainer_repository",
         "fault:scripts/skillguard_v2/project_adoption.py:build_project_manifest",
         "fault:scripts/skillguard_v2/self_host.py:SelfHostError",
+        "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt",
         "fault:scripts/skillguard_v2/self_host.py:run_current_verifier",
+        "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets",
         "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary",
         "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt",
@@ -10930,12 +11195,9 @@
         "option:maintainer-audit:--root",
         "option:maintainer-audit:--skillguard-version",
         "provider:scripts/skillguard_v2/project_adoption.py:audit_maintainer_repository",
-        "provider:scripts/skillguard_v2/self_host.py:run_current_verifier",
-        "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier",
         "route:skillguard.route.maintainer-adopt.current",
         "route:skillguard.route.maintainer-audit.current",
-        "script:scripts/skillguard_self_host.py",
-        "ui:scripts/skillguard_v2/self_host.py:run_current_verifier"
+        "script:scripts/skillguard_self_host.py"
       ]
     },
     {
@@ -11043,7 +11305,7 @@
     }
   ],
   "schema_version": "skillguard.surface_semantic_map.v1",
-  "source_discovery_fingerprint": "sha256:b4bdba5e0b3c0451af0580e2f8d3f48a17ee1a740efb1f50f3479a156177bd89",
+  "source_discovery_fingerprint": "sha256:96fef69bd50862a9ea4dd1d8f3251419a8047edf1f8e36dd3bc9bedfa9f5adce",
   "surface_bindings": [
     {
       "decision": "explicit-author-rule",
@@ -11850,6 +12112,18 @@
         "decision:public-api-model-owned"
       ],
       "surface_id": "api:.skillguard/template_lifecycle_model.py:terminal_predicate"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:public-api-model-owned"
+      ],
+      "surface_id": "api:scripts/check_model_export.py:main"
     },
     {
       "decision": "explicit-author-rule",
@@ -14693,6 +14967,18 @@
         "decision:all-current-surfaces-static-audit",
         "decision:public-api-model-owned"
       ],
+      "surface_id": "api:scripts/checker_engine.py:route_reference"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:public-api-model-owned"
+      ],
       "surface_id": "api:scripts/checker_engine.py:route_task"
     },
     {
@@ -15935,6 +16221,18 @@
         "decision:all-current-surfaces-static-audit",
         "decision:public-api-model-owned"
       ],
+      "surface_id": "api:scripts/skillguard_utils.py:summarize_payload"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:public-api-model-owned"
+      ],
       "surface_id": "api:scripts/skillguard_utils.py:utc_timestamp"
     },
     {
@@ -16361,6 +16659,30 @@
         "decision:unique-depth-evidence",
         "decision:verifier-and-artifact-freshness"
       ],
+      "surface_id": "api:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:artifact-freshness",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:execution-depth-closure",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:unique-depth-evidence",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:execution-depth-closure",
+        "decision:no-former-authority-success",
+        "decision:public-api-model-owned",
+        "decision:unique-depth-evidence",
+        "decision:verifier-and-artifact-freshness"
+      ],
       "surface_id": "api:scripts/skillguard_v2/check_runner.py:check_toolchain_identity"
     },
     {
@@ -16674,6 +16996,30 @@
         "decision:verifier-and-artifact-freshness"
       ],
       "surface_id": "api:scripts/skillguard_v2/check_runner.py:owner_receipt_document_ref"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:artifact-freshness",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:execution-depth-closure",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:unique-depth-evidence",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:execution-depth-closure",
+        "decision:no-former-authority-success",
+        "decision:public-api-model-owned",
+        "decision:unique-depth-evidence",
+        "decision:verifier-and-artifact-freshness"
+      ],
+      "surface_id": "api:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context"
     },
     {
       "decision": "explicit-author-rule",
@@ -21089,6 +21435,26 @@
     {
       "decision": "explicit-author-rule",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
+        "obligation:author-repository-adoption",
+        "obligation:claimed-run",
+        "obligation:exact-closure",
+        "obligation:guard-run-identity",
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:author-repository-adoption",
+        "decision:public-api-model-owned",
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
+      ],
+      "surface_id": "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
         "obligation:author-repository-adoption",
         "obligation:claimed-run",
         "obligation:guard-run-identity",
@@ -21532,6 +21898,30 @@
         "decision:public-api-model-owned"
       ],
       "surface_id": "api:scripts/skillguard_v2/surface_inventory.py:PublicSourceSurfaceScan"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:public-api-model-owned"
+      ],
+      "surface_id": "api:scripts/skillguard_v2/surface_inventory.py:SourceObservation"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:public-api-model-owned"
+      ],
+      "surface_id": "api:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext"
     },
     {
       "decision": "explicit-author-rule",
@@ -22425,6 +22815,40 @@
         "decision:public-api-model-owned",
         "decision:target-native-deepening"
       ],
+      "surface_id": "api:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:target-native-deepening-closure"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:public-api-model-owned",
+        "decision:target-native-deepening"
+      ],
+      "surface_id": "api:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:target-native-deepening-closure"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:public-api-model-owned",
+        "decision:target-native-deepening"
+      ],
       "surface_id": "api:scripts/skillguard_v2/test_mesh.py:project_current_test_mesh_aggregation_to_openspec_receipt"
     },
     {
@@ -22442,7 +22866,41 @@
         "decision:public-api-model-owned",
         "decision:target-native-deepening"
       ],
+      "surface_id": "api:scripts/skillguard_v2/test_mesh.py:pytest_leaf_plan_current_pass"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:target-native-deepening-closure"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:public-api-model-owned",
+        "decision:target-native-deepening"
+      ],
       "surface_id": "api:scripts/skillguard_v2/test_mesh.py:replay_current_test_mesh_aggregation"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:target-native-deepening-closure"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:public-api-model-owned",
+        "decision:target-native-deepening"
+      ],
+      "surface_id": "api:scripts/skillguard_v2/test_mesh.py:validate_pytest_leaf_plan"
     },
     {
       "decision": "explicit-author-rule",
@@ -23559,6 +24017,22 @@
         "decision:entry-packet-consumption",
         "decision:public-entry-route-ownership"
       ],
+      "surface_id": "command:route-reference"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:packet-consumption",
+        "obligation:route-ownership",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:entry-material-loading",
+        "decision:entry-packet-consumption",
+        "decision:public-entry-route-ownership"
+      ],
       "surface_id": "command:route-task"
     },
     {
@@ -23669,6 +24143,20 @@
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
         "obligation:assurance-diagnostics",
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
+      ],
+      "surface_id": "component:scripts/check_model_export.py"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
         "obligation:exact-closure",
         "obligation:failed-lock-recovery",
         "obligation:model-authority",
@@ -23701,6 +24189,47 @@
         "decision:internal-components-model-owned"
       ],
       "surface_id": "component:scripts/skillguard_self_host.py"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:exact-closure",
+        "obligation:model-authority",
+        "obligation:route-ownership",
+        "obligation:static-audit",
+        "obligation:target-native-deepening-closure",
+        "obligation:unique-depth-evidence",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:target-native-deepening",
+        "decision:test-mesh-component-ownership-and-closure"
+      ],
+      "surface_id": "component:scripts/skillguard_test_mesh.py"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:exact-closure",
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:effect-closure-owned",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
+      ],
+      "surface_id": "component:scripts/skillguard_utils.py"
     },
     {
       "decision": "explicit-author-component-group-closure",
@@ -24467,24 +24996,22 @@
     {
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
         "obligation:assurance-diagnostics",
         "obligation:author-repository-adoption",
         "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
+        "obligation:exact-closure",
         "obligation:guard-run-identity",
         "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
+        "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:author-repository-adoption",
         "decision:fault-diagnostic-owned",
         "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
       ],
       "surface_id": "component:scripts/skillguard_v2/self_host.py"
     },
@@ -25910,6 +26437,27 @@
         "decision:provider-verifier-owned",
         "decision:recovery-authority-owned"
       ],
+      "surface_id": "effect:scripts/checker_engine.py:invoke_post_generation_check"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:exact-closure",
+        "obligation:failed-lock-recovery",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:effect-closure-owned",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:recovery-authority-owned"
+      ],
       "surface_id": "effect:scripts/checker_engine.py:is_optional_reference"
     },
     {
@@ -26288,6 +26836,27 @@
         "decision:provider-verifier-owned",
         "decision:recovery-authority-owned"
       ],
+      "surface_id": "effect:scripts/checker_engine.py:run_fixture_handler"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:exact-closure",
+        "obligation:failed-lock-recovery",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:effect-closure-owned",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:recovery-authority-owned"
+      ],
       "surface_id": "effect:scripts/checker_engine.py:self_check"
     },
     {
@@ -26372,12 +26941,14 @@
       "model_obligation_ids": [
         "obligation:assurance-diagnostics",
         "obligation:exact-closure",
+        "obligation:model-authority",
         "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:effect-closure-owned",
-        "decision:fault-diagnostic-owned"
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
       ],
       "surface_id": "effect:scripts/skillguard_utils.py:dump_json"
     },
@@ -26386,12 +26957,14 @@
       "model_obligation_ids": [
         "obligation:assurance-diagnostics",
         "obligation:exact-closure",
+        "obligation:model-authority",
         "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:effect-closure-owned",
-        "decision:fault-diagnostic-owned"
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
       ],
       "surface_id": "effect:scripts/skillguard_utils.py:utc_timestamp"
     },
@@ -26735,6 +27308,35 @@
         "decision:run-identity-and-claim"
       ],
       "surface_id": "effect:scripts/skillguard_v2/execution_records.py:redact_runtime_text"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:claimed-run",
+        "obligation:durable-resume",
+        "obligation:exact-closure",
+        "obligation:execution-depth-closure",
+        "obligation:failed-lock-recovery",
+        "obligation:guard-run-identity",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:durable-resume",
+        "decision:effect-closure-owned",
+        "decision:execution-depth-closure",
+        "decision:failed-lock-recovery",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:recovery-authority-owned",
+        "decision:run-identity-and-claim"
+      ],
+      "surface_id": "effect:scripts/skillguard_v2/execution_records.py:release_process_tree_containment"
     },
     {
       "decision": "explicit-author-component-group-closure",
@@ -27901,6 +28503,20 @@
         "decision:fault-diagnostic-owned"
       ],
       "surface_id": "fault:.skillguard/template_lifecycle_model.py:template_skillguard_never_owns_domain_semantics"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
+      ],
+      "surface_id": "fault:scripts/check_model_export.py:main"
     },
     {
       "decision": "explicit-author-component-group-closure",
@@ -29160,6 +29776,27 @@
         "decision:provider-verifier-owned",
         "decision:recovery-authority-owned"
       ],
+      "surface_id": "fault:scripts/checker_engine.py:run_fixture_handler"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:exact-closure",
+        "obligation:failed-lock-recovery",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:effect-closure-owned",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:recovery-authority-owned"
+      ],
       "surface_id": "fault:scripts/checker_engine.py:scan_text_for_unsafe_claims"
     },
     {
@@ -29536,14 +30173,22 @@
         "obligation:assurance-diagnostics",
         "obligation:deep-audit",
         "obligation:depth-native-authority",
+        "obligation:exact-closure",
+        "obligation:model-authority",
+        "obligation:route-ownership",
         "obligation:static-audit",
-        "obligation:target-native-deepening-closure"
+        "obligation:target-native-deepening-closure",
+        "obligation:unique-depth-evidence",
+        "obligation:verifier-pass"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:deep-audit-and-native-depth",
         "decision:fault-diagnostic-owned",
-        "decision:target-native-deepening"
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:target-native-deepening",
+        "decision:test-mesh-component-ownership-and-closure"
       ],
       "surface_id": "fault:scripts/skillguard_test_mesh.py:main"
     },
@@ -29552,12 +30197,30 @@
       "model_obligation_ids": [
         "obligation:assurance-diagnostics",
         "obligation:exact-closure",
+        "obligation:model-authority",
         "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:effect-closure-owned",
-        "decision:fault-diagnostic-owned"
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
+      ],
+      "surface_id": "fault:scripts/skillguard_utils.py:emit_json"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:exact-closure",
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:effect-closure-owned",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
       ],
       "surface_id": "fault:scripts/skillguard_utils.py:ensure_under_root"
     },
@@ -29566,12 +30229,14 @@
       "model_obligation_ids": [
         "obligation:assurance-diagnostics",
         "obligation:exact-closure",
+        "obligation:model-authority",
         "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:effect-closure-owned",
-        "decision:fault-diagnostic-owned"
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
       ],
       "surface_id": "fault:scripts/skillguard_utils.py:load_jsonl"
     },
@@ -29580,12 +30245,14 @@
       "model_obligation_ids": [
         "obligation:assurance-diagnostics",
         "obligation:exact-closure",
+        "obligation:model-authority",
         "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:effect-closure-owned",
-        "decision:fault-diagnostic-owned"
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned"
       ],
       "surface_id": "fault:scripts/skillguard_utils.py:write_report"
     },
@@ -29848,6 +30515,37 @@
         "decision:unique-depth-evidence",
         "decision:verifier-and-artifact-freshness"
       ],
+      "surface_id": "fault:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:artifact-freshness",
+        "obligation:assurance-diagnostics",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:exact-closure",
+        "obligation:execution-depth-closure",
+        "obligation:failed-lock-recovery",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:unique-depth-evidence",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:effect-closure-owned",
+        "decision:execution-depth-closure",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:no-former-authority-success",
+        "decision:provider-verifier-owned",
+        "decision:recovery-authority-owned",
+        "decision:unique-depth-evidence",
+        "decision:verifier-and-artifact-freshness"
+      ],
       "surface_id": "fault:scripts/skillguard_v2/check_runner.py:execute_check"
     },
     {
@@ -30035,6 +30733,37 @@
         "decision:verifier-and-artifact-freshness"
       ],
       "surface_id": "fault:scripts/skillguard_v2/check_runner.py:load_run_owner_receipt_index"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:artifact-freshness",
+        "obligation:assurance-diagnostics",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:exact-closure",
+        "obligation:execution-depth-closure",
+        "obligation:failed-lock-recovery",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:unique-depth-evidence",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:effect-closure-owned",
+        "decision:execution-depth-closure",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:no-former-authority-success",
+        "decision:provider-verifier-owned",
+        "decision:recovery-authority-owned",
+        "decision:unique-depth-evidence",
+        "decision:verifier-and-artifact-freshness"
+      ],
+      "surface_id": "fault:scripts/skillguard_v2/check_runner.py:prepare_current_owner_input_context"
     },
     {
       "decision": "explicit-author-component-group-closure",
@@ -32877,144 +33606,176 @@
     {
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
         "obligation:assurance-diagnostics",
         "obligation:author-repository-adoption",
         "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
+        "obligation:exact-closure",
         "obligation:guard-run-identity",
         "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
+        "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:author-repository-adoption",
         "decision:fault-diagnostic-owned",
         "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
       ],
       "surface_id": "fault:scripts/skillguard_v2/self_host.py:SelfHostError"
     },
     {
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
         "obligation:assurance-diagnostics",
         "obligation:author-repository-adoption",
         "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
+        "obligation:exact-closure",
         "obligation:guard-run-identity",
         "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
+        "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:author-repository-adoption",
         "decision:fault-diagnostic-owned",
         "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
+      ],
+      "surface_id": "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:artifact-freshness",
+        "obligation:assurance-diagnostics",
+        "obligation:author-repository-adoption",
+        "obligation:claimed-run",
+        "obligation:exact-closure",
+        "obligation:guard-run-identity",
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:author-repository-adoption",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
       ],
       "surface_id": "fault:scripts/skillguard_v2/self_host.py:publish_current_self_host_terminal_receipt"
     },
     {
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
         "obligation:assurance-diagnostics",
         "obligation:author-repository-adoption",
         "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
+        "obligation:exact-closure",
         "obligation:guard-run-identity",
         "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
+        "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:author-repository-adoption",
         "decision:fault-diagnostic-owned",
         "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
       ],
       "surface_id": "fault:scripts/skillguard_v2/self_host.py:run_current_verifier"
     },
     {
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
         "obligation:assurance-diagnostics",
         "obligation:author-repository-adoption",
         "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
+        "obligation:exact-closure",
         "obligation:guard-run-identity",
         "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
+        "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:author-repository-adoption",
         "decision:fault-diagnostic-owned",
         "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
+      ],
+      "surface_id": "fault:scripts/skillguard_v2/self_host.py:run_self_host_bootstrap"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:artifact-freshness",
+        "obligation:assurance-diagnostics",
+        "obligation:author-repository-adoption",
+        "obligation:claimed-run",
+        "obligation:exact-closure",
+        "obligation:guard-run-identity",
+        "obligation:model-authority",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:author-repository-adoption",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
       ],
       "surface_id": "fault:scripts/skillguard_v2/self_host.py:validate_self_host_long_check_timeout_budgets"
     },
     {
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
         "obligation:assurance-diagnostics",
         "obligation:author-repository-adoption",
         "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
+        "obligation:exact-closure",
         "obligation:guard-run-identity",
         "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
+        "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:author-repository-adoption",
         "decision:fault-diagnostic-owned",
         "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
       ],
       "surface_id": "fault:scripts/skillguard_v2/self_host.py:validate_self_host_test_mesh_boundary"
     },
     {
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
         "obligation:assurance-diagnostics",
         "obligation:author-repository-adoption",
         "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
+        "obligation:exact-closure",
         "obligation:guard-run-identity",
         "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
+        "obligation:static-audit"
       ],
       "rule_ids": [
         "decision:all-current-surfaces-static-audit",
         "decision:author-repository-adoption",
         "decision:fault-diagnostic-owned",
         "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
+        "decision:run-identity-and-claim",
+        "decision:self-host-finalize-terminal-closure"
       ],
       "surface_id": "fault:scripts/skillguard_v2/self_host.py:verify_current_self_host_terminal_receipt"
     },
@@ -33356,6 +34117,25 @@
         "decision:run-identity-and-claim"
       ],
       "surface_id": "fault:scripts/skillguard_v2/supervisor.py:validate_supervisor_packet"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:failed-lock-recovery",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:recovery-authority-owned"
+      ],
+      "surface_id": "fault:scripts/skillguard_v2/surface_inventory.py:SourceObservationContext"
     },
     {
       "decision": "explicit-author-component-group-closure",
@@ -33774,6 +34554,44 @@
         "decision:target-native-deepening"
       ],
       "surface_id": "fault:scripts/skillguard_v2/test_mesh.py:execute_test_mesh"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:target-native-deepening-closure"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:target-native-deepening"
+      ],
+      "surface_id": "fault:scripts/skillguard_v2/test_mesh.py:freeze_pytest_leaf_plan"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:model-authority",
+        "obligation:static-audit",
+        "obligation:target-native-deepening-closure"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:target-native-deepening"
+      ],
+      "surface_id": "fault:scripts/skillguard_v2/test_mesh.py:observe_pytest_leaf_plan"
     },
     {
       "decision": "explicit-author-component-group-closure",
@@ -37246,6 +38064,22 @@
       "model_obligation_ids": [
         "obligation:author-entry-loading",
         "obligation:packet-consumption",
+        "obligation:route-ownership",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:entry-material-loading",
+        "decision:entry-packet-consumption",
+        "decision:public-entry-route-ownership"
+      ],
+      "surface_id": "option:plan-skill:--output"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:packet-consumption",
         "obligation:portfolio-freshness",
         "obligation:route-ownership",
         "obligation:static-audit"
@@ -37574,6 +38408,38 @@
         "decision:public-entry-route-ownership"
       ],
       "surface_id": "option:review-checker-change:--target"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:packet-consumption",
+        "obligation:route-ownership",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:entry-material-loading",
+        "decision:entry-packet-consumption",
+        "decision:public-entry-route-ownership"
+      ],
+      "surface_id": "option:route-reference:--output"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:packet-consumption",
+        "obligation:route-ownership",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:entry-material-loading",
+        "decision:entry-packet-consumption",
+        "decision:public-entry-route-ownership"
+      ],
+      "surface_id": "option:route-reference:--route-id"
     },
     {
       "decision": "explicit-author-rule",
@@ -38441,7 +39307,53 @@
         "decision:provider-verifier-owned",
         "decision:recovery-authority-owned"
       ],
+      "surface_id": "provider:scripts/checker_engine.py:run_fixture_handler"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:exact-closure",
+        "obligation:failed-lock-recovery",
+        "obligation:model-authority",
+        "obligation:no-former-authority-success",
+        "obligation:static-audit",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:effect-closure-owned",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:recovery-authority-owned"
+      ],
       "surface_id": "provider:scripts/checker_engine.py:sandbox_mutating_runtime_fixture_argv"
+    },
+    {
+      "decision": "explicit-author-component-group-closure",
+      "model_obligation_ids": [
+        "obligation:assurance-diagnostics",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:exact-closure",
+        "obligation:model-authority",
+        "obligation:route-ownership",
+        "obligation:static-audit",
+        "obligation:target-native-deepening-closure",
+        "obligation:unique-depth-evidence",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:fault-diagnostic-owned",
+        "decision:internal-components-model-owned",
+        "decision:provider-verifier-owned",
+        "decision:target-native-deepening",
+        "decision:test-mesh-component-ownership-and-closure"
+      ],
+      "surface_id": "provider:scripts/skillguard_test_mesh.py:main"
     },
     {
       "decision": "explicit-author-component-group-closure",
@@ -39787,30 +40699,6 @@
       "decision": "explicit-author-component-group-closure",
       "model_obligation_ids": [
         "obligation:assurance-diagnostics",
-        "obligation:author-repository-adoption",
-        "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
-        "obligation:guard-run-identity",
-        "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
-      ],
-      "rule_ids": [
-        "decision:all-current-surfaces-static-audit",
-        "decision:author-repository-adoption",
-        "decision:fault-diagnostic-owned",
-        "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
-      ],
-      "surface_id": "provider:scripts/skillguard_v2/self_host.py:run_current_verifier"
-    },
-    {
-      "decision": "explicit-author-component-group-closure",
-      "model_obligation_ids": [
-        "obligation:assurance-diagnostics",
         "obligation:durable-resume",
         "obligation:failed-lock-recovery",
         "obligation:loop-liveness",
@@ -40738,30 +41626,6 @@
         "decision:run-identity-and-claim"
       ],
       "surface_id": "recovery:scripts/skillguard_v2/run_store.py:append_event"
-    },
-    {
-      "decision": "explicit-author-component-group-closure",
-      "model_obligation_ids": [
-        "obligation:assurance-diagnostics",
-        "obligation:author-repository-adoption",
-        "obligation:claimed-run",
-        "obligation:failed-lock-recovery",
-        "obligation:guard-run-identity",
-        "obligation:model-authority",
-        "obligation:no-former-authority-success",
-        "obligation:static-audit",
-        "obligation:verifier-pass"
-      ],
-      "rule_ids": [
-        "decision:all-current-surfaces-static-audit",
-        "decision:author-repository-adoption",
-        "decision:fault-diagnostic-owned",
-        "decision:internal-components-model-owned",
-        "decision:provider-verifier-owned",
-        "decision:recovery-authority-owned",
-        "decision:run-identity-and-claim"
-      ],
-      "surface_id": "recovery:scripts/skillguard_v2/self_host.py:run_current_verifier"
     },
     {
       "decision": "explicit-author-component-group-closure",
@@ -41710,6 +42574,22 @@
         "decision:entry-packet-consumption",
         "decision:public-entry-route-ownership"
       ],
+      "surface_id": "route:skillguard.route.route-reference.v1"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:packet-consumption",
+        "obligation:route-ownership",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:entry-material-loading",
+        "decision:entry-packet-consumption",
+        "decision:public-entry-route-ownership"
+      ],
       "surface_id": "route:skillguard.route.route-task.v1"
     },
     {
@@ -41823,6 +42703,18 @@
         "decision:entry-material-loading"
       ],
       "surface_id": "script:.skillguard/template_lifecycle_model.py"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:entry-material-loading"
+      ],
+      "surface_id": "script:scripts/check_model_export.py"
     },
     {
       "decision": "explicit-author-rule",
@@ -41985,6 +42877,18 @@
         "decision:entry-material-loading"
       ],
       "surface_id": "template:SKILL.md"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
+        "obligation:author-entry-loading",
+        "obligation:static-audit"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:entry-material-loading"
+      ],
+      "surface_id": "template:references/route_map_summary.md"
     },
     {
       "decision": "explicit-author-rule",
@@ -42594,6 +43498,32 @@
     {
       "decision": "explicit-author-rule",
       "model_obligation_ids": [
+        "obligation:artifact-freshness",
+        "obligation:author-entry-loading",
+        "obligation:deep-audit",
+        "obligation:depth-native-authority",
+        "obligation:execution-depth-closure",
+        "obligation:no-former-authority-success",
+        "obligation:route-ownership",
+        "obligation:static-audit",
+        "obligation:unique-depth-evidence",
+        "obligation:verifier-pass"
+      ],
+      "rule_ids": [
+        "decision:all-current-surfaces-static-audit",
+        "decision:deep-audit-and-native-depth",
+        "decision:entry-material-loading",
+        "decision:execution-depth-closure",
+        "decision:no-former-authority-success",
+        "decision:public-entry-route-ownership",
+        "decision:unique-depth-evidence",
+        "decision:verifier-and-artifact-freshness"
+      ],
+      "surface_id": "ui:scripts/skillguard_v2/check_runner.py:CurrentOwnerInputContext"
+    },
+    {
+      "decision": "explicit-author-rule",
+      "model_obligation_ids": [
         "obligation:author-entry-loading",
         "obligation:exact-closure",
         "obligation:execution-depth-closure",
@@ -43023,25 +43953,6 @@
         "decision:run-identity-and-claim"
       ],
       "surface_id": "ui:scripts/skillguard_v2/run_store.py:release_run_locks"
-    },
-    {
-      "decision": "explicit-author-rule",
-      "model_obligation_ids": [
-        "obligation:author-entry-loading",
-        "obligation:author-repository-adoption",
-        "obligation:claimed-run",
-        "obligation:guard-run-identity",
-        "obligation:route-ownership",
-        "obligation:static-audit"
-      ],
-      "rule_ids": [
-        "decision:all-current-surfaces-static-audit",
-        "decision:author-repository-adoption",
-        "decision:entry-material-loading",
-        "decision:public-entry-route-ownership",
-        "decision:run-identity-and-claim"
-      ],
-      "surface_id": "ui:scripts/skillguard_v2/self_host.py:run_current_verifier"
     },
     {
       "decision": "explicit-author-rule",

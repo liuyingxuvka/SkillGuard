@@ -34,6 +34,19 @@ class LaunchPlanTest(unittest.TestCase):
         self.assertEqual(plan.argv[0], str(Path(sys.executable).resolve()))
         self.assertTrue(plan.record["resolved_program_identity"].startswith("sha256:"))
 
+    def test_symlink_entry_is_preserved_while_physical_identity_is_recorded(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="launch-symlink-", dir=ROOT) as tmp:
+            link = Path(tmp) / "python-entry"
+            try:
+                os.symlink(sys.executable, link)
+            except (OSError, NotImplementedError) as exc:
+                self.skipTest(f"symlink unavailable: {exc}")
+            plan = self.plan(str(link), ["--version"], Path(tmp))
+            self.assertEqual(plan.argv[0], str(Path(os.path.abspath(link))))
+            self.assertEqual(plan.record["resolved_program"], str(Path(os.path.abspath(link))))
+            self.assertEqual(plan.record["physical_program_path"], os.path.realpath(link))
+            self.assertNotEqual(plan.record["resolved_program"], plan.record["physical_program_path"])
+
     def test_unix_executable_plan_remains_direct_and_shell_free(self) -> None:
         plan = self.plan(
             sys.executable,

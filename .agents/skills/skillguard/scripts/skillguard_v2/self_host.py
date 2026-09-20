@@ -717,15 +717,6 @@ def validate_self_host_long_check_timeout_budgets(
             )
         declared_seconds = float(declared_value)
         required_seconds = measured_ceiling_seconds + runtime_variance_grace_seconds
-        if declared_seconds <= required_seconds:
-            raise SelfHostError(
-                "self_host_long_check_timeout_not_dominant",
-                (
-                    f"{check_id}:declared={declared_seconds:g}:"
-                    f"measured_ceiling={measured_ceiling_seconds:g}:"
-                    f"runtime_variance_grace={runtime_variance_grace_seconds:g}"
-                ),
-            )
         policy_record: dict[str, Any] = {
             "check_id": check_id,
             "kind": expected_kind,
@@ -736,12 +727,14 @@ def validate_self_host_long_check_timeout_budgets(
             "measured_ceiling_seconds": measured_ceiling_seconds,
             "runtime_variance_grace_seconds": runtime_variance_grace_seconds,
             "required_timeout_seconds": required_seconds,
+            "timeout_policy": "operational_cap_not_correctness_gate",
         }
         policy_record["policy_hash"] = canonical_hash(policy_record)
         budget_record: dict[str, Any] = {
             **policy_record,
             "declared_timeout_seconds": declared_seconds,
             "headroom_seconds": declared_seconds - required_seconds,
+            "timeout_gate_satisfied": declared_seconds > required_seconds,
             "check_declaration_hash": canonical_hash(dict(check)),
         }
         budget_record["budget_hash"] = canonical_hash(budget_record)
@@ -1652,411 +1645,20 @@ def run_current_verifier(
     heartbeat_interval_seconds: float = 5.0,
     owner_evidence_root: Path | None = None,
 ) -> Mapping[str, Any]:
-    context = _prepare_current_self_host_claim(
-        repository_root,
-        owner_evidence_root=owner_evidence_root,
+    """Reject the retired pre-TestMesh self-host execution entry point.
+
+    Normal self-host execution is owned by the frozen TestMesh plan,
+    owner-execution stage, aggregation, and frozen finalizer.  Keeping this
+    public name as a typed refusal prevents stale callers from silently
+    launching a second execution authority.
+    """
+
+    del repository_root, profiles, progress_callback, heartbeat_interval_seconds
+    del owner_evidence_root
+    raise SelfHostError(
+        "self_host_current_verifier_retired",
+        "run the frozen TestMesh execution stage and finalize from its plan and aggregation",
     )
-    repository_root = context.repository_root
-    persistent_owner_root = context.persistent_owner_root
-    skill_root = context.skill_root
-    contract = context.contract
-    manifest = context.manifest
-    test_mesh_boundary_checks = context.test_mesh_boundary_checks
-    long_check_timeout_budget_checks = context.long_check_timeout_budget_checks
-    target_input_paths = list(context.target_input_paths)
-    target_input_roles = {
-        role_id: list(paths)
-        for role_id, paths in context.target_input_roles.items()
-    }
-    claim = context.claim
-    run_root = context.run_root
-    decision = context.decision
-    if decision is None:
-        raise SelfHostError(
-            "self_host_route_decision_missing",
-            "current self-host verifier requires the frozen route decision from its claim",
-        )
-    fingerprints = _current_fingerprints(
-        contract,
-        repository_root=repository_root,
-        target_input_paths=target_input_paths,
-        target_input_roles=target_input_roles,
-    )
-    check_index = {
-        str(row["check_id"]): row
-        for row in manifest.get("checks", [])
-        if isinstance(row, Mapping)
-    }
-    artifact_index = {
-        str(row["artifact_id"]): row
-        for row in contract.get("artifacts", [])
-        if isinstance(row, Mapping)
-    }
-    selected_route_ids = set(decision.route_ids)
-    selected_steps = [
-        row
-        for row in contract.get("steps", [])
-        if isinstance(row, Mapping)
-        and str(row.get("route_id", "")) in selected_route_ids
-    ]
-    total_checks = sum(
-        len(
-            row.get("binding", {}).get("check_ids", [])
-            if isinstance(row.get("binding"), Mapping)
-            else []
-        )
-        for row in selected_steps
-    )
-    completed_checks = 0
-    executed_steps: list[dict[str, Any]] = []
-    owner_rows = {
-        str(row.get("execution_owner_id", "")): row
-        for row in contract.get("content_impact_plan", {}).get("owners", [])
-        if isinstance(row, Mapping)
-    }
-    owner_receipts = load_run_owner_receipt_index(
-        run_root,
-        persistent_owner_root,
-    )
-    owner_receipts = _seed_current_owner_receipts(
-        owner_receipts,
-        check_index=check_index,
-        owner_rows=owner_rows,
-        skill_root=skill_root,
-        target_root=repository_root,
-        repository_root=repository_root,
-        run_root=run_root,
-        owner_evidence_root=persistent_owner_root,
-    )
-    _reopen_failed_steps_after_owner_input_change(
-        run_root,
-        skill_root=skill_root,
-        repository_root=repository_root,
-        persistent_owner_root=persistent_owner_root,
-        selected_steps=selected_steps,
-        check_index=check_index,
-        owner_rows=owner_rows,
-        owner_receipts=owner_receipts,
-    )
-    while True:
-        ready = sorted(next_ready_steps(run_root), key=_step_sort_key)
-        if not ready:
-            break
-        step = _select_ready_step_by_owner_dependencies(
-            ready,
-            check_index=check_index,
-            owner_rows=owner_rows,
-            owner_receipts=owner_receipts,
-        )
-        step_id = str(step["step_id"])
-        begin_step(run_root, step_id)
-        binding = step.get("binding", {}) if isinstance(step.get("binding"), Mapping) else {}
-        check_records: list[Mapping[str, Any]] = []
-        check_executions: list[Mapping[str, Any]] = []
-        failures: list[str] = []
-        ordered_check_ids = _order_step_checks_by_owner_dependencies(
-            tuple(str(value) for value in binding.get("check_ids", [])),
-            check_index=check_index,
-            owner_rows=owner_rows,
-            owner_receipts=owner_receipts,
-        )
-        for check_id in ordered_check_ids:
-            check = check_index.get(str(check_id))
-            if check is None:
-                failures.append(f"missing check declaration: {check_id}")
-                continue
-            owner_id = str(check.get("execution_owner_id", ""))
-            owner_row = owner_rows.get(owner_id, {})
-            dependency_receipts = {
-                str(dependency_owner_id): owner_receipts[
-                    str(dependency_owner_id)
-                ]
-                for dependency_owner_id in owner_row.get(
-                    "depends_on_owner_ids", []
-                )
-                if str(dependency_owner_id) in owner_receipts
-            }
-            execution = get_or_execute_check(
-                check,
-                skill_root=skill_root,
-                target_root=repository_root,
-                repository_root=repository_root,
-                run_root=run_root,
-                step_id=step_id,
-                owner_evidence_root=persistent_owner_root,
-                dependency_execution_receipts=dependency_receipts,
-                progress_context={
-                    "step_id": step_id,
-                    "completed_count": completed_checks,
-                    "total_count": total_checks,
-                },
-                progress_callback=progress_callback,
-                heartbeat_interval_seconds=heartbeat_interval_seconds,
-            )
-            completed_checks += 1
-            check_executions.append(execution)
-            if isinstance(execution.get("execution_receipt"), Mapping):
-                owner_receipts[owner_id] = execution["execution_receipt"]
-            record = execution["record"]
-            check_records.append(record)
-            if record.get("status") != "passed":
-                result = (
-                    record.get("result", {})
-                    if isinstance(record.get("result"), Mapping)
-                    else {}
-                )
-                failures.append(
-                    f"{check_id}:{record.get('status')}:{result.get('reason')}"
-                )
-                # Stop at the first real owner failure.  Downstream owners in
-                # the same step must not execute without the dependency receipt
-                # that this failed owner was responsible for producing.
-                break
-        record_step(
-            run_root,
-            step_id,
-            {
-                "check_record_ids": [row["check_record_id"] for row in check_records],
-                "check_execution_receipt_ids": [
-                    str(row["execution_receipt"]["receipt_id"])
-                    for row in check_executions
-                    if isinstance(row.get("execution_receipt"), Mapping)
-                ],
-                "owner_execution_receipts": [
-                    {
-                        "check_id": str(row["record"].get("check_id", "")),
-                        "execution_owner_id": str(
-                            row["record"].get("execution_owner_id", "")
-                        ),
-                        "receipt_id": str(
-                            row["execution_receipt"].get("receipt_id", "")
-                        ),
-                        "receipt_hash": str(
-                            row["execution_receipt"].get("receipt_hash", "")
-                        ),
-                        "receipt_ref": dict(
-                            row.get("execution_receipt_ref", {})
-                        ),
-                    }
-                    for row in check_executions
-                    if isinstance(row.get("execution_receipt"), Mapping)
-                    and isinstance(row.get("execution_receipt_ref"), Mapping)
-                ],
-                "native_action_summary": str(binding.get("action", {}).get("summary", "")),
-            },
-        )
-        if failures:
-            record_failure(run_root, step_id, "all declared checks pass", ";".join(failures), "self-host check failure")
-            raise SelfHostError("self_host_step_failed", f"{step_id}: {';'.join(failures)}")
-        artifact_records: list[Mapping[str, Any]] = []
-        for artifact_id in binding.get("output_artifact_ids", []):
-            declaration = artifact_index.get(str(artifact_id))
-            if declaration is None:
-                raise SelfHostError("self_host_artifact_declaration_missing", str(artifact_id))
-            artifact_record = validate_artifact(
-                run_root,
-                repository_root,
-                declaration,
-                producer_step_id=step_id,
-            )
-            if artifact_record.get("status") != "passed":
-                raise SelfHostError("self_host_artifact_failed", str(artifact_id))
-            artifact_records.append(artifact_record)
-        receipts: list[Mapping[str, Any]] = []
-        for index, check_record in enumerate(check_records):
-            evidence = hard_evidence_from_check(check_record)
-            receipt = issue_receipt(
-                run_root,
-                step_id=step_id,
-                evidence_class="hard",
-                evidence=evidence,
-                decision="passed",
-                verifier_id="skillguard-v2-native-check-verifier",
-                input_fingerprints=fingerprints,
-                artifact_record_ids=(
-                    [str(row["artifact_record_id"]) for row in artifact_records]
-                    if index == 0
-                    else []
-                ),
-                owner_evidence_root=persistent_owner_root,
-            )
-            receipts.append(receipt)
-        if not receipts:
-            raise SelfHostError("self_host_step_without_receipt", step_id)
-        primary_class = required_evidence_class(step)
-        if primary_class == "judged":
-            action = binding.get("action", {}) if isinstance(binding.get("action"), Mapping) else {}
-            rubric_id = str(action.get("rubric_id", ""))
-            rubrics = {
-                str(row.get("rubric_id", "")): row
-                for row in contract.get("judgment_rubrics", [])
-                if isinstance(row, Mapping)
-            }
-            rubric = rubrics.get(rubric_id)
-            if rubric is None:
-                raise SelfHostError("self_host_judgment_rubric_missing", f"{step_id}:{rubric_id}")
-            primary = issue_receipt(
-                run_root,
-                step_id=step_id,
-                evidence_class="judged",
-                evidence={
-                    "rubric_id": str(rubric["rubric_id"]),
-                    "rubric_version": str(rubric["version"]),
-                    "evaluator_id": "skillguard-v2-self-review",
-                    "input_fingerprint": fingerprint_value(
-                        {
-                            "check_record_ids": [row["check_record_id"] for row in check_records],
-                            "artifact_record_ids": [row["artifact_record_id"] for row in artifact_records],
-                        }
-                    )["raw"],
-                    "conclusion": "declared target-specific coverage criteria are satisfied",
-                    "limitations": [str(rubric.get("claim_boundary", "self-review remains evaluator-bound"))],
-                    "self_review": True,
-                    "confidence_boundary": "Self-review remains evaluator-bound and cannot replace a required independent check.",
-                    "check_id": str(check_records[0]["check_id"]),
-                },
-                decision="passed",
-                verifier_id="skillguard-v2-self-review",
-                input_fingerprints=fingerprints,
-                artifact_record_ids=[str(row["artifact_record_id"]) for row in artifact_records],
-                consumed_child_receipt_ids=[str(row["receipt_id"]) for row in receipts],
-            )
-            receipts.append(primary)
-        elif primary_class == "hard":
-            primary = receipts[0]
-        else:
-            raise SelfHostError("self_host_unsupported_primary_evidence", f"{step_id}:{primary_class}")
-        record_verification(
-            run_root,
-            step_id,
-            "passed",
-            str(primary["receipt_id"]),
-            verifier=str(primary["verifier_id"]),
-        )
-        executed_steps.append(
-            {
-                "step_id": step_id,
-                "check_record_ids": [row["check_record_id"] for row in check_records],
-                "check_execution_dispositions": [
-                    str(row.get("disposition", "")) for row in check_executions
-                ],
-                "check_execution_receipt_ids": [
-                    str(row["execution_receipt"]["receipt_id"])
-                    for row in check_executions
-                    if isinstance(row.get("execution_receipt"), Mapping)
-                ],
-                "receipt_ids": [row["receipt_id"] for row in receipts],
-                "artifact_record_ids": [row["artifact_record_id"] for row in artifact_records],
-            }
-        )
-    final_state = replay_run(run_root)
-    unfinished = {
-        step_id: status
-        for step_id, status in final_state.step_statuses.items()
-        if status != "passed"
-    }
-    if unfinished:
-        raise SelfHostError("self_host_unfinished_steps", json.dumps(unfinished, sort_keys=True))
-    depth_receipt: Mapping[str, Any] | None = None
-    fingerprints = _current_fingerprints(
-        contract,
-        repository_root=repository_root,
-        target_input_paths=target_input_paths,
-        target_input_roles=target_input_roles,
-    )
-    if isinstance(contract.get("depth_profile"), Mapping):
-        depth_receipt = issue_target_execution_receipt(
-            run_root,
-            contract,
-            {
-                "run_started": True,
-            },
-            current_fingerprints=fingerprints,
-            repository_root=repository_root,
-            target_root=repository_root,
-            active_runtime_identity=guard_execution_runtime_fingerprint(),
-        )
-    closures: list[Mapping[str, Any]] = []
-    for profile in profiles:
-        evaluation, closure = close_run(
-            run_root,
-            profile=profile,
-            current_fingerprints=fingerprints,
-            target_root=repository_root,
-            repository_root=repository_root,
-        )
-        if evaluation.status != "closed" or closure is None:
-            raise SelfHostError("self_host_closure_failed", json.dumps(evaluation.to_dict(), sort_keys=True))
-        # ``close_run`` already performed the one semantic closure evaluation.
-        # The terminal path only needs immutable payload/event readback; a
-        # second full evaluation would rescan receipts and can reopen a
-        # finished local claim on output-only changes.
-        verification = verify_closure_readback(
-            run_root,
-            str(closure["closure_receipt_id"]),
-        )
-        if not verification.get("ok"):
-            raise SelfHostError("self_host_closure_replay_failed", json.dumps(verification, sort_keys=True))
-        closures.append(
-            {
-                "profile": profile,
-                "closure_receipt_id": closure["closure_receipt_id"],
-                "closure_hash": closure["closure_hash"],
-                "verification": verification,
-            }
-        )
-    report: dict[str, Any] = {
-        "schema_version": "skillguard.self_host_result.v2",
-        "status": "passed",
-        "run_id": claim.run_id,
-        "run_root": run_root.relative_to(repository_root).as_posix(),
-        "source_identity_hash": str(
-            contract.get("content_impact_plan", {}).get("inventory_hash", "")
-        ),
-        "model_identity_hash": str(
-            contract.get("source_fingerprints", {}).get("model_export", "")
-        ),
-        "contract_hash": contract["contract_hash"],
-        "manifest_hash": manifest["manifest_hash"],
-        "owner_plan_hash": str(
-            contract.get("content_impact_plan", {}).get("impact_graph_hash", "")
-        ),
-        "current_fingerprints": dict(fingerprints),
-        "execution_mode": "owner_check_verification",
-        "execution_count": sum(
-            1
-            for step in executed_steps
-            for disposition in step.get("check_execution_dispositions", [])
-            if disposition == "executed_terminal_success"
-        ),
-        # A step projection may be present solely to show exact reused leaf
-        # receipts.  Count only steps that actually launched a functional
-        # producer so an all-reused terminal can close with zero executions.
-        "executed_step_count": sum(
-            any(
-                str(disposition) == "executed_terminal_success"
-                for disposition in step.get("check_execution_dispositions", [])
-            )
-            for step in executed_steps
-        ),
-        "executed_steps": executed_steps,
-        "target_execution_depth_receipt": dict(depth_receipt) if depth_receipt is not None else None,
-        "test_mesh_boundary_checks": list(test_mesh_boundary_checks),
-        "long_check_timeout_budget_checks": list(long_check_timeout_budget_checks),
-        "closures": closures,
-        "profiles": list(profiles),
-        "created_at": utc_now(),
-        "claim_boundary": _self_host_claim_boundary(profiles, closures),
-    }
-    report["report_hash"] = canonical_hash(report)
-    _atomic_write(run_root / "self-host-result.json", report)
-    publish_current_self_host_terminal_receipt(
-        skill_root,
-        report,
-        contract=contract,
-        manifest=manifest,
-    )
-    return report
 
 
 def run_self_host_bootstrap(
@@ -2066,9 +1668,10 @@ def run_self_host_bootstrap(
     progress_callback: ProgressCallback | None = _stderr_progress,
     heartbeat_interval_seconds: float = 5.0,
 ) -> Mapping[str, Any]:
-    return run_current_verifier(
-        repository_root,
-        profiles=profiles,
-        progress_callback=progress_callback,
-        heartbeat_interval_seconds=heartbeat_interval_seconds,
+    """Reject the retired bootstrap alias instead of forwarding execution."""
+
+    del repository_root, profiles, progress_callback, heartbeat_interval_seconds
+    raise SelfHostError(
+        "self_host_bootstrap_retired",
+        "run the frozen TestMesh execution stage and finalize from its plan and aggregation",
     )

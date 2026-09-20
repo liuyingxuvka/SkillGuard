@@ -55,24 +55,45 @@ def rel(path: Path) -> str:
     return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
 
 
-def run_skillguard(*args: str, expected_exit: int = 0) -> dict[str, Any]:
-    completed = subprocess.run(
-        [sys.executable, str(SKILLGUARD), *args],
-        cwd=REPO_ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if completed.returncode != expected_exit:
-        raise AssertionError(
-            f"skillguard.py {' '.join(args)} exited {completed.returncode}, expected {expected_exit}\n"
-            f"stderr={completed.stderr}\nstdout={completed.stdout}"
+def run_skillguard(*args: str, expected_exit: int = 0, full_output: bool = True) -> dict[str, Any]:
+    command_args = list(args)
+    runtime_root = SCRIPT_DIR.parent / "work"
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="test-cli-report-", dir=runtime_root) as temp_dir:
+        report_path = Path(temp_dir) / "complete-report.json"
+        if full_output and "--output" not in command_args:
+            command_args.extend(["--output", report_path.relative_to(SCRIPT_DIR.parent).as_posix()])
+        completed = subprocess.run(
+            [sys.executable, str(SKILLGUARD), *command_args],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
         )
-    try:
-        return json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise AssertionError(f"command did not produce parseable JSON: {exc}\n{completed.stdout}") from exc
+        if completed.returncode != expected_exit:
+            raise AssertionError(
+                f"skillguard.py {' '.join(command_args)} exited {completed.returncode}, expected {expected_exit}\n"
+                f"stderr={completed.stderr}\nstdout={completed.stdout}"
+            )
+        if full_output:
+            if not report_path.is_file():
+                if expected_exit != 0:
+                    try:
+                        return json.loads(completed.stdout)
+                    except json.JSONDecodeError as exc:
+                        raise AssertionError(
+                            f"failed command did not write a complete report or bounded JSON summary: {exc}\n{completed.stdout}"
+                        ) from exc
+                raise AssertionError(f"command did not write the explicit complete report: {report_path}")
+            try:
+                return json.loads(report_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                raise AssertionError(f"complete report was not parseable JSON: {exc}\n{report_path}") from exc
+        try:
+            return json.loads(completed.stdout)
+        except json.JSONDecodeError as exc:
+            raise AssertionError(f"command did not produce parseable JSON: {exc}\n{completed.stdout}") from exc
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:

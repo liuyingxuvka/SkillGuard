@@ -67,6 +67,18 @@ def _content_identity(path: Path) -> str:
     raise LaunchPlanError("launch_program_unhashable", str(path))
 
 
+def _physical_path(path: Path) -> Path:
+    """Return the physical identity without changing the launch spelling."""
+
+    return Path(os.path.realpath(os.fspath(path)))
+
+
+def _absolute_launch_path(path: str | Path) -> Path:
+    """Make a launch path absolute while preserving symlink and spelling."""
+
+    return Path(os.path.abspath(os.fspath(path)))
+
+
 def _resolve_requested_program(
     command: str,
     *,
@@ -76,15 +88,15 @@ def _resolve_requested_program(
     candidate = Path(command)
     has_path = candidate.is_absolute() or any(separator in command for separator in ("/", "\\"))
     if has_path:
-        resolved = candidate if candidate.is_absolute() else cwd / candidate
-        resolved = resolved.resolve()
-        if not resolved.is_file():
+        launch_path = candidate if candidate.is_absolute() else cwd / candidate
+        launch_path = _absolute_launch_path(launch_path)
+        if not launch_path.is_file():
             raise LaunchPlanError("launch_program_missing", command)
-        return resolved
+        return launch_path
     located = shutil.which(command, path=environment.get("PATH"))
     if not located:
         raise LaunchPlanError("launch_program_missing", command)
-    return Path(located).resolve()
+    return _absolute_launch_path(located)
 
 
 def _resolve_interpreter(
@@ -97,10 +109,10 @@ def _resolve_interpreter(
             continue
         path = Path(candidate)
         if path.is_file():
-            return path.resolve()
+            return _absolute_launch_path(path)
         located = shutil.which(candidate, path=environment.get("PATH"))
         if located:
-            return Path(located).resolve()
+            return _absolute_launch_path(located)
     raise LaunchPlanError("launch_interpreter_missing", ",".join(candidates))
 
 
@@ -147,7 +159,7 @@ def resolve_launch_plan(
         adapter = "windows_powershell_script"
         adapter_args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-File", str(program)]
     elif windows and suffix in WINDOWS_PYTHON_SCRIPTS:
-        interpreter = Path(sys.executable).resolve()
+        interpreter = _absolute_launch_path(sys.executable)
         adapter = "windows_python_script"
         adapter_args = [str(program)]
     elif not windows and not os.access(program, os.X_OK):
@@ -167,9 +179,15 @@ def resolve_launch_plan(
         "requested_args": list(args),
         "resolved_program": str(program),
         "resolved_program_identity": _content_identity(program),
+        "physical_program_path": str(_physical_path(program)),
+        "physical_program_identity": _content_identity(_physical_path(program)),
         "adapter": adapter,
         "interpreter": str(interpreter) if interpreter is not None else "",
         "interpreter_identity": _content_identity(interpreter) if interpreter is not None else "",
+        "physical_interpreter_path": str(_physical_path(interpreter)) if interpreter is not None else "",
+        "physical_interpreter_identity": (
+            _content_identity(_physical_path(interpreter)) if interpreter is not None else ""
+        ),
         "argv": argv,
         "cwd": {
             "token": cwd_token,

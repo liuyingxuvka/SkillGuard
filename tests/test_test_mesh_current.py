@@ -5,6 +5,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from copy import deepcopy
 from pathlib import Path
@@ -132,6 +133,88 @@ class CurrentTestMeshTests(unittest.TestCase):
             **kwargs,
         )
 
+    def test_source_only_profile_does_not_select_installed_provenance_owner(self) -> None:
+        contract = {
+            "closure_profiles": [
+                {
+                    "profile_id": "enforced",
+                    "required_obligation_ids": ["obligation:provenance"],
+                }
+            ],
+            "obligations": [
+                {
+                    "obligation_id": "obligation:provenance",
+                    "required_check_ids": [
+                        "check:self:source-provenance",
+                        "check:self:installed-provenance",
+                    ],
+                }
+            ],
+            "checks": [
+                {
+                    "check_id": "check:self:source-provenance",
+                    "execution_owner_id": "owner:self:source-provenance",
+                },
+                {
+                    "check_id": "check:self:installed-provenance",
+                    "execution_owner_id": "owner:self:installed-provenance",
+                },
+            ],
+            "content_impact_plan": {
+                "schema_version": "skillguard.content_impact_plan.current",
+                "health": {},
+                "owners": [
+                    {
+                        "execution_owner_id": "owner:self:source-provenance",
+                        "depends_on_owner_ids": [],
+                    },
+                    {
+                        "execution_owner_id": "owner:self:installed-provenance",
+                        "depends_on_owner_ids": [],
+                    },
+                ],
+            },
+        }
+        source_mesh = {
+            "profiles": [
+                {
+                    "profile_id": "full",
+                    "closure_profile_id": "enforced",
+                    "requested_claims": ["source_release"],
+                }
+            ]
+        }
+        _profile, source_owners = test_mesh_module._selected_owner_rows(
+            contract, source_mesh, "full"
+        )
+        self.assertEqual(
+            ["owner:self:source-provenance"],
+            [row["execution_owner_id"] for row in source_owners],
+        )
+
+        installed_mesh = {
+            "profiles": [
+                {
+                    "profile_id": "full",
+                    "closure_profile_id": "enforced",
+                    "requested_claims": [
+                        "installed_current",
+                        "source_release",
+                    ],
+                }
+            ]
+        }
+        _profile, installed_owners = test_mesh_module._selected_owner_rows(
+            contract, installed_mesh, "full"
+        )
+        self.assertEqual(
+            [
+                "owner:self:installed-provenance",
+                "owner:self:source-provenance",
+            ],
+            [row["execution_owner_id"] for row in installed_owners],
+        )
+
     def test_shared_semantic_check_uses_first_declared_step_for_run_store(self) -> None:
         contract = json.loads(
             (self.run_root / "contract.json").read_text(encoding="utf-8")
@@ -158,6 +241,89 @@ class CurrentTestMeshTests(unittest.TestCase):
             step_id="step:intake",
             owner_evidence_root=self.owner_root,
         )
+
+    def test_shared_leaf_projection_creates_receipt_without_starting_process(self) -> None:
+        shared_evidence = {
+            "status": "pass",
+            "plan_hash": "sha256:" + ("a" * 64),
+            "leaf_ids": ["leaf:current"],
+            "leaf_refs": [
+                {
+                    "leaf_id": "leaf:current",
+                    "leaf_key": "sha256:" + ("b" * 64),
+                    "nodeid": "tests/test_current.py::test_current",
+                    "evidence_refs": ["owner-receipt:sha256:" + ("c" * 64)],
+                }
+            ],
+        }
+        with patch(
+            "skillguard_v2.check_runner.execute_check",
+            side_effect=AssertionError("shared leaf projection launched a child"),
+        ):
+            result = get_or_execute_check(
+                self.check,
+                skill_root=self.skill,
+                target_root=self.target,
+                repository_root=self.repository,
+                run_root=self.run_root,
+                step_id="step:intake",
+                owner_evidence_root=self.owner_root,
+                shared_leaf_evidence=shared_evidence,
+            )
+        self.assertEqual("reused_terminal_success", result["disposition"])
+        self.assertIsNotNone(result["execution_receipt"])
+        self.assertFalse(
+            result["record"]["command_executed_in_this_call"]
+        )
+        self.assertTrue(result["record"]["result"]["shared_leaf_reuse"])
+        self.assertEqual(
+            "shared_leaf_reuse",
+            result["record"]["result"]["terminal_kind"],
+        )
+
+    def test_duplicate_pytest_leaf_runs_once_and_projects_second_owner(self) -> None:
+        sample = self.repository / "test_shared_leaf_sample.py"
+        sample.write_text(
+            "def test_shared_leaf_sample():\n    assert True\n",
+            encoding="utf-8",
+        )
+        shared_args = ["-m", "pytest", sample.name, "-q"]
+        self._claim_checks(
+            [
+                {
+                    "check_id": "check:intake",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": shared_args,
+                    "cwd_token": "repository_root",
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:intake"],
+                },
+                {
+                    "check_id": "check:review",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": shared_args,
+                    "cwd_token": "repository_root",
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:review"],
+                },
+            ],
+            name="duplicate-pytest-leaf",
+        )
+        plan = self._plan()
+        self.assertEqual("passed", plan["status"], plan)
+        leaf_plan = plan["pytest_leaf_plan"]
+        self.assertEqual(1, leaf_plan["leaf_count"])
+        self.assertEqual(2, leaf_plan["logical_assignment_count"])
+        self.assertEqual(1, leaf_plan["duplicate_assignment_count"])
+
+        execution = self._run_frozen_owners(plan)
+        self.assertEqual("passed", execution["status"], execution)
+        self.assertEqual(1, execution["execution_count"], execution)
+        self.assertEqual(1, len(execution["executed_owner_ids"]))
+        self.assertEqual(1, len(execution["reused_after_freeze_owner_ids"]))
+        self.assertEqual(1, execution["pytest_leaf_reuse_count"])
 
     def _claim_checks(
         self,
@@ -367,6 +533,137 @@ class CurrentTestMeshTests(unittest.TestCase):
             ["check:intake", "check:review"],
             execution["owner_results"][0]["check_ids"],
         )
+
+    def test_owner_execution_stops_after_failure_and_keeps_remaining_projection(self) -> None:
+        self._claim_checks(
+            [
+                {
+                    "check_id": "check:intake",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": ["-c", "raise SystemExit(7)"],
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:intake"],
+                    "execution_owner_id": "owner:a-fails",
+                },
+                {
+                    "check_id": "check:review",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": [
+                        "-c",
+                        "from pathlib import Path; Path('second-ran').write_text('yes')",
+                    ],
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:review"],
+                    "execution_owner_id": "owner:b-marker",
+                },
+            ],
+            name="fail-fast",
+        )
+        frozen_plan = self._plan()
+        execution = self._run_frozen_owners(frozen_plan)
+        self.assertEqual("failed", execution["status"])
+        self.assertEqual(["owner:a-fails"], execution["failed_owner_ids"])
+        self.assertIn("owner:b-marker", execution["not_run_owner_ids"])
+        self.assertFalse((self.target / "second-ran").exists())
+        self.assertTrue(
+            any(
+                row["terminal_disposition"] == "not_run_after_failure"
+                for row in execution["owner_results"]
+                if row["execution_owner_id"] == "owner:b-marker"
+            )
+        )
+
+    def test_diagnostic_mode_runs_independent_owner_after_failure(self) -> None:
+        self._claim_checks(
+            [
+                {
+                    "check_id": "check:intake",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": ["-c", "raise SystemExit(7)"],
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:intake"],
+                    "execution_owner_id": "owner:a-fails",
+                },
+                {
+                    "check_id": "check:review",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": [
+                        "-c",
+                        "from pathlib import Path; Path('second-ran').write_text('yes')",
+                    ],
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:review"],
+                    "execution_owner_id": "owner:b-marker",
+                },
+            ],
+            name="diagnostic-fanout",
+        )
+        frozen_plan = self._plan()
+        execution = self._plan(
+            mode="owner_execution_only",
+            frozen_plan=frozen_plan,
+            diagnostic=True,
+        )
+        self.assertEqual("failed", execution["status"])
+        self.assertEqual(["owner:a-fails"], execution["failed_owner_ids"])
+        self.assertEqual([], execution["not_run_owner_ids"])
+        self.assertTrue((self.target / "second-ran").exists())
+
+    def test_owner_execution_budget_stops_without_running_remaining_owners(self) -> None:
+        self._claim_checks(
+            [
+                {
+                    "check_id": "check:intake",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": ["-c", "import time; time.sleep(0.20)"],
+                    "timeout_seconds": 10,
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:intake"],
+                    "execution_owner_id": "owner:a-sleeps",
+                },
+                {
+                    "check_id": "check:review",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": ["-c", "import time; time.sleep(0.20)"],
+                    "timeout_seconds": 10,
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:review"],
+                    "execution_owner_id": "owner:b-sleeps",
+                },
+                {
+                    "check_id": "check:finish",
+                    "kind": "command",
+                    "command": sys.executable,
+                    "args": [
+                        "-c",
+                        "from pathlib import Path; Path('third-ran').write_text('yes')",
+                    ],
+                    "expected": {"exit_code": 0},
+                    "covers_obligation_ids": ["obligation:finish"],
+                    "execution_owner_id": "owner:c-marker",
+                },
+            ],
+            name="budget-stop",
+        )
+        frozen_plan = self._plan()
+        started = time.monotonic()
+        execution = self._plan(
+            mode="owner_execution_only",
+            frozen_plan=frozen_plan,
+            total_budget_seconds=0.60,
+        )
+        elapsed = time.monotonic() - started
+        self.assertEqual("failed", execution["status"])
+        self.assertTrue(execution["budget_exhausted"])
+        self.assertIn("owner:c-marker", execution["not_run_owner_ids"])
+        self.assertFalse((self.target / "third-ran").exists())
+        self.assertLess(elapsed, 1.2)
 
     def test_mismatched_shared_owner_rejection_happens_before_execution(self) -> None:
         shared = {

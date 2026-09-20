@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import sys
@@ -54,6 +55,8 @@ from validation_composition_model import (
     CURRENT_PARENT_SCHEMA,
     INVARIANTS,
     MODEL_ID,
+    MODEL_PATH,
+    PARENT_MODEL_ID,
     SCENARIOS,
     model_summary,
     run_contract_review,
@@ -87,24 +90,74 @@ def _repository_manifest_alignment() -> dict[str, Any]:
 
     manifest_path = REPOSITORY_ROOT / ".agents" / "skills" / "skillguard" / "test-mesh.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    profiles = {
-        str(row.get("profile_id", "")): {
-            "closure_profile_id": str(row.get("closure_profile_id", "")),
-            "full_admission_required": row.get("full_admission_required"),
+    def profile_projection(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        return {
+            str(row.get("profile_id", "")): {
+                "closure_profile_id": str(row.get("closure_profile_id", "")),
+                "requested_claims": list(row.get("requested_claims", [])),
+                "owner_ids": list(row.get("owner_ids", [])),
+            }
+            for row in payload.get("profiles", ())
+            if isinstance(row, dict)
         }
-        for row in manifest.get("profiles", ())
-        if isinstance(row, dict)
-    }
+
+    profiles = profile_projection(manifest)
     expected_profiles = {
-        "fast": {"closure_profile_id": "enforced", "full_admission_required": False},
-        "focused": {"closure_profile_id": "enforced", "full_admission_required": False},
-        "full": {"closure_profile_id": "enforced", "full_admission_required": True},
+        "fast": {
+            "closure_profile_id": "enforced",
+            "requested_claims": ["source_release"],
+            "owner_ids": ["owner:self:run-native-static-checks"],
+        },
+        "focused": {
+            "closure_profile_id": "enforced",
+            "requested_claims": ["source_release"],
+            "owner_ids": [
+                "owner:self:run-declared-checks",
+                "owner:self:run-native-static-checks",
+                "owner:self:validate-step-evidence",
+                "owner:self:validation-composition-model",
+            ],
+        },
+        "full": {
+            "closure_profile_id": "enforced",
+            "requested_claims": ["source_release"],
+            "owner_ids": [],
+        },
     }
+    legacy_manifest = json.loads(json.dumps(manifest))
+    for row in legacy_manifest.get("profiles", ()):
+        if isinstance(row, dict):
+            row["full_admission_required"] = True
+    legacy_profiles = profile_projection(legacy_manifest)
+    compiled_contract = json.loads(
+        (
+            REPOSITORY_ROOT
+            / ".agents"
+            / "skills"
+            / "skillguard"
+            / ".skillguard"
+            / "compiled-contract.json"
+        ).read_text(encoding="utf-8")
+    )
+    current_owner_ids = {
+        str(row.get("execution_owner_id", ""))
+        for row in compiled_contract.get("content_impact_plan", {}).get(
+            "owners", ()
+        )
+        if isinstance(row, dict) and row.get("execution_owner_id")
+    }
+    focused_owner_ids = set(profiles.get("focused", {}).get("owner_ids", []))
     checks = {
         "current_manifest_schema": manifest.get("schema_version") == "skillguard.test_mesh_manifest.current",
         "source_model_file_exists": (REPOSITORY_ROOT / SOURCE_MODEL_PATH).is_file(),
         "source_model_id_current": manifest.get("source_model_id") == SOURCE_MODEL_ID,
         "exact_profile_projection": profiles == expected_profiles,
+        "focused_owner_set_matches_current_owner_table": (
+            focused_owner_ids
+            == set(expected_profiles["focused"]["owner_ids"])
+            and focused_owner_ids.issubset(current_owner_ids)
+        ),
+        "retired_manifest_admission_field_ignored": legacy_profiles == profiles,
         "no_runtime_commands": "suites" not in manifest and "commands" not in manifest,
         "no_runtime_source_selectors": "source_paths" not in manifest and "reuse_edges" not in manifest,
         "plan_and_aggregation_only_claim": all(
@@ -118,6 +171,8 @@ def _repository_manifest_alignment() -> dict[str, Any]:
         "manifest_path": ".agents/skills/skillguard/test-mesh.json",
         "profiles": profiles,
         "checks": checks,
+        "failed_checks": sorted(name for name, passed in checks.items() if not passed),
+        "finding_codes": [] if all(checks.values()) else ["repository_manifest_alignment_failed"],
         "claim_boundary": "This proves only that the repository manifest exposes plan/aggregation selection; owner execution and receipt currentness require separate runtime evidence.",
     }
 
@@ -128,7 +183,76 @@ def _dict(report: Any) -> dict[str, Any]:
     raise TypeError(f"report {type(report).__name__} has no to_dict()")
 
 
-def run_all() -> tuple[bool, dict[str, Any]]:
+def _report_summary(report: Any) -> dict[str, Any]:
+    """Return only the stable, bounded fields needed by the summary CLI."""
+
+    findings = getattr(report, "findings", ())
+    finding_codes = [str(getattr(finding, "code", finding)) for finding in findings]
+    return {
+        "ok": bool(getattr(report, "ok", False)),
+        "decision": str(getattr(report, "decision", "")),
+        "confidence": str(getattr(report, "confidence", "")),
+        "finding_count": len(finding_codes),
+        "finding_codes": finding_codes[:3],
+    }
+
+
+def _compact_model_summary() -> dict[str, Any]:
+    return {
+        "model_id": MODEL_ID,
+        "parent_model_id": PARENT_MODEL_ID,
+        "model_path": MODEL_PATH,
+    }
+
+
+def _counterexample_summary(known_bad_scenario_ids: set[str]) -> list[dict[str, str]]:
+    return [
+        {
+            "id": scenario_id,
+            "expected_status": "violation",
+            "source": "validation_composition_scenario",
+        }
+        for scenario_id in sorted(known_bad_scenario_ids)[:3]
+    ]
+
+
+def _deduplicate_detail_sections(sections: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Store repeated detailed report structures once and replace duplicates by refs."""
+
+    store: dict[str, Any] = {}
+    seen: dict[str, str] = {}
+
+    def intern(value: Any, *, root: bool = False) -> Any:
+        if isinstance(value, dict):
+            transformed = {key: intern(child) for key, child in value.items()}
+        elif isinstance(value, list):
+            transformed = [intern(child) for child in value]
+        else:
+            return value
+
+        if root or not isinstance(transformed, (dict, list)):
+            return transformed
+        if len(transformed) < 2:
+            return transformed
+        encoded = json.dumps(transformed, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        if len(encoded) < 96:
+            return transformed
+        key = f"sha256:{hashlib.sha256(encoded.encode('utf-8')).hexdigest()}"
+        reference = seen.get(key)
+        if reference is None:
+            reference = f"detail:{len(store) + 1:04d}"
+            seen[key] = reference
+            store[reference] = transformed
+        return {"$ref": reference}
+
+    transformed_sections = {name: intern(section, root=True) for name, section in sections.items()}
+    return transformed_sections, store
+
+
+def run_all(detail_level: str = "summary") -> tuple[bool, dict[str, Any]]:
+    if detail_level not in {"summary", "full"}:
+        raise ValueError("detail_level must be 'summary' or 'full'")
+
     scenario = run_scenario_review()
     contracts = run_contract_review()
     refinement = run_refinement_review()
@@ -257,64 +381,111 @@ def run_all() -> tuple[bool, dict[str, Any]]:
         ok = False
     skipped_checks = []
 
-    payload = {
+    summary_payload = {
         "schema_version": "skillguard.validation_composition_flowguard_report.current",
         "status": "pass" if ok else "fail",
-        "flowguard": {
-            "schema_version": str(flowguard.SCHEMA_VERSION),
-            "package_version": importlib.metadata.version("flowguard"),
-        },
-        "model": model_summary(),
-        "ownership": {
-            "portable_parent_model_id": "skillguard.executable_contract_runtime.current",
-            "validation_child_model_id": MODEL_ID,
-            "retired_shape_boundary": "negative-fixtures-only",
-            "execution_depth_sibling_model_id": "skillguard.execution_depth_rollout.current",
-            "duplicate_boundary_risk": "none_after_component_owner_partition",
-            "current_testmesh_owner_suites": list(CURRENT_SUITE_IDS),
-            "required_partition_ids": list(ALL_PARTITIONS),
-        },
+        "detail_level": "summary",
+        "flowguard": {"schema_version": str(flowguard.SCHEMA_VERSION)},
+        "model": _compact_model_summary(),
         "repository_manifest_alignment": manifest_alignment,
-        "evidence_ids": EVIDENCE_IDS,
         "positive_gate_status": positive,
         "known_bad_gate_status": expected_bad,
-        "known_bad_scenario_ids": sorted(known_bad_scenario_ids),
-        "reports": {
-            "scenario_review": _dict(scenario),
-            "function_contract_review": _dict(contracts),
-            "refinement_review": _dict(refinement),
-            "loop_stuck_review": _dict(loop_good),
-            "progress_review": _dict(progress_good),
-            "behavior_commitment_review": _dict(bcl),
-            "hierarchy_mesh_review": _dict(hierarchy),
-            "test_mesh_review": _dict(test_mesh),
-            "field_lifecycle_review": _dict(field_lifecycle),
-            "development_process_review": _dict(process),
-            "structure_mesh_review": _dict(structure),
+        "gate_counts": {
+            "positive": {"passed": sum(positive.values()), "total": len(positive)},
+            "known_bad": {"passed": sum(expected_bad.values()), "total": len(expected_bad)},
         },
-        "expected_bad_reports": {
-            "nonterminating_loop": _dict(loop_bad),
-            "stale_reattachment": _dict(hierarchy_bad),
-            "parent_level_reuse": _dict(test_mesh_bad),
-            "out_of_order_process": _dict(process_bad),
-            "duplicate_evidence_store_structure": _dict(structure_bad),
-        },
-        "skipped_checks": skipped_checks,
-        "residual_risk": [
-            "production compiler, same-unit owner receipt, TestMesh, consumer distribution, Portfolio summary, private author router, and external-provider exclusion require focused implementation regressions",
-            "manifest alignment does not prove that every selected owner has a current independently replayable receipt",
-        ],
+        "counterexamples": _counterexample_summary(known_bad_scenario_ids),
         "claim_boundary": CLAIM_BOUNDARY,
     }
+
+    if detail_level == "summary":
+        return ok, summary_payload
+
+    detailed_sections, detail_store = _deduplicate_detail_sections(
+        {
+            "reports": {
+                "scenario_review": _dict(scenario),
+                "function_contract_review": _dict(contracts),
+                "refinement_review": _dict(refinement),
+                "loop_stuck_review": _dict(loop_good),
+                "progress_review": _dict(progress_good),
+                "behavior_commitment_review": _dict(bcl),
+                "hierarchy_mesh_review": _dict(hierarchy),
+                "test_mesh_review": _dict(test_mesh),
+                "field_lifecycle_review": _dict(field_lifecycle),
+                "development_process_review": _dict(process),
+                "structure_mesh_review": _dict(structure),
+            },
+            "expected_bad_reports": {
+                "nonterminating_loop": _dict(loop_bad),
+                "stale_reattachment": _dict(hierarchy_bad),
+                "parent_level_reuse": _dict(test_mesh_bad),
+                "out_of_order_process": _dict(process_bad),
+                "duplicate_evidence_store_structure": _dict(structure_bad),
+            },
+        }
+    )
+    payload = dict(summary_payload)
+    payload.update(
+        {
+            "detail_level": "full",
+            "flowguard": {
+                "schema_version": str(flowguard.SCHEMA_VERSION),
+                "package_version": importlib.metadata.version("flowguard"),
+            },
+            "model": model_summary(),
+            "ownership": {
+                "portable_parent_model_id": "skillguard.executable_contract_runtime.current",
+                "validation_child_model_id": MODEL_ID,
+                "retired_shape_boundary": "negative-fixtures-only",
+                "execution_depth_sibling_model_id": "skillguard.execution_depth_rollout.current",
+                "duplicate_boundary_risk": "none_after_component_owner_partition",
+                "current_testmesh_owner_suites": list(CURRENT_SUITE_IDS),
+                "required_partition_ids": list(ALL_PARTITIONS),
+            },
+            "evidence_ids": EVIDENCE_IDS,
+            "known_bad_scenario_ids": sorted(known_bad_scenario_ids),
+            **detailed_sections,
+            "detail_store": detail_store,
+            "detail_reference_schema": {
+                "$ref": "detail:<id>",
+                "description": "Detailed repeated structures are stored under detail_store and referenced from reports.",
+            },
+            "skipped_checks": skipped_checks,
+            "residual_risk": [
+                "production compiler, same-unit owner receipt, TestMesh, consumer distribution, Portfolio summary, private author router, and external-provider exclusion require focused implementation regressions",
+                "manifest alignment does not prove that every selected owner has a current independently replayable receipt",
+            ],
+        }
+    )
     return ok, payload
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run all component-scoped validation FlowGuard models and expected bad variants.")
     parser.add_argument("--json", action="store_true", help="Emit one machine-readable JSON payload.")
+    parser.add_argument("--full-output", action="store_true", help="Write the explicit detailed report to --output.")
+    parser.add_argument("--output", type=Path, help="Destination for an explicit --full-output JSON report.")
     args = parser.parse_args(argv)
-    ok, payload = run_all()
-    if args.json:
+    if args.output is not None and not args.full_output:
+        parser.error("--output requires --full-output")
+    if args.full_output and args.output is None:
+        parser.error("--full-output requires --output PATH")
+
+    ok, payload = run_all(detail_level="full" if args.full_output else "summary")
+    if args.full_output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        if args.json:
+            stdout_payload = dict(payload)
+            for key in ("reports", "expected_bad_reports", "detail_store", "detail_reference_schema", "ownership", "evidence_ids", "known_bad_scenario_ids", "residual_risk", "skipped_checks"):
+                stdout_payload.pop(key, None)
+            stdout_payload["detail_level"] = "full-file"
+            print(json.dumps(stdout_payload, ensure_ascii=False, indent=2, sort_keys=True))
+        else:
+            print(f"status: {payload['status']}")
+            print(f"detail_output: {args.output}")
+    elif args.json:
         print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     else:
         print(f"status: {payload['status']}")

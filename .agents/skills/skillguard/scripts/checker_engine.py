@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from skillguard_utils import (
+    CLI_SUMMARY_SCHEMA,
     dump_json,
     ensure_under_root,
     load_json,
@@ -89,6 +90,7 @@ from skillguard_v2.template_profiles import (
     validate_template_profile,
 )
 from skillguard_v2.surface_inventory import (
+    SourceObservationContext,
     discover_full_source_surfaces,
     discover_public_source_surfaces,
     validate_full_surface_inventory,
@@ -649,6 +651,16 @@ _ROUTE_TASK_ROUTE_REGISTRY_BASE: tuple[dict[str, Any], ...] = (
         "status": "current",
         "hints": ("route-task", "router", "route", "routing"),
         "keywords": ("route task", "route request", "routing decision", "choose route", "dispatch task"),
+    },
+    {
+        "route_id": "skillguard.route.route-reference.v1",
+        "route_node_id": "route-reference",
+        "command_family": "route-reference",
+        "responsibility": "router",
+        "next_step": "Return one current SkillGuard route capsule and its load order.",
+        "status": "current",
+        "hints": ("route-reference", "selected-route-reference", "route-capsule"),
+        "keywords": ("route reference", "selected route reference", "route capsule", "single route capsule"),
     },
     {
         "route_id": "skillguard.route.plan-skill.v1",
@@ -1491,8 +1503,22 @@ class SkillGuardCliError(Exception):
 
 
 class JsonArgumentParser(argparse.ArgumentParser):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.add_argument(
+            "--full-output",
+            action="store_true",
+            help="Write the complete machine report to --output; stdout remains a bounded summary.",
+        )
+
     def error(self, message: str) -> None:
         raise SkillGuardCliError(self.prog, message)
+
+    def parse_args(self, args: list[str] | None = None, namespace: argparse.Namespace | None = None) -> argparse.Namespace:
+        parsed = super().parse_args(args, namespace)
+        if getattr(parsed, "full_output", False) and getattr(parsed, "output", "-") in {None, "-"}:
+            self.error("--full-output requires --output PATH")
+        return parsed
 
 
 def schema_path(name: str) -> Path:
@@ -2528,6 +2554,7 @@ def check_depth(argv: list[str]) -> int:
                             if str(depth_profile.get("target_skill_id", "")) == "skillguard"
                             else ()
                         )
+                        observation_context = SourceObservationContext(target_candidate)
                         surface_findings.extend(
                             validate_full_surface_inventory(
                                 inventory,
@@ -2537,6 +2564,7 @@ def check_depth(argv: list[str]) -> int:
                                 command_handlers=COMMANDS if str(depth_profile.get("target_skill_id", "")) == "skillguard" else None,
                                 native_check_ids=depth_profile.get("native_check_ids", []),
                                 model_deepening_check_id=str(depth_profile.get("model_deepening_check_id", "")),
+                                observation_context=observation_context,
                             )
                         )
                         surface_result = {
@@ -5769,22 +5797,38 @@ def invoke_post_generation_check(command_name: str, argv: list[str]) -> tuple[in
         return 1, None, f"unsupported post-generation command: {command_name}"
 
     stdout = io.StringIO()
+    work_root = skill_root() / "work"
+    work_root.mkdir(parents=True, exist_ok=True)
     try:
-        with contextlib.redirect_stdout(stdout):
-            exit_code = command(argv)
+        with tempfile.TemporaryDirectory(prefix="post-generation-", dir=work_root) as temp_dir:
+            report_path = Path(temp_dir) / "complete-report.json"
+            report_relative = report_path.relative_to(skill_root()).as_posix()
+            command_argv = list(argv)
+            if "--output" in command_argv:
+                output_index = command_argv.index("--output")
+                if output_index + 1 >= len(command_argv):
+                    return 1, None, "post-generation command has an incomplete --output argument"
+                command_argv[output_index + 1] = report_relative
+            else:
+                command_argv.extend(["--output", report_relative])
+            with contextlib.redirect_stdout(stdout):
+                exit_code = command(command_argv)
+            if not report_path.is_file():
+                return exit_code, None, "post-generation command did not write its complete report file"
+            try:
+                parsed = json.loads(report_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                return exit_code, None, f"post-generation complete report could not be read: {exc}"
+            if not isinstance(parsed, dict):
+                return exit_code, None, "post-generation complete report was not a JSON object"
+            if parsed.get("schema_version") == CLI_SUMMARY_SCHEMA or parsed.get("artifact_type") in {
+                "skillguard_cli_summary",
+                "skillguard_command_surface_summary",
+            }:
+                return exit_code, None, "post-generation command wrote a bounded summary instead of a complete report"
+            return exit_code, parsed, ""
     except Exception as exc:  # pragma: no cover - defensive around generated-artifact validation
         return 1, None, f"{type(exc).__name__}: {exc}"
-
-    raw_output = stdout.getvalue().strip()
-    if not raw_output:
-        return exit_code, None, "post-generation command produced no JSON output"
-    try:
-        parsed = json.loads(raw_output)
-    except json.JSONDecodeError as exc:
-        return exit_code, None, f"post-generation command JSON parse failed: {exc}"
-    if not isinstance(parsed, dict):
-        return exit_code, None, "post-generation command output was not a JSON object"
-    return exit_code, parsed, ""
 
 
 def build_post_generation_check_result(
@@ -7638,6 +7682,7 @@ def plan_skill(argv: list[str]) -> int:
         description="Convert a skill idea JSON file into a no-write Skill Blueprint preview.",
     )
     parser.add_argument("--input", help="Skill idea JSON file under the repository root.")
+    parser.add_argument("--output", default="-", help="Output report path under the skill root, or '-' for stdout.")
     args = parser.parse_args(argv)
 
     payload = base_result("plan-skill")
@@ -7653,7 +7698,7 @@ def plan_skill(argv: list[str]) -> int:
                 "summary": "No input JSON file was supplied.",
             }
         ]
-        return write_and_exit(payload)
+        return write_and_exit(payload, args.output)
 
     try:
         input_path = ensure_under_root(args.input)
@@ -7670,7 +7715,7 @@ def plan_skill(argv: list[str]) -> int:
                 "summary": "The supplied input path is outside the repository root.",
             }
         ]
-        return write_and_exit(payload)
+        return write_and_exit(payload, args.output)
 
     payload["target_path"] = input_relative
     payload["input_path"] = input_relative
@@ -7686,7 +7731,7 @@ def plan_skill(argv: list[str]) -> int:
                 "summary": "The supplied input path does not point to a current file.",
             }
         ]
-        return write_and_exit(payload)
+        return write_and_exit(payload, args.output)
 
     try:
         raw_input = load_json(input_path)
@@ -7702,7 +7747,7 @@ def plan_skill(argv: list[str]) -> int:
                 "summary": "The supplied input file is not parseable JSON.",
             }
         ]
-        return write_and_exit(payload)
+        return write_and_exit(payload, args.output)
 
     normalized, blockers = normalize_plan_skill_input(raw_input)
     target_relative = normalized.get("target_path") or input_relative
@@ -7752,7 +7797,7 @@ def plan_skill(argv: list[str]) -> int:
         payload["blockers"] = blockers
         payload["supported_workflow_modes"] = list(PLAN_SKILL_SUPPORTED_WORKFLOW_MODES)
         payload["supported_safe_edit_modes"] = list(PLAN_SKILL_SUPPORTED_SAFE_EDIT_MODES)
-        return write_and_exit(payload)
+        return write_and_exit(payload, args.output)
 
     blueprint = build_plan_skill_blueprint(normalized, input_relative)
     try:
@@ -7768,7 +7813,7 @@ def plan_skill(argv: list[str]) -> int:
         payload["skipped_checks"] = [
             "No target files were written and no template builder was invoked because template profile planning blocked."
         ]
-        return write_and_exit(payload)
+        return write_and_exit(payload, args.output)
     except TemplatePackError as exc:
         payload["decision"] = "block"
         payload["blockers"] = [
@@ -7778,14 +7823,14 @@ def plan_skill(argv: list[str]) -> int:
         payload["skipped_checks"] = [
             "No target files were written and no template builder was invoked because target template inputs were invalid."
         ]
-        return write_and_exit(payload)
+        return write_and_exit(payload, args.output)
     except (OSError, ValueError) as exc:
         payload["decision"] = "block"
         payload["blockers"] = [f"template profile planning failed: {exc}"]
         payload["skipped_checks"] = [
             "No target files were written because current template source material could not be loaded."
         ]
-        return write_and_exit(payload)
+        return write_and_exit(payload, args.output)
 
     blueprint["template_profile"] = template_profile
     payload["skill_blueprint"] = blueprint
@@ -7833,7 +7878,7 @@ def plan_skill(argv: list[str]) -> int:
         "and the no-write command path. It does not prove target file creation, runtime checker execution, fixture coverage, "
         "tests, suite automation, package publication, release readiness, code-contract validation, external services, or future AI behavior."
     )
-    return write_and_exit(payload)
+    return write_and_exit(payload, args.output)
 
 
 def generate_skill(argv: list[str]) -> int:
@@ -8756,6 +8801,86 @@ def find_route_by_hint(route_hint: str) -> dict[str, Any] | None:
         if normalized_hint in values:
             return entry
     return None
+
+
+def route_reference(argv: list[str]) -> int:
+    """Return one current route capsule without loading the route catalog."""
+
+    parser = JsonArgumentParser(
+        prog="skillguard.py route-reference",
+        description="Return one selected SkillGuard route capsule and its load order.",
+    )
+    parser.add_argument(
+        "route",
+        nargs="?",
+        help="Current route id, route node id, command family, or current route hint.",
+    )
+    parser.add_argument(
+        "--route-id",
+        dest="route_id",
+        help="Named form of the current route id or route node id.",
+    )
+    parser.add_argument("--output", default="-", help="Output path under the skill root, or '-' for stdout.")
+    args = parser.parse_args(argv)
+
+    requested_values = [value.strip() for value in (args.route, args.route_id) if isinstance(value, str) and value.strip()]
+    payload = base_result("route-reference", requested_values[0] if requested_values else "")
+    payload["route_registry_version"] = ROUTE_TASK_REGISTRY_VERSION
+    payload["claim_boundary"] = (
+        "This route-reference result returns only one current public SkillGuard route capsule "
+        "from the author-side registry. It does not load or prove the selected route, execute "
+        "checks, mutate project files, install a consumer, refresh router state, publish a release, "
+        "or establish future AI behavior."
+    )
+    blockers: list[str] = []
+    selected: dict[str, Any] | None = None
+    if len(requested_values) != 1:
+        blockers.append("route-reference requires exactly one positional route or --route-id value")
+    else:
+        selected = find_route_by_hint(requested_values[0])
+        if selected is None:
+            blockers.append("route-reference route is not a current public route")
+
+    payload["requested_route"] = requested_values[0] if len(requested_values) == 1 else ""
+    payload["selected_route"] = public_route_entry(selected) if selected is not None else {}
+    payload["checks"] = [
+        {
+            "check_id": "route-reference:single-capsule",
+            "name": "Single route capsule",
+            "required": True,
+            "status": "pass" if selected is not None and not blockers else "block",
+            "summary": "Returned one current route capsule without returning the complete route registry.",
+        },
+        {
+            "check_id": "route-reference:no-mutation",
+            "name": "No project mutation",
+            "required": True,
+            "status": "pass",
+            "summary": "Route lookup only read the in-process current registry and wrote the requested report output.",
+        },
+    ]
+    payload["evidence"] = [
+        {
+            "evidence_id": "route-reference-current-registry",
+            "kind": "static_registry",
+            "fresh": True,
+            "summary": f"Used {ROUTE_TASK_REGISTRY_VERSION}; stale and repair-only route aliases are not authoritative.",
+            "source_path": ".agents/skills/skillguard/scripts/checker_engine.py",
+        }
+    ]
+    payload["blockers"] = blockers
+    payload["decision"] = "pass" if selected is not None and not blockers else "block"
+    payload["skipped_checks"] = [
+        "The selected route fragment was not read or executed; the caller must load only the returned load_order."
+    ]
+    payload["residual_risk"] = [
+        "The capsule is current registry metadata only; it cannot prove route applicability or target closure.",
+    ]
+    if args.output == "-":
+        print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0 if selected is not None and not blockers else 1
+    write_report(payload, args.output, skill_root())
+    return 0 if selected is not None and not blockers else 1
 
 
 def _declared_cue_evidence(task_text: str, cues: tuple[str, ...]) -> list[dict[str, Any]]:
@@ -11336,6 +11461,7 @@ def checker_command_required_checks(command_name: str) -> list[str]:
         "commands": ["check:self:inventory-static-surface"],
         "assurance-diagnostics": ["check:self:assurance-diagnostics"],
         "route-task": ["check:self:select-function-route"],
+        "route-reference": ["check:self:author-entry-loading"],
         "inventory": ["check:self:inventory-static-surface"],
         "plan-skill": [
             "check:self:select-function-route",
@@ -13037,10 +13163,24 @@ def build_route_task_fixture_argv(fixture_path: Path, case_data: dict[str, Any])
 
 
 def run_fixture_handler(handler: Callable[[list[str]], int], argv: list[str]) -> tuple[int, dict[str, Any]]:
-    stream = io.StringIO()
-    with contextlib.redirect_stdout(stream):
-        exit_code = handler(argv)
-    return exit_code, json.loads(stream.getvalue())
+    runtime_root = skill_root() / "work"
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    handler_argv = list(argv)
+    with tempfile.TemporaryDirectory(prefix="fixture-handler-", dir=runtime_root) as temp_dir:
+        report_path = Path(temp_dir) / "complete-report.json"
+        if "--output" not in handler_argv:
+            handler_argv.extend(["--output", report_path.relative_to(skill_root()).as_posix()])
+        stream = io.StringIO()
+        with contextlib.redirect_stdout(stream):
+            exit_code = handler(handler_argv)
+        if not report_path.is_file():
+            raise ValueError("fixture handler did not publish its complete report to the explicit output path")
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+        if not isinstance(report, dict):
+            raise ValueError("fixture handler complete report must be a JSON object")
+        if report.get("schema_version") == CLI_SUMMARY_SCHEMA:
+            raise ValueError("fixture handler published a bounded CLI summary instead of its complete report")
+        return exit_code, report
 
 
 MUTATING_RUNTIME_FIXTURE_COMMANDS = {
@@ -13863,7 +14003,6 @@ def evaluate_runtime_fixture_case(
     }
     handler = handler_map[target_command]
 
-    stream = io.StringIO()
     sandbox_workspace: Path | None = None
     mutation_before = route_task_fixture_mutation_snapshot(fixture_path, case_data) if target_command == "route-task" else {}
     repeat_report: dict[str, Any] | None = None
@@ -13873,14 +14012,9 @@ def evaluate_runtime_fixture_case(
         run_argv = argv
         if target_command in MUTATING_RUNTIME_FIXTURE_COMMANDS and case_data.get("sandbox_workspace", True) is not False:
             run_argv, sandbox_workspace = sandbox_mutating_runtime_fixture_argv(fixture_path, fixture_id, argv)
-        with contextlib.redirect_stdout(stream):
-            exit_code = handler(run_argv)
-        report = json.loads(stream.getvalue())
+        exit_code, report = run_fixture_handler(handler, run_argv)
         if target_command == "route-task" and deterministic_repeat:
-            repeat_stream = io.StringIO()
-            with contextlib.redirect_stdout(repeat_stream):
-                repeat_exit_code = handler(run_argv)
-            repeat_report = json.loads(repeat_stream.getvalue())
+            repeat_exit_code, repeat_report = run_fixture_handler(handler, run_argv)
             if repeat_exit_code != exit_code:
                 report.setdefault("fixture_repeat_findings", []).append("deterministic repeat exit code changed")
     except Exception as exc:
@@ -14596,12 +14730,14 @@ def self_check(argv: list[str]) -> int:
                     command_surface=current_checker_command_surface(),
                     route_entries=current_route_entries(),
                     command_handlers=COMMANDS,
+                    observation_context=observation_context,
                 )
                 reverse_scan = discover_public_source_surfaces(
                     target,
                     command_surface=current_checker_command_surface(),
                     route_entries=current_route_entries(),
                     command_handlers=COMMANDS,
+                    observation_context=observation_context,
                 )
                 reverse_surface_result = {
                     "status": "pass" if not reverse_findings else "blocked",
@@ -14680,12 +14816,14 @@ def self_check(argv: list[str]) -> int:
                     command_surface=current_checker_command_surface(),
                     route_entries=current_route_entries(),
                     command_handlers=COMMANDS,
+                    observation_context=observation_context,
                 )
                 full_scan = discover_full_source_surfaces(
                     target,
                     command_surface=current_checker_command_surface(),
                     route_entries=current_route_entries(),
                     command_handlers=COMMANDS,
+                    observation_context=observation_context,
                 )
                 full_surface_result = {
                     "status": "pass" if not full_findings else "blocked",
@@ -14881,6 +15019,7 @@ COMMAND_SUMMARIES: dict[str, str] = {
     "commands": "List command dispatch targets.",
     "assurance-diagnostics": "Explain current closure blockers and project target-owned mutation evidence without executing or changing authority.",
     "route-task": "Route one task request to a current SkillGuard command family.",
+    "route-reference": "Return one current route capsule and its selected load order without loading the route catalog.",
     "inventory": "Generate a repository inventory record.",
     "plan-skill": "Convert a skill idea JSON file into a no-write Skill Blueprint preview.",
     "generate-skill": "Create a draft SkillGuard skill scaffold from a valid Skill Blueprint.",
@@ -14939,6 +15078,7 @@ COMMANDS: dict[str, CommandHandler] = {
     "commands": commands,
     "assurance-diagnostics": assurance_diagnostics,
     "route-task": route_task,
+    "route-reference": route_reference,
     "inventory": inventory,
     "plan-skill": plan_skill,
     "generate-skill": generate_skill,

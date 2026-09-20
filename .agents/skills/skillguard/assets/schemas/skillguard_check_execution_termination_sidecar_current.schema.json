@@ -3,7 +3,7 @@
   "$id": "skillguard_check_execution_termination_sidecar_current.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "terminal_kind", "termination_scope", "termination_attempted", "termination_succeeded", "termination_method", "termination_error_kind", "cleanup_confirmed", "claim_boundary"],
+  "required": ["schema_version", "terminal_kind", "termination_scope", "termination_attempted", "termination_succeeded", "termination_method", "termination_error_kind", "termination_reason", "cleanup_confirmed", "claim_boundary"],
   "properties": {
     "schema_version": {"const": "skillguard.check_execution_termination_sidecar.current"},
     "terminal_kind": {"type": "string"},
@@ -12,6 +12,7 @@
     "termination_succeeded": {"type": "boolean"},
     "termination_method": {"type": "string", "minLength": 1},
     "termination_error_kind": {"type": "string"},
+    "termination_reason": {"type": "string"},
     "cleanup_confirmed": {"type": "boolean"},
     "claim_boundary": {"type": "string", "minLength": 1}
   }

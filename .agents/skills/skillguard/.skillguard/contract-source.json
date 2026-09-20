@@ -310,6 +310,10 @@
     },
     {
       "args": [
+        ".agents/skills/skillguard/scripts/check_model_export.py",
+        "--repository-root",
+        ".",
+        "--model-path",
         ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
       ],
       "check_id": "check:self:load-model-export",
@@ -330,6 +334,10 @@
         {
           "kind": "path",
           "path": ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py"
+        },
+        {
+          "kind": "path",
+          "path": ".agents/skills/skillguard/scripts/check_model_export.py"
         }
       ],
       "kind": "command",
@@ -1325,8 +1333,7 @@
         "obligation:provenance"
       ],
       "depends_on_check_ids": [
-        "check:self:compare-installed-and-repository",
-        "check:self:installed-provenance"
+        "check:self:compare-installed-and-repository"
       ],
       "evidence_class": "hard",
       "evidence_domain_id": "skillguard:installation-and-release",
@@ -1842,6 +1849,7 @@
     ".agents/skills/skillguard/.skillguard/flowguard_contract_model.py",
     ".agents/skills/skillguard/references/skillguard-route-index.json",
     ".agents/skills/skillguard/scripts/generate_route_index.py",
+    ".agents/skills/skillguard/scripts/check_model_export.py",
     ".agents/skills/skillguard/scripts/skillguard_v2",
     ".agents/skills/skillguard/scripts/skillguard_v2/portfolio.py",
     ".agents/skills/skillguard/scripts/skillguard_v2/portfolio_records.py",

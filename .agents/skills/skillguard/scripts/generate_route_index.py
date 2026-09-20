@@ -72,7 +72,7 @@ def build_route_index() -> dict[str, Any]:
             "fallback_allowed": False,
         },
         "prompt_budget": {
-            "entry_shell_max_characters": 12000,
+            "entry_shell_max_characters": 6000,
             "single_route_capsule_max_characters": 7000,
             "global_managed_block_max_characters": 9000,
             "minimum_reasoning_headroom_characters": 12000,

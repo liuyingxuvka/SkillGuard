@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.7.5 - 2026-09-20
+
+- Added a bounded single-route reference entrypoint and compact author
+  entry materials so route selection does not require loading the full
+  catalog or execution contract.
+- Kept full reports on explicit artifact paths, separated current pytest
+  leaf ownership from duplicate execution, and preserved exact maintenance
+  unit receipt identity across the joint audit.
+- Updated the author-side FlowGuard adoption boundary for the frozen
+  `v0.69.3` candidate; consumer distributions remain independent of
+  SkillGuard control files and receipts.
+
 ## v0.7.4 - 2026-09-13
 
 - Closed the lightweight functional-maintenance route with current source,

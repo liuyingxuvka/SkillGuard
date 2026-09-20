@@ -461,6 +461,7 @@ def validate_timeout_receipt(receipt: Mapping[str, Any], expected_schema: str) -
         "resume_action",
         "retry_action",
         "terminal_kind",
+        "termination_reason",
         "termination_scope",
         "termination_attempted",
         "termination_succeeded",
@@ -488,6 +489,7 @@ def validate_timeout_receipt(receipt: Mapping[str, Any], expected_schema: str) -
                 "resolved_interpreter_identity",
                 "cleanup_confirmed",
                 "cleanup_confirmation_method",
+                "termination_reason",
                 "descendant_count_before",
                 "descendant_count_after",
                 "remaining_descendant_pids",
@@ -702,6 +704,106 @@ def isolated_process_kwargs() -> dict[str, Any]:
     return {"start_new_session": True}
 
 
+def _windows_process_parent_rows() -> tuple[dict[int, int] | None, str]:
+    """Read a Windows process parent map through Toolhelp32Snapshot."""
+
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        class PROCESSENTRY32W(ctypes.Structure):
+            _fields_ = [
+                ("dwSize", wintypes.DWORD),
+                ("cntUsage", wintypes.DWORD),
+                ("th32ProcessID", wintypes.DWORD),
+                ("th32DefaultHeapID", ctypes.c_size_t),
+                ("th32ModuleID", wintypes.DWORD),
+                ("cntThreads", wintypes.DWORD),
+                ("th32ParentProcessID", wintypes.DWORD),
+                ("pcPriClassBase", ctypes.c_long),
+                ("dwFlags", wintypes.DWORD),
+                ("szExeFile", wintypes.WCHAR * 260),
+            ]
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        create_snapshot = kernel32.CreateToolhelp32Snapshot
+        create_snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+        create_snapshot.restype = wintypes.HANDLE
+        process_first = kernel32.Process32FirstW
+        process_first.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(PROCESSENTRY32W),
+        ]
+        process_first.restype = wintypes.BOOL
+        process_next = kernel32.Process32NextW
+        process_next.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(PROCESSENTRY32W),
+        ]
+        process_next.restype = wintypes.BOOL
+        close_handle = kernel32.CloseHandle
+        close_handle.argtypes = [wintypes.HANDLE]
+        close_handle.restype = wintypes.BOOL
+
+        snapshot = create_snapshot(0x00000002, 0)
+        snapshot_value = int(getattr(snapshot, "value", snapshot) or 0)
+        if not snapshot or snapshot_value == -1:
+            raise OSError(ctypes.get_last_error(), "CreateToolhelp32Snapshot")
+        rows: dict[int, int] = {}
+        try:
+            entry = PROCESSENTRY32W(dwSize=ctypes.sizeof(PROCESSENTRY32W))
+            if not process_first(snapshot, ctypes.byref(entry)):
+                raise OSError(ctypes.get_last_error(), "Process32FirstW")
+            while True:
+                rows[int(entry.th32ProcessID)] = int(entry.th32ParentProcessID)
+                if not process_next(snapshot, ctypes.byref(entry)):
+                    error = ctypes.get_last_error()
+                    if error not in {0, 18}:  # ERROR_NO_MORE_FILES
+                        raise OSError(error, "Process32NextW")
+                    break
+        finally:
+            close_handle(snapshot)
+        return rows, "windows_toolhelp_snapshot"
+    except (AttributeError, OSError, TypeError, ValueError):
+        return None, "windows_process_snapshot_unavailable"
+
+
+def _process_parent_rows() -> tuple[dict[int, int] | None, str]:
+    """Read a best-effort parent map without treating an unavailable query as empty."""
+
+    if os.name == "nt":
+        return _windows_process_parent_rows()
+    proc_root = Path("/proc")
+    if not proc_root.is_dir():
+        return None, "process_snapshot_unavailable"
+    rows: dict[int, int] = {}
+    try:
+        for entry in proc_root.iterdir():
+            if not entry.name.isdigit():
+                continue
+            stat_path = entry / "stat"
+            payload = stat_path.read_text(encoding="utf-8")
+            _, tail = payload.rsplit(")", 1)
+            fields = tail.split()
+            if len(fields) >= 2:
+                rows[int(entry.name)] = int(fields[1])
+    except (OSError, ValueError):
+        return None, "process_snapshot_unavailable"
+    return rows, "procfs_parent_snapshot"
+
+
+def _descendants(root_pid: int, parent_rows: Mapping[int, int]) -> set[int]:
+    descendants: set[int] = set()
+    frontier = {int(root_pid)}
+    while frontier:
+        children = {
+            pid for pid, parent in parent_rows.items() if parent in frontier and pid not in descendants
+        }
+        descendants.update(children)
+        frontier = children
+    return descendants
+
+
 @dataclass
 class ProcessTreeContainment:
     """OS-level containment kept alive until the launcher releases the tree."""
@@ -832,7 +934,9 @@ def release_process_tree_containment(
         "termination_succeeded": False,
         "termination_method": containment.method,
         "termination_error_kind": containment.error_kind,
+        "termination_reason": "unknown",
         "cleanup_confirmed": False,
+        "cleanup_confirmation_method": "unknown",
         "containment_attached": containment.attached,
         # Keep the timeout-receipt shape total even when the OS-level
         # containment query itself fails.  In that case the post-cleanup
@@ -845,11 +949,14 @@ def release_process_tree_containment(
     }
     if containment.released:
         facts["termination_error_kind"] = "containment_already_released"
+        facts["termination_reason"] = "containment_already_released"
         return facts
     containment.released = True
     if not containment.attached:
         fallback = terminate_process_tree(process)
         facts.update(fallback)
+        facts.setdefault("cleanup_confirmation_method", "unknown")
+        facts.setdefault("termination_reason", "unknown")
         facts["cleanup_confirmed"] = bool(
             fallback.get("termination_succeeded")
             and process.poll() is not None
@@ -858,8 +965,18 @@ def release_process_tree_containment(
                 and fallback.get("termination_method") == "already_exited"
             )
         )
+        facts["termination_reason"] = (
+            "process_tree_terminated" if facts["cleanup_confirmed"] else "cleanup_unconfirmed"
+        )
         return facts
     if os.name == "nt":
+        before_rows, before_method = _process_parent_rows()
+        descendants_before = (
+            _descendants(process.pid, before_rows) if before_rows is not None else set()
+        )
+        facts["descendant_count_before"] = (
+            len(descendants_before) if before_rows is not None else -1
+        )
         try:
             import ctypes
             from ctypes import wintypes
@@ -918,10 +1035,22 @@ def release_process_tree_containment(
                 "windows_job_active_process_query"
             )
             facts["descendant_count_before"] = max(
-                0, active_processes_before - 1
+                facts["descendant_count_before"], active_processes_before - 1
             )
             # TerminateJobObject is used even when the direct child already
             # exited: a successful parent must not leave grandchildren alive.
+            if process.poll() is None:
+                taskkill = subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    check=False,
+                    timeout=10,
+                )
+                if taskkill.returncode == 0:
+                    facts["termination_method"] = "windows_taskkill_tree_then_job"
             if not terminate_job(job_handle, 0xE0000001):
                 raise OSError(ctypes.get_last_error(), "TerminateJobObject")
             deadline = time.monotonic() + 10.0
@@ -945,15 +1074,47 @@ def release_process_tree_containment(
                 time.sleep(0.05)
             if process.poll() is None:
                 process.wait(timeout=2)
+            after_rows, after_method = _process_parent_rows()
+            remaining = (
+                sorted(pid for pid in descendants_before if pid in after_rows)
+                if before_rows is not None and after_rows is not None
+                else []
+            )
+            if remaining:
+                for pid in remaining:
+                    subprocess.run(
+                        ["taskkill", "/PID", str(pid), "/T", "/F"],
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        check=False,
+                        timeout=10,
+                    )
+                after_rows, after_method = _process_parent_rows()
+                remaining = (
+                    sorted(pid for pid in descendants_before if pid in after_rows)
+                    if after_rows is not None
+                    else []
+                )
             facts["termination_succeeded"] = process.poll() is not None
             facts["cleanup_confirmed"] = bool(
-                facts["termination_succeeded"] and active_processes == 0
+                facts["termination_succeeded"]
+                and active_processes == 0
+                and before_rows is not None
+                and after_rows is not None
+                and not remaining
             )
-            facts["descendant_count_after"] = max(
-                0, int(active_processes or 0)
+            facts["descendant_count_after"] = (
+                len(remaining) if after_rows is not None else -1
             )
-            facts["remaining_descendant_pids"] = []
+            facts["remaining_descendant_pids"] = remaining
             facts["termination_method"] = "windows_job_terminate_and_query"
+            if remaining:
+                facts["termination_method"] = "windows_taskkill_tree_then_job"
+            facts["termination_reason"] = (
+                "process_tree_terminated" if facts["cleanup_confirmed"] else "cleanup_unconfirmed"
+            )
             if active_processes != 0:
                 facts["termination_error_kind"] = "job_processes_still_active"
             if not close_handle(job_handle):
@@ -961,6 +1122,7 @@ def release_process_tree_containment(
                 facts["termination_error_kind"] = "job_handle_close_failed"
         except (OSError, subprocess.SubprocessError) as exc:
             facts["termination_error_kind"] = type(exc).__name__
+            facts["termination_reason"] = "cleanup_unconfirmed"
             handle = containment.windows_job_handle
             if handle is not None:
                 try:
@@ -970,36 +1132,53 @@ def release_process_tree_containment(
                 except (AttributeError, OSError, TypeError, ValueError):
                     pass
         return facts
+    facts["cleanup_confirmation_method"] = "posix_process_group_probe"
+    group_empty = False
     try:
         try:
             os.killpg(containment.root_pid, signal.SIGTERM)
         except ProcessLookupError:
-            facts["termination_succeeded"] = True
-            facts["cleanup_confirmed"] = True
+            group_empty = True
             facts["termination_method"] = "posix_process_group_already_empty"
-            return facts
-        deadline = time.monotonic() + 5.0
-        while time.monotonic() < deadline:
-            try:
-                os.killpg(containment.root_pid, 0)
-            except ProcessLookupError:
-                facts["termination_succeeded"] = True
-                facts["cleanup_confirmed"] = True
-                return facts
-            time.sleep(0.05)
-        os.killpg(containment.root_pid, signal.SIGKILL)
-        deadline = time.monotonic() + 5.0
-        while time.monotonic() < deadline:
-            try:
-                os.killpg(containment.root_pid, 0)
-            except ProcessLookupError:
-                facts["termination_succeeded"] = True
-                facts["cleanup_confirmed"] = True
-                return facts
-            time.sleep(0.05)
-        facts["termination_error_kind"] = "process_group_still_alive"
+        if not group_empty:
+            deadline = time.monotonic() + 5.0
+            while time.monotonic() < deadline:
+                try:
+                    os.killpg(containment.root_pid, 0)
+                except ProcessLookupError:
+                    group_empty = True
+                    break
+                time.sleep(0.05)
+        if not group_empty:
+            os.killpg(containment.root_pid, signal.SIGKILL)
+            facts["termination_method"] = "posix_process_group_sigkill"
+            deadline = time.monotonic() + 5.0
+            while time.monotonic() < deadline:
+                try:
+                    os.killpg(containment.root_pid, 0)
+                except ProcessLookupError:
+                    group_empty = True
+                    break
+                time.sleep(0.05)
+        try:
+            process.wait(timeout=2)
+        except (OSError, subprocess.SubprocessError):
+            pass
+        root_exited = process.poll() is not None
+        facts["termination_succeeded"] = bool(root_exited and group_empty)
+        facts["cleanup_confirmed"] = bool(root_exited and group_empty)
+        facts["descendant_count_after"] = 0 if group_empty else -1
+        facts["remaining_descendant_pids"] = []
+        facts["termination_reason"] = (
+            "process_group_already_empty" if facts["termination_method"] == "posix_process_group_already_empty"
+            else "process_tree_terminated" if facts["cleanup_confirmed"]
+            else "cleanup_unconfirmed"
+        )
+        if not group_empty:
+            facts["termination_error_kind"] = "process_group_still_alive"
     except (OSError, subprocess.SubprocessError) as exc:
         facts["termination_error_kind"] = type(exc).__name__
+        facts["termination_reason"] = "cleanup_unconfirmed"
     return facts
 
 
@@ -1014,6 +1193,7 @@ def terminate_process_tree(process: subprocess.Popen[Any]) -> Mapping[str, Any]:
         "termination_succeeded": False,
         "termination_method": "",
         "termination_error_kind": "",
+        "termination_reason": "unknown",
         "cleanup_confirmed": False,
         "cleanup_confirmation_method": before_method,
         "descendant_count_before": len(descendants_before),
@@ -1022,10 +1202,11 @@ def terminate_process_tree(process: subprocess.Popen[Any]) -> Mapping[str, Any]:
     }
     if process.poll() is not None:
         facts.update(
-            {
-                "termination_succeeded": True,
-                "termination_method": "already_exited",
-            }
+                {
+                    "termination_succeeded": True,
+                    "termination_method": "already_exited",
+                    "termination_reason": "process_already_exited",
+                }
         )
         after_rows, after_method = _process_parent_rows()
         if before_rows is not None and after_rows is not None:
@@ -1038,6 +1219,13 @@ def terminate_process_tree(process: subprocess.Popen[Any]) -> Mapping[str, Any]:
                     "remaining_descendant_pids": remaining,
                 }
             )
+            facts["termination_reason"] = (
+                "process_tree_terminated"
+                if facts["cleanup_confirmed"]
+                else "cleanup_unconfirmed"
+            )
+        else:
+            facts["termination_reason"] = "cleanup_unconfirmed"
         return facts
     try:
         if os.name == "nt":
@@ -1066,13 +1254,24 @@ def terminate_process_tree(process: subprocess.Popen[Any]) -> Mapping[str, Any]:
                 os.killpg(process.pid, signal.SIGKILL)
             process.wait(timeout=5)
         facts["termination_succeeded"] = process.poll() is not None
+        facts["termination_reason"] = (
+            "process_tree_terminated"
+            if facts["termination_succeeded"]
+            else "cleanup_unconfirmed"
+        )
     except (OSError, subprocess.SubprocessError) as exc:
         facts["termination_error_kind"] = type(exc).__name__
+        facts["termination_reason"] = "cleanup_unconfirmed"
         try:
             process.kill()
             process.wait(timeout=5)
             facts["termination_succeeded"] = process.poll() is not None
             facts["termination_method"] = facts["termination_method"] or "parent_kill_fallback"
+            facts["termination_reason"] = (
+                "process_tree_terminated"
+                if facts["termination_succeeded"]
+                else "cleanup_unconfirmed"
+            )
         except (OSError, subprocess.SubprocessError) as fallback_exc:
             facts["termination_error_kind"] = (
                 f"{type(exc).__name__}:{type(fallback_exc).__name__}"
@@ -1095,5 +1294,10 @@ def terminate_process_tree(process: subprocess.Popen[Any]) -> Mapping[str, Any]:
         facts["cleanup_confirmation_method"] = f"{before_method}+{after_method}"
     facts["termination_succeeded"] = bool(
         facts["termination_succeeded"] and facts["cleanup_confirmed"]
+    )
+    facts["termination_reason"] = (
+        "process_tree_terminated"
+        if facts["termination_succeeded"]
+        else "cleanup_unconfirmed"
     )
     return facts

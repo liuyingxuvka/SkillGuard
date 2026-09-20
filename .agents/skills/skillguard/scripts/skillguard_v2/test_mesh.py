@@ -7,6 +7,8 @@ import hashlib
 import io
 import os
 import re
+import sys
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -17,6 +19,7 @@ from .contract_compiler import (
 )
 from .check_runner import (
     CheckRunnerError,
+    CurrentOwnerInputContext,
     check_toolchain_identity,
     get_or_execute_check,
     inspect_check_prelaunch_admission,
@@ -25,6 +28,7 @@ from .check_runner import (
     inspect_owner_receipt_history,
     load_owner_receipt_from_ref,
     owner_receipt_document_ref,
+    prepare_current_owner_input_context,
     resolve_owner_evidence_root,
 )
 from .execution_records import (
@@ -90,7 +94,39 @@ CURRENT_REQUESTED_CLAIMS = (
     "installed_current",
     "global_router_current",
 )
+CURRENT_TEST_MESH_TOTAL_BUDGET_SECONDS = {
+    "fast": 30.0,
+    "focused": 120.0,
+    "full": 900.0,
+}
 CURRENT_REQUESTED_CLAIM_SET = frozenset(CURRENT_REQUESTED_CLAIMS)
+CURRENT_EXTERNAL_REQUESTED_CLAIM_SET = frozenset(
+    {"installed_current", "global_router_current"}
+)
+# These checks read an external consumer projection rather than the author
+# checkout.  They are claim-gated so a source-only full plan never acquires an
+# implicit installation dependency from the broad enforced obligation set.
+CURRENT_EXTERNAL_CLAIM_CHECK_IDS = {
+    "installed_current": frozenset({"check:self:installed-provenance"}),
+}
+CURRENT_PYTEST_LEAF_PLAN_SCHEMA = "flowguard.pytest_leaf_plan.v1"
+CURRENT_PYTEST_LEAF_PLAN_VERSION = 1
+_PYTEST_LEAF_NON_SEMANTIC_FIELDS = frozenset(
+    {
+        "checked_at",
+        "finished_at",
+        "head",
+        "log_path",
+        "output_path",
+        "receipt_hash",
+        "receipt_id",
+        "report_path",
+        "run_id",
+        "started_at",
+        "stderr_path",
+        "stdout_path",
+    }
+)
 INSTALLATION_BINDING_FIELDS = (
     "schema_version",
     "evidence_domain",
@@ -116,6 +152,579 @@ GLOBAL_PROMPT_BINDING_FIELDS = (
     "content_consumer_projection_hash",
     "binding_hash",
 )
+
+
+def _external_requested_claims(requested_claims: Sequence[str]) -> frozenset[str]:
+    """Return only explicitly requested installation/router claims."""
+
+    return frozenset(
+        set(str(value) for value in requested_claims)
+        & CURRENT_EXTERNAL_REQUESTED_CLAIM_SET
+    )
+
+
+def _pytest_leaf_semantic_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _pytest_leaf_semantic_value(item)
+            for key, item in value.items()
+            if str(key) not in _PYTEST_LEAF_NON_SEMANTIC_FIELDS
+        }
+    if isinstance(value, (list, tuple)):
+        return [_pytest_leaf_semantic_value(item) for item in value]
+    return value
+
+
+def _pytest_leaf_identity(identity: Mapping[str, Any] | str) -> dict[str, Any]:
+    raw: Any = {"identity_fingerprint": identity} if isinstance(identity, str) else identity
+    if not isinstance(raw, Mapping):
+        raise ValueError("current pytest leaf identity invalid")
+    projected = _pytest_leaf_semantic_value(dict(raw))
+    if not projected:
+        raise ValueError("current pytest leaf identity empty")
+    return dict(projected)
+
+
+def _pytest_leaf_key(nodeid: str, identity: Mapping[str, Any] | str) -> str:
+    normalized = str(nodeid).strip()
+    if not normalized:
+        raise ValueError("current pytest leaf node id empty")
+    return wire_hash(
+        {
+            "schema_version": CURRENT_PYTEST_LEAF_PLAN_SCHEMA,
+            "nodeid": normalized,
+            "identity": _pytest_leaf_identity(identity),
+        }
+    )
+
+
+def freeze_pytest_leaf_plan(
+    declarations: Sequence[Mapping[str, Any]],
+    *,
+    required_obligation_ids: Sequence[str] = (),
+) -> dict[str, Any]:
+    """Freeze exact pytest leaves and map duplicate owner obligations to them."""
+
+    leaves_by_key: dict[str, dict[str, Any]] = {}
+    assignments: list[dict[str, Any]] = []
+    covered: set[str] = set()
+    owners: set[str] = set()
+    for declaration in declarations:
+        if not isinstance(declaration, Mapping):
+            raise ValueError("current pytest leaf declaration invalid")
+        owner_id = str(declaration.get("owner_id", "")).strip()
+        raw_obligations = declaration.get("obligation_ids", ())
+        raw_nodeids = declaration.get("node_ids", declaration.get("nodeids", ()))
+        if not owner_id or not isinstance(raw_obligations, Sequence) or isinstance(
+            raw_obligations, (str, bytes, bytearray)
+        ) or not isinstance(raw_nodeids, Sequence) or isinstance(
+            raw_nodeids, (str, bytes, bytearray)
+        ):
+            raise ValueError("current pytest leaf declaration shape invalid")
+        obligation_ids = tuple(
+            dict.fromkeys(str(value).strip() for value in raw_obligations if str(value).strip())
+        )
+        nodeids = tuple(
+            dict.fromkeys(str(value).strip() for value in raw_nodeids if str(value).strip())
+        )
+        if not obligation_ids or len(nodeids) != len(raw_nodeids):
+            raise ValueError("current pytest leaf declaration is empty or ambiguous")
+        identity = _pytest_leaf_identity(
+            declaration.get("identity", declaration.get("execution_identity", {}))
+        )
+        identity_hash = wire_hash(identity)
+        owners.add(owner_id)
+        covered.update(obligation_ids)
+        for nodeid in nodeids:
+            key = _pytest_leaf_key(nodeid, identity)
+            leaf = leaves_by_key.get(key)
+            if leaf is None:
+                leaf = {
+                    "leaf_id": "leaf:" + key.split(":", 1)[1][:32],
+                    "leaf_key": key,
+                    "nodeid": nodeid,
+                    "identity_fingerprint": identity_hash,
+                    "identity": identity,
+                    "owner_ids": [],
+                    "obligation_ids": [],
+                    "assignments": [],
+                    "status": "not_run",
+                    "scope": "current",
+                    "evidence_refs": [],
+                }
+                leaves_by_key[key] = leaf
+            if owner_id not in leaf["owner_ids"]:
+                leaf["owner_ids"].append(owner_id)
+            for obligation_id in obligation_ids:
+                if obligation_id not in leaf["obligation_ids"]:
+                    leaf["obligation_ids"].append(obligation_id)
+            assignment = {
+                "owner_id": owner_id,
+                "obligation_ids": list(obligation_ids),
+                "nodeid": nodeid,
+                "leaf_id": leaf["leaf_id"],
+                "leaf_key": key,
+            }
+            leaf["assignments"].append(assignment)
+            assignments.append(assignment)
+    required = tuple(
+        dict.fromkeys(str(value).strip() for value in required_obligation_ids if str(value).strip())
+    )
+    leaves = [leaves_by_key[key] for key in sorted(leaves_by_key)]
+    plan = {
+        "schema_version": CURRENT_PYTEST_LEAF_PLAN_SCHEMA,
+        "plan_version": CURRENT_PYTEST_LEAF_PLAN_VERSION,
+        "status": "passed" if not set(required) - covered else "blocked",
+        "owner_ids": sorted(owners),
+        "required_obligation_ids": list(required),
+        "covered_obligation_ids": sorted(covered),
+        "missing_obligation_ids": sorted(set(required) - covered),
+        "leaf_count": len(leaves),
+        "execution_count": len(leaves),
+        "logical_assignment_count": len(assignments),
+        "duplicate_assignment_count": max(0, len(assignments) - len(leaves)),
+        "leaves": leaves,
+        "assignments": assignments,
+        "claim_boundary": (
+            "Only exact node-id/runtime identities share one producer. Missing, failed, "
+            "timed-out, and old-scope leaves cannot become current pass evidence."
+        ),
+    }
+    plan["plan_hash"] = _pytest_leaf_plan_hash(plan)
+    return plan
+
+
+def _pytest_leaf_plan_hash(plan: Mapping[str, Any]) -> str:
+    payload = {
+        str(key): value
+        for key, value in plan.items()
+        if str(key) not in {"plan_hash", "observation_hash", "observed_leaf_count"}
+    }
+    raw_leaves = payload.get("leaves")
+    if isinstance(raw_leaves, list):
+        payload["leaves"] = [
+            {
+                str(key): value
+                for key, value in row.items()
+                if str(key) not in {"status", "scope", "evidence_refs"}
+            }
+            if isinstance(row, Mapping)
+            else row
+            for row in raw_leaves
+        ]
+    return wire_hash(payload)
+
+
+def observe_pytest_leaf_plan(
+    plan: Mapping[str, Any],
+    observations: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Attach terminal leaf facts while retaining the frozen plan hash."""
+
+    if plan.get("schema_version") != CURRENT_PYTEST_LEAF_PLAN_SCHEMA:
+        raise ValueError("current pytest leaf plan schema invalid")
+    observed = json.loads(json.dumps(dict(plan), ensure_ascii=False))
+    leaves = observed.get("leaves")
+    if not isinstance(leaves, list):
+        raise ValueError("current pytest leaf plan leaves invalid")
+    by_id = {
+        str(row.get("leaf_id", "")): row
+        for row in leaves
+        if isinstance(row, Mapping) and str(row.get("leaf_id", ""))
+    }
+    seen: set[str] = set()
+    for observation in observations:
+        if not isinstance(observation, Mapping):
+            raise ValueError("current pytest leaf observation invalid")
+        leaf_id = str(observation.get("leaf_id", "")).strip()
+        status = str(observation.get("status", "")).strip()
+        if leaf_id not in by_id or leaf_id in seen:
+            raise ValueError("current pytest leaf observation identity invalid")
+        if status not in {"pass", "fail", "blocked", "not_run", "old_scope"}:
+            raise ValueError("current pytest leaf observation status invalid")
+        row = by_id[leaf_id]
+        row["status"] = status
+        row["scope"] = str(observation.get("scope", "current"))
+        refs = observation.get("evidence_refs", observation.get("evidence_ref", ()))
+        if isinstance(refs, str):
+            refs = [refs] if refs else []
+        if not isinstance(refs, Sequence) or isinstance(refs, (bytes, bytearray)):
+            raise ValueError("current pytest leaf evidence refs invalid")
+        row["evidence_refs"] = [str(value) for value in refs if str(value)]
+        seen.add(leaf_id)
+    observed["observed_leaf_count"] = len(seen)
+    observed["observation_hash"] = _pytest_leaf_plan_hash(
+        {"plan_hash": observed.get("plan_hash", ""), "leaves": observed["leaves"]}
+    )
+    return observed
+
+
+def validate_pytest_leaf_plan(
+    plan: Mapping[str, Any],
+    *,
+    required_obligation_ids: Sequence[str] | None = None,
+) -> dict[str, Any]:
+    findings: list[str] = []
+    if plan.get("schema_version") != CURRENT_PYTEST_LEAF_PLAN_SCHEMA:
+        findings.append("schema_invalid")
+    leaves = plan.get("leaves", ())
+    assignments = plan.get("assignments", ())
+    if not isinstance(leaves, list) or not isinstance(assignments, list):
+        findings.append("shape_invalid")
+        leaves, assignments = [], []
+    leaf_ids = [str(row.get("leaf_id", "")) for row in leaves if isinstance(row, Mapping)]
+    leaf_keys = [str(row.get("leaf_key", "")) for row in leaves if isinstance(row, Mapping)]
+    if len(leaf_ids) != len(set(leaf_ids)) or len(leaf_keys) != len(set(leaf_keys)):
+        findings.append("duplicate_leaf_identity")
+    leaf_by_id = {str(row.get("leaf_id", "")): row for row in leaves if isinstance(row, Mapping)}
+    covered: set[str] = set()
+    for assignment in assignments:
+        if not isinstance(assignment, Mapping):
+            findings.append("assignment_invalid")
+            continue
+        leaf = leaf_by_id.get(str(assignment.get("leaf_id", "")))
+        if leaf is None or leaf.get("nodeid") != assignment.get("nodeid"):
+            findings.append("assignment_leaf_mismatch")
+        covered.update(str(value) for value in assignment.get("obligation_ids", ()) if str(value))
+    required = tuple(
+        str(value)
+        for value in (
+            required_obligation_ids
+            if required_obligation_ids is not None
+            else plan.get("required_obligation_ids", ())
+        )
+        if str(value)
+    )
+    missing = sorted(set(required) - covered)
+    if missing:
+        findings.append("required_obligation_coverage_missing")
+    if plan.get("execution_count") != len(leaf_ids):
+        findings.append("execution_count_mismatch")
+    return {
+        "schema_version": CURRENT_PYTEST_LEAF_PLAN_SCHEMA,
+        "ok": not findings,
+        "findings": findings,
+        "leaf_count": len(leaf_ids),
+        "assignment_count": len(assignments),
+        "execution_count": len(leaf_ids),
+        "duplicate_assignment_count": max(0, len(assignments) - len(leaf_ids)),
+        "missing_obligation_ids": missing,
+    }
+
+
+def pytest_leaf_plan_current_pass(
+    plan: Mapping[str, Any],
+    *,
+    required_obligation_ids: Sequence[str] | None = None,
+) -> bool:
+    if not validate_pytest_leaf_plan(
+        plan, required_obligation_ids=required_obligation_ids
+    )["ok"]:
+        return False
+    required = set(
+        str(value)
+        for value in (
+            required_obligation_ids
+            if required_obligation_ids is not None
+            else plan.get("required_obligation_ids", ())
+        )
+        if str(value)
+    )
+    leaves = [row for row in plan.get("leaves", ()) if isinstance(row, Mapping)]
+    return bool(required) and all(
+        any(
+            obligation in {str(value) for value in leaf.get("obligation_ids", ())}
+            and leaf.get("status") == "pass"
+            and leaf.get("scope", "current") == "current"
+            and bool(leaf.get("evidence_refs"))
+            for leaf in leaves
+        )
+        for obligation in required
+    )
+
+
+def _pytest_leaf_ids_for_owner(
+    plan: Mapping[str, Any] | None,
+    owner_id: str,
+) -> tuple[str, ...]:
+    if not isinstance(plan, Mapping):
+        return ()
+    leaf_ids: list[str] = []
+    for assignment in plan.get("assignments", ()):
+        if not isinstance(assignment, Mapping):
+            continue
+        if str(assignment.get("owner_id", "")) != str(owner_id):
+            continue
+        leaf_id = str(assignment.get("leaf_id", "")).strip()
+        if leaf_id and leaf_id not in leaf_ids:
+            leaf_ids.append(leaf_id)
+    return tuple(leaf_ids)
+
+
+def _shared_pytest_leaf_evidence_for_owner(
+    plan: Mapping[str, Any] | None,
+    *,
+    owner_id: str,
+    check: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Return only exact current leaf evidence that can project one owner.
+
+    The frozen leaf table is the single producer map.  A parent owner may
+    consume it only after every leaf assigned to that owner is current,
+    passing, and linked to at least one immutable evidence reference.
+    """
+
+    if _pytest_check_parts(check) is None:
+        return None
+    if not isinstance(plan, Mapping):
+        return None
+    if plan.get("schema_version") != CURRENT_PYTEST_LEAF_PLAN_SCHEMA:
+        return None
+    if plan.get("plan_hash") != _pytest_leaf_plan_hash(plan):
+        return None
+    if not validate_pytest_leaf_plan(plan).get("ok"):
+        return None
+    leaf_ids = _pytest_leaf_ids_for_owner(plan, owner_id)
+    if not leaf_ids:
+        return None
+    leaves_by_id = {
+        str(row.get("leaf_id", "")): row
+        for row in plan.get("leaves", ())
+        if isinstance(row, Mapping) and str(row.get("leaf_id", ""))
+    }
+    refs: list[dict[str, Any]] = []
+    for leaf_id in leaf_ids:
+        leaf = leaves_by_id.get(leaf_id)
+        if (
+            leaf is None
+            or leaf.get("status") != "pass"
+            or leaf.get("scope", "current") != "current"
+            or not isinstance(leaf.get("evidence_refs"), list)
+            or not leaf.get("evidence_refs")
+        ):
+            return None
+        refs.append(
+            {
+                "leaf_id": leaf_id,
+                "leaf_key": str(leaf.get("leaf_key", "")),
+                "nodeid": str(leaf.get("nodeid", "")),
+                "evidence_refs": list(leaf.get("evidence_refs", ())),
+            }
+        )
+    return {
+        "status": "pass",
+        "plan_hash": str(plan.get("plan_hash", "")),
+        "leaf_ids": list(leaf_ids),
+        "leaf_refs": refs,
+        "check_id": str(check.get("check_id", "")),
+    }
+
+
+def _pytest_leaf_observation_for_owner(
+    plan: Mapping[str, Any] | None,
+    *,
+    owner_id: str,
+    check: Mapping[str, Any],
+    execution: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    """Convert one completed pytest owner into bounded leaf observations.
+
+    A passing process is promoted to leaf pass only when its captured output
+    does not report skipped tests or an empty selection.  This keeps skipped
+    and non-run leaves out of current-pass reuse; failed/non-started owners
+    are recorded as fail/not_run without manufacturing evidence references.
+    """
+
+    if _pytest_check_parts(check) is None or not isinstance(plan, Mapping):
+        return None
+    leaf_ids = _pytest_leaf_ids_for_owner(plan, owner_id)
+    if not leaf_ids:
+        return None
+    raw = execution.get("_raw_result")
+    raw_result = raw if isinstance(raw, Mapping) else {}
+    disposition = str(execution.get("disposition", ""))
+    if raw_result.get("shared_leaf_reuse") is True:
+        return None
+    process_started = bool(
+        raw_result.get("process_started") is True
+        or raw_result.get("executed") is True
+    )
+    if disposition in {"executed_terminal_success", "reused_terminal_success"}:
+        output = "\n".join(
+            str(raw_result.get(field, ""))
+            for field in ("stdout", "stderr")
+        )
+        skipped = (
+            re.search(r"\b(?:\d+|no)\s+skipped\b", output, re.IGNORECASE)
+            if disposition == "executed_terminal_success"
+            else None
+        )
+        empty = (
+            re.search(r"\bno tests ran\b", output, re.IGNORECASE)
+            if disposition == "executed_terminal_success"
+            else None
+        )
+        if skipped or empty:
+            status = "blocked"
+            evidence_refs: list[str] = []
+        else:
+            status = "pass"
+            receipt = execution.get("execution_receipt")
+            receipt_hash = (
+                str(receipt.get("receipt_hash", ""))
+                if isinstance(receipt, Mapping)
+                else ""
+            )
+            evidence_refs = [f"owner-receipt:{receipt_hash}"] if receipt_hash else []
+            if not evidence_refs:
+                status = "blocked"
+    elif process_started or disposition == "executed_failed_attempt":
+        status = "fail"
+        evidence_refs = []
+    else:
+        status = "not_run"
+        evidence_refs = []
+    return {
+        "leaf_ids": leaf_ids,
+        "status": status,
+        "evidence_refs": evidence_refs,
+    }
+
+
+def _pytest_check_parts(check: Mapping[str, Any]) -> tuple[str, ...] | None:
+    command = str(check.get("command", "")).strip()
+    raw_args = check.get("args", ())
+    if not command or not isinstance(raw_args, Sequence) or isinstance(
+        raw_args, (str, bytes, bytearray)
+    ):
+        return None
+    parts = (command, *(str(value) for value in raw_args))
+    if "pytest" not in {value.casefold() for value in parts}:
+        return None
+    if "-m" not in parts:
+        return None
+    try:
+        if parts[parts.index("-m") + 1].casefold() != "pytest":
+            return None
+    except (ValueError, IndexError):
+        return None
+    return parts
+
+
+def _pytest_selection_tokens(parts: Sequence[str]) -> tuple[str, ...]:
+    """Return selector-only tokens that do not alter one node's execution."""
+
+    values: list[str] = []
+    skip_next = False
+    for index, value in enumerate(parts):
+        if index == 0 or skip_next:
+            skip_next = False
+            continue
+        if value in {"-k", "--deselect", "--ignore", "--ignore-glob"}:
+            values.append(value)
+            skip_next = True
+            continue
+        if value.startswith("-k=") or value.startswith("--deselect="):
+            values.append(value)
+    return tuple(values)
+
+
+def _pytest_runtime_argument_tokens(parts: Sequence[str]) -> tuple[str, ...]:
+    """Remove only collection-selection predicates from the runtime key."""
+
+    values: list[str] = []
+    skip_next = False
+    for index, value in enumerate(parts):
+        if index == 0:
+            values.append(value)
+            continue
+        if skip_next:
+            skip_next = False
+            continue
+        if value in {"-k", "--deselect", "--ignore", "--ignore-glob"}:
+            skip_next = True
+            continue
+        if value.startswith("-k=") or value.startswith("--deselect="):
+            continue
+        values.append(value)
+    return tuple(values)
+
+
+def _collect_pytest_nodeids_once(
+    repository_root: Path,
+    parts: Sequence[str],
+    *,
+    cache: dict[tuple[str, ...], tuple[str, ...] | str],
+) -> tuple[str, ...]:
+    """Collect one declared pytest selection once for the frozen plan.
+
+    This is an observation-only subprocess.  The cache key retains the
+    selection predicate, while the resulting leaf identities can still share
+    exact node executions when their runtime identity is otherwise equal.
+    """
+
+    import subprocess as _subprocess
+
+    key = tuple(str(value) for value in parts)
+    cached = cache.get(key)
+    if isinstance(cached, str):
+        raise ValueError(cached)
+    if cached is not None:
+        return cached
+    if (
+        len(parts) >= 3
+        and parts[1] == "-m"
+        and parts[2].casefold() == "pytest"
+    ):
+        command = [parts[0], "-B", *parts[1:]]
+    else:
+        command = list(parts)
+    if "--collect-only" not in command:
+        command.append("--collect-only")
+    if "-q" not in command and "--quiet" not in command:
+        command.append("-q")
+    if "-p" not in command:
+        command.extend(("-p", "no:cacheprovider"))
+    environment = dict(os.environ)
+    environment.update(
+        {
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTHONUTF8": "1",
+            "PYTEST_DISABLE_PLUGIN_AUTOLOAD": environment.get(
+                "PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1"
+            ),
+        }
+    )
+    try:
+        completed = _subprocess.run(
+            command,
+            cwd=repository_root,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120.0,
+        )
+    except (OSError, _subprocess.TimeoutExpired) as exc:
+        reason = f"pytest_leaf_collection_failed:{type(exc).__name__}"
+        cache[key] = reason
+        raise ValueError(reason) from exc
+    if completed.returncode != 0:
+        reason = f"pytest_leaf_collection_failed:exit={completed.returncode}"
+        cache[key] = reason
+        raise ValueError(reason)
+    nodeids = tuple(
+        dict.fromkeys(
+            line.strip()
+            for line in (completed.stdout + "\n" + completed.stderr).splitlines()
+            if "::" in line
+            and line.strip()
+            and " " not in line.strip()
+            and not line.lstrip().startswith(("<", "=", "PLUGIN"))
+        )
+    )
+    cache[key] = nodeids
+    return nodeids
 
 
 
@@ -723,6 +1332,12 @@ def _selected_owner_rows(
             check_ids.update(
                 str(value) for value in obligation.get("required_check_ids", [])
             )
+        requested_claims = {
+            str(value) for value in profile.get("requested_claims", [])
+        }
+        for claim_id, gated_check_ids in CURRENT_EXTERNAL_CLAIM_CHECK_IDS.items():
+            if claim_id not in requested_claims:
+                check_ids.difference_update(gated_check_ids)
     plan = contract.get("content_impact_plan")
     if (
         not isinstance(plan, Mapping)
@@ -1058,6 +1673,13 @@ def _compile_current_test_mesh_plan(
     except (ValueError, OSError) as exc:
         return _blocked_current_plan(profile_id, [str(exc)])
     impact_plan = contract["content_impact_plan"]
+    try:
+        owner_input_context = prepare_current_owner_input_context(
+            repository_root,
+            impact_plan,
+        )
+    except (CheckRunnerError, ValueError, OSError) as exc:
+        return _blocked_current_plan(profile_id, [str(exc)])
     maintenance_unit_id = str(contract.get("maintenance_unit_id", ""))
     member_skill_id = str(contract.get("skill_id", ""))
     persistent_root = resolve_owner_evidence_root(
@@ -1071,6 +1693,8 @@ def _compile_current_test_mesh_plan(
             ).append(check)
 
     prelaunch_by_owner: dict[str, dict[str, Any]] = {}
+    pytest_collection_cache: dict[tuple[str, ...], tuple[str, ...] | str] = {}
+    pytest_leaf_declarations: list[dict[str, Any]] = []
     try:
         for owner in owners:
             owner_id = str(owner["execution_owner_id"])
@@ -1110,7 +1734,75 @@ def _compile_current_test_mesh_plan(
                 repository_root=repository_root,
                 content_impact_plan=impact_plan,
                 owner=owner,
+                context=owner_input_context,
             )
+            pytest_parts = _pytest_check_parts(check)
+            if pytest_parts is not None:
+                pytest_nodeids = _collect_pytest_nodeids_once(
+                    repository_root,
+                    pytest_parts,
+                    cache=pytest_collection_cache,
+                )
+                if pytest_nodeids:
+                    declared_environment = check.get("environment", {})
+                    if not isinstance(declared_environment, Mapping):
+                        declared_environment = {}
+                    identity = {
+                        "interpreter": dict(toolchain),
+                        "environment": {
+                            "declared": dict(declared_environment),
+                            "PYTEST_ADDOPTS": os.environ.get("PYTEST_ADDOPTS", ""),
+                            "PYTEST_DISABLE_PLUGIN_AUTOLOAD": os.environ.get(
+                                "PYTEST_DISABLE_PLUGIN_AUTOLOAD", ""
+                            ),
+                        },
+                        "config": {
+                            "cwd_token": str(check.get("cwd_token", "")),
+                            "cwd_relative": str(check.get("cwd_relative", ".")),
+                        },
+                        # Selection predicates (-k/--deselect) are logical
+                        # owner scope, not node execution semantics.  Their
+                        # overlapping node ids can therefore share a leaf
+                        # only when every runtime identity below is equal.
+                        "args_semantics": list(
+                            _pytest_runtime_argument_tokens(pytest_parts)
+                        ),
+                        "input_identity": str(
+                            current_input["owner_input_projection_hash"]
+                        ),
+                        "timeout_seconds": float(check.get("timeout_seconds", 0) or 0),
+                        "timeout_result": "not_observed",
+                        "plugins": list(check.get("pytest_plugins", ()))
+                        if isinstance(check.get("pytest_plugins", ()), Sequence)
+                        and not isinstance(check.get("pytest_plugins", ()), (str, bytes, bytearray))
+                        else [],
+                        "instrumentation": dict(
+                            check.get("pytest_instrumentation", {})
+                        )
+                        if isinstance(check.get("pytest_instrumentation", {}), Mapping)
+                        else {},
+                        "target_input_roles": dict(
+                            prelaunch_by_owner[owner_id].get(
+                                "target_input_role_fingerprints", {}
+                            )
+                        ),
+                    }
+                    pytest_leaf_declarations.append(
+                        {
+                            "owner_id": owner_id,
+                            "obligation_ids": list(
+                                str(value)
+                                for value in check.get(
+                                    "covers_obligation_ids", []
+                                )
+                                if str(value)
+                            )
+                            or [str(check.get("check_id", ""))],
+                            "node_ids": list(pytest_nodeids),
+                            "identity": identity,
+                            "selection_scope": list(_pytest_selection_tokens(pytest_parts)),
+                        }
+                    )
             toolchain_rows.append(
                 {"execution_owner_id": owner_id, **toolchain}
             )
@@ -1136,6 +1828,7 @@ def _compile_current_test_mesh_plan(
                         dependency_id: reusable_receipts[dependency_id]
                         for dependency_id in dependency_ids
                     },
+                    owner_input_context=owner_input_context,
                 )
             if (
                 inspection is not None
@@ -1296,7 +1989,7 @@ def _compile_current_test_mesh_plan(
             ["current_test_mesh_requested_claims_invalid"],
         )
     claim_requires_external_binding = bool(
-        set(selected_claims) & {"installed_current", "global_router_current"}
+        _external_requested_claims(selected_claims)
     )
     if claim_requires_external_binding and full_admission_reason not in full_reasons:
         # External claims are explicit requests, not an implicit consequence of
@@ -1409,6 +2102,23 @@ def _compile_current_test_mesh_plan(
             [dict(prompt_binding)] if prompt_binding is not None else []
         ),
         "owner_plans": owner_plans,
+        "pytest_leaf_plan": (
+            freeze_pytest_leaf_plan(
+                pytest_leaf_declarations,
+                required_obligation_ids=tuple(
+                    sorted(
+                        {
+                            str(value)
+                            for declaration in pytest_leaf_declarations
+                            for value in declaration.get("obligation_ids", ())
+                            if str(value)
+                        }
+                    )
+                ),
+            )
+            if pytest_leaf_declarations
+            else None
+        ),
         "execution_count": 0,
         "findings": [],
         "claim_boundary": (
@@ -1429,6 +2139,7 @@ def _validate_frozen_current_plan(
     skill_root: Path,
     target_root: Path,
     owner_evidence_root: Path | None,
+    owner_input_context: CurrentOwnerInputContext | None = None,
 ) -> tuple[list[Mapping[str, Any]], dict[str, Mapping[str, Any]]]:
     if (
         frozen_plan.get("schema_version") != CURRENT_TEST_MESH_PLAN_SCHEMA
@@ -1437,6 +2148,21 @@ def _validate_frozen_current_plan(
         or frozen_plan.get("plan_hash") != _current_plan_hash(frozen_plan)
     ):
         raise ValueError("current_test_mesh_frozen_plan_invalid")
+    pytest_leaf_plan = frozen_plan.get("pytest_leaf_plan")
+    if pytest_leaf_plan is not None:
+        if not isinstance(pytest_leaf_plan, Mapping):
+            raise ValueError("current_test_mesh_frozen_pytest_leaf_plan_invalid")
+        if (
+            pytest_leaf_plan.get("plan_hash")
+            != _pytest_leaf_plan_hash(pytest_leaf_plan)
+        ):
+            raise ValueError("current_test_mesh_frozen_pytest_leaf_plan_hash_stale")
+        leaf_audit = validate_pytest_leaf_plan(pytest_leaf_plan)
+        if not leaf_audit.get("ok"):
+            raise ValueError(
+                "current_test_mesh_frozen_pytest_leaf_plan_invalid:"
+                + ",".join(str(value) for value in leaf_audit.get("findings", []))
+            )
     mesh_manifest = _load_current_test_mesh_manifest(manifest_path)
     contract = load_contract_snapshot(run_root)
     check_manifest = load_check_manifest_snapshot(run_root)
@@ -1459,6 +2185,10 @@ def _validate_frozen_current_plan(
     if selected_owner_ids != list(frozen_plan.get("selected_owner_ids", [])):
         raise ValueError("current_test_mesh_frozen_owner_selection_stale")
     impact_plan = contract["content_impact_plan"]
+    current_owner_input_context = owner_input_context or prepare_current_owner_input_context(
+        repository_root,
+        impact_plan,
+    )
     profile_claims = tuple(str(value) for value in _profile.get("requested_claims", []))
     requested_claims = tuple(str(value) for value in frozen_plan.get("requested_claims", []))
     if (
@@ -1470,7 +2200,7 @@ def _validate_frozen_current_plan(
     ):
         raise ValueError("current_test_mesh_profile_requested_claims_invalid")
     claim_requires_external_binding = bool(
-        set(requested_claims) & {"installed_current", "global_router_current"}
+        _external_requested_claims(requested_claims)
     )
     if bool(frozen_plan.get("full_admission_required", False)) != claim_requires_external_binding:
         raise ValueError("current_test_mesh_frozen_claim_binding_projection_stale")
@@ -1569,6 +2299,7 @@ def _validate_frozen_current_plan(
             repository_root=repository_root,
             content_impact_plan=impact_plan,
             owner=owner,
+            context=current_owner_input_context,
         )
         expected_decision = (
             "reuse_owner_receipt"
@@ -1784,11 +2515,39 @@ def _execute_frozen_current_test_mesh_owners(
     skill_root: Path,
     target_root: Path,
     owner_evidence_root: Path | None,
+    total_budget_seconds: float | None,
+    diagnostic: bool,
 ) -> dict[str, Any]:
     """Execute only the immutable plan's exact missing owner partition."""
 
     profile_id = str(frozen_plan.get("profile_id", ""))
+    configured_budget = (
+        CURRENT_TEST_MESH_TOTAL_BUDGET_SECONDS.get(profile_id)
+        if total_budget_seconds is None
+        else total_budget_seconds
+    )
     try:
+        budget_seconds = float(configured_budget)
+    except (TypeError, ValueError):
+        return _blocked_owner_execution(
+            profile_id,
+            frozen_plan,
+            ["current_test_mesh_total_budget_invalid"],
+        )
+    if budget_seconds <= 0 or not budget_seconds < float("inf"):
+        return _blocked_owner_execution(
+            profile_id,
+            frozen_plan,
+            ["current_test_mesh_total_budget_invalid"],
+        )
+    invocation_started = time.monotonic()
+    invocation_deadline = invocation_started + budget_seconds
+    try:
+        contract = load_contract_snapshot(run_root)
+        owner_input_context = prepare_current_owner_input_context(
+            repository_root,
+            contract["content_impact_plan"],
+        )
         owners, checks_by_owner = _validate_frozen_current_plan(
             frozen_plan,
             manifest_path=manifest_path,
@@ -1797,8 +2556,8 @@ def _execute_frozen_current_test_mesh_owners(
             skill_root=skill_root,
             target_root=target_root,
             owner_evidence_root=owner_evidence_root,
+            owner_input_context=owner_input_context,
         )
-        contract = load_contract_snapshot(run_root)
         step_by_owner = {
             owner_id: _check_step_id(
                 contract, str(check.get("check_id", ""))
@@ -1829,8 +2588,41 @@ def _execute_frozen_current_test_mesh_owners(
     failed: list[str] = []
     not_run: list[str] = []
     results_by_owner: dict[str, dict[str, Any]] = {}
+    frozen_pytest_leaf_plan = frozen_plan.get("pytest_leaf_plan")
+    observed_pytest_leaf_plan = (
+        json.loads(json.dumps(dict(frozen_pytest_leaf_plan), ensure_ascii=False))
+        if isinstance(frozen_pytest_leaf_plan, Mapping)
+        else None
+    )
     findings: list[str] = []
     execution_count = 0
+
+    def mark_not_run(
+        owner: Mapping[str, Any],
+        *,
+        disposition: str,
+        finding: str,
+    ) -> None:
+        owner_id = str(owner["execution_owner_id"])
+        if owner_id in not_run or owner_id in results_by_owner:
+            return
+        check = checks_by_owner[owner_id]
+        check_id = str(check.get("check_id", ""))
+        step_id = step_by_owner[owner_id]
+        not_run.append(owner_id)
+        results_by_owner[owner_id] = {
+            "execution_owner_id": owner_id,
+            "primary_check_id": check_id,
+            **_owner_result_check_projection(plan_by_owner[owner_id]),
+            "step_id": step_id,
+            "planned_disposition": "execute_owner",
+            "terminal_disposition": disposition,
+            "process_started": False,
+            "receipt_id": "",
+            "receipt_hash": "",
+            "receipt_ref": None,
+            "finding": finding,
+        }
 
     # Planned reuse is a read-only precondition on the frozen plan.  Verify
     # every such receipt before any process may start so a stale plan cannot
@@ -1886,6 +2678,7 @@ def _execute_frozen_current_test_mesh_owners(
                 run_root=run_root,
                 owner_evidence_root=persistent_root,
                 dependency_execution_receipts=dependency_receipts,
+                owner_input_context=owner_input_context,
             )
         except CheckRunnerError as exc:
             inspection = {"disposition": "execute_owner", "reason": str(exc)}
@@ -1956,6 +2749,24 @@ def _execute_frozen_current_test_mesh_owners(
         owner_id = str(owner["execution_owner_id"])
         if owner_id not in planned_execute_set:
             continue
+        if time.monotonic() >= invocation_deadline:
+            findings.append("test_mesh_budget_exhausted")
+            remaining_owner_rows = owners[
+                next(
+                    index
+                    for index, row in enumerate(owners)
+                    if str(row["execution_owner_id"]) == owner_id
+                ) :
+            ]
+            for remaining_owner in remaining_owner_rows:
+                remaining_id = str(remaining_owner["execution_owner_id"])
+                if remaining_id in planned_execute_set:
+                    mark_not_run(
+                        remaining_owner,
+                        disposition="budget_exhausted",
+                        finding=f"owner_budget_exhausted:{remaining_id}",
+                    )
+            break
         check = checks_by_owner[owner_id]
         check_id = str(check.get("check_id", ""))
         step_id = step_by_owner[owner_id]
@@ -2001,6 +2812,11 @@ def _execute_frozen_current_test_mesh_owners(
             process_started_in_call = True
 
         try:
+            shared_leaf_evidence = _shared_pytest_leaf_evidence_for_owner(
+                observed_pytest_leaf_plan,
+                owner_id=owner_id,
+                check=check,
+            )
             execution = get_or_execute_check(
                 check,
                 skill_root=skill_root,
@@ -2010,13 +2826,23 @@ def _execute_frozen_current_test_mesh_owners(
                 step_id=step_id,
                 owner_evidence_root=persistent_root,
                 dependency_execution_receipts=dependency_receipts,
+                owner_input_context=owner_input_context,
                 progress_context={
                     "completed_count": len(executed)
                     + len(reused_after_freeze)
                     + len(failed),
                     "total_count": len(planned_execute),
+                    "budget_seconds": budget_seconds,
+                    "budget_remaining_seconds": max(
+                        0.0, invocation_deadline - time.monotonic()
+                    ),
                 },
                 process_started_callback=mark_process_started,
+                deadline=invocation_deadline,
+                timeout_cap_seconds=max(
+                    0.0, invocation_deadline - time.monotonic()
+                ),
+                shared_leaf_evidence=shared_leaf_evidence,
             )
         except (CheckRunnerError, OSError, ValueError) as exc:
             finding = f"owner_execution_error:{owner_id}:{exc}"
@@ -2039,8 +2865,44 @@ def _execute_frozen_current_test_mesh_owners(
                 "receipt_ref": None,
                 "finding": finding,
             }
+            if process_started_in_call:
+                stop_finding = f"owner_not_run_after_failure:{owner_id}"
+                findings.append(stop_finding)
+                owner_index = next(
+                    index
+                    for index, row in enumerate(owners)
+                    if str(row["execution_owner_id"]) == owner_id
+                )
+                for remaining_owner in owners[owner_index + 1 :]:
+                    if str(remaining_owner["execution_owner_id"]) in planned_execute_set:
+                        mark_not_run(
+                            remaining_owner,
+                            disposition="not_run_after_failure",
+                            finding=stop_finding,
+                        )
+                break
             continue
 
+        if observed_pytest_leaf_plan is not None:
+            leaf_observation = _pytest_leaf_observation_for_owner(
+                observed_pytest_leaf_plan,
+                owner_id=owner_id,
+                check=check,
+                execution=execution,
+            )
+            if leaf_observation is not None:
+                observed_pytest_leaf_plan = observe_pytest_leaf_plan(
+                    observed_pytest_leaf_plan,
+                    [
+                        {
+                            "leaf_id": leaf_id,
+                            "status": leaf_observation["status"],
+                            "scope": "current",
+                            "evidence_refs": leaf_observation["evidence_refs"],
+                        }
+                        for leaf_id in leaf_observation["leaf_ids"]
+                    ],
+                )
         disposition = str(execution.get("disposition", ""))
         receipt = execution.get("execution_receipt")
         record = execution.get("record")
@@ -2050,11 +2912,32 @@ def _execute_frozen_current_test_mesh_owners(
         ) or process_started_in_call
         if process_started:
             execution_count += 1
-        if (
+        record_reason = (
+            str(record.get("reason", ""))
+            if isinstance(record, Mapping)
+            else ""
+        )
+        budget_stop = (
+            disposition.startswith("not_run_budget_exhausted")
+            or record_reason == "budget_exhausted"
+            or time.monotonic() >= invocation_deadline
+        )
+        cleanup_unconfirmed = bool(
+            isinstance(record, Mapping)
+            and (
+                record.get("cleanup_confirmed") is False
+                or str(record.get("terminal_kind", ""))
+                in {"cleanup_unconfirmed", "cancelled", "interrupted"}
+                or str(record.get("termination_reason", ""))
+                in {"unknown", "cleanup_unconfirmed"}
+            )
+        )
+        owner_succeeded = (
             disposition
             in {"executed_terminal_success", "reused_terminal_success"}
             and isinstance(receipt, Mapping)
-        ):
+        )
+        if owner_succeeded:
             receipts[owner_id] = receipt
             if disposition == "executed_terminal_success":
                 executed.append(owner_id)
@@ -2067,14 +2950,17 @@ def _execute_frozen_current_test_mesh_owners(
             if process_started:
                 failed.append(owner_id)
             else:
-                not_run.append(owner_id)
+                if owner_id not in not_run:
+                    not_run.append(owner_id)
         results_by_owner[owner_id] = {
             "execution_owner_id": owner_id,
             "primary_check_id": check_id,
             **_owner_result_check_projection(plan_by_owner[owner_id]),
             "step_id": step_id,
             "planned_disposition": "execute_owner",
-            "terminal_disposition": disposition or "unknown",
+            "terminal_disposition": (
+                "budget_exhausted" if budget_stop else disposition or "unknown"
+            ),
             "process_started": process_started,
             "receipt_id": str(
                 receipt.get("receipt_id", "")
@@ -2093,6 +2979,41 @@ def _execute_frozen_current_test_mesh_owners(
             ),
             "finding": finding,
         }
+        if budget_stop:
+            findings.append("test_mesh_budget_exhausted")
+            owner_index = next(
+                index
+                for index, row in enumerate(owners)
+                if str(row["execution_owner_id"]) == owner_id
+            )
+            for remaining_owner in owners[owner_index + 1 :]:
+                if str(remaining_owner["execution_owner_id"]) in planned_execute_set:
+                    mark_not_run(
+                        remaining_owner,
+                        disposition="budget_exhausted",
+                        finding=f"owner_budget_exhausted:{remaining_owner['execution_owner_id']}",
+                    )
+            break
+        if (
+            process_started
+            and not owner_succeeded
+            and (cleanup_unconfirmed or not diagnostic)
+        ):
+            stop_finding = f"owner_not_run_after_failure:{owner_id}"
+            findings.append(stop_finding)
+            owner_index = next(
+                index
+                for index, row in enumerate(owners)
+                if str(row["execution_owner_id"]) == owner_id
+            )
+            for remaining_owner in owners[owner_index + 1 :]:
+                if str(remaining_owner["execution_owner_id"]) in planned_execute_set:
+                    mark_not_run(
+                        remaining_owner,
+                        disposition="not_run_after_failure",
+                        finding=stop_finding,
+                    )
+            break
 
     return {
         "schema_version": CURRENT_TEST_MESH_OWNER_EXECUTION_SCHEMA,
@@ -2109,6 +3030,17 @@ def _execute_frozen_current_test_mesh_owners(
         "failed_owner_ids": failed,
         "not_run_owner_ids": not_run,
         "execution_count": execution_count,
+        "diagnostic_mode": bool(diagnostic),
+        "total_budget_seconds": budget_seconds,
+        "budget_exhausted": "test_mesh_budget_exhausted" in findings,
+        "pytest_leaf_plan": observed_pytest_leaf_plan,
+        "pytest_leaf_reuse_count": sum(
+            1
+            for row in results_by_owner.values()
+            if row.get("terminal_disposition") == "reused_terminal_success"
+            and row.get("process_started") is False
+            and isinstance(row.get("receipt_ref"), Mapping)
+        ),
         "owner_results": [
             results_by_owner[owner_id]
             for owner_id in selected_owner_ids
@@ -2136,6 +3068,13 @@ def _aggregate_frozen_current_test_mesh(
     global_prompt_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     try:
+        contract = load_contract_snapshot(run_root)
+        # This is intentionally a fresh post-run observation.  Never reuse
+        # the owner-input cache that admitted or executed the frozen plan.
+        owner_input_context = prepare_current_owner_input_context(
+            repository_root,
+            contract["content_impact_plan"],
+        )
         owners, checks_by_owner = _validate_frozen_current_plan(
             frozen_plan,
             manifest_path=manifest_path,
@@ -2144,6 +3083,7 @@ def _aggregate_frozen_current_test_mesh(
             skill_root=skill_root,
             target_root=target_root,
             owner_evidence_root=owner_evidence_root,
+            owner_input_context=owner_input_context,
         )
     except (CheckRunnerError, ValueError, OSError) as exc:
         return {
@@ -2189,6 +3129,7 @@ def _aggregate_frozen_current_test_mesh(
                     dependency_id: receipts[dependency_id]
                     for dependency_id in dependency_ids
                 },
+                owner_input_context=owner_input_context,
             )
         except (CheckRunnerError, KeyError) as exc:
             return {
@@ -2981,6 +3922,8 @@ def execute_test_mesh(
     verified_installation_context: VerifiedInstallationContext | None = None,
     global_prompt_codex_home: Path | None = None,
     global_prompt_skill_roots: Sequence[Path] | None = None,
+    total_budget_seconds: float | None = None,
+    diagnostic: bool = False,
 ) -> dict[str, Any]:
     repository_root = canonical_filesystem_path(repository_root)
     try:
@@ -3044,8 +3987,9 @@ def execute_test_mesh(
             profile_id,
             ["current_test_mesh_profile_requested_claims_invalid"],
         )
-    requires_installation = "installed_current" in effective_requested_claims
-    requires_router = "global_router_current" in effective_requested_claims
+    external_claims = _external_requested_claims(effective_requested_claims)
+    requires_installation = "installed_current" in external_claims
+    requires_router = "global_router_current" in external_claims
     external_claim_requested = requires_installation or requires_router
     binding_options_supplied = bool(
         installation_receipt_root
@@ -3220,6 +4164,8 @@ def execute_test_mesh(
             skill_root=skill_root.resolve(),
             target_root=target_root.resolve(),
             owner_evidence_root=owner_evidence_root,
+            total_budget_seconds=total_budget_seconds,
+            diagnostic=diagnostic,
         )
     if mode == "aggregation_only":
         installation_binding: Mapping[str, Any] | None = None

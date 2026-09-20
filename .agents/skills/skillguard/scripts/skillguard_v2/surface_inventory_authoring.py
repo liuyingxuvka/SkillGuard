@@ -28,7 +28,9 @@ if str(_SCRIPT_ROOT) not in sys.path:
 
 from skillguard_v2.surface_inventory import (  # noqa: E402
     PublicSourceSurface,
+    SourceObservationContext,
     discover_full_source_surfaces,
+    discover_public_source_surfaces,
     surface_inventory_hash,
 )
 
@@ -72,8 +74,11 @@ class SemanticRule:
     proof_ref: str
     source_paths: tuple[str, ...] = ()
     kinds: tuple[str, ...] = ()
+    surface_ids: tuple[str, ...] = ()
 
     def matches(self, surface: PublicSourceSurface) -> bool:
+        if self.surface_ids and surface.surface_id not in self.surface_ids:
+            return False
         if self.source_paths and surface.source_path not in self.source_paths:
             return False
         if self.kinds and surface.kind not in self.kinds:
@@ -91,6 +96,8 @@ class SemanticRule:
             payload["source_paths"] = list(self.source_paths)
         if self.kinds:
             payload["kinds"] = list(self.kinds)
+        if self.surface_ids:
+            payload["surface_ids"] = list(self.surface_ids)
         return payload
 
 
@@ -181,6 +188,20 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
             "scripts/skillguard_v2/run_store.py",
             "scripts/skillguard_v2/supervisor.py",
             "scripts/skillguard_v2/self_host.py",
+        ),
+    ),
+    SemanticRule(
+        "decision:self-host-finalize-terminal-closure",
+        (
+            "obligation:exact-closure",
+            "obligation:artifact-freshness",
+            "obligation:guard-run-identity",
+        ),
+        "The frozen self-host finalizer and its explicit fault surface may close only from the exact current mesh, artifact, and run identity.",
+        _CHECK_PROOF + "#check:self:issue-closure-receipt",
+        surface_ids=(
+            "api:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
+            "fault:scripts/skillguard_v2/self_host.py:finalize_current_self_host_from_frozen_mesh",
         ),
     ),
     SemanticRule(
@@ -309,6 +330,18 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
             "scripts/skillguard_test_mesh.py",
             "assets/schemas/skillguard_functional_closure.schema.json",
         ),
+    ),
+    SemanticRule(
+        "decision:test-mesh-component-ownership-and-closure",
+        (
+            "obligation:route-ownership",
+            "obligation:depth-native-authority",
+            "obligation:unique-depth-evidence",
+            "obligation:exact-closure",
+        ),
+        "The test-mesh component owns its route, native-depth, unique-evidence, and terminal-closure boundary as one explicit review unit.",
+        _CHECK_PROOF + "#check:self:test-mesh-fast",
+        surface_ids=("component:scripts/skillguard_test_mesh.py",),
     ),
     SemanticRule(
         "decision:execution-depth-closure",
@@ -547,6 +580,100 @@ def _rule_summary(surface: PublicSourceSurface) -> list[str]:
     return [rule.rule_id for rule in _rules_for_surface(surface)]
 
 
+def _new_reverse_surface_row(surface: PublicSourceSurface) -> dict[str, Any]:
+    """Author the minimum explicit meaning for one newly observed reverse row."""
+
+    row = surface.to_dict()
+    row.update(
+        {
+            "disposition": "governed",
+            "intent_id": "intent:reverse:" + surface.surface_id,
+            "owner_id": "owner:self:reverse-surface",
+            "required_check_ids": ["check:self:surface-inventory"],
+            "adequacy_check_ids": ["check:self:surface-inventory"],
+            "evidence_subject_ids": ["subject:reverse:" + surface.surface_id],
+        }
+    )
+    if surface.function_id:
+        row["symbol"] = surface.function_id
+    return row
+
+
+def _refresh_reverse_surface_row(
+    previous: Mapping[str, Any],
+    surface: PublicSourceSurface,
+) -> dict[str, Any]:
+    """Refresh only observed identity fields on an existing reverse row."""
+
+    row = dict(previous)
+    source = surface.to_dict()
+    for field in (
+        "kind",
+        "name",
+        "source_path",
+        "source_fingerprint",
+        "function_id",
+        "route_id",
+        "review_group_id",
+        "review_granularity",
+        "component_members",
+    ):
+        if field in row or field != "component_members":
+            row[field] = source[field]
+    row["surface_id"] = surface.surface_id
+    if "source_symbol_or_route" in row:
+        row["source_symbol_or_route"] = surface.function_id or surface.route_id
+    if "symbol" in row:
+        row["symbol"] = surface.function_id or surface.route_id
+    return row
+
+
+def _refresh_command_surface_row(
+    command: Mapping[str, Any],
+    surface: PublicSourceSurface,
+    old_row: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Refresh source identity while keeping command semantics target-owned."""
+
+    name = str(command.get("name", "")).strip()
+    dispatch = str(command.get("dispatch_function", "")).strip()
+    if not name or not dispatch:
+        raise ValueError("current command surface contains an incomplete command identity")
+    row = dict(old_row) if isinstance(old_row, Mapping) else {}
+    row.update(
+        {
+            "surface_id": name,
+            "kind": "command",
+            "name": name,
+            "source_path": surface.source_path,
+            "source_fingerprint": surface.source_fingerprint,
+            "function_id": dispatch,
+            "route_id": surface.route_id,
+            "review_group_id": surface.review_group_id,
+            "review_granularity": surface.review_granularity,
+            "source_symbol_or_route": dispatch,
+            "symbol": dispatch,
+        }
+    )
+    if not old_row:
+        row.update(
+            {
+                "disposition": "governed",
+                "intent_id": "intent:surface:command:" + name,
+                "owner_id": "owner:self:command-surface",
+                "obligation_ids": ["obligation:surface:command:" + name],
+                "required_check_ids": ["check:self:author-entry-loading"],
+                "adequacy_check_ids": ["check:self:surface-inventory"],
+                "execution_owner_ids": ["owner:self:command-surface"],
+                "evidence_subject_ids": ["subject:surface:command:" + name],
+                "lifecycle_phase": "runtime",
+                "consumer_exposure": "author-cli",
+                "write_authority": "target-owned",
+            }
+        )
+    return row
+
+
 def build_current_semantic_map(
     *,
     target_root: Path,
@@ -559,15 +686,59 @@ def build_current_semantic_map(
 
     target_root = target_root.resolve()
     obligation_ids = _compiled_obligation_ids(target_root)
+    observation_context = SourceObservationContext(target_root)
+    public_scan = discover_public_source_surfaces(
+        target_root,
+        command_surface=command_surface,
+        route_entries=route_entries,
+        command_handlers=command_handlers,
+        observation_context=observation_context,
+    )
     scan = discover_full_source_surfaces(
         target_root,
         command_surface=command_surface,
         route_entries=route_entries,
         command_handlers=command_handlers,
+        observation_context=observation_context,
     )
-    if scan.findings:
+    if public_scan.findings or scan.findings:
         raise ValueError("fresh source discovery is not clean; semantic authoring is blocked")
     old = _load_json(inventory_path) if inventory_path.is_file() else {}
+    public_by_id = {surface.surface_id: surface for surface in public_scan.surfaces}
+    full_by_id = {surface.surface_id: surface for surface in scan.surfaces}
+    old_command_rows = {
+        str(row.get("surface_id")): row
+        for row in old.get("rows", [])
+        if isinstance(row, Mapping) and row.get("surface_id")
+    }
+    command_rows: list[dict[str, Any]] = []
+    for command in command_surface:
+        if not isinstance(command, Mapping):
+            raise ValueError("current command surface contains a non-object entry")
+        name = str(command.get("name", "")).strip()
+        dispatch = str(command.get("dispatch_function", "")).strip()
+        surface = full_by_id.get("command:" + name)
+        public_surface = public_by_id.get("dispatch:" + dispatch)
+        if surface is None or public_surface is None:
+            raise ValueError(f"current command surface is not source-observable: {name}")
+        command_rows.append(
+            _refresh_command_surface_row(command, surface, old_command_rows.get(name))
+        )
+    old_reverse_rows = {
+        str(row.get("surface_id")): row
+        for row in old.get("reverse_surfaces", [])
+        if isinstance(row, Mapping) and row.get("surface_id")
+    }
+    reverse_rows: list[dict[str, Any]] = []
+    for surface in public_scan.surfaces:
+        previous = old_reverse_rows.get(surface.surface_id)
+        reverse_rows.append(
+            _refresh_reverse_surface_row(previous, surface)
+            if previous is not None
+            else _new_reverse_surface_row(surface)
+        )
+    command_rows.sort(key=lambda row: str(row.get("surface_id", "")))
+    reverse_rows.sort(key=lambda row: str(row.get("surface_id", "")))
     old_rows = {
         str(row.get("surface_id")): row
         for row in old.get("full_surfaces", [])
@@ -678,6 +849,10 @@ def build_current_semantic_map(
     inventory["target_skill_id"] = "skillguard"
     inventory["source_kind"] = "target-owned-full-source-discovery"
     inventory["source_paths"] = list(scan.source_paths)
+    inventory["observed_surface_ids"] = [str(row["surface_id"]) for row in command_rows]
+    inventory["rows"] = command_rows
+    inventory["reverse_surface_ids"] = [str(row["surface_id"]) for row in reverse_rows]
+    inventory["reverse_surfaces"] = reverse_rows
     inventory["full_surface_ids"] = list(map_payload["full_surface_ids"])
     inventory["full_surfaces"] = rows
     inventory["current_obligation_ids"] = list(obligation_ids)

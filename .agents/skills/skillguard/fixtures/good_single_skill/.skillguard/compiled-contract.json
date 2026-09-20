@@ -1,6 +1,6 @@
 {
   "artifacts": [],
-  "check_declarations_hash": "245A11E29E6A76A883162A54DB385E9082B5AFDA0F46CB460703C4D87F4579D2",
+  "check_declarations_hash": "E15B5324C6969763A142C862FB6D9A47D81082C480181DFB45BF794517263019",
   "checks": [
     {
       "args": [
@@ -37,7 +37,7 @@
       "kind": "command",
       "maintenance_unit_id": "unit:good_single_skill",
       "member_skill_id": "good_single_skill",
-      "owner_declaration_hash": "sha256:bcce42e92cff99282cc8c087cfb5f3c4766c8bf1f7ae63d1516be8ade8b724d9",
+      "owner_declaration_hash": "sha256:3bb1c4e183615a91680fe0868ba75f1c06f0272eb41f7e157ae670a3a8f5035d",
       "owner_input_projection_hash": "sha256:3db28f6614f9b6cab0dc19c6b1fe6b899b5a46871563e6517cc9ec62818522ff",
       "projection_declaration_hash": "sha256:5b2bf07eefedd158c5877664519b76d3e798b9b94196f078b683a611107f3381",
       "semantic_check_id": "semantic:good_single_skill:generated-current",
@@ -166,7 +166,7 @@
       "owner_cycles": [],
       "unmapped_paths": []
     },
-    "impact_graph_hash": "sha256:b49748b84a54559f508ebd3586b7d440d59179738b0c29bdedc9290f1ae8105a",
+    "impact_graph_hash": "sha256:447f68f7fc108b41d211c3634898d4c0c6b6614b4ce28ed56c5509bcecec7ec7",
     "inventory": [
       {
         "classification_rule_id": "skillguard.content_role_classifier.current:contract_schema",
@@ -224,7 +224,7 @@
             "path": "scripts/run_checks.py"
           }
         ],
-        "owner_declaration_hash": "sha256:bcce42e92cff99282cc8c087cfb5f3c4766c8bf1f7ae63d1516be8ade8b724d9",
+        "owner_declaration_hash": "sha256:3bb1c4e183615a91680fe0868ba75f1c06f0272eb41f7e157ae670a3a8f5035d",
         "owner_input_projection_hash": "sha256:3db28f6614f9b6cab0dc19c6b1fe6b899b5a46871563e6517cc9ec62818522ff",
         "target_input_role_ids": []
       }
@@ -295,7 +295,7 @@
     "schema_version": "skillguard.content_impact_plan.current",
     "unknown_mapping_disposition": "block"
   },
-  "contract_hash": "AA69F6221B6F4E4753AD5E591E36933361DAD572C8B3E2B82F178FF4972A827B",
+  "contract_hash": "824EC7F48740A221728CC72F9FCA13DC9FDBE62E197C120F19EB43DBBACC6742",
   "flowguard_schema_version": "1.0",
   "functions": [
     {

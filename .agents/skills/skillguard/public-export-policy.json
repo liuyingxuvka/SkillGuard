@@ -38,7 +38,7 @@
   "large_text_review_records": [
     {
       "asset_path": ".agents/skills/skillguard/.skillguard/surface-inventory.json",
-      "asset_sha256": "sha256:10c76135ef7c7788ffa439cffebbd6be3ffc2f1093fa1ee118c1f353c5e81bb9",
+      "asset_sha256": "sha256:4a65e2c83683bf80817f3ef250f5dec371b2fbd937e38e47327c6cf76466c32e",
       "status": "passed",
       "review_scope": "Generated author-side reverse surface denominator; relative source identities only; excluded from consumer installation projection."
     }

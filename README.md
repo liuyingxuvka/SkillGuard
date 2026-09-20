@@ -10,7 +10,7 @@
 </p>
 <!-- README HERO END -->
 
-Current release: `v0.7.4` (source-only; validation evidence and publication status remain separate claims)
+Current release: `v0.7.5` (source-only; validation evidence and publication status remain separate claims)
 
 English comes first; the second half is a full Chinese mirror.
 
@@ -79,11 +79,11 @@ SkillGuard currently ships as source plus a local Python dispatcher. It is not a
 | --- | --- |
 | Skill entrypoint | `.agents/skills/skillguard/SKILL.md` |
 | Local dispatcher | `.agents/skills/skillguard/scripts/skillguard.py` |
-| Source version | `0.7.4` |
+| Source version | `0.7.5` |
 | Author control root | `.skillguard/**` inside explicit maintainer sources only |
 | Consumer projection | Target-owned files plus `consumer-release.json`; no SkillGuard dependency |
 | Ordinary project behavior | Zero SkillGuard writes |
-| Reverse implementation denominator | Current author inventory covers 1,968 implementation surfaces and 119 reverse surfaces with exact current bindings; the local self-check reports no findings within its declared boundary. A row is not a source-code line. |
+| Reverse implementation denominator | Current author inventory covers 2,004 implementation surfaces and 122 reverse surfaces with exact current bindings; the local self-check reports no findings within its declared boundary. A row is not a source-code line. |
 | OpenSpec relationship | Official external provider; read-only context only |
 | Publication | Not proven by local source or tests |
 
@@ -97,7 +97,7 @@ python .agents/skills/skillguard/scripts/skillguard.py commands
 
 The current public commands are:
 
-- discovery and author routing: `commands`, `route-task`, `inventory`, `scan-global-skills`, `build-global-registry`, `check-global-registry`, `refresh-global-router`;
+- discovery and author routing: `commands`, `route-task`, `route-reference`, `inventory`, `scan-global-skills`, `build-global-registry`, `check-global-registry`, `refresh-global-router`;
 - planning and generation: `plan-skill`, `generate-skill`, `generate-suite`;
 - author repository and contract work: `maintainer-adopt`, `maintainer-audit`, `check-runtime-authority`, `check-json-schema`, `check-contract`, `check-depth`, `check-capability`, `audit-capabilities`, `check-source-sync`, `init-target`, `init-suite`, `mark`, `check-skill`, `check-suite`, `check-suite-map`, `check-suite-contract`;
 - fixtures and evidence review: `assurance-diagnostics`, `check-fixture-manifest`, `fixture-test`, `detect-stale-evidence`, `review-checker-change`, `check-maintenance-record`, `check-ai-judgment`, `check-report`, `check-workflow-report`, `make-closure`, `evidence-audit`, `evidence-gc-plan`, `evidence-gc-apply`, `evidence-gc-purge`;
@@ -176,7 +176,7 @@ Portfolio records one status per independent maintenance unit. A change stales o
 ### Adopt Or Audit A Skill Repository
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.7.4
+python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.7.5
 python .agents/skills/skillguard/scripts/skillguard.py maintainer-audit --root <author-repository>
 ```
 
@@ -289,11 +289,11 @@ SkillGuard 目前以源码和本地 Python 调度器的形式存在，不是托�
 | --- | --- |
 | 技能入口 | `.agents/skills/skillguard/SKILL.md` |
 | 本地调度器 | `.agents/skills/skillguard/scripts/skillguard.py` |
-| 源码版本 | `0.7.4` |
+| 源码版本 | `0.7.5` |
 | 作者控制目录 | 只存在于明确维护源码里的 `.skillguard/**` |
 | 消费者投影 | 目标自己的文件和 `consumer-release.json`，不依赖 SkillGuard |
 | 普通项目 | SkillGuard 零写入 |
-| 反向实现分母 | 反向发现已经启用；当前作者清单包含 1,968 个实现表面和 119 个反向表面，并按精确的当前绑定连接意图、owner、检查和证据；本地 self-check 在声明边界内没有 findings。源码行只是定位锚点，不是独立 row。 |
+| 反向实现分母 | 反向发现已经启用；当前作者清单包含 2,004 个实现表面和 122 个反向表面，并按精确的当前绑定连接意图、owner、检查和证据；本地 self-check 在声明边界内没有 findings。源码行只是定位锚点，不是独立 row。 |
 | OpenSpec | 官方外部工具，只读上下文 |
 | 发布 | 不能由本地源码或测试自动证明 |
 

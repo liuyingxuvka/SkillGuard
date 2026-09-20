@@ -84,7 +84,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--global-prompt-codex-home")
     parser.add_argument("--global-prompt-skill-root", action="append", default=[])
     parser.add_argument("--profile", action="append", default=[])
+    parser.add_argument("--output", help="Write the complete machine report to this repository-relative file.")
+    parser.add_argument(
+        "--full-output",
+        action="store_true",
+        help="Require --output for the complete machine report; stdout remains a bounded summary.",
+    )
     args = parser.parse_args(argv)
+    if args.full_output and not args.output:
+        parser.error("--full-output requires --output PATH")
+    repository_root = Path(args.repository_root).resolve()
     if args.claim_only:
         if any(
             value
@@ -108,7 +117,12 @@ def main(argv: list[str] | None = None) -> int:
             result = claim_current_self_host_run(Path(args.repository_root))
         except Exception as exc:
             result = _exception_terminal(exc)
-        emit_json(result)
+        emit_json(
+            result,
+            output=args.output,
+            full_output=args.full_output,
+            root=repository_root,
+        )
         return 0 if result.get("status") == "passed" else 1
     if not args.finalize:
         parser.error(
@@ -116,7 +130,6 @@ def main(argv: list[str] | None = None) -> int:
             "to the frozen TestMesh owner-execution stage"
         )
     try:
-        repository_root = Path(args.repository_root).resolve()
         frozen_plan_path = Path(args.frozen_plan).resolve()
         aggregation_ref_path = Path(args.aggregation_ref).resolve()
         frozen_plan = json.loads(frozen_plan_path.read_text(encoding="utf-8"))
@@ -189,7 +202,12 @@ def main(argv: list[str] | None = None) -> int:
         )
     except Exception as exc:
         result = _exception_terminal(exc)
-    emit_json(result)
+    emit_json(
+        result,
+        output=args.output,
+        full_output=args.full_output,
+        root=repository_root,
+    )
     return 0 if result.get("status") == "passed" else 1
 
 

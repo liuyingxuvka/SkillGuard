@@ -36,21 +36,32 @@ def write_json(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def run_skillguard(*args: str, expected_exit: int = 0) -> dict[str, Any]:
-    completed = subprocess.run(
-        [sys.executable, str(SKILLGUARD), *args],
-        cwd=REPO_ROOT,
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if completed.returncode != expected_exit:
-        raise AssertionError(
-            f"skillguard.py {' '.join(args)} exited {completed.returncode}, expected {expected_exit}\n"
-            f"stderr={completed.stderr}\nstdout={completed.stdout}"
+def run_skillguard(*args: str, expected_exit: int = 0, full_output: bool = True) -> dict[str, Any]:
+    command_args = list(args)
+    runtime_root = SKILL_ROOT / "work"
+    runtime_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="test-cli-report-", dir=runtime_root) as temp_dir:
+        report_path = Path(temp_dir) / "complete-report.json"
+        if full_output and "--output" not in command_args:
+            command_args.extend(["--output", report_path.relative_to(SKILL_ROOT).as_posix()])
+        completed = subprocess.run(
+            [sys.executable, str(SKILLGUARD), *command_args],
+            cwd=REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
         )
-    return json.loads(completed.stdout)
+        if completed.returncode != expected_exit:
+            raise AssertionError(
+                f"skillguard.py {' '.join(command_args)} exited {completed.returncode}, expected {expected_exit}\n"
+                f"stderr={completed.stderr}\nstdout={completed.stdout}"
+            )
+        if full_output:
+            if not report_path.is_file():
+                raise AssertionError(f"command did not write the explicit complete report: {report_path}")
+            return json.loads(report_path.read_text(encoding="utf-8"))
+        return json.loads(completed.stdout)
 
 
 def skill_idea(target: Path) -> dict[str, Any]:

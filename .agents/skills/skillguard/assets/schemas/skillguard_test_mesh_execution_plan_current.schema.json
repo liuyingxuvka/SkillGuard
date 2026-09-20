@@ -124,6 +124,33 @@
       "maxItems": 1,
       "items": {"type": "object"}
     },
+    "pytest_leaf_plan": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "required": ["schema_version", "plan_version", "status", "owner_ids", "required_obligation_ids", "covered_obligation_ids", "missing_obligation_ids", "leaf_count", "execution_count", "logical_assignment_count", "duplicate_assignment_count", "leaves", "assignments", "claim_boundary", "plan_hash"],
+          "properties": {
+            "schema_version": {"type": "string", "minLength": 1},
+            "plan_version": {"type": "integer", "minimum": 1},
+            "status": {"enum": ["passed", "blocked"]},
+            "owner_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "required_obligation_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "covered_obligation_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "missing_obligation_ids": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+            "leaf_count": {"type": "integer", "minimum": 0},
+            "execution_count": {"type": "integer", "minimum": 0},
+            "logical_assignment_count": {"type": "integer", "minimum": 0},
+            "duplicate_assignment_count": {"type": "integer", "minimum": 0},
+            "leaves": {"type": "array", "items": {"type": "object"}},
+            "assignments": {"type": "array", "items": {"type": "object"}},
+            "claim_boundary": {"type": "string", "minLength": 1},
+            "plan_hash": {"$ref": "#/$defs/hash"}
+          },
+          "additionalProperties": true
+        }
+      ]
+    },
     "claim_boundary": {"type": "string", "minLength": 1}
   },
   "if": {"properties": {"status": {"const": "passed"}}},

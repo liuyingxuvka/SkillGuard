@@ -247,7 +247,7 @@ def _wire_hash(value: bytes) -> str:
     return "sha256:" + hashlib.sha256(value).hexdigest()
 
 
-def _source_fingerprint(path: Path) -> str:
+def _source_fingerprint_from_bytes(path: Path, source_bytes: bytes) -> str:
     """Return the current semantic identity for one discovered source file.
 
     ``large_text_review_records`` in the public-export policy are
@@ -260,16 +260,108 @@ def _source_fingerprint(path: Path) -> str:
 
     if path.name == "public-export-policy.json":
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            payload = json.loads(source_bytes.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
             # Invalid policy bytes retain their exact identity so policy
             # validation fails closed instead of hiding the error.
-            return _wire_hash(path.read_bytes())
+            return _wire_hash(source_bytes)
         if isinstance(payload, dict) and "large_text_review_records" in payload:
             payload = dict(payload)
             payload.pop("large_text_review_records", None)
             return _wire_hash(_canonical_bytes(payload))
-    return _wire_hash(path.read_bytes())
+    # Source identity is semantic text identity, not package-byte identity.
+    # The distribution layer owns exact bytes; this reverse source boundary
+    # must not make a line-ending-only checkout change every surface row.
+    normalized = source_bytes.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return _wire_hash(normalized)
+
+
+def _source_fingerprint(path: Path) -> str:
+    """Return the current semantic identity for one source file.
+
+    This one-file helper remains the direct-call boundary for callers that do
+    not have a discovery context.  Source discovery itself uses
+    :class:`SourceObservationContext` so repeated surface rows never reread
+    or rehash the same file.
+    """
+
+    return _source_fingerprint_from_bytes(path, path.read_bytes())
+
+
+def _real_source_path(path: Path) -> Path:
+    """Return a stable real-path spelling for one in-process observation key."""
+
+    return Path(os.path.normcase(os.path.realpath(os.fspath(path))))
+
+
+@dataclass(frozen=True)
+class SourceObservation:
+    """One immutable source observation held for a single discovery call."""
+
+    path: Path
+    relative_path: str
+    source_bytes: bytes
+    source_fingerprint: str
+    tree: ast.Module | None = None
+    parse_error: str = ""
+
+
+class SourceObservationContext:
+    """Per-call source bytes, AST, and fingerprint observations.
+
+    The cache is intentionally process-local and owned by the caller.  It is
+    keyed by real paths under one controlled root, has no mtime or disk cache,
+    and is never shared implicitly across discovery calls.
+    """
+
+    def __init__(self, controlled_root: Path):
+        self.controlled_root = _real_source_path(controlled_root)
+        self._observations: dict[str, SourceObservation] = {}
+
+    def ensure_root(self, controlled_root: Path) -> None:
+        expected = _real_source_path(controlled_root)
+        if expected != self.controlled_root:
+            raise ValueError(
+                "source observation context root does not match the controlled discovery root"
+            )
+
+    def observe(self, path: Path) -> SourceObservation:
+        resolved = _real_source_path(path)
+        try:
+            relative_path = resolved.relative_to(self.controlled_root).as_posix()
+        except ValueError as exc:
+            raise ValueError(
+                f"source observation path escapes controlled root: {path}"
+            ) from exc
+        key = os.path.normcase(os.fspath(resolved))
+        cached = self._observations.get(key)
+        if cached is not None:
+            return cached
+
+        source_bytes = resolved.read_bytes()
+        tree: ast.Module | None = None
+        parse_error = ""
+        if resolved.suffix.lower() == ".py":
+            try:
+                tree = ast.parse(
+                    source_bytes.decode("utf-8"),
+                    filename=relative_path,
+                )
+            except (UnicodeError, SyntaxError) as exc:
+                parse_error = str(exc)
+        observation = SourceObservation(
+            path=resolved,
+            relative_path=relative_path,
+            source_bytes=source_bytes,
+            source_fingerprint=_source_fingerprint_from_bytes(resolved, source_bytes),
+            tree=tree,
+            parse_error=parse_error,
+        )
+        self._observations[key] = observation
+        return observation
+
+    def fingerprint(self, path: Path) -> str:
+        return self.observe(path).source_fingerprint
 
 
 def surface_inventory_hash(payload: Mapping[str, Any]) -> str:
@@ -284,18 +376,79 @@ def _text(value: object) -> str:
     return str(value).strip() if isinstance(value, str) else ""
 
 
+@dataclass(frozen=True)
+class _NormalizedIds:
+    """Validated ID-array values and the set used by relation checks."""
+
+    values: tuple[str, ...]
+    value_set: frozenset[str]
+
+
+class _IdsNormalizationContext:
+    """Invocation-local ID-array memo that retains object identities safely."""
+
+    def __init__(self) -> None:
+        self._records: dict[int, tuple[object, _NormalizedIds]] = {}
+
+    def get(self, value: object) -> _NormalizedIds | None:
+        entry = self._records.get(id(value))
+        if entry is None or entry[0] is not value:
+            return None
+        return entry[1]
+
+    def put(self, value: object, record: _NormalizedIds) -> None:
+        # Retain the original object alongside its id so a later object cannot
+        # inherit a record after Python reuses that id.
+        self._records[id(value)] = (value, record)
+
+
+class _FindingAccumulator(list[SurfaceInventoryFinding]):
+    """Findings list carrying one validator-call ID normalization context."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.ids_context = _IdsNormalizationContext()
+
+
+def _normalized_ids(
+    value: object,
+    *,
+    path: str,
+    findings: list[SurfaceInventoryFinding],
+) -> _NormalizedIds:
+    """Validate one ID array and return its tuple/set projection."""
+
+    values = _ids(value, path=path, findings=findings)
+    context = getattr(findings, "ids_context", None)
+    if isinstance(context, _IdsNormalizationContext):
+        cached = context.get(value)
+        if cached is not None:
+            return cached
+    return _NormalizedIds(tuple(values), frozenset(values))
+
+
 def _ids(value: object, *, path: str, findings: list[SurfaceInventoryFinding]) -> list[str]:
+    context = getattr(findings, "ids_context", None)
+    if isinstance(context, _IdsNormalizationContext):
+        cached = context.get(value)
+        if cached is not None:
+            return list(cached.values)
     if not isinstance(value, list):
         findings.append(_finding("surface_inventory_ids_invalid", path, "a list of ids is required"))
         return []
     result: list[str] = []
+    valid = True
     for index, item in enumerate(value):
         text = _text(item)
         if not text or not _ID_RE.fullmatch(text):
+            valid = False
             findings.append(_finding("surface_inventory_id_invalid", f"{path}[{index}]", item))
         result.append(text)
     if len(result) != len(set(result)):
+        valid = False
         findings.append(_finding("surface_inventory_id_duplicate", path, "ids must be unique"))
+    if valid and isinstance(context, _IdsNormalizationContext):
+        context.put(value, _NormalizedIds(tuple(result), frozenset(result)))
     return result
 
 
@@ -321,7 +474,8 @@ def _owner_ids(
             )
         )
         return []
-    owners = _ids(value, path=path, findings=findings)
+    owners_record = _normalized_ids(value, path=path, findings=findings)
+    owners = list(owners_record.values)
     if not owners:
         findings.append(
             _finding(
@@ -330,7 +484,7 @@ def _owner_ids(
                 "at least one target-owned owner id is required",
             )
         )
-    if len(owners) != len(set(owners)):
+    if len(owners) != len(owners_record.value_set):
         findings.append(
             _finding(
                 "surface_owner_id_duplicate",
@@ -387,19 +541,27 @@ def _module_name_for_source(path: Path, scripts_root: Path) -> str:
     return ".".join(parts)
 
 
-def _source_module_index(scripts_root: Path) -> tuple[dict[str, tuple[Path, set[str], bool, dict[str, str]]], list[SurfaceInventoryFinding]]:
+def _source_module_index(
+    scripts_root: Path,
+    observation_context: SourceObservationContext | None = None,
+) -> tuple[dict[str, tuple[Path, set[str], bool, dict[str, str]]], list[SurfaceInventoryFinding]]:
     """Parse script modules and return (path, functions, main-guard) metadata."""
 
     index: dict[str, tuple[Path, set[str], bool, dict[str, str]]] = {}
     findings: list[SurfaceInventoryFinding] = []
     if not scripts_root.is_dir():
         return index, [_finding("surface_source_root_missing", "$.source_paths", scripts_root)]
+    context = observation_context or SourceObservationContext(scripts_root.parent)
+    context.ensure_root(scripts_root.parent)
     for path in sorted(scripts_root.rglob("*.py")):
-        relative = path.relative_to(scripts_root.parent.parent).as_posix()
-        try:
-            tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
-        except (OSError, UnicodeError, SyntaxError) as exc:
-            findings.append(_finding("surface_source_parse_failed", relative, exc))
+        observation = context.observe(path)
+        relative = observation.relative_path
+        if observation.parse_error:
+            findings.append(_finding("surface_source_parse_failed", relative, observation.parse_error))
+            continue
+        tree = observation.tree
+        if tree is None:
+            findings.append(_finding("surface_source_parse_failed", relative, "Python source could not be parsed"))
             continue
         functions = {
             node.name
@@ -426,6 +588,7 @@ def discover_public_source_surfaces(
     command_surface: Sequence[Mapping[str, Any]],
     route_entries: Sequence[Mapping[str, Any]],
     command_handlers: Mapping[str, Any] | None = None,
+    observation_context: SourceObservationContext | None = None,
 ) -> PublicSourceSurfaceScan:
     """Discover bounded Python entry scripts, dispatch functions, and routes.
 
@@ -443,8 +606,10 @@ def discover_public_source_surfaces(
     """
 
     target = target_root.resolve()
+    context = observation_context or SourceObservationContext(target)
+    context.ensure_root(target)
     scripts_root = target / "scripts"
-    module_index, findings = _source_module_index(scripts_root)
+    module_index, findings = _source_module_index(scripts_root, context)
     surfaces: list[PublicSourceSurface] = []
 
     for module, (path, _functions, main_guard, _imports) in sorted(module_index.items()):
@@ -460,7 +625,7 @@ def discover_public_source_surfaces(
                 kind="script",
                 name=relative,
                 source_path=relative,
-                source_fingerprint=_source_fingerprint(path),
+                source_fingerprint=context.fingerprint(path),
                 function_id=main_function,
                 route_id=f"entry:{relative}",
             )
@@ -530,7 +695,7 @@ def discover_public_source_surfaces(
                 if actual_symbol not in resolved_functions:
                     findings.append(_finding("surface_dispatch_symbol_missing", dispatch, resolved_path.relative_to(target).as_posix()))
                 source_path = resolved_path.relative_to(target).as_posix()
-                source_fingerprint = _source_fingerprint(resolved_path)
+                source_fingerprint = context.fingerprint(resolved_path)
             else:
                 source_file = inspect.getsourcefile(handler)
                 source_path = ""
@@ -560,7 +725,7 @@ def discover_public_source_surfaces(
             elif symbol not in resolved_functions:
                 findings.append(_finding("surface_dispatch_symbol_missing", dispatch, path.relative_to(target).as_posix()))
             source_path = resolved_path.relative_to(target).as_posix()
-            source_fingerprint = _source_fingerprint(resolved_path)
+            source_fingerprint = context.fingerprint(resolved_path)
         route = route_by_command.get(command_name, {})
         route_id = _text(route.get("route_id")) or f"command:{command_name}"
         surfaces.append(
@@ -593,7 +758,7 @@ def discover_public_source_surfaces(
                 kind="route",
                 name=command_family,
                 source_path="scripts/checker_engine.py",
-                source_fingerprint=_source_fingerprint(target / "scripts" / "checker_engine.py"),
+                source_fingerprint=context.fingerprint(target / "scripts" / "checker_engine.py"),
                 function_id=f"route:{route_id}",
                 route_id=route_id,
             )
@@ -800,6 +965,8 @@ def _source_command_options(
     target_root: Path,
     command_surface: Sequence[Mapping[str, Any]],
     command_handlers: Mapping[str, Any] | None = None,
+    *,
+    observation_context: SourceObservationContext | None = None,
 ) -> tuple[dict[str, tuple[str, ...]], dict[str, str]]:
     """Discover literal parser options for the current command handlers.
 
@@ -809,20 +976,21 @@ def _source_command_options(
     executing the CLI or assigning one intent to every source line.
     """
 
-    source_files = _full_source_files(target_root.resolve())
+    root = target_root.resolve()
+    context = observation_context or SourceObservationContext(root)
+    context.ensure_root(root)
+    source_files = _full_source_files(root)
     module_functions: dict[str, dict[str, ast.AST]] = {}
     module_imports: dict[str, dict[str, tuple[str, str]]] = {}
+    module_paths: dict[str, str] = {}
     for path in source_files:
         if path.suffix.lower() != ".py":
             continue
-        try:
-            tree = ast.parse(
-                path.read_text(encoding="utf-8"),
-                filename=path.relative_to(target_root).as_posix(),
-            )
-        except (OSError, UnicodeError, SyntaxError):
+        observation = context.observe(path)
+        if observation.parse_error or observation.tree is None:
             continue
-        module = _full_module_name(path, target_root)
+        tree = observation.tree
+        module = _full_module_name(path, root)
         module_functions[module] = {
             node.name: node
             for node in tree.body
@@ -834,6 +1002,7 @@ def _source_command_options(
                 for alias in node.names:
                     imports[alias.asname or alias.name] = (node.module, alias.name)
         module_imports[module] = imports
+        module_paths[module] = path.relative_to(root).as_posix()
 
     by_stem: dict[str, list[str]] = {}
     for module in module_functions:
@@ -845,45 +1014,39 @@ def _source_command_options(
         candidates = by_stem.get(module_hint.rsplit(".", 1)[-1], [])
         return candidates[0] if len(candidates) == 1 else None
 
-    def collect(module: str, name: str, visiting: set[tuple[str, str]]) -> set[str]:
-        key = (module, name)
-        if key in visiting:
-            return set()
-        visiting.add(key)
-        node = module_functions.get(module, {}).get(name)
-        if node is None:
-            imported = module_imports.get(module, {}).get(name)
-            if imported is None:
-                visiting.remove(key)
-                return set()
-            imported_module, imported_name = imported
-            resolved = resolve_module(imported_module)
-            result = (
-                collect(resolved, imported_name, visiting)
-                if resolved is not None and imported_name in module_functions.get(resolved, {})
-                else set()
-            )
-            visiting.remove(key)
-            return result
-        result: set[str] = set()
+    # Build one direct-option/edge record per function.  The previous
+    # implementation walked the same callee AST once per recursive call path;
+    # a graph keeps the observation local to this discovery and lets each
+    # command compute a visited transitive closure without re-walking a node.
+    direct_options: dict[tuple[str, str], set[str]] = {}
+    callee_edges: dict[tuple[str, str], set[tuple[str, str]]] = {}
+    for module, functions in module_functions.items():
         imports = module_imports.get(module, {})
-        for call in ast.walk(node):
-            if not isinstance(call, ast.Call):
-                continue
-            if isinstance(call.func, ast.Attribute) and call.func.attr == "add_argument":
-                for arg in call.args:
-                    result.update(_literal_option_strings(arg))
-            if isinstance(call.func, ast.Name):
+        for name, node in functions.items():
+            key = (module, name)
+            options: set[str] = set()
+            children: set[tuple[str, str]] = set()
+            for call in ast.walk(node):
+                if not isinstance(call, ast.Call):
+                    continue
+                if isinstance(call.func, ast.Attribute) and call.func.attr == "add_argument":
+                    for arg in call.args:
+                        options.update(_literal_option_strings(arg))
+                if not isinstance(call.func, ast.Name):
+                    continue
                 child_name = call.func.id
-                if child_name in module_functions.get(module, {}):
-                    result.update(collect(module, child_name, visiting))
-                elif child_name in imports:
-                    imported_module, imported_name = imports[child_name]
-                    resolved = resolve_module(imported_module)
-                    if resolved is not None and imported_name in module_functions.get(resolved, {}):
-                        result.update(collect(resolved, imported_name, visiting))
-        visiting.remove(key)
-        return result
+                if child_name in functions:
+                    children.add((module, child_name))
+                    continue
+                imported = imports.get(child_name)
+                if imported is None:
+                    continue
+                imported_module, imported_name = imported
+                resolved = resolve_module(imported_module)
+                if resolved is not None and imported_name in module_functions.get(resolved, {}):
+                    children.add((resolved, imported_name))
+            direct_options[key] = options
+            callee_edges[key] = children
 
     options_by_dispatch: dict[str, tuple[str, ...]] = {}
     source_paths_by_dispatch: dict[str, str] = {}
@@ -902,7 +1065,25 @@ def _source_command_options(
         else:
             separator = "."
         resolved_module = resolve_module(module_hint) if separator else None
-        discovered = collect(resolved_module, symbol, set()) if resolved_module else set()
+        discovered: set[str] = set()
+        if resolved_module:
+            pending: list[tuple[str, str]] = [(resolved_module, symbol)]
+            visited: set[tuple[str, str]] = set()
+            while pending:
+                key = pending.pop()
+                if key in visited:
+                    continue
+                visited.add(key)
+                if key not in direct_options:
+                    imported = module_imports.get(key[0], {}).get(key[1])
+                    if imported is not None:
+                        imported_module, imported_name = imported
+                        imported_resolved = resolve_module(imported_module)
+                        if imported_resolved is not None:
+                            pending.append((imported_resolved, imported_name))
+                    continue
+                discovered.update(direct_options[key])
+                pending.extend(callee_edges.get(key, ()))
         declared = command.get("options", command.get("option_names", ()))
         if isinstance(declared, Mapping):
             declared = tuple(declared.values())
@@ -913,25 +1094,15 @@ def _source_command_options(
                 else:
                     discovered.update(_literal_option_strings(ast.Constant(value=_text(item))))
         options_by_dispatch[dispatch] = tuple(sorted(discovered))
-        if resolved_module:
-            resolved_path = module_functions[resolved_module].get(symbol)
-            if resolved_path is not None:
-                # The AST node does not retain its file; resolve the module
-                # path deterministically from the module name instead.
-                module_parts = resolved_module.split(".")
-                candidates = [
-                    path
-                    for path in source_files
-                    if path.suffix.lower() == ".py"
-                    and _full_module_name(path, target_root) == resolved_module
-                ]
-                if candidates:
-                    source_paths_by_dispatch[dispatch] = candidates[0].relative_to(target_root).as_posix()
+        if resolved_module and symbol in module_functions.get(resolved_module, {}):
+            source_path = module_paths.get(resolved_module)
+            if source_path:
+                source_paths_by_dispatch[dispatch] = source_path
         if dispatch not in source_paths_by_dispatch and handler is not None:
             source_file = inspect.getsourcefile(handler)
             if source_file:
                 try:
-                    source_paths_by_dispatch[dispatch] = Path(source_file).resolve().relative_to(target_root.resolve()).as_posix()
+                    source_paths_by_dispatch[dispatch] = Path(source_file).resolve().relative_to(root).as_posix()
                 except ValueError:
                     pass
     return options_by_dispatch, source_paths_by_dispatch
@@ -943,6 +1114,7 @@ def discover_full_source_surfaces(
     command_surface: Sequence[Mapping[str, Any]] = (),
     route_entries: Sequence[Mapping[str, Any]] = (),
     command_handlers: Mapping[str, Any] | None = None,
+    observation_context: SourceObservationContext | None = None,
 ) -> FullSourceSurfaceScan:
     """Discover the broad production denominator without inferring intent.
 
@@ -954,7 +1126,14 @@ def discover_full_source_surfaces(
     """
 
     root = target_root.resolve()
+    context = observation_context or SourceObservationContext(root)
+    context.ensure_root(root)
     files = _full_source_files(root)
+    # Materialize every current source observation once for this discovery.
+    # Later command-option, API, effect, fault, component, config, and
+    # template rows all read from this same in-process set.
+    for path in files:
+        context.observe(path)
     findings: list[SurfaceInventoryFinding] = []
     surfaces: list[PublicSourceSurface] = []
     seen: set[str] = set()
@@ -962,6 +1141,7 @@ def discover_full_source_surfaces(
         root,
         command_surface,
         command_handlers,
+        observation_context=context,
     )
 
     if len(files) > 2_000:
@@ -987,7 +1167,7 @@ def discover_full_source_surfaces(
                 kind=kind,
                 name=name,
                 source_path=source_path,
-                source_fingerprint=_source_fingerprint(root / source_path),
+                source_fingerprint=context.fingerprint(root / source_path),
                 function_id=function_id,
                 route_id=route_id,
                 component_members=tuple(sorted(set(component_members))),
@@ -1088,10 +1268,13 @@ def discover_full_source_surfaces(
         relative = path.relative_to(root).as_posix()
         suffix = path.suffix.lower()
         if suffix == ".py":
-            try:
-                tree = ast.parse(path.read_text(encoding="utf-8"), filename=relative)
-            except (OSError, UnicodeError, SyntaxError) as exc:
-                findings.append(_finding("full_surface_source_parse_failed", relative, exc))
+            observation = context.observe(path)
+            if observation.parse_error:
+                findings.append(_finding("full_surface_source_parse_failed", relative, observation.parse_error))
+                continue
+            tree = observation.tree
+            if tree is None:
+                findings.append(_finding("full_surface_source_parse_failed", relative, "Python source could not be parsed"))
                 continue
             module = _full_module_name(path, root)
             private_members = _private_component_members(tree)
@@ -1549,17 +1732,20 @@ def refresh_surface_inventory(
         }
 
     root = target_root.resolve()
+    observation_context = SourceObservationContext(root)
     public_scan = discover_public_source_surfaces(
         root,
         command_surface=command_surface,
         route_entries=route_entries,
         command_handlers=command_handlers,
+        observation_context=observation_context,
     )
     full_scan = discover_full_source_surfaces(
         root,
         command_surface=command_surface,
         route_entries=route_entries,
         command_handlers=command_handlers,
+        observation_context=observation_context,
     )
     findings = list(public_scan.findings) + list(full_scan.findings)
     command_ids = {
@@ -1739,7 +1925,7 @@ def validate_surface_inventory(
     partially mapped surface from becoming a graduation pass.
     """
 
-    findings: list[SurfaceInventoryFinding] = []
+    findings: list[SurfaceInventoryFinding] = _FindingAccumulator()
     if not isinstance(payload, Mapping):
         return (_finding("surface_inventory_shape_invalid", path, "an object is required"),)
     allowed = {
@@ -1776,7 +1962,12 @@ def validate_surface_inventory(
         findings.append(_finding("surface_inventory_target_mismatch", f"{path}.target_skill_id", f"expected {target_skill_id}"))
     source_paths = payload.get("source_paths", [])
     _paths(source_paths, path=f"{path}.source_paths", findings=findings)
-    observed_ids = _ids(payload.get("observed_surface_ids"), path=f"{path}.observed_surface_ids", findings=findings)
+    observed_record = _normalized_ids(
+        payload.get("observed_surface_ids"),
+        path=f"{path}.observed_surface_ids",
+        findings=findings,
+    )
+    observed_ids = list(observed_record.values)
     if not observed_ids:
         findings.append(
             _finding(
@@ -1795,11 +1986,16 @@ def validate_surface_inventory(
         for owner_id in declared_owner_ids
         if _text(owner_id)
     }
-    adequacy_ids = _ids(payload.get("adequacy_check_ids"), path=f"{path}.adequacy_check_ids", findings=findings)
+    adequacy_record = _normalized_ids(
+        payload.get("adequacy_check_ids"),
+        path=f"{path}.adequacy_check_ids",
+        findings=findings,
+    )
+    adequacy_ids = list(adequacy_record.values)
     native_ids = {str(value) for value in native_check_ids if _text(value)}
     if not adequacy_ids:
         findings.append(_finding("surface_adequacy_checks_missing", f"{path}.adequacy_check_ids", "at least one target-owned adequacy check is required"))
-    for check_id in sorted(set(adequacy_ids) - native_ids) if native_ids else []:
+    for check_id in sorted(adequacy_record.value_set - native_ids) if native_ids else []:
         findings.append(_finding("surface_adequacy_check_not_native", f"{path}.adequacy_check_ids", check_id))
     declared_deepening = _text(payload.get("model_deepening_check_id"))
     if not declared_deepening:
@@ -1863,23 +2059,35 @@ def validate_surface_inventory(
         function_id = _text(row.get("function_id"))
         if not function_id or not _ID_RE.fullmatch(function_id):
             findings.append(_finding("surface_row_missing_function", f"{row_path}.function_id", "each surface must name its target-owned function or dispatch owner"))
-        required_ids = _ids(row.get("required_check_ids"), path=f"{row_path}.required_check_ids", findings=findings)
-        if not required_ids:
+        required_record = _normalized_ids(
+            row.get("required_check_ids"),
+            path=f"{row_path}.required_check_ids",
+            findings=findings,
+        )
+        if not required_record.values:
             findings.append(_finding("surface_row_missing_checks", f"{row_path}.required_check_ids", "at least one native check is required"))
-        row_adequacy_ids = _ids(row.get("adequacy_check_ids"), path=f"{row_path}.adequacy_check_ids", findings=findings)
-        if not row_adequacy_ids:
+        row_adequacy_record = _normalized_ids(
+            row.get("adequacy_check_ids"),
+            path=f"{row_path}.adequacy_check_ids",
+            findings=findings,
+        )
+        if not row_adequacy_record.values:
             findings.append(_finding("surface_row_adequacy_missing", f"{row_path}.adequacy_check_ids", "each row must be covered by an adequacy check"))
-        for check_id in sorted(set(row_adequacy_ids) - set(adequacy_ids)):
+        for check_id in sorted(row_adequacy_record.value_set - adequacy_record.value_set):
             findings.append(_finding("surface_row_adequacy_unknown", f"{row_path}.adequacy_check_ids", check_id))
-        evidence_ids = _ids(row.get("evidence_subject_ids"), path=f"{row_path}.evidence_subject_ids", findings=findings)
-        if not evidence_ids:
+        evidence_record = _normalized_ids(
+            row.get("evidence_subject_ids"),
+            path=f"{row_path}.evidence_subject_ids",
+            findings=findings,
+        )
+        if not evidence_record.values:
             findings.append(_finding("surface_row_evidence_missing", f"{row_path}.evidence_subject_ids"))
         if disposition in {"internal_proven", "retired_proven", "not_applicable_proven"} and not _text(row.get("disposition_reason")):
             findings.append(_finding("surface_row_disposition_reason_missing", f"{row_path}.disposition_reason"))
         if native_ids:
-            for check_id in sorted(set(required_ids) - native_ids):
+            for check_id in sorted(required_record.value_set - native_ids):
                 findings.append(_finding("surface_row_check_not_native", f"{row_path}.required_check_ids", check_id))
-    if observed_ids and set(observed_ids) != set(row_ids):
+    if observed_ids and observed_record.value_set != set(row_ids):
         findings.append(_finding("surface_observed_denominator_mismatch", f"{path}.observed_surface_ids", f"observed={len(observed_ids)} rows={len(row_ids)}"))
     stored_hash = _text(payload.get("inventory_hash"))
     if not stored_hash:
@@ -2038,6 +2246,7 @@ def validate_reverse_surface_inventory(
     command_surface: Sequence[Mapping[str, Any]],
     route_entries: Sequence[Mapping[str, Any]],
     command_handlers: Mapping[str, Any] | None = None,
+    observation_context: SourceObservationContext | None = None,
 ) -> tuple[SurfaceInventoryFinding, ...]:
     """Compare a target inventory with source-derived public surfaces.
 
@@ -2049,7 +2258,7 @@ def validate_reverse_surface_inventory(
     live orphan is always a failure.
     """
 
-    findings: list[SurfaceInventoryFinding] = []
+    findings: list[SurfaceInventoryFinding] = _FindingAccumulator()
     findings.extend(
         validate_command_surface_inventory(
             inventory,
@@ -2073,11 +2282,12 @@ def validate_reverse_surface_inventory(
         )
         return tuple(findings)
 
-    reverse_ids = _ids(
+    reverse_record = _normalized_ids(
         inventory.get("reverse_surface_ids"),
         path="$.reverse_surface_ids",
         findings=findings,
     )
+    reverse_ids = list(reverse_record.values)
     if not reverse_ids:
         findings.append(
             _finding(
@@ -2133,11 +2343,11 @@ def validate_reverse_surface_inventory(
         if disposition in {"internal_proven", "retired_proven", "not_applicable_proven"} and not _text(row.get("disposition_reason")):
             findings.append(_finding("surface_reverse_row_disposition_reason_missing", f"{row_path}.disposition_reason"))
         for field, code in (("required_check_ids", "surface_reverse_row_missing_checks"), ("adequacy_check_ids", "surface_reverse_row_adequacy_missing"), ("evidence_subject_ids", "surface_reverse_row_evidence_missing")):
-            values = _ids(row.get(field), path=f"{row_path}.{field}", findings=findings)
-            if not values:
+            values = _normalized_ids(row.get(field), path=f"{row_path}.{field}", findings=findings)
+            if not values.values:
                 findings.append(_finding(code, f"{row_path}.{field}"))
 
-    if reverse_ids and set(reverse_ids) != set(reverse_by_id):
+    if reverse_ids and reverse_record.value_set != set(reverse_by_id):
         findings.append(
             _finding(
                 "surface_reverse_denominator_mismatch",
@@ -2151,6 +2361,7 @@ def validate_reverse_surface_inventory(
         command_surface=command_surface,
         route_entries=route_entries,
         command_handlers=command_handlers,
+        observation_context=observation_context,
     )
     findings.extend(scan.findings)
     discovered_by_id = {surface.surface_id: surface for surface in scan.surfaces}
@@ -2201,6 +2412,7 @@ def validate_full_surface_inventory(
     command_handlers: Mapping[str, Any] | None = None,
     native_check_ids: Iterable[str] = (),
     model_deepening_check_id: str | None = None,
+    observation_context: SourceObservationContext | None = None,
 ) -> tuple[SurfaceInventoryFinding, ...]:
     """Validate the independent implementation-to-intent denominator.
 
@@ -2211,7 +2423,7 @@ def validate_full_surface_inventory(
     surface.  A row count match or a resealed hash is never enough.
     """
 
-    findings: list[SurfaceInventoryFinding] = []
+    findings: list[SurfaceInventoryFinding] = _FindingAccumulator()
     if not isinstance(inventory, Mapping):
         return (_finding("full_surface_inventory_shape_invalid", "$", "an object is required"),)
     owner_ids = _owner_ids(
@@ -2221,7 +2433,8 @@ def validate_full_surface_inventory(
     )
     owners = set(owner_ids)
     raw_ids = inventory.get("full_surface_ids")
-    full_ids = _ids(raw_ids, path="$.full_surface_ids", findings=findings)
+    full_ids_record = _normalized_ids(raw_ids, path="$.full_surface_ids", findings=findings)
+    full_ids = list(full_ids_record.values)
     if not full_ids:
         findings.append(_finding("full_surface_denominator_missing", "$.full_surface_ids", "the independently discovered denominator is required"))
     raw_rows = inventory.get("full_surfaces")
@@ -2265,16 +2478,42 @@ def validate_full_surface_inventory(
             findings.append(_finding("full_surface_row_review_group_missing", f"{row_path}.review_group_id"))
         if review_granularity not in {"surface", "component"}:
             findings.append(_finding("full_surface_row_review_granularity_invalid", f"{row_path}.review_granularity", review_granularity))
-        obligation_ids = _ids(row.get("obligation_ids"), path=f"{row_path}.obligation_ids", findings=findings)
-        model_obligation_ids = _ids(
+        obligation_record = _normalized_ids(
+            row.get("obligation_ids"),
+            path=f"{row_path}.obligation_ids",
+            findings=findings,
+        )
+        obligation_ids = list(obligation_record.values)
+        model_obligation_record = _normalized_ids(
             row.get("model_obligation_ids"),
             path=f"{row_path}.model_obligation_ids",
             findings=findings,
         )
-        required_ids = _ids(row.get("required_check_ids"), path=f"{row_path}.required_check_ids", findings=findings)
-        adequacy_ids = _ids(row.get("adequacy_check_ids"), path=f"{row_path}.adequacy_check_ids", findings=findings)
-        execution_owner_ids = _ids(row.get("execution_owner_ids"), path=f"{row_path}.execution_owner_ids", findings=findings)
-        evidence_ids = _ids(row.get("evidence_subject_ids"), path=f"{row_path}.evidence_subject_ids", findings=findings)
+        model_obligation_ids = list(model_obligation_record.values)
+        required_record = _normalized_ids(
+            row.get("required_check_ids"),
+            path=f"{row_path}.required_check_ids",
+            findings=findings,
+        )
+        required_ids = list(required_record.values)
+        adequacy_record = _normalized_ids(
+            row.get("adequacy_check_ids"),
+            path=f"{row_path}.adequacy_check_ids",
+            findings=findings,
+        )
+        adequacy_ids = list(adequacy_record.values)
+        execution_owner_record = _normalized_ids(
+            row.get("execution_owner_ids"),
+            path=f"{row_path}.execution_owner_ids",
+            findings=findings,
+        )
+        execution_owner_ids = list(execution_owner_record.values)
+        evidence_record = _normalized_ids(
+            row.get("evidence_subject_ids"),
+            path=f"{row_path}.evidence_subject_ids",
+            findings=findings,
+        )
+        evidence_ids = list(evidence_record.values)
         if kind == "component":
             members = row.get("component_members")
             normalized_members = (
@@ -2317,7 +2556,7 @@ def validate_full_surface_inventory(
         # One generic smoke check is intentionally insufficient for a governed
         # surface.  The target must provide at least a native check plus a
         # separate adequacy/failure/recovery check projection.
-        if disposition == "governed" and len(set(adequacy_ids)) < 2:
+        if disposition == "governed" and len(adequacy_record.value_set) < 2:
             findings.append(_finding("full_surface_row_adequacy_shallow", f"{row_path}.adequacy_check_ids", "governed rows need a non-empty adequacy envelope, not one generic smoke check"))
         if not execution_owner_ids:
             findings.append(_finding("full_surface_row_execution_owner_missing", f"{row_path}.execution_owner_ids"))
@@ -2328,19 +2567,20 @@ def validate_full_surface_inventory(
                 findings.append(_finding("full_surface_row_disposition_proof_missing", row_path))
         native_ids = {str(value) for value in native_check_ids if _text(value)}
         if native_ids:
-            for check_id in sorted(set(required_ids + adequacy_ids) - native_ids):
+            for check_id in sorted((required_record.value_set | adequacy_record.value_set) - native_ids):
                 findings.append(_finding("full_surface_row_check_not_native", f"{row_path}.required_check_ids", check_id))
-        if disposition == "governed" and model_deepening_check_id and model_deepening_check_id not in set(adequacy_ids):
+        if disposition == "governed" and model_deepening_check_id and model_deepening_check_id not in adequacy_record.value_set:
             findings.append(_finding("full_surface_row_deepening_missing", f"{row_path}.adequacy_check_ids", model_deepening_check_id))
 
-    if full_ids and set(full_ids) != set(row_by_id):
+    if full_ids and full_ids_record.value_set != set(row_by_id):
         findings.append(_finding("full_surface_denominator_row_mismatch", "$.full_surface_ids", f"declared={len(full_ids)} rows={len(row_by_id)}"))
 
-    current_obligation_ids = _ids(
+    current_obligation_record = _normalized_ids(
         inventory.get("current_obligation_ids"),
         path="$.current_obligation_ids",
         findings=findings,
     )
+    current_obligation_ids = list(current_obligation_record.values)
     if not current_obligation_ids:
         findings.append(
             _finding(
@@ -2401,12 +2641,12 @@ def validate_full_surface_inventory(
                     disposition,
                 )
             )
-        model_surface_ids = _ids(
+        model_surface_record = _normalized_ids(
             model_row.get("surface_ids"),
             path=f"{model_path}.surface_ids",
             findings=findings,
         )
-        if disposition == "governed" and not model_surface_ids:
+        if disposition == "governed" and not model_surface_record.values:
             findings.append(
                 _finding(
                     "full_surface_model_obligation_surface_ids_missing",
@@ -2414,7 +2654,7 @@ def validate_full_surface_inventory(
                     "a governed current model obligation must name at least one implementation surface",
                 )
             )
-        if disposition != "governed" and model_surface_ids:
+        if disposition != "governed" and model_surface_record.values:
             findings.append(
                 _finding(
                     "full_surface_model_obligation_non_governed_surface_binding",
@@ -2431,7 +2671,7 @@ def validate_full_surface_inventory(
                 )
             )
 
-    if current_obligation_ids and set(current_obligation_ids) != set(model_obligation_by_id):
+    if current_obligation_ids and current_obligation_record.value_set != set(model_obligation_by_id):
         findings.append(
             _finding(
                 "full_surface_model_obligation_denominator_mismatch",
@@ -2445,6 +2685,7 @@ def validate_full_surface_inventory(
         command_surface=command_surface,
         route_entries=route_entries,
         command_handlers=command_handlers,
+        observation_context=observation_context,
     )
     findings.extend(discovery.findings)
     discovered = {surface.surface_id: surface for surface in discovery.surfaces}
@@ -2465,7 +2706,7 @@ def validate_full_surface_inventory(
                 f"expected {discovery.discovery_fingerprint}",
             )
         )
-    if full_ids and set(full_ids) != set(discovered):
+    if full_ids and full_ids_record.value_set != set(discovered):
         findings.append(_finding("full_surface_discovery_denominator_mismatch", "$.full_surface_ids", f"declared={len(full_ids)} discovered={len(discovered)}"))
     for surface_id, surface in sorted(discovered.items()):
         row = row_by_id.get(surface_id)
@@ -2507,14 +2748,14 @@ def validate_full_surface_inventory(
     # governed model obligation must point back to the exact live rows that
     # carry it.  No names, checks, or function paths are used to infer an edge.
     discovered_ids = set(discovered)
-    declared_full_ids = set(full_ids)
+    declared_full_ids = full_ids_record.value_set
     for surface_id, row in sorted(row_by_id.items()):
-        model_refs = _ids(
+        model_refs_record = _normalized_ids(
             row.get("model_obligation_ids"),
             path=f"$.full_surfaces[{surface_id}].model_obligation_ids",
             findings=findings,
         )
-        for obligation_id in sorted(set(model_refs)):
+        for obligation_id in sorted(model_refs_record.value_set):
             model_row = model_obligation_by_id.get(obligation_id)
             if model_row is None:
                 findings.append(
@@ -2533,14 +2774,12 @@ def validate_full_surface_inventory(
                         obligation_id,
                     )
                 )
-            model_surface_ids = set(
-                _ids(
-                    model_row.get("surface_ids"),
-                    path=f"$.model_obligations[{obligation_id}].surface_ids",
-                    findings=findings,
-                )
+            model_surface_ids = _normalized_ids(
+                model_row.get("surface_ids"),
+                path=f"$.model_obligations[{obligation_id}].surface_ids",
+                findings=findings,
             )
-            if surface_id not in model_surface_ids:
+            if surface_id not in model_surface_ids.value_set:
                 findings.append(
                     _finding(
                         "full_surface_model_obligation_reverse_mismatch",
@@ -2551,14 +2790,12 @@ def validate_full_surface_inventory(
 
     for obligation_id, model_row in sorted(model_obligation_by_id.items()):
         disposition = _text(model_row.get("disposition"))
-        model_surface_ids = set(
-            _ids(
-                model_row.get("surface_ids"),
-                path=f"$.model_obligations[{obligation_id}].surface_ids",
-                findings=findings,
-            )
+        model_surface_record = _normalized_ids(
+            model_row.get("surface_ids"),
+            path=f"$.model_obligations[{obligation_id}].surface_ids",
+            findings=findings,
         )
-        unknown_surface_ids = sorted(model_surface_ids - discovered_ids)
+        unknown_surface_ids = sorted(model_surface_record.value_set - discovered_ids)
         for surface_id in unknown_surface_ids:
             findings.append(
                 _finding(
@@ -2569,18 +2806,16 @@ def validate_full_surface_inventory(
             )
         if disposition != "governed":
             continue
-        for surface_id in sorted(model_surface_ids & declared_full_ids):
+        for surface_id in sorted(model_surface_record.value_set & declared_full_ids):
             row = row_by_id.get(surface_id)
             if row is None:
                 continue
-            row_refs = set(
-                _ids(
-                    row.get("model_obligation_ids"),
-                    path=f"$.full_surfaces[{surface_id}].model_obligation_ids",
-                    findings=findings,
-                )
+            row_refs = _normalized_ids(
+                row.get("model_obligation_ids"),
+                path=f"$.full_surfaces[{surface_id}].model_obligation_ids",
+                findings=findings,
             )
-            if obligation_id not in row_refs:
+            if obligation_id not in row_refs.value_set:
                 findings.append(
                     _finding(
                         "full_surface_model_obligation_forward_mismatch",
@@ -2606,25 +2841,21 @@ def validate_full_surface_inventory(
             continue
         expected_refs = tuple(
             sorted(
-                set(
-                    _ids(
-                        group_rows[0][1].get("model_obligation_ids"),
-                        path=f"$.full_surfaces[{group_rows[0][0]}].model_obligation_ids",
-                        findings=findings,
-                    )
-                )
+                _normalized_ids(
+                    group_rows[0][1].get("model_obligation_ids"),
+                    path=f"$.full_surfaces[{group_rows[0][0]}].model_obligation_ids",
+                    findings=findings,
+                ).value_set
             )
         )
         for surface_id, row in group_rows[1:]:
             observed_refs = tuple(
                 sorted(
-                    set(
-                        _ids(
-                            row.get("model_obligation_ids"),
-                            path=f"$.full_surfaces[{surface_id}].model_obligation_ids",
-                            findings=findings,
-                        )
-                    )
+                    _normalized_ids(
+                        row.get("model_obligation_ids"),
+                        path=f"$.full_surfaces[{surface_id}].model_obligation_ids",
+                        findings=findings,
+                    ).value_set
                 )
             )
             if observed_refs != expected_refs:

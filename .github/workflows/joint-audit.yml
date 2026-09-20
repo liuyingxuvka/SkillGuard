@@ -1,0 +1,60 @@
+name: SkillGuard joint audit
+
+on:
+  push:
+    branches: [audit/joint-20260920]
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+jobs:
+  native-and-wire:
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout frozen audit branch
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install locked audit dependencies and candidate FlowGuard
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade "pip==25.2"
+          python -m pip install "pytest==9.0.3"
+          python -m pip install "git+https://github.com/liuyingxuvka/FlowGuard.git@audit/joint-20260920"
+
+      - name: Run SkillGuard native checks
+        shell: pwsh
+        run: |
+          $output = Join-Path $env:RUNNER_TEMP "skillguard-native"
+          python .agents/skills/skillguard/scripts/skillguard.py self-check --root . --json --output (Join-Path $output "self-check.json")
+
+      - name: Verify clean staged installation and cleanup
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP "skillguard-install-stage"
+          python .agents/skills/skillguard/scripts/skillguard_install.py --canonical-skill-root .agents/skills/skillguard --stage-root $stage --prepare
+          if (Test-Path -LiteralPath $stage) {
+            Remove-Item -LiteralPath $stage -Recurse -Force
+          }
+          if (Test-Path -LiteralPath $stage) {
+            throw "runner-local SkillGuard stage was not cleaned"
+          }
+
+      - name: Run installation and wire tests
+        shell: pwsh
+        run: |
+          python -m pytest -q tests/test_installation.py tests/test_consumer_release_wire_protocol.py tests/test_target_installation.py

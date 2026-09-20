@@ -187,45 +187,37 @@ def build_project_manifest(
 
 def render_project_block(manifest: Mapping[str, Any]) -> str:
     rows = manifest.get("managed_skills", [])
-    skill_lines = []
-    for row in rows if isinstance(rows, list) else []:
-        if not isinstance(row, Mapping):
-            continue
-        skill_lines.append(
-            f"- `{str(row.get('skill_path', ''))}` — native owner="
-            f"`{str(row.get('native_owner_id', ''))}`, maintenance unit="
-            f"`{str(row.get('maintenance_unit_id', ''))}`, route evidence="
-            f"`{str(row.get('native_route_evidence_path', ''))}`; the target skill keeps domain-route, "
-            "judgment, action, and native-check authority."
-        )
+    managed_rows = [row for row in rows if isinstance(row, Mapping)] if isinstance(rows, list) else []
+    skill_lines = [
+        f"- `.skillguard/author-project.json` is the exact managed inventory ({len(managed_rows)} member(s)); "
+        "each row binds one native owner, maintenance unit, and route-evidence path.",
+        "- The target skills keep domain-route, judgment, action, and native-check authority.",
+    ]
     body = [
         BEGIN_MARKER,
         "## SkillGuard author maintenance",
         "",
-        "This repository is an explicit skill-authoring workspace. Use SkillGuard only while "
-        "maintaining, validating, graduating, or releasing the managed source skills below.",
+        "This is an explicit SkillGuard author repository. This block is only a short "
+        "admission pointer; the target skill keeps its domain route, judgment, actions, "
+        "and native-check authority.",
         "",
         f"Canonical SkillGuard repository: {SKILLGUARD_REPOSITORY}",
         "",
         "Managed skills:",
         *skill_lines,
         "",
-        "Required maintenance handoff:",
+        "Before a source edit or validation, read the target `SKILL.md`, its native "
+        "route/check contracts, and `references/skillguard-supervisor.md`.",
+        "Use one frozen maintenance unit, exact owner/check identities, private evidence "
+        "roots, and current terminal receipts; missing, duplicate, foreign, stale, or "
+        "cleanup-unconfirmed evidence blocks.",
         "",
-        "1. Read the target skill's `SKILL.md` and its native route/check contracts before editing.",
-        "2. Use SkillGuard to inventory, run every target-declared check, reconcile exact receipts, and close non-trivial skill changes.",
-        "3. Preserve the target's sole current native route and exact declared checks; SkillGuard never supplies a target-domain route.",
-        "4. Never let SkillGuard replace target-owned domain judgment, simulation, search, modeling, actions, or checks.",
-        "5. Do not claim complete use from contract presence alone; require a current declared-check execution receipt.",
-        "6. Never copy this block, the author manifest, contracts, receipts, router state, or Portfolio state "
-        "into a graduated consumer skill or an ordinary business project.",
-        "7. If SkillGuard is unavailable or this block/manifest is missing, stale, duplicated, or invalid, "
-        "report only author maintenance as blocked; ordinary consumer use remains independent.",
-        "",
-        "Validation execution ownership:",
-        "",
-        f"- policy_id: `{VALIDATION_EXECUTION_POLICY_ID}`",
-        *VALIDATION_EXECUTION_POLICY_LINES,
+        f"Validation policy: `{VALIDATION_EXECUTION_POLICY_ID}`. It is direct-current "
+        "only: no fallback, migration, alias, dual authority, or cross-unit receipt reuse.",
+        "Consumer projections contain no author contracts, receipts, router, Portfolio, "
+        "or author-only runtime. Installation, global-router currentness, and release "
+        "are separate explicit claims; read `references/skillguard-target-installation.md` "
+        "and `references/skillguard-self-host.md` only for those routes.",
         "",
         "Author audit command: `python <installed-skillguard>/scripts/skillguard.py maintainer-audit --root .`",
         "",

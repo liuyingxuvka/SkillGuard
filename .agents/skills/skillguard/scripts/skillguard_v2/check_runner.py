@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
+import math
 import os
 import platform
 import re
@@ -96,6 +98,146 @@ class CheckRunnerError(ValueError):
 
     def __str__(self) -> str:
         return f"{self.code}: {self.message}"
+
+
+@dataclass
+class CurrentOwnerInputContext:
+    """One frozen observation of the current content-impact inputs.
+
+    Planning, reuse admission, and execution all need the same owner-local
+    projection.  Keep the component/path parse and each selected owner's
+    content hashes in one invocation-local cache.  A new context must be
+    created for post-run freshness checks so a cache can never hide a change
+    made while an owner was running.
+    """
+
+    repository_root: Path
+    plan_fingerprint: str
+    inventory: Mapping[str, Mapping[str, Any]]
+    components: Mapping[str, Mapping[str, Any]]
+    _projections: dict[str, dict[str, Any]]
+    projection_build_counts: dict[str, int]
+
+    def assert_matches(
+        self,
+        repository_root: Path,
+        plan: Mapping[str, Any],
+    ) -> None:
+        root = filesystem_path(repository_root).resolve()
+        if root != self.repository_root or wire_hash(plan) != self.plan_fingerprint:
+            raise CheckRunnerError(
+                "check_owner_input_context_stale",
+                str(plan.get("impact_graph_hash", "")),
+            )
+
+    def projection_for(self, owner: Mapping[str, Any]) -> dict[str, Any]:
+        owner_id = str(owner.get("execution_owner_id", ""))
+        if not owner_id:
+            raise CheckRunnerError("check_execution_owner_missing", "missing")
+        cached = self._projections.get(owner_id)
+        if cached is not None:
+            return cached
+
+        self.projection_build_counts[owner_id] = (
+            self.projection_build_counts.get(owner_id, 0) + 1
+        )
+        current_components: list[dict[str, str]] = []
+        selected_paths: list[dict[str, str]] = []
+        for component_id_value in owner.get("input_component_ids", []):
+            component_id = str(component_id_value)
+            component = self.components.get(component_id)
+            if component is None:
+                raise CheckRunnerError(
+                    "check_owner_input_component_missing", component_id
+                )
+            members: list[dict[str, str]] = []
+            for path_value in component.get("member_paths", []):
+                relative_text = str(path_value)
+                inventory_row = self.inventory.get(relative_text)
+                relative = Path(relative_text)
+                if (
+                    inventory_row is None
+                    or not relative_text
+                    or relative.is_absolute()
+                ):
+                    raise CheckRunnerError(
+                        "check_owner_input_member_invalid", relative_text or "missing"
+                    )
+                candidate = (self.repository_root / relative).resolve()
+                try:
+                    candidate.relative_to(self.repository_root)
+                except ValueError as exc:
+                    raise CheckRunnerError(
+                        "check_owner_input_member_escape", relative_text
+                    ) from exc
+                if not candidate.is_file():
+                    raise CheckRunnerError(
+                        "check_owner_input_member_missing", relative_text
+                    )
+                actual_hash = impact_file_hash(candidate)
+                if actual_hash != str(inventory_row.get("content_hash", "")):
+                    raise CheckRunnerError(
+                        "check_owner_input_component_stale", relative_text
+                    )
+                member = {"path": relative_text, "content_hash": actual_hash}
+                members.append(member)
+                selected_paths.append(
+                    {"component_id": component_id, **member}
+                )
+            component_hash = wire_hash(members)
+            if component_hash != str(component.get("component_hash", "")):
+                raise CheckRunnerError(
+                    "check_owner_input_component_hash_mismatch", component_id
+                )
+            current_components.append(
+                {"component_id": component_id, "component_hash": component_hash}
+            )
+        current_components.sort(key=lambda row: row["component_id"])
+        selected_paths.sort(
+            key=lambda row: (row["component_id"], row["path"])
+        )
+        projection_hash = wire_hash(current_components)
+        if projection_hash != str(owner.get("owner_input_projection_hash", "")):
+            raise CheckRunnerError(
+                "check_owner_input_projection_stale",
+                owner_id,
+            )
+        projection = {
+            "components": current_components,
+            "paths": selected_paths,
+            "owner_input_projection_hash": projection_hash,
+        }
+        self._projections[owner_id] = projection
+        return projection
+
+
+def prepare_current_owner_input_context(
+    repository_root: Path,
+    content_impact_plan: Mapping[str, Any],
+) -> CurrentOwnerInputContext:
+    """Freeze the plan's inventory/component lookup for one invocation."""
+
+    root = filesystem_path(repository_root).resolve()
+    if not isinstance(content_impact_plan, Mapping):
+        raise CheckRunnerError("check_content_impact_plan_missing_or_unsupported", "missing")
+    inventory = {
+        str(row.get("path", "")): dict(row)
+        for row in content_impact_plan.get("inventory", [])
+        if isinstance(row, Mapping) and str(row.get("path", ""))
+    }
+    components = {
+        str(row.get("component_id", "")): dict(row)
+        for row in content_impact_plan.get("components", [])
+        if isinstance(row, Mapping) and str(row.get("component_id", ""))
+    }
+    return CurrentOwnerInputContext(
+        repository_root=root,
+        plan_fingerprint=wire_hash(content_impact_plan),
+        inventory=inventory,
+        components=components,
+        _projections={},
+        projection_build_counts={},
+    )
 
 
 def _under(path: Path, root: Path, code: str) -> Path:
@@ -624,6 +766,7 @@ def _stable_persisted_result(result: Mapping[str, Any]) -> dict[str, Any]:
         "termination_succeeded": False,
         "termination_method": "not_required",
         "termination_error_kind": "",
+        "termination_reason": "not_required",
         "cleanup_confirmed": False,
         "cleanup_confirmation_method": "not_required",
         "descendant_count_before": 0,
@@ -710,6 +853,7 @@ def _semantic_termination_sidecar(result: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "schema_version": CHECK_EXECUTION_TERMINATION_SIDECAR_SCHEMA,
         "terminal_kind": str(result.get("terminal_kind", "")),
+        "termination_reason": str(result.get("termination_reason", "unknown")),
         "termination_scope": str(result.get("termination_scope", "none")),
         "termination_attempted": bool(result.get("termination_attempted", False)),
         "termination_succeeded": termination_succeeded,
@@ -770,71 +914,16 @@ def _current_owner_input_projection(
     repository_root: Path,
     plan: Mapping[str, Any],
     owner: Mapping[str, Any],
+    context: CurrentOwnerInputContext | None = None,
 ) -> dict[str, Any]:
-    root = repository_root.resolve()
-    inventory = {
-        str(row.get("path", "")): row
-        for row in plan.get("inventory", [])
-        if isinstance(row, Mapping) and str(row.get("path", ""))
-    }
-    components = {
-        str(row.get("component_id", "")): row
-        for row in plan.get("components", [])
-        if isinstance(row, Mapping) and str(row.get("component_id", ""))
-    }
-    current_components: list[dict[str, str]] = []
-    for component_id_value in owner.get("input_component_ids", []):
-        component_id = str(component_id_value)
-        component = components.get(component_id)
-        if component is None:
-            raise CheckRunnerError(
-                "check_owner_input_component_missing", component_id
-            )
-        members: list[dict[str, str]] = []
-        for path_value in component.get("member_paths", []):
-            relative_text = str(path_value)
-            inventory_row = inventory.get(relative_text)
-            relative = Path(relative_text)
-            if inventory_row is None or not relative_text or relative.is_absolute():
-                raise CheckRunnerError(
-                    "check_owner_input_member_invalid", relative_text or "missing"
-                )
-            candidate = (root / relative).resolve()
-            try:
-                candidate.relative_to(root)
-            except ValueError as exc:
-                raise CheckRunnerError(
-                    "check_owner_input_member_escape", relative_text
-                ) from exc
-            if not candidate.is_file():
-                raise CheckRunnerError(
-                    "check_owner_input_member_missing", relative_text
-                )
-            actual_hash = impact_file_hash(candidate)
-            if actual_hash != str(inventory_row.get("content_hash", "")):
-                raise CheckRunnerError(
-                    "check_owner_input_component_stale", relative_text
-                )
-            members.append({"path": relative_text, "content_hash": actual_hash})
-        component_hash = wire_hash(members)
-        if component_hash != str(component.get("component_hash", "")):
-            raise CheckRunnerError(
-                "check_owner_input_component_hash_mismatch", component_id
-            )
-        current_components.append(
-            {"component_id": component_id, "component_hash": component_hash}
+    current_context = context
+    if current_context is None:
+        current_context = prepare_current_owner_input_context(
+            repository_root,
+            plan,
         )
-    current_components.sort(key=lambda row: row["component_id"])
-    projection_hash = wire_hash(current_components)
-    if projection_hash != str(owner.get("owner_input_projection_hash", "")):
-        raise CheckRunnerError(
-            "check_owner_input_projection_stale",
-            str(owner.get("execution_owner_id", "")),
-        )
-    return {
-        "components": current_components,
-        "owner_input_projection_hash": projection_hash,
-    }
+    current_context.assert_matches(repository_root, plan)
+    return current_context.projection_for(owner)
 
 
 def inspect_current_owner_input_projection(
@@ -842,6 +931,7 @@ def inspect_current_owner_input_projection(
     repository_root: Path,
     content_impact_plan: Mapping[str, Any],
     owner: Mapping[str, Any],
+    context: CurrentOwnerInputContext | None = None,
 ) -> dict[str, Any]:
     """Public read-only owner input projection used by impact planning."""
 
@@ -849,6 +939,7 @@ def inspect_current_owner_input_projection(
         repository_root=repository_root,
         plan=content_impact_plan,
         owner=owner,
+        context=context,
     )
 
 
@@ -1166,6 +1257,8 @@ def _check_execution_identity(
     run_root: Path,
     owner_evidence_root: Path,
     dependency_receipts: Mapping[str, Mapping[str, Any]],
+    owner_input_context: CurrentOwnerInputContext | None = None,
+    shared_leaf_plan_hash: str = "",
 ) -> dict[str, Any]:
     declared, manifest = _declared_check_for_run(run_root, check)
     run = load_run(run_root)
@@ -1175,6 +1268,7 @@ def _check_execution_identity(
         repository_root=repository_root,
         plan=plan,
         owner=owner,
+        context=owner_input_context,
     )
     owner_input_components = list(owner_input["components"])
     installed_component = _installed_runtime_input_component(
@@ -1257,6 +1351,21 @@ def _check_execution_identity(
             launch_plan.record.get("interpreter_identity", "")
         ),
         "impact_policy_id": str(plan.get("policy_id", "")),
+        # The root role is part of the execution identity even when the
+        # selected target files have identical bytes.  This prevents a pass
+        # receipt bound to one repository/target role from being reused under
+        # another role while keeping report paths out of the receipt.
+        "repository_root_role_fingerprint": wire_hash(
+            {
+                "role": "repository_root",
+            }
+        ),
+        "target_root_role_fingerprint": wire_hash(
+            {
+                "role": "target_root",
+            }
+        ),
+        "shared_leaf_plan_hash": str(shared_leaf_plan_hash),
     }
     return {
         **semantic_identity,
@@ -1565,16 +1674,40 @@ def _validate_owner_receipt(
             "check_execution_sidecar_invalid", "termination:schema"
         )
     result_payload = loaded["result"].get("result")
+    shared_leaf_projection = (
+        result_payload.get("shared_leaf_reuse") is True
+        if isinstance(result_payload, Mapping)
+        else False
+    )
     if (
         not isinstance(result_payload, Mapping)
         or result_payload.get("status") != "passed"
-        or result_payload.get("executed") is not True
+        or (
+            result_payload.get("executed") is not True
+            and not shared_leaf_projection
+        )
         or result_payload.get("stdout_sidecar_ref") != sidecars.get("stdout")
         or result_payload.get("stderr_sidecar_ref") != sidecars.get("stderr")
     ):
         raise CheckRunnerError(
             "check_execution_sidecar_invalid", "result:terminal_binding"
         )
+    if shared_leaf_projection:
+        shared_plan_hash = str(result_payload.get("shared_leaf_plan_hash", ""))
+        shared_leaf_ids = result_payload.get("shared_leaf_ids", ())
+        shared_leaf_refs = result_payload.get("shared_leaf_evidence_refs", ())
+        if (
+            not re.fullmatch(WIRE_HASH_PATTERN, shared_plan_hash)
+            or not isinstance(shared_leaf_ids, list)
+            or not shared_leaf_ids
+            or any(not str(value) for value in shared_leaf_ids)
+            or not isinstance(shared_leaf_refs, list)
+            or len(shared_leaf_refs) != len(shared_leaf_ids)
+            or any(not isinstance(value, Mapping) for value in shared_leaf_refs)
+        ):
+            raise CheckRunnerError(
+                "check_execution_sidecar_invalid", "result:shared_leaf_binding"
+            )
     for kind in ("stdout", "stderr"):
         observed_content_hash = str(result_payload.get(f"{kind}_content_hash", ""))
         expected_content_hash = str(
@@ -1696,6 +1829,7 @@ def inspect_current_owner_execution(
     dependency_execution_receipts: Mapping[
         str, Mapping[str, Any]
     ] | None = None,
+    owner_input_context: CurrentOwnerInputContext | None = None,
 ) -> dict[str, Any]:
     """Resolve one exact owner receipt without locks, writes, or execution."""
 
@@ -1711,6 +1845,7 @@ def inspect_current_owner_execution(
         run_root=run_root,
         owner_evidence_root=persistent_root,
         dependency_receipts=dict(dependency_execution_receipts or {}),
+        owner_input_context=owner_input_context,
     )
     try:
         current = _load_canonical_success(persistent_root, identity)
@@ -1921,6 +2056,108 @@ def owner_receipt_document_ref(receipt: Mapping[str, Any]) -> Mapping[str, Any]:
     """Return the portable content-addressed locator for one owner receipt."""
 
     return _owner_receipt_document_ref(receipt)
+
+
+def _shared_leaf_success_result(
+    declared: Mapping[str, Any],
+    manifest: Mapping[str, Any],
+    identity: Mapping[str, Any],
+    owner_evidence_root: Path,
+    shared_leaf_evidence: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Build one owner result from already verified exact pytest leaves.
+
+    This is a projection, not a second producer.  The child owner receives a
+    distinct owner receipt bound to its own declaration and dependencies, but
+    its output/result sidecars point back to the immutable leaf evidence and
+    no pytest process is launched here.
+    """
+
+    status = str(shared_leaf_evidence.get("status", ""))
+    plan_hash = str(shared_leaf_evidence.get("plan_hash", ""))
+    raw_leaf_ids = shared_leaf_evidence.get("leaf_ids", ())
+    raw_leaf_refs = shared_leaf_evidence.get("leaf_refs", ())
+    if status != "pass" or not plan_hash:
+        raise CheckRunnerError(
+            "check_shared_leaf_evidence_not_current",
+            str(declared.get("check_id", "")),
+        )
+    if not isinstance(raw_leaf_ids, Sequence) or isinstance(
+        raw_leaf_ids, (str, bytes, bytearray)
+    ):
+        raise CheckRunnerError(
+            "check_shared_leaf_evidence_invalid",
+            str(declared.get("check_id", "")),
+        )
+    leaf_ids = tuple(dict.fromkeys(str(value) for value in raw_leaf_ids if str(value)))
+    if not leaf_ids:
+        raise CheckRunnerError(
+            "check_shared_leaf_evidence_empty",
+            str(declared.get("check_id", "")),
+        )
+    if not isinstance(raw_leaf_refs, Sequence) or isinstance(
+        raw_leaf_refs, (str, bytes, bytearray)
+    ):
+        raise CheckRunnerError(
+            "check_shared_leaf_evidence_invalid",
+            str(declared.get("check_id", "")),
+        )
+    leaf_refs = [dict(item) for item in raw_leaf_refs if isinstance(item, Mapping)]
+    if len(leaf_refs) != len(leaf_ids):
+        raise CheckRunnerError(
+            "check_shared_leaf_evidence_reference_gap",
+            str(declared.get("check_id", "")),
+        )
+    raw = _stable_persisted_result(
+        {
+            "check_id": str(declared.get("check_id", "")),
+            "kind": str(declared.get("kind", "")),
+            "covers_obligation_ids": list(
+                declared.get("covers_obligation_ids")
+                or declared.get("covers")
+                or []
+            ),
+            "check_manifest_hash": str(identity.get("check_manifest_hash", "")),
+            "check_declarations_hash": str(
+                manifest.get("check_declarations_hash", "")
+            ),
+            "declared_check_hash": canonical_hash(dict(declared)),
+            "status": "passed",
+            "reason": "reused_shared_pytest_leaf",
+            "executed": False,
+            "process_started": False,
+            "exit_code": 0,
+            "expected_exit_code": int(
+                declared.get("expected", {}).get("exit_code", 0)
+                if isinstance(declared.get("expected", {}), Mapping)
+                else 0
+            ),
+            "terminal_kind": "shared_leaf_reuse",
+            "termination_reason": "reused_shared_leaf",
+            "cleanup_confirmed": True,
+            "shared_leaf_reuse": True,
+            "shared_leaf_plan_hash": plan_hash,
+            "shared_leaf_ids": list(leaf_ids),
+            "shared_leaf_evidence_refs": leaf_refs,
+            "claim_boundary": (
+                "This owner result projects exact current passing pytest leaf evidence; "
+                "it launches no child pytest process."
+            ),
+        }
+    )
+    raw["stdout_sidecar_ref"] = _persist_stream_sidecar(
+        owner_evidence_root,
+        io.BytesIO(b""),
+        media_type="text/plain",
+    )
+    raw["stderr_sidecar_ref"] = _persist_stream_sidecar(
+        owner_evidence_root,
+        io.BytesIO(b""),
+        media_type="text/plain",
+    )
+    raw["stdout_content_hash"] = str(raw["stdout_sidecar_ref"].get("content_hash", ""))
+    raw["stderr_content_hash"] = str(raw["stderr_sidecar_ref"].get("content_hash", ""))
+    return raw
 
 
 def _quarantine_corrupt_success(
@@ -2157,10 +2394,14 @@ def get_or_execute_check(
     step_id: str,
     owner_evidence_root: Path | None = None,
     dependency_execution_receipts: Mapping[str, Mapping[str, Any]] | None = None,
+    owner_input_context: CurrentOwnerInputContext | None = None,
     progress_context: Mapping[str, Any] | None = None,
     progress_callback: ProgressCallback | None = None,
     process_started_callback: ProcessStartedCallback | None = None,
     heartbeat_interval_seconds: float = 5.0,
+    deadline: float | None = None,
+    timeout_cap_seconds: float | None = None,
+    shared_leaf_evidence: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Reuse one exact terminal success or execute one new isolated attempt."""
 
@@ -2173,6 +2414,11 @@ def get_or_execute_check(
         owner_evidence_root,
     )
     dependency_receipts = dict(dependency_execution_receipts or {})
+    shared_leaf_plan_hash = (
+        str(shared_leaf_evidence.get("plan_hash", ""))
+        if isinstance(shared_leaf_evidence, Mapping)
+        else ""
+    )
     tentative_identity = _check_execution_identity(
         declared,
         skill_root=skill_root,
@@ -2181,6 +2427,8 @@ def get_or_execute_check(
         run_root=run_root,
         owner_evidence_root=persistent_root,
         dependency_receipts=dependency_receipts,
+        owner_input_context=owner_input_context,
+        shared_leaf_plan_hash=shared_leaf_plan_hash,
     )
     # The common exact-current path is deliberately outside the single-flight
     # lease and writer.  A read of an already verified immutable receipt must
@@ -2234,6 +2482,8 @@ def get_or_execute_check(
                 run_root=run_root,
                 owner_evidence_root=persistent_root,
                 dependency_receipts=dependency_receipts,
+                owner_input_context=owner_input_context,
+                shared_leaf_plan_hash=shared_leaf_plan_hash,
             )
             if identity["execution_key"] != tentative_identity["execution_key"]:
                 raise CheckRunnerError(
@@ -2271,21 +2521,32 @@ def get_or_execute_check(
                     "started_at": utc_now_precise(),
                 }
             )[:24].lower()
-            raw = dict(
-                execute_check(
+            if isinstance(shared_leaf_evidence, Mapping):
+                raw = _shared_leaf_success_result(
                     declared,
-                    target_root=target_root,
-                    repository_root=repository_root,
-                    run_root=run_root,
-                    step_id=step_id,
-                    owner_evidence_root=persistent_root,
-                    progress_context=progress_context,
-                    progress_callback=progress_callback,
-                    process_started_callback=process_started_callback,
-                    heartbeat_interval_seconds=heartbeat_interval_seconds,
-                    resolved_launch_plan=identity["_resolved_launch_plan"],
+                    _manifest,
+                    identity,
+                    persistent_root,
+                    shared_leaf_evidence,
                 )
-            )
+            else:
+                raw = dict(
+                    execute_check(
+                        declared,
+                        target_root=target_root,
+                        repository_root=repository_root,
+                        run_root=run_root,
+                        step_id=step_id,
+                        owner_evidence_root=persistent_root,
+                        progress_context=progress_context,
+                        progress_callback=progress_callback,
+                        process_started_callback=process_started_callback,
+                        heartbeat_interval_seconds=heartbeat_interval_seconds,
+                        deadline=deadline,
+                        timeout_cap_seconds=timeout_cap_seconds,
+                        resolved_launch_plan=identity["_resolved_launch_plan"],
+                    )
+                )
             raw.update(
                 {
                     "maintenance_unit_id": str(
@@ -2304,10 +2565,16 @@ def get_or_execute_check(
                     "projection_declaration_hash": str(
                         declared.get("projection_declaration_hash", "")
                     ),
-                    "command_executed_in_this_call": True,
+                    "command_executed_in_this_call": bool(
+                        raw.get("process_started") is True
+                        or raw.get("executed") is True
+                    ),
                 }
             )
-            if raw.get("status") == "passed" and raw.get("executed") is True:
+            shared_leaf_reuse = raw.get("shared_leaf_reuse") is True
+            if raw.get("status") == "passed" and (
+                raw.get("executed") is True or shared_leaf_reuse
+            ):
                 receipt = _write_canonical_success(
                     persistent_root, identity, raw
                 )
@@ -2320,7 +2587,11 @@ def get_or_execute_check(
                 )
                 raw.update(
                     {
-                        "execution_disposition": "executed_terminal_success",
+                        "execution_disposition": (
+                            "reused_terminal_success"
+                            if shared_leaf_reuse
+                            else "executed_terminal_success"
+                        ),
                         "owner_receipt_id": str(receipt["receipt_id"]),
                         "owner_receipt_hash": str(receipt["receipt_hash"]),
                         "owner_receipt_ref": _owner_receipt_document_ref(receipt),
@@ -2329,10 +2600,26 @@ def get_or_execute_check(
                 raw["proof_fingerprint"] = _execution_proof_fingerprint(raw)
                 record = dict(store_check_result(run_root, step_id, raw))
                 return {
-                    "disposition": "executed_terminal_success",
+                    "disposition": (
+                        "reused_terminal_success"
+                        if shared_leaf_reuse
+                        else "executed_terminal_success"
+                    ),
                     "record": record,
                     "execution_receipt": receipt,
                     "execution_receipt_ref": _owner_receipt_document_ref(receipt),
+                    "_raw_result": raw,
+                }
+            if raw.get("status") == "not_run":
+                reason = str(raw.get("reason", "not_run")) or "not_run"
+                raw["execution_disposition"] = f"not_run_{reason}"
+                raw["proof_fingerprint"] = _execution_proof_fingerprint(raw)
+                record = dict(store_check_result(run_root, step_id, raw))
+                return {
+                    "disposition": raw["execution_disposition"],
+                    "record": record,
+                    "execution_receipt": None,
+                    "execution_receipt_ref": None,
                 }
             raw["execution_disposition"] = "executed_failed_attempt"
             raw["proof_fingerprint"] = _execution_proof_fingerprint(raw)
@@ -2361,6 +2648,8 @@ def execute_check(
     progress_callback: ProgressCallback | None = None,
     process_started_callback: ProcessStartedCallback | None = None,
     heartbeat_interval_seconds: float = 5.0,
+    deadline: float | None = None,
+    timeout_cap_seconds: float | None = None,
     resolved_launch_plan: ResolvedLaunchPlan | None = None,
 ) -> Mapping[str, Any]:
     check, manifest = _declared_check_for_run(run_root, check)
@@ -2463,9 +2752,40 @@ def execute_check(
             ",".join(retired_target_evidence_fields),
             check_id,
         )
-    timeout = float(check.get("timeout_seconds", 30))
-    if timeout <= 0 or timeout > 3600:
-        raise CheckRunnerError("check_timeout_invalid", str(timeout), check_id)
+    declared_timeout = float(check.get("timeout_seconds", 30))
+    if (
+        not math.isfinite(declared_timeout)
+        or declared_timeout <= 0
+        or declared_timeout > 3600
+    ):
+        raise CheckRunnerError("check_timeout_invalid", str(declared_timeout), check_id)
+    caller_timeout = None
+    if timeout_cap_seconds is not None:
+        try:
+            caller_timeout = float(timeout_cap_seconds)
+        except (TypeError, ValueError) as exc:
+            raise CheckRunnerError(
+                "caller_timeout_invalid", str(timeout_cap_seconds), check_id
+            ) from exc
+        if not math.isfinite(caller_timeout) or caller_timeout < 0:
+            raise CheckRunnerError(
+                "caller_timeout_invalid", str(timeout_cap_seconds), check_id
+            )
+    remaining_budget = None
+    if deadline is not None:
+        try:
+            deadline = float(deadline)
+        except (TypeError, ValueError) as exc:
+            raise CheckRunnerError("deadline_invalid", str(deadline), check_id) from exc
+        if not math.isfinite(deadline):
+            raise CheckRunnerError("deadline_invalid", str(deadline), check_id)
+        remaining_budget = deadline - time.monotonic()
+    timeout_candidates = [declared_timeout]
+    if caller_timeout is not None:
+        timeout_candidates.append(caller_timeout)
+    if remaining_budget is not None:
+        timeout_candidates.append(max(0.0, remaining_budget))
+    timeout = min(timeout_candidates)
     expected = check.get("expected", {})
     expected_exit = int(expected.get("exit_code", 0)) if isinstance(expected, Mapping) else 0
     context = dict(progress_context or {})
@@ -2474,6 +2794,66 @@ def execute_check(
     total_count = max(completed_before + 1, int(context.get("total_count", 1)))
     started_wall = datetime.now(timezone.utc)
     started = started_wall.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    budget_exhausted = bool(
+        remaining_budget is not None and remaining_budget <= 0.0
+    )
+    caller_cap_exhausted = bool(caller_timeout is not None and caller_timeout <= 0.0)
+    if budget_exhausted or caller_cap_exhausted:
+        reason = "budget_exhausted" if budget_exhausted else "caller_timeout_exhausted"
+        now = utc_now_precise()
+        _emit_execution_event(
+            run_root,
+            event_type="start",
+            step_id=current_step_id,
+            check_id=check_id,
+            completed_count=completed_before,
+            total_count=total_count,
+            elapsed_seconds=0.0,
+            started_at=started,
+            deadline_at=started,
+            callback=progress_callback,
+        )
+        _emit_execution_event(
+            run_root,
+            event_type="end",
+            step_id=current_step_id,
+            check_id=check_id,
+            completed_count=completed_before,
+            total_count=total_count,
+            elapsed_seconds=0.0,
+            started_at=started,
+            deadline_at=started,
+            callback=progress_callback,
+            status="not_run",
+        )
+        return {
+            **base,
+            "status": "not_run",
+            "reason": reason,
+            "executed": False,
+            "process_started": False,
+            "terminal_kind": reason,
+            "command": command_token(command),
+            "command_token": command_token(command),
+            "command_fingerprint": command_fingerprint(command, args),
+            "launch_plan": dict(launch_plan.record),
+            "launch_plan_fingerprint": str(launch_plan.record.get("launch_plan_fingerprint", "")),
+            "args": projected_declared_args,
+            "declared_args": projected_declared_args,
+            "cwd_token": cwd_token,
+            "cwd_relative": cwd_relative,
+            "timeout_seconds": timeout,
+            "declared_timeout_seconds": declared_timeout,
+            "timeout_cap_seconds": caller_timeout,
+            "budget_remaining_seconds": max(0.0, remaining_budget or 0.0),
+            "step_id": current_step_id,
+            "started_at": started,
+            "deadline_at": started,
+            "finished_at": now,
+            "cleanup_confirmed": False,
+            "termination_reason": "not_required",
+            "claim_boundary": "A deadline with no remaining budget is a non-run and never passing evidence.",
+        }
     deadline_at = (started_wall + timedelta(seconds=timeout)).isoformat(
         timespec="milliseconds"
     ).replace("+00:00", "Z")
@@ -2537,6 +2917,7 @@ def execute_check(
         "termination_succeeded": False,
         "termination_method": "not_required",
         "termination_error_kind": "",
+        "termination_reason": "not_required",
         "cleanup_confirmed": True,
         "cleanup_confirmation_method": "not_required",
         "descendant_count_before": 0,
@@ -2648,6 +3029,9 @@ def execute_check(
                     )
                     next_heartbeat = now + heartbeat_interval
                 if elapsed >= timeout:
+                    budget_exhausted = bool(
+                        deadline is not None and time.monotonic() >= deadline
+                    )
                     timed_out = True
                     break
                 time.sleep(0.05)
@@ -2658,6 +3042,13 @@ def execute_check(
                 process,
                 containment,
                 timed_out=timed_out,
+            )
+            termination_facts = dict(termination_facts)
+            if budget_exhausted:
+                termination_facts["termination_reason"] = "budget_exhausted"
+            termination_facts.setdefault(
+                "termination_reason",
+                "cancelled" if cancelled else "timeout" if timed_out else "normal_exit_cleanup",
             )
         exit_code = process.returncode
         stdout, stdout_content_hash, stdout_truncated, stdout_total_bytes, stdout_captured_bytes = _capture_file(stdout_file)
@@ -2704,22 +3095,52 @@ def execute_check(
     elapsed_seconds = round(time.monotonic() - started_monotonic, 3)
     elapsed_ms = max(0, round(elapsed_seconds * 1000))
     cleanup_confirmed = bool(termination_facts.get("cleanup_confirmed", False))
-    status = (
-        "failed"
-        if timed_out or not cleanup_confirmed
-        else "passed"
-        if exit_code == expected_exit
-        else "failed"
-    )
-    reason = (
-        "cleanup_unconfirmed"
-        if (timed_out or cancelled) and not cleanup_confirmed
-        else "cancelled"
+    terminal_kind = (
+        "cancelled"
         if cancelled
+        else "timeout"
+        if timed_out and budget_exhausted
         else "timeout"
         if timed_out
         else "cleanup_unconfirmed"
         if not cleanup_confirmed
+        else "exit"
+    )
+    cleanup_confirmation_method = str(
+        termination_facts.get("cleanup_confirmation_method", "")
+    )
+    termination_reason = str(termination_facts.get("termination_reason", ""))
+    terminal_evidence_complete = bool(
+        cleanup_confirmation_method
+        and cleanup_confirmation_method not in {"unknown", "not_required"}
+        and termination_reason
+        and termination_reason != "unknown"
+        and int(termination_facts.get("descendant_count_after", -1)) >= 0
+        and isinstance(termination_facts.get("remaining_descendant_pids"), list)
+    )
+    status = (
+        "passed"
+        if (
+            not timed_out
+            and not cancelled
+            and exit_code == expected_exit
+            and cleanup_confirmed
+            and terminal_kind == "exit"
+            and terminal_evidence_complete
+        )
+        else "failed"
+    )
+    reason = (
+        "cancelled"
+        if cancelled
+        else "timeout"
+        if timed_out and not budget_exhausted
+        else "budget_exhausted"
+        if timed_out and budget_exhausted
+        else "cleanup_unconfirmed"
+        if not cleanup_confirmed
+        else "terminal_evidence_incomplete"
+        if not terminal_evidence_complete
         else "expected_exit_observed"
         if status == "passed"
         else "unexpected_exit_code"
@@ -2731,13 +3152,7 @@ def execute_check(
         "executed": True,
         "process_started": True,
         "launch_error_kind": "",
-        "terminal_kind": (
-            "timeout"
-            if timed_out
-            else "cleanup_unconfirmed"
-            if not cleanup_confirmed
-            else "exit"
-        ),
+        "terminal_kind": terminal_kind,
         "command": command_token(command),
         "command_token": command_token(command),
         "command_fingerprint": command_fingerprint(command, args),
@@ -2748,6 +3163,10 @@ def execute_check(
         "cwd_token": cwd_token,
         "cwd_relative": cwd_relative,
         "timeout_seconds": timeout,
+        "declared_timeout_seconds": declared_timeout,
+        "timeout_cap_seconds": caller_timeout,
+        "budget_remaining_seconds": max(0.0, remaining_budget or 0.0),
+        "budget_exhausted": budget_exhausted,
         "exit_code": exit_code,
         "expected_exit_code": expected_exit,
         "stdout": stdout,
@@ -2844,7 +3263,11 @@ def execute_check(
                 "stderr_captured_bytes": stderr_captured_bytes,
                 "output_truncated": stdout_truncated or stderr_truncated,
                 "partial_output_content_hash": partial_output_content_hash,
-                "reason": "declared_timeout_elapsed",
+                "reason": (
+                    "budget_exhausted"
+                    if budget_exhausted
+                    else "declared_timeout_elapsed"
+                ),
                 "resume_action": "resume the claimed run and replay this step before closure",
                 "retry_action": "diagnose duration/output, then retry the same manifest-bound check",
                 "terminal_kind": "timeout",

@@ -176,7 +176,7 @@ def test_self_inventory_closes_the_current_command_adequacy_gaps() -> None:
     )
     route_gaps = [item for item in findings if item.code == "surface_command_route_missing"]
     check_gaps = [item for item in findings if item.code == "surface_command_required_checks_empty"]
-    assert len(checker_engine.COMMANDS) == 54
+    assert len(checker_engine.COMMANDS) == len(checker_engine.current_checker_command_surface())
     assert route_gaps == []
     assert check_gaps == []
     assert all(item.code != "surface_command_denominator_mismatch" for item in findings)
@@ -230,7 +230,7 @@ def test_current_command_reverse_denominator_binds_exact_metadata_for_every_comm
         if isinstance(row, dict) and row.get("kind") == "command"
     }
 
-    assert len(command_surface) == len(checker_engine.COMMANDS) == 54
+    assert len(command_surface) == len(checker_engine.COMMANDS)
     assert {str(item["name"]) for item in command_surface} == set(rows_by_name)
     assert {"check-capability", "audit-capabilities", "check-source-sync"} <= rows_by_name.keys()
 
@@ -272,7 +272,7 @@ def test_historical_underdeclaration_is_still_fail_closed() -> None:
     route_gaps = [item for item in findings if item.code == "surface_command_route_missing"]
     check_gaps = [item for item in findings if item.code == "surface_command_required_checks_empty"]
     assert len(route_gaps) == 26
-    assert len(check_gaps) == 47
+    assert len(check_gaps) == len(LEGACY_EMPTY_CHECK_COMMANDS)
 
 
 def test_self_inventory_negative_row_cannot_become_green_by_hash_reseal() -> None:

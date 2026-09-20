@@ -3,7 +3,7 @@
   "$id": "skillguard_test_mesh_owner_execution_current.schema.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "artifact_type", "status", "mode", "profile_id", "plan_hash", "planned_execute_owner_ids", "planned_reuse_owner_ids", "verified_planned_reuse_owner_ids", "executed_owner_ids", "reused_after_freeze_owner_ids", "failed_owner_ids", "not_run_owner_ids", "execution_count", "owner_results", "findings", "claim_boundary"],
+  "required": ["schema_version", "artifact_type", "status", "mode", "profile_id", "plan_hash", "planned_execute_owner_ids", "planned_reuse_owner_ids", "verified_planned_reuse_owner_ids", "executed_owner_ids", "reused_after_freeze_owner_ids", "failed_owner_ids", "not_run_owner_ids", "execution_count", "diagnostic_mode", "total_budget_seconds", "budget_exhausted", "pytest_leaf_plan", "pytest_leaf_reuse_count", "owner_results", "findings", "claim_boundary"],
   "properties": {
     "schema_version": {"const": "skillguard.test_mesh_owner_execution.current"},
     "artifact_type": {"const": "skillguard_test_mesh_owner_execution"},
@@ -19,6 +19,16 @@
     "failed_owner_ids": {"$ref": "#/$defs/ownerIds"},
     "not_run_owner_ids": {"$ref": "#/$defs/ownerIds"},
     "execution_count": {"type": "integer", "minimum": 0},
+    "diagnostic_mode": {"type": "boolean"},
+    "total_budget_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "budget_exhausted": {"type": "boolean"},
+    "pytest_leaf_plan": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "object", "additionalProperties": true}
+      ]
+    },
+    "pytest_leaf_reuse_count": {"type": "integer", "minimum": 0},
     "owner_results": {
       "type": "array",
       "items": {

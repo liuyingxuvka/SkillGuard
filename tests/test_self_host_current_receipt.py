@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -16,7 +15,6 @@ if str(SCRIPTS) not in sys.path:
 import skillguard_v2.self_host as self_host  # noqa: E402
 from skillguard_v2.self_host import (  # noqa: E402
     SelfHostError,
-    SelfHostClaimContext,
     finalize_current_self_host_from_frozen_mesh,
     publish_current_self_host_terminal_receipt,
     run_current_verifier,
@@ -272,35 +270,30 @@ def test_current_self_host_receipt_consumer_fails_closed_when_missing(
         )
 
 
-def test_current_verifier_blocks_when_frozen_route_decision_is_missing(
+def test_retired_current_verifier_refuses_before_claim_or_owner_start(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     repository = tmp_path / "repository"
-    skill_root = repository / ".agents" / "skills" / "skillguard"
-    skill_root.mkdir(parents=True)
-    context = SelfHostClaimContext(
-        repository_root=repository,
-        persistent_owner_root=repository / "owner-evidence",
-        skill_root=skill_root,
-        contract={},
-        manifest={},
-        test_mesh_boundary_checks=(),
-        long_check_timeout_budget_checks=(),
-        request={},
-        target_input_paths=(),
-        target_input_roles={},
-        claim=SimpleNamespace(run_id="run-current"),
-        run_root=repository / "work" / "run-current",
-    )
+    repository.mkdir(parents=True)
+    called = False
+
+    def unexpected_prepare(*_args: object, **_kwargs: object) -> None:
+        nonlocal called
+        called = True
+        raise AssertionError("retired verifier must not prepare a claim")
+
     monkeypatch.setattr(
         self_host,
         "_prepare_current_self_host_claim",
-        lambda *_args, **_kwargs: context,
+        unexpected_prepare,
     )
 
-    with pytest.raises(SelfHostError, match="route"):
+    with pytest.raises(SelfHostError) as caught:
         run_current_verifier(repository, progress_callback=None)
+    assert caught.value.code == "self_host_current_verifier_retired"
+    assert not called
+    assert not (repository / "work").exists()
 
 
 def test_frozen_mesh_finalizer_does_not_claim_compile_or_execute_and_is_idempotent(
