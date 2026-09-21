@@ -842,6 +842,395 @@ class ProcessTreeContainment:
     released: bool = False
 
 
+class _AtomicWindowsProcess:
+    """Small Popen-compatible view over a CreateProcessW handle."""
+
+    def __init__(self, process_handle: int, pid: int, args: Sequence[str]) -> None:
+        self._handle = int(process_handle)
+        self.pid = int(pid)
+        self.args = list(args)
+        self._returncode: int | None = None
+        self._closed = False
+
+    @property
+    def returncode(self) -> int | None:
+        return self.poll()
+
+    def poll(self) -> int | None:
+        if self._returncode is not None:
+            return self._returncode
+        import ctypes
+        from ctypes import wintypes
+
+        code = wintypes.DWORD()
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        get_exit_code = kernel32.GetExitCodeProcess
+        get_exit_code.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+        get_exit_code.restype = wintypes.BOOL
+        if not get_exit_code(wintypes.HANDLE(self._handle), ctypes.byref(code)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        if code.value == 259:  # STILL_ACTIVE
+            return None
+        self._returncode = int(code.value)
+        return self._returncode
+
+    def wait(self, timeout: float | None = None) -> int:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        wait_for_single_object = kernel32.WaitForSingleObject
+        wait_for_single_object.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        wait_for_single_object.restype = wintypes.DWORD
+        milliseconds = 0xFFFFFFFF if timeout is None else max(0, int(timeout * 1000))
+        result = wait_for_single_object(wintypes.HANDLE(self._handle), milliseconds)
+        if result == 0x102:
+            raise subprocess.TimeoutExpired(self.args, timeout)
+        if result != 0:
+            raise ctypes.WinError(ctypes.get_last_error())
+        value = self.poll()
+        if value is None:
+            raise OSError("CreateProcessW returned without a terminal exit code")
+        return value
+
+    def kill(self) -> None:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        terminate_process = kernel32.TerminateProcess
+        terminate_process.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        terminate_process.restype = wintypes.BOOL
+        if not terminate_process(wintypes.HANDLE(self._handle), 1):
+            error = ctypes.get_last_error()
+            if error not in {0, 5, 6}:
+                raise ctypes.WinError(error)
+
+    terminate = kill
+
+    def close(self) -> None:
+        if not self._closed:
+            _windows_close_handle(self._handle)
+            self._closed = True
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
+
+
+def _windows_close_handle(handle: int | None) -> None:
+    if handle is None:
+        return
+    import ctypes
+    from ctypes import wintypes
+
+    try:
+        ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle(
+            wintypes.HANDLE(int(handle))
+        )
+    except (AttributeError, OSError, TypeError, ValueError):
+        pass
+
+
+def _windows_inheritable_handle(file_object: Any, *, read: bool = False) -> tuple[int, bool]:
+    """Return an inheritable Win32 handle and whether this call opened it."""
+
+    import ctypes
+    from ctypes import wintypes
+    import msvcrt
+
+    if isinstance(file_object, int):
+        if file_object == subprocess.DEVNULL:
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            create_file = kernel32.CreateFileW
+            create_file.argtypes = [
+                wintypes.LPCWSTR,
+                wintypes.DWORD,
+                wintypes.DWORD,
+                ctypes.c_void_p,
+                wintypes.DWORD,
+                wintypes.DWORD,
+                wintypes.HANDLE,
+            ]
+            create_file.restype = wintypes.HANDLE
+            access = 0x80000000 if read else 0x40000000
+            handle = create_file(
+                "NUL", access, 0x00000003, None, 3, 0x00000080, None
+            )
+            if handle == wintypes.HANDLE(-1).value:
+                raise ctypes.WinError(ctypes.get_last_error())
+            opened = True
+        else:
+            handle = msvcrt.get_osfhandle(file_object)
+            opened = False
+    else:
+        handle = msvcrt.get_osfhandle(file_object.fileno())
+        opened = False
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    set_handle_information = kernel32.SetHandleInformation
+    set_handle_information.argtypes = [wintypes.HANDLE, wintypes.DWORD, wintypes.DWORD]
+    set_handle_information.restype = wintypes.BOOL
+    if not set_handle_information(
+        wintypes.HANDLE(handle), 0x00000001, 0x00000001
+    ):
+        error = ctypes.get_last_error()
+        if opened:
+            _windows_close_handle(int(handle))
+        raise ctypes.WinError(error)
+    return int(handle), opened
+
+
+def _launch_windows_atomic(
+    argv: Sequence[str],
+    *,
+    cwd: Path,
+    env: Mapping[str, str],
+    stdin: Any,
+    stdout: Any,
+    stderr: Any,
+    on_created: Any,
+) -> _AtomicWindowsProcess:
+    """Create a target directly inside a kill-on-close Job object.
+
+    The Job handle is supplied in PROC_THREAD_ATTRIBUTE_JOB_LIST at process
+    creation time.  There is no ordinary-Popen-then-attach fallback.
+    """
+
+    import ctypes
+    from ctypes import wintypes
+
+    if not argv:
+        raise OSError("empty process argv")
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create_job = kernel32.CreateJobObjectW
+    create_job.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+    create_job.restype = wintypes.HANDLE
+    job = create_job(None, None)
+    if not job:
+        raise ctypes.WinError(ctypes.get_last_error())
+    process_handle: int | None = None
+    opened_handles: list[int] = []
+    attribute_buffer = None
+    try:
+        class LARGE_INTEGER(ctypes.Structure):
+            _fields_ = [("quad_part", ctypes.c_longlong)]
+
+        class IO_COUNTERS(ctypes.Structure):
+            _fields_ = [(name, ctypes.c_ulonglong) for name in (
+                "read_operation_count", "write_operation_count", "other_operation_count",
+                "read_transfer_count", "write_transfer_count", "other_transfer_count",
+            )]
+
+        class BASIC_LIMIT_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ("per_process_user_time_limit", LARGE_INTEGER),
+                ("per_job_user_time_limit", LARGE_INTEGER),
+                ("limit_flags", wintypes.DWORD),
+                ("minimum_working_set_size", ctypes.c_size_t),
+                ("maximum_working_set_size", ctypes.c_size_t),
+                ("active_process_limit", wintypes.DWORD),
+                ("affinity", ctypes.c_size_t),
+                ("priority_class", wintypes.DWORD),
+                ("scheduling_class", wintypes.DWORD),
+            ]
+
+        class EXTENDED_LIMIT_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ("basic_limit_information", BASIC_LIMIT_INFORMATION),
+                ("io_info", IO_COUNTERS),
+                ("process_memory_limit", ctypes.c_size_t),
+                ("job_memory_limit", ctypes.c_size_t),
+                ("peak_process_memory_used", ctypes.c_size_t),
+                ("peak_job_memory_used", ctypes.c_size_t),
+            ]
+
+        limits = EXTENDED_LIMIT_INFORMATION()
+        limits.basic_limit_information.limit_flags = 0x00002000  # KILL_ON_JOB_CLOSE
+        set_information = kernel32.SetInformationJobObject
+        set_information.argtypes = [
+            wintypes.HANDLE,
+            wintypes.INT,
+            ctypes.c_void_p,
+            wintypes.DWORD,
+        ]
+        set_information.restype = wintypes.BOOL
+        if not set_information(
+            job, 9, ctypes.byref(limits), ctypes.sizeof(limits)
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+        stdin_handle, stdin_opened = _windows_inheritable_handle(stdin, read=True)
+        stdout_handle, stdout_opened = _windows_inheritable_handle(stdout)
+        stderr_handle, stderr_opened = _windows_inheritable_handle(stderr)
+        opened_handles.extend(
+            handle for handle, opened in (
+                (stdin_handle, stdin_opened),
+                (stdout_handle, stdout_opened),
+                (stderr_handle, stderr_opened),
+            ) if opened
+        )
+
+        class STARTUPINFO(ctypes.Structure):
+            _fields_ = [
+                ("cb", wintypes.DWORD), ("lpReserved", wintypes.LPWSTR),
+                ("lpDesktop", wintypes.LPWSTR), ("lpTitle", wintypes.LPWSTR),
+                ("dwX", wintypes.DWORD), ("dwY", wintypes.DWORD),
+                ("dwXSize", wintypes.DWORD), ("dwYSize", wintypes.DWORD),
+                ("dwXCountChars", wintypes.DWORD), ("dwYCountChars", wintypes.DWORD),
+                ("dwFillAttribute", wintypes.DWORD), ("dwFlags", wintypes.DWORD),
+                ("wShowWindow", wintypes.WORD), ("cbReserved2", wintypes.WORD),
+                ("lpReserved2", ctypes.POINTER(ctypes.c_byte)),
+                ("hStdInput", wintypes.HANDLE), ("hStdOutput", wintypes.HANDLE),
+                ("hStdError", wintypes.HANDLE),
+            ]
+
+        class STARTUPINFOEX(ctypes.Structure):
+            _fields_ = [("StartupInfo", STARTUPINFO), ("lpAttributeList", ctypes.c_void_p)]
+
+        info = STARTUPINFOEX()
+        info.StartupInfo.cb = ctypes.sizeof(STARTUPINFOEX)
+        info.StartupInfo.dwFlags = 0x00000100  # STARTF_USESTDHANDLES
+        info.StartupInfo.hStdInput = wintypes.HANDLE(stdin_handle)
+        info.StartupInfo.hStdOutput = wintypes.HANDLE(stdout_handle)
+        info.StartupInfo.hStdError = wintypes.HANDLE(stderr_handle)
+
+        size = ctypes.c_size_t(0)
+        initialize_attributes = kernel32.InitializeProcThreadAttributeList
+        initialize_attributes.argtypes = [
+            ctypes.c_void_p,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            ctypes.POINTER(ctypes.c_size_t),
+        ]
+        initialize_attributes.restype = wintypes.BOOL
+        initialize_attributes(None, 2, 0, ctypes.byref(size))
+        attribute_buffer = ctypes.create_string_buffer(size.value)
+        info.lpAttributeList = ctypes.cast(attribute_buffer, ctypes.c_void_p)
+        if not initialize_attributes(
+            info.lpAttributeList, 2, 0, ctypes.byref(size)
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        job_list = (wintypes.HANDLE * 1)(wintypes.HANDLE(job))
+        update_attribute = kernel32.UpdateProcThreadAttribute
+        update_attribute.argtypes = [
+            ctypes.c_void_p,
+            wintypes.DWORD,
+            ctypes.c_size_t,
+            ctypes.c_void_p,
+            ctypes.c_size_t,
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_size_t),
+        ]
+        update_attribute.restype = wintypes.BOOL
+        if not update_attribute(
+            info.lpAttributeList, 0, 0x0002000D, ctypes.byref(job_list),
+            ctypes.sizeof(job_list), None, None
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        handle_list = (wintypes.HANDLE * 3)(
+            wintypes.HANDLE(stdin_handle), wintypes.HANDLE(stdout_handle), wintypes.HANDLE(stderr_handle)
+        )
+        if not update_attribute(
+            info.lpAttributeList, 0, 0x00020002, ctypes.byref(handle_list),
+            ctypes.sizeof(handle_list), None, None
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+        environment_block = "".join(
+            f"{key}={value}\0" for key, value in sorted(env.items(), key=lambda row: row[0].casefold())
+        ) + "\0"
+        command_line = ctypes.create_unicode_buffer(subprocess.list2cmdline([str(item) for item in argv]))
+        class PROCESS_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ("hProcess", wintypes.HANDLE), ("hThread", wintypes.HANDLE),
+                ("dwProcessId", wintypes.DWORD), ("dwThreadId", wintypes.DWORD),
+            ]
+        process_info = PROCESS_INFORMATION()
+        flags = 0x00080000 | 0x00000400 | 0x08000000  # EXTENDED_STARTUPINFO + UNICODE_ENV + NO_WINDOW
+        create_process = kernel32.CreateProcessW
+        create_process.argtypes = [
+            wintypes.LPCWSTR,
+            wintypes.LPWSTR,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            wintypes.BOOL,
+            wintypes.DWORD,
+            ctypes.c_void_p,
+            wintypes.LPCWSTR,
+            ctypes.c_void_p,
+            ctypes.POINTER(PROCESS_INFORMATION),
+        ]
+        create_process.restype = wintypes.BOOL
+        environment_buffer = ctypes.create_unicode_buffer(environment_block)
+        if not create_process(
+            str(argv[0]), command_line, None, None, True, flags,
+            ctypes.cast(environment_buffer, ctypes.c_void_p), str(cwd),
+            ctypes.byref(info.StartupInfo), ctypes.byref(process_info)
+        ):
+            raise ctypes.WinError(ctypes.get_last_error())
+        process_handle = int(process_info.hProcess)
+        _windows_close_handle(int(process_info.hThread))
+        process = _AtomicWindowsProcess(process_handle, int(process_info.dwProcessId), list(argv))
+        process_handle = None
+        process._skillguard_containment = ProcessTreeContainment(
+            root_pid=process.pid,
+            attached=True,
+            method="windows_atomic_job_list",
+            windows_job_handle=int(job),
+        )
+        job = None
+        on_created(process)
+        return process
+    finally:
+        if attribute_buffer is not None:
+            try:
+                delete_attributes = kernel32.DeleteProcThreadAttributeList
+                delete_attributes.argtypes = [ctypes.c_void_p]
+                delete_attributes.restype = None
+                delete_attributes(ctypes.cast(attribute_buffer, ctypes.c_void_p))
+            except (AttributeError, OSError):
+                pass
+        for handle in opened_handles:
+            _windows_close_handle(handle)
+        if process_handle is not None:
+            _windows_close_handle(process_handle)
+        if job is not None:
+            _windows_close_handle(int(job))
+
+
+def launch_contained_process(
+    argv: Sequence[str],
+    *,
+    cwd: Path,
+    env: Mapping[str, str],
+    stdin: Any,
+    stdout: Any,
+    stderr: Any,
+    on_created: Any,
+) -> Any:
+    """Launch one target and invoke ``on_created`` at the OS create edge."""
+
+    if os.name == "nt":
+        return _launch_windows_atomic(
+            argv, cwd=cwd, env=env, stdin=stdin, stdout=stdout,
+            stderr=stderr, on_created=on_created,
+        )
+    process = subprocess.Popen(
+        [str(item) for item in argv],
+        cwd=cwd,
+        env=dict(env),
+        stdin=stdin,
+        stdout=stdout,
+        stderr=stderr,
+        shell=False,
+        start_new_session=True,
+    )
+    on_created(process)
+    return process
+
+
 def attach_process_tree_containment(
     process: subprocess.Popen[Any],
 ) -> ProcessTreeContainment:
@@ -1065,18 +1454,8 @@ def release_process_tree_containment(
             )
             # TerminateJobObject is used even when the direct child already
             # exited: a successful parent must not leave grandchildren alive.
-            if process.poll() is None:
-                taskkill = subprocess.run(
-                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
-                    stdin=subprocess.DEVNULL,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                    timeout=10,
-                )
-                if taskkill.returncode == 0:
-                    facts["termination_method"] = "windows_taskkill_tree_then_job"
+            # The process was created atomically in this job, so no taskkill or
+            # ordinary-process fallback is needed to establish its boundary.
             if not terminate_job(job_handle, 0xE0000001):
                 raise OSError(ctypes.get_last_error(), "TerminateJobObject")
             deadline = time.monotonic() + 10.0
@@ -1106,23 +1485,6 @@ def release_process_tree_containment(
                 if before_rows is not None and after_rows is not None
                 else []
             )
-            if remaining:
-                for pid in remaining:
-                    subprocess.run(
-                        ["taskkill", "/PID", str(pid), "/T", "/F"],
-                        stdin=subprocess.DEVNULL,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                        check=False,
-                        timeout=10,
-                    )
-                after_rows, after_method = _process_parent_rows()
-                remaining = (
-                    sorted(pid for pid in descendants_before if pid in after_rows)
-                    if after_rows is not None
-                    else []
-                )
             facts["termination_succeeded"] = process.poll() is not None
             facts["cleanup_confirmed"] = bool(
                 facts["termination_succeeded"]
@@ -1136,8 +1498,6 @@ def release_process_tree_containment(
             )
             facts["remaining_descendant_pids"] = remaining
             facts["termination_method"] = "windows_job_terminate_and_query"
-            if remaining:
-                facts["termination_method"] = "windows_taskkill_tree_then_job"
             facts["termination_reason"] = (
                 "process_tree_terminated" if facts["cleanup_confirmed"] else "cleanup_unconfirmed"
             )
@@ -1146,6 +1506,9 @@ def release_process_tree_containment(
             if not close_handle(job_handle):
                 facts["cleanup_confirmed"] = False
                 facts["termination_error_kind"] = "job_handle_close_failed"
+            close_process = getattr(process, "close", None)
+            if callable(close_process):
+                close_process()
         except (OSError, subprocess.SubprocessError) as exc:
             facts["termination_error_kind"] = type(exc).__name__
             facts["termination_reason"] = "cleanup_unconfirmed"
@@ -1157,6 +1520,9 @@ def release_process_tree_containment(
                     )
                 except (AttributeError, OSError, TypeError, ValueError):
                     pass
+            close_process = getattr(process, "close", None)
+            if callable(close_process):
+                close_process()
         return facts
     facts["cleanup_confirmation_method"] = "posix_process_group_probe"
     group_empty = False

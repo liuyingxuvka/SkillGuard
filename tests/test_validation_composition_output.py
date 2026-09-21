@@ -34,7 +34,7 @@ def test_summary_does_not_expand_report_to_dict(monkeypatch) -> None:
     assert payload["status"] == ("pass" if ok else "fail")
     assert payload["positive_gate_status"]
     assert payload["known_bad_gate_status"]
-    assert payload["repository_manifest_alignment"]["failed_checks"] == ["exact_profile_projection"]
+    assert payload["repository_manifest_alignment"]["failed_checks"] == []
     assert len(payload["counterexamples"]) <= 3
     assert len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) <= 8192
 

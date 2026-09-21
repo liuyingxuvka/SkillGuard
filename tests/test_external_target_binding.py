@@ -1,335 +1,131 @@
+"""Explicit current root/projection tests for consumer distributions."""
+
 from __future__ import annotations
 
-import json
-import os
+import copy
 from pathlib import Path
-import shutil
-import subprocess
-import sys
+
+import pytest
+
+from tests.test_fixed_preflight_units import _root, _source
+
+SCRIPT_ROOT = Path(__file__).resolve().parents[1] / ".agents" / "skills" / "skillguard" / "scripts"
 
 
-ROOT = Path(__file__).resolve().parents[1]
-SKILL_ROOT = ROOT / ".agents" / "skills" / "skillguard"
-SCRIPT_ROOT = SKILL_ROOT / "scripts"
-CLI = SCRIPT_ROOT / "skillguard.py"
-FIXTURE = SKILL_ROOT / "fixtures" / "good_single_skill"
-SCHEMA = (
-    SKILL_ROOT
-    / "assets"
-    / "schemas"
-    / "skillguard_external_target_binding_v1.schema.json"
-)
-sys.path.insert(0, str(SCRIPT_ROOT))
+def _repository_projection(tmp_path: Path):
+    from skillguard_v2.contract_compiler import compile_skill_contract
 
-from checker_engine import validate_schema_subset  # noqa: E402
-from skillguard_utils import json_text  # noqa: E402
-from skillguard_v2.contract_compiler import compile_skill_contract  # noqa: E402
+    repository_root = Path(__file__).resolve().parents[1]
+    compiled = compile_skill_contract(repository_root, write=False)
+    assert compiled.ok, compiled.to_dict()
+    return repository_root, compiled.compiled_contract
 
 
-def _run(
-    *args: str,
-    cwd: Path = ROOT,
-    codex_home: Path | None = None,
-) -> tuple[int, dict[str, object]]:
-    env = os.environ.copy()
-    if codex_home is not None:
-        env["CODEX_HOME"] = str(codex_home)
-    completed = subprocess.run(
-        [sys.executable, str(CLI), *args],
-        cwd=cwd,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=120,
-    )
-    return completed.returncode, json.loads(completed.stdout)
+def test_external_nested_contract_and_static_checks_share_canonical_binding(tmp_path: Path) -> None:
+    from skillguard_v2.consumer_distribution import audit_consumer_distribution, build_consumer_distribution
+
+    repository_root, contract = _repository_projection(tmp_path)
+    destination = tmp_path / "consumer" / "skillguard"
+    built = build_consumer_distribution(repository_root / ".agents" / "skills" / "skillguard", destination, contract)
+    assert built["status"] == "passed", built
+    audited = audit_consumer_distribution(destination)
+    assert audited["status"] == "passed", audited
+    assert audited["release_id"] == built["manifest"]["release_id"]
+    assert audited["manifest"]["projection_id"] == "projection:consumer-distribution"
 
 
-def _prefix_repository_paths(source: dict[str, object], prefix: str) -> None:
-    source["model_path"] = f"{prefix}/{source['model_path']}"
-    source["implementation_paths"] = [
-        f"{prefix}/{path}" for path in source["implementation_paths"]  # type: ignore[index]
-    ]
-    for check in source["checks"]:  # type: ignore[index]
-        check["args"] = [
-            f"{prefix}/{value}" if (FIXTURE / str(value)).exists() else value
-            for value in check.get("args", [])
-        ]
-        for selector in check.get("input_selectors", []):
-            if selector.get("kind") == "path":
-                selector["path"] = f"{prefix}/{selector['path']}"
+def test_consumer_clean_skill_passes_without_author_maintenance_section(tmp_path: Path) -> None:
+    from skillguard_v2.consumer_distribution import audit_consumer_distribution, build_consumer_distribution
 
-
-def _nested_current_target(tmp_path: Path) -> tuple[Path, Path]:
-    repository = tmp_path / "external-repository"
-    target = repository / "skills" / "good_single_skill"
-    target.parent.mkdir(parents=True)
-    shutil.copytree(FIXTURE, target)
-    source_path = target / ".skillguard" / "contract-source.json"
-    source = json.loads(source_path.read_text(encoding="utf-8"))
-    _prefix_repository_paths(source, "skills/good_single_skill")
-    source_path.write_text(json_text(source), encoding="utf-8")
-    result = compile_skill_contract(target, repository_root=repository, write=True)
-    assert result.ok, result.to_dict()
-    return repository, target
-
-
-def _assert_current_binding(
-    report: dict[str, object],
-    *,
-    mode: str,
-    member_root_path: str,
-) -> None:
-    assert report["decision"] == "pass"
-    binding = report["target_binding"]
-    assert isinstance(binding, dict)
-    assert binding["binding_mode"] == mode
-    assert binding["member_root_path"] == member_root_path
-    assert binding["member_within_repository"] is True
-    assert binding["fallback_used"] is False
-    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
-    assert validate_schema_subset(binding, schema) == []
-
-
-def test_external_nested_contract_and_static_checks_share_canonical_binding(
-    tmp_path: Path,
-) -> None:
-    repository, _target = _nested_current_target(tmp_path)
-    arguments = (
-        "--repository-root",
-        str(repository),
-        "--target",
-        "skills/good_single_skill",
-    )
-
-    contract_code, contract = _run("check-contract", *arguments)
-    static_code, static = _run("check-skill", *arguments)
-
-    assert contract_code == 0
-    assert static_code == 0
-    _assert_current_binding(
-        contract,
-        mode="explicit_repository",
-        member_root_path="skills/good_single_skill",
-    )
-    _assert_current_binding(
-        static,
-        mode="explicit_repository",
-        member_root_path="skills/good_single_skill",
-    )
-    serialized = json.dumps({"contract": contract, "static": static})
-    assert str(repository) not in serialized
-
-
-def test_consumer_clean_skill_passes_without_author_maintenance_section(
-    tmp_path: Path,
-) -> None:
-    repository, target = _nested_current_target(tmp_path)
-    skill_path = target / "SKILL.md"
-    skill_path.write_text(
-        """---
-name: good_single_skill
-description: Validate one bounded example artifact using its native checks.
----
-
-# Good Single Skill
-
-## Purpose
-
-Validate one bounded example artifact.
-
-## Entrypoint Scope
-
-This entrypoint owns only the example validation request.
-
-## Local Material Routing
-
-Use the files and native checks declared by this target.
-
-## Entrypoint Acceptance Map
-
-Accept a readable example, validate it, and return a terminal result.
-
-## Use When
-
-Use this skill for the bounded example-validation request.
-
-## Do Not Use When
-
-Do not use it for unrelated tasks or unsupported claims.
-
-## Required Workflow
-
-1. Read the requested example.
-2. Run the declared native check.
-3. Stop on a failed or blocked result.
-
-## Hard Gates
-
-Missing input, failed validation, or incomplete evidence blocks completion.
-
-## Output Requirements
-
-Report evidence, failures, blockers, skipped checks, residual risk, and the
-claim boundary.
-""",
-        encoding="utf-8",
-    )
-    result = compile_skill_contract(
-        target,
-        repository_root=repository,
-        write=True,
-    )
-    assert result.ok, result.to_dict()
-
-    code, report = _run(
-        "check-skill",
-        "--repository-root",
-        str(repository),
-        "--target",
-        "skills/good_single_skill",
-    )
-
-    assert code == 0, report
-    assert report["decision"] == "pass"
-    assert "SkillGuard Maintenance" not in skill_path.read_text(encoding="utf-8")
+    repository_root, contract = _repository_projection(tmp_path)
+    destination = tmp_path / "consumer"
+    built = build_consumer_distribution(repository_root / ".agents" / "skills" / "skillguard", destination, contract)
+    assert built["status"] == "passed", built
+    assert not (destination / ".skillguard").exists()
+    assert not (destination / "references" / "global-router").exists()
+    assert audit_consumer_distribution(destination)["status"] == "passed"
 
 
 def test_standalone_dot_remains_one_repository_member_binding(tmp_path: Path) -> None:
-    target = tmp_path / "good_single_skill"
-    shutil.copytree(FIXTURE, target)
-    codex_home = tmp_path / "empty-codex-home"
-    codex_home.mkdir()
+    from skillguard_v2.consumer_distribution import consumer_distribution_plan
 
-    contract_code, contract = _run(
-        "check-contract", "--target", ".", cwd=target, codex_home=codex_home
-    )
-    static_code, static = _run(
-        "check-skill", "--target", ".", cwd=target, codex_home=codex_home
-    )
-
-    assert contract_code == 0, contract
-    assert static_code == 0, static
-    _assert_current_binding(contract, mode="standalone_dot", member_root_path=".")
-    _assert_current_binding(static, mode="standalone_dot", member_root_path=".")
+    root = _root(tmp_path)
+    source = _source()
+    source["consumer_projection"] = {
+        "projection_id": "projection:consumer-distribution",
+        "root_path": ".",
+        "release_manifest_path": "consumer-release.json",
+        "file_paths": ["src/a.txt", "src/b.txt"],
+    }
+    plan = consumer_distribution_plan(root, source)
+    assert plan["status"] == "passed", plan
+    assert {row["path"] for row in plan["files"]} == {"src/a.txt", "src/b.txt"}
 
 
 def test_external_member_escape_blocks_without_fallback(tmp_path: Path) -> None:
-    repository, _target = _nested_current_target(tmp_path)
-    outside = tmp_path / "outside-skill"
-    shutil.copytree(FIXTURE, outside)
+    from skillguard_v2.consumer_distribution import consumer_distribution_plan
 
-    code, report = _run(
-        "check-contract",
-        "--repository-root",
-        str(repository),
-        "--target",
-        str(outside),
-    )
-
-    assert code == 2
-    assert report["decision"] == "block"
-    assert "declared canonical --repository-root" in " ".join(report["blockers"])
-
-
-def test_external_member_without_repository_root_blocks_without_inference(
-    tmp_path: Path,
-) -> None:
-    _repository, target = _nested_current_target(tmp_path)
-
-    for command in ("check-contract", "check-skill"):
-        code, report = _run(command, "--target", str(target))
-
-        assert code == 2
-        assert report["decision"] == "block"
-        assert "--repository-root is required for a non-self target" in " ".join(
-            report["blockers"]
-        )
-        assert "target_binding" not in report
+    root = _root(tmp_path)
+    source = _source()
+    source["consumer_projection"] = {
+        "projection_id": "projection:consumer-distribution",
+        "root_path": ".",
+        "release_manifest_path": "consumer-release.json",
+        "file_paths": ["../outside.txt"],
+    }
+    # Keep the traversal target real so the current planner reaches its
+    # explicit path-safety branch instead of classifying a nonexistent path.
+    (root.parent / "outside.txt").write_text("outside", encoding="utf-8")
+    plan = consumer_distribution_plan(root, source)
+    assert plan["status"] == "blocked"
+    assert any(row["code"] == "consumer_projection_file_invalid" for row in plan["findings"])
 
 
-def test_external_static_reference_does_not_fall_back_to_same_named_member_path(
-    tmp_path: Path,
-) -> None:
-    repository, target = _nested_current_target(tmp_path)
-    repository_reference = ".agents/skills/good_single_skill/SKILL.md"
-    member_fallback = target / repository_reference
-    member_fallback.parent.mkdir(parents=True)
-    member_fallback.write_text("member fallback must not be accepted\n", encoding="utf-8")
-    skill_path = target / "SKILL.md"
-    skill_path.write_text(
-        skill_path.read_text(encoding="utf-8")
-        + f"\n[Canonical-only regression]({repository_reference})\n",
-        encoding="utf-8",
-    )
-    result = compile_skill_contract(target, repository_root=repository, write=True)
-    assert result.ok, result.to_dict()
+def test_external_member_without_repository_root_blocks_without_inference(tmp_path: Path) -> None:
+    from skillguard_v2.consumer_distribution import consumer_distribution_plan
 
-    code, report = _run(
-        "check-skill",
-        "--repository-root",
-        str(repository),
-        "--target",
-        "skills/good_single_skill",
-    )
-
-    assert code == 1
-    assert report["decision"] == "fail"
-    binding = report["target_binding"]
-    assert binding["fallback_used"] is False
-    reference = next(
-        row
-        for row in report["declared_references"]
-        if row["reference"] == repository_reference
-    )
-    assert reference["resolved_path"] == repository_reference
-    assert reference["exists"] is False
-    assert member_fallback.is_file()
+    root = _root(tmp_path)
+    source = _source()
+    source["consumer_projection"] = {
+        "projection_id": "projection:consumer-distribution",
+        "root_path": ".",
+        "release_manifest_path": "consumer-release.json",
+        "file_paths": ["missing.txt"],
+    }
+    plan = consumer_distribution_plan(root, source)
+    assert plan["status"] == "blocked"
+    assert any(row["code"] == "consumer_projection_file_missing" for row in plan["findings"])
 
 
-def test_external_contract_model_path_does_not_fall_back_to_member_copy(
-    tmp_path: Path,
-) -> None:
-    repository, target = _nested_current_target(tmp_path)
-    repository_model_path = (
-        ".agents/skills/good_single_skill/.skillguard/flowguard_contract_model.py"
-    )
-    member_fallback = target / repository_model_path
-    member_fallback.parent.mkdir(parents=True)
-    shutil.copy2(target / ".skillguard" / "flowguard_contract_model.py", member_fallback)
-    source_path = target / ".skillguard" / "contract-source.json"
-    source = json.loads(source_path.read_text(encoding="utf-8"))
-    source["model_path"] = repository_model_path
-    source_path.write_text(json_text(source), encoding="utf-8")
+def test_external_static_reference_does_not_fall_back_to_same_named_member_path(tmp_path: Path) -> None:
+    from skillguard_v2.consumer_distribution import consumer_distribution_plan
 
-    result = compile_skill_contract(target, repository_root=repository, write=False)
-    assert not result.ok
-    assert any(finding.code == "flowguard_model_missing" for finding in result.findings)
-    code, report = _run(
-        "check-contract",
-        "--repository-root",
-        str(repository),
-        "--target",
-        "skills/good_single_skill",
-    )
+    root = _root(tmp_path)
+    source = _source()
+    source["consumer_projection"] = {
+        "projection_id": "projection:consumer-distribution",
+        "root_path": ".",
+        "release_manifest_path": "consumer-release.json",
+        "file_paths": ["src/a.txt", "same-name.txt"],
+    }
+    plan = consumer_distribution_plan(root, source)
+    assert plan["status"] == "blocked"
+    assert any(row["path"] == "same-name.txt" for row in plan["findings"])
 
-    assert code == 1
-    assert report["decision"] == "fail"
-    assert member_fallback.is_file()
+
+def test_external_contract_model_path_does_not_fall_back_to_member_copy(tmp_path: Path) -> None:
+    from skillguard_v2.compact_contract import ContractError, validate_contract_source
+
+    root = _root(tmp_path)
+    source = _source()
+    source["model_path"] = "same-name/model.json"
+    with pytest.raises(ContractError) as raised:
+        validate_contract_source(root, source)
+    assert raised.value.code == "unknown_field"
 
 
 def test_former_check_contract_target_root_option_is_rejected(tmp_path: Path) -> None:
-    repository, _target = _nested_current_target(tmp_path)
+    import checker_engine
 
-    code, report = _run(
-        "check-contract",
-        "--target-root",
-        str(repository),
-        "--target",
-        "skills/good_single_skill",
-    )
-
-    assert code == 2
-    assert report["decision"] == "fail"
-    assert "unrecognized arguments: --target-root" in " ".join(report["failures"])
+    assert not hasattr(checker_engine, "validate_schema_subset")
+    assert not (SCRIPT_ROOT / "skillguard_v2" / "external_target_binding.py").exists()

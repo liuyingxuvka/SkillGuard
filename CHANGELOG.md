@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.7.8 - 2026-09-22
+
+- Completed the compact direct-current author boundary: one SkillGuard maintainer entry, one public `read`/`change`/`release` dispatcher contract, and no compatibility, alias, migration, or fallback route.
+- Revalidated the fixed author checks, consumer projection, installation staging, and release identity against the FlowGuard v0.69.6 source pin.
+- Kept author evidence, consumer files, local installation, GitHub tags, and release publication as separate claims with explicit verification gates.
+
 ## v0.7.7 - 2026-09-21
 
 - Replaced the former broad dispatcher with the strict three-operation public

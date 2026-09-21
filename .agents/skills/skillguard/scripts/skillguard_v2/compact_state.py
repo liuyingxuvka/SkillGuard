@@ -325,18 +325,92 @@ def load_accepted_observation(
         raise ContractError("evidence_invalid", "$.aggregate.input_snapshot_ref", "pointer mismatch")
     if aggregate.get("contract_snapshot_ref") != accepted.get("contract_snapshot_ref") or aggregate.get("contract_snapshot_hash") != accepted.get("contract_snapshot_hash"):
         raise ContractError("evidence_invalid", "$.aggregate.contract_snapshot_ref", "pointer mismatch")
+
+    # Rebuild the selected plan from the current v3 contract.  The accepted
+    # plan is an immutable receipt, but it is not an authority which can
+    # reduce the current check denominator by being rehashed.  Importing here
+    # avoids the checker/compact-state module cycle during CLI startup.
+    operation = plan.get("operation")
+    if operation not in {"change", "release"}:
+        raise ContractError("evidence_invalid", "$.plan.operation", "change or release required")
     route_ids = plan.get("route_ids")
-    if not isinstance(route_ids, list) or not all(isinstance(item, str) for item in route_ids):
-        raise ContractError("evidence_invalid", "$.plan.route_ids", "string array required")
+    route_ids_valid = (
+        isinstance(route_ids, list)
+        and bool(route_ids)
+        and all(type(item) is str and bool(item) for item in route_ids)
+    )
+    if not route_ids_valid or len(route_ids) != len(set(route_ids)) or any(item not in accepted_contract.by_route for item in route_ids):
+        raise ContractError("evidence_invalid", "$.plan.route_ids", "current contract route identities required")
+    from checker_engine import build_plan
+    from .route_runtime import RouteDecision
+
+    rebuilt = build_plan(
+        accepted_contract,
+        RouteDecision(True, "selected", tuple(route_ids)),
+        operation=str(operation),
+        root=root,
+    )
+    rebuilt_payload = rebuilt.to_dict()
+    if dict(plan) != rebuilt_payload:
+        raise ContractError("evidence_invalid", "$.plan", "stored plan does not equal current contract denominator")
+    if not rebuilt.check_order:
+        raise ContractError("evidence_invalid", "$.plan.check_order", "non-empty current denominator required")
     missing_scope = [route_id for route_id in scope if route_id not in route_ids]
     if missing_scope:
         raise ContractError("accepted_scope_missing", "$.scope", missing_scope[0])
+    # A typed snapshot is part of the accepted contract.  Validate its rows
+    # against the current contract declarations without reading live files.
+    snapshot_rows = snapshot.get("inputs")
+    if not isinstance(snapshot_rows, list):
+        raise ContractError("evidence_invalid", "$.input_snapshot.inputs", "array required")
+    expected_input_ids = list(rebuilt.selected_input_ids)
+    if len(snapshot_rows) != len(expected_input_ids):
+        raise ContractError("evidence_invalid", "$.input_snapshot.inputs", "snapshot denominator mismatch")
+    expected_snapshot_fields = {"id", "path", "role", "required", "exists", "sha256"}
+    for index, (row, expected_id) in enumerate(zip(snapshot_rows, expected_input_ids)):
+        if not isinstance(row, Mapping) or set(row) != expected_snapshot_fields:
+            raise ContractError("evidence_invalid", f"$.input_snapshot.inputs[{index}]", "exact typed row required")
+        if row.get("id") != expected_id:
+            raise ContractError("evidence_invalid", f"$.input_snapshot.inputs[{index}].id", "selected input order mismatch")
+        declaration = accepted_contract.by_input.get(expected_id)
+        if declaration is None:
+            raise ContractError("evidence_invalid", f"$.input_snapshot.inputs[{index}].id", "unknown input")
+        expected_path = Path(str(declaration["path"])).as_posix()
+        if row.get("path") != expected_path or row.get("role") != declaration.get("role"):
+            raise ContractError("evidence_invalid", f"$.input_snapshot.inputs[{index}]", "input declaration mismatch")
+        if type(row.get("required")) is not bool or row.get("required") != declaration["required"]:
+            raise ContractError("evidence_invalid", f"$.input_snapshot.inputs[{index}].required", "typed required flag mismatch")
+        if type(row.get("exists")) is not bool:
+            raise ContractError("evidence_invalid", f"$.input_snapshot.inputs[{index}].exists", "typed exists flag required")
+        digest = row.get("sha256")
+        if row["exists"]:
+            if not is_wire_hash(digest):
+                raise ContractError("evidence_invalid", f"$.input_snapshot.inputs[{index}].sha256", "wire hash required for present input")
+        elif row["required"] or digest is not None:
+            raise ContractError("evidence_invalid", f"$.input_snapshot.inputs[{index}]", "missing input must be optional with null hash")
+
     required = aggregate.get("required_checks")
     leaves = aggregate.get("leaves")
-    if not isinstance(required, list) or len(required) != len(set(required)) or required != plan.get("check_order"):
+    if not isinstance(required, list) or len(required) != len(set(required)) or required != list(rebuilt.check_order):
         raise ContractError("evidence_invalid", "$.aggregate.required_checks", "plan denominator mismatch")
     if not isinstance(leaves, list) or len(leaves) != len(required):
         raise ContractError("evidence_invalid", "$.aggregate.leaves", "leaf denominator mismatch")
+    if plan.get("obligation_checks") != rebuilt_payload["obligation_checks"] or plan.get("check_dependencies") != rebuilt_payload["check_dependencies"]:
+        raise ContractError("evidence_invalid", "$.plan", "obligation or dependency denominator mismatch")
+    qualification = aggregate.get("qualification")
+    artifact = aggregate.get("artifact")
+    if qualification not in {"source_qualification_only", "source_and_artifact"}:
+        raise ContractError("evidence_invalid", "$.aggregate.qualification", "unsupported qualification")
+    if qualification == "source_qualification_only" and artifact is not None:
+        raise ContractError("evidence_invalid", "$.aggregate.artifact", "source-only result cannot carry artifact")
+    if qualification == "source_and_artifact":
+        if not isinstance(artifact, Mapping) or set(artifact) != {"path", "kind", "sha256"}:
+            raise ContractError("evidence_invalid", "$.aggregate.artifact", "typed artifact identity required")
+        artifact_path = artifact.get("path")
+        if not isinstance(artifact_path, str) or not artifact_path or "\\" in artifact_path or Path(artifact_path).is_absolute() or ".." in Path(artifact_path).parts:
+            raise ContractError("evidence_invalid", "$.aggregate.artifact.path", "safe relative artifact path required")
+        if artifact.get("kind") not in {"file", "consumer_directory"} or not is_wire_hash(artifact.get("sha256")):
+            raise ContractError("evidence_invalid", "$.aggregate.artifact", "artifact identity invalid")
     missing_leaf_checks: list[str] = []
     leaf_ids: list[str] = []
     ref_keys = {

@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+import json
 from pathlib import Path
 from unittest.mock import patch
 
 from tests._skillguard_v2_runtime_fixture import runtime_check_manifest, runtime_contract
+from tests.test_compact_contract_cli import _request, _write_contract
+from tests.test_fixed_preflight_units import _root as make_target_root
+from skillguard_v2.compact_state import control_root
+import checker_engine
 from skillguard_v2.author_context import (
     AuthorContextError,
     validate_author_maintenance_context,
@@ -100,43 +105,29 @@ class AuthorMaintenanceContextTests(unittest.TestCase):
 
     def test_route_predicate_rejection_precedes_input_and_run_producers(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            repository = root / "author"
-            skill = repository / "skills" / "demo"
-            target = repository / "target"
-            skill.mkdir(parents=True)
-            target.mkdir()
-            contract = runtime_contract()
-            contract["repository_role"] = "skill_maintainer_source"
-            for route in contract["routes"]:
-                route["when"] = {"operation": route["route_id"]}
-            manifest = runtime_check_manifest(contract)
-            packet = {
-                "request": {"facts": {}},
-                "steps": {},
-                "execution_depth": {},
-            }
+            root = make_target_root(Path(temp))
+            _write_contract(root)
+            state = Path(temp) / "state"
+            state.mkdir()
+            request_path = _request(root, state, "change")
+            request = json.loads(request_path.read_text(encoding="utf-8"))
+            request["facts"] = {"operation": "unsupported"}
+            request_path.write_text(json.dumps(request), encoding="utf-8")
 
-            with patch(
-                "skillguard_v2.supervisor._load_or_compile_runtime_pair",
-                return_value=(contract, manifest),
-            ), patch("skillguard_v2.supervisor.claim_run") as claim_run, patch(
-                "skillguard_v2.supervisor.fingerprint_target_inputs"
-            ) as fingerprint_target_inputs:
-                with self.assertRaisesRegex(SupervisorError, "route_selection_blocked"):
-                    supervise_contract_run(
-                        skill,
-                        target,
-                        repository,
-                        packet,
-                        compiled_contract=contract,
-                        check_manifest=manifest,
-                        run_state_root=repository / "work" / "run-state",
-                        owner_evidence_root=repository / "work" / "owner-evidence",
-                    )
+            with patch("checker_engine.observe_inputs") as observe_inputs, patch(
+                "checker_engine.execute_plan"
+            ) as execute_plan, patch("checker_engine._emit", wraps=checker_engine._emit) as emit:
+                code = checker_engine.change(
+                    ["--root", str(root), "--request", str(request_path), "--json"]
+                )
 
-            claim_run.assert_not_called()
-            fingerprint_target_inputs.assert_not_called()
+            self.assertEqual(1, code)
+            payload = emit.call_args.args[0]
+            self.assertEqual("no_route", payload["route"]["findings"][0]["code"])
+            self.assertEqual(0, payload["producer_count"])
+            self.assertFalse((control_root(state, "fixture-unit", "fixture") / "binding.json").exists())
+            observe_inputs.assert_not_called()
+            execute_plan.assert_not_called()
 
 
 if __name__ == "__main__":

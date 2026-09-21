@@ -129,33 +129,31 @@ def _repository_manifest_alignment() -> dict[str, Any]:
         if isinstance(row, dict):
             row["full_admission_required"] = True
     legacy_profiles = profile_projection(legacy_manifest)
+    # The compact v3 author contract is rooted at the repository control
+    # directory.  The consumer projection under ``.agents/skills/skillguard``
+    # is deliberately free of author-only ``.skillguard`` evidence and must
+    # never be treated as a second authority or compatibility path.
     compiled_contract = json.loads(
-        (
-            REPOSITORY_ROOT
-            / ".agents"
-            / "skills"
-            / "skillguard"
-            / ".skillguard"
-            / "compiled-contract.json"
-        ).read_text(encoding="utf-8")
-    )
-    current_owner_ids = {
-        str(row.get("execution_owner_id", ""))
-        for row in compiled_contract.get("content_impact_plan", {}).get(
-            "owners", ()
+        (REPOSITORY_ROOT / ".skillguard" / "compiled-contract.json").read_text(
+            encoding="utf-8"
         )
-        if isinstance(row, dict) and row.get("execution_owner_id")
-    }
+    )
     focused_owner_ids = set(profiles.get("focused", {}).get("owner_ids", []))
+    focused_owner_list = profiles.get("focused", {}).get("owner_ids", [])
     checks = {
         "current_manifest_schema": manifest.get("schema_version") == "skillguard.test_mesh_manifest.current",
         "source_model_file_exists": (REPOSITORY_ROOT / SOURCE_MODEL_PATH).is_file(),
         "source_model_id_current": manifest.get("source_model_id") == SOURCE_MODEL_ID,
         "exact_profile_projection": profiles == expected_profiles,
-        "focused_owner_set_matches_current_owner_table": (
-            focused_owner_ids
-            == set(expected_profiles["focused"]["owner_ids"])
-            and focused_owner_ids.issubset(current_owner_ids)
+        # TestMesh owner labels are planning metadata.  Compact v3 keeps
+        # execution ownership in the declared check/step contract and has no
+        # legacy ``content_impact_plan`` owner table to consume here.  The
+        # boundary therefore checks only the exact reviewed manifest labels,
+        # uniqueness, and absence of the retired authority field.
+        "focused_owner_labels_are_current_and_typed": (
+            focused_owner_ids == set(expected_profiles["focused"]["owner_ids"])
+            and len(focused_owner_list) == len(focused_owner_ids)
+            and "content_impact_plan" not in compiled_contract
         ),
         "retired_manifest_admission_field_ignored": legacy_profiles == profiles,
         "no_runtime_commands": "suites" not in manifest and "commands" not in manifest,

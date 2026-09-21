@@ -30,3 +30,8 @@ def test_current_projection_is_clean_and_contains_runtime_dependencies(tmp_path:
     assert "scripts/skillguard_v2/compact_state.py" in paths
     assert ".skillguard" not in paths
     assert all("receipt" not in path and "router" not in path for path in paths)
+    assert not any(
+        path.endswith(("/run_store.py", "/content_projection.py", "/runtime_authority.py"))
+        or "/kb/" in f"/{path.lower()}/"
+        for path in paths
+    )

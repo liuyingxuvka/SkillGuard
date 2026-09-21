@@ -1,13 +1,11 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
-
-
-import tests.test_contract_compiler_v2 as compiler_tests
 
 from skillguard_v2.contract_compiler import compile_skill_contract
 from skillguard_v2.consumer_distribution import audit_consumer_distribution
@@ -22,18 +20,20 @@ from skillguard_v2.target_installation import (
 
 
 class TargetInstallationTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        compiler_tests.ContractCompilerV2Tests.setUpClass()
-
     def setUp(self) -> None:
-        self.fixture = compiler_tests.ContractCompilerV2Tests(
-            "test_repository_root_fixture_directory_is_source_only"
+        self.repository_temp = tempfile.TemporaryDirectory()
+        self.repo = Path(self.repository_temp.name)
+        self.skill = self.repo / ".agents" / "skills" / "fixture-skill"
+        self.control = self.repo / ".skillguard"
+        self.skill.mkdir(parents=True)
+        self.control.mkdir(parents=True)
+        (self.skill / "SKILL.md").write_text(
+            "---\nname: fixture-skill\ndescription: target installation fixture.\n---\n# Fixture\n",
+            encoding="utf-8",
         )
-        self.fixture.setUp()
-        self.repo = self.fixture.repo
-        self.skill = self.fixture.skill
-        self.runtime = self.fixture.implementation
+        self.runtime = self.skill / "runtime.py"
+        self.runtime.write_text("VALUE = 1\n", encoding="utf-8")
+        self._write_contract_source()
         self.stage_temp = tempfile.TemporaryDirectory()
         self.home_temp = tempfile.TemporaryDirectory()
         self.stage_parent = Path(self.stage_temp.name)
@@ -47,12 +47,63 @@ class TargetInstallationTests(unittest.TestCase):
         os.environ.pop("SKILLGUARD_TARGET_INSTALL_FAILPOINT", None)
         self.stage_temp.cleanup()
         self.home_temp.cleanup()
-        self.fixture.tearDown()
+        self.repository_temp.cleanup()
+
+    def _write_contract_source(self) -> None:
+        source = {
+            "schema_version": "skillguard.skill_contract.v3",
+            "skill_id": "fixture-skill",
+            "maintenance_unit_id": "unit:fixture",
+            "member_skill_ids": ["fixture-skill"],
+            "inputs": [
+                {
+                    "id": "input:runtime",
+                    "path": ".agents/skills/fixture-skill/runtime.py",
+                    "required": True,
+                    "role": "runtime_source",
+                }
+            ],
+            "routes": [
+                {
+                    "route_id": "route:read",
+                    "choice_group": "operation",
+                    "when": [{"fact": "operation", "equals": "read"}],
+                    "step_ids": ["step:read"],
+                    "obligation_ids": ["obligation:read"],
+                }
+            ],
+            "steps": [
+                {"step_id": "step:read", "requires": [], "check_ids": ["check:fixture"]}
+            ],
+            "obligations": [
+                {"obligation_id": "obligation:read", "check_ids": ["check:fixture"]}
+            ],
+            "checks": [
+                {
+                    "check_id": "check:fixture",
+                    "kind": "command",
+                    "command": "{{python}}",
+                    "args": [
+                        "-c",
+                        "from pathlib import Path; assert Path('.agents/skills/fixture-skill/runtime.py').is_file()",
+                    ],
+                    "input_ids": ["input:runtime"],
+                    "expected": {"exit_code": 0},
+                }
+            ],
+            "consumer_projection": {
+                "projection_id": "projection:consumer-distribution",
+                "root_path": ".agents/skills/fixture-skill",
+                "release_manifest_path": "consumer-release.json",
+                "file_paths": ["SKILL.md", "runtime.py"],
+            },
+        }
+        (self.control / "contract-source.json").write_text(
+            json.dumps(source, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
 
     def _compile(self) -> None:
-        result = compile_skill_contract(
-            self.skill, repository_root=self.repo, write=True
-        )
+        result = compile_skill_contract(self.repo, write=True)
         self.assertTrue(result.ok, result.to_dict())
 
     def _stage(self, suffix: str = "") -> Path:

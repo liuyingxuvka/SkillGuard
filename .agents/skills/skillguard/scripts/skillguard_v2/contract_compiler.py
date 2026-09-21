@@ -15,12 +15,6 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .compact_contract import SCHEMA_VERSION, compile_direct_contract
-from .content_projection import (
-    current_content_projection,
-    current_content_projection_from_files,
-    impact_file_hash,
-    source_file_hash,
-)
 from .path_identity import canonical_filesystem_path, physical_relative_path
 from .portable_content import (
     PORTABLE,
@@ -50,6 +44,34 @@ OWNER_BEHAVIOR_FIELDS = (
     "native_route_id",
     "applicable",
 )
+
+
+# These helpers belong to the author-side projection compiler.  Keep their
+# implementation lazy so importing a concrete consumer module never requires
+# the retired content-projection runtime.  The current compact consumer only
+# imports the identity/compiler symbols it explicitly owns.
+def current_content_projection(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from .content_projection import current_content_projection as _current
+
+    return _current(*args, **kwargs)
+
+
+def current_content_projection_from_files(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    from .content_projection import current_content_projection_from_files as _current
+
+    return _current(*args, **kwargs)
+
+
+def impact_file_hash(*args: Any, **kwargs: Any) -> str:
+    from .content_projection import impact_file_hash as _impact
+
+    return _impact(*args, **kwargs)
+
+
+def source_file_hash(*args: Any, **kwargs: Any) -> str:
+    from .content_projection import source_file_hash as _source
+
+    return _source(*args, **kwargs)
 
 
 def _is_transient_implementation_output(relative: Path) -> bool:

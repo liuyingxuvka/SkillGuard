@@ -24,7 +24,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: git config --global core.longpaths true
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.69.5"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.69.6"
       - run: python -m pytest -q -p no:cacheprovider tests/test_fixed_preflight_units.py tests/test_compact_contract_cli.py
 
   consumer-projection:
@@ -41,7 +41,7 @@ jobs:
           python-version: "3.12"
       - run: git config --global core.longpaths true
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.69.5"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.69.6"
       - run: python -m pytest -q -p no:cacheprovider tests/test_compact_contract_cli.py tests/test_current_consumer_projection.py
 
   current-runtime-suite:
@@ -54,7 +54,7 @@ jobs:
           python-version: "3.12"
       - run: git config --global core.longpaths true
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.69.5"
+      - run: python -m pip install pytest "git+https://github.com/liuyingxuvka/FlowGuard.git@v0.69.6"
       - run: python -m pytest -q -p no:cacheprovider tests/test_fixed_preflight_units.py tests/test_compact_contract_cli.py
 
   tag-release-identity:

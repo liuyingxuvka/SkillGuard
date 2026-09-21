@@ -52,9 +52,9 @@
     }
   ],
   "claim_boundary": "The manifest declares exact checks and does not claim execution.",
-  "contract_hash": "sha256:e7b9ddd44f17c10289463e13eb7efca306a7ffce219f90eee8447f2c92611397",
+  "contract_hash": "sha256:bb2335ed7f358baff81dd0a4b379302e7de9aad184bb9633ad61ec71f5ec26c4",
   "maintenance_unit_id": "unit:skillguard",
-  "manifest_hash": "sha256:9be7b2f924879dcdf451626afe7ffa6e7d58c0f70a2d89e36fdc7ed491c5dd6b",
+  "manifest_hash": "sha256:b07759133b6dab1605eb3b1a4c3c3c7cd790dc6307c7df69d01457ef3799ef32",
   "schema_version": "skillguard.check_manifest.v3",
   "skill_id": "skillguard"
 }

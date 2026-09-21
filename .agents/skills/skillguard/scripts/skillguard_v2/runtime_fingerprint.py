@@ -2,17 +2,25 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 from typing import Any, Mapping
 
-from .contract_compiler import canonical_hash, source_file_hash
 from .portable_content import (
     runtime_fingerprint_excluded,
     scan_active_installation_currentness_boundary,
     scan_member_boundary,
 )
-from .wire_identity import wire_hash
+from .wire_identity import canonical_json_bytes, wire_hash
+
+
+def _canonical_hash(payload: object) -> str:
+    return hashlib.sha256(canonical_json_bytes(payload)).hexdigest().upper()
+
+
+def _raw_source_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest().upper()
 
 
 class GuardRuntimeFingerprintError(RuntimeError):
@@ -44,7 +52,7 @@ def current_execution_runtime(runtime_root: Path) -> dict[str, Any]:
             raise GuardRuntimeFingerprintError(f"execution runtime file escapes root: {relative}") from exc
         if not path.is_file():
             raise GuardRuntimeFingerprintError(f"execution runtime file is missing: {relative}")
-        rows.append({"path": relative.as_posix(), "sha256": source_file_hash(path)})
+        rows.append({"path": relative.as_posix(), "sha256": _raw_source_hash(path)})
     return {"schema_version": "skillguard.execution_runtime.v1", "files": rows, "runtime_hash": wire_hash(rows)}
 
 
@@ -116,7 +124,7 @@ def runtime_functional_projection(
 def runtime_functional_key(fingerprint: Mapping[str, Any]) -> str:
     """Return the stable behavior identity for one runtime fingerprint."""
 
-    return canonical_hash(runtime_functional_projection(fingerprint))
+    return _canonical_hash(runtime_functional_projection(fingerprint))
 
 
 def _existing_directory(path: Path, *, label: str) -> Path:
@@ -296,7 +304,7 @@ def _guard_runtime_fingerprint(
         files.append(
             {
                 "path": logical_path,
-                "content_hash": source_file_hash(path),
+                "content_hash": _raw_source_hash(path),
             }
         )
     fingerprint = {
@@ -306,7 +314,7 @@ def _guard_runtime_fingerprint(
         "capability_ids": list(RUNTIME_CAPABILITY_IDS),
         "enrollment_status": "enrolled",
         "file_count": len(files),
-        "source_hash": canonical_hash(files),
+        "source_hash": _canonical_hash(files),
     }
     # Validate the exact projection used by functional freshness while
     # keeping enrollment/file-count metadata available to their own consumers.

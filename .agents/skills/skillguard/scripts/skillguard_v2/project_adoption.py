@@ -224,7 +224,7 @@ def render_project_block(manifest: Mapping[str, Any]) -> str:
         "are separate explicit claims; read `references/skillguard-target-installation.md` "
         "and `references/skillguard-self-host.md` only for those routes.",
         "",
-        "Author audit command: `python <installed-skillguard>/scripts/skillguard.py maintainer-audit --root .`",
+        "Author currentness command: `python <installed-skillguard>/scripts/skillguard.py read --root . --request read.json --json`",
         "",
         "This managed block is a routing and maintenance contract. It is not runtime, test, release, or future-behavior proof.",
         END_MARKER,

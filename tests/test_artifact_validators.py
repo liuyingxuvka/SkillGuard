@@ -7,7 +7,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import (
+    SCRIPT_ROOT,
+    runtime_check_manifest,
+    runtime_contract,
+    runtime_validated_contract,
+)  # noqa: F401
 from skillguard_v2.artifact_validators import (
     ArtifactValidationError,
     hard_evidence_from_artifact,
@@ -25,10 +30,14 @@ class ArtifactValidatorTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.target = Path(self.temp.name)
         self.contract = runtime_contract()
-        decision = select_routes(self.contract, {"function_ids": ["analyze"]})
+        decision = select_routes(
+            runtime_validated_contract(self.target),
+            {"operation": "analyze"},
+            ["route:analyze"],
+        )
         claim = claim_run(
             self.contract,
-            {"function_ids": ["analyze"], "write_targets": ["outputs"], "request": "artifact fixture"},
+            {"operation": "analyze", "write_targets": ["outputs"], "request": "artifact fixture"},
             self.target,
             decision,
             check_manifest=runtime_check_manifest(self.contract),

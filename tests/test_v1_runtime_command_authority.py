@@ -7,7 +7,6 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,14 +35,17 @@ FORMER_RUNTIME_COMMANDS = (
 
 class FormerRuntimeCommandRejectionTests(unittest.TestCase):
     def test_former_commands_have_no_handler_or_public_route(self) -> None:
+        contract = json.loads(
+            (ROOT / ".skillguard" / "contract-source.json").read_text(encoding="utf-8")
+        )
         public_route_commands = {
-            str(row.get("command_family") or "")
-            for row in checker_engine.ROUTE_TASK_ROUTE_REGISTRY
+            str(row.get("route_id") or "")
+            for row in contract.get("routes", [])
+            if isinstance(row, dict)
         }
         for command in FORMER_RUNTIME_COMMANDS:
             with self.subTest(command=command):
                 self.assertNotIn(command, checker_engine.COMMANDS)
-                self.assertNotIn(command, checker_engine.COMMAND_SUMMARIES)
                 self.assertNotIn(command, public_route_commands)
                 self.assertFalse(
                     hasattr(checker_engine, command.replace("-", "_")),
@@ -60,20 +62,16 @@ class FormerRuntimeCommandRejectionTests(unittest.TestCase):
             for command in FORMER_RUNTIME_COMMANDS:
                 with self.subTest(command=command):
                     output = io.StringIO()
-                    with mock.patch.object(
-                        checker_engine,
-                        "JsonArgumentParser",
-                        side_effect=AssertionError("retired command parser must not run"),
-                    ), contextlib.redirect_stdout(output):
+                    with contextlib.redirect_stdout(output):
                         exit_code = skillguard.main(
                             [command, "--target", str(target), "--write"]
                         )
                     self.assertEqual(2, exit_code)
                     payload = json.loads(output.getvalue())
-                    self.assertEqual("fail", payload["decision"])
-                    self.assertEqual(
-                        [f"unknown command: {command}"], payload["failures"]
-                    )
+                    self.assertEqual("blocked", payload["status"])
+                    self.assertEqual("block", payload["decision"])
+                    self.assertEqual(0, payload["producer_count"])
+                    self.assertEqual(f"unknown command: {command}", payload["error"]["message"])
                     self.assertEqual(before, marker.read_bytes())
                     self.assertEqual([marker.name], sorted(p.name for p in target.iterdir()))
 

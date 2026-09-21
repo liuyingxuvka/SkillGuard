@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping
 
@@ -41,6 +41,7 @@ from skillguard_v2.execution_records import (
     attach_process_tree_containment,
     durable_write_immutable_json,
     filesystem_path,
+    launch_contained_process,
     release_process_tree_containment,
 )
 from skillguard_v2.wire_identity import is_wire_hash, wire_hash
@@ -96,6 +97,39 @@ class PlanExecutionResult:
     not_run_count: int
 
 
+@dataclass
+class ExecutionContext:
+    """Invocation-local execution accounting.
+
+    This object belongs to one public ``change`` or ``release`` call.  It is
+    deliberately independent of the shared attempts directory: a concurrent
+    request that loses the operation lock must report zero producers even if
+    another invocation has already created attempt records in the same state
+    root.
+    """
+
+    producer_count: int = 0
+    run_check_ids: list[str] = field(default_factory=list)
+    reused_check_ids: list[str] = field(default_factory=list)
+    passed_check_ids: list[str] = field(default_factory=list)
+    required_check_ids: tuple[str, ...] = ()
+    active_check_id: str | None = None
+    cleanup_confirmed: bool | None = None
+    failure_code: str | None = None
+
+    @property
+    def run_count(self) -> int:
+        return len(self.run_check_ids)
+
+    @property
+    def reused_count(self) -> int:
+        return len(self.reused_check_ids)
+
+    @property
+    def not_run_count(self) -> int:
+        return max(0, len(self.required_check_ids) - self.run_count - self.reused_count)
+
+
 def _author_root_identity(root: Path) -> str:
     return os.path.normcase(str(canonical_filesystem_path(root)))
 
@@ -144,13 +178,25 @@ def observe_inputs(root: Path, validated: ValidatedContract, plan: FrozenPlan) -
 
 def _effective_environment(declared: Mapping[str, Any] | None) -> dict[str, str]:
     baseline = (
-        ("SystemRoot", "WINDIR", "COMSPEC", "PATHEXT", "TEMP", "TMP", "USERPROFILE", "HOMEDRIVE", "HOMEPATH")
+        ("SystemRoot", "SystemDrive", "WINDIR", "COMSPEC", "PATHEXT", "TEMP", "TMP", "USERPROFILE", "HOMEDRIVE", "HOMEPATH")
         if os.name == "nt"
         else ("HOME", "TMPDIR", "LANG", "LC_ALL")
     )
     result = {key: os.environ[key] for key in (*baseline, "PATH") if key in os.environ}
+    seen_declared: set[str] = set()
     for key, value in (declared or {}).items():
-        result[str(key)] = str(value)
+        if not isinstance(key, str) or not key or "=" in key or "\x00" in key:
+            raise ContractError("invalid_environment", "$.checks.environment", "valid environment name required")
+        if not isinstance(value, str) or "\x00" in value:
+            raise ContractError("invalid_environment", "$.checks.environment", "valid environment value required")
+        identity = key.casefold() if os.name == "nt" else key
+        if identity in seen_declared:
+            raise ContractError("invalid_environment", "$.checks.environment", f"duplicate environment name: {key}")
+        seen_declared.add(identity)
+        for existing in list(result):
+            if (existing.casefold() if os.name == "nt" else existing) == identity:
+                del result[existing]
+        result[key] = value
     result["PYTHONDONTWRITEBYTECODE"] = "1"
     result["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
     return result
@@ -305,6 +351,7 @@ def execute_plan(
     control_root: Path,
     *,
     lock_timeout_seconds: float = 0.0,
+    execution_context: ExecutionContext | None = None,
     preflight: Callable[[], None] | None = None,
     final_validation: Callable[[InputSnapshot], None] | None = None,
     on_success: Callable[[PlanExecutionResult], None] | None = None,
@@ -314,7 +361,9 @@ def execute_plan(
     if not control_root.is_absolute() or control_root == root or control_root in root.parents or root in control_root.parents:
         raise ContractError("invalid_state_root", "$.author_state_root", "separate absolute control root required")
     control_root.mkdir(parents=True, exist_ok=True)
-    producer_count = 0
+    context = execution_context or ExecutionContext(required_check_ids=plan.check_order)
+    if not context.required_check_ids:
+        context.required_check_ids = plan.check_order
     try:
         lock = _portable_file_lock(control_root / "operation.lock", timeout_seconds=lock_timeout_seconds)
         with lock:
@@ -351,54 +400,101 @@ def execute_plan(
                         raise ContractError("evidence_invalid", f"$.functions.{check_id}.exit_code", "oracle mismatch")
                     leaves.append(leaf)
                     dependency_keys[check_id] = execution_key
-                    reused_count += 1
+                    context.reused_check_ids.append(check_id)
                     continue
 
                 attempt_root = control_root / "attempts" / uuid.uuid4().hex
                 attempt_root.mkdir(parents=True, exist_ok=False)
                 stdout_path, stderr_path = attempt_root / "stdout.bin", attempt_root / "stderr.bin"
                 check = validated.by_check[check_id]
-                creation: dict[str, Any] = {}
-                if os.name != "nt":
-                    creation["start_new_session"] = True
+                process: Any = None
+                containment = None
+                cleanup: Mapping[str, Any] = {"cleanup_confirmed": False}
+                timed_out = False
+                attach_failed = False
+
+                def _on_created(created: Any) -> None:
+                    nonlocal process, containment, attach_failed
+                    process = created
+                    # The producer edge is the launcher callback, before any
+                    # attach, wait, cleanup, or evidence persistence work.
+                    context.producer_count += 1
+                    context.run_check_ids.append(check_id)
+                    context.active_check_id = check_id
+                    context.cleanup_confirmed = None
+                    if os.name == "nt":
+                        # Windows containment is installed atomically by the
+                        # launcher through PROC_THREAD_ATTRIBUTE_JOB_LIST.
+                        # A missing attribute is a hard failure; never attach
+                        # an ordinary Popen child after creation as fallback.
+                        containment = getattr(created, "_skillguard_containment", None)
+                        if containment is None:
+                            attach_failed = True
+                            context.failure_code = "containment_attach_failed"
+                    else:
+                        containment = attach_process_tree_containment(created)
+                    if containment is not None:
+                        context.cleanup_confirmed = bool(containment.attached)
+                        if not containment.attached:
+                            attach_failed = True
+                            context.failure_code = "containment_attach_failed"
+
                 try:
                     with stdout_path.open("xb") as stdout_handle, stderr_path.open("xb") as stderr_handle:
-                        process = subprocess.Popen(
+                        process = launch_contained_process(
                             [str(invocation["executable"]), *[str(item) for item in invocation["args"]]],
                             cwd=root,
                             env=dict(invocation["effective_environment"]),
                             stdin=subprocess.DEVNULL,
                             stdout=stdout_handle,
                             stderr=stderr_handle,
-                            shell=False,
-                            **creation,
+                            on_created=_on_created,
                         )
-                        producer_count += 1
-                        run_count += 1
-                        containment = attach_process_tree_containment(process)
-                        timed_out = False
-                        try:
-                            process.wait(timeout=float(check.get("timeout_seconds", 120.0)))
-                        except subprocess.TimeoutExpired:
-                            timed_out = True
-                        cleanup = release_process_tree_containment(process, containment, timed_out=timed_out)
+                        if process is None:
+                            raise ContractError(
+                                "producer_launch_failed",
+                                f"$.checks.{check_id}",
+                                "launcher returned without a process",
+                            )
+                        if not attach_failed and containment is not None:
+                            try:
+                                process.wait(timeout=float(check.get("timeout_seconds", 120.0)))
+                            except subprocess.TimeoutExpired:
+                                timed_out = True
+                except KeyboardInterrupt as exc:
+                    context.failure_code = "cancelled"
+                    raise ContractError("execution_cancelled", f"$.checks.{check_id}", "execution cancelled") from exc
+                except ContractError:
+                    raise
                 except OSError as exc:
-                    for attempt_file in (stdout_path, stderr_path):
-                        try:
-                            attempt_file.unlink()
-                        except FileNotFoundError:
-                            pass
-                    try:
-                        attempt_root.rmdir()
-                    except OSError:
-                        pass
+                    context.failure_code = "producer_launch_failed"
                     raise ContractError("producer_launch_failed", f"$.checks.{check_id}", type(exc).__name__) from exc
+                except Exception as exc:
+                    context.failure_code = "producer_execution_failed"
+                    raise ContractError("producer_execution_failed", f"$.checks.{check_id}", type(exc).__name__) from exc
+                finally:
+                    if process is not None and containment is not None and not containment.released:
+                        cleanup = release_process_tree_containment(
+                            process, containment, timed_out=timed_out
+                        )
+                        context.cleanup_confirmed = bool(
+                            cleanup.get("cleanup_confirmed")
+                        )
+                if attach_failed:
+                    raise ContractError(
+                        "containment_attach_failed",
+                        f"$.checks.{check_id}",
+                        containment.error_kind if containment is not None else "OS containment could not be established",
+                    )
                 if timed_out:
+                    context.failure_code = "check_timeout"
                     raise ContractError("check_timeout", f"$.checks.{check_id}", "declared timeout elapsed")
                 if not cleanup.get("cleanup_confirmed"):
+                    context.failure_code = "cleanup_unconfirmed"
                     raise ContractError("cleanup_unconfirmed", f"$.checks.{check_id}", str(cleanup.get("termination_error_kind", "unknown")))
                 expected_exit = int(check["expected"]["exit_code"])
                 if process.returncode != expected_exit:
+                    context.failure_code = "check_failed"
                     raise ContractError("check_failed", f"$.checks.{check_id}", f"expected {expected_exit}, got {process.returncode}")
                 stdout_ref = stdout_path.relative_to(control_root).as_posix()
                 stderr_ref = stderr_path.relative_to(control_root).as_posix()
@@ -421,9 +517,15 @@ def execute_plan(
                 try:
                     durable_write_immutable_json(leaf_path, leaf)
                 except ExecutionRecordError as exc:
+                    context.failure_code = "persistence_failed"
                     raise ContractError("evidence_cas_conflict", f"$.functions.{check_id}", str(exc)) from exc
+                except OSError as exc:
+                    context.failure_code = "persistence_failed"
+                    raise ContractError("persistence_failed", f"$.functions.{check_id}", type(exc).__name__) from exc
                 leaves.append(leaf)
                 dependency_keys[check_id] = execution_key
+                context.passed_check_ids.append(check_id)
+                context.active_check_id = None
             final_snapshot = observe_inputs(root, validated, plan)
             if final_snapshot.snapshot_hash != snapshot.snapshot_hash:
                 raise ContractError("input_changed", "$.inputs", "selected input bytes changed during execution")
@@ -432,13 +534,20 @@ def execute_plan(
             result = PlanExecutionResult(
                 snapshot=snapshot,
                 leaves=tuple(leaves),
-                producer_count=producer_count,
-                run_count=run_count,
-                reused_count=reused_count,
-                not_run_count=0,
+                producer_count=context.producer_count,
+                run_count=context.run_count,
+                reused_count=context.reused_count,
+                not_run_count=context.not_run_count,
             )
             if on_success is not None:
-                on_success(result)
+                try:
+                    on_success(result)
+                except ContractError as exc:
+                    context.failure_code = exc.code
+                    raise
+                except (ExecutionRecordError, OSError) as exc:
+                    context.failure_code = "persistence_failed"
+                    raise ContractError("persistence_failed", "$.accepted", type(exc).__name__) from exc
             return result
     except ExecutionRecordError as exc:
         if exc.code == "execution_record_lock_timeout":
@@ -862,6 +971,7 @@ def change(argv: list[str]) -> int:
         state_root, str(contract["maintenance_unit_id"]), str(contract["skill_id"])
     )
     accepted_result: dict[str, Any] = {}
+    execution_context = ExecutionContext(required_check_ids=tuple(check_ids))
 
     def preflight() -> None:
         current_observation = load_accepted_observation(
@@ -900,13 +1010,13 @@ def change(argv: list[str]) -> int:
         )
         accepted_result.update({"accepted": accepted, "accepted_id": accepted_id, "changed": changed})
 
-    before_attempts = len(list((target_state / "attempts").glob("*"))) if (target_state / "attempts").is_dir() else 0
     try:
         execution = execute_plan(
             root,
             validated,
             plan,
             target_state,
+            execution_context=execution_context,
             preflight=preflight,
             final_validation=lambda _snapshot: _revalidate_selected_source(
                 root, path, request, validated, plan, "change"
@@ -914,18 +1024,17 @@ def change(argv: list[str]) -> int:
             on_success=accept,
         )
     except ContractError as exc:
-        after_attempts = len(list((target_state / "attempts").glob("*"))) if (target_state / "attempts").is_dir() else before_attempts
-        producers = max(0, after_attempts - before_attempts)
+        execution_context.failure_code = exc.code
         return _emit({
             "artifact_type": "skillguard_cli_result",
             "operation": "change",
             "status": "blocked",
             "decision": "block",
-            "producer_count": producers,
+            "producer_count": execution_context.producer_count,
             "required_count": len(check_ids),
-            "run_count": producers,
-            "reused_count": 0,
-            "not_run_count": max(0, len(check_ids) - producers),
+            "run_count": execution_context.run_count,
+            "reused_count": execution_context.reused_count,
+            "not_run_count": execution_context.not_run_count,
             "reason": exc.code,
             "blockers": [exc.to_dict()],
             "claim_boundary": "A blocked execution did not update accepted current.",
@@ -1002,6 +1111,7 @@ def release(argv: list[str]) -> int:
         state_root, str(contract["maintenance_unit_id"]), str(contract["skill_id"])
     )
     accepted_result: dict[str, Any] = {}
+    execution_context = ExecutionContext(required_check_ids=tuple(plan.check_order))
 
     def preflight() -> None:
         current_observation = load_accepted_observation(
@@ -1040,13 +1150,13 @@ def release(argv: list[str]) -> int:
         )
         accepted_result.update({"accepted": accepted, "accepted_id": accepted_id, "changed": changed})
 
-    before_attempts = len(list((target_state / "attempts").glob("*"))) if (target_state / "attempts").is_dir() else 0
     try:
         execution = execute_plan(
             root,
             validated,
             plan,
             target_state,
+            execution_context=execution_context,
             preflight=preflight,
             final_validation=lambda _snapshot: _revalidate_selected_source(
                 root, path, request, validated, plan, "release"
@@ -1054,18 +1164,17 @@ def release(argv: list[str]) -> int:
             on_success=accept,
         )
     except ContractError as exc:
-        after_attempts = len(list((target_state / "attempts").glob("*"))) if (target_state / "attempts").is_dir() else before_attempts
-        producers = max(0, after_attempts - before_attempts)
+        execution_context.failure_code = exc.code
         return _emit({
             "artifact_type": "skillguard_cli_result",
             "operation": "release",
             "status": "blocked",
             "decision": "block",
-            "producer_count": producers,
+            "producer_count": execution_context.producer_count,
             "required_count": len(plan.check_order),
-            "run_count": producers,
-            "reused_count": 0,
-            "not_run_count": max(0, len(plan.check_order) - producers),
+            "run_count": execution_context.run_count,
+            "reused_count": execution_context.reused_count,
+            "not_run_count": execution_context.not_run_count,
             "reason": exc.code,
             "blockers": [exc.to_dict()],
         })

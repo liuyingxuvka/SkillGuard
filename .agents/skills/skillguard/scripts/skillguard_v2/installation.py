@@ -41,7 +41,16 @@ from .portable_content import (
     scan_active_installation_currentness_boundary,
     scan_member_boundary,
 )
-from .runtime_authority import AUTHORITY_CURRENT, resolve_runtime_authority
+# Runtime-authority resolution is author-only legacy machinery.  Keep the
+# import lazy so a projected target installer does not require that retired
+# module merely to load the transaction helpers.
+AUTHORITY_CURRENT = "current"
+
+
+def resolve_runtime_authority(*args: Any, **kwargs: Any) -> Any:
+    from .runtime_authority import resolve_runtime_authority as _resolve
+
+    return _resolve(*args, **kwargs)
 
 
 GLOBAL_ROUTER_MEMBER = "skillguard-global-router"

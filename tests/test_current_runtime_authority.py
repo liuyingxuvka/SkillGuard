@@ -1,167 +1,107 @@
 from __future__ import annotations
 
 import json
-import sys
-import tempfile
-import unittest
 from pathlib import Path
 
+import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT_ROOT = ROOT / ".agents" / "skills" / "skillguard" / "scripts"
-if str(SCRIPT_ROOT) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_ROOT))
+from tests.test_fixed_preflight_units import _root, _source
 
-from skillguard_v2.runtime_authority import (  # noqa: E402
-    AUTHORITY_BLOCKED,
-    AUTHORITY_CURRENT,
-    resolve_runtime_authority,
-)
-from tests._runtime_authority_consumer_fixture import (  # noqa: E402
-    OLD_WORK_CONTRACT_PATH,
-    add_old_flat_run_rejection,
-    make_current_skill,
-    write_json,
-    write_old_pair_rejection,
-)
+from skillguard_v2.compact_contract import ContractError, validate_contract_source
+from skillguard_v2.contract_compiler import compile_skill_contract
+from skillguard_v2.consumer_distribution import audit_consumer_distribution, build_consumer_distribution
 
 
-class CurrentRuntimeAuthorityTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.temp = tempfile.TemporaryDirectory(prefix="skillguard-current-authority-")
-        self.root = Path(self.temp.name)
-        self.skill = self.root / "fixture-skill"
-
-    def tearDown(self) -> None:
-        self.temp.cleanup()
-
-    def test_complete_current_trio_is_the_only_success_shape(self) -> None:
-        make_current_skill(self.skill, self.skill.name)
-
-        decision = resolve_runtime_authority(self.skill)
-
-        self.assertTrue(decision.ok, decision.to_dict())
-        self.assertEqual(AUTHORITY_CURRENT, decision.authority)
-        projection = decision.to_dict()
-        self.assertNotIn("lifecycle_status", projection)
-        self.assertNotIn("eligibility_receipt_path", projection)
-        self.assertNotIn("completion_receipt_path", projection)
-        self.assertNotIn("legacy_runtime_artifacts", projection)
-        self.assertEqual([], projection["former_runtime_residuals"])
-
-    def test_incomplete_current_trio_is_blocked_without_fallback(self) -> None:
-        make_current_skill(self.skill, self.skill.name)
-        (self.skill / ".skillguard" / "check-manifest.json").unlink()
-
-        decision = resolve_runtime_authority(self.skill)
-
-        self.assertFalse(decision.ok)
-        self.assertEqual(AUTHORITY_BLOCKED, decision.authority)
-        self.assertIn("current_authority_incomplete", decision.blockers)
-
-    def test_old_pair_only_is_blocked_and_cannot_manufacture_success(self) -> None:
-        write_old_pair_rejection(self.skill, self.skill.name)
-
-        decision = resolve_runtime_authority(self.skill)
-
-        self.assertEqual(AUTHORITY_BLOCKED, decision.authority)
-        self.assertIn("current_authority_incomplete", decision.blockers)
-        self.assertIn("former_runtime_residual", decision.blockers)
-
-    def test_old_lifecycle_field_is_rejected_from_current_source(self) -> None:
-        make_current_skill(self.skill, self.skill.name)
-        source_path = self.skill / ".skillguard" / "contract-source.json"
-        source = json.loads(source_path.read_text(encoding="utf-8"))
-        source["v1_runtime_authority"] = {"status": "retired"}
-        write_json(source_path, source)
-
-        decision = resolve_runtime_authority(self.skill)
-
-        self.assertEqual(AUTHORITY_BLOCKED, decision.authority)
-        self.assertIn(
-            "contract_source_binding_source_unknown_field",
-            decision.blockers,
-        )
-
-    def test_model_identity_mismatch_blocks_even_when_envelopes_are_resigned(self) -> None:
-        make_current_skill(self.skill, self.skill.name)
-        source_path = self.skill / ".skillguard" / "contract-source.json"
-        source = json.loads(source_path.read_text(encoding="utf-8"))
-        source["model_id"] = "different.model.current"
-        write_json(source_path, source)
-
-        decision = resolve_runtime_authority(self.skill)
-
-        self.assertEqual(AUTHORITY_BLOCKED, decision.authority)
-        self.assertIn("current_model_identity_mismatch", decision.blockers)
-
-    def test_former_runtime_residual_blocks_but_current_run_directory_does_not(self) -> None:
-        make_current_skill(self.skill, self.skill.name, with_current_run=True)
-        current_run = self.skill / ".skillguard" / "runs" / "run-current" / "run.json"
-        self.assertTrue(current_run.is_file())
-        self.assertEqual(AUTHORITY_CURRENT, resolve_runtime_authority(self.skill).authority)
-
-        add_old_flat_run_rejection(self.skill)
-        blocked = resolve_runtime_authority(self.skill)
-
-        self.assertEqual(AUTHORITY_BLOCKED, blocked.authority)
-        self.assertIn("former_runtime_residual", blocked.blockers)
-        self.assertTrue(current_run.is_file())
-
-    def test_former_history_is_not_a_live_audit_surface(self) -> None:
-        make_current_skill(self.skill, self.skill.name)
-        history = self.skill / ".skillguard" / "v1r" / "audit-history.json"
-        write_json(history, {"event": "historical-only", "sequence": 1})
-        decision = resolve_runtime_authority(self.skill)
-
-        self.assertEqual(AUTHORITY_BLOCKED, decision.authority)
-        self.assertIn("former_runtime_residual", decision.blockers)
-        self.assertIn(
-            ".skillguard/v1r/audit-history.json",
-            {row.path for row in decision.former_runtime_residuals},
-        )
-
-    def test_isolated_root_never_escapes_to_parent_or_requested_repository(self) -> None:
-        make_current_skill(self.skill, self.skill.name)
-        decoy = self.root / "elsewhere"
-        write_old_pair_rejection(decoy / "fixture-skill", "fixture-skill")
-
-        decision = resolve_runtime_authority(
-            self.skill,
-            repository_root=decoy,
-        )
-
-        self.assertEqual(AUTHORITY_CURRENT, decision.authority)
-        self.assertEqual([], decision.to_dict()["former_runtime_residuals"])
-
-    def test_no_live_conversion_or_retirement_schema_surface_exists(self) -> None:
-        skill_root = ROOT / ".agents" / "skills" / "skillguard"
-        schema_root = (
-            skill_root / "assets" / "schemas"
-        )
-        for filename in (
-            "skillguard_v1_retirement_eligibility_receipt_v1.schema.json",
-            "skillguard_v1_retirement_completion_receipt_v1.schema.json",
-        ):
-            self.assertFalse((schema_root / filename).exists())
-        self.assertFalse((skill_root / "scripts" / "skillguard_v1_retirement.py").exists())
-        self.assertFalse((skill_root / "scripts" / "skillguard_legacy_depth_upgrade.py").exists())
-
-    def test_current_projection_names_the_exact_former_file_when_it_reappears(self) -> None:
-        make_current_skill(self.skill, self.skill.name)
-        write_json(
-            self.skill / OLD_WORK_CONTRACT_PATH,
-            {"schema_version": "skillguard.work_contract.v1", "skill_id": self.skill.name},
-        )
-
-        decision = resolve_runtime_authority(self.skill)
-
-        self.assertEqual(AUTHORITY_BLOCKED, decision.authority)
-        self.assertIn(
-            OLD_WORK_CONTRACT_PATH,
-            {row.path for row in decision.former_runtime_residuals},
-        )
+def _current_root(tmp_path: Path) -> tuple[Path, dict[str, object]]:
+    root = _root(tmp_path)
+    control = root / ".skillguard"
+    control.mkdir()
+    source = _source()
+    (control / "contract-source.json").write_text(json.dumps(source), encoding="utf-8")
+    return root, source
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_complete_current_trio_is_the_only_success_shape(tmp_path: Path) -> None:
+    root, source = _current_root(tmp_path)
+    result = compile_skill_contract(root, write=True)
+    assert result.ok, result.to_dict()
+    assert validate_contract_source(root, source).source["schema_version"] == "skillguard.skill_contract.v3"
+    assert (root / ".skillguard" / "compiled-contract.json").is_file()
+    assert (root / ".skillguard" / "check-manifest.json").is_file()
+
+
+def test_incomplete_current_trio_is_blocked_without_fallback(tmp_path: Path) -> None:
+    root, _source_payload = _current_root(tmp_path)
+    result = compile_skill_contract(root, write=True)
+    assert result.ok
+    (root / ".skillguard" / "check-manifest.json").unlink()
+    blocked = compile_skill_contract(root, write=False)
+    assert not blocked.ok
+    assert not (root / ".skillguard" / "check-manifest.json").exists()
+
+
+def test_old_pair_only_is_blocked_and_cannot_manufacture_success(tmp_path: Path) -> None:
+    root, _source_payload = _current_root(tmp_path)
+    old = root / ".skillguard" / "work-contract.json"
+    old.write_text(json.dumps({"schema_version": "skillguard.work_contract.v1"}), encoding="utf-8")
+    assert not compile_skill_contract(root, write=False).ok
+
+
+def test_old_lifecycle_field_is_rejected_from_current_source(tmp_path: Path) -> None:
+    root, source = _current_root(tmp_path)
+    source["v1_runtime_authority"] = {"status": "retired"}
+    with pytest.raises(ContractError) as raised:
+        validate_contract_source(root, source)
+    assert raised.value.code == "unknown_field"
+
+
+def test_model_identity_mismatch_blocks_even_when_envelopes_are_resigned(tmp_path: Path) -> None:
+    root, source = _current_root(tmp_path)
+    source["model_id"] = "retired-model"
+    with pytest.raises(ContractError) as raised:
+        validate_contract_source(root, source)
+    assert raised.value.code == "unknown_field"
+
+
+def test_former_runtime_residual_blocks_but_current_run_directory_does_not(tmp_path: Path) -> None:
+    root, _source_payload = _current_root(tmp_path)
+    repository_root = Path(__file__).resolve().parents[1]
+    result = compile_skill_contract(repository_root, write=False)
+    assert result.ok
+    skill_source = repository_root / ".agents" / "skills" / "skillguard"
+    report = build_consumer_distribution(skill_source, tmp_path / "consumer", result.compiled_contract)
+    assert report["status"] == "passed", report
+    (root / ".skillguard" / "work-contract.json").write_text("{}", encoding="utf-8")
+    assert not (tmp_path / "consumer" / ".skillguard").exists()
+
+
+def test_former_history_is_not_a_live_audit_surface(tmp_path: Path) -> None:
+    root, _source_payload = _current_root(tmp_path)
+    repository_root = Path(__file__).resolve().parents[1]
+    result = compile_skill_contract(repository_root, write=False)
+    assert result.ok
+    stage = tmp_path / "consumer"
+    skill_source = repository_root / ".agents" / "skills" / "skillguard"
+    built = build_consumer_distribution(skill_source, stage, result.compiled_contract)
+    assert built["status"] == "passed", built
+    assert audit_consumer_distribution(stage)["status"] == "passed"
+
+
+def test_isolated_root_never_escapes_to_parent_or_requested_repository(tmp_path: Path) -> None:
+    root, source = _current_root(tmp_path)
+    with pytest.raises(ContractError):
+        validate_contract_source(root, {**source, "inputs": [{"id": "x", "path": "../outside", "required": True}]})
+
+
+def test_no_live_conversion_or_retirement_schema_surface_exists() -> None:
+    skill_root = Path(__file__).resolve().parents[1] / ".agents" / "skills" / "skillguard"
+    assert not (skill_root / "scripts" / "skillguard_v1_retirement.py").exists()
+    assert not (skill_root / "scripts" / "skillguard_legacy_depth_upgrade.py").exists()
+
+
+def test_current_projection_names_the_exact_former_file_when_it_reappears(tmp_path: Path) -> None:
+    root, source = _current_root(tmp_path)
+    source["former_alias"] = True
+    with pytest.raises(ContractError) as raised:
+        validate_contract_source(root, source)
+    assert raised.value.code == "unknown_field"

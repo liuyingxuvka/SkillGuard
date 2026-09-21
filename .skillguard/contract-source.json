@@ -68,7 +68,6 @@
       "scripts/skillguard_v2/path_identity.py",
       "scripts/skillguard_v2/portable_content.py",
       "scripts/skillguard_v2/route_runtime.py",
-      "scripts/skillguard_v2/run_store.py",
       "scripts/skillguard_v2/runtime_fingerprint.py",
       "scripts/skillguard_v2/target_installation.py",
       "scripts/skillguard_v2/wire_identity.py"

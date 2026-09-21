@@ -1,0 +1,96 @@
+{
+  "schema_version": "skillguard.self_case_groups.v1",
+  "groups": {
+    "admission": [
+      "tests/test_contract_v3_routes.py::test_sg_missing_explicit_contract_never_uses_default",
+      "tests/test_contract_v3_routes.py::test_sg_empty_selection_does_not_expand_to_all_checks",
+      "tests/test_contract_v3_routes.py::test_sg_obligation_checks_are_not_omitted",
+      "tests/test_contract_v3_routes.py::test_sg_required_step_is_included_before_child",
+      "tests/test_contract_v3_routes.py::test_sg_step_cycle_blocks_before_execution",
+      "tests/test_contract_v3_routes.py::test_sg_unknown_step_blocks_before_execution",
+      "tests/test_contract_v3_routes.py::test_sg_duplicate_check_id_blocks_before_execution",
+      "tests/test_contract_v3_routes.py::test_sg_missing_required_input_blocks_before_execution",
+      "tests/test_contract_v3_routes.py::test_sg_unknown_oracle_key_does_not_silently_pass",
+      "tests/test_contract_v3_routes.py::test_sg_rejects_legacy_fields_before_execution",
+      "tests/test_contract_v3_routes.py::test_sg_no_function_id_predicate_bypass",
+      "tests/test_contract_v3_routes.py::test_sg_json_boolean_does_not_match_integer",
+      "tests/test_contract_v3_routes.py::test_sg_explicit_route_does_not_override_ambiguity",
+      "tests/test_contract_v3_routes.py::test_sg_different_composition_ids_not_composable",
+      "tests/test_contract_v3_routes.py::test_sg_unselected_bad_check_never_runs",
+      "tests/test_contract_v3_routes.py::test_sg_undeclared_arguments_rejected",
+      "tests/test_contract_v3_routes.py::test_sg_no_match_rejected",
+      "tests/test_contract_v3_routes.py::test_sg_missing_facts_rejected",
+      "tests/test_contract_v3_routes.py::test_sg_unverified_empty_oracle_rejected",
+      "tests/test_contract_v3_routes.py::test_sg_duplicate_json_rejected_before_work",
+      "tests/test_contract_v3_routes.py::test_target_id_mismatch_starts_zero",
+      "tests/test_contract_v3_routes.py::test_check_has_exactly_one_step_owner",
+      "tests/test_contract_v3_routes.py::test_obligation_pulls_owner_and_transitive_preconditions",
+      "tests/test_contract_v3_routes.py::test_unknown_route_candidate_cannot_hide_ambiguity",
+      "tests/test_contract_v3_routes.py::test_ruled_out_route_does_not_require_irrelevant_fact",
+      "tests/test_contract_v3_routes.py::test_nested_json_boolean_does_not_match_integer",
+      "tests/test_contract_v3_routes.py::test_self_input_inventory_complete"
+    ],
+    "execution": [
+      "tests/test_fixed_runtime_evidence.py::test_sg_valid_change_executes_real_check",
+      "tests/test_fixed_runtime_evidence.py::test_sg_failure_stops_later_check",
+      "tests/test_fixed_runtime_evidence.py::test_sg_input_mutation_cannot_be_accepted",
+      "tests/test_fixed_runtime_evidence.py::test_sg_unchanged_change_reuses_result",
+      "tests/test_fixed_runtime_evidence.py::test_sg_only_changed_leaf_is_run",
+      "tests/test_fixed_runtime_evidence.py::test_sg_wrong_expected_current_blocks_before_work",
+      "tests/test_fixed_runtime_evidence.py::test_sg_null_expected_on_existing_target_blocks_before_work",
+      "tests/test_fixed_runtime_evidence.py::test_declared_environment_reaches_real_producer",
+      "tests/test_fixed_runtime_evidence.py::test_optional_missing_is_observed_not_replaced",
+      "tests/test_fixed_runtime_evidence.py::test_concurrent_identical_plan_has_one_actual_producer",
+      "tests/test_fixed_runtime_evidence.py::test_self_runner_rejects_skipped_required_case",
+      "tests/test_fixed_runtime_evidence.py::test_self_runner_rejects_xfail_and_xpass",
+      "tests/test_fixed_runtime_evidence.py::test_immutable_leaf_rejects_tamper",
+      "tests/test_fixed_runtime_evidence.py::test_runtime_change_invalidates_leaf",
+      "tests/test_fixed_runtime_evidence.py::test_owner_lock_released_after_crash",
+      "tests/test_fixed_runtime_evidence.py::test_leaf_dependencies_use_functional_keys",
+      "tests/test_fixed_runtime_evidence.py::test_post_launch_persistence_failure_keeps_count",
+      "tests/test_fixed_runtime_evidence.py::test_cancellation_cannot_publish_success",
+      "tests/test_fixed_runtime_evidence.py::test_large_output_is_private_and_summary_bounded",
+      "tests/test_fixed_runtime_evidence.py::test_self_runner_rejects_missing_extra_duplicate_collection",
+      "tests/test_fixed_runtime_evidence.py::test_self_runner_rejects_collection_error_and_teardown_failure",
+      "tests/test_fixed_runtime_evidence.py::test_self_runner_invokes_pytest_once",
+      "tests/test_fixed_runtime_evidence.py::test_target_busy_reports_own_zero_producer",
+      "tests/test_fixed_runtime_evidence.py::test_failed_containment_blocks_before_body",
+      "tests/test_fixed_runtime_evidence.py::test_execution_runtime_hash_binds_raw_bytes",
+      "tests/test_fixed_runtime_evidence.py::test_target_owned_native_failure_is_not_reinterpreted"
+    ],
+    "release": [
+      "tests/test_fixed_runtime_evidence.py::test_sg_read_has_no_producers_or_writes",
+      "tests/test_fixed_runtime_evidence.py::test_sg_release_rejects_changed_execution_identity[input]",
+      "tests/test_fixed_runtime_evidence.py::test_sg_release_rejects_changed_execution_identity[contract]",
+      "tests/test_fixed_runtime_evidence.py::test_sg_release_rejects_changed_execution_identity[facts]",
+      "tests/test_fixed_runtime_evidence.py::test_sg_release_checks_explicit_artifact",
+      "tests/test_fixed_runtime_evidence.py::test_sg_accepted_result_tamper_rejected",
+      "tests/test_fixed_runtime_evidence.py::test_same_check_reuses_across_change_release_routes",
+      "tests/test_fixed_runtime_evidence.py::test_same_unit_shared_state_rejects_foreign_root",
+      "tests/test_fixed_runtime_evidence.py::test_read_survives_live_input_deletion_without_writes",
+      "tests/test_fixed_runtime_evidence.py::test_incomplete_result_cannot_be_rehashed_current",
+      "tests/test_fixed_runtime_evidence.py::test_foreign_result_cannot_be_rehashed_current",
+      "tests/test_fixed_runtime_evidence.py::test_consumer_isolated_actual_change",
+      "tests/test_fixed_runtime_evidence.py::test_consumer_projection_root_is_exact",
+      "tests/test_fixed_runtime_evidence.py::test_consumer_source_drift_during_copy_blocks",
+      "tests/test_fixed_runtime_evidence.py::test_accepted_id_unchanged_on_exact_noop",
+      "tests/test_fixed_runtime_evidence.py::test_rehashed_plan_cannot_reduce_required_denominator",
+      "tests/test_fixed_runtime_evidence.py::test_rehashed_snapshot_requires_typed_exact_rows"
+    ]
+  },
+  "platform_cases": {
+    "nt": {
+      "execution": [
+        "tests/test_fixed_runtime_evidence.py::test_windows_timeout_leaves_no_running_descendant",
+        "tests/test_fixed_runtime_evidence.py::test_windows_store_alias_preserves_os_environment"
+      ]
+    },
+    "posix": {
+      "execution": [
+        "tests/test_fixed_runtime_evidence.py::test_timeout_returns_with_no_running_descendant"
+      ]
+    }
+  }
+}
+
+\n

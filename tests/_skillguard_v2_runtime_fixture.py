@@ -15,6 +15,7 @@ from skillguard_v2.contract_compiler import (  # noqa: E402
     canonical_hash,
     wire_hash,
 )
+from skillguard_v2.compact_contract import validate_contract_source  # noqa: E402
 
 
 def _current_checks_and_plan(
@@ -196,7 +197,7 @@ def runtime_checks() -> list[dict[str, object]]:
 def runtime_contract() -> dict[str, object]:
     checks, content_impact_plan = _current_checks_and_plan(runtime_checks())
     contract: dict[str, object] = {
-        "schema_version": "skillguard.compiled_contract.v2",
+        "schema_version": "skillguard.compiled_contract.v3",
         "compiler_version": "fixture",
         "skill_id": "runtime-fixture",
         "repository_role": "skill_maintainer_source",
@@ -478,6 +479,77 @@ def runtime_contract() -> dict[str, object]:
     return contract
 
 
+def validated_contract_from_compiled(
+    compiled: dict[str, object], root: Path,
+):
+    """Return the runtime fixture through the current v3 source validator.
+
+    The author-side fixture still exposes the compiled mapping for tests that
+    exercise immutable run records.  Route selection, however, consumes the
+    current ``ValidatedContract`` and its explicit asserted scope.  Keeping
+    this conversion in the fixture makes every caller use the same v3
+    contract boundary without adding a production compatibility reader.
+    """
+
+    source = {
+        "schema_version": "skillguard.skill_contract.v3",
+        "skill_id": compiled["skill_id"],
+        "maintenance_unit_id": compiled["maintenance_unit_id"],
+        "inputs": [
+            {
+                "id": "input:runtime",
+                "path": "runtime-fixture.py",
+                "required": True,
+            }
+        ],
+        "routes": [
+            {
+                key: row[key]
+                for key in (
+                    "route_id",
+                    "choice_group",
+                    "when",
+                    "step_ids",
+                    "obligation_ids",
+                )
+                if key in row
+            }
+            for row in compiled["routes"]
+        ],
+        "steps": [
+            {
+                "step_id": row["step_id"],
+                "requires": row.get("requires", row.get("prerequisite_step_ids", [])),
+                "check_ids": row.get("check_ids", []),
+            }
+            for row in compiled["steps"]
+        ],
+        "obligations": [
+            {
+                "obligation_id": row["obligation_id"],
+                "check_ids": row.get("check_ids", row.get("required_check_ids", [])),
+            }
+            for row in compiled["obligations"]
+        ],
+        "checks": [
+            {
+                "check_id": row["check_id"],
+                "kind": "command",
+                "command": row["command"],
+                "args": row["args"],
+                "input_ids": ["input:runtime"],
+                "expected": row["expected"],
+            }
+            for row in compiled["checks"]
+        ],
+    }
+    return validate_contract_source(root.resolve(), source)
+
+
+def runtime_validated_contract(root: Path | None = None):
+    return validated_contract_from_compiled(runtime_contract(), (root or ROOT).resolve())
+
+
 def runtime_check_manifest(
     contract: dict[str, object],
     checks: list[dict[str, object]] | None = None,
@@ -488,6 +560,7 @@ def runtime_check_manifest(
     manifest: dict[str, object] = {
         "schema_version": "skillguard.check_manifest.v3",
         "skill_id": contract["skill_id"],
+        "maintenance_unit_id": contract["maintenance_unit_id"],
         "contract_hash": contract["contract_hash"],
         "checks": checks,
         "check_declarations_hash": wire_hash(checks),

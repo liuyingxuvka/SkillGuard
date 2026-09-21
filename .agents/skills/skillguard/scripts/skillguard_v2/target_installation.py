@@ -98,15 +98,18 @@ def _canonical_target(
     canonical = canonical_filesystem_path(canonical_skill_root)
     if not canonical.is_dir() or not canonical.is_relative_to(repository):
         raise ValueError("target_install_skill_root_outside_repository")
+    # The compact v3 contract is repository-owned.  A target skill is selected
+    # by its explicit consumer projection; it does not carry a second private
+    # contract copy inside the projected member tree.
     contract = _read_json_object(
-        canonical / ".skillguard" / "compiled-contract.json",
+        repository / ".skillguard" / "compiled-contract.json",
         "target_install_compiled_contract_missing",
     )
     skill_id = _safe_skill_id(contract.get("skill_id"))
-    impact_plan = contract.get("content_impact_plan")
-    if not isinstance(impact_plan, Mapping):
-        raise ValueError("target_install_content_impact_plan_missing")
-    member_root_path = str(impact_plan.get("member_root_path", "")).replace("\\", "/")
+    projection = contract.get("consumer_projection")
+    if not isinstance(projection, Mapping):
+        raise ValueError("target_install_consumer_projection_missing")
+    member_root_path = str(projection.get("root_path", "")).replace("\\", "/")
     if not member_root_path:
         raise ValueError("target_install_member_root_path_missing")
     expected = repository if member_root_path == "." else repository / Path(
@@ -133,7 +136,7 @@ def _canonical_target(
             + [str(consumer_plan["release_manifest_path"])]
         )
     )
-    projection = {
+    target_projection = {
         "projection_id": "projection:consumer-distribution",
         "release_id": str(consumer_plan["release_id"]),
         "member_paths_hash": canonical_hash(list(member_paths)),
@@ -143,7 +146,7 @@ def _canonical_target(
         "canonical_root": canonical,
         "skill_id": skill_id,
         "member_root_path": member_root_path,
-        "projection": projection,
+        "projection": target_projection,
         "contract": contract,
         "consumer_plan": consumer_plan,
         "member_paths": member_paths,

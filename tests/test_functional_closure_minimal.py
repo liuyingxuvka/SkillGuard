@@ -13,85 +13,12 @@ from pathlib import Path
 
 import pytest
 
-from tests._skillguard_v2_runtime_fixture import runtime_contract_with_checks
-from skillguard_v2.check_runner import get_or_execute_check
-from skillguard_v2.receipts import ReceiptIndex, derive_freshness, fingerprint_value
+from tests.test_compact_contract_cli import _request, _run, _write_contract
+from tests.test_fixed_preflight_units import _execution_fixture, _root, _source
+from skillguard_v2.compact_contract import validate_contract_source
 from skillguard_v2.route_runtime import select_routes
-from skillguard_v2.run_store import claim_run
-from skillguard_v2.test_mesh import execute_test_mesh, replay_current_test_mesh_aggregation
-
-
-def _fixture(tmp_path: Path):
-    repository = tmp_path / "repository"
-    target = tmp_path / "target"
-    skill = repository / "skill"
-    repository.mkdir()
-    target.mkdir()
-    skill.mkdir()
-    contract, manifest = runtime_contract_with_checks(
-        [
-            {
-                "check_id": "check:intake",
-                "kind": "command",
-                "command": sys.executable,
-                "args": ["-c", "print('a')"],
-                "expected": {"exit_code": 0},
-                "covers_obligation_ids": ["obligation:intake"],
-            },
-            {
-                "check_id": "check:review",
-                "kind": "command",
-                "command": sys.executable,
-                "args": ["-c", "print('b')"],
-                "expected": {"exit_code": 0},
-                "covers_obligation_ids": ["obligation:review"],
-            },
-        ]
-    )
-    decision = select_routes(contract, {"function_ids": ["analyze"]})
-    claim = claim_run(
-        contract,
-        {"function_ids": ["analyze"], "write_targets": ["out"], "request": "minimal closure"},
-        target,
-        decision,
-        check_manifest=manifest,
-    )
-    assert claim.ok, claim.to_dict()
-    assert claim.run_root is not None
-    mesh = repository / "test-mesh.json"
-    mesh.write_text(
-        json.dumps(
-            {
-                "schema_version": "skillguard.test_mesh_manifest.current",
-                "mesh_id": "minimal",
-                "source_model_id": "minimal.model",
-                "profiles": [
-                    {"profile_id": "fast", "closure_profile_id": "enforced", "requested_claims": ["source_release"], "owner_ids": ["owner:intake"]},
-                    {"profile_id": "focused", "closure_profile_id": "enforced", "requested_claims": ["source_release"], "owner_ids": ["owner:intake", "owner:review"]},
-                    {"profile_id": "full", "closure_profile_id": "enforced", "requested_claims": ["global_router_current", "installed_current", "source_release"], "owner_ids": ["owner:intake", "owner:review"]},
-                ],
-                "claim_boundary": "minimal fixture only",
-            },
-            sort_keys=True,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-    owner_root = repository / "work" / "owner-evidence"
-    return repository, target, skill, mesh, owner_root, claim.run_root, manifest
-
-
-def _plan(repository, target, skill, mesh, owner_root, run_root, profile="focused", **kwargs):
-    return execute_test_mesh(
-        mesh,
-        repository,
-        profile,
-        run_root=run_root,
-        skill_root=skill,
-        target_root=target,
-        owner_evidence_root=owner_root,
-        **kwargs,
-    )
+from skillguard_v2.receipts import ReceiptIndex, derive_freshness, fingerprint_value
+from checker_engine import execute_plan
 
 
 def test_t01_t02_t05_functional_fingerprint_excludes_transport_metadata(tmp_path: Path) -> None:
@@ -111,28 +38,12 @@ def test_t01_t02_t05_functional_fingerprint_excludes_transport_metadata(tmp_path
 
 
 def test_t03_t04_t06_t07_t08_t09_real_owner_execution_and_reuse_are_bounded(tmp_path: Path) -> None:
-    repository, target, skill, mesh, owner_root, run_root, manifest = _fixture(tmp_path)
-    plan = _plan(repository, target, skill, mesh, owner_root, run_root)
-    assert plan["status"] == "passed"
-    assert len(plan["will_execute_owner_ids"]) == 2
-    first = _plan(
-        repository, target, skill, mesh, owner_root, run_root,
-        mode="owner_execution_only", frozen_plan=plan,
-    )
-    assert first["status"] == "passed"
-    assert first["execution_count"] == 2
-    second = _plan(repository, target, skill, mesh, owner_root, run_root)
-    assert second["will_execute_owner_ids"] == []
-    assert set(second["will_reuse_owner_ids"]) == set(plan["will_execute_owner_ids"])
-    assert second["execution_count"] == 0
-    aggregation = _plan(
-        repository, target, skill, mesh, owner_root, run_root,
-        mode="aggregation_only", frozen_plan=plan,
-    )
-    assert aggregation["status"] == "passed"
-    assert aggregation["execution_count"] == 0
-    assert len(aggregation["child_receipts"]) == 2
-    assert replay_current_test_mesh_aggregation(owner_root, aggregation["aggregation_ref"])["status"] == "passed"
+    root, validated, plan, state = _execution_fixture(tmp_path)
+    first = execute_plan(root, validated, plan, state)
+    assert (first.producer_count, first.run_count, first.reused_count) == (2, 2, 0)
+    second = execute_plan(root, validated, plan, state)
+    assert (second.producer_count, second.run_count, second.reused_count) == (0, 0, 2)
+    assert second.leaves == first.leaves
 
 
 def test_t10_selected_receipt_index_reads_one_bounded_set(tmp_path: Path) -> None:
@@ -178,24 +89,66 @@ def test_t11_foreign_or_tampered_child_cannot_be_current(tmp_path: Path) -> None
 
 
 def test_t12_cancellation_and_t13_no_unrequested_full_side_effect(tmp_path: Path) -> None:
-    repository, target, skill, mesh, owner_root, run_root, _manifest = _fixture(tmp_path)
-    plan = _plan(repository, target, skill, mesh, owner_root, run_root, profile="fast")
-    assert plan["status"] == "passed"
-    assert plan["execution_count"] == 0
-    assert plan["full_admission_required"] is False
+    root = _root(tmp_path)
+    _write_contract(root)
+    state = tmp_path / "state"
+    state.mkdir()
+    code, accepted = _run(root, _request(root, state, "change"), "change")
+    assert code == 0, accepted
+    before = {path.relative_to(state): path.read_bytes() for path in state.rglob("*") if path.is_file()}
+    code, readback = _run(root, _request(root, state, "read", scope="route:change"), "read")
+    after = {path.relative_to(state): path.read_bytes() for path in state.rglob("*") if path.is_file()}
+    assert code == 0, readback
+    assert readback["producer_count"] == 0
+    assert before == after
 
 
 def test_t14_fast_focused_full_are_distinct_and_t16_compiled_check_is_read_only(tmp_path: Path) -> None:
-    repository, target, skill, mesh, owner_root, run_root, _manifest = _fixture(tmp_path)
-    fast = _plan(repository, target, skill, mesh, owner_root, run_root, profile="fast")
-    focused = _plan(repository, target, skill, mesh, owner_root, run_root, profile="focused")
-    full = _plan(repository, target, skill, mesh, owner_root, run_root, profile="full")
-    assert fast["profile_id"] == "fast"
-    assert focused["profile_id"] == "focused"
-    assert full["profile_id"] == "full"
-    assert full["status"] == "blocked"
-    assert "requested_claims_require_exact_freeze_identity" in full["findings"]
-    assert fast["execution_count"] == focused["execution_count"] == full["execution_count"] == 0
+    root = _root(tmp_path)
+    source = _source()
+    source["routes"].append(  # type: ignore[union-attr]
+        {
+            "route_id": "route:release",
+            "choice_group": "operation",
+            "when": [{"fact": "operation", "equals": "release"}],
+            "step_ids": [],
+            "obligation_ids": ["ob:leaf"],
+        }
+    )
+    (root / ".skillguard").mkdir()
+    (root / ".skillguard" / "contract-source.json").write_text(
+        json.dumps(source), encoding="utf-8"
+    )
+    state = tmp_path / "state"
+    state.mkdir()
+    changed_code, changed = _run(root, _request(root, state, "change"), "change")
+    assert changed_code == 0, changed
+    release_code, release = _run(
+        root,
+        _request(root, state, "release", expected_current=str(changed["accepted_id"])),
+        "release",
+    )
+    assert release_code == 0, release
+    assert release["producer_count"] == 0
+    invalid_request = _request(root, state, "change")
+    payload = json.loads(invalid_request.read_text(encoding="utf-8"))
+    payload["facts"] = {"operation": "unsupported"}
+    invalid_request.write_text(json.dumps(payload), encoding="utf-8")
+    blocked_code, blocked = _run(root, invalid_request, "change")
+    assert blocked_code == 1
+    assert blocked["producer_count"] == 0
+    # The public CLI emits a bounded summary and intentionally keeps nested
+    # route findings out of stdout.  Verify the summary boundary and inspect
+    # the same current v3 selector directly for the semantic reason.
+    assert blocked["status"] == "blocked"
+    assert blocked["route"]["status"] == "blocked"
+    decision = select_routes(
+        validate_contract_source(root, source),
+        {"operation": "unsupported"},
+        ["route:change"],
+    )
+    assert not decision.ok
+    assert decision.findings[0].code == "no_route"
 
 
 def test_t15_t18_readback_preserves_functional_key_and_does_not_start_a_producer(tmp_path: Path) -> None:

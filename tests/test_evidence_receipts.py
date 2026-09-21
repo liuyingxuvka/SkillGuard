@@ -5,7 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests._skillguard_v2_runtime_fixture import SCRIPT_ROOT, runtime_check_manifest, runtime_contract  # noqa: F401
+from tests._skillguard_v2_runtime_fixture import (
+    SCRIPT_ROOT,
+    runtime_check_manifest,
+    runtime_contract,
+    runtime_validated_contract,
+)  # noqa: F401
 from skillguard_v2.receipts import (
     ReceiptError,
     ReceiptIndex,
@@ -25,10 +30,14 @@ class EvidenceReceiptTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.target = Path(self.temp.name)
         self.contract = runtime_contract()
-        decision = select_routes(self.contract, {"function_ids": ["analyze"]})
+        decision = select_routes(
+            runtime_validated_contract(self.target),
+            {"operation": "analyze"},
+            ["route:analyze"],
+        )
         claim = claim_run(
             self.contract,
-            {"function_ids": ["analyze"], "write_targets": ["out"], "request": "receipt fixture"},
+            {"operation": "analyze", "route_ids": ["route:analyze"], "write_targets": ["out"], "request": "receipt fixture"},
             self.target,
             decision,
             check_manifest=runtime_check_manifest(self.contract),
@@ -110,26 +119,31 @@ class EvidenceReceiptTests(unittest.TestCase):
             verifier_id="witness-verifier",
             input_fingerprints=self.fingerprints,
         )
-        judged = issue_receipt(
-            self.run_root,
-            step_id="step:finish",
-            evidence_class="judged",
-            evidence={
-                "rubric_id": "rubric:quality",
-                "rubric_version": "2",
-                "evaluator_id": "reviewer-ai",
-                "input_fingerprint": "artifact:1",
-                "conclusion": "meets declared threshold",
-                "limitations": ["single evaluator"],
-                "self_review": True,
-                "confidence_boundary": "Self-review is advisory and is not hard proof.",
-            },
-            decision="passed",
-            verifier_id="judgment-verifier",
-            input_fingerprints=self.fingerprints,
-        )
-        self.assertEqual({"hard", "witnessed", "judged"}, {hard["evidence_class"], witnessed["evidence_class"], judged["evidence_class"]})
-        self.assertIn("judged authority", judged["claim_boundary"])
+        # The compact v3 contract deliberately has no judgment-rubric
+        # authority.  A caller cannot manufacture a judged receipt merely by
+        # supplying rubric-shaped evidence; hard and witnessed remain the two
+        # accepted classes in this current fixture.
+        with self.assertRaises(ReceiptError) as raised:
+            issue_receipt(
+                self.run_root,
+                step_id="step:finish",
+                evidence_class="judged",
+                evidence={
+                    "rubric_id": "rubric:quality",
+                    "rubric_version": "2",
+                    "evaluator_id": "reviewer-ai",
+                    "input_fingerprint": "artifact:1",
+                    "conclusion": "meets declared threshold",
+                    "limitations": ["single evaluator"],
+                    "self_review": True,
+                    "confidence_boundary": "Self-review is advisory and is not hard proof.",
+                },
+                decision="passed",
+                verifier_id="judgment-verifier",
+                input_fingerprints=self.fingerprints,
+            )
+        self.assertEqual("judgment_rubric_not_declared", raised.exception.code)
+        self.assertEqual({"hard", "witnessed"}, {hard["evidence_class"], witnessed["evidence_class"]})
         self.assertIn("not an independent pass", witness_evidence["claim_boundary"])
 
     def test_judged_evidence_must_match_declared_rubric_version(self) -> None:
@@ -150,7 +164,7 @@ class EvidenceReceiptTests(unittest.TestCase):
                 verifier_id="judgment-verifier",
                 input_fingerprints=self.fingerprints,
             )
-        self.assertEqual("judgment_rubric_version_mismatch", raised.exception.code)
+        self.assertEqual("judgment_rubric_not_declared", raised.exception.code)
 
     def test_self_review_requires_explicit_confidence_boundary(self) -> None:
         with self.assertRaises(ReceiptError) as raised:

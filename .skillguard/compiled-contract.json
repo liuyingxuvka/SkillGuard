@@ -70,7 +70,6 @@
       "scripts/skillguard_v2/path_identity.py",
       "scripts/skillguard_v2/portable_content.py",
       "scripts/skillguard_v2/route_runtime.py",
-      "scripts/skillguard_v2/run_store.py",
       "scripts/skillguard_v2/runtime_fingerprint.py",
       "scripts/skillguard_v2/target_installation.py",
       "scripts/skillguard_v2/wire_identity.py"
@@ -79,7 +78,7 @@
     "release_manifest_path": "consumer-release.json",
     "root_path": ".agents/skills/skillguard"
   },
-  "contract_hash": "sha256:e7b9ddd44f17c10289463e13eb7efca306a7ffce219f90eee8447f2c92611397",
+  "contract_hash": "sha256:bb2335ed7f358baff81dd0a4b379302e7de9aad184bb9633ad61ec71f5ec26c4",
   "inputs": [
     {
       "id": "input:1",
@@ -207,7 +206,7 @@
   "schema_version": "skillguard.compiled_contract.v3",
   "skill_id": "skillguard",
   "source_identity": {
-    "content_hash": "sha256:f944ac8e337c1f1e03347bcb37249ea381d0352e7301862ede1a756bedb6bcce",
+    "content_hash": "sha256:6e1509a567ad389cb5e566e08bbc3bab9537ab28dc4172911e5905b2fe40fc50",
     "path": ".skillguard/contract-source.json"
   },
   "steps": [
