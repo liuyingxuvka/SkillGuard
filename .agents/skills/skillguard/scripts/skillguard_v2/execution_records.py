@@ -16,6 +16,7 @@ import os
 import signal
 import subprocess
 import sys
+import threading
 import time
 import uuid
 import re
@@ -37,6 +38,10 @@ TIMEOUT_RECEIPT_PREFIXES = {
     CHECK_TIMEOUT_SCHEMA: "timeout-",
     TEST_MESH_TIMEOUT_SCHEMA: "test-timeout-",
 }
+
+
+_PROCESS_LOCKS_GUARD = threading.Lock()
+_PROCESS_LOCKS: dict[str, threading.Lock] = {}
 
 
 @dataclass
@@ -249,44 +254,56 @@ def durable_copy_immutable_stream(
 @contextmanager
 def _portable_file_lock(path: Path, timeout_seconds: float = 5.0) -> Iterator[None]:
     path = filesystem_path(path)
+    lock_key = os.path.normcase(str(path))
+    with _PROCESS_LOCKS_GUARD:
+        process_lock = _PROCESS_LOCKS.setdefault(lock_key, threading.Lock())
+    if timeout_seconds <= 0:
+        acquired = process_lock.acquire(blocking=False)
+    else:
+        acquired = process_lock.acquire(timeout=float(timeout_seconds))
+    if not acquired:
+        raise ExecutionRecordError("execution_record_lock_timeout", path.name)
     _durable_mkdir(path.parent)
-    handle = path.open("a+b")
     try:
-        if path.stat().st_size == 0:
-            handle.write(b"\0")
-            handle.flush()
-            os.fsync(handle.fileno())
-        deadline = time.monotonic() + timeout_seconds
-        while True:
+        handle = path.open("a+b")
+        try:
+            if path.stat().st_size == 0:
+                handle.write(b"\0")
+                handle.flush()
+                os.fsync(handle.fileno())
+            deadline = time.monotonic() + max(float(timeout_seconds), 0.0)
+            while True:
+                try:
+                    handle.seek(0)
+                    if os.name == "nt":
+                        import msvcrt
+
+                        msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    else:
+                        import fcntl
+
+                        fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except OSError as exc:
+                    if time.monotonic() >= deadline:
+                        raise ExecutionRecordError("execution_record_lock_timeout", path.name) from exc
+                    time.sleep(0.02)
             try:
+                yield
+            finally:
                 handle.seek(0)
                 if os.name == "nt":
                     import msvcrt
 
-                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+                    msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
                 else:
                     import fcntl
 
-                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except OSError as exc:
-                if time.monotonic() >= deadline:
-                    raise ExecutionRecordError("execution_record_lock_timeout", path.name) from exc
-                time.sleep(0.02)
-        try:
-            yield
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
         finally:
-            handle.seek(0)
-            if os.name == "nt":
-                import msvcrt
-
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            handle.close()
     finally:
-        handle.close()
+        process_lock.release()
 
 
 @contextmanager
