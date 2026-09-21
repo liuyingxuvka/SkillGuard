@@ -1,10 +1,10 @@
 {
-  "check_declarations_hash": "sha256:8bcef13053b4e17d6f67cfde446f4b3e31f2fa216972fa5719bfa9fb7486280e",
+  "check_declarations_hash": "sha256:90868ea2a95821d1ccb8b124fca37c00c03f1f7d385a913b35f8b8eb3ba20353",
   "checks": [
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('SKILL.md').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/SKILL.md').is_file()"
       ],
       "check_id": "check:self:author-entry-loading",
       "command": "{{python}}",
@@ -19,7 +19,7 @@
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('scripts/skillguard_v2/route_runtime.py').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py').is_file()"
       ],
       "check_id": "check:self:declared-check-runtime",
       "command": "{{python}}",
@@ -37,7 +37,7 @@
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('scripts/skillguard_v2/receipts.py').is_file() and Path('scripts/skillguard_v2/execution_records.py').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/execution_records.py').is_file() and Path('.agents/skills/skillguard/scripts/skillguard_v2/wire_identity.py').is_file()"
       ],
       "check_id": "check:self:verify-release-provenance",
       "command": "{{python}}",
@@ -51,7 +51,7 @@
       "kind": "command"
     }
   ],
-  "claim_boundary": "Compilation derives one contract from the explicit source; it does not execute checks or prove installation or publication.",
+  "claim_boundary": "Compilation validates one explicit source and does not execute checks.",
   "consumer_projection": {
     "file_paths": [
       "SKILL.md",
@@ -61,146 +61,71 @@
       "scripts/skillguard_utils.py",
       "scripts/skillguard_v2/__init__.py",
       "scripts/skillguard_v2/compact_contract.py",
+      "scripts/skillguard_v2/compact_state.py",
+      "scripts/skillguard_v2/consumer_distribution.py",
       "scripts/skillguard_v2/contract_compiler.py",
       "scripts/skillguard_v2/contract_schema.py",
-      "scripts/skillguard_v2/content_projection.py",
       "scripts/skillguard_v2/execution_records.py",
+      "scripts/skillguard_v2/installation.py",
       "scripts/skillguard_v2/path_identity.py",
       "scripts/skillguard_v2/portable_content.py",
-      "scripts/skillguard_v2/receipts.py",
       "scripts/skillguard_v2/route_runtime.py",
       "scripts/skillguard_v2/run_store.py",
       "scripts/skillguard_v2/runtime_fingerprint.py",
+      "scripts/skillguard_v2/target_installation.py",
       "scripts/skillguard_v2/wire_identity.py"
     ],
     "projection_id": "projection:consumer-distribution",
-    "release_manifest_path": "consumer-release.json"
+    "release_manifest_path": "consumer-release.json",
+    "root_path": ".agents/skills/skillguard"
   },
-  "content_impact_plan": {
-    "inventory": [
-      {
-        "install_disposition": "copy",
-        "path": "SKILL.md"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "public-export-policy.json"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/checker_engine.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_utils.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/__init__.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/compact_contract.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/content_projection.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/contract_compiler.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/contract_schema.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/execution_records.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/path_identity.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/portable_content.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/receipts.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/route_runtime.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/run_store.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/runtime_fingerprint.py"
-      },
-      {
-        "install_disposition": "copy",
-        "path": "scripts/skillguard_v2/wire_identity.py"
-      }
-    ],
-    "member_root_path": ".",
-    "schema_version": "skillguard.content_impact_plan.v3"
-  },
-  "contract_hash": "sha256:f7bc73d43ac3f744596504404c46026c23a492980c6a13f4e2cf08bb55f03d38",
+  "contract_hash": "sha256:e7b9ddd44f17c10289463e13eb7efca306a7ffce219f90eee8447f2c92611397",
   "inputs": [
     {
       "id": "input:1",
-      "path": "SKILL.md",
+      "path": ".agents/skills/skillguard/SKILL.md",
       "required": true,
       "role": "instructions"
     },
     {
       "id": "input:2",
-      "path": "scripts/skillguard.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:3",
-      "path": "scripts/checker_engine.py",
+      "path": ".agents/skills/skillguard/scripts/checker_engine.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:4",
-      "path": "scripts/skillguard_v2/route_runtime.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:5",
-      "path": "scripts/skillguard_v2/receipts.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/execution_records.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:6",
-      "path": "scripts/skillguard_v2/execution_records.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/wire_identity.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:7",
-      "path": "scripts/skillguard_v2/check_runner.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/compact_contract.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:8",
-      "path": "scripts/skillguard_v2/run_store.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/compact_state.py",
       "required": true,
       "role": "runtime_source"
     }
@@ -282,17 +207,7 @@
   "schema_version": "skillguard.compiled_contract.v3",
   "skill_id": "skillguard",
   "source_identity": {
-    "content_hash": "sha256:141a577cd5035f8613dc4224e23aed265056cddd7648237e0544083fd66a0737",
-    "input_fingerprints": {
-      "input:1": "sha256:db5f53be57d6cbe502d91d3178552aa635d988de4bef4a6f82b276c6fec1331b",
-      "input:2": "sha256:dbe61657d6eb52be2c1144c5c6979c6527c66917c0243d923c2ddab11efbff45",
-      "input:3": "sha256:b4949d782ef74b1aa5bd36b4a5cf201732d982ca9623ed5592df9dd91c89e20b",
-      "input:4": "sha256:36229997b3f800dc58c6e534235f10c66bb47f7c6cf92ddfbc41764cf2779902",
-      "input:5": "sha256:c5a0300d3ddc5b3a792b1075a54865f4da8cdc585db7e634c835001fd595c8f9",
-      "input:6": "sha256:1d6d553c3abb37ead3ac98041cfdf7dac1697c425436df34f57f5b74f7ca6bd1",
-      "input:7": "sha256:d2be08cb8185f4088d2190145ed6cbdce887331ad411ff8b248cd59fd250b3c1",
-      "input:8": "sha256:bb7803d312b43162a77bbd509e9b739bea1985b93888b984ba56a4c116212872"
-    },
+    "content_hash": "sha256:f944ac8e337c1f1e03347bcb37249ea381d0352e7301862ede1a756bedb6bcce",
     "path": ".skillguard/contract-source.json"
   },
   "steps": [

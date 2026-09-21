@@ -21,12 +21,11 @@ current authorized scope.
 
 ## Route-first entry
 
-Read the short `.agents/skills/skillguard/SKILL.md` first. Then query exactly one
-current route and load only its selected reference:
+Read the short `.agents/skills/skillguard/SKILL.md` first. Then use exactly one
+of the current public operations and load only the selected contract evidence:
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py route-reference --route-id <route>
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-audit --root .
+python .agents/skills/skillguard/scripts/skillguard.py read --root . --request read.json --json
 ```
 
 The complete route catalog remains in the generated
@@ -70,10 +69,9 @@ trigger.
 ## Short command index
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py route-reference --route-id <route>
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-audit --root .
-python .agents/skills/skillguard/scripts/skillguard.py self-check --root .
-python .agents/skills/skillguard/scripts/generate_route_index.py --json
+python .agents/skills/skillguard/scripts/skillguard.py read --root . --request read.json --json
+python .agents/skills/skillguard/scripts/skillguard.py change --root . --request change.json --json
+python .agents/skills/skillguard/scripts/skillguard.py release --root . --request release.json --json
 ```
 
 These entrypoints produce scoped evidence only; report actual checks, receipts,
@@ -96,7 +94,7 @@ Use one frozen maintenance unit, exact owner/check identities, private evidence 
 Validation policy: `skillguard.validation_execution_ownership.current`. It is direct-current only: no fallback, migration, alias, dual authority, or cross-unit receipt reuse.
 Consumer projections contain no author contracts, receipts, router, Portfolio, or author-only runtime. Installation, global-router currentness, and release are separate explicit claims; read `references/skillguard-target-installation.md` and `references/skillguard-self-host.md` only for those routes.
 
-Author audit command: `python <installed-skillguard>/scripts/skillguard.py maintainer-audit --root .`
+Author currentness command: `python <installed-skillguard>/scripts/skillguard.py read --root . --request read.json --json`
 
 This managed block is a routing and maintenance contract. It is not runtime, test, release, or future-behavior proof.
 <!-- END MANAGED SKILLGUARD AUTHOR RULES -->

@@ -2619,6 +2619,7 @@ def _validate_check_manifest_v3(payload: object) -> tuple[SchemaFinding, ...]:
     allowed = {
         "schema_version",
         "skill_id",
+        "maintenance_unit_id",
         "contract_hash",
         "checks",
         "check_declarations_hash",
@@ -2630,7 +2631,7 @@ def _validate_check_manifest_v3(payload: object) -> tuple[SchemaFinding, ...]:
         findings.append(_finding("check_manifest_v3_unknown_field", "$", ",".join(unknown)))
     if root.get("schema_version") != CHECK_MANIFEST_V3_SCHEMA:
         findings.append(_finding("check_manifest_v3_schema_mismatch", "$.schema_version", CHECK_MANIFEST_V3_SCHEMA))
-    for key in ("skill_id", "contract_hash", "check_declarations_hash", "manifest_hash", "claim_boundary"):
+    for key in ("skill_id", "maintenance_unit_id", "contract_hash", "check_declarations_hash", "manifest_hash", "claim_boundary"):
         _required_text(root, key, "$", findings)
     checks = _rows(root.get("checks"), "$.checks", findings)
     _unique_ids(checks, "check_id", "$.checks", findings)

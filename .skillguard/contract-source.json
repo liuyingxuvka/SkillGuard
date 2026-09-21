@@ -1,33 +1,9 @@
 {
-  "consumer_projection": {
-    "projection_id": "projection:consumer-distribution",
-    "release_manifest_path": "consumer-release.json",
-    "file_paths": [
-      "SKILL.md",
-      "public-export-policy.json",
-      "scripts/checker_engine.py",
-      "scripts/skillguard.py",
-      "scripts/skillguard_utils.py",
-      "scripts/skillguard_v2/__init__.py",
-      "scripts/skillguard_v2/compact_contract.py",
-      "scripts/skillguard_v2/contract_compiler.py",
-      "scripts/skillguard_v2/contract_schema.py",
-      "scripts/skillguard_v2/content_projection.py",
-      "scripts/skillguard_v2/execution_records.py",
-      "scripts/skillguard_v2/path_identity.py",
-      "scripts/skillguard_v2/portable_content.py",
-      "scripts/skillguard_v2/receipts.py",
-      "scripts/skillguard_v2/route_runtime.py",
-      "scripts/skillguard_v2/run_store.py",
-      "scripts/skillguard_v2/runtime_fingerprint.py",
-      "scripts/skillguard_v2/wire_identity.py"
-    ]
-  },
   "checks": [
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('SKILL.md').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/SKILL.md').is_file()"
       ],
       "check_id": "check:self:author-entry-loading",
       "command": "{{python}}",
@@ -42,7 +18,7 @@
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('scripts/skillguard_v2/route_runtime.py').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py').is_file()"
       ],
       "check_id": "check:self:declared-check-runtime",
       "command": "{{python}}",
@@ -60,7 +36,7 @@
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('scripts/skillguard_v2/receipts.py').is_file() and Path('scripts/skillguard_v2/execution_records.py').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/execution_records.py').is_file() and Path('.agents/skills/skillguard/scripts/skillguard_v2/wire_identity.py').is_file()"
       ],
       "check_id": "check:self:verify-release-provenance",
       "command": "{{python}}",
@@ -74,52 +50,79 @@
       "kind": "command"
     }
   ],
+  "consumer_projection": {
+    "file_paths": [
+      "SKILL.md",
+      "public-export-policy.json",
+      "scripts/checker_engine.py",
+      "scripts/skillguard.py",
+      "scripts/skillguard_utils.py",
+      "scripts/skillguard_v2/__init__.py",
+      "scripts/skillguard_v2/compact_contract.py",
+      "scripts/skillguard_v2/compact_state.py",
+      "scripts/skillguard_v2/consumer_distribution.py",
+      "scripts/skillguard_v2/contract_compiler.py",
+      "scripts/skillguard_v2/contract_schema.py",
+      "scripts/skillguard_v2/execution_records.py",
+      "scripts/skillguard_v2/installation.py",
+      "scripts/skillguard_v2/path_identity.py",
+      "scripts/skillguard_v2/portable_content.py",
+      "scripts/skillguard_v2/route_runtime.py",
+      "scripts/skillguard_v2/run_store.py",
+      "scripts/skillguard_v2/runtime_fingerprint.py",
+      "scripts/skillguard_v2/target_installation.py",
+      "scripts/skillguard_v2/wire_identity.py"
+    ],
+    "projection_id": "projection:consumer-distribution",
+    "release_manifest_path": "consumer-release.json",
+    "root_path": ".agents/skills/skillguard"
+  },
   "inputs": [
     {
       "id": "input:1",
-      "path": "SKILL.md",
+      "path": ".agents/skills/skillguard/SKILL.md",
       "required": true,
       "role": "instructions"
     },
     {
       "id": "input:2",
-      "path": "scripts/skillguard.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:3",
-      "path": "scripts/checker_engine.py",
+      "path": ".agents/skills/skillguard/scripts/checker_engine.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:4",
-      "path": "scripts/skillguard_v2/route_runtime.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:5",
-      "path": "scripts/skillguard_v2/receipts.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/execution_records.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:6",
-      "path": "scripts/skillguard_v2/execution_records.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/wire_identity.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:7",
-      "path": "scripts/skillguard_v2/check_runner.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/compact_contract.py",
       "required": true,
       "role": "runtime_source"
     },
     {
       "id": "input:8",
-      "path": "scripts/skillguard_v2/run_store.py",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/compact_state.py",
       "required": true,
       "role": "runtime_source"
     }

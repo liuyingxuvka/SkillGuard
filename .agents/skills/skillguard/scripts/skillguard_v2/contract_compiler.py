@@ -140,16 +140,14 @@ def path_fingerprint(path: Path, *, member_root: Path | None = None) -> str:
 
 
 def compile_skill_contract(
-    skill_root: Path,
+    repository_root: Path,
     *,
-    repository_root: Path | None = None,
     write: bool = False,
 ) -> CompileResult:
-    """Compile the one current source contract and nothing else."""
+    """Compile the unique repository-root contract and nothing else."""
 
-    del repository_root
-    skill_root = skill_root.resolve()
-    binding_path = skill_root / ".skillguard" / BINDING_SOURCE_FILE
+    repository_root = repository_root.resolve()
+    binding_path = repository_root / ".skillguard" / BINDING_SOURCE_FILE
     try:
         source = json.loads(binding_path.read_text(encoding="utf-8"))
     except FileNotFoundError:
@@ -177,7 +175,7 @@ def compile_skill_contract(
             ),
         )
     ok, status, raw_findings, contract, manifest, written = compile_direct_contract(
-        skill_root,
+        repository_root,
         binding_path,
         write=write,
     )

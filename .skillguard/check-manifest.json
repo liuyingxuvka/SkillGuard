@@ -1,10 +1,10 @@
 {
-  "check_declarations_hash": "sha256:8bcef13053b4e17d6f67cfde446f4b3e31f2fa216972fa5719bfa9fb7486280e",
+  "check_declarations_hash": "sha256:90868ea2a95821d1ccb8b124fca37c00c03f1f7d385a913b35f8b8eb3ba20353",
   "checks": [
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('SKILL.md').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/SKILL.md').is_file()"
       ],
       "check_id": "check:self:author-entry-loading",
       "command": "{{python}}",
@@ -19,7 +19,7 @@
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('scripts/skillguard_v2/route_runtime.py').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py').is_file()"
       ],
       "check_id": "check:self:declared-check-runtime",
       "command": "{{python}}",
@@ -37,7 +37,7 @@
     {
       "args": [
         "-c",
-        "from pathlib import Path; assert Path('scripts/skillguard_v2/receipts.py').is_file() and Path('scripts/skillguard_v2/execution_records.py').is_file()"
+        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/execution_records.py').is_file() and Path('.agents/skills/skillguard/scripts/skillguard_v2/wire_identity.py').is_file()"
       ],
       "check_id": "check:self:verify-release-provenance",
       "command": "{{python}}",
@@ -51,9 +51,10 @@
       "kind": "command"
     }
   ],
-  "claim_boundary": "The manifest preserves declared commands, arguments, inputs and oracles; it does not claim their execution.",
-  "contract_hash": "sha256:f7bc73d43ac3f744596504404c46026c23a492980c6a13f4e2cf08bb55f03d38",
-  "manifest_hash": "sha256:c5db80f5f4e0ffc10909719d081e4b2054ae805b1e4b7532b1c4f27c4218a00c",
+  "claim_boundary": "The manifest declares exact checks and does not claim execution.",
+  "contract_hash": "sha256:e7b9ddd44f17c10289463e13eb7efca306a7ffce219f90eee8447f2c92611397",
+  "maintenance_unit_id": "unit:skillguard",
+  "manifest_hash": "sha256:9be7b2f924879dcdf451626afe7ffa6e7d58c0f70a2d89e36fdc7ed491c5dd6b",
   "schema_version": "skillguard.check_manifest.v3",
   "skill_id": "skillguard"
 }

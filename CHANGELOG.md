@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.7.7 - 2026-09-21
+
+- Replaced the former broad dispatcher with the strict three-operation public
+  surface: `read`, `change`, and `release`.
+- Added the direct-current v3 contract compiler, fact-based route admission,
+  frozen prerequisite plans, selected input snapshots, real environment
+  fingerprints, single-flight execution, immutable per-leaf evidence, and
+  accepted-current CAS boundaries.
+- Kept consumer projection and author state separate. The source-only release
+  is cumulative from the last public GitHub release `v0.7.4`; no compatibility
+  reader, alias, migration, converter, or fallback route is provided.
+
 ## v0.7.6 - 2026-09-20
 
 - Completed the standalone contract/runtime contraction: the public dispatcher

@@ -10,7 +10,7 @@
 </p>
 <!-- README HERO END -->
 
-Current release: `v0.7.6` (source-only; validation evidence and publication status remain separate claims)
+Current release: `v0.7.7` (source-only; validation evidence and publication status remain separate claims)
 
 English comes first; the second half is a full Chinese mirror.
 
@@ -61,7 +61,7 @@ blocks.
 | Contract compilation | Compile one current author contract and exact check manifest from the maintained source. |
 | Declared verification | Compare target-declared promises with target-owned checks, current execution evidence, and bounded closure claims without inventing domain criteria. |
 | Reverse surface closure | Discover real target commands, scripts, exports, routes, actions, artifacts, and failure/recovery boundaries; require every row to be governed or explicitly proven internal, retired, or not-applicable with current evidence. |
-| Assurance diagnostics | Explain a supplied current closure with a dependency-aware subset-minimal blocker basis and project target-owned mutation evidence without executing, resuming, weakening obligations, or changing closure. |
+| Accepted-state read | Read one accepted immutable snapshot with a bounded blocker summary; it does not execute, resume, or alter obligations. |
 | Maintenance-unit isolation | Bind checks and receipts to unit, member, subject, semantic responsibility, owner, inputs, dependencies, toolchain, and environment. |
 | TestMesh | Freeze same-unit validation plans, order dependencies, preserve immutable evidence, and keep skipped/not-run gaps visible. |
 | Portfolio | Aggregate independent maintenance-unit statuses and audit semantic overlap without transferring proof. |
@@ -79,7 +79,7 @@ SkillGuard currently ships as source plus a local Python dispatcher. It is not a
 | --- | --- |
 | Skill entrypoint | `.agents/skills/skillguard/SKILL.md` |
 | Local dispatcher | `.agents/skills/skillguard/scripts/skillguard.py` |
-| Source version | `0.7.6` |
+| Source version | `0.7.7` |
 | Author control root | `.skillguard/**` inside explicit maintainer sources only |
 | Consumer projection | Target-owned files plus `consumer-release.json`; no SkillGuard dependency |
 | Ordinary project behavior | Zero SkillGuard writes |
@@ -92,20 +92,25 @@ SkillGuard currently ships as source plus a local Python dispatcher. It is not a
 Run the dispatcher from the repository root:
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py commands
+python .agents/skills/skillguard/scripts/skillguard.py --help
+python .agents/skills/skillguard/scripts/skillguard.py read --root <root> --request <request.json> --json
+python .agents/skills/skillguard/scripts/skillguard.py change --root <root> --request <request.json> --json
+python .agents/skills/skillguard/scripts/skillguard.py release --root <root> --request <request.json> --json
 ```
 
-The current public commands are:
+The public surface is exactly `read`, `change`, and `release`:
 
-- discovery and author routing: `commands`, `route-task`, `route-reference`, `inventory`, `scan-global-skills`, `build-global-registry`, `check-global-registry`, `refresh-global-router`;
-- planning and generation: `plan-skill`, `generate-skill`, `generate-suite`;
-- author repository and contract work: `maintainer-adopt`, `maintainer-audit`, `check-runtime-authority`, `check-json-schema`, `check-contract`, `check-depth`, `check-capability`, `audit-capabilities`, `check-source-sync`, `init-target`, `init-suite`, `mark`, `check-skill`, `check-suite`, `check-suite-map`, `check-suite-contract`;
-- fixtures and evidence review: `assurance-diagnostics`, `check-fixture-manifest`, `fixture-test`, `detect-stale-evidence`, `review-checker-change`, `check-maintenance-record`, `check-ai-judgment`, `check-report`, `check-workflow-report`, `make-closure`, `evidence-audit`, `evidence-gc-plan`, `evidence-gc-apply`, `evidence-gc-purge`;
-- independent Portfolio maintenance: `build-current-portfolio-registry`, `audit-portfolio`, `mark-portfolio-impact`, `verify-portfolio-impact-receipt`, `prepare-portfolio-run`, `execute-portfolio-run`, `capture-portfolio-production-revalidation`, `assemble-portfolio-run`, `graduate-portfolio`;
-- installation evidence: `capture-installation-receipt`, `verify-installation-receipt`;
-- repository gates: `check-readme-release`, `self-check`, `write-report`.
+- `read` reads the accepted contract snapshot without facts, live route
+  selection, producer execution, or writes;
+- `change` selects the declared route from exact request facts, executes the
+  frozen prerequisite closure once, and accepts a current result only after
+  immutable leaf evidence and CAS checks pass;
+- `release` verifies the accepted current and fills only an explicitly missing
+  leaf when the aggregate remains valid. It never installs or publishes.
 
-The standalone ordinary-skill resolver and consumer prompt installer are intentionally not public commands. The author-only `refresh-global-router` performs its registry and maintainer-prompt projection as one bounded operation.
+Former discovery, portfolio, router, maintainer, template, evidence-GC, and
+installation aliases are retired from this dispatcher. They do not forward to
+another handler and there is no compatibility or fallback route.
 
 ## Runtime Contract Executor
 
@@ -113,7 +118,9 @@ The runtime executor is an author-maintenance facility. Before it writes state, 
 
 The executor freezes the exact declared-check inventory, launches only the unit's owned checks, records immutable terminal evidence, verifies dependencies and freshness, and derives a scoped closure. It does not invent domain tests or replace the target skill's own judgment.
 
-Commands such as `init-target`, `init-suite`, and `mark` are maintainer-source utilities. They are not consumer-install or ordinary-project initialization commands.
+The v3 contract/compiler files are maintained directly in the explicit author
+repository. They are not consumer-install or ordinary-project initialization
+commands.
 
 ## Current Executable Contract
 
@@ -158,35 +165,38 @@ Freeze one maintenance unit, its members, semantic checks, dependencies, and evi
 
 ### Explain A Blocked Closure
 
-Run `assurance-diagnostics` only on the exact current compiled contract, check manifest, impact graph, receipts, and hashed closure evaluation. It reports a dependency-aware blocker basis and an unchanged target-native mutation result. A successful diagnostic command means the explanation was derived; it never means the source closure passed, and it cannot execute a missing owner or propose deleting or relaxing an obligation.
+Use the public `read` operation against the accepted snapshot. It reports the
+accepted identity, missing leaf evidence, and the bounded claim boundary
+without loading live route facts or starting a producer. A blocked read is an
+evidence gap; it does not authorize deleting or relaxing an obligation.
 
-### Maintain Global Skill Routing
+### Keep author state private
 
-```powershell
-python .agents/skills/skillguard/scripts/skillguard.py refresh-global-router --skill-root <explicit-author-skill-root> --codex-home <maintainer-codex-home> --output-dir <private-router-output>
-python .agents/skills/skillguard/scripts/skillguard.py check-global-registry --registry <private-router-output>/global_registry.json
-```
+The `.skillguard` contract, compiled contract, check manifest, accepted
+evidence, and operation locks remain in the explicit author state root. They
+are not copied into a consumer skill and do not govern ordinary consumer
+execution.
 
-This registry is private author-maintenance state. It does not govern ordinary consumer execution and is not copied to another computer with a graduated skill.
+### Keep maintenance units separate
 
-### Validate And Revalidate A Skill Portfolio
+Each change owns one explicit maintenance unit and its exact checks. A changed
+input invalidates only the leaves whose frozen functional closure consumes it;
+another unit or an old receipt cannot prove the new result.
 
-Portfolio records one status per independent maintenance unit. A change stales only units whose exact component graph consumes the changed input. Each stale unit must regain currentness through its own evidence; no prior unit, parent receipt, or external provider can prove it.
+### Work on an explicitly maintained source
 
-### Adopt Or Audit A Skill Repository
-
-```powershell
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-adopt --root <author-repository> --managed-skill "<skill-path>|<native-owner>" --skillguard-version 0.7.6
-python .agents/skills/skillguard/scripts/skillguard.py maintainer-audit --root <author-repository>
-```
-
-These commands accept only explicit skill-authoring repositories. An ordinary business project is ineligible and remains unchanged.
+Use `change` with an explicit absolute author-state root and request facts. Use
+`read` to inspect the accepted snapshot and `release` to qualify that same
+current. An ordinary business project is not an author source and remains
+unchanged.
 
 ### Review Stale Evidence
 
 Use affected-only invalidation for maintained source, test, contract, configuration, toolchain, and policy inputs. Reports, receipts, logs, timestamps, progress, and status files are evidence outputs and do not retrigger their own producer.
 
-Use `evidence-audit` and `evidence-gc-plan` for zero-write reachability inspection. Applying a plan only moves exact unreachable objects into quarantine; permanent purge is a separate command that requires the matching apply receipt, a fresh audit, replay gates, and the declared grace period.
+The public `read` operation is the only read-only dispatcher route. It never
+starts a producer, creates a run directory, writes a lock, or runs a cleanup
+operation.
 
 ## README And Release Gates
 
@@ -289,7 +299,7 @@ SkillGuard 目前以源码和本地 Python 调度器的形式存在，不是托�
 | --- | --- |
 | 技能入口 | `.agents/skills/skillguard/SKILL.md` |
 | 本地调度器 | `.agents/skills/skillguard/scripts/skillguard.py` |
-| 源码版本 | `0.7.6` |
+| 源码版本 | `0.7.7` |
 | 作者控制目录 | 只存在于明确维护源码里的 `.skillguard/**` |
 | 消费者投影 | 目标自己的文件和 `consumer-release.json`，不依赖 SkillGuard |
 | 普通项目 | SkillGuard 零写入 |
@@ -302,12 +312,16 @@ SkillGuard 目前以源码和本地 Python 调度器的形式存在，不是托�
 从仓库根目录运行：
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py commands
+python .agents/skills/skillguard/scripts/skillguard.py --help
+python .agents/skills/skillguard/scripts/skillguard.py read --root <root> --request <request.json> --json
+python .agents/skills/skillguard/scripts/skillguard.py change --root <root> --request <request.json> --json
+python .agents/skills/skillguard/scripts/skillguard.py release --root <root> --request <request.json> --json
 ```
 
-当前公开命令按用途分为：作者发现与路由、规划与生成、作者仓库与合同、测试与证据检查、相互独立的 Portfolio 维护、安装证据和仓库门禁。英文部分已经列出全部精确命令名。
-
-面向普通技能的独立解析命令和消费者提示安装命令已经退出公开命令面。作者专用的 `refresh-global-router` 在一次受限操作中完成注册表和维护提示投影。
+当前公开命令只有 `read`、`change` 和 `release`。`read` 只读取已接受的合同快照，
+`change` 按明确事实执行冻结的负责人闭包，`release` 核验当前并只补齐明确缺失的叶证据。
+旧的作者路由、Portfolio、模板、证据 GC、安装和维护别名已经退出公开命令面，
+不会转发，也没有兼容或 fallback 路径。
 
 ## 运行合同执行器
 
@@ -315,7 +329,7 @@ python .agents/skills/skillguard/scripts/skillguard.py commands
 
 执行器冻结精确检查清单，只启动本单元拥有的检查，记录不可变终态证据，验证依赖和新鲜度，再生成范围受限的结论。它不会发明领域测试，也不会替代技能自己的判断。
 
-`init-target`、`init-suite` 和 `mark` 都是维护源码工具，不是消费者安装命令，也不是普通项目初始化命令。
+维护源码的合同编译和状态写入只通过当前的 `change` 入口完成；不存在旧初始化、标记或兼容转发命令。
 
 ## 当前可执行合同
 
@@ -353,25 +367,25 @@ python .agents/skills/skillguard/scripts/skillguard.py commands
 
 ### 解释一个被阻断的 closure
 
-只有在当前编译合同、精确检查清单、影响图、收据和带哈希的 closure 评估身份完全一致时，才使用 `assurance-diagnostics`。它只生成考虑依赖关系的阻断依据和目标原生 mutation 结果投影。命令成功只说明“解释生成成功”，不代表原 closure 已通过；它不会替缺失负责人执行或恢复，也会拒绝删除、放松或自动缩小义务。
+使用公开的 `read` 操作读取已接受快照。它只报告接受身份、缺失叶证据和有限的结论边界，不加载实时路由事实，也不启动负责人。阻断的 read 只表示证据缺口，不授权删除或放松义务。
 
 ### 维护全局技能路由
 
-使用英文部分给出的 `refresh-global-router` 和 `check-global-registry` 示例。这个注册表是维护电脑上的私有作者状态，不管理普通消费者运行，也不会随毕业技能复制到另一台电脑。
+作者注册和维护状态属于私有作者边界；当前消费者命令面不提供路由刷新、注册表检查或兼容桥接。
 
-### 验证并重新验证技能组合
+### 保持维护单元独立
 
-Portfolio 为每个独立维护单元记录一个状态。某个输入变化，只会让明确消费该输入的单元过期。每个过期单元必须依靠自己的证据恢复当前状态；以前的单元、父收据或外部工具都不能替它证明。
+每次 change 只拥有一个明确维护单元及其冻结检查。输入变化只会使实际消费该输入的叶子失效；其他单元或旧收据不能替代新的证据。
 
 ### 接管或审计技能仓库
 
-使用 `maintainer-adopt` 和 `maintainer-audit`，而且只针对明确的技能作者仓库。普通业务项目不符合资格，失败时必须保持完全不变。
+只在明确的技能作者仓库中使用 `change`、`read` 和 `release`；普通业务项目不符合作者状态边界，失败时必须保持完全不变。
 
 ### 检查过期证据
 
 只有被维护的源码、测试、合同、配置、工具链和策略输入会按精确依赖关系触发失效。报告、收据、日志、时间戳、进度和状态文件都是证据输出，不能反过来触发自己的生产者。
 
-`evidence-audit` 和 `evidence-gc-plan` 只读检查可达性。执行计划只会把精确、不可达对象移动到隔离区；永久清除是另一条明确命令，必须同时满足匹配的隔离收据、最新审计、回放门和声明的宽限期。
+公开 `read` 只读取当前接受的快照，不启动生产者、不创建运行目录、不写锁，也不执行清理。
 
 ## README 和发布门禁
 

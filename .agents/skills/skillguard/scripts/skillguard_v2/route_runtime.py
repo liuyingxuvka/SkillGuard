@@ -1,34 +1,29 @@
-"""Deterministic fact-to-route selection for SkillContract v3."""
+"""Deterministic three-valued route selection for SkillContract v3."""
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
-
-MISSING_FACT = "MISSING_FACT"
-NO_ROUTE = "NO_ROUTE"
-AMBIGUOUS_ROUTE = "AMBIGUOUS_ROUTE"
-UNKNOWN_ROUTE = "UNKNOWN_ROUTE"
+from .compact_contract import ValidatedContract
 
 
 @dataclass(frozen=True)
 class RouteFinding:
     code: str
+    path: str
     message: str
-    target_id: str = ""
 
     def to_dict(self) -> dict[str, str]:
-        return {"code": self.code, "message": self.message, "target_id": self.target_id}
+        return {"code": self.code, "path": self.path, "message": self.message}
 
 
 @dataclass(frozen=True)
 class RouteDecision:
     ok: bool
     status: str
-    function_ids: tuple[str, ...]
     route_ids: tuple[str, ...]
-    claim_scope: str
     findings: tuple[RouteFinding, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
@@ -36,216 +31,88 @@ class RouteDecision:
             "artifact_type": "skillguard_v3_route_decision",
             "ok": self.ok,
             "status": self.status,
-            "function_ids": list(self.function_ids),
             "route_ids": list(self.route_ids),
-            "claim_scope": self.claim_scope,
             "findings": [row.to_dict() for row in self.findings],
-            "claim_boundary": "Selection chooses only declared routes; it does not execute them.",
+            "claim_boundary": "Selection asserts only declared routes and starts no producer.",
         }
 
 
-def _facts(request: Mapping[str, Any]) -> Mapping[str, Any] | None:
-    value = request.get("facts")
-    return value if isinstance(value, Mapping) else None
+def _json_equal(left: Any, right: Any) -> bool:
+    if isinstance(left, bool) or isinstance(right, bool):
+        return isinstance(left, bool) and isinstance(right, bool) and left is right
+    if left is None or right is None:
+        return left is None and right is None
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+        if not math.isfinite(float(left)) or not math.isfinite(float(right)):
+            return False
+        return left == right
+    if isinstance(left, str) or isinstance(right, str):
+        return isinstance(left, str) and isinstance(right, str) and left == right
+    if isinstance(left, list) or isinstance(right, list):
+        return isinstance(left, list) and isinstance(right, list) and len(left) == len(right) and all(_json_equal(a, b) for a, b in zip(left, right))
+    if isinstance(left, Mapping) or isinstance(right, Mapping):
+        return isinstance(left, Mapping) and isinstance(right, Mapping) and set(left) == set(right) and all(_json_equal(left[key], right[key]) for key in left)
+    return False
 
 
-def _predicates(route: Mapping[str, Any]) -> tuple[tuple[str, Any], ...] | None:
-    value = route.get("when", [])
-    if isinstance(value, Mapping):
-        return tuple((str(key), expected) for key, expected in value.items())
-    if not isinstance(value, list):
+def _assertion(value: str | Sequence[str] | None) -> tuple[str, ...] | None:
+    if value is None:
         return None
-    result: list[tuple[str, Any]] = []
-    for predicate in value:
-        if not isinstance(predicate, Mapping) or not isinstance(predicate.get("fact"), str) or "equals" not in predicate:
-            return None
-        result.append((str(predicate["fact"]), predicate["equals"]))
-    return tuple(result)
+    if isinstance(value, str):
+        return (value,)
+    return tuple(value)
 
 
-def _evaluate(route: Mapping[str, Any], facts: Mapping[str, Any]) -> tuple[str, tuple[str, ...]]:
-    predicates = _predicates(route)
-    route_id = str(route.get("route_id", ""))
-    if predicates is None or not predicates:
-        return "invalid", (route_id,)
-    missing = tuple(sorted({fact for fact, _expected in predicates if fact not in facts}))
-    if missing:
-        return "missing", missing
-    if all(facts[fact] == expected for fact, expected in predicates):
-        return "match", ()
-    return "mismatch", ()
-
-
-def _decision(
-    route_ids: list[str],
-    routes: Mapping[str, Mapping[str, Any]],
-    request: Mapping[str, Any],
-    findings: list[RouteFinding],
+def select_routes(
+    validated: ValidatedContract,
+    facts: Mapping[str, Any],
+    asserted_scope: Sequence[str],
+    explicit_assertion: str | Sequence[str] | None = None,
 ) -> RouteDecision:
-    function_ids = tuple(
-        dict.fromkeys(
-            str(routes[route_id]["function_id"])
-            for route_id in route_ids
-            if routes[route_id].get("function_id")
-        )
-    )
-    claim_scope = str(request.get("claim_scope", "enforced"))
-    if claim_scope != "enforced":
-        findings.append(RouteFinding("claim_scope_must_be_enforced", "claim scope must be enforced", claim_scope))
-    if findings:
-        return RouteDecision(False, "blocked", function_ids, tuple(route_ids), claim_scope, tuple(findings))
-    return RouteDecision(True, "selected", function_ids, tuple(dict.fromkeys(route_ids)), claim_scope)
+    """Select all routes from facts, then verify scope/route assertions exactly."""
 
-
-def _function_composition_findings(
-    functions: Mapping[str, Mapping[str, Any]],
-    function_ids: list[str],
-    request: Mapping[str, Any],
-) -> list[RouteFinding]:
-    findings: list[RouteFinding] = []
-    unknown = [function_id for function_id in function_ids if function_id not in functions]
-    findings.extend(RouteFinding("unknown_function", "function is not declared", item) for item in unknown)
-    if len(function_ids) > 1 and not bool(request.get("compose", False)):
-        findings.append(RouteFinding("composition_not_requested", "multiple functions require compose=true", ",".join(function_ids)))
-    if len(function_ids) > 1 and bool(request.get("compose", False)):
-        selected = set(function_ids)
-        for function_id in function_ids:
-            allowed = {str(item) for item in functions[function_id].get("composable_with", [])}
-            if not (selected - {function_id}).issubset(allowed):
-                findings.append(RouteFinding("incompatible_function_composition", "declared function composition is not symmetric", function_id))
-    return findings
-
-
-def select_routes(contract: Mapping[str, Any], request: Mapping[str, Any]) -> RouteDecision:
-    """Select routes only by exact declared facts.
-
-    No text scoring, similarity, first-match fallback, coercion or alternate
-    route is permitted. Every blocked result returns before a producer can be
-    started by the caller.
-    """
-
-    routes = [row for row in contract.get("routes", []) if isinstance(row, Mapping)]
-    route_index = {str(row.get("route_id", "")): row for row in routes if row.get("route_id")}
-    functions = {
-        str(row.get("function_id", "")): row
-        for row in contract.get("functions", [])
-        if isinstance(row, Mapping) and row.get("function_id")
-    }
-    if not functions:
-        # Compact v3 keeps the route declaration as the single public routing
-        # record.  Internal callers may still name a function alias, so derive
-        # the minimal lookup from route rows without restoring a second
-        # top-level function registry.
-        for row in routes:
-            function_id = str(row.get("function_id", "")).strip()
-            route_id = str(row.get("route_id", "")).strip()
-            if not function_id or not route_id:
-                continue
-            functions.setdefault(
-                function_id,
-                {
-                    "function_id": function_id,
-                    "route_ids": [route_id],
-                    "composable_with": list(row.get("composable_with", []))
-                    if isinstance(row.get("composable_with", []), list)
-                    else [],
-                },
-            )
-    findings: list[RouteFinding] = []
-    facts = _facts(request)
-    raw_function_ids = request.get("function_ids", [])
-
-    requested: list[str] = []
-    if isinstance(request.get("route_id"), str):
-        requested.append(str(request["route_id"]))
-    raw = request.get("route_ids", [])
-    if isinstance(raw, str):
-        requested.append(raw)
-    elif isinstance(raw, list):
-        requested.extend(str(item) for item in raw)
-    requested = list(dict.fromkeys(requested))
-    if facts is None and not raw_function_ids and not requested:
-        return RouteDecision(False, "blocked", (), (), str(request.get("claim_scope", "enforced")), (
-            RouteFinding(MISSING_FACT, "request.facts must be an object", "facts"),
-        ))
-    if requested:
-        unknown = [route_id for route_id in requested if route_id not in route_index]
-        if unknown:
-            findings.extend(RouteFinding(UNKNOWN_ROUTE, "route is not declared", route_id) for route_id in unknown)
-            return _decision([], route_index, request, findings)
-        if facts is None:
-            findings.append(RouteFinding(MISSING_FACT, "request.facts must be an object", "facts"))
-            return _decision([], route_index, request, findings)
-        states = {route_id: _evaluate(route_index[route_id], facts) for route_id in requested}
-        missing = sorted({fact for state, details in states.values() if state == "missing" for fact in details})
-        invalid = [route_id for route_id, (state, _details) in states.items() if state == "invalid"]
-        mismatch = [route_id for route_id, (state, _details) in states.items() if state == "mismatch"]
+    if not isinstance(facts, Mapping):
+        return RouteDecision(False, "blocked", (), (RouteFinding("missing_fact", "$.facts", "facts object required"),))
+    matches: list[str] = []
+    unresolved: list[tuple[str, str]] = []
+    groups: dict[str, list[str]] = {}
+    for route_id, route in validated.by_route.items():
+        missing: list[str] = []
+        ruled_out = False
+        for predicate in route["when"]:
+            fact = str(predicate["fact"])
+            if fact not in facts:
+                missing.append(fact)
+            elif not _json_equal(facts[fact], predicate["equals"]):
+                ruled_out = True
+                break
+        if ruled_out:
+            continue
         if missing:
-            findings.append(RouteFinding(MISSING_FACT, "route requires missing facts: " + ", ".join(missing), ",".join(requested)))
-        elif invalid or mismatch:
-            findings.append(RouteFinding(NO_ROUTE, "explicit route predicates do not match", ",".join((*mismatch, *invalid))))
-        elif len(requested) > 1 and not all(route_index[route_id].get("composition_id") for route_id in requested):
-            findings.append(RouteFinding(NO_ROUTE, "multiple routes require an explicit contract composition", ",".join(requested)))
-        return _decision(requested if not findings else [], route_index, request, findings)
-
-    if isinstance(raw_function_ids, str):
-        function_ids = [raw_function_ids]
-    elif isinstance(raw_function_ids, list):
-        function_ids = list(dict.fromkeys(str(item) for item in raw_function_ids))
-    else:
-        function_ids = []
-    if function_ids:
-        findings.extend(_function_composition_findings(functions, function_ids, request))
-        selected = [
-            route_id
-            for function_id in function_ids
-            for route_id in functions.get(function_id, {}).get("route_ids", [])
-            if str(route_id) in route_index
-        ]
-        if not findings:
-            return _decision([str(item) for item in selected], route_index, request, findings)
-        return _decision([], route_index, request, findings)
-
-    matched_by_group: dict[str, list[str]] = {}
-    any_missing: set[str] = set()
-    invalid: list[str] = []
-    for route in routes:
-        route_id = str(route.get("route_id", ""))
-        state, details = _evaluate(route, facts)
-        if state == "match":
-            group = str(route.get("choice_group", ""))
-            matched_by_group.setdefault(group, []).append(route_id)
-        elif state == "missing":
-            any_missing.update(details)
-        elif state == "invalid":
-            invalid.append(route_id)
-
-    ambiguous = [route_id for group in matched_by_group.values() if len(group) > 1 for route_id in group]
+            unresolved.extend((route_id, fact) for fact in missing)
+            continue
+        matches.append(route_id)
+        groups.setdefault(str(route["choice_group"]), []).append(route_id)
+    if unresolved:
+        details = ", ".join(f"{route}:{fact}" for route, fact in unresolved)
+        return RouteDecision(False, "blocked", (), (RouteFinding("missing_fact", "$.facts", details),))
+    ambiguous = [route_id for rows in groups.values() if len(rows) > 1 for route_id in rows]
     if ambiguous:
-        findings.append(RouteFinding(AMBIGUOUS_ROUTE, "same choice_group has multiple matches", ",".join(ambiguous)))
-        return _decision([], route_index, request, findings)
-    selected = [group[0] for group in matched_by_group.values()]
-    if not selected:
-        if any_missing:
-            findings.append(RouteFinding(MISSING_FACT, "route predicates require missing facts: " + ", ".join(sorted(any_missing)), "facts"))
-        else:
-            message = "no declared route matches request facts"
-            if invalid:
-                message += "; invalid predicates: " + ", ".join(invalid)
-            findings.append(RouteFinding(NO_ROUTE, message))
-        return _decision([], route_index, request, findings)
-    if len(selected) > 1 and not all(route_index[route_id].get("composition_id") for route_id in selected):
-        findings.append(RouteFinding(NO_ROUTE, "multiple choice groups require an explicit contract composition", ",".join(selected)))
-        return _decision([], route_index, request, findings)
-    return _decision(selected, route_index, request, findings)
+        return RouteDecision(False, "blocked", (), (RouteFinding("ambiguous_route", "$.routes", ",".join(ambiguous)),))
+    if not matches:
+        return RouteDecision(False, "blocked", (), (RouteFinding("no_route", "$.facts", "no declared route matches"),))
+    if len(matches) > 1:
+        composition_ids = {str(validated.by_route[route_id].get("composition_id", "")) for route_id in matches}
+        if len(composition_ids) != 1 or "" in composition_ids:
+            return RouteDecision(False, "blocked", (), (RouteFinding("incompatible_composition", "$.routes", ",".join(matches)),))
+    selected = tuple(route_id for route_id in validated.by_route if route_id in set(matches))
+    scope = tuple(asserted_scope)
+    if not scope or len(scope) != len(set(scope)) or set(scope) != set(selected):
+        return RouteDecision(False, "blocked", selected, (RouteFinding("scope_mismatch", "$.scope", "scope must equal selected routes"),))
+    explicit = _assertion(explicit_assertion)
+    if explicit is not None and (not explicit or len(explicit) != len(set(explicit)) or set(explicit) != set(selected)):
+        return RouteDecision(False, "blocked", selected, (RouteFinding("route_assertion_mismatch", "$.route_ids", "route assertion must equal selected routes"),))
+    return RouteDecision(True, "selected", selected)
 
 
-__all__ = [
-    "AMBIGUOUS_ROUTE",
-    "MISSING_FACT",
-    "NO_ROUTE",
-    "UNKNOWN_ROUTE",
-    "RouteDecision",
-    "RouteFinding",
-    "select_routes",
-]
+__all__ = ["RouteDecision", "RouteFinding", "select_routes"]

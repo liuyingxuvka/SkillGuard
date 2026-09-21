@@ -49,7 +49,10 @@ openspec/**/verification-reports/
 openspec/**/provenance/
 tmp/
 temp/
-/.skillguard/
+/.skillguard/*
+!/.skillguard/contract-source.json
+!/.skillguard/compiled-contract.json
+!/.skillguard/check-manifest.json
 /.codex/
 .install-smoke/
 .flowpilot/

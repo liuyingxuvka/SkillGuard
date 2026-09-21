@@ -12,10 +12,40 @@ from .portable_content import (
     scan_active_installation_currentness_boundary,
     scan_member_boundary,
 )
+from .wire_identity import wire_hash
 
 
 class GuardRuntimeFingerprintError(RuntimeError):
     """Raised when the declared Guard behavior surface is incomplete or unsafe."""
+
+
+_CURRENT_EXECUTION_FILES = (
+    Path("checker_engine.py"),
+    Path("skillguard_v2/execution_records.py"),
+    Path("skillguard_v2/wire_identity.py"),
+    Path("skillguard_v2/path_identity.py"),
+    Path("skillguard_v2/runtime_fingerprint.py"),
+)
+
+
+def current_execution_runtime(runtime_root: Path) -> dict[str, Any]:
+    """Hash only the fixed files that govern compact leaf execution."""
+
+    root = Path(runtime_root)
+    if not root.is_absolute():
+        raise GuardRuntimeFingerprintError("execution runtime root must be absolute")
+    root = root.resolve(strict=True)
+    rows: list[dict[str, str]] = []
+    for relative in _CURRENT_EXECUTION_FILES:
+        path = (root / relative).resolve(strict=True)
+        try:
+            path.relative_to(root)
+        except ValueError as exc:
+            raise GuardRuntimeFingerprintError(f"execution runtime file escapes root: {relative}") from exc
+        if not path.is_file():
+            raise GuardRuntimeFingerprintError(f"execution runtime file is missing: {relative}")
+        rows.append({"path": relative.as_posix(), "sha256": source_file_hash(path)})
+    return {"schema_version": "skillguard.execution_runtime.v1", "files": rows, "runtime_hash": wire_hash(rows)}
 
 
 _RUNTIME_SENTINEL = Path("scripts/skillguard_v2/runtime_fingerprint.py")
