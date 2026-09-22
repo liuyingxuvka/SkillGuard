@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from .compact_contract import ContractError, strict_json_load, validate_contract_source
+from .compact_contract import ContractError, strict_json_load, strict_json_loads, validate_contract_source
 from .contract_compiler import canonical_hash
 from .path_identity import canonical_filesystem_path
 from .execution_records import durable_write_immutable_json, filesystem_path
@@ -194,10 +194,11 @@ def _load_hashed(root: Path, reference: Any, expected_hash: Any, path: str) -> t
         raise ContractError("evidence_missing", path, reference)
     if not is_wire_hash(expected_hash):
         raise ContractError("evidence_invalid", path, "wire hash required")
-    actual = "sha256:" + hashlib.sha256(target.read_bytes()).hexdigest()
+    raw = target.read_bytes()
+    actual = "sha256:" + hashlib.sha256(raw).hexdigest()
     if actual != expected_hash:
         raise ContractError("evidence_invalid", path, "raw byte hash mismatch")
-    return target, strict_json_load(target)
+    return target, strict_json_loads(raw, source=path)
 
 
 def _load_current_pointer(

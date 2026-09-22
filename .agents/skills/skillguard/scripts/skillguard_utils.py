@@ -111,6 +111,7 @@ def _compact_value(value: Any, *, depth: int = 0) -> Any:
             "required",
             "summary",
             "code",
+            "category",
             "path",
             "source_path",
             "kind",

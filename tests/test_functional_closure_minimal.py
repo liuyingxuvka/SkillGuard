@@ -15,8 +15,6 @@ import pytest
 
 from tests.test_compact_contract_cli import _request, _run, _write_contract
 from tests.test_fixed_preflight_units import _execution_fixture, _root, _source
-from skillguard_v2.compact_contract import validate_contract_source
-from skillguard_v2.route_runtime import select_routes
 from skillguard_v2.receipts import ReceiptIndex, derive_freshness, fingerprint_value
 from checker_engine import execute_plan
 
@@ -135,20 +133,10 @@ def test_t14_fast_focused_full_are_distinct_and_t16_compiled_check_is_read_only(
     payload["facts"] = {"operation": "unsupported"}
     invalid_request.write_text(json.dumps(payload), encoding="utf-8")
     blocked_code, blocked = _run(root, invalid_request, "change")
-    assert blocked_code == 1
+    assert blocked_code == 2
     assert blocked["producer_count"] == 0
-    # The public CLI emits a bounded summary and intentionally keeps nested
-    # route findings out of stdout.  Verify the summary boundary and inspect
-    # the same current v3 selector directly for the semantic reason.
     assert blocked["status"] == "blocked"
-    assert blocked["route"]["status"] == "blocked"
-    decision = select_routes(
-        validate_contract_source(root, source),
-        {"operation": "unsupported"},
-        ["route:change"],
-    )
-    assert not decision.ok
-    assert decision.findings[0].code == "no_route"
+    assert blocked["error"]["category"] == "operation_fact_mismatch"
 
 
 def test_t15_t18_readback_preserves_functional_key_and_does_not_start_a_producer(tmp_path: Path) -> None:

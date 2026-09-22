@@ -673,7 +673,14 @@ def activate_target_stage(
         return {"status": "blocked", "blockers": ["target_stage_verification_failed"], "verification": verification}
     try:
         _validate_target_control_paths(home, target["skill_id"])
-        with _InstallMutex(home, f"activate-target:{target['skill_id']}"):
+        # Acquire the shared lock without rewriting its metadata.  An exact
+        # projection can then return no_change without changing even the lock
+        # file; metadata is recorded only once a real transaction is needed.
+        with _InstallMutex(
+            home,
+            f"activate-target:{target['skill_id']}",
+            write_metadata=False,
+        ) as install_lock:
             recovery = _recover_locked(home, target["skill_id"])
             if recovery["status"] != "passed":
                 return {"status": "blocked", "blockers": ["target_recovery_failed"], "recovery": recovery}
@@ -683,6 +690,29 @@ def activate_target_stage(
             if current_verification.get("stage_verification_hash") != verification.get("stage_verification_hash"):
                 return {"status": "blocked", "blockers": ["target_stage_changed_after_verification"]}
             head = _load_head(home, target["skill_id"])
+            if _path_entity_exists(active) and active.is_dir():
+                active_files = _portable_relative_files(active)
+                active_projection = _consumer_tree_projection(active)
+                if (
+                    active_files == tuple(target["member_paths"])
+                    and active_projection == current_verification["stage_projection"]
+                ):
+                    return {
+                        "status": "no_change",
+                        "skill_id": target["skill_id"],
+                        "transaction_id": None,
+                        "receipt": None,
+                        "head": head,
+                        "stage_verification": current_verification,
+                        "active_projection": active_projection,
+                        "blockers": [],
+                        "transaction_created": False,
+                        "claim_boundary": (
+                            "The verified stage and active projection are identical; no transaction, "
+                            "journal, receipt, backup, or filesystem timestamp was created or changed."
+                        ),
+                    }
+            install_lock.record_metadata()
             transaction_id = f"target-install-{uuid.uuid4().hex}"
             active_budget = _stage_path_budget(active, target["member_paths"])
             incoming_budget = _stage_path_budget(

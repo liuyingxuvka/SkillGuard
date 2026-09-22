@@ -160,3 +160,11 @@ Declared branch closure, transactional installation, exact installed parity, aff
 - **WHEN** a check is ordered after another check but does not consume its immutable receipt
 - **THEN** it SHALL NOT declare `depends_on_check_ids`
 - **AND** the ordering MAY remain in the development-process model or final aggregation without propagating owner freshness
+### Compact direct-current boundary (2026-09-22)
+
+SkillGuard keeps exactly three public operations: `read`, `change`, and `release`. The current route source is the v3 contract's explicit `routes`; no generated route catalog, old profile, FlowGuard-model dependency, Portfolio bridge, migration metadata, alias, compatibility reader, or fallback route participates in current success. Consumer projection remains independent of author evidence.
+
+#### Scenario: Retired author input blocks without side effects
+
+- **WHEN** a request or contract contains a retired route, former profile, migration field, alias, or compatibility coordinate
+- **THEN** SkillGuard returns a typed rejection before any producer, receipt, current-pointer, or installation write.

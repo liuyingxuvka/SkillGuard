@@ -21,6 +21,7 @@ from tests.test_compact_contract_cli import (
 from tests.test_fixed_preflight_units import _root
 
 from skillguard_v2.compact_state import control_root
+from skillguard_v2.compact_contract import ContractError
 from skillguard_v2.contract_compiler import compile_skill_contract
 from skillguard_v2.execution_records import (
     launch_contained_process,
@@ -658,22 +659,26 @@ def test_runtime_change_invalidates_leaf(monkeypatch: pytest.MonkeyPatch, tmp_pa
     from tests.test_fixed_preflight_units import _execution_fixture
 
     root, validated, plan, state = _execution_fixture(tmp_path)
-    first = checker_engine.execute_plan(root, validated, plan, state)
     original = checker_engine.current_execution_runtime
+    calls = 0
 
     def changed_runtime(runtime_root: Path) -> dict[str, object]:
+        nonlocal calls
+        calls += 1
         runtime = dict(original(runtime_root))
-        runtime["runtime_hash"] = "sha256:" + "f" * 64
+        if calls >= 2:
+            runtime["runtime_hash"] = "sha256:" + "f" * 64
         return runtime
 
     monkeypatch.setattr(checker_engine, "current_execution_runtime", changed_runtime)
-    second = checker_engine.execute_plan(root, validated, plan, state)
-    assert first.producer_count == 2
-    assert second.producer_count == 2
-    assert second.reused_count == 0
+    context = checker_engine.ExecutionContext(required_check_ids=plan.check_order)
+    with pytest.raises(ContractError) as raised:
+        checker_engine.execute_plan(root, validated, plan, state, execution_context=context)
+    assert raised.value.code == "runtime_changed"
+    assert context.producer_count == 2
 
 
-def test_owner_lock_released_after_crash(tmp_path: Path) -> None:
+def test_owner_lock_released_after_callback_error(tmp_path: Path) -> None:
     import checker_engine
     from skillguard_v2.compact_contract import ContractError
     from tests.test_fixed_preflight_units import _execution_fixture
@@ -695,8 +700,37 @@ def test_owner_lock_released_after_crash(tmp_path: Path) -> None:
     assert retry.reused_count == 2
 
 
+def test_owner_lock_released_after_process_exit(tmp_path: Path) -> None:
+    """An owner that dies in the critical section cannot strand the OS lock."""
+
+    from skillguard_v2.execution_records import _portable_file_lock
+
+    lock_path = tmp_path / "author-state" / "operation.lock"
+    script_root = Path(__file__).resolve().parents[1] / ".agents" / "skills" / "skillguard" / "scripts"
+    child_code = (
+        "import os, sys\n"
+        "from pathlib import Path\n"
+        "sys.path.insert(0, sys.argv[2])\n"
+        "from skillguard_v2.execution_records import _portable_file_lock\n"
+        "lock = Path(sys.argv[1])\n"
+        "with _portable_file_lock(lock, timeout_seconds=3):\n"
+        "    os._exit(23)\n"
+    )
+    child = subprocess.run(
+        [sys.executable, "-B", "-c", child_code, str(lock_path), str(script_root)],
+        cwd=tmp_path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        timeout=10,
+    )
+    assert child.returncode == 23, child.stderr.decode(errors="replace")
+    with _portable_file_lock(lock_path, timeout_seconds=2):
+        pass
+
+
 def test_leaf_dependencies_use_functional_keys(tmp_path: Path) -> None:
-    from checker_engine import leaf_execution_key, observe_inputs, build_plan
+    from checker_engine import build_plan, freeze_execution_identity, leaf_execution_key, observe_inputs
     from skillguard_v2.compact_contract import validate_contract_source
     from skillguard_v2.route_runtime import select_routes
 
@@ -709,12 +743,13 @@ def test_leaf_dependencies_use_functional_keys(tmp_path: Path) -> None:
         root=root,
     )
     snapshot = observe_inputs(root, validated, plan)
-    first_key = leaf_execution_key(root, validated, plan, snapshot, "a", {})[0]
+    execution_identity = freeze_execution_identity(root, validated, plan)
+    first_key = leaf_execution_key(root, validated, plan, snapshot, "a", {}, execution_identity)[0]
     second_key, invocation = leaf_execution_key(
-        root, validated, plan, snapshot, "b", {"a": first_key}
+        root, validated, plan, snapshot, "b", {"a": first_key}, execution_identity
     )
     changed_key = leaf_execution_key(
-        root, validated, plan, snapshot, "b", {"a": "sha256:" + "0" * 64}
+        root, validated, plan, snapshot, "b", {"a": "sha256:" + "0" * 64}, execution_identity
     )[0]
     assert invocation["args"] == ["-c", "pass"]
     assert second_key != changed_key
@@ -819,6 +854,9 @@ def test_execution_runtime_hash_binds_raw_bytes(tmp_path: Path) -> None:
         Path("skillguard_v2/wire_identity.py"),
         Path("skillguard_v2/path_identity.py"),
         Path("skillguard_v2/runtime_fingerprint.py"),
+        Path("skillguard_v2/compact_contract.py"),
+        Path("skillguard_v2/compact_state.py"),
+        Path("skillguard_v2/route_runtime.py"),
     ):
         destination = runtime_root / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -850,7 +888,7 @@ def test_target_owned_native_failure_is_not_reinterpreted(tmp_path: Path) -> Non
     assert b"target_metric=0.91" in stdout.read_bytes()
 
 
-def test_windows_timeout_leaves_no_running_descendant(tmp_path: Path) -> None:
+def test_timeout_does_not_publish_current(tmp_path: Path) -> None:
     source = _source()
     source["checks"][0]["timeout_seconds"] = 0.2  # type: ignore[index]
     source["checks"][0]["args"] = ["-c", "import time; time.sleep(3)"]  # type: ignore[index]
@@ -862,8 +900,48 @@ def test_windows_timeout_leaves_no_running_descendant(tmp_path: Path) -> None:
     assert not (control_root(state, "fixture-unit", "fixture") / "current.json").exists()
 
 
+def test_timeout_cleans_spawned_descendants(tmp_path: Path) -> None:
+    """Windows timeout containment terminates a child created by the check."""
+
+    if os.name != "nt":
+        return
+    source = _source()
+    source["checks"][0]["timeout_seconds"] = 0.5  # type: ignore[index]
+    source["checks"][0]["args"] = [  # type: ignore[index]
+        "-c",
+        (
+            "import pathlib, subprocess, sys, time; "
+            "child=subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)']); "
+            "pathlib.Path('spawned.pid').write_text(str(child.pid)); "
+            "time.sleep(30)"
+        ),
+    ]  # type: ignore[index]
+    root, state, _ = _cli_fixture(tmp_path, source)
+    code, payload = _run(root, _request(root, state, "change"), "change")
+    assert code == 1
+    assert payload["reason"] == "check_timeout"
+    assert payload["producer_count"] == 1
+    pid_path = root / "spawned.pid"
+    assert pid_path.is_file()
+    child_pid = int(pid_path.read_text(encoding="utf-8"))
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        listing = subprocess.run(
+            ["tasklist", "/FI", f"PID eq {child_pid}"],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if str(child_pid) not in listing.stdout:
+            break
+        time.sleep(0.1)
+    else:
+        pytest.fail(f"timed-out descendant {child_pid} is still running")
+
+
 def test_timeout_returns_with_no_running_descendant(tmp_path: Path) -> None:
-    test_windows_timeout_leaves_no_running_descendant(tmp_path)
+    test_timeout_does_not_publish_current(tmp_path)
 
 
 def test_windows_store_alias_preserves_os_environment(tmp_path: Path) -> None:
@@ -917,7 +995,8 @@ def test_sg_release_rejects_changed_execution_identity(tmp_path: Path, mutation:
         assert code == 1, payload
         assert payload["producer_count"] == 1
     else:
-        assert code == 1, payload
+        assert code == 2, payload
+        assert payload["error"]["category"] == "operation_fact_mismatch"
         assert payload["producer_count"] == 0
 
 
@@ -1162,7 +1241,8 @@ def test_conditional_noop_closure_v2_current_contract(tmp_path: Path) -> None:
     unsupported["facts"] = {"operation": "unsupported"}
     unsupported_request.write_text(json.dumps(unsupported), encoding="utf-8")
     blocked_code, blocked = _run(root, unsupported_request, "release")
-    assert blocked_code == 1, blocked
+    assert blocked_code == 2, blocked
+    assert blocked["error"]["category"] == "operation_fact_mismatch"
     assert blocked["producer_count"] == 0
 
 

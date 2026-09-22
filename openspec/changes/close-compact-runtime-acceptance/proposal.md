@@ -24,3 +24,9 @@ No historical capability is replaced by this change. The new acceptance capabili
 ## Impact
 
 The implementation scope is limited to the SkillGuard compact state, execution records, checker engine, contract compiler/schema, runtime fingerprint, installation and target-installation transaction, consumer distribution/entrypoint, self-runner, retained tests/protection maps, CI owner configuration, and delivery evidence. It does not alter the historical OpenSpec changes, the already published `v0.7.7` tag/release, the user's installed skill, or GitHub publication. FlowGuard integration is an external acceptance dependency and is coordinated by the same-named change in the FlowGuard repository.
+
+
+
+## 2026-09-22 audit delta
+
+The earlier checked receipts describe the historical v0.7.8 state and are not current proof for the next patch. This change remains open until the direct-current compact contract is revalidated after the final source edits. The current public surface is exactly `read`, `change`, and `release`; retired commands, route catalogs, migration metadata, aliases, compatibility readers, and fallback paths are removed rather than interpreted. The selected-read/owner evidence, current model or contract identity, one final Windows 3.12 full-suite owner, installation parity, and release identity must all be re-established on one frozen source revision. Documentation and CI are part of that frozen source identity.

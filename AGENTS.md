@@ -21,18 +21,19 @@ current authorized scope.
 
 ## Route-first entry
 
-Read the short `.agents/skills/skillguard/SKILL.md` first. Then use exactly one
-of the current public operations and load only the selected contract evidence:
+Read the short `.agents/skills/skillguard/SKILL.md` first. Then select exactly
+one of `read`, `change`, or `release` and load only the current contract
+evidence named by that operation. The routes in
+`.skillguard/contract-source.json` are the sole route source; there is no
+route catalog, route summary, or route generator to consult.
 
 ```powershell
 python .agents/skills/skillguard/scripts/skillguard.py read --root . --request read.json --json
 ```
 
-The complete route catalog remains in the generated
-`.agents/skills/skillguard/references/skillguard-route-index.json`; ordinary
-work must not preload it. Zero, many, stale, forbidden, or missing-input
-matches block. No keyword score, declaration order, or fallback selects a
-route. See `references/route_map_summary.md` for the compact map.
+Zero, many, stale, forbidden, or missing-input matches block. No keyword score,
+declaration order, alias, compatibility reader, migration, or fallback selects
+a route.
 
 ## Execution phase boundary
 
@@ -45,7 +46,7 @@ route. See `references/route_map_summary.md` for the compact map.
   stale, failed, skipped, foreign, duplicate, timed-out, cancelled, or
   cleanup-unconfirmed evidence blocks.
 - Installation/currentness, global-router refresh, and release are separate
-  explicit claims. A source `full` profile never implies them.
+  explicit claims. A source check never implies them.
 
 ## Source of truth and evidence
 
@@ -58,13 +59,12 @@ descendant process tree is gone before accepting evidence.
 
 ## Explicit references
 
-Use `references/skillguard-supervisor.md` for unit ownership and closure;
-`skillguard-test-mesh.md` for affected/full execution; execution-records for
-receipts; assurance-diagnostics for read-only blockers; target-installation for
-explicit install/currentness; self-host for SkillGuard's own governed release;
-and portfolio/project-adoption only when those routes are selected. Do not read
-all route references, model history, logs, or receipt trees without a named
-trigger.
+Use `references/skillguard-supervisor.md` for unit ownership and closure,
+`references/skillguard-execution-records.md` for receipts,
+`references/skillguard-target-installation.md` for explicit installation, and
+`references/skillguard-self-host.md` for SkillGuard's own release boundary.
+These are author-only references. Do not read unrelated history, logs, or
+receipt trees without a named trigger.
 
 ## Short command index
 

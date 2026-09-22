@@ -27,13 +27,15 @@ The only public operations are:
 - `release`: verify one accepted current result and expose release evidence.
   Installation and Git publication remain separate transactions.
 
-Use the script with fixed arguments:
+Define `skillguard-skill-root` as the directory containing this loaded
+`SKILL.md`. Use that installed directory for the script and pass the separately
+selected maintained repository as `--root`:
 
 ```powershell
-python .agents/skills/skillguard/scripts/skillguard.py --help
-python .agents/skills/skillguard/scripts/skillguard.py read --root <root> --request <request.json> --json
-python .agents/skills/skillguard/scripts/skillguard.py change --root <root> --request <request.json> --json
-python .agents/skills/skillguard/scripts/skillguard.py release --root <root> --request <request.json> --json
+python <skillguard-skill-root>/scripts/skillguard.py --help
+python <skillguard-skill-root>/scripts/skillguard.py read --root <author-root> --request <request.json> --json
+python <skillguard-skill-root>/scripts/skillguard.py change --root <author-root> --request <request.json> --json
+python <skillguard-skill-root>/scripts/skillguard.py release --root <author-root> --request <request.json> --json
 ```
 
 Legacy command names, `--profile`, `fast`, `focused`, and `full` are rejected;

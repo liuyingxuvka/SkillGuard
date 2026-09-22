@@ -33,6 +33,9 @@ _CURRENT_EXECUTION_FILES = (
     Path("skillguard_v2/wire_identity.py"),
     Path("skillguard_v2/path_identity.py"),
     Path("skillguard_v2/runtime_fingerprint.py"),
+    Path("skillguard_v2/compact_contract.py"),
+    Path("skillguard_v2/compact_state.py"),
+    Path("skillguard_v2/route_runtime.py"),
 )
 
 

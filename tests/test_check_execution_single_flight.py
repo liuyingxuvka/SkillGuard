@@ -18,6 +18,7 @@ from checker_engine import (
     ExecutionContext,
     build_plan,
     execute_plan,
+    freeze_execution_identity,
     leaf_execution_key,
     observe_inputs,
 )
@@ -95,7 +96,8 @@ def _execute(root: Path, validated, plan, state: Path, *, context: ExecutionCont
 def test_toolchain_identity_returns_both_current_hashes(tmp_path: Path) -> None:
     root, _payload, validated, plan, _state = _fixture(tmp_path)
     snapshot = observe_inputs(root, validated, plan)
-    key, invocation = leaf_execution_key(root, validated, plan, snapshot, "a", {})
+    execution_identity = freeze_execution_identity(root, validated, plan)
+    key, invocation = leaf_execution_key(root, validated, plan, snapshot, "a", {}, execution_identity)
     assert key.startswith("sha256:")
     assert invocation["executable_sha256"].startswith("sha256:")
     assert invocation["environment_identity"]
@@ -126,8 +128,12 @@ def test_functional_execution_key_ignores_shared_parent_plan_identity(tmp_path: 
     release_decision = select_routes(validated, {"operation": "release"}, ["route:release"])
     release_plan = build_plan(validated, release_decision, operation="release", root=root)
     snapshot = observe_inputs(root, validated, change_plan)
-    first = leaf_execution_key(root, validated, change_plan, snapshot, "a", {})[0]
-    second = leaf_execution_key(root, validated, release_plan, snapshot, "a", {})[0]
+    first = leaf_execution_key(
+        root, validated, change_plan, snapshot, "a", {}, freeze_execution_identity(root, validated, change_plan)
+    )[0]
+    second = leaf_execution_key(
+        root, validated, release_plan, snapshot, "a", {}, freeze_execution_identity(root, validated, release_plan)
+    )[0]
     assert first == second
 
 

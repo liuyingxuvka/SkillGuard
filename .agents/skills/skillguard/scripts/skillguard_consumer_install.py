@@ -74,7 +74,13 @@ def main(argv: list[str] | None = None) -> int:
                 stage_verification=verification,
             )
         )
-    status = "passed" if all(row.get("status") == "passed" for row in reports) else "blocked"
+    # An exact current projection is a successful terminal outcome.  The
+    # underlying installer deliberately returns ``no_change`` for that
+    # zero-write path; treating it as blocked makes a second activation look
+    # like a failed install even though verification proved the active bytes
+    # are already current.
+    success_statuses = {"passed", "no_change"}
+    status = "passed" if all(row.get("status") in success_statuses for row in reports) else "blocked"
     emit_json(
         {
             "status": status,

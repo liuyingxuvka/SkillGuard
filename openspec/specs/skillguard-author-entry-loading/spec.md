@@ -81,3 +81,11 @@ SkillGuard's source metadata, package metadata, generated prompt identity, self-
 - **THEN** source version, generated route index, prompt projections, FlowGuard model authority, and self-host contract agree on `0.7.2`
 - **AND** installation, Git, tag, and GitHub Release remain unclaimed until their own checks pass
 
+### Compact direct-current boundary (2026-09-22)
+
+SkillGuard keeps exactly three public operations: `read`, `change`, and `release`. The current route source is the v3 contract's explicit `routes`; no generated route catalog, old profile, FlowGuard-model dependency, Portfolio bridge, migration metadata, alias, compatibility reader, or fallback route participates in current success. Consumer projection remains independent of author evidence.
+
+#### Scenario: Retired author input blocks without side effects
+
+- **WHEN** a request or contract contains a retired route, former profile, migration field, alias, or compatibility coordinate
+- **THEN** SkillGuard returns a typed rejection before any producer, receipt, current-pointer, or installation write.

@@ -50,3 +50,11 @@ The clean consumer distribution SHALL contain target runtime material only and n
 - **GIVEN** a maintained target is staged for consumer installation
 - **WHEN** the projection is audited
 - **THEN** `.skillguard`, author paths, receipts, router state, and SkillGuard imports are absent
+### Compact direct-current boundary (2026-09-22)
+
+SkillGuard keeps exactly three public operations: `read`, `change`, and `release`. The current route source is the v3 contract's explicit `routes`; no generated route catalog, old profile, FlowGuard-model dependency, Portfolio bridge, migration metadata, alias, compatibility reader, or fallback route participates in current success. Consumer projection remains independent of author evidence.
+
+#### Scenario: Retired author input blocks without side effects
+
+- **WHEN** a request or contract contains a retired route, former profile, migration field, alias, or compatibility coordinate
+- **THEN** SkillGuard returns a typed rejection before any producer, receipt, current-pointer, or installation write.

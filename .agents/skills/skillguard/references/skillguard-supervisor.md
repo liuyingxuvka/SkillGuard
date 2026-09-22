@@ -1,116 +1,54 @@
 # SkillGuard author-side supervisor
 
-The supervisor executes one explicitly maintained unit's declared workflow. It
-does not reimplement the target skill, and it never writes into an ordinary
-business project by default.
+This reference defines the author-only ownership boundary for the current
+SkillGuard contract. It does not define target-domain meaning and it does not
+load or execute a FlowGuard model.
 
-## Required author context
+Before a current source change, freeze exactly one maintenance unit, its member
+ids, declared checks, evidence subjects, dependency order, private evidence
+root, toolchain, and one execution owner per check. The current source of
+truth is `.skillguard/contract-source.json`; its compiled contract and check
+manifest are derived outputs. Missing, duplicate, foreign, stale, malformed,
+failed, skipped, timed-out, cancelled, or cleanup-unconfirmed evidence blocks
+the current result.
 
-Before compilation, run claim, receipt lookup, or directory creation, the
-caller must provide:
-
-- an explicit `skill_maintainer_source` repository;
-- one `maintenance_unit_id`;
-- one declared member skill;
-- an author `run_state_root`;
-- an author `owner_evidence_root`;
-- the separate task-data `target_root`.
-
-The run and evidence roots must belong to the author-maintenance workspace.
-They have no fallback to `target_root`, the consumer skill, the current working
-directory, or a user's ordinary project. Missing or invalid author context
-blocks with zero writes.
-
-## Command
+The only public operation facts are `read`, `change`, and `release`:
 
 ```text
-python scripts/skillguard_supervise.py <skill-root> <packet.json> \
-  --repository-root <author-repository> \
-  --target-root <task-data-root> \
-  --run-state-root <private-author-run-root> \
-  --owner-evidence-root <private-author-evidence-root>
+read    -> inspect the accepted current result; zero producers and zero writes
+change  -> execute the selected current owner closure and accept by CAS
+release -> verify the declared release scope and fill only missing owners
 ```
 
-The maintained source contains the current author contract trio and declared
-FlowGuard model. Compilation regenerates only the compiled author contract and
-check manifest.
+Each operation must bind its request, input bytes, dependency identities,
+toolchain, environment, maintenance unit, owner, and evidence subject. A
+parent summary cannot replace a leaf result. A result from another maintenance
+unit cannot be reused, even when the command text is identical.
 
-## Packet boundary
+The supervisor may validate target-owned check identity and terminal evidence,
+but it does not decide whether a target check is sufficient for the target's
+domain. The target owns its behavior, judgment, fixtures, actions, and native
+checks. SkillGuard reports the exact evidence boundary and keeps unknown,
+blocked, not-run, skipped, stale, and failed states visible.
 
-The packet selects routes already declared by the target and supplies only
-task inputs, witnessed observations, declared judgments, or contract-authorized
-skip evidence. It cannot assert pass status, invent a receipt, change the
-maintenance unit, change an execution owner, or broaden the closure.
+Read is strictly side-effect free: it does not compile, create a run
+directory, acquire a lease, launch an owner, write a receipt, refresh a
+router, install a consumer, or publish a release. Change and release stop on
+source drift, CAS conflict, missing owners, failed cleanup, or incomplete
+evidence.
 
-Conditional targets use the target's own branch contract. An intermediate
-authorization is non-terminal; final closure consumes the exact target-native
-terminal and current declared-check evidence.
+Direct-current replacement is the only supported maintenance format. There is
+no compatibility reader, migration command, alias, dual authority, Portfolio
+bridge, old route catalog, or fallback success path. Retired inputs return a
+typed rejection and remain unread.
 
-## Evidence authority
+The author entrypoint is:
 
-- `hard` evidence comes from a stored, executed, passing declared check.
-- `witnessed` evidence binds a concrete executor, target, input, output, and
-  limitations.
-- `judged` evidence binds a declared rubric, evaluator, input, conclusion,
-  limitations, and confidence boundary.
-- `skip` is legal only for a model-declared optional step after its condition
-  and verifier evidence pass.
+```powershell
+python <installed-skillguard>/scripts/skillguard.py <read|change|release> `
+  --root <author-root> --request <request.json> --json
+```
 
-Every declared check projection includes maintenance unit, member, evidence
-subject, semantic check, execution owner, covered obligations, and evidence
-domain. Its producer receipt separately binds the owner, request, inputs,
-dependencies, toolchain, environment, and policy. Keeping these identities
-separate lets one explicitly declared same-unit producer satisfy several exact
-semantic projections without making the projections interchangeable.
-
-When the target declares an iterative model-closure check, that check remains
-target-owned. The supervisor verifies its exact current terminal receipt and
-does not inspect or reinterpret the domain model; self-reported understanding,
-open addressable gaps, stale receipts, and no-progress iterations remain
-non-terminal evidence.
-
-One exact terminal-success receipt may be reused only inside the same
-maintenance unit under that complete identity. A foreign-unit receipt or
-dependency blocks before process launch and cannot be projected into closure.
-
-SkillGuard never infers producer sharing from command, argument, name, or
-output similarity and never decides that a target's declared capability should
-be deeper. The target skill owns those declarations; the supervisor verifies
-their exact execution and evidence only.
-
-The unit has one canonical owner-evidence root. Complete streams are stored as
-deterministic compressed objects with separate logical and storage hashes.
-`evidence-audit` and `evidence-gc-plan` are read-only; apply quarantines an
-exact current plan, and purge is a separate quarantine-only operation gated by
-current and release-pinned replay.
-
-## Execution and cleanup
-
-The supervisor:
-
-1. freezes the unit's complete check inventory;
-2. resolves current same-unit receipts;
-3. executes only missing owners;
-4. records immutable results and sidecars;
-5. confirms zero descendant processes after timeout, cancellation, or
-   interruption;
-6. reconciles every declared check exactly;
-7. derives only the fixed `enforced` closure.
-
-Missing, duplicate, failed, skipped, stale, timed-out, cancelled,
-cleanup-unconfirmed, non-terminal, wrong-member, wrong-subject, or wrong-unit
-evidence blocks.
-
-## Consumer boundary
-
-Supervisor packets, run state, receipts, compiled contracts, check manifests,
-and author roots are not consumer files. A graduated consumer uses its own
-`SKILL.md`, scripts, references, assets, runtime, and native checks without
-calling this supervisor or locating SkillGuard.
-
-## Claim boundary
-
-A supervisor result proves only the named maintenance unit's exact author-side
-run and bounded closure. It does not prove another unit, consumer installation,
-publication, future AI behavior, or the correctness of the target's own domain
-specification.
+The installed skill directory supplies the script; `--root` is the separately
+selected maintained author repository. Installation, global-router currentness,
+Git, tags, and publication are separate claims and require their own evidence.

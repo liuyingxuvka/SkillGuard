@@ -15,7 +15,7 @@ from skillguard_v2.compact_state import author_root_identity, control_root  # no
 from skillguard_v2.route_runtime import select_routes  # noqa: E402
 from skillguard_v2.execution_records import durable_write_immutable_json  # noqa: E402
 from skillguard_v2.wire_identity import atomic_write_json, wire_hash  # noqa: E402
-from checker_engine import build_plan, leaf_execution_key, observe_inputs  # noqa: E402
+from checker_engine import build_plan, freeze_execution_identity, leaf_execution_key, observe_inputs  # noqa: E402
 
 
 CLI = SCRIPT_ROOT / "skillguard.py"
@@ -62,6 +62,7 @@ def _accepted_v2(root: Path, state: Path, source: dict[str, object]) -> tuple[st
     decision = select_routes(validated, {"operation": "change"}, ["route:change"])
     plan = build_plan(validated, decision, operation="change", root=root)
     snapshot = observe_inputs(root, validated, plan)
+    execution_identity = freeze_execution_identity(root, validated, plan)
     target = control_root(state, "fixture-unit", "fixture")
     target.mkdir(parents=True)
     identity = author_root_identity(root)
@@ -90,7 +91,7 @@ def _accepted_v2(root: Path, state: Path, source: dict[str, object]) -> tuple[st
     leaf_refs: list[dict[str, str]] = []
     for check_id in plan.check_order:
         dependencies = {item: dependency_keys[item] for item in plan.check_dependencies[check_id]}
-        key, _ = leaf_execution_key(root, validated, plan, snapshot, check_id, dependencies)
+        key, _ = leaf_execution_key(root, validated, plan, snapshot, check_id, dependencies, execution_identity)
         attempt = target / "attempts" / ("fixture-" + check_id)
         attempt.mkdir(parents=True)
         (attempt / "stdout.bin").write_bytes(b"")

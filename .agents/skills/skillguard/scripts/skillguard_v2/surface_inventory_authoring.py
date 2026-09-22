@@ -171,8 +171,6 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
             "scripts/skillguard_v2/verification_contract_review.py",
             "scripts/skillguard_verification_contract_review.py",
             "test-mesh.json",
-            "references/skillguard-execution-depth.md",
-            "references/skillguard-test-mesh.md",
         ),
     ),
     SemanticRule(
@@ -356,14 +354,12 @@ SEMANTIC_RULES: tuple[SemanticRule, ...] = (
     SemanticRule(
         "decision:global-router-handoff",
         ("obligation:global-router-handoff",),
-        "Global-router discovery, projection, transaction, route index, and consumer projection surfaces own the exact handoff boundary.",
+        "Global-router discovery, projection, transaction, current contract routes, and consumer projection surfaces own the exact handoff boundary.",
         _CHECK_PROOF + "#check:self:verify-target-handoff",
         source_paths=(
             "scripts/skillguard_v2/content_projection.py",
             "scripts/skillguard_v2/consumer_distribution.py",
             "scripts/skillguard.py",
-            "scripts/generate_route_index.py",
-            "references/skillguard-route-index.json",
         ),
     ),
     SemanticRule(

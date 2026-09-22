@@ -78,6 +78,47 @@ def test_verified_stage_can_activate_into_an_empty_codex_home(tmp_path: Path) ->
     assert not (active / ".skillguard").exists()
 
 
+def test_exact_current_projection_activation_is_a_noop(tmp_path: Path) -> None:
+    repository, skill = _fixture(tmp_path)
+    stage = _stage(tmp_path)
+    home = tmp_path / "active" / ".codex"
+    prepared = prepare_target_stage(repository, skill, stage)
+    first = activate_target_stage(
+        repository, skill, stage, home, stage_verification=prepared["verification"]
+    )
+    assert first["status"] == "passed", first
+    tracked = home / "skills" / "fixture-skill"
+    before_files = {
+        path.relative_to(home): path.read_bytes()
+        for path in home.rglob("*")
+        if path.is_file()
+    }
+    before_mtimes = {
+        path.relative_to(home): path.stat().st_mtime_ns
+        for path in home.rglob("*")
+        if path.is_file()
+    }
+    second = activate_target_stage(
+        repository, skill, stage, home, stage_verification=prepared["verification"]
+    )
+    assert second["status"] == "no_change", second
+    assert second["transaction_id"] is None
+    assert second["transaction_created"] is False
+    assert tracked.is_dir()
+    after_files = {
+        path.relative_to(home): path.read_bytes()
+        for path in home.rglob("*")
+        if path.is_file()
+    }
+    after_mtimes = {
+        path.relative_to(home): path.stat().st_mtime_ns
+        for path in home.rglob("*")
+        if path.is_file()
+    }
+    assert after_files == before_files
+    assert after_mtimes == before_mtimes
+
+
 def test_first_install_is_projection_exact_and_rollbackable(tmp_path: Path) -> None:
     repository, skill = _fixture(tmp_path)
     stage = _stage(tmp_path)
@@ -195,5 +236,3 @@ def test_reparse_stage_root_is_rejected_when_supported(tmp_path: Path) -> None:
         assert str(exc) == "target_install_stage_root_invalid"
     else:
         raise AssertionError("reparse stage root must block")
-
-\n

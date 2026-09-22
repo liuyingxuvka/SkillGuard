@@ -28,7 +28,7 @@ The staged tree must not contain:
 
 - `.skillguard/**`;
 - SkillGuard imports or command instructions;
-- SkillGuard receipt/run/router/Portfolio references;
+- SkillGuard receipt, run, or author-router references;
 - author-only tests, fixtures, models, plans, or maintenance notes;
 - runtime hidden under `.skillguard/runtime`.
 

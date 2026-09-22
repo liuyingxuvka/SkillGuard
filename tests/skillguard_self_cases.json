@@ -45,7 +45,8 @@
       "tests/test_fixed_runtime_evidence.py::test_self_runner_rejects_xfail_and_xpass",
       "tests/test_fixed_runtime_evidence.py::test_immutable_leaf_rejects_tamper",
       "tests/test_fixed_runtime_evidence.py::test_runtime_change_invalidates_leaf",
-      "tests/test_fixed_runtime_evidence.py::test_owner_lock_released_after_crash",
+      "tests/test_fixed_runtime_evidence.py::test_owner_lock_released_after_callback_error",
+      "tests/test_fixed_runtime_evidence.py::test_owner_lock_released_after_process_exit",
       "tests/test_fixed_runtime_evidence.py::test_leaf_dependencies_use_functional_keys",
       "tests/test_fixed_runtime_evidence.py::test_post_launch_persistence_failure_keeps_count",
       "tests/test_fixed_runtime_evidence.py::test_cancellation_cannot_publish_success",
@@ -81,7 +82,8 @@
   "platform_cases": {
     "nt": {
       "execution": [
-        "tests/test_fixed_runtime_evidence.py::test_windows_timeout_leaves_no_running_descendant",
+        "tests/test_fixed_runtime_evidence.py::test_timeout_does_not_publish_current",
+        "tests/test_fixed_runtime_evidence.py::test_timeout_cleans_spawned_descendants",
         "tests/test_fixed_runtime_evidence.py::test_windows_store_alias_preserves_os_environment"
       ]
     },
@@ -92,5 +94,3 @@
     }
   }
 }
-
-\n

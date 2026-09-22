@@ -116,15 +116,13 @@ class AuthorMaintenanceContextTests(unittest.TestCase):
 
             with patch("checker_engine.observe_inputs") as observe_inputs, patch(
                 "checker_engine.execute_plan"
-            ) as execute_plan, patch("checker_engine._emit", wraps=checker_engine._emit) as emit:
-                code = checker_engine.change(
-                    ["--root", str(root), "--request", str(request_path), "--json"]
-                )
+            ) as execute_plan:
+                with self.assertRaises(checker_engine.SkillGuardCliError) as raised:
+                    checker_engine.change(
+                        ["--root", str(root), "--request", str(request_path), "--json"]
+                    )
 
-            self.assertEqual(1, code)
-            payload = emit.call_args.args[0]
-            self.assertEqual("no_route", payload["route"]["findings"][0]["code"])
-            self.assertEqual(0, payload["producer_count"])
+            self.assertEqual("operation_fact_mismatch", raised.exception.category)
             self.assertFalse((control_root(state, "fixture-unit", "fixture") / "binding.json").exists())
             observe_inputs.assert_not_called()
             execute_plan.assert_not_called()

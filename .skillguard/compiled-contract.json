@@ -1,10 +1,11 @@
 {
-  "check_declarations_hash": "sha256:90868ea2a95821d1ccb8b124fca37c00c03f1f7d385a913b35f8b8eb3ba20353",
+  "check_declarations_hash": "sha256:361539631b03ccc90c9f92fb5d1cee3af9475e1f5df3fb04604031002445706a",
   "checks": [
     {
       "args": [
-        "-c",
-        "from pathlib import Path; assert Path('.agents/skills/skillguard/SKILL.md').is_file()"
+        "-B",
+        ".agents/skills/skillguard/scripts/run_self_checks.py",
+        "admission"
       ],
       "check_id": "check:self:author-entry-loading",
       "command": "{{python}}",
@@ -12,14 +13,36 @@
         "exit_code": 0
       },
       "input_ids": [
-        "input:1"
+        "input:r:checker_engine",
+        "input:r:execution_records",
+        "input:r:wire_identity",
+        "input:r:path_identity",
+        "input:r:runtime_fingerprint",
+        "input:r:compact_contract",
+        "input:r:compact_state",
+        "input:r:route_runtime",
+        "input:t:runner",
+        "input:t:case_table",
+        "input:t:pyproject",
+        "input:t:test_init",
+        "input:t:preflight",
+        "input:c:skillguard_cli",
+        "input:c:skillguard_utils",
+        "input:c:package_init",
+        "input:c:contract_compiler",
+        "input:c:contract_schema",
+        "input:c:portable_content",
+        "input:c:consumer_distribution",
+        "input:author:skill",
+        "input:author:routes"
       ],
       "kind": "command"
     },
     {
       "args": [
-        "-c",
-        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py').is_file()"
+        "-B",
+        ".agents/skills/skillguard/scripts/run_self_checks.py",
+        "execution"
       ],
       "check_id": "check:self:declared-check-runtime",
       "command": "{{python}}",
@@ -27,17 +50,36 @@
         "exit_code": 0
       },
       "input_ids": [
-        "input:3",
-        "input:4",
-        "input:7",
-        "input:8"
+        "input:r:checker_engine",
+        "input:r:execution_records",
+        "input:r:wire_identity",
+        "input:r:path_identity",
+        "input:r:runtime_fingerprint",
+        "input:r:compact_contract",
+        "input:r:compact_state",
+        "input:r:route_runtime",
+        "input:t:runner",
+        "input:t:case_table",
+        "input:t:pyproject",
+        "input:t:test_init",
+        "input:t:preflight",
+        "input:c:skillguard_cli",
+        "input:c:skillguard_utils",
+        "input:c:package_init",
+        "input:c:contract_compiler",
+        "input:c:contract_schema",
+        "input:c:portable_content",
+        "input:c:consumer_distribution",
+        "input:author:compact_tests",
+        "input:author:runtime_tests"
       ],
       "kind": "command"
     },
     {
       "args": [
-        "-c",
-        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/execution_records.py').is_file() and Path('.agents/skills/skillguard/scripts/skillguard_v2/wire_identity.py').is_file()"
+        "-B",
+        ".agents/skills/skillguard/scripts/run_self_checks.py",
+        "release"
       ],
       "check_id": "check:self:verify-release-provenance",
       "command": "{{python}}",
@@ -45,8 +87,31 @@
         "exit_code": 0
       },
       "input_ids": [
-        "input:5",
-        "input:6"
+        "input:r:checker_engine",
+        "input:r:execution_records",
+        "input:r:wire_identity",
+        "input:r:path_identity",
+        "input:r:runtime_fingerprint",
+        "input:r:compact_contract",
+        "input:r:compact_state",
+        "input:r:route_runtime",
+        "input:t:runner",
+        "input:t:case_table",
+        "input:t:pyproject",
+        "input:t:test_init",
+        "input:t:preflight",
+        "input:c:skillguard_cli",
+        "input:c:skillguard_utils",
+        "input:c:package_init",
+        "input:c:contract_compiler",
+        "input:c:contract_schema",
+        "input:c:portable_content",
+        "input:c:consumer_distribution",
+        "input:author:compact_tests",
+        "input:author:runtime_tests",
+        "input:author:export_policy",
+        "input:author:installation",
+        "input:author:target_installation"
       ],
       "kind": "command"
     }
@@ -78,55 +143,169 @@
     "release_manifest_path": "consumer-release.json",
     "root_path": ".agents/skills/skillguard"
   },
-  "contract_hash": "sha256:bb2335ed7f358baff81dd0a4b379302e7de9aad184bb9633ad61ec71f5ec26c4",
+  "contract_hash": "sha256:d986fed7d87eb1309ed04f0622406192cc7ead7bca53b4d3ccef67523dde121d",
   "inputs": [
     {
-      "id": "input:1",
-      "path": ".agents/skills/skillguard/SKILL.md",
-      "required": true,
-      "role": "instructions"
-    },
-    {
-      "id": "input:2",
-      "path": ".agents/skills/skillguard/scripts/skillguard.py",
-      "required": true,
-      "role": "runtime_source"
-    },
-    {
-      "id": "input:3",
+      "id": "input:r:checker_engine",
       "path": ".agents/skills/skillguard/scripts/checker_engine.py",
       "required": true,
       "role": "runtime_source"
     },
     {
-      "id": "input:4",
-      "path": ".agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py",
-      "required": true,
-      "role": "runtime_source"
-    },
-    {
-      "id": "input:5",
+      "id": "input:r:execution_records",
       "path": ".agents/skills/skillguard/scripts/skillguard_v2/execution_records.py",
       "required": true,
       "role": "runtime_source"
     },
     {
-      "id": "input:6",
+      "id": "input:r:wire_identity",
       "path": ".agents/skills/skillguard/scripts/skillguard_v2/wire_identity.py",
       "required": true,
       "role": "runtime_source"
     },
     {
-      "id": "input:7",
+      "id": "input:r:path_identity",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/path_identity.py",
+      "required": true,
+      "role": "runtime_source"
+    },
+    {
+      "id": "input:r:runtime_fingerprint",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/runtime_fingerprint.py",
+      "required": true,
+      "role": "runtime_source"
+    },
+    {
+      "id": "input:r:compact_contract",
       "path": ".agents/skills/skillguard/scripts/skillguard_v2/compact_contract.py",
       "required": true,
       "role": "runtime_source"
     },
     {
-      "id": "input:8",
+      "id": "input:r:compact_state",
       "path": ".agents/skills/skillguard/scripts/skillguard_v2/compact_state.py",
       "required": true,
       "role": "runtime_source"
+    },
+    {
+      "id": "input:r:route_runtime",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py",
+      "required": true,
+      "role": "runtime_source"
+    },
+    {
+      "id": "input:t:runner",
+      "path": ".agents/skills/skillguard/scripts/run_self_checks.py",
+      "required": true,
+      "role": "test_runtime"
+    },
+    {
+      "id": "input:t:case_table",
+      "path": "tests/skillguard_self_cases.json",
+      "required": true,
+      "role": "test_runtime"
+    },
+    {
+      "id": "input:t:pyproject",
+      "path": "pyproject.toml",
+      "required": true,
+      "role": "test_runtime"
+    },
+    {
+      "id": "input:t:test_init",
+      "path": "tests/__init__.py",
+      "required": true,
+      "role": "test_runtime"
+    },
+    {
+      "id": "input:t:preflight",
+      "path": "tests/test_fixed_preflight_units.py",
+      "required": true,
+      "role": "test_runtime"
+    },
+    {
+      "id": "input:c:skillguard_cli",
+      "path": ".agents/skills/skillguard/scripts/skillguard.py",
+      "required": true,
+      "role": "cli_support"
+    },
+    {
+      "id": "input:c:skillguard_utils",
+      "path": ".agents/skills/skillguard/scripts/skillguard_utils.py",
+      "required": true,
+      "role": "cli_support"
+    },
+    {
+      "id": "input:c:package_init",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/__init__.py",
+      "required": true,
+      "role": "cli_support"
+    },
+    {
+      "id": "input:c:contract_compiler",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/contract_compiler.py",
+      "required": true,
+      "role": "cli_support"
+    },
+    {
+      "id": "input:c:contract_schema",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/contract_schema.py",
+      "required": true,
+      "role": "cli_support"
+    },
+    {
+      "id": "input:c:portable_content",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/portable_content.py",
+      "required": true,
+      "role": "cli_support"
+    },
+    {
+      "id": "input:c:consumer_distribution",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/consumer_distribution.py",
+      "required": true,
+      "role": "cli_support"
+    },
+    {
+      "id": "input:author:skill",
+      "path": ".agents/skills/skillguard/SKILL.md",
+      "required": true,
+      "role": "instructions"
+    },
+    {
+      "id": "input:author:routes",
+      "path": "tests/test_contract_v3_routes.py",
+      "required": true,
+      "role": "admission_tests"
+    },
+    {
+      "id": "input:author:compact_tests",
+      "path": "tests/test_compact_contract_cli.py",
+      "required": true,
+      "role": "execution_tests"
+    },
+    {
+      "id": "input:author:runtime_tests",
+      "path": "tests/test_fixed_runtime_evidence.py",
+      "required": true,
+      "role": "execution_tests"
+    },
+    {
+      "id": "input:author:export_policy",
+      "path": ".agents/skills/skillguard/public-export-policy.json",
+      "required": true,
+      "role": "release_source"
+    },
+    {
+      "id": "input:author:installation",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/installation.py",
+      "required": true,
+      "role": "release_source"
+    },
+    {
+      "id": "input:author:target_installation",
+      "path": ".agents/skills/skillguard/scripts/skillguard_v2/target_installation.py",
+      "required": true,
+      "role": "release_source"
     }
   ],
   "maintenance_unit_id": "unit:skillguard",
@@ -134,12 +313,6 @@
     "skillguard"
   ],
   "obligations": [
-    {
-      "check_ids": [
-        "check:self:author-entry-loading"
-      ],
-      "obligation_id": "obligation:read"
-    },
     {
       "check_ids": [
         "check:self:declared-check-runtime"
@@ -154,22 +327,6 @@
     }
   ],
   "routes": [
-    {
-      "choice_group": "operation",
-      "obligation_ids": [
-        "obligation:read"
-      ],
-      "route_id": "route:read",
-      "step_ids": [
-        "step:read"
-      ],
-      "when": [
-        {
-          "equals": "read",
-          "fact": "operation"
-        }
-      ]
-    },
     {
       "choice_group": "operation",
       "obligation_ids": [
@@ -206,7 +363,7 @@
   "schema_version": "skillguard.compiled_contract.v3",
   "skill_id": "skillguard",
   "source_identity": {
-    "content_hash": "sha256:6e1509a567ad389cb5e566e08bbc3bab9537ab28dc4172911e5905b2fe40fc50",
+    "content_hash": "sha256:d3d648103e3feb6f356c651618213cccb2a4210fcc0c4f731d2fc9e7dfe1f838",
     "path": ".skillguard/contract-source.json"
   },
   "steps": [
@@ -215,14 +372,14 @@
         "check:self:author-entry-loading"
       ],
       "requires": [],
-      "step_id": "step:read"
+      "step_id": "step:admission"
     },
     {
       "check_ids": [
         "check:self:declared-check-runtime"
       ],
       "requires": [
-        "step:read"
+        "step:admission"
       ],
       "step_id": "step:change"
     },

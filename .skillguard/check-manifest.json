@@ -1,10 +1,11 @@
 {
-  "check_declarations_hash": "sha256:90868ea2a95821d1ccb8b124fca37c00c03f1f7d385a913b35f8b8eb3ba20353",
+  "check_declarations_hash": "sha256:361539631b03ccc90c9f92fb5d1cee3af9475e1f5df3fb04604031002445706a",
   "checks": [
     {
       "args": [
-        "-c",
-        "from pathlib import Path; assert Path('.agents/skills/skillguard/SKILL.md').is_file()"
+        "-B",
+        ".agents/skills/skillguard/scripts/run_self_checks.py",
+        "admission"
       ],
       "check_id": "check:self:author-entry-loading",
       "command": "{{python}}",
@@ -12,14 +13,36 @@
         "exit_code": 0
       },
       "input_ids": [
-        "input:1"
+        "input:r:checker_engine",
+        "input:r:execution_records",
+        "input:r:wire_identity",
+        "input:r:path_identity",
+        "input:r:runtime_fingerprint",
+        "input:r:compact_contract",
+        "input:r:compact_state",
+        "input:r:route_runtime",
+        "input:t:runner",
+        "input:t:case_table",
+        "input:t:pyproject",
+        "input:t:test_init",
+        "input:t:preflight",
+        "input:c:skillguard_cli",
+        "input:c:skillguard_utils",
+        "input:c:package_init",
+        "input:c:contract_compiler",
+        "input:c:contract_schema",
+        "input:c:portable_content",
+        "input:c:consumer_distribution",
+        "input:author:skill",
+        "input:author:routes"
       ],
       "kind": "command"
     },
     {
       "args": [
-        "-c",
-        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/route_runtime.py').is_file()"
+        "-B",
+        ".agents/skills/skillguard/scripts/run_self_checks.py",
+        "execution"
       ],
       "check_id": "check:self:declared-check-runtime",
       "command": "{{python}}",
@@ -27,17 +50,36 @@
         "exit_code": 0
       },
       "input_ids": [
-        "input:3",
-        "input:4",
-        "input:7",
-        "input:8"
+        "input:r:checker_engine",
+        "input:r:execution_records",
+        "input:r:wire_identity",
+        "input:r:path_identity",
+        "input:r:runtime_fingerprint",
+        "input:r:compact_contract",
+        "input:r:compact_state",
+        "input:r:route_runtime",
+        "input:t:runner",
+        "input:t:case_table",
+        "input:t:pyproject",
+        "input:t:test_init",
+        "input:t:preflight",
+        "input:c:skillguard_cli",
+        "input:c:skillguard_utils",
+        "input:c:package_init",
+        "input:c:contract_compiler",
+        "input:c:contract_schema",
+        "input:c:portable_content",
+        "input:c:consumer_distribution",
+        "input:author:compact_tests",
+        "input:author:runtime_tests"
       ],
       "kind": "command"
     },
     {
       "args": [
-        "-c",
-        "from pathlib import Path; assert Path('.agents/skills/skillguard/scripts/skillguard_v2/execution_records.py').is_file() and Path('.agents/skills/skillguard/scripts/skillguard_v2/wire_identity.py').is_file()"
+        "-B",
+        ".agents/skills/skillguard/scripts/run_self_checks.py",
+        "release"
       ],
       "check_id": "check:self:verify-release-provenance",
       "command": "{{python}}",
@@ -45,16 +87,39 @@
         "exit_code": 0
       },
       "input_ids": [
-        "input:5",
-        "input:6"
+        "input:r:checker_engine",
+        "input:r:execution_records",
+        "input:r:wire_identity",
+        "input:r:path_identity",
+        "input:r:runtime_fingerprint",
+        "input:r:compact_contract",
+        "input:r:compact_state",
+        "input:r:route_runtime",
+        "input:t:runner",
+        "input:t:case_table",
+        "input:t:pyproject",
+        "input:t:test_init",
+        "input:t:preflight",
+        "input:c:skillguard_cli",
+        "input:c:skillguard_utils",
+        "input:c:package_init",
+        "input:c:contract_compiler",
+        "input:c:contract_schema",
+        "input:c:portable_content",
+        "input:c:consumer_distribution",
+        "input:author:compact_tests",
+        "input:author:runtime_tests",
+        "input:author:export_policy",
+        "input:author:installation",
+        "input:author:target_installation"
       ],
       "kind": "command"
     }
   ],
   "claim_boundary": "The manifest declares exact checks and does not claim execution.",
-  "contract_hash": "sha256:bb2335ed7f358baff81dd0a4b379302e7de9aad184bb9633ad61ec71f5ec26c4",
+  "contract_hash": "sha256:d986fed7d87eb1309ed04f0622406192cc7ead7bca53b4d3ccef67523dde121d",
   "maintenance_unit_id": "unit:skillguard",
-  "manifest_hash": "sha256:b07759133b6dab1605eb3b1a4c3c3c7cd790dc6307c7df69d01457ef3799ef32",
+  "manifest_hash": "sha256:6fd2c182c7a17ad8a66bbdbb90eb82795c85ee6ee370ed2dfd15ac34b9647608",
   "schema_version": "skillguard.check_manifest.v3",
   "skill_id": "skillguard"
 }

@@ -1,3 +1,4 @@
+<!-- 2026-09-22 final audit reset: prior checked boxes describe historical v0.7.8 evidence; the selected C03/C05/C07-C13 gates are reopened until the compact direct-current implementation and final CI owner pass. -->
 ## C00 — Freeze the current implementation starting point
 
 - [x] Read the supplied closeout handoff, V00-V27 matrix, protection inventories, and verify the handoff ZIP SHA-256 a256fa6efbb9f00f7a1bfc8b5799dc89d36410f7930b5f7491c1dfba7739896a.
@@ -23,7 +24,7 @@
 
 - [x] Use real admission, execution, and release self-runner groups with exact collected/called multiset, setup/call/teardown, source, contract, and owner identities.
 - [x] Confirm valid cases pass and broken route/checker source, missing, extra, duplicate, skipped, xfailed, xpassed, collection-error, or teardown-invalid cases fail with current state unchanged.
-- [x] Final self-runner results are admission 27/27, execution 28/28, release 17/17, all passed, blocked=0; static declaration preflight closes same-module collection ambiguity.
+- [x] Final self-runner results are admission 27/27, execution 30/30, release 17/17, all passed, blocked=0; static declaration preflight closes same-module collection ambiguity.
 - [x] Keep installer-only nodes outside self-runner recursion and retain direct-current v3 ownership; no v2 compatibility reader or fallback was restored.
 
 ## C04 — Coordinate FlowGuard native qualification
@@ -47,36 +48,34 @@
 
 - [x] Apply current direct-current KEEP/PORT/DELETE dispositions; old v2 test files and obsolete route/profile matrices are retired rather than wrapped by compatibility shims.
 - [x] Keep current collection/full-suite owners while removing same-environment duplicate jobs; no new ignore, skip, or xfail escape was introduced.
-- [x] Run SkillGuard collection with the prepared interpreter: 401 tests collected, exit 0, zero collection errors; final full pytest is 399 passed, 2 skipped, 72 subtests passed.
+- [x] Run SkillGuard collection with the prepared interpreter; the frozen revision produced 405 passed tests, 2 skipped, and 72 subtests with zero collection errors. Historical counts are reference evidence only.
 - [x] Record current FlowGuard coordination entries in this OpenSpec change; no private receipt is copied into the consumer stage.
 
-## C09 — Run joint public journeys and fixed measurement collection
+## C09 — Run joint public journeys and one acceptance-result collection
 
-- [x] Exercise current SkillGuard lifecycle (read/change/release) and transactional consumer installation/readback path with fixed fixtures.
+- [x] Exercise current SkillGuard lifecycle (read/change/release) and transactional consumer installation/readback path with fixed fixtures, then record performance and installation as two sections of one acceptance result.
 - [x] Verify SkillGuard consumer runs without FlowGuard or author-path leakage and no receipt, owner, or source import crosses a maintenance unit.
 - [x] Treat platform-specific journeys unavailable in local Windows environment as explicit boundaries; no unavailable journey is reported as passed.
 
 ## C10 — Synchronize metadata, accept current self-audit, and freeze delivery identity
 
-- [x] Synchronize SkillGuard 0.7.8 metadata and FlowGuard provider pin v0.69.6; historical release records remain unchanged.
+- [x] Synchronize the target SkillGuard 0.7.9 metadata and FlowGuard provider pin v0.69.7; historical release records remain unchanged.
 - [x] Accept current v3 self-audit/contract evidence through admission, execution, and release groups; all final groups are current and stale-free.
 - [x] Freeze source/test/contract/toolchain/environment/owner-plan/self-audit identities before publication; any later tracked input change requires affected checks to be rerun.
 
 ## C11 — Run one final full test owner and read-only qualification
 
-- [x] Run the single final SkillGuard full pytest owner in the declared Windows CPython environment; result is 399 passed, 2 skipped, 72 subtests passed, exit 0.
+- [x] Run the single final SkillGuard full pytest owner in the declared Windows CPython environment; record the actual result for this frozen revision and require exit 0.
 - [x] Run read-only consumer and installation verification without accepting a new current contract or mutating author metadata.
 - [x] Require collection success, current self evidence, and explicit platform boundaries; no unavailable platform claim is inferred from local results.
 
 ## C12 — Verify measurements, isolated installation, and package candidate
 
-- [x] Verify the clean consumer stage, current v3 manifest, self-runner groups, and installation receipts match final source identity.
+- [x] Verify the clean consumer stage, current v3 manifest, self-runner groups, and both sections of the one acceptance result match final source identity.
 - [x] Package only source-safe files; raw logs, databases, cookies, credentials, and machine-specific work output remain outside the repository release.
 - [x] Report measured checks and known boundaries without inventing token or time percentages.
 
 ## C13 — Publish the authorized patch release
 
-- [x] The user explicitly authorized publication after all implementation and verification gates; historical v0.7.7 remains unchanged.
-- [x] Verify final branch/commit, remote identity, tag, release notes, and GitHub release for v0.7.8; synchronize installed SkillGuard version after final source validation.
-
-\n
+- [ ] After all implementation and verification gates pass, prepare the authorized patch release; historical tags remain unchanged.
+- [ ] Verify final branch/commit, remote identity, tag, release notes, and GitHub release for v0.7.9; synchronize the installed SkillGuard version only after final source validation.

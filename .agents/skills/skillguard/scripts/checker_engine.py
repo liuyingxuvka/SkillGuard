@@ -33,7 +33,7 @@ from skillguard_v2.compact_state import (
     publish_acceptance,
 )
 from skillguard_v2.path_identity import canonical_filesystem_path
-from skillguard_v2.route_runtime import RouteDecision, select_routes
+from skillguard_v2.route_runtime import RouteDecision, RouteFinding, select_routes
 from skillguard_v2.runtime_fingerprint import current_execution_runtime
 from skillguard_v2.execution_records import (
     ExecutionRecordError,
@@ -202,7 +202,12 @@ def _effective_environment(declared: Mapping[str, Any] | None) -> dict[str, str]
     return result
 
 
-def resolve_invocation(root: Path, check: Mapping[str, Any]) -> Mapping[str, Any]:
+def resolve_invocation(
+    root: Path,
+    check: Mapping[str, Any],
+    *,
+    binary_cache: dict[Path, bytes] | None = None,
+) -> Mapping[str, Any]:
     command = str(check["command"])
     if command == "{{python}}":
         # Keep the exact interpreter spelling used by the launcher.  Windows
@@ -214,7 +219,9 @@ def resolve_invocation(root: Path, check: Mapping[str, Any]) -> Mapping[str, Any
         if not binary_identity_path.is_file():
             binary_identity_path = executable
         try:
-            binary_bytes = binary_identity_path.read_bytes()
+            if binary_cache is not None and binary_identity_path not in binary_cache:
+                binary_cache[binary_identity_path] = binary_identity_path.read_bytes()
+            binary_bytes = binary_cache[binary_identity_path] if binary_cache is not None else binary_identity_path.read_bytes()
         except OSError as exc:
             raise ContractError("unresolved_command", "$.checks.command", "python interpreter bytes are unreadable") from exc
         is_python = True
@@ -230,7 +237,9 @@ def resolve_invocation(root: Path, check: Mapping[str, Any]) -> Mapping[str, Any
             else candidate
         )
         try:
-            binary_bytes = binary_identity_path.read_bytes()
+            if binary_cache is not None and binary_identity_path not in binary_cache:
+                binary_cache[binary_identity_path] = binary_identity_path.read_bytes()
+            binary_bytes = binary_cache[binary_identity_path] if binary_cache is not None else binary_identity_path.read_bytes()
         except OSError as exc:
             raise ContractError("unresolved_command", "$.checks.command", "executable bytes are unreadable") from exc
     environment = _effective_environment(check.get("environment") if isinstance(check.get("environment"), Mapping) else None)
@@ -249,6 +258,38 @@ def resolve_invocation(root: Path, check: Mapping[str, Any]) -> Mapping[str, Any
     }
 
 
+def freeze_execution_identity(
+    root: Path,
+    validated: ValidatedContract,
+    plan: FrozenPlan,
+) -> Mapping[str, Any]:
+    """Freeze runtime and executable identities once for one locked operation."""
+
+    binary_cache: dict[Path, bytes] = {}
+    invocations = {
+        check_id: resolve_invocation(
+            root,
+            validated.by_check[check_id],
+            binary_cache=binary_cache,
+        )
+        for check_id in plan.check_order
+    }
+    return {
+        "runtime": current_execution_runtime(Path(__file__).resolve().parent),
+        "invocations": invocations,
+    }
+
+
+def _same_execution_identity(
+    root: Path,
+    validated: ValidatedContract,
+    plan: FrozenPlan,
+    frozen: Mapping[str, Any],
+) -> bool:
+    current = freeze_execution_identity(root, validated, plan)
+    return current == frozen
+
+
 def leaf_execution_key(
     root: Path,
     validated: ValidatedContract,
@@ -256,10 +297,15 @@ def leaf_execution_key(
     snapshot: InputSnapshot,
     check_id: str,
     dependency_execution_keys: Mapping[str, str],
+    execution_identity: Mapping[str, Any],
 ) -> tuple[str, Mapping[str, Any]]:
     check = validated.by_check[check_id]
     row_index = {str(row["id"]): row for row in snapshot.rows}
-    invocation = resolve_invocation(root, check)
+    invocations = execution_identity.get("invocations")
+    runtime = execution_identity.get("runtime")
+    if not isinstance(invocations, Mapping) or check_id not in invocations or not isinstance(runtime, Mapping):
+        raise ContractError("execution_identity_missing", f"$.checks.{check_id}", "frozen execution identity is required")
+    invocation = invocations[check_id]
     key_invocation = {key: value for key, value in invocation.items() if key != "effective_environment"}
     payload = {
         "schema_version": "skillguard.leaf_execution.v1",
@@ -270,7 +316,7 @@ def leaf_execution_key(
         "check_declaration": {key: check[key] for key in ("kind", "command", "args", "input_ids", "expected") if key in check} | ({"environment": check["environment"]} if "environment" in check else {}),
         "input_snapshot_rows": [row_index[input_id] for input_id in check["input_ids"]],
         "invocation": key_invocation,
-        "execution_runtime": current_execution_runtime(Path(__file__).resolve().parent),
+        "execution_runtime": runtime,
         "dependency_execution_keys": {key: dependency_execution_keys[key] for key in sorted(dependency_execution_keys)},
     }
     return wire_hash(payload), invocation
@@ -372,6 +418,7 @@ def execute_plan(
             # Observe after winning single-flight so the snapshot and all leaf
             # keys describe one frozen operation.
             snapshot = observe_inputs(root, validated, plan)
+            execution_identity = freeze_execution_identity(root, validated, plan)
             leaves: list[Mapping[str, Any]] = []
             dependency_keys: dict[str, str] = {}
             reused_count = 0
@@ -382,7 +429,13 @@ def execute_plan(
                     for dependency in plan.check_dependencies[check_id]
                 }
                 execution_key, invocation = leaf_execution_key(
-                    root, validated, plan, snapshot, check_id, declared_dependencies
+                    root,
+                    validated,
+                    plan,
+                    snapshot,
+                    check_id,
+                    declared_dependencies,
+                    execution_identity,
                 )
                 leaf_path = filesystem_path(control_root / "functions" / f"{execution_key.removeprefix('sha256:')}.json")
                 if leaf_path.exists():
@@ -529,6 +582,8 @@ def execute_plan(
             final_snapshot = observe_inputs(root, validated, plan)
             if final_snapshot.snapshot_hash != snapshot.snapshot_hash:
                 raise ContractError("input_changed", "$.inputs", "selected input bytes changed during execution")
+            if not _same_execution_identity(root, validated, plan, execution_identity):
+                raise ContractError("runtime_changed", "$.execution_runtime", "execution runtime or executable identity changed during execution")
             if final_validation is not None:
                 final_validation(final_snapshot)
             result = PlanExecutionResult(
@@ -555,13 +610,40 @@ def execute_plan(
         raise ContractError("evidence_invalid", "$.author_state_root", str(exc)) from exc
 
 
-def build_plan(validated: ValidatedContract, decision: RouteDecision, *, operation: str = "change", root: Path | None = None) -> FrozenPlan:
+def build_plan(
+    validated: ValidatedContract,
+    decision: RouteDecision,
+    *,
+    operation: str | None = None,
+    root: Path | None = None,
+) -> FrozenPlan:
     """Expand selected routes through obligation owners and all step prerequisites."""
 
     if not decision.ok:
         raise ContractError("route_not_selected", "$.routes", "a successful route decision is required")
+    if operation is None:
+        declared_operations = [
+            predicate["equals"]
+            for route_id in decision.route_ids
+            for predicate in validated.by_route[route_id]["when"]
+            if str(predicate["fact"]) == "operation"
+        ]
+        operation = (
+            declared_operations[0]
+            if len(declared_operations) == 1
+            and isinstance(declared_operations[0], str)
+            else "change"
+        )
     if operation not in {"change", "release"}:
         raise ContractError("invalid_operation", "$.operation", "change or release required")
+    for route_id in decision.route_ids:
+        for predicate in validated.by_route[route_id]["when"]:
+            if str(predicate["fact"]) == "operation" and predicate["equals"] != operation:
+                raise ContractError(
+                    "operation_route_mismatch",
+                    f"$.routes.{route_id}.when",
+                    "selected route operation does not match the handler",
+                )
     plan_root = canonical_filesystem_path(root or Path.cwd())
     selected_steps: set[str] = set()
     selected_obligations: list[str] = []
@@ -783,6 +865,15 @@ def _validate_request(operation: str, root: Path, request: Mapping[str, Any]) ->
         expected = request.get("expected_current")
         if expected is not None and not is_wire_hash(expected):
             raise SkillGuardCliError(operation, "request.expected_current must be JSON null or a sha256 wire identity")
+        facts = request.get("facts")
+        if not isinstance(facts, Mapping):
+            raise SkillGuardCliError(operation, "request.facts must be an object", "missing_fact")
+        if "operation" in facts and facts["operation"] != operation:
+            raise SkillGuardCliError(
+                operation,
+                "facts.operation must match the public handler",
+                "operation_fact_mismatch",
+            )
     state_value = request.get("author_state_root")
     if not isinstance(state_value, str) or not Path(state_value).is_absolute():
         raise SkillGuardCliError(operation, "request.author_state_root must be absolute")
@@ -797,7 +888,44 @@ def _route_payload(validated: ValidatedContract, request: Mapping[str, Any]) -> 
         explicit = request["route_id"] if isinstance(request["route_id"], str) else []
     elif "route_ids" in request:
         explicit = request["route_ids"] if isinstance(request["route_ids"], list) else []
-    decision = select_routes(validated, request.get("facts", {}), request.get("scope", []), explicit)
+    facts = request.get("facts", {})
+    operation = request.get("operation")
+    if isinstance(facts, Mapping) and "operation" in facts and facts["operation"] != operation:
+        decision = RouteDecision(
+            False,
+            "blocked",
+            (),
+            (
+                # Keep this at route admission so no source/target state is
+                # observed and no producer can start on a mismatched request.
+                RouteFinding(
+                    "operation_fact_mismatch",
+                    "$.facts.operation",
+                    "facts.operation must match the public handler",
+                ),
+            ),
+        )
+    else:
+        decision = select_routes(validated, facts, request.get("scope", []), explicit)
+    if decision.ok:
+        for route_id in decision.route_ids:
+            for predicate in validated.by_route[route_id]["when"]:
+                if str(predicate["fact"]) == "operation" and predicate["equals"] != operation:
+                    decision = RouteDecision(
+                        False,
+                        "blocked",
+                        decision.route_ids,
+                        (
+                            RouteFinding(
+                                "operation_route_mismatch",
+                                f"$.routes.{route_id}.when",
+                                "selected route operation does not match the public handler",
+                            ),
+                        ),
+                    )
+                    break
+            if not decision.ok:
+                break
     return decision, decision.to_dict()
 
 

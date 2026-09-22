@@ -37,8 +37,8 @@ class ValidatedContract:
     step_topological_order: tuple[str, ...]
 
 
-def strict_json_load(path: Path) -> dict[str, Any]:
-    """Reject duplicate keys, NaN/Infinity and non-object roots."""
+def strict_json_loads(raw: str | bytes, *, source: str = "$") -> dict[str, Any]:
+    """Parse one already-read JSON byte/string payload with strict rules."""
 
     def pairs(rows: list[tuple[str, Any]]) -> dict[str, Any]:
         result: dict[str, Any] = {}
@@ -51,19 +51,34 @@ def strict_json_load(path: Path) -> dict[str, Any]:
     def nonfinite(value: str) -> None:
         raise ContractError("invalid_json_number", "$", f"non-finite number: {value}")
 
-    try:
-        text = path.read_text(encoding="utf-8")
-    except OSError as exc:
-        raise ContractError("json_unreadable", "$", str(exc)) from exc
+    if isinstance(raw, bytes):
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ContractError("invalid_json", source, str(exc)) from exc
+    elif isinstance(raw, str):
+        text = raw
+    else:
+        raise ContractError("invalid_json", source, "UTF-8 JSON text required")
     try:
         value = json.loads(text, object_pairs_hook=pairs, parse_constant=nonfinite)
     except ContractError:
         raise
     except json.JSONDecodeError as exc:
-        raise ContractError("invalid_json", "$", str(exc)) from exc
+        raise ContractError("invalid_json", source, str(exc)) from exc
     if not isinstance(value, dict):
-        raise ContractError("invalid_json", "$", "top-level JSON object required")
+        raise ContractError("invalid_json", source, "top-level JSON object required")
     return value
+
+
+def strict_json_load(path: Path) -> dict[str, Any]:
+    """Read and strictly parse one JSON object."""
+
+    try:
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise ContractError("json_unreadable", "$", str(exc)) from exc
+    return strict_json_loads(raw, source=str(path))
 
 
 def _shape(row: Mapping[str, Any], required: set[str], optional: set[str], path: str) -> None:
@@ -179,7 +194,7 @@ def validate_contract_source(root: Path, source: Mapping[str, Any]) -> Validated
     if not root.is_absolute() or not root.is_dir():
         raise ContractError("input_path_outside_root", "$", "existing absolute root required")
     root = root.resolve(strict=True)
-    _shape(source, {"schema_version", "skill_id", "maintenance_unit_id", "inputs", "routes", "steps", "obligations", "checks"}, {"member_skill_ids", "consumer_projection", "migration"}, "$")
+    _shape(source, {"schema_version", "skill_id", "maintenance_unit_id", "inputs", "routes", "steps", "obligations", "checks"}, {"member_skill_ids", "consumer_projection"}, "$")
     if source["schema_version"] != SCHEMA_VERSION:
         raise ContractError("unsupported_contract_schema", "$.schema_version", SCHEMA_VERSION)
     skill_id = _id(source["skill_id"], "$.skill_id")

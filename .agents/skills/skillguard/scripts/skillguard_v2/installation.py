@@ -458,10 +458,17 @@ def _unlock_handle(handle: Any) -> None:
 
 
 class _InstallMutex:
-    def __init__(self, codex_home: Path, operation: str) -> None:
+    def __init__(
+        self,
+        codex_home: Path,
+        operation: str,
+        *,
+        write_metadata: bool = True,
+    ) -> None:
         self.codex_home = codex_home.resolve()
         self.path = self.codex_home / INSTALL_LOCK_NAME
         self.operation = operation
+        self.write_metadata = write_metadata
         self.handle: Any | None = None
         self.key = str(self.path).casefold()
 
@@ -478,20 +485,8 @@ class _InstallMutex:
             descriptor = os.open(self.path, flags, 0o600)
             self.handle = os.fdopen(descriptor, "a+b")
             _lock_handle(self.handle)
-            metadata = canonical_json_bytes(
-                {
-                    "schema_version": "skillguard.install_lock.v1",
-                    "pid": os.getpid(),
-                    "host": socket.gethostname(),
-                    "operation": self.operation,
-                    "acquired_at": _utc_now(),
-                }
-            )
-            self.handle.seek(1)
-            self.handle.truncate(1)
-            self.handle.write(metadata)
-            self.handle.flush()
-            os.fsync(self.handle.fileno())
+            if self.write_metadata:
+                self.record_metadata()
         except Exception:
             if self.handle is not None:
                 self.handle.close()
@@ -500,6 +495,26 @@ class _InstallMutex:
                 _PROCESS_LOCKED_PATHS.discard(self.key)
             raise
         return self
+
+    def record_metadata(self) -> None:
+        """Write operation metadata after a no-op decision has been ruled out."""
+
+        if self.handle is None:
+            raise InstallBusyError("install_lock_not_acquired")
+        metadata = canonical_json_bytes(
+            {
+                "schema_version": "skillguard.install_lock.v1",
+                "pid": os.getpid(),
+                "host": socket.gethostname(),
+                "operation": self.operation,
+                "acquired_at": _utc_now(),
+            }
+        )
+        self.handle.seek(1)
+        self.handle.truncate(1)
+        self.handle.write(metadata)
+        self.handle.flush()
+        os.fsync(self.handle.fileno())
 
     def __exit__(self, exc_type: Any, exc: Any, traceback: Any) -> None:
         try:

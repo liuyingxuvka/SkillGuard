@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.7.9 - 2026-09-22
+
+- Finalized the direct-current compact contract after the FlowGuard v0.69.7
+  public-surface retirement: one maintainer entry, three lifecycle operations,
+  and no compatibility, alias, migration, or fallback route.
+- Rebuilt the real self-check bindings, frozen runtime identity, exact no-op
+  installation path, and consumer projection against the FlowGuard v0.69.7
+  provider.
+- Kept author evidence, consumer files, local installation, GitHub tags, and
+  release publication as separate claims with explicit verification gates.
+
 ## v0.7.8 - 2026-09-22
 
 - Completed the compact direct-current author boundary: one SkillGuard maintainer entry, one public `read`/`change`/`release` dispatcher contract, and no compatibility, alias, migration, or fallback route.

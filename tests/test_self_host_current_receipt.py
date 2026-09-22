@@ -102,5 +102,3 @@ def test_frozen_mesh_finalizer_does_not_claim_compile_or_execute_and_is_idempote
     second = run_self_checks.load_required_nodeids(table, "admission", "nt" if __import__("os").name == "nt" else "posix")
     assert first == second
     assert len(first) == 27
-
-\n

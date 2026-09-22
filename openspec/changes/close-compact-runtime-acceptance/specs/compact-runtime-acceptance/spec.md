@@ -139,9 +139,11 @@ hidden, duplicate, or compatibility escapes.
 ### Requirement: Cross-Guard journeys and measurements are independent
 
 The acceptance suite MUST exercise the required public journeys and verify
-that SkillGuard can run without FlowGuard, with fixed measurement fixtures and
-explicit source, environment, and privacy identities. A measurement collected
-before the final freeze MUST NOT be promoted to final evidence.
+that SkillGuard can run without FlowGuard, with one fixed acceptance result
+whose performance and installation sections carry explicit source,
+environment, and privacy identities. A section collected before the final
+freeze MUST NOT be promoted to final evidence, and no separate handoff
+delivery platform is required.
 
 #### Scenario: SkillGuard runs in isolation
 
@@ -150,12 +152,12 @@ before the final freeze MUST NOT be promoted to final evidence.
 - **THEN** it imports and runs without FlowGuard or author-path leakage and
   records zero unauthorized shared receipts
 
-#### Scenario: Measurement fixture is current
+#### Scenario: Acceptance result is current
 
 - **WHEN** performance and installation fixtures run under the final freeze
   identity
-- **THEN** the receipt records exact counters, details hash, and platform
-  boundary without claiming an unmeasured token percentage
+- **THEN** the one acceptance result records exact counters, details hashes,
+  and platform boundaries without claiming an unmeasured token percentage
 
 ### Requirement: Freeze and final validation preserve evidence order
 
@@ -185,8 +187,8 @@ after all C00-C12 gates pass.
 
 #### Scenario: Candidate package is complete
 
-- **WHEN** full pytest, four measurements, clean installation, self-audit, and
-  privacy/provenance checks all match the freeze
+- **WHEN** full pytest, both acceptance-result sections, clean installation,
+  self-audit, and privacy/provenance checks all match the freeze
 - **THEN** a clean candidate package may be prepared without changing the
   existing release
 
@@ -196,3 +198,53 @@ after all C00-C12 gates pass.
   been granted
 - **THEN** the existing tag and release remain unchanged and the candidate is
   reported as blocked or scoped
+
+### Requirement: Evidence is proportional to the selected operation
+
+The necessity gate MUST require per-element good, bad, and draft evidence only
+for an explicit architecture reduction or candidate comparison. An ordinary
+change MUST use the real declared self-checks and program-derived contract
+coverage already owned by the selected unit. A read operation MUST not create
+new good, bad, or draft evidence. Missing budget inputs or required evidence
+MUST fail closed.
+
+#### Scenario: Ordinary change uses current self-checks
+
+- **WHEN** a bounded change does not declare reduction or candidate comparison
+- **THEN** it runs the selected current self-check owners and derived contract
+  coverage without creating a new evidence bundle
+
+#### Scenario: Read lacks an evidence budget or required input
+
+- **WHEN** a read request omits a required page budget, selected identity, or
+  required source input
+- **THEN** the read rejects with zero producers and zero writes
+
+### Requirement: Route changes preserve leaf evidence identity
+
+Changing a route name, admission condition, or obligation requires a fresh
+admission decision and current plan or accepted identity. When the actual
+check, input, dependency, toolchain, and environment are unchanged, a route
+rename MUST NOT change the leaf execution key or create a duplicate producer.
+The SkillGuard operation fact MUST agree with the selected operation, owner,
+and result.
+
+#### Scenario: Route metadata changes while the leaf is unchanged
+
+- **WHEN** route or obligation metadata changes but the concrete leaf inputs and
+  execution identity remain exact
+- **THEN** admission and plan identity are refreshed while the existing leaf
+  execution key remains reusable within the same maintenance unit
+
+#### Scenario: Execution fails after process start
+
+- **WHEN** a started owner exits with failure, cancellation, timeout, or cleanup
+  error
+- **THEN** the recorded execution count reflects the real process start and the
+  result remains failed or incomplete; it cannot be promoted to pass
+
+
+
+## 2026-09-22 audit delta
+
+The earlier checked receipts describe the historical v0.7.8 state and are not current proof for the next patch. This change remains open until the direct-current compact contract is revalidated after the final source edits. The current public surface is exactly `read`, `change`, and `release`; retired commands, route catalogs, migration metadata, aliases, compatibility readers, and fallback paths are removed rather than interpreted. The selected-read/owner evidence, current model or contract identity, one final Windows 3.12 full-suite owner, installation parity, and release identity must all be re-established on one frozen source revision. Documentation and CI are part of that frozen source identity.

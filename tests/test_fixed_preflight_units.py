@@ -14,7 +14,7 @@ import pytest
 SCRIPT_ROOT = Path(__file__).resolve().parents[1] / ".agents" / "skills" / "skillguard" / "scripts"
 sys.path.insert(0, str(SCRIPT_ROOT))
 
-from checker_engine import build_plan, execute_plan, leaf_execution_key, observe_inputs  # noqa: E402
+from checker_engine import build_plan, execute_plan, freeze_execution_identity, leaf_execution_key, observe_inputs  # noqa: E402
 from skillguard_v2.compact_contract import (  # noqa: E402
     ContractError,
     strict_json_load,
@@ -213,11 +213,12 @@ def test_leaf_key_binds_root_unit_environment_and_dependencies(tmp_path: Path) -
     validated = validate_contract_source(root, source)
     plan = build_plan(validated, select_routes(validated, {"operation": "change"}, ["route:change"]))
     snapshot = observe_inputs(root, validated, plan)
-    a_key, _ = leaf_execution_key(root, validated, plan, snapshot, "a", {})
-    b_key, invocation = leaf_execution_key(root, validated, plan, snapshot, "b", {"a": a_key})
+    execution_identity = freeze_execution_identity(root, validated, plan)
+    a_key, _ = leaf_execution_key(root, validated, plan, snapshot, "a", {}, execution_identity)
+    b_key, invocation = leaf_execution_key(root, validated, plan, snapshot, "b", {"a": a_key}, execution_identity)
     assert invocation["effective_environment"]["DECLARED_VALUE"] == "visible"
-    assert leaf_execution_key(root, validated, plan, snapshot, "b", {"a": a_key})[0] == b_key
-    assert leaf_execution_key(root, validated, plan, snapshot, "b", {"a": "sha256:" + "0" * 64})[0] != b_key
+    assert leaf_execution_key(root, validated, plan, snapshot, "b", {"a": a_key}, execution_identity)[0] == b_key
+    assert leaf_execution_key(root, validated, plan, snapshot, "b", {"a": "sha256:" + "0" * 64}, execution_identity)[0] != b_key
 
 
 def test_leaf_key_excludes_route_identity_but_binds_input_bytes(tmp_path: Path) -> None:
@@ -227,12 +228,12 @@ def test_leaf_key_excludes_route_identity_but_binds_input_bytes(tmp_path: Path) 
     change_plan = build_plan(validated, select_routes(validated, {"operation": "change"}, ["route:change"]))
     release_plan = build_plan(validated, select_routes(validated, {"operation": "release"}, ["route:release"]))
     first = observe_inputs(root, validated, change_plan)
-    change_key = leaf_execution_key(root, validated, change_plan, first, "a", {})[0]
-    release_key = leaf_execution_key(root, validated, release_plan, first, "a", {})[0]
+    change_key = leaf_execution_key(root, validated, change_plan, first, "a", {}, freeze_execution_identity(root, validated, change_plan))[0]
+    release_key = leaf_execution_key(root, validated, release_plan, first, "a", {}, freeze_execution_identity(root, validated, release_plan))[0]
     assert change_key == release_key
     (root / "src" / "a.txt").write_text("changed", encoding="utf-8")
     second = observe_inputs(root, validated, change_plan)
-    assert leaf_execution_key(root, validated, change_plan, second, "a", {})[0] != change_key
+    assert leaf_execution_key(root, validated, change_plan, second, "a", {}, freeze_execution_identity(root, validated, change_plan))[0] != change_key
 
 
 def _execution_fixture(tmp_path: Path, source: dict[str, object] | None = None):
